@@ -2,13 +2,6 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 
-const SKILL_OPTIONS = [
-  'Mold Cleanup', 'Drywall Repair', 'Plumbing', 'Electrical',
-  'Tree Removal', 'Roof Tarps', 'Mucking Out', 'Childcare',
-  'Pet Care', 'Translation', 'Transport', 'Meal Prep',
-  'Tech Help', 'Paperwork Help', 'Heavy Lifting', 'Yard Work',
-]
-
 export default function Profile() {
   const { user, profile, signOut, refreshProfile } = useAuth()
   const [editing, setEditing] = useState(false)
@@ -27,6 +20,21 @@ export default function Profile() {
   const [ambassador, setAmbassador] = useState(null)
   const [ambAvailability, setAmbAvailability] = useState('')
   const [ambInterests, setAmbInterests] = useState('')
+
+  // Skill categories from database
+  const [skillOptions, setSkillOptions] = useState([])
+
+  useEffect(() => {
+    async function loadSkills() {
+      const { data } = await supabase
+        .from('skill_categories')
+        .select('title')
+        .eq('is_active', true)
+        .order('title')
+      if (data) setSkillOptions(data.map((s) => s.title))
+    }
+    loadSkills()
+  }, [])
 
   // Load profile data into form
   useEffect(() => {
@@ -275,7 +283,7 @@ export default function Profile() {
         <div className="form-field">
           <label>Skills</label>
           <div className="skill-grid">
-            {SKILL_OPTIONS.map((skill) => (
+            {skillOptions.map((skill) => (
               <button
                 key={skill}
                 type="button"

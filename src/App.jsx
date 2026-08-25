@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import Feed from './pages/Feed'
 import Profile from './pages/Profile'
 import Help from './pages/Help'
+import AskForHelp from './pages/AskForHelp'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -66,6 +67,7 @@ function AppRoutes() {
         <Route path="skillshare" element={<Feed />} />
         <Route path="profile" element={<Profile />} />
         <Route path="help" element={<Help />} />
+        <Route path="ask" element={<AskForHelp />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,0 +1,183 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { supabase } from '../supabaseClient'
+
+const URGENCY_OPTIONS = [
+  { value: 'now', label: 'Right now', desc: 'Emergency or same-day need' },
+  { value: 'today', label: 'Today', desc: 'Within the next few hours' },
+  { value: 'this_week', label: 'This week', desc: 'Can wait a day or two' },
+  { value: 'flexible', label: 'Flexible', desc: 'No rush, whenever someone is free' },
+]
+
+export default function AskForHelp() {
+  const { user, profile } = useAuth()
+  const navigate = useNavigate()
+
+  const [skills, setSkills] = useState([])
+  const [skillNeeded, setSkillNeeded] = useState('')
+  const [description, setDescription] = useState('')
+  const [urgency, setUrgency] = useState('today')
+  const [neighborhood, setNeighborhood] = useState('')
+
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  // Load skill categories from the database
+  useEffect(() => {
+    async function loadSkills() {
+      const { data } = await supabase
+        .from('skill_categories')
+        .select('title')
+        .eq('is_active', true)
+        .order('title')
+
+      if (data) {
+        setSkills(data.map((s) => s.title))
+      }
+    }
+    loadSkills()
+  }, [])
+
+  // Pre-fill neighborhood from profile
+  useEffect(() => {
+    if (profile?.neighborhood) {
+      setNeighborhood(profile.neighborhood)
+    }
+  }, [profile])
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError('')
+
+    if (!skillNeeded) {
+      setError('Please choose what kind of help you need.')
+      return
+    }
+    if (!description.trim()) {
+      setError('Please describe what you need.')
+      return
+    }
+
+    setSubmitting(true)
+
+    const { error: insertError } = await supabase
+      .from('help_requests')
+      .insert({
+        requester_id: user.id,
+        skill_needed: skillNeeded,
+        description: description.trim(),
+        urgency,
+        neighborhood: neighborhood.trim(),
+        latitude: profile?.latitude || 0,
+        longitude: profile?.longitude || 0,
+      })
+
+    if (insertError) {
+      setError('Something went wrong. Please try again.')
+      console.error(insertError)
+      setSubmitting(false)
+      return
+    }
+
+    navigate('/', { state: { message: 'Your request has been posted.' } })
+  }
+
+  return (
+    <div className="ask-page">
+      <h1>Ask for help</h1>
+      <p className="ask-intro">
+        Tell us what you need. Only Hope Ambassadors in your area will see this.
+        No personal details are shared until you say so.
+      </p>
+
+      <form onSubmit={handleSubmit} className="ask-form">
+
+        <div className="form-field">
+          <label htmlFor="skillNeeded">What kind of help do you need?</label>
+          <div className="skill-grid">
+            {skills.map((skill) => (
+              <button
+                key={skill}
+                type="button"
+                className={`skill-chip ${skillNeeded === skill ? 'active' : ''}`}
+                onClick={() => setSkillNeeded(skill)}
+              >
+                {skill}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="description">What's going on?</label>
+          <textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe your situation. Be as specific as you're comfortable with."
+            rows={4}
+            required
+          />
+        </div>
+
+        <div className="form-field">
+          <label>How soon do you need help?</label>
+          <div className="urgency-options">
+            {URGENCY_OPTIONS.map((opt) => (
+              <label
+                key={opt.value}
+                className={`urgency-option ${urgency === opt.value ? 'active' : ''}`}
+              >
+                <input
+                  type="radio"
+                  name="urgency"
+                  value={opt.value}
+                  checked={urgency === opt.value}
+                  onChange={() => setUrgency(opt.value)}
+                  className="sr-only"
+                />
+                <span className="urgency-label">{opt.label}</span>
+                <span className="urgency-desc">{opt.desc}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="neighborhood">Your general area</label>
+          <input
+            id="neighborhood"
+            type="text"
+            value={neighborhood}
+            onChange={(e) => setNeighborhood(e.target.value)}
+            placeholder="e.g., Ringgold, Fort Oglethorpe"
+          />
+          <span className="field-hint">
+            Just your town or neighborhood. We never share your exact address.
+          </span>
+        </div>
+
+        {error && <p className="form-error" role="alert">{error}</p>}
+
+        <div className="form-row" style={{ marginTop: '0.5rem' }}>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => navigate('/')}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={submitting}
+            style={{ flex: 1 }}
+          >
+            {submitting ? 'Posting...' : 'Post request'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}

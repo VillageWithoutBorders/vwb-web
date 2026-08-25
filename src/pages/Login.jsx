@@ -1,17 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-
-const SKILL_OPTIONS = [
-  'Mold Cleanup', 'Drywall Repair', 'Plumbing', 'Electrical',
-  'Tree Removal', 'Roof Tarps', 'Mucking Out', 'Childcare',
-  'Pet Care', 'Translation', 'Transport', 'Meal Prep',
-  'Tech Help', 'Paperwork Help', 'Heavy Lifting', 'Yard Work',
-]
+import { supabase } from '../supabaseClient'
 
 export default function Login() {
   const [mode, setMode] = useState('signin')
   const [step, setStep] = useState(1)
+
+  // Skill categories from database
+  const [skillOptions, setSkillOptions] = useState([])
+
+  useEffect(() => {
+    async function loadSkills() {
+      const { data } = await supabase
+        .from('skill_categories')
+        .select('title')
+        .eq('is_active', true)
+        .order('title')
+      if (data) setSkillOptions(data.map((s) => s.title))
+    }
+    loadSkills()
+  }, [])
 
   // Step 1 fields
   const [displayName, setDisplayName] = useState('')
@@ -334,7 +343,7 @@ export default function Login() {
           <div className="form-field">
             <label>What can you help with?</label>
             <div className="skill-grid">
-              {SKILL_OPTIONS.map((skill) => (
+              {skillOptions.map((skill) => (
                 <button
                   key={skill}
                   type="button"

@@ -1,14 +1,22 @@
 import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 export default function Dashboard() {
   const { profile } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const displayName = profile?.display_name || 'Neighbor'
+  const successMessage = location.state?.message
 
   return (
     <div className="dashboard">
+      {successMessage && (
+        <p className="form-success" role="status" style={{ marginBottom: '1rem' }}>
+          {successMessage}
+        </p>
+      )}
+
       <div className="welcome-section">
         <h1>Welcome back, {displayName}</h1>
         <p className="welcome-sub">What do you need today?</p>
