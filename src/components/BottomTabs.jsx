@@ -1,0 +1,41 @@
+import { NavLink } from 'react-router-dom'
+
+export default function BottomTabs() {
+  return (
+    <nav className="bottom-tabs" aria-label="Main navigation">
+      <NavLink to="/" end className="tab-item">
+        <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span className="tab-label">Home</span>
+      </NavLink>
+
+      <NavLink to="/skillshare" className="tab-item">
+        <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 2L2 7l10 5 10-5-10-5z" />
+          <path d="M2 17l10 5 10-5" />
+          <path d="M2 12l10 5 10-5" />
+        </svg>
+        <span className="tab-label">SkillShare</span>
+      </NavLink>
+
+      <NavLink to="/profile" className="tab-item">
+        <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <span className="tab-label">Profile</span>
+      </NavLink>
+
+      <NavLink to="/help" className="tab-item">
+        <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+        <span className="tab-label">Help</span>
+      </NavLink>
+    </nav>
+  )
+}

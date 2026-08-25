@@ -36,7 +36,6 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function ensureProfile(authUser) {
-    // Try to fetch existing profile
     const { data } = await supabase
       .from('helper_profiles')
       .select('*')
@@ -45,6 +44,35 @@ export function AuthProvider({ children }) {
 
     if (data) {
       setProfile(data)
+
+      // Check for pending ambassador signup
+      const pending = localStorage.getItem('vwb_ambassador_pending')
+      if (pending && !data.is_hope_ambassador) {
+        try {
+          const ambassadorData = JSON.parse(pending)
+          const { error } = await supabase
+            .from('hope_ambassadors')
+            .insert({
+              user_id: authUser.id,
+              skills: ambassadorData.skills,
+              availability: ambassadorData.availability,
+              interests: ambassadorData.interests,
+            })
+
+          if (!error) {
+            await supabase
+              .from('helper_profiles')
+              .update({ is_hope_ambassador: true })
+              .eq('user_id', authUser.id)
+
+            localStorage.removeItem('vwb_ambassador_pending')
+            setProfile({ ...data, is_hope_ambassador: true })
+          }
+        } catch (e) {
+          console.error('Failed to save ambassador data:', e)
+        }
+      }
+
       return
     }
 
@@ -64,12 +92,28 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function signUp(email, password, displayName) {
+  async function refreshProfile() {
+    if (!user) return
+    const { data } = await supabase
+      .from('helper_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (data) {
+      setProfile(data)
+    }
+  }
+
+  async function signUp(email, password, displayName, isAmbassador = false) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { display_name: displayName },
+        data: {
+          display_name: displayName,
+          is_hope_ambassador: isAmbassador,
+        },
       },
     })
     return { data, error }
@@ -90,7 +134,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )
