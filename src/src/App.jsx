@@ -11,23 +11,59 @@ import ActiveTasks from './pages/ActiveTasks'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="loading-screen"><p>Loading...</p></div>
-  if (!user) return <Navigate to="/login" replace />
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
   return children
 }
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="loading-screen"><p>Loading...</p></div>
-  if (user) return <Navigate to="/" replace />
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
+  if (user) {
+    return <Navigate to="/" replace />
+  }
+
   return children
 }
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+
+      <Route
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Dashboard />} />
         <Route path="skillshare" element={<Feed />} />
         <Route path="tasks" element={<ActiveTasks />} />
@@ -35,6 +71,7 @@ function AppRoutes() {
         <Route path="help" element={<Help />} />
         <Route path="ask" element={<AskForHelp />} />
       </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
