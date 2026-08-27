@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { getCurrentPosition } from '../utils/location'
+import VouchButton from '../components/VouchButton'
 
 const URGENCY_CONFIG = {
   now:       { label: 'Right now', className: 'urgency-now' },
@@ -39,19 +40,16 @@ export default function Feed() {
   const loadFeed = useCallback(async () => {
     setLoading(true)
 
-    // Get user's location
     const loc = await getCurrentPosition()
     setUserLocation(loc)
     setLocationStatus(loc.source === 'browser' ? 'active' : 'default')
 
-    // Build the skill filter
     const helperSkills = filterSkill === 'all'
       ? []
       : [filterSkill]
 
     const radius = profile?.radius_miles || 10
 
-    // Call the geofenced matching function
     const { data, error } = await supabase.rpc('nearby_matching_requests', {
       helper_lat: loc.lat,
       helper_lng: loc.lng,
@@ -61,7 +59,6 @@ export default function Feed() {
 
     if (error) {
       console.error('Feed error:', error)
-      // Fallback: load all open requests without geofencing
       const { data: fallback } = await supabase
         .from('open_requests_by_urgency')
         .select('*')
@@ -100,7 +97,6 @@ export default function Feed() {
         </p>
       </div>
 
-      {/* Location status */}
       <div className={`location-banner location-${locationStatus}`}>
         <span className="location-dot" />
         {locationStatus === 'active'
@@ -108,7 +104,6 @@ export default function Feed() {
           : 'Using approximate location. Enable location for better matches.'}
       </div>
 
-      {/* Filters */}
       <div className="feed-filters">
         <select
           className="feed-filter-select"
@@ -131,7 +126,6 @@ export default function Feed() {
         </button>
       </div>
 
-      {/* Request cards */}
       {loading ? (
         <div className="feed-loading">
           <div className="feed-loading-spinner" />
@@ -165,7 +159,6 @@ export default function Feed() {
                 className={`feed-card ${isExpanded ? 'feed-card-expanded' : ''}`}
                 onClick={() => setExpandedId(isExpanded ? null : req.id)}
               >
-                {/* Top row: urgency + time */}
                 <div className="feed-card-top">
                   <span className={`urgency-badge ${urg.className}`}>
                     {urg.label}
@@ -173,7 +166,6 @@ export default function Feed() {
                   <span className="feed-card-time">{timeAgo(req.created_at)}</span>
                 </div>
 
-                {/* Skill + distance */}
                 <div className="feed-card-meta">
                   <span className="feed-card-skill">{req.skill_needed}</span>
                   {req.distance_miles != null && (
@@ -183,7 +175,6 @@ export default function Feed() {
                   )}
                 </div>
 
-                {/* Requester + neighborhood */}
                 <div className="feed-card-who">
                   <span className="feed-card-name">
                     {req.requester_name || 'A neighbor'}
@@ -195,24 +186,38 @@ export default function Feed() {
                   )}
                 </div>
 
-                {/* Description */}
+                {req.requester_id && (
+                  <div className="feed-card-vouch-row">
+                    <VouchButton
+                      userId={req.requester_id}
+                      size="sm"
+                      showCount={true}
+                    />
+                  </div>
+                )}
+
                 <p className={`feed-card-desc ${isExpanded ? '' : 'feed-card-desc-clamp'}`}>
                   {req.description}
                 </p>
 
-                {/* Expanded actions */}
                 {isExpanded && (
                   <div className="feed-card-actions">
                     <button
                       className="btn btn-primary btn-sm"
                       onClick={(e) => {
                         e.stopPropagation()
-                        // Future: trigger match/message flow
                         navigate(`/messages?request=${req.id}`)
                       }}
                     >
                       I can help
                     </button>
+                    {req.requester_id && (
+                      <VouchButton
+                        userId={req.requester_id}
+                        size="md"
+                        showCount={false}
+                      />
+                    )}
                   </div>
                 )}
               </div>
@@ -221,7 +226,6 @@ export default function Feed() {
         </div>
       )}
 
-      {/* Floating action button */}
       <button
         className="fab"
         onClick={() => navigate('/ask')}
