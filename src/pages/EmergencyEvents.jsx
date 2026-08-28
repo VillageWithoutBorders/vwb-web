@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 
+const VERIFY_THRESHOLD = 3
+
 export default function EmergencyEvents() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [mySignups, setMySignups] = useState({})
+  const [myUpvotes, setMyUpvotes] = useState({})
 
   useEffect(() => { loadEvents() }, [])
 
@@ -22,7 +25,31 @@ export default function EmergencyEvents() {
       signups.forEach(s => { map[s.event_id] = s.role })
       setMySignups(map)
     }
+    const { data: upvotes } = await supabase.from('event_upvotes').select('event_id').eq('user_id', user.id)
+    if (upvotes) {
+      const map = {}
+      upvotes.forEach(u => { map[u.event_id] = true })
+      setMyUpvotes(map)
+    }
     setLoading(false)
+  }
+
+  async function upvoteEvent(e, eventId) {
+    e.stopPropagation()
+    if (myUpvotes[eventId]) return
+    await supabase.from('event_upvotes').insert({ event_id: eventId, user_id: user.id })
+    const newCount = (events.find(ev => ev.id === eventId)?.upvote_count || 0) + 1
+    await supabase.from('emergency_events').update({
+      upvote_count: newCount,
+      verified: newCount >= VERIFY_THRESHOLD ? true : undefined
+    }).eq('id', eventId)
+    await loadEvents()
+  }
+
+  async function adminVerify(e, eventId) {
+    e.stopPropagation()
+    await supabase.from('emergency_events').update({ verified: true }).eq('id', eventId)
+    await loadEvents()
   }
 
   function timeAgo(ts) {
@@ -33,23 +60,27 @@ export default function EmergencyEvents() {
     return Math.floor(hrs / 24) + 'd ago'
   }
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'organizer' || profile?.is_hope_ambassador
+  const isAdmin = profile?.role === 'admin'
+  const verified = events.filter(ev => ev.verified)
+  const pending = events.filter(ev => !ev.verified)
 
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#4ecca3' }}>Emergency Response</h1>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#ff6644' }}>Emergency Response</h1>
           <p style={{ color: '#888', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>Active events in your area</p>
         </div>
-        <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
       </div>
 
-      {isAdmin && (
-        <button onClick={() => navigate('/emergency/create')} style={{ display: 'block', width: '100%', padding: '0.75rem', borderRadius: '10px', border: '2px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer', marginBottom: '1rem' }}>
-          + Create Emergency Event
-        </button>
-      )}
+      <button onClick={() => navigate('/emergency/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '1rem', borderRadius: '10px', border: '2px solid #ff4444', background: 'linear-gradient(135deg, #3a1a1a, #4a2020)', cursor: 'pointer', textAlign: 'left', marginBottom: '1.25rem' }}>
+        <span style={{ fontSize: '1.75rem' }}>&#9888;</span>
+        <div>
+          <span style={{ display: 'block', color: '#ff6644', fontWeight: 700, fontSize: '0.95rem' }}>Report Active Emergency</span>
+          <span style={{ color: '#cc9999', fontSize: '0.8rem' }}>Report a disaster or emergency in your area</span>
+        </div>
+      </button>
 
       {loading && <p style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>Loading...</p>}
 
@@ -61,27 +92,65 @@ export default function EmergencyEvents() {
         </div>
       )}
 
-      {!loading && events.map(ev => {
-        const myRole = mySignups[ev.id]
-        return (
-          <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: ev.status === 'active' ? '4px solid #ff6644' : '4px solid #444' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <span style={{ background: '#ff6644', color: '#fff', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type || 'Emergency'}</span>
-                <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.1rem' }}>{ev.title}</h3>
+      {!loading && pending.length > 0 && (
+        <>
+          <p style={{ color: '#ffaa44', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Pending verification ({pending.length})</p>
+          {pending.map(ev => {
+            const myRole = mySignups[ev.id]
+            const voted = myUpvotes[ev.id]
+            return (
+              <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} style={{ background: '#1e1e1e', border: '1px solid #444', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #ffaa44', opacity: 0.9 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <span style={{ background: '#ffaa44', color: '#1a1a1a', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>Unverified</span>
+                    <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.05rem' }}>{ev.title}</h3>
+                  </div>
+                  <span style={{ color: '#888', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
+                </div>
+                {ev.location_name && <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
+                {ev.description && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem' }}>
+                  <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid #4ecca3' : '1px solid #666', background: voted ? '#1a3a2a' : 'none', color: voted ? '#4ecca3' : '#aaa', cursor: voted ? 'default' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
+                    &#9650; {ev.upvote_count || 0}
+                  </button>
+                  <span style={{ color: '#666', fontSize: '0.75rem' }}>{VERIFY_THRESHOLD - (ev.upvote_count || 0) > 0 ? (VERIFY_THRESHOLD - (ev.upvote_count || 0)) + ' more to verify' : 'Verifying...'}</span>
+                  {isAdmin && (
+                    <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Verify</button>
+                  )}
+                </div>
               </div>
-              <span style={{ color: '#888', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
-            </div>
-            {ev.location_name && <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
-            {ev.description && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
-            {myRole && (
-              <span style={{ display: 'inline-block', marginTop: '0.5rem', background: myRole === 'responder' ? '#1a4a3a' : myRole === 'coordinator' ? '#1a3a5a' : '#4a3a1a', color: myRole === 'responder' ? '#4ecca3' : myRole === 'coordinator' ? '#66aaff' : '#ffaa44', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
-                {myRole === 'responder' ? 'Signed up to help' : myRole === 'coordinator' ? 'Coordinator' : 'Signed up as affected'}
-              </span>
-            )}
-          </div>
-        )
-      })}
+            )
+          })}
+        </>
+      )}
+
+      {!loading && verified.length > 0 && (
+        <>
+          {pending.length > 0 && <p style={{ color: '#ff6644', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Verified emergencies ({verified.length})</p>}
+          {verified.map(ev => {
+            const myRole = mySignups[ev.id]
+            return (
+              <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #ff6644' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <span style={{ background: '#ff6644', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type || 'Emergency'}</span>
+                    <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>&#10003; Verified</span>
+                    <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.1rem' }}>{ev.title}</h3>
+                  </div>
+                  <span style={{ color: '#888', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
+                </div>
+                {ev.location_name && <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
+                {ev.description && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
+                {myRole && (
+                  <span style={{ display: 'inline-block', marginTop: '0.5rem', background: myRole === 'responder' ? '#1a4a3a' : myRole === 'coordinator' ? '#1a3a5a' : '#4a3a1a', color: myRole === 'responder' ? '#4ecca3' : myRole === 'coordinator' ? '#66aaff' : '#ffaa44', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
+                    {myRole === 'responder' ? 'Signed up to help' : myRole === 'coordinator' ? 'Coordinator' : 'Signed up as affected'}
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </>
+      )}
     </div>
   )
 }

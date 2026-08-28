@@ -5,7 +5,7 @@ export default function Layout() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <h1 className="app-title">VWB</h1>
+        <img src="/images/vwb_logo.png" alt="Village Without Borders" style={{ height: "36px" }} />
       </header>
 
       <main className="app-main">

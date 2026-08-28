@@ -15,6 +15,7 @@ import MessagesPage from './pages/Messages'
 import EmergencyEvents from './pages/EmergencyEvents'
 import CreateEvent from './pages/CreateEvent'
 import EventDetail from './pages/EventDetail'
+import Admin from './pages/Admin'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -44,6 +45,7 @@ function AppRoutes() {
         <Route path="emergency" element={<EmergencyEvents />} />
         <Route path="emergency/create" element={<CreateEvent />} />
         <Route path="emergency/:id" element={<EventDetail />} />
+        <Route path="admin" element={<Admin />} />
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="messages" element={<MessagesPage />} />
       </Route>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 
 export default function Profile() {
   const { user, profile, signOut, refreshProfile } = useAuth()
+  const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -327,6 +329,11 @@ export default function Profile() {
         >
           Sign out
         </button>
+        {profile?.role === "admin" && (
+          <button className="btn btn-outline btn-full" onClick={() => navigate("/admin")} style={{ marginTop: "0.5rem", borderColor: "#4ecca3", color: "#4ecca3" }}>
+            &#9881; Admin Panel
+          </button>
+        )}
       </div>
     )
   }
