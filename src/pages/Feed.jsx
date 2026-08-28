@@ -193,7 +193,7 @@ export default function Feed() {
                   <p className={'feed-card-desc' + (isExpanded ? '' : ' feed-card-desc-clamp')}>{offer.description}</p>
                   {isExpanded && offer.user_id && (
                     <div className="feed-card-actions">
-                      <VouchButton userId={offer.user_id} size="md" showCount={true} />
+                      {offer.user_id !== user.id && <button className="btn btn-primary btn-sm" onClick={async (e) => { e.stopPropagation(); const { data: existing } = await supabase.from('conversations').select('id').eq('helper_id', offer.user_id).eq('requester_id', user.id).maybeSingle(); if (existing) { navigate('/conversation/' + existing.id); return; } const { data: convo } = await supabase.from('conversations').insert({ helper_id: offer.user_id, requester_id: user.id }).select().single(); if (convo) { await supabase.from('chat_messages').insert({ conversation_id: convo.id, sender_id: user.id, body: 'Hi! Interested in your offer: ' + offer.title }); navigate('/conversation/' + convo.id); } }}>I'm interested</button>} <VouchButton userId={offer.user_id} size="md" showCount={true} />
                     </div>
                   )}
                 </div>
