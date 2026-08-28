@@ -14,16 +14,14 @@ import MessagesPage from './pages/Messages'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="loading-screen"><p>Loading...</p></div>
-  if (!user) return <Navigate to="/login" replace />
-  return children
+  if (loading) return null
+  return user ? children : <Navigate to="/login" replace />
 }
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="loading-screen"><p>Loading...</p></div>
-  if (user) return <Navigate to="/" replace />
-  return children
+  if (loading) return null
+  return user ? <Navigate to="/" replace /> : children
 }
 
 function AppRoutes() {
@@ -35,8 +33,10 @@ function AppRoutes() {
         <Route path="skillshare" element={<Feed />} />
         <Route path="tasks" element={<ActiveTasks />} />
         <Route path="profile" element={<Profile />} />
-        <Route path="community" element={<Community />} />`n        <Route path="help" element={<Help />} />
-        <Route path="ask" element={<AskForHelp />} />`n        <Route path="conversation/:id" element={<Conversation />} />
+        <Route path="community" element={<Community />} />
+        <Route path="help" element={<Help />} />
+        <Route path="ask" element={<AskForHelp />} />
+        <Route path="conversation/:id" element={<Conversation />} />
         <Route path="messages" element={<MessagesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
