@@ -9,6 +9,7 @@ import Help from './pages/Help'
 import AskForHelp from './pages/AskForHelp'
 import ActiveTasks from './pages/ActiveTasks'
 import Community from './pages/Community'
+import Conversation from './pages/Conversation'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -34,7 +35,7 @@ function AppRoutes() {
         <Route path="tasks" element={<ActiveTasks />} />
         <Route path="profile" element={<Profile />} />
         <Route path="community" element={<Community />} />`n        <Route path="help" element={<Help />} />
-        <Route path="ask" element={<AskForHelp />} />
+        <Route path="ask" element={<AskForHelp />} />`n        <Route path="conversation/:id" element={<Conversation />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -28,7 +28,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
     const { data: countData } = await supabase
       .from('vouches')
       .select('id', { count: 'exact', head: true })
-      .eq('vouchee_id', userId)
+      .eq('vouched_for_id', userId)
 
     // Check if current user already vouched
     if (user?.id && !isSelf) {
@@ -36,7 +36,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
         .from('vouches')
         .select('id')
         .eq('voucher_id', user.id)
-        .eq('vouchee_id', userId)
+        .eq('vouched_for_id', userId)
         .maybeSingle()
 
       setHasVouched(!!existing)
@@ -61,7 +61,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
       .from('vouches')
       .insert({
         voucher_id: user.id,
-        vouchee_id: userId,
+        vouched_for_id: userId,
       })
 
     if (error) {

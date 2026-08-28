@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient'
 import { getCurrentPosition } from '../utils/location'
 import VouchButton from '../components/VouchButton'
 
-async function createMatch(userId, requestId, navigate) {
+async function createMatch(userId, requestId, requesterId, navigate) {
   const { data: match, error: matchErr } = await supabase
     .from('skill_matches')
     .insert({ helper_id: userId, request_id: requestId })
@@ -17,7 +17,7 @@ async function createMatch(userId, requestId, navigate) {
     return
   }
   await supabase.from('help_requests').update({ status: 'matched' }).eq('id', requestId)
-  navigate('/tasks')
+  const { data: convo } = await supabase.from('conversations').insert({ request_id: requestId, helper_id: userId, requester_id: requesterId }).select().single(); if (convo) { navigate('/conversation/' + convo.id) } else { navigate('/tasks') }
 }
 
 const URGENCY_CONFIG = {
@@ -45,8 +45,8 @@ export default function Feed() {
 
   useEffect(() => {
     async function loadSkills() {
-      const { data } = await supabase.from('skill_categories').select('name').order('name')
-      if (data) setSkillCategories(data.map(s => s.name))
+      const { data } = await supabase.from('skill_categories').select('title').order('title')
+      if (data) setSkillCategories(data.map(s => s.title))
     }
     loadSkills()
   }, [])
@@ -156,7 +156,7 @@ export default function Feed() {
                   <p className={'feed-card-desc' + (isExpanded ? '' : ' feed-card-desc-clamp')}>{req.description}</p>
                   {isExpanded && (
                     <div className="feed-card-actions">
-                      <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); createMatch(user.id, req.id, navigate) }}>I can help</button>
+                      <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); createMatch(user.id, req.id, req.requester_id, navigate) }}>I can help</button>
                       {req.requester_id && <VouchButton userId={req.requester_id} size="md" showCount={false} />}
                     </div>
                   )}

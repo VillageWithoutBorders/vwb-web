@@ -1433,3 +1433,150 @@ a:focus:not(:focus-visible) {
 .amb-signup-form .amb-signup-desc {
   text-align: left;
 }
+
+/* ---------- Conversation / Messaging ---------- */
+.conversation-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--tab-height) - env(safe-area-inset-bottom, 0px));
+  padding: 0;
+}
+
+.convo-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--card-bg, var(--white));
+}
+
+.convo-back {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--green);
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.convo-header-info h1 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.convo-context {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.convo-request-banner {
+  padding: 0.75rem 1rem;
+  background: var(--surface, #f5f5f5);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8125rem;
+}
+
+.convo-request-skill {
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.convo-request-desc {
+  margin: 0.25rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.convo-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.convo-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2rem 0;
+  font-size: 0.875rem;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 1rem;
+  word-wrap: break-word;
+}
+
+.chat-bubble.mine {
+  align-self: flex-end;
+  background: var(--green);
+  color: var(--white);
+  border-bottom-right-radius: 0.25rem;
+}
+
+.chat-bubble.theirs {
+  align-self: flex-start;
+  background: var(--card-bg, #e8e8e8);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 0.25rem;
+}
+
+.chat-body {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.chat-time {
+  display: block;
+  font-size: 0.6875rem;
+  margin-top: 0.25rem;
+  opacity: 0.7;
+}
+
+.convo-input-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--card-bg, var(--white));
+}
+
+.convo-input {
+  flex: 1;
+  padding: 0.625rem 0.875rem;
+  border-radius: 1.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface, #f5f5f5);
+  font-size: 0.9375rem;
+  outline: none;
+}
+
+.convo-input:focus {
+  border-color: var(--green);
+}
+
+.convo-send {
+  padding: 0.625rem 1.25rem;
+  border-radius: 1.5rem;
+  background: var(--green);
+  color: var(--white);
+  border: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.convo-send:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
