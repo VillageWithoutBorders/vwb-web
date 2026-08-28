@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import VouchButton from '../components/VouchButton'
@@ -25,7 +26,7 @@ export default function ActiveTasks() {
     setLoading(true)
     const { data, error } = await supabase
       .from('skill_matches')
-      .select('id, status, helper_id, requester_confirmed, helper_confirmed, completed_at, created_at, updated_at, help_requests (id, neighborhood, skill_needed, description, urgency, status, requester_id)')
+      .select('id, accepted, declined, helper_id, requester_confirmed, helper_confirmed, completed_at, created_at, updated_at, help_requests (id, neighborhood, skill_needed, description, urgency, status, requester_id)')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -44,7 +45,7 @@ export default function ActiveTasks() {
   async function updateMatchStatus(matchId, newStatus) {
     const { error } = await supabase
       .from('skill_matches')
-      .update({ status: newStatus })
+      .update(newStatus === 'accepted' ? { accepted: true } : newStatus === 'declined' ? { declined: true } : { accepted: true })
       .eq('id', matchId)
     if (error) { console.error('Status update error:', error); return }
 
@@ -147,6 +148,7 @@ export default function ActiveTasks() {
                   )}
                   {isAccepted && <button className="btn btn-primary btn-sm" onClick={() => updateMatchStatus(match.id, 'in_progress')}>Mark in progress</button>}
                   {isInProgress && !myConfirmed && <button className="btn btn-primary btn-sm" onClick={() => confirmCompletion(match.id)}>Confirm done</button>}
+                  {!isCompleted && <button className="btn btn-outline btn-sm" onClick={() => { supabase.from('conversations').select('id').eq('request_id', match.help_requests?.id).eq('helper_id', tab === 'helping' ? user.id : match.helper_id).maybeSingle().then(({ data }) => { if (data) navigate('/conversation/' + data.id) }) }}>Message</button>}
                   {isCompleted && otherUserId && <VouchButton userId={otherUserId} size="md" showCount={true} />}
                 </div>
               </div>
