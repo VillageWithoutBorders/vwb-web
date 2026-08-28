@@ -9,15 +9,18 @@ export default function Profile() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
+  // Editable fields
   const [displayName, setDisplayName] = useState('')
   const [zipCode, setZipCode] = useState('')
   const [neighborhood, setNeighborhood] = useState('')
   const [selectedSkills, setSelectedSkills] = useState([])
   const [radiusMiles, setRadiusMiles] = useState(10)
 
+  // Ambassador fields
   const [ambAvailability, setAmbAvailability] = useState('')
   const [ambInterests, setAmbInterests] = useState('')
 
+  // Ambassador signup flow
   const [showAmbassadorSignup, setShowAmbassadorSignup] = useState(false)
   const [ambSignupSkills, setAmbSignupSkills] = useState([])
   const [ambSignupAvailability, setAmbSignupAvailability] = useState('')
@@ -25,19 +28,21 @@ export default function Profile() {
   const [ambSignupSaving, setAmbSignupSaving] = useState(false)
   const [ambSignupError, setAmbSignupError] = useState('')
 
+  // Database-driven skill categories
   const [skillOptions, setSkillOptions] = useState([])
 
   useEffect(() => {
     async function loadSkills() {
       const { data } = await supabase
         .from('skill_categories')
-        .select('title')
-        .order('id')
-      if (data) setSkillOptions(data.map((s) => s.title))
+        .select('name')
+        .order('sort_order')
+      if (data) setSkillOptions(data.map((s) => s.name))
     }
     loadSkills()
   }, [])
 
+  // Load profile data into form
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.display_name || '')
@@ -52,13 +57,17 @@ export default function Profile() {
 
   function toggleSkill(skill) {
     setSelectedSkills((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
+      prev.includes(skill)
+        ? prev.filter((s) => s !== skill)
+        : [...prev, skill]
     )
   }
 
   function toggleAmbSignupSkill(skill) {
     setAmbSignupSkills((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
+      prev.includes(skill)
+        ? prev.filter((s) => s !== skill)
+        : [...prev, skill]
     )
   }
 
@@ -87,6 +96,7 @@ export default function Profile() {
       setError('Name is required.')
       return
     }
+
     setSaving(true)
     setError('')
     setMessage('')
@@ -98,6 +108,8 @@ export default function Profile() {
       skills: selectedSkills,
       radius_miles: radiusMiles,
     }
+
+    // If ambassador, also save availability and interests
     if (profile?.is_hope_ambassador) {
       updates.availability = ambAvailability.trim()
       updates.interests = ambInterests.trim()
@@ -113,6 +125,7 @@ export default function Profile() {
       setSaving(false)
       return
     }
+
     await refreshProfile()
     setMessage('Profile saved.')
     setEditing(false)
@@ -124,6 +137,7 @@ export default function Profile() {
       setAmbSignupError('Pick at least one skill you can help with.')
       return
     }
+
     setAmbSignupSaving(true)
     setAmbSignupError('')
 
@@ -144,6 +158,7 @@ export default function Profile() {
       return
     }
 
+    // Also update the profiles table
     await supabase
       .from('profiles')
       .update({ is_hope_ambassador: true, skills: ambSignupSkills })
@@ -157,6 +172,7 @@ export default function Profile() {
 
   const name = profile?.display_name || 'Neighbor'
 
+  // ---- View Mode ----
   if (!editing) {
     return (
       <div className="profile-page">
@@ -183,7 +199,9 @@ export default function Profile() {
           <div className="detail-row">
             <span className="detail-label">Skills</span>
             <span className="detail-value">
-              {profile?.skills?.length > 0 ? profile.skills.join(', ') : 'None yet'}
+              {profile?.skills?.length > 0
+                ? profile.skills.join(', ')
+                : 'None yet'}
             </span>
           </div>
           <div className="detail-row">
@@ -196,6 +214,7 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Ambassador details for existing ambassadors */}
         {profile?.is_hope_ambassador && (
           <div className="profile-details" style={{ marginTop: '1rem' }}>
             <div className="detail-section-header">Ambassador Details</div>
@@ -217,6 +236,7 @@ export default function Profile() {
           </div>
         )}
 
+        {/* Become a Hope Ambassador card for non-ambassadors */}
         {!profile?.is_hope_ambassador && !showAmbassadorSignup && (
           <div className="amb-signup-card">
             <div className="amb-signup-icon" aria-hidden="true">🌿</div>
@@ -235,6 +255,7 @@ export default function Profile() {
           </div>
         )}
 
+        {/* Ambassador signup form (expanded) */}
         {!profile?.is_hope_ambassador && showAmbassadorSignup && (
           <div className="amb-signup-form">
             <h2 className="amb-signup-title">Hope Ambassador Signup</h2>
@@ -331,6 +352,7 @@ export default function Profile() {
     )
   }
 
+  // ---- Edit Mode ----
   return (
     <div className="profile-page">
       <div className="profile-header-section">

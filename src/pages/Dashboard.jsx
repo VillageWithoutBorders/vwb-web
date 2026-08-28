@@ -43,11 +43,11 @@ export default function Dashboard() {
 
         <button
           className="action-card"
-          onClick={() => navigate('/projects')}
+          onClick={() => navigate('/community')}
         >
           <span className="action-icon" aria-hidden="true">🔨</span>
-          <span className="action-label">Projects</span>
-          <span className="action-desc">Active community projects</span>
+          <span className="action-label">Community</span>
+          <span className="action-desc">Resource library, events, and feedback</span>
         </button>
       </div>
 
