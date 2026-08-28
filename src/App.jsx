@@ -10,6 +10,7 @@ import AskForHelp from './pages/AskForHelp'
 import ActiveTasks from './pages/ActiveTasks'
 import Community from './pages/Community'
 import Conversation from './pages/Conversation'
+import MessagesPage from './pages/Messages'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="community" element={<Community />} />`n        <Route path="help" element={<Help />} />
         <Route path="ask" element={<AskForHelp />} />`n        <Route path="conversation/:id" element={<Conversation />} />
+        <Route path="messages" element={<MessagesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

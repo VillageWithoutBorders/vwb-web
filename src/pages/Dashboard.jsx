@@ -49,6 +49,14 @@ export default function Dashboard() {
           <span className="action-label">Community</span>
           <span className="action-desc">Resource library, events, and feedback</span>
         </button>
+        <button
+          className="action-card"
+          onClick={() => navigate('/messages')}
+        >
+          <span className="action-icon" aria-hidden="true">💬</span>
+          <span className="action-label">Messages</span>
+          <span className="action-desc">Resource library, events, and feedback</span>
+        </button>
       </div>
 
       {profile?.is_hope_ambassador && (

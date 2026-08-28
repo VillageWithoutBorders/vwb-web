@@ -1580,3 +1580,58 @@ a:focus:not(:focus-visible) {
   opacity: 0.5;
   cursor: default;
 }
+
+/* ---------- Messages List ---------- */
+.messages-page {
+  padding: 0 1rem;
+}
+
+.messages-page h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.message-card {
+  background: var(--card-bg, var(--white));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.875rem 1rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.message-card:hover {
+  border-color: var(--green);
+}
+
+.message-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+
+.message-card-name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.message-card-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.message-card-skill {
+  font-size: 0.8125rem;
+  color: var(--green);
+  margin: 0 0 0.25rem;
+}
+
+.message-card-preview {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
