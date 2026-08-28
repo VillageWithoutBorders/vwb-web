@@ -5,7 +5,7 @@ export default function Layout() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <img src="/images/vwb_logo.png" alt="Village Without Borders" style={{ height: "36px" }} />
+        <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer"><img src="/images/vwb_header.png" alt="Village Without Borders" style={{ height: "40px", borderRadius: "50%" }} /></a>
       </header>
 
       <main className="app-main">
