@@ -55,7 +55,7 @@ export default function Dashboard() {
         >
           <span className="action-icon" aria-hidden="true">💬</span>
           <span className="action-label">Messages</span>
-          <span className="action-desc">Resource library, events, and feedback</span>
+          <span className="action-desc">Chat with people you are helping</span>
         </button>
       </div>
 
