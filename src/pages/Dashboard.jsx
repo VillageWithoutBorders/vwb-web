@@ -45,6 +45,14 @@ export default function Dashboard() {
 
         <button
           className="action-card"
+          onClick={() => navigate('/emergency')}
+        >
+          <span className="action-icon" aria-hidden="true">&#9888;</span>
+          <span className="action-label">Emergency Response</span>
+          <span className="action-desc">Active events and disaster response</span>
+        </button>
+        <button
+          className="action-card"
           onClick={() => navigate('/community')}
         >
           <span className="action-icon" aria-hidden="true">🔨</span>

@@ -12,6 +12,9 @@ import ActiveTasks from './pages/ActiveTasks'
 import Community from './pages/Community'
 import Conversation from './pages/Conversation'
 import MessagesPage from './pages/Messages'
+import EmergencyEvents from './pages/EmergencyEvents'
+import CreateEvent from './pages/CreateEvent'
+import EventDetail from './pages/EventDetail'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -38,6 +41,9 @@ function AppRoutes() {
         <Route path="help" element={<Help />} />
         <Route path="ask" element={<AskForHelp />} />
         <Route path="post-offer" element={<PostOffer />} />
+        <Route path="emergency" element={<EmergencyEvents />} />
+        <Route path="emergency/create" element={<CreateEvent />} />
+        <Route path="emergency/:id" element={<EventDetail />} />
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="messages" element={<MessagesPage />} />
       </Route>
