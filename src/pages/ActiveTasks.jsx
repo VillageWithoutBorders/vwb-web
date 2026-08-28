@@ -14,6 +14,7 @@ const STATUS_FLOW = {
 
 export default function ActiveTasks() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [tab, setTab] = useState('helping')
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
@@ -148,7 +149,7 @@ export default function ActiveTasks() {
                   )}
                   {isAccepted && <button className="btn btn-primary btn-sm" onClick={() => updateMatchStatus(match.id, 'in_progress')}>Mark in progress</button>}
                   {isInProgress && !myConfirmed && <button className="btn btn-primary btn-sm" onClick={() => confirmCompletion(match.id)}>Confirm done</button>}
-                  {!isCompleted && <button className="btn btn-outline btn-sm" onClick={() => { supabase.from('conversations').select('id').eq('request_id', match.help_requests?.id).eq('helper_id', tab === 'helping' ? user.id : match.helper_id).maybeSingle().then(({ data }) => { if (data) navigate('/conversation/' + data.id) }) }}>Message</button>}
+                  {!isCompleted && <button className="btn btn-outline btn-sm" onClick={() => { supabase.from('conversations').select('id').eq('request_id', match.help_requests?.id).eq('helper_id', tab === 'helping' ? user.id : match.helper_id).maybeSingle().then(async ({ data }) => { if (data) { navigate('/conversation/' + data.id) } else { const { data: newConvo } = await supabase.from('conversations').insert({ request_id: match.help_requests?.id, helper_id: tab === 'helping' ? user.id : match.helper_id, requester_id: tab === 'helping' ? match.help_requests?.requester_id : user.id }).select().single(); if (newConvo) navigate('/conversation/' + newConvo.id) } }) }}>Message</button>}
                   {isCompleted && otherUserId && <VouchButton userId={otherUserId} size="md" showCount={true} />}
                 </div>
               </div>
