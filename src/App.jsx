@@ -7,6 +7,7 @@ import Feed from './pages/Feed'
 import Profile from './pages/Profile'
 import Help from './pages/Help'
 import AskForHelp from './pages/AskForHelp'
+import PostOffer from './pages/PostOffer'
 import ActiveTasks from './pages/ActiveTasks'
 import Community from './pages/Community'
 import Conversation from './pages/Conversation'
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="community" element={<Community />} />
         <Route path="help" element={<Help />} />
         <Route path="ask" element={<AskForHelp />} />
+        <Route path="post-offer" element={<PostOffer />} />
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="messages" element={<MessagesPage />} />
       </Route>

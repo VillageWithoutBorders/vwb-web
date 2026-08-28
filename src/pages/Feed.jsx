@@ -131,7 +131,7 @@ export default function Feed() {
             <span className="feed-empty-icon">&#x1F33F;</span>
             <h2>No requests right now</h2>
             <p>{filterSkill !== 'all' ? `No open "${filterSkill}" requests nearby.` : 'No open requests in your area right now.'}</p>
-            <button className="btn btn-primary" onClick={() => navigate('/ask')}>Post a request</button>
+            <button className="btn btn-primary" onClick={() => navigate(view === 'offers' ? '/post-offer' : '/ask')}>Post a request</button>
           </div>
         ) : (
           <div className="feed-list">
@@ -203,7 +203,7 @@ export default function Feed() {
         )
       )}
 
-      <button className="fab" onClick={() => navigate('/ask')} aria-label="Ask for help">+</button>
+      <button className="fab" onClick={() => navigate(view === 'offers' ? '/post-offer' : '/ask')} aria-label="Ask for help">+</button>
     </div>
   )
 }

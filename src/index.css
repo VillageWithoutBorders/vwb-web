@@ -1476,8 +1476,9 @@ a:focus:not(:focus-visible) {
 
 .convo-request-banner {
   padding: 0.75rem 1rem;
-  background: var(--surface, #f5f5f5);
-  border-bottom: 1px solid var(--border);
+  background: #222;
+  border-bottom: 1px solid #333;
+  color: #ccc;
   font-size: 0.8125rem;
 }
 
@@ -1525,8 +1526,9 @@ a:focus:not(:focus-visible) {
 
 .chat-bubble.theirs {
   align-self: flex-start;
-  background: var(--card-bg, #e8e8e8);
-  border: 1px solid var(--border);
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: #eee;
   border-bottom-left-radius: 0.25rem;
 }
 
@@ -1556,7 +1558,8 @@ a:focus:not(:focus-visible) {
   padding: 0.625rem 0.875rem;
   border-radius: 1.5rem;
   border: 1px solid var(--border);
-  background: var(--surface, #f5f5f5);
+  background: #222;
+  color: #fff;
   font-size: 0.9375rem;
   outline: none;
 }

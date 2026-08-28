@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useUnreadCount } from '../hooks/useUnreadCount'
 
 export default function Dashboard() {
   const { profile } = useAuth()
@@ -7,6 +8,7 @@ export default function Dashboard() {
   const location = useLocation()
 
   const displayName = profile?.display_name || 'Neighbor'
+  const { unreadCount } = useUnreadCount()
   const successMessage = location.state?.message
 
   return (
@@ -54,8 +56,8 @@ export default function Dashboard() {
           onClick={() => navigate('/messages')}
         >
           <span className="action-icon" aria-hidden="true">💬</span>
-          <span className="action-label">Messages</span>
-          <span className="action-desc">Chat with people you are helping</span>
+          <span className="action-label">Messages{unreadCount > 0 && <span style={{ background: "#ff4444", color: "#fff", fontSize: "0.7rem", fontWeight: 700, borderRadius: "9px", padding: "1px 6px", marginLeft: "6px" }}>{unreadCount}</span>}</span>
+          <span className="action-desc">Connect with your neighbors</span>
         </button>
       </div>
 
@@ -68,3 +70,4 @@ export default function Dashboard() {
     </div>
   )
 }
+

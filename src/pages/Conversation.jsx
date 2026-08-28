@@ -1,3 +1,4 @@
+import MessageOptionsMenu from '../components/popup/MessageOptionsMenu'
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -16,7 +17,8 @@ export default function Conversation() {
   const [request, setRequest] = useState(null)
   const bottomRef = useRef(null)
   const pollRef = useRef(null)
-
+  const [selectedMessage, setSelectedMessage] = useState(null)
+  
   useEffect(() => {
     loadConversation()
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
@@ -32,6 +34,8 @@ export default function Conversation() {
       .from('conversations').select('*').eq('id', id).single()
     if (!c) { setLoading(false); return }
     setConvo(c)
+    const readCol = c.helper_id === user.id ? "last_read_helper" : "last_read_requester"
+    supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", c.id)
 
     const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
     const { data: otherProfile } = await supabase
@@ -110,6 +114,13 @@ export default function Conversation() {
           <h1>{otherName}</h1>
           {request && <p className="convo-context">{request.skill_needed}</p>}
         </div>
+
+
+
+
+
+
+
       </div>
 
       {request && (
@@ -125,14 +136,18 @@ export default function Conversation() {
           <p className="convo-empty">No messages yet. Say hello!</p>
         )}
         {messages.map((msg) => {
-          const isMe = msg.sender_id === user.id
-          return (
-            <div key={msg.id} className={'chat-bubble ' + (isMe ? 'mine' : 'theirs')}>
-              <p className="chat-body">{msg.body}</p>
-              <span className="chat-time">{formatTime(msg.created_at)}</span>
-            </div>
-          )
-        })}
+  const isMe = msg.sender_id === user.id
+  return (
+    <div
+  key={msg.id}
+  className={'chat-bubble ' + (isMe ? 'mine' : 'theirs')}
+  onClick={() => setSelectedMessage(msg)}
+>
+  <p className="chat-body">{msg.body}</p>
+  <span className="chat-time">{formatTime(msg.created_at)}</span>
+</div>
+  )
+})}
         <div ref={bottomRef} />
       </div>
 
@@ -155,6 +170,14 @@ export default function Conversation() {
           Send
         </button>
       </div>
+      {selectedMessage && (
+        <MessageOptionsMenu
+          message={selectedMessage}
+          currentUserId={user.id}
+          conversationId={id}
+          onClose={() => { setSelectedMessage(null); loadMessages() }}
+        />
+      )}
     </div>
   )
 }
