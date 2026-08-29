@@ -17,6 +17,7 @@ import CreateEvent from './pages/CreateEvent'
 import EventDetail from './pages/EventDetail'
 import Admin from './pages/Admin'
 import Campfire from './pages/Campfire'
+import Notifications from './pages/Notifications'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -50,6 +51,7 @@ function AppRoutes() {
         <Route path="campfire" element={<Campfire />} />
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="messages" element={<MessagesPage />} />
+        <Route path="notifications" element={<Notifications />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
