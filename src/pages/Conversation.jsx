@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { createNotification } from '../utils/notificationHelpers'
 
 export default function Conversation() {
   const { id } = useParams()
@@ -68,7 +69,7 @@ export default function Conversation() {
       sender_id: user.id,
       body: newMsg.trim(),
     })
-    if (!error) { setNewMsg(''); await loadMessages() }
+    if (!error) { const recipientId = convo.helper_id === user.id ? convo.requester_id : convo.helper_id; createNotification({ userId: recipientId, type: 'message', title: 'New message from ' + (convo.helper_id === user.id ? 'your helper' : 'your neighbor'), body: newMsg.trim().substring(0, 100), link: '/conversation/' + id }); setNewMsg(''); await loadMessages() }
     setSending(false)
   }
 

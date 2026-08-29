@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { createNotification } from '../utils/notificationHelpers'
 
 /**
  * VouchButton - lets a user vouch for another user
