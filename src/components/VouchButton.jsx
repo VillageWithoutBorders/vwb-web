@@ -3,20 +3,11 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 
-/**
- * VouchButton - lets a user vouch for another user
- * Props:
- *   userId - the person being vouched for
- *   size - 'sm' or 'md' (default 'sm')
- *   showCount - whether to show the vouch count (default true)
- *   onVouchChange - callback when vouch state changes
- */
 export default function VouchButton({ userId, size = 'sm', showCount = true, onVouchChange }) {
   const { user } = useAuth()
   const [vouchCount, setVouchCount] = useState(0)
   const [hasVouched, setHasVouched] = useState(false)
   const [loading, setLoading] = useState(false)
-
   const isSelf = user?.id === userId
 
   useEffect(() => {
@@ -25,13 +16,6 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
   }, [userId, user?.id])
 
   async function loadVouchData() {
-    // Get vouch count
-    const { data: countData } = await supabase
-      .from('vouches')
-      .select('id', { count: 'exact', head: true })
-      .eq('vouched_for_id', userId)
-
-    // Check if current user already vouched
     if (user?.id && !isSelf) {
       const { data: existing } = await supabase
         .from('vouches')
@@ -39,72 +23,72 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
         .eq('voucher_id', user.id)
         .eq('vouched_for_id', userId)
         .maybeSingle()
-
       setHasVouched(!!existing)
     }
-
-    // Get count from the view
     const { data: vc } = await supabase
       .from('vouch_counts')
       .select('vouch_count')
       .eq('user_id', userId)
       .maybeSingle()
-
     setVouchCount(vc?.vouch_count || 0)
   }
 
   async function handleVouch() {
-    if (isSelf || hasVouched || loading || !user?.id) return
-
+    if (isSelf || loading || !user?.id) return
     setLoading(true)
 
-    const { error } = await supabase
-      .from('vouches')
-      .insert({
-        voucher_id: user.id,
-        vouched_for_id: userId,
-      })
-
-    if (error) {
-      if (error.code === '23505') {
-        // Already vouched (unique constraint)
-        setHasVouched(true)
+    if (hasVouched) {
+      const { error } = await supabase
+        .from('vouches')
+        .delete()
+        .eq('voucher_id', user.id)
+        .eq('vouched_for_id', userId)
+      if (!error) {
+        setHasVouched(false)
+        setVouchCount(prev => Math.max(0, prev - 1))
+        onVouchChange?.()
       } else {
-        console.error('Vouch error:', error)
+        console.error('Unvouch error:', error)
       }
     } else {
-      setHasVouched(true)
-      setVouchCount(prev => prev + 1)
-      createNotification({ userId, type: 'vouch', title: 'Someone vouched for you!', body: 'A neighbor believes in you.', link: '/profile' })
-      onVouchChange?.()
+      const { error } = await supabase
+        .from('vouches')
+        .insert({ voucher_id: user.id, vouched_for_id: userId })
+      if (error) {
+        if (error.code === '23505') {
+          setHasVouched(true)
+        } else {
+          console.error('Vouch error:', error)
+        }
+      } else {
+        setHasVouched(true)
+        setVouchCount(prev => prev + 1)
+        createNotification({ userId, type: 'vouch', title: 'Someone vouched for you!', body: 'A neighbor believes in you.', link: '/profile' })
+        onVouchChange?.()
+      }
     }
-
     setLoading(false)
   }
 
-  // Don't render anything for yourself
   if (isSelf && !showCount) return null
 
   return (
     <div className={`vouch-container vouch-${size}`}>
       {showCount && vouchCount > 0 && (
         <span className="vouch-count" title={`${vouchCount} neighbor${vouchCount !== 1 ? 's' : ''} vouch for this person`}>
-          <span className="vouch-icon" aria-hidden="true">âœ¦</span>
-          {vouchCount} vouch{vouchCount !== 1 ? 'es' : ''}
+          &#10022; {vouchCount} vouch{vouchCount !== 1 ? 'es' : ''}
         </span>
       )}
-
       {!isSelf && user?.id && (
         <button
           className={`vouch-btn vouch-btn-${size} ${hasVouched ? 'vouch-btn-done' : ''}`}
           onClick={handleVouch}
-          disabled={hasVouched || loading}
-          aria-label={hasVouched ? 'You vouched for this person' : 'Vouch for this person'}
+          disabled={loading}
+          aria-label={hasVouched ? 'Remove your vouch' : 'Vouch for this person'}
         >
-          {loading ? '...' : hasVouched ? 'âœ¦ Vouched' : 'âœ¦ Vouch'}
+          {loading ? '...' : hasVouched ? '\u2726 Vouched' : '\u2726 Vouch'}
         </button>
       )}
-
       {isSelf && showCount && vouchCount === 0 && (
         <span className="vouch-count vouch-count-empty">No vouches yet</span>
       )}
