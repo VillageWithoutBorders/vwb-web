@@ -1887,3 +1887,52 @@ a:focus:not(:focus-visible) {
 .push-banner-dismiss:hover {
   color: var(--text);
 }
+
+/* =============================================
+   Install App Banner
+   ============================================= */
+.install-banner {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #1a4a3a, #2d5a45);
+  border: 1px solid #4ecca3;
+  border-radius: var(--radius);
+}
+.install-banner-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.install-banner-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.install-banner-text strong {
+  display: block;
+  font-size: 0.9375rem;
+  color: #fff;
+  margin-bottom: 0.125rem;
+}
+.install-banner-text p {
+  font-size: 0.8125rem;
+  color: #b0d4c0;
+  margin: 0;
+  line-height: 1.4;
+}
+.install-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.install-banner-dismiss {
+  background: none;
+  border: none;
+  color: #b0d4c0;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 0.375rem 0;
+}
+.install-banner-dismiss:hover {
+  color: #fff;
+}
