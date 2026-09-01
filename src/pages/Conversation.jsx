@@ -95,7 +95,7 @@ export default function Conversation() {
     return (
       <div className="conversation-page">
         <p style={{ textAlign: 'center', padding: '2rem' }}>Conversation not found.</p>
-        <button className="btn btn-outline btn-full" onClick={() => navigate('/tasks')}>Back to Tasks</button>
+        <button className="btn btn-outline btn-full" onClick={() => navigate(-1)}>Back to Tasks</button>
       </div>
     )
   }
@@ -108,7 +108,7 @@ export default function Conversation() {
   return (
     <div className="conversation-page">
       <div className="convo-header">
-        <button className="convo-back" onClick={() => navigate('/tasks')} aria-label="Back">
+        <button className="convo-back" onClick={() => navigate(-1)} aria-label="Back">
           &#8592;
         </button>
         <div className="convo-header-info">
