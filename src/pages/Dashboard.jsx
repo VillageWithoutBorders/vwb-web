@@ -1,6 +1,7 @@
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useUnreadCount } from '../hooks/useUnreadCount'
+import PushBanner from '../components/PushBanner'
 export default function Dashboard() {
   const { profile } = useAuth()
   const navigate = useNavigate()
@@ -24,6 +25,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <PushBanner />
       <div className="welcome-section">
         <h1>Welcome back, {displayName}</h1>
         <p className="welcome-sub">What do you need today?</p>
