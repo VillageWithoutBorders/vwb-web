@@ -18,7 +18,7 @@ async function createMatch(userId, requestId, requesterId, navigate) {
     return
   }
   await supabase.from('help_requests').update({ status: 'matched' }).eq('id', requestId)
-  const { data: convo } = await supabase.from('conversations').insert({ request_id: requestId, helper_id: userId, requester_id: requesterId }).select().single(); if (convo) { await supabase.from('chat_messages').insert({ conversation_id: convo.id, sender_id: userId, body: 'I can help!' }); createNotification({ userId: requesterId, type: 'match_request', title: 'Someone offered to help!', body: 'A neighbor wants to help with your request.', link: '/tasks' }); navigate('/conversation/' + convo.id) } else { navigate('/tasks') }
+  const { data: convo } = await supabase.from('conversations').insert({ request_id: requestId, helper_id: userId, requester_id: requesterId }).select().single(); if (convo) { await supabase.from('chat_messages').insert({ conversation_id: convo.id, sender_id: userId, body: 'I can help!' }); createNotification({ userId: requesterId, type: 'match_request', title: 'Someone offered to help!', body: 'A neighbor wants to help with your request.', link: '/conversation/' + convo.id }); navigate('/conversation/' + convo.id) } else { navigate('/tasks') }
 }
 
 const URGENCY_CONFIG = {

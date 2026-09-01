@@ -12,6 +12,7 @@ const TYPE_ICONS = {
   task_update: '\u{1F4CB}',
   emergency: '\u{1F6A8}',
   vouch: '\u2B50',
+  task_complete: '\u2705',
   resource_approved: '\u{1F4DA}'
 }
 
@@ -23,6 +24,7 @@ const TYPE_COLORS = {
   task_update: '#f59e0b',
   emergency: '#dc2626',
   vouch: '#eab308',
+  task_complete: '#10b981',
   resource_approved: '#06b6d4'
 }
 
