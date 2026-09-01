@@ -143,6 +143,7 @@ export default function Feed() {
                 <div key={req.id} className={'feed-card' + (isExpanded ? ' feed-card-expanded' : '')} onClick={() => setExpandedId(isExpanded ? null : req.id)}>
                   <div className="feed-card-top">
                     <span className={'urgency-badge ' + urg.className}>{urg.label}</span>
+                    {req.requester_id === user.id && <span className="urgency-badge" style={{ background: '#2d6a4f', color: '#fff' }}>Your request</span>}
                     <span className="feed-card-time">{timeAgo(req.created_at)}</span>
                   </div>
                   <div className="feed-card-meta">
@@ -157,7 +158,7 @@ export default function Feed() {
                   <p className={'feed-card-desc' + (isExpanded ? '' : ' feed-card-desc-clamp')}>{req.description}</p>
                   {isExpanded && (
                     <div className="feed-card-actions">
-                      <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); createMatch(user.id, req.id, req.requester_id, navigate) }}>I can help</button>
+                      {req.requester_id !== user.id && <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); createMatch(user.id, req.id, req.requester_id, navigate) }}>I can help</button>}
                       {req.requester_id && <VouchButton userId={req.requester_id} size="md" showCount={false} />}
                     </div>
                   )}
