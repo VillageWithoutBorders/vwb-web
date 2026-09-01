@@ -63,7 +63,7 @@ export default function Feed() {
       const { data, error } = await supabase.rpc('nearby_matching_requests', {
         helper_lat: loc.lat, helper_lng: loc.lng, helper_radius: radius, helper_skills: helperSkills,
       })
-      if (error) {
+      if (error || !data || data.length === 0) {
         const { data: fallback } = await supabase.from('open_requests_by_urgency').select('*').limit(50)
         setRequests(fallback || [])
       } else {

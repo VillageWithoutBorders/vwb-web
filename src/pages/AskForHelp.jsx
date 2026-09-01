@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { getCurrentPosition } from '../utils/location'
 
 const URGENCY_OPTIONS = [
   { value: 'now', label: 'Right now', desc: 'Emergency or same-day need' },
