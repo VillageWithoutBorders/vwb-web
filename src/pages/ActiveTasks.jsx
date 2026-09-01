@@ -52,10 +52,10 @@ export default function ActiveTasks() {
     if (error) { console.error('Status update error:', error); return }
 
     const match = matches.find(m => m.id === matchId)
-    if (newStatus === 'accepted' && match?.help_requests?.id) {
+    if (newStatus === 'accepted' && match) { const otherUserId = match.helper_id === user.id ? match.help_requests?.requester_id : match.helper_id; createNotification({ userId: otherUserId, type: 'task_update', title: 'Your help request was accepted!', body: match.help_requests?.skill_needed || 'Someone accepted your request.', link: '/tasks' }); } if (newStatus === 'accepted' && match?.help_requests?.id) {
       await supabase.from('help_requests').update({ status: 'matched' }).eq('id', match.help_requests.id)
     }
-    if (newStatus === 'in_progress' && match?.help_requests?.id) {
+    if (newStatus === 'in_progress' && match) { const otherUserId2 = match.helper_id === user.id ? match.help_requests?.requester_id : match.helper_id; createNotification({ userId: otherUserId2, type: 'task_update', title: 'Task is now in progress', body: match.help_requests?.skill_needed || 'A task you are part of is in progress.', link: '/tasks' }); } if (newStatus === 'in_progress' && match?.help_requests?.id) {
       await supabase.from('help_requests').update({ status: 'in_progress' }).eq('id', match.help_requests.id)
     }
     loadMatches()
@@ -79,6 +79,8 @@ export default function ActiveTasks() {
 
     if (otherConfirmed && match.help_requests?.id) {
       await supabase.from('help_requests').update({ status: 'completed' }).eq('id', match.help_requests.id)
+      const completedOther = isHelper ? match.help_requests?.requester_id : match.helper_id
+      createNotification({ userId: completedOther, type: 'task_complete', title: 'Task completed!', body: (match.help_requests?.skill_needed || 'A task') + ' has been marked complete.', link: '/tasks' })
     }
     loadMatches()
   }

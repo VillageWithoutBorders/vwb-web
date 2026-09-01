@@ -75,6 +75,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
     } else {
       setHasVouched(true)
       setVouchCount(prev => prev + 1)
+      createNotification({ userId, type: 'vouch', title: 'Someone vouched for you!', body: 'A neighbor believes in you.', link: '/profile' })
       onVouchChange?.()
     }
 
@@ -88,7 +89,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
     <div className={`vouch-container vouch-${size}`}>
       {showCount && vouchCount > 0 && (
         <span className="vouch-count" title={`${vouchCount} neighbor${vouchCount !== 1 ? 's' : ''} vouch for this person`}>
-          <span className="vouch-icon" aria-hidden="true">✦</span>
+          <span className="vouch-icon" aria-hidden="true">âœ¦</span>
           {vouchCount} vouch{vouchCount !== 1 ? 'es' : ''}
         </span>
       )}
@@ -100,7 +101,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
           disabled={hasVouched || loading}
           aria-label={hasVouched ? 'You vouched for this person' : 'Vouch for this person'}
         >
-          {loading ? '...' : hasVouched ? '✦ Vouched' : '✦ Vouch'}
+          {loading ? '...' : hasVouched ? 'âœ¦ Vouched' : 'âœ¦ Vouch'}
         </button>
       )}
 
