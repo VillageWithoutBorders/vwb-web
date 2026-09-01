@@ -108,7 +108,7 @@ export default function Conversation() {
   return (
     <div className="conversation-page">
       <div className="convo-header">
-        <button className="convo-back" onClick={() => navigate(-1)} aria-label="Back">
+        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id) } navigate(-1) }} aria-label="Back">
           &#8592;
         </button>
         <div className="convo-header-info">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 
@@ -21,6 +21,7 @@ const MUTE_OPTIONS = [
 export default function Messages() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [convos, setConvos] = useState([])
   const [loading, setLoading] = useState(true)
   const [folders, setFolders] = useState([])
@@ -44,7 +45,7 @@ export default function Messages() {
   const [convoSettings, setConvoSettings] = useState({})
   const [showArchived, setShowArchived] = useState(false)
 
-  useEffect(() => { loadAll() }, [])
+  useEffect(() => { loadAll() }, [location.key])
 
   async function loadAll() {
     setLoading(true)
@@ -175,13 +176,15 @@ export default function Messages() {
   }
 
   async function loadConversations() {
-    const { data } = await supabase.from('conversations').select('id, request_id, helper_id, requester_id, created_at, disappear_after_mins, help_requests (skill_needed, neighborhood, urgency)').order('created_at', { ascending: false })
+    const { data } = await supabase.from('conversations').select('id, request_id, helper_id, requester_id, created_at, disappear_after_mins, last_read_helper, last_read_requester, help_requests (skill_needed, neighborhood, urgency)').order('created_at', { ascending: false })
     if (data) {
       const withNames = await Promise.all(data.map(async (c) => {
         const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
         const { data: p } = await supabase.from('helper_profiles').select('display_name').eq('user_id', otherId).maybeSingle()
         const { data: lastMsg } = await supabase.from('chat_messages').select('body, created_at').eq('conversation_id', c.id).is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
-        return { ...c, otherId, otherName: p?.display_name || 'Neighbor', lastMessage: lastMsg?.body || null, lastMessageAt: lastMsg?.created_at || c.created_at }
+        const lastRead = c.helper_id === user.id ? c.last_read_helper : c.last_read_requester
+        const hasUnread = lastMsg && (!lastRead || new Date(lastMsg.created_at) > new Date(lastRead))
+        return { ...c, otherId, otherName: p?.display_name || 'Neighbor', lastMessage: lastMsg?.body || null, lastMessageAt: lastMsg?.created_at || c.created_at, hasUnread }
       }))
       withNames.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))
       setConvos(withNames)
@@ -245,7 +248,7 @@ export default function Messages() {
     alert('Report submitted. Thank you for helping keep our community safe.')
   }
 
-  let filtered = activeFolder === 'all' ? convos : activeFolder === 'archived' ? convos : convos.filter(c => (assignments[c.id] || []).includes(activeFolder))
+  let filtered = activeFolder === 'all' ? convos : activeFolder === 'unread' ? convos.filter(c => c.hasUnread) : activeFolder === 'archived' ? convos : convos.filter(c => (assignments[c.id] || []).includes(activeFolder))
   if (activeFolder === 'archived') {
     filtered = filtered.filter(c => convoSettings[c.id]?.archived)
   } else {
@@ -352,6 +355,7 @@ export default function Messages() {
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+        <button style={tabStyle(activeFolder === 'unread')} onClick={() => setActiveFolder('unread')}>Unread</button>
         <button style={{ ...tabStyle(activeFolder === 'all'), outline: dropTarget === 'all' ? '2px solid #4ecca3' : 'none' }} onClick={() => setActiveFolder('all')} onDragOver={(e) => { e.preventDefault(); setDropTarget('all') }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), 'remove'); setDraggingConvo(null) }}>All</button>
         {folders.map(f => (
           <button key={f.id} style={{ ...tabStyle(activeFolder === f.id), outline: dropTarget === f.id ? '2px solid #4ecca3' : 'none' }} onClick={() => setActiveFolder(f.id)} onDragOver={(e) => { e.preventDefault(); setDropTarget(f.id) }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), f.id); setDraggingConvo(null) }}>{f.name}</button>
@@ -392,17 +396,18 @@ export default function Messages() {
         const muted = isMuted(c.id)
         return (
         <div key={c.id} className="message-card" style={{ position: 'relative', cursor: 'grab', opacity: draggingConvo === c.id ? 0.5 : 1, borderLeft: isPinned ? '3px solid #4ecca3' : 'none' }} draggable onDragStart={(e) => { setDraggingConvo(c.id); e.dataTransfer.setData('text/plain', c.id) }} onDragEnd={() => { setDraggingConvo(null); setDropTarget(null) }}>
-          <div onClick={() => navigate('/conversation/' + c.id)} style={{ cursor: 'pointer', paddingRight: '2rem' }}>
+          <div onClick={() => { setConvos(prev => prev.map(cv => cv.id === c.id ? { ...cv, hasUnread: false } : cv)); navigate('/conversation/' + c.id) }} style={{ cursor: 'pointer', paddingRight: '2rem' }}>
             <div className="message-card-header">
-              <span className="message-card-name">
+              <span className="message-card-name" style={{ fontWeight: c.hasUnread ? 800 : 600 }}>
                 {isPinned && <span style={{ marginRight: '4px' }} title="Pinned">&#128204;</span>}
                 {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title="Muted">&#128263;</span>}
                 {c.otherName}
+                {c.hasUnread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#4ecca3", marginLeft: "6px", flexShrink: 0 }} />}
               </span>
-              <span className="message-card-time">{formatTime(c.lastMessageAt)}</span>
+              <span className="message-card-time" style={{ color: c.hasUnread ? "#4ecca3" : undefined }}>{formatTime(c.lastMessageAt)}</span>
             </div>
             {c.help_requests && (<p className="message-card-skill">{c.help_requests.skill_needed} in {c.help_requests.neighborhood}</p>)}
-            {c.lastMessage && (<p className="message-card-preview">{c.lastMessage.length > 80 ? c.lastMessage.slice(0, 80) + '...' : c.lastMessage}</p>)}
+            {c.lastMessage && (<p className="message-card-preview" style={{ color: c.hasUnread ? "#ddd" : undefined, fontWeight: c.hasUnread ? 600 : 400 }}>{c.lastMessage.length > 80 ? c.lastMessage.slice(0, 80) + '...' : c.lastMessage}</p>)}
           </div>
 
           <button onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === c.id ? null : c.id); setShowMuteMenu(null) }}

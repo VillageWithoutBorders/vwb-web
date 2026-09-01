@@ -160,7 +160,7 @@ export default function Community() {
           <div key={cat} style={{ marginBottom: '0.5rem' }}>
             <button onClick={() => toggleCat(cat)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0.75rem', background: '#1e1e1e', border: '1px solid #333', borderRadius: isOpen ? '10px 10px 0 0' : '10px', cursor: 'pointer', textAlign: 'left' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span dangerouslySetInnerHTML={{ __html: CAT_ICONS[cat] || '&#128204;' }} style={{ fontSize: '1.1rem' }} />
+                <span dangerouslySetInnerHTML={{ __html: CAT_ICONS[cat] || '&#128204;' }} style={{ fontSize: '1.1rem', color: cat === 'Emergency Help' ? '#ffaa44' : undefined }} />
                 <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ddd' }}>{cat}</span>
                 <span style={{ color: '#888', fontSize: '0.8rem' }}>({grouped[cat].length})</span>
               </div>

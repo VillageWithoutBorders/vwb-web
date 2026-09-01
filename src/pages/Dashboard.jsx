@@ -34,18 +34,18 @@ export default function Dashboard() {
       </div>
       <div className="quick-actions">
         <button className="action-card" onClick={() => navigate('/ask')}>
-          <span className="action-icon" aria-hidden="true">&#128588;</span>
+          <span className="action-icon" aria-hidden="true">&#127384;</span>
           <span className="action-label">Ask for Help</span>
           <span className="action-desc">Post a request for your community</span>
         </button>
         <button className="action-card" onClick={() => navigate('/skillshare')}>
-          <span className="action-icon" aria-hidden="true">&#127793;</span>
+          <span className="action-icon" aria-hidden="true">&#128260;</span>
           <span className="action-label">SkillShare</span>
           <span className="action-desc">See what neighbors are offering</span>
         </button>
         
         <button className="action-card" onClick={() => navigate('/community')}>
-          <span className="action-icon" aria-hidden="true">&#128296;</span>
+          <span className="action-icon" aria-hidden="true">&#127793;</span>
           <span className="action-label">Community</span>
           <span className="action-desc">Resource library, events, and feedback</span>
         </button>
@@ -56,10 +56,10 @@ export default function Dashboard() {
         </button>
       </div>
       <button onClick={() => navigate('/emergency')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "1.25rem", padding: "1rem 1.25rem", borderRadius: "12px", border: "2px solid #ff4444", background: "linear-gradient(135deg, #3a1a1a, #4a2020)", cursor: "pointer", textAlign: "left" }}>
-        <span style={{ fontSize: "2rem", lineHeight: 1 }}>&#9888;</span>
+        <span style={{ fontSize: "2rem", lineHeight: 1, color: "#ffaa44" }}>&#9888;</span>
         <div>
-          <span style={{ display: "block", color: "#ff6644", fontWeight: 700, fontSize: "1rem" }}>Report Active Emergency</span>
-          <span style={{ color: "#cc9999", fontSize: "0.8rem" }}>Report a disaster or emergency in your area</span>
+          <span style={{ display: "block", color: "#ff6644", fontWeight: 700, fontSize: "1rem" }}>Emergency Response</span>
+          <span style={{ color: "#cc9999", fontSize: "0.8rem" }}>View active emergencies or report a new one</span>
         </div>
       </button>
       <button onClick={signOut} style={{ width: '100%', marginTop: '1.5rem', padding: '0.75rem', background: 'none', border: '1px solid #555', borderRadius: '10px', color: '#aaa', fontSize: '0.9rem', cursor: 'pointer' }}>Log out</button>
