@@ -1936,3 +1936,83 @@ a:focus:not(:focus-visible) {
 .install-banner-dismiss:hover {
   color: #fff;
 }
+
+/* ---- Availability Picker ---- */
+.availability-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.avail-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.avail-header-row,
+.avail-row {
+  display: grid;
+  grid-template-columns: 2.5rem repeat(7, 1fr);
+  gap: 2px;
+}
+.avail-corner {
+  width: 2.5rem;
+}
+.avail-day-header {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #b0b0b0;
+  padding: 0.25rem 0;
+}
+.avail-period-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #b0b0b0;
+  width: 2.5rem;
+}
+.avail-cell {
+  aspect-ratio: 1;
+  border: 1.5px solid #3a3a3a;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 2rem;
+}
+.avail-cell:hover {
+  border-color: #1D9E75;
+}
+.avail-cell.active {
+  background: #1D9E75;
+  border-color: #1D9E75;
+}
+.avail-specials {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ---- Password Toggle ---- */
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.password-input-wrap input {
+  flex: 1;
+  padding-right: 3.5rem;
+}
+.password-toggle {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: #1D9E75;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}

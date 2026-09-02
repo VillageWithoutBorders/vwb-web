@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarBuilder, { AvatarDisplay } from '../components/AvatarBuilder'
+import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
 
 export default function Profile() {
   const { user, profile, signOut, refreshProfile } = useAuth()
@@ -172,7 +173,7 @@ export default function Profile() {
             <div className="detail-section-header">Ambassador Details</div>
             <div className="detail-row">
               <span className="detail-label">Availability</span>
-              <span className="detail-value">{profile.availability || 'Not set'}</span>
+              <span className="detail-value">{availabilityDisplayString(profile.availability)}</span>
             </div>
             <div className="detail-row">
               <span className="detail-label">About me</span>
@@ -220,8 +221,8 @@ export default function Profile() {
               </div>
             </div>
             <div className="form-field">
-              <label htmlFor="ambAvail">When are you usually available?</label>
-              <input id="ambAvail" type="text" value={ambSignupAvailability} onChange={(e) => setAmbSignupAvailability(e.target.value)} placeholder="e.g., Weekday mornings, weekends" />
+              <label>When are you usually available?</label>
+              <AvailabilityPicker value={ambSignupAvailability} onChange={setAmbSignupAvailability} />
             </div>
             <div className="form-field">
               <label htmlFor="ambAbout">Anything else you want neighbors to know?</label>
@@ -293,8 +294,8 @@ export default function Profile() {
           <>
             <div className="edit-section-divider"><span>Ambassador Details</span></div>
             <div className="form-field">
-              <label htmlFor="editAvail">Availability</label>
-              <input id="editAvail" type="text" value={ambAvailability} onChange={(e) => setAmbAvailability(e.target.value)} placeholder="e.g., Weekday mornings, weekends" />
+              <label>Availability</label>
+              <AvailabilityPicker value={ambAvailability} onChange={setAmbAvailability} />
             </div>
             <div className="form-field">
               <label htmlFor="editInterests">About you</label>
