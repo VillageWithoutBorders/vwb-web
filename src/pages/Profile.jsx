@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import AvatarBuilder, { AvatarDisplay } from '../components/AvatarBuilder'
 
 export default function Profile() {
   const { user, profile, signOut, refreshProfile } = useAuth()
@@ -10,6 +11,7 @@ export default function Profile() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [showAvatarBuilder, setShowAvatarBuilder] = useState(false)
 
   const [displayName, setDisplayName] = useState('')
   const [zipCode, setZipCode] = useState('')
@@ -31,10 +33,7 @@ export default function Profile() {
 
   useEffect(() => {
     async function loadSkills() {
-      const { data } = await supabase
-        .from('skill_categories')
-        .select('title')
-        .order('id')
+      const { data } = await supabase.from('skill_categories').select('title').order('id')
       if (data) setSkillOptions(data.map((s) => s.title))
     }
     loadSkills()
@@ -53,22 +52,14 @@ export default function Profile() {
   }, [profile])
 
   function toggleSkill(skill) {
-    setSelectedSkills((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
-    )
+    setSelectedSkills((prev) => prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill])
   }
 
   function toggleAmbSignupSkill(skill) {
-    setAmbSignupSkills((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
-    )
+    setAmbSignupSkills((prev) => prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill])
   }
 
-  function startEditing() {
-    setEditing(true)
-    setMessage('')
-    setError('')
-  }
+  function startEditing() { setEditing(true); setMessage(''); setError('') }
 
   function cancelEditing() {
     if (profile) {
@@ -80,19 +71,12 @@ export default function Profile() {
       setAmbAvailability(profile.availability || '')
       setAmbInterests(profile.interests || '')
     }
-    setEditing(false)
-    setError('')
+    setEditing(false); setError('')
   }
 
   async function handleSave() {
-    if (!displayName.trim()) {
-      setError('Name is required.')
-      return
-    }
-    setSaving(true)
-    setError('')
-    setMessage('')
-
+    if (!displayName.trim()) { setError('Name is required.'); return }
+    setSaving(true); setError(''); setMessage('')
     const updates = {
       display_name: displayName.trim(),
       zip_code: zipCode.trim(),
@@ -104,67 +88,52 @@ export default function Profile() {
       updates.availability = ambAvailability.trim()
       updates.interests = ambInterests.trim()
     }
-
-    const { error: profileError } = await supabase
-      .from('helper_profiles')
-      .update(updates)
-      .eq('user_id', user.id)
-
-    if (profileError) {
-      setError('Could not save profile. Try again.')
-      setSaving(false)
-      return
-    }
+    const { error: profileError } = await supabase.from('helper_profiles').update(updates).eq('user_id', user.id)
+    if (profileError) { setError('Could not save profile. Try again.'); setSaving(false); return }
     await refreshProfile()
-    setMessage('Profile saved.')
-    setEditing(false)
-    setSaving(false)
+    setMessage('Profile saved.'); setEditing(false); setSaving(false)
   }
 
   async function handleAmbassadorSignup() {
-    if (ambSignupSkills.length === 0) {
-      setAmbSignupError('Pick at least one skill you can help with.')
-      return
-    }
-    setAmbSignupSaving(true)
-    setAmbSignupError('')
-
-    const { error: updateError } = await supabase
-      .from('helper_profiles')
-      .update({
-        is_hope_ambassador: true,
-        skills: ambSignupSkills,
-        availability: ambSignupAvailability.trim(),
-        interests: ambSignupInterests.trim(),
-        is_available: true,
-      })
-      .eq('user_id', user.id)
-
-    if (updateError) {
-      setAmbSignupError('Something went wrong. Try again.')
-      setAmbSignupSaving(false)
-      return
-    }
-
-    await supabase
-      .from('profiles')
-      .update({ is_hope_ambassador: true, skills: ambSignupSkills })
-      .eq('id', user.id)
-
+    if (ambSignupSkills.length === 0) { setAmbSignupError('Pick at least one skill you can help with.'); return }
+    setAmbSignupSaving(true); setAmbSignupError('')
+    const { error: updateError } = await supabase.from('helper_profiles').update({
+      is_hope_ambassador: true, skills: ambSignupSkills,
+      availability: ambSignupAvailability.trim(), interests: ambSignupInterests.trim(), is_available: true,
+    }).eq('user_id', user.id)
+    if (updateError) { setAmbSignupError('Something went wrong. Try again.'); setAmbSignupSaving(false); return }
+    await supabase.from('profiles').update({ is_hope_ambassador: true, skills: ambSignupSkills }).eq('id', user.id)
     await refreshProfile()
-    setShowAmbassadorSignup(false)
-    setMessage('Welcome aboard! You are now a Hope Ambassador.')
-    setAmbSignupSaving(false)
+    setShowAmbassadorSignup(false); setMessage('Welcome aboard! You are now a Hope Ambassador.'); setAmbSignupSaving(false)
+  }
+
+  function handleAvatarSaved(url, config) {
+    setShowAvatarBuilder(false)
+    setMessage('Avatar saved!')
+    refreshProfile()
   }
 
   const name = profile?.display_name || 'Neighbor'
+
+  if (showAvatarBuilder) {
+    return (
+      <AvatarBuilder
+        onSave={handleAvatarSaved}
+        onCancel={() => setShowAvatarBuilder(false)}
+        initialConfig={profile?.avatar_config || null}
+      />
+    )
+  }
 
   if (!editing) {
     return (
       <div className="profile-page">
         <div className="profile-header-section">
-          <div className="avatar-placeholder">
-            {name.charAt(0).toUpperCase()}
+          <div onClick={() => setShowAvatarBuilder(true)} style={{ cursor: 'pointer', position: 'relative' }}>
+            <AvatarDisplay url={profile?.avatar_url} size={80} />
+            <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#4ecca3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#1a1a1a', fontWeight: 700, border: '2px solid #1a1a1a' }}>
+              {'\u270E'}
+            </div>
           </div>
           <h1>{name}</h1>
           {profile?.is_hope_ambassador && (
@@ -221,17 +190,14 @@ export default function Profile() {
 
         {!profile?.is_hope_ambassador && !showAmbassadorSignup && (
           <div className="amb-signup-card">
-            <div className="amb-signup-icon" aria-hidden="true">🌿</div>
+            <div className="amb-signup-icon" aria-hidden="true">{'\uD83C\uDF3F'}</div>
             <h2 className="amb-signup-title">Become a Hope Ambassador</h2>
             <p className="amb-signup-desc">
               Hope Ambassadors are neighbors who volunteer their time and skills
               to help others in the community. Sign up and we will match you with
               people nearby who need a hand.
             </p>
-            <button
-              className="btn btn-primary btn-full"
-              onClick={() => setShowAmbassadorSignup(true)}
-            >
+            <button className="btn btn-primary btn-full" onClick={() => setShowAmbassadorSignup(true)}>
               Sign me up
             </button>
           </div>
@@ -243,69 +209,28 @@ export default function Profile() {
             <p className="amb-signup-desc" style={{ marginBottom: '1rem' }}>
               Tell us a little about how you can help.
             </p>
-
             <div className="form-field">
               <label>What skills can you offer?</label>
               <div className="skill-grid">
                 {skillOptions.map((skill) => (
-                  <button
-                    key={skill}
-                    type="button"
-                    className={`skill-chip ${ambSignupSkills.includes(skill) ? 'active' : ''}`}
-                    onClick={() => toggleAmbSignupSkill(skill)}
-                  >
+                  <button key={skill} type="button" className={`skill-chip ${ambSignupSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleAmbSignupSkill(skill)}>
                     {skill}
                   </button>
                 ))}
               </div>
             </div>
-
             <div className="form-field">
               <label htmlFor="ambAvail">When are you usually available?</label>
-              <input
-                id="ambAvail"
-                type="text"
-                value={ambSignupAvailability}
-                onChange={(e) => setAmbSignupAvailability(e.target.value)}
-                placeholder="e.g., Weekday mornings, weekends"
-              />
+              <input id="ambAvail" type="text" value={ambSignupAvailability} onChange={(e) => setAmbSignupAvailability(e.target.value)} placeholder="e.g., Weekday mornings, weekends" />
             </div>
-
             <div className="form-field">
               <label htmlFor="ambAbout">Anything else you want neighbors to know?</label>
-              <textarea
-                id="ambAbout"
-                value={ambSignupInterests}
-                onChange={(e) => setAmbSignupInterests(e.target.value)}
-                placeholder="Your experience, why you want to help, or anything else"
-                rows={3}
-              />
+              <textarea id="ambAbout" value={ambSignupInterests} onChange={(e) => setAmbSignupInterests(e.target.value)} placeholder="Your experience, why you want to help, or anything else" rows={3} />
             </div>
-
             {ambSignupError && <p className="form-error" role="alert">{ambSignupError}</p>}
-
             <div className="form-row" style={{ marginTop: '0.5rem' }}>
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => {
-                  setShowAmbassadorSignup(false)
-                  setAmbSignupSkills([])
-                  setAmbSignupAvailability('')
-                  setAmbSignupInterests('')
-                  setAmbSignupError('')
-                }}
-                disabled={ambSignupSaving}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleAmbassadorSignup}
-                disabled={ambSignupSaving}
-                style={{ flex: 1 }}
-              >
+              <button type="button" className="btn btn-outline" onClick={() => { setShowAmbassadorSignup(false); setAmbSignupSkills([]); setAmbSignupAvailability(''); setAmbSignupInterests(''); setAmbSignupError('') }} disabled={ambSignupSaving}>Cancel</button>
+              <button type="button" className="btn btn-primary" onClick={handleAmbassadorSignup} disabled={ambSignupSaving} style={{ flex: 1 }}>
                 {ambSignupSaving ? 'Saving...' : 'Become an Ambassador'}
               </button>
             </div>
@@ -314,24 +239,11 @@ export default function Profile() {
 
         {message && <p className="form-success" role="status" style={{ marginTop: '1rem' }}>{message}</p>}
 
-        <button
-          className="btn btn-primary btn-full"
-          style={{ marginTop: '1.5rem' }}
-          onClick={startEditing}
-        >
-          Edit profile
-        </button>
-
-        <button
-          className="btn btn-outline btn-full"
-          style={{ marginTop: '0.75rem' }}
-          onClick={signOut}
-        >
-          Sign out
-        </button>
+        <button className="btn btn-primary btn-full" style={{ marginTop: '1.5rem' }} onClick={startEditing}>Edit profile</button>
+        <button className="btn btn-outline btn-full" style={{ marginTop: '0.75rem' }} onClick={signOut}>Sign out</button>
         {profile?.role === "admin" && (
           <button className="btn btn-outline btn-full" onClick={() => navigate("/admin")} style={{ marginTop: "0.5rem", borderColor: "#4ecca3", color: "#4ecca3" }}>
-            &#9881; Admin Panel
+            {'\u2699'} Admin Panel
           </button>
         )}
       </div>
@@ -341,129 +253,59 @@ export default function Profile() {
   return (
     <div className="profile-page">
       <div className="profile-header-section">
-        <div className="avatar-placeholder">
-          {(displayName || 'N').charAt(0).toUpperCase()}
+        <div onClick={() => setShowAvatarBuilder(true)} style={{ cursor: 'pointer', position: 'relative' }}>
+          <AvatarDisplay url={profile?.avatar_url} size={80} />
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#4ecca3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#1a1a1a', fontWeight: 700, border: '2px solid #1a1a1a' }}>
+            {'\u270E'}
+          </div>
         </div>
         <h1>Edit profile</h1>
       </div>
-
       <div className="edit-form">
         <div className="form-field">
           <label htmlFor="editName">Name or nickname</label>
-          <input
-            id="editName"
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="What should we call you?"
-          />
+          <input id="editName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="What should we call you?" />
         </div>
-
         <div className="form-field">
           <label htmlFor="editZip">Zip code</label>
-          <input
-            id="editZip"
-            type="text"
-            value={zipCode}
-            onChange={(e) => setZipCode(e.target.value)}
-            placeholder="e.g., 30736"
-            maxLength={10}
-          />
+          <input id="editZip" type="text" value={zipCode} onChange={(e) => setZipCode(e.target.value)} placeholder="e.g., 30736" maxLength={10} />
         </div>
-
         <div className="form-field">
           <label htmlFor="editHood">Neighborhood or area</label>
-          <input
-            id="editHood"
-            type="text"
-            value={neighborhood}
-            onChange={(e) => setNeighborhood(e.target.value)}
-            placeholder="e.g., Fort Oglethorpe, Ringgold"
-          />
+          <input id="editHood" type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="e.g., Fort Oglethorpe, Ringgold" />
         </div>
-
         <div className="form-field">
           <label>Skills</label>
           <div className="skill-grid">
             {skillOptions.map((skill) => (
-              <button
-                key={skill}
-                type="button"
-                className={`skill-chip ${selectedSkills.includes(skill) ? 'active' : ''}`}
-                onClick={() => toggleSkill(skill)}
-              >
+              <button key={skill} type="button" className={`skill-chip ${selectedSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleSkill(skill)}>
                 {skill}
               </button>
             ))}
           </div>
         </div>
-
         <div className="form-field">
           <label htmlFor="editRadius">How far can you help? ({radiusMiles} miles)</label>
-          <input
-            id="editRadius"
-            type="range"
-            min="1"
-            max="50"
-            value={radiusMiles}
-            onChange={(e) => setRadiusMiles(Number(e.target.value))}
-            className="range-input"
-          />
-          <div className="range-labels">
-            <span>1 mi</span>
-            <span>25 mi</span>
-            <span>50 mi</span>
-          </div>
+          <input id="editRadius" type="range" min="1" max="50" value={radiusMiles} onChange={(e) => setRadiusMiles(Number(e.target.value))} className="range-input" />
+          <div className="range-labels"><span>1 mi</span><span>25 mi</span><span>50 mi</span></div>
         </div>
-
         {profile?.is_hope_ambassador && (
           <>
-            <div className="edit-section-divider">
-              <span>Ambassador Details</span>
-            </div>
-
+            <div className="edit-section-divider"><span>Ambassador Details</span></div>
             <div className="form-field">
               <label htmlFor="editAvail">Availability</label>
-              <input
-                id="editAvail"
-                type="text"
-                value={ambAvailability}
-                onChange={(e) => setAmbAvailability(e.target.value)}
-                placeholder="e.g., Weekday mornings, weekends"
-              />
+              <input id="editAvail" type="text" value={ambAvailability} onChange={(e) => setAmbAvailability(e.target.value)} placeholder="e.g., Weekday mornings, weekends" />
             </div>
-
             <div className="form-field">
               <label htmlFor="editInterests">About you</label>
-              <textarea
-                id="editInterests"
-                value={ambInterests}
-                onChange={(e) => setAmbInterests(e.target.value)}
-                placeholder="Your interests, experience, or why you help"
-                rows={3}
-              />
+              <textarea id="editInterests" value={ambInterests} onChange={(e) => setAmbInterests(e.target.value)} placeholder="Your interests, experience, or why you help" rows={3} />
             </div>
           </>
         )}
-
         {error && <p className="form-error" role="alert">{error}</p>}
-
         <div className="form-row" style={{ marginTop: '0.5rem' }}>
-          <button
-            type="button"
-            className="btn btn-outline"
-            onClick={cancelEditing}
-            disabled={saving}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleSave}
-            disabled={saving}
-            style={{ flex: 1 }}
-          >
+          <button type="button" className="btn btn-outline" onClick={cancelEditing} disabled={saving}>Cancel</button>
+          <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ flex: 1 }}>
             {saving ? 'Saving...' : 'Save'}
           </button>
         </div>

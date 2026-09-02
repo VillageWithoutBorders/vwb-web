@@ -10,10 +10,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.3",
     "@supabase/supabase-js": "^2.112.4",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "json2csv": "^6.0.0-alpha.2",
+    "multer": "^2.3.0",
+    "pdfkit": "^0.20.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.2"
+    "react-router-dom": "^7.18.2",
+    "sqlite3": "^6.0.1"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
@@ -23,5 +31,18 @@
     "sharp": "^0.35.4",
     "vite": "^8.2.2",
     "vite-plugin-pwa": "^1.3.0"
-  }
+  },
+  "description": "This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.",
+  "main": "vite.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VillageWithoutBorders/vwb-web.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VillageWithoutBorders/vwb-web/issues"
+  },
+  "homepage": "https://github.com/VillageWithoutBorders/vwb-web#readme"
 }

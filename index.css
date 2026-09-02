@@ -1,0 +1,80 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+    background: #f7f7f7;
+    color: #333;
+}
+
+h1, h2 {
+    margin-bottom: 10px;
+}
+
+form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+form input {
+    padding: 10px;
+    margin: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    width: 180px;
+}
+
+button {
+    padding: 10px 16px;
+    background: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #004999;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+th, td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+th {
+    background: #fafafa;
+}
+
+img.resource-photo {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.report-links a {
+    display: inline-block;
+    margin-right: 20px;
+    padding: 10px 14px;
+    background: #009944;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.report-links a:hover {
+    background: #007733;
+}
