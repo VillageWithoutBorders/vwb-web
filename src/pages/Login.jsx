@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -15,8 +15,7 @@ export default function Login() {
       const { data } = await supabase
         .from('skill_categories')
         .select('title')
-        .eq('is_active', true)
-        .order('title')
+        .order('id')
       if (data) setSkillOptions(data.map((s) => s.title))
     }
     loadSkills()
@@ -32,6 +31,7 @@ export default function Login() {
   const [selectedSkills, setSelectedSkills] = useState([])
   const [availability, setAvailability] = useState('')
   const [interests, setInterests] = useState('')
+  const [radiusMiles, setRadiusMiles] = useState(10)
 
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -125,6 +125,7 @@ export default function Login() {
         skills: selectedSkills,
         availability,
         interests,
+        radius_miles: radiusMiles,
       }))
     }
 
@@ -353,6 +354,23 @@ export default function Login() {
                   {skill}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="form-field">
+            <label>How far can you help? ({radiusMiles} miles)</label>
+            <input
+              type="range"
+              min={1}
+              max={50}
+              value={radiusMiles}
+              onChange={(e) => setRadiusMiles(Number(e.target.value))}
+              className="radius-slider"
+            />
+            <div className="radius-labels">
+              <span>1 mi</span>
+              <span>25 mi</span>
+              <span>50 mi</span>
             </div>
           </div>
 
