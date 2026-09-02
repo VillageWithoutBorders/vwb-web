@@ -40,14 +40,10 @@ function makeSeeds(base, count) {
 export default function AvatarBuilder({ onSave, onCancel }) {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
-  const [mode, setMode] = useState('pick')
+  const [mode] = useState('pick')
   const [selected, setSelected] = useState(null)
   const [batch, setBatch] = useState(0)
-  const [config, setConfig] = useState({
-    skinColor: 'light', top: 'shortFlat', eyes: 'default', eyebrows: 'default',
-    mouth: 'smile', clothes: 'shirtCrewNeck', clothesColor: 'blue01', hairColor: 'brownDark',
-  })
-  const [activeSection, setActiveSection] = useState('skinColor')
+  
   const name = user?.email?.split('@')[0] || 'neighbor'
   const seeds = makeSeeds(name + '-' + batch, 12)
 
@@ -106,10 +102,7 @@ export default function AvatarBuilder({ onSave, onCancel }) {
         {onCancel && <button onClick={onCancel} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.3rem', cursor: 'pointer' }}>{'\u2715'}</button>}
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button onClick={() => setMode('pick')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: mode === 'pick' ? '#4ecca3' : '#2a2a2a', color: mode === 'pick' ? '#1a1a1a' : '#aaa', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>Browse</button>
-        <button onClick={() => setMode('customize')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: mode === 'customize' ? '#4ecca3' : '#2a2a2a', color: mode === 'customize' ? '#1a1a1a' : '#aaa', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>Customize</button>
-      </div>
+
 
       {mode === 'pick' && (
         <>
