@@ -1,10 +1,32 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { getCurrentPosition } from '../utils/location'
 import VouchButton from '../components/VouchButton'
 import { createNotification } from '../utils/notificationHelpers'
+
+async function enrichRequests(reqs) {
+  const userIds = [...new Set(reqs.map(r => r.requester_id).filter(Boolean))]
+  if (userIds.length === 0) return reqs
+  const profiles = {}
+  for (const uid of userIds) {
+    const { data: p } = await supabase.from('helper_profiles').select('is_hope_ambassador, created_at, avatar_url').eq('user_id', uid).maybeSingle()
+    if (p) profiles[uid] = p
+  }
+  return reqs.map(r => ({ ...r, is_ambassador: profiles[r.requester_id]?.is_hope_ambassador || false, member_since: profiles[r.requester_id]?.created_at || null, avatar_url: profiles[r.requester_id]?.avatar_url || null }))
+}
+
+async function enrichOffers(items) {
+  const userIds = [...new Set(items.map(r => r.user_id).filter(Boolean))]
+  if (userIds.length === 0) return items
+  const profiles = {}
+  for (const uid of userIds) {
+    const { data: p } = await supabase.from('helper_profiles').select('display_name, is_hope_ambassador, created_at, avatar_url').eq('user_id', uid).maybeSingle()
+    if (p) profiles[uid] = p
+  }
+  return items.map(r => ({ ...r, poster_name: profiles[r.user_id]?.display_name || 'A neighbor', is_ambassador: profiles[r.user_id]?.is_hope_ambassador || false, member_since: profiles[r.user_id]?.created_at || null }))
+}
 
 async function createMatch(userId, requestId, requesterId, navigate) {
   const { data: match, error: matchErr } = await supabase
@@ -33,6 +55,8 @@ const OFFER_CATEGORIES = ['Food and Meals', 'Supplies', 'Clothes', 'Labor', 'Fur
 export default function Feed() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [successMsg, setSuccessMsg] = useState(location.state?.message || null)
 
   const [view, setView] = useState('requests')
   const [requests, setRequests] = useState([])
@@ -65,15 +89,15 @@ export default function Feed() {
       })
       if (error || !data || data.length === 0) {
         const { data: fallback } = await supabase.from('open_requests_by_urgency').select('*').limit(50)
-        setRequests(fallback || [])
+        setRequests(await enrichRequests(fallback || []))
       } else {
-        setRequests(data || [])
+        setRequests(await enrichRequests(data || []))
       }
     } else {
       let query = supabase.from('offers').select('*').eq('is_available', true).order('created_at', { ascending: false })
       if (filterOfferCat !== 'all') { query = query.eq('category', filterOfferCat) }
       const { data } = await query
-      setOffers(data || [])
+      setOffers(await enrichOffers(data || []))
     }
     setLoading(false)
   }, [profile, filterSkill, filterOfferCat, view])
@@ -152,7 +176,7 @@ export default function Feed() {
                   </div>
                   <div className="feed-card-who">
                     <span className="feed-card-name">{req.requester_name || 'A neighbor'}</span>
-                    {req.neighborhood && <span className="feed-card-hood"> in {req.neighborhood}</span>}
+                    {req.neighborhood && <span className="feed-card-hood"> in {req.neighborhood}</span>}{req.is_ambassador && <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Hope Ambassador</span>}{req.member_since && <span style={{ color: '#666', fontSize: '0.7rem', marginLeft: '0.35rem' }}>Member since {new Date(req.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>}
                   </div>
                   {req.requester_id && <div className="feed-card-vouch-row"><VouchButton userId={req.requester_id} size="sm" showCount={true} /></div>}
                   <p className={'feed-card-desc' + (isExpanded ? '' : ' feed-card-desc-clamp')}>{req.description}</p>
@@ -187,7 +211,14 @@ export default function Feed() {
                   <div className="feed-card-meta">
                     <span className="feed-card-skill">{offer.title}</span>
                   </div>
-                  {offer.neighborhood && (
+                  {offer.poster_name && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                    <span className="feed-card-name">{offer.poster_name}</span>
+                    {offer.is_ambassador && <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>Hope Ambassador</span>}
+                    {offer.member_since && <span style={{ color: '#666', fontSize: '0.7rem' }}>Member since {new Date(offer.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>}
+                  </div>
+                )}
+                {offer.neighborhood && (
                     <div className="feed-card-who">
                       <span className="feed-card-hood">in {offer.neighborhood}</span>
                     </div>

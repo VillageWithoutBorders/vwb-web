@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { createNotification } from '../utils/notificationHelpers'
 
-const VERIFY_THRESHOLD = 3
+const VERIFY_THRESHOLD = 2
 
 export default function EmergencyEvents() {
   const { user, profile } = useAuth()
@@ -34,6 +35,22 @@ export default function EmergencyEvents() {
     setLoading(false)
   }
 
+  async function notifyAndPost(eventId) {
+    const ev = events.find(e2 => e2.id === eventId)
+    if (!ev) return
+    await createNotification({
+      userId: ev.created_by,
+      type: 'emergency_verified',
+      title: 'Emergency Verified',
+      body: ev.title + ' has been verified by the community.',
+      link: '/emergency/' + eventId
+    })
+    await supabase.from('campfire_messages').insert({
+      user_id: user.id,
+      body: '\ud83d\udea8 Emergency Verified: ' + ev.title + ' (' + (ev.location_name || 'Unknown area') + '). Head to the event page to sign up or add resources.'
+    })
+  }
+
   async function upvoteEvent(e, eventId) {
     e.stopPropagation()
     if (myUpvotes[eventId]) return
@@ -43,12 +60,16 @@ export default function EmergencyEvents() {
       upvote_count: newCount,
       verified: newCount >= VERIFY_THRESHOLD ? true : undefined
     }).eq('id', eventId)
+    if (newCount >= VERIFY_THRESHOLD) {
+      await notifyAndPost(eventId)
+    }
     await loadEvents()
   }
 
   async function adminVerify(e, eventId) {
     e.stopPropagation()
     await supabase.from('emergency_events').update({ verified: true }).eq('id', eventId)
+    await notifyAndPost(eventId)
     await loadEvents()
   }
 
@@ -60,7 +81,7 @@ export default function EmergencyEvents() {
     return Math.floor(hrs / 24) + 'd ago'
   }
 
-  const isAdmin = profile?.role === 'admin'
+  const canVerify = profile?.role === 'admin' || profile?.is_hope_ambassador
   const verified = events.filter(ev => ev.verified)
   const pending = events.filter(ev => !ev.verified)
 
@@ -103,6 +124,7 @@ export default function EmergencyEvents() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <span style={{ background: '#ffaa44', color: '#1a1a1a', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>Unverified</span>
+                    {ev.created_by === user.id && <span style={{ background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
                     <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.05rem' }}>{ev.title}</h3>
                   </div>
                   <span style={{ color: '#888', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
@@ -113,8 +135,8 @@ export default function EmergencyEvents() {
                   <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid #4ecca3' : '1px solid #666', background: voted ? '#1a3a2a' : 'none', color: voted ? '#4ecca3' : '#aaa', cursor: voted ? 'default' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
                     &#9650; {ev.upvote_count || 0}
                   </button>
-                  <span style={{ color: '#666', fontSize: '0.75rem' }}>{VERIFY_THRESHOLD - (ev.upvote_count || 0) > 0 ? (VERIFY_THRESHOLD - (ev.upvote_count || 0)) + ' more to verify' : 'Verifying...'}</span>
-                  {isAdmin && (
+                  <span style={{ color: '#666', fontSize: '0.75rem' }}>{(ev.upvote_count || 0) + ' verified'}</span>
+                  {canVerify && !voted && (
                     <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Verify</button>
                   )}
                 </div>
@@ -135,6 +157,7 @@ export default function EmergencyEvents() {
                   <div>
                     <span style={{ background: '#ff6644', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type || 'Emergency'}</span>
                     <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>&#10003; Verified</span>
+                    {ev.created_by === user.id && <span style={{ background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
                     <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.1rem' }}>{ev.title}</h3>
                   </div>
                   <span style={{ color: '#888', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>

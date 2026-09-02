@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { createNotification } from '../utils/notificationHelpers'
 
 const STATUS_CONFIG = {
   safe:        { label: 'Safe',         color: '#4ecca3', bg: '#1a3a2a', icon: '\u2714' },
@@ -12,6 +13,8 @@ const STATUS_CONFIG = {
 }
 
 const RESOURCE_CATEGORIES = ['Water', 'Food', 'Shelter', 'Tools', 'Transportation', 'Medical', 'Clothing', 'Power/Fuel', 'Tarps/Building', 'Hygiene', 'Other']
+
+const menuBtnStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.6rem 0.75rem', background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left' }
 
 export default function EventDetail() {
   const { id } = useParams()
@@ -39,6 +42,10 @@ export default function EventDetail() {
   const [resQty, setResQty] = useState(1)
   const [resNote, setResNote] = useState('')
   const [resFilter, setResFilter] = useState('all')
+  const [openSignupMenu, setOpenSignupMenu] = useState(null)
+  const [editingNotes, setEditingNotes] = useState(null)
+  const [editNotesVal, setEditNotesVal] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState(null)
 
   useEffect(() => { loadAll() }, [id])
 
@@ -162,6 +169,46 @@ export default function EventDetail() {
     await loadAll()
   }
 
+  async function messageUser(userId) {
+    setOpenSignupMenu(null)
+    const { data: existing } = await supabase.from('conversations').select('id').or('and(helper_id.eq.' + userId + ',requester_id.eq.' + user.id + '),and(helper_id.eq.' + user.id + ',requester_id.eq.' + userId + ')').maybeSingle()
+    if (existing) { navigate('/conversation/' + existing.id); return }
+    const { data: convo } = await supabase.from('conversations').insert({ helper_id: userId, requester_id: user.id }).select().single()
+    if (convo) navigate('/conversation/' + convo.id)
+  }
+
+  async function reportUser(userId) {
+    await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: userId, alert_type: 'flag', description: 'Reported from emergency event' })
+    setOpenSignupMenu(null)
+    alert('Report submitted. Thank you for keeping the community safe.')
+  }
+
+  async function blockUser(userId) {
+    if (!confirm('Block this user?')) return
+    await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: userId })
+    setOpenSignupMenu(null)
+    alert('User blocked.')
+  }
+
+  async function deleteSignup(signupId) {
+    if (!confirm('Remove this signup?')) return
+    await supabase.from('event_signups').delete().eq('id', signupId)
+    setOpenSignupMenu(null)
+    await loadAll()
+  }
+
+  async function saveNotes(signupId) {
+    await supabase.from('event_signups').update({ notes: editNotesVal.trim() || null }).eq('id', signupId)
+    setEditingNotes(null)
+    await loadAll()
+  }
+
+  async function switchRole() {
+    const newRole = mySignup.role === 'responder' ? 'affected' : 'responder'
+    await supabase.from('event_signups').update({ role: newRole }).eq('event_id', id).eq('user_id', user.id)
+    await loadAll()
+  }
+
   async function closeEvent() {
     if (!confirm('Close this event? It will no longer appear in the active list.')) return
     await supabase.from('emergency_events').update({ status: 'closed' }).eq('id', id)
@@ -180,6 +227,47 @@ export default function EventDetail() {
     const hrs = Math.floor(mins / 60)
     if (hrs < 24) return hrs + 'h ago'
     return Math.floor(hrs / 24) + 'd ago'
+  }
+
+  function renderSignupMenu(s) {
+    return (
+      <>
+        <button onClick={(e) => { e.stopPropagation(); setOpenSignupMenu(openSignupMenu === s.id ? null : s.id) }} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '1.25rem', padding: '4px 6px' }}>&#8943;</button>
+        {openSignupMenu === s.id && (
+          <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', right: '0.5rem', top: '2rem', background: '#2a2a2a', border: '1px solid #444', borderRadius: '10px', zIndex: 10, minWidth: '160px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
+            {s.user_id === user.id ? (
+              <>
+                <button onClick={() => { setEditingNotes(s.id); setEditNotesVal(s.notes || ''); setOpenSignupMenu(null) }} style={menuBtnStyle}>
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9998;</span> Edit notes
+                </button>
+                <button onClick={() => deleteSignup(s.id)} style={{ ...menuBtnStyle, color: '#ff4444' }}>
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128465;</span> Remove me
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => messageUser(s.user_id)} style={menuBtnStyle}>
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128172;</span> Message
+                </button>
+                <button onClick={() => reportUser(s.user_id)} style={menuBtnStyle}>
+                  <span style={{ width: '1.2rem', textAlign: 'center', color: '#ff4444' }}>&#9873;</span> Report
+                </button>
+                <button onClick={() => blockUser(s.user_id)} style={menuBtnStyle}>
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128683;</span> Block user
+                </button>
+              </>
+            )}
+          </div>
+        )}
+        {editingNotes === s.id && (
+          <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.35rem' }}>
+            <input type="text" value={editNotesVal} onChange={(e) => setEditNotesVal(e.target.value)} style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
+            <button onClick={() => saveNotes(s.id)} style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Save</button>
+            <button onClick={() => setEditingNotes(null)} style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.8rem' }}>Cancel</button>
+          </div>
+        )}
+      </>
+    )
   }
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Loading...</div>
@@ -237,41 +325,47 @@ export default function EventDetail() {
         </div>
       </div>
 
+      {event.verified && resources.length === 0 && (isCoordinator || event.created_by === user.id) && (
+        <div style={{ background: 'linear-gradient(135deg, #1a3a2a, #2a4a3a)', border: '1px solid #4ecca3', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
+          <p style={{ color: '#4ecca3', fontWeight: 700, fontSize: '1rem', margin: '0 0 0.35rem' }}>Event verified!</p>
+          <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Next step: add what resources are needed so responders know how to help.</p>
+          <button onClick={() => { setTab('resources'); setShowResourceForm('need') }} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: '#ff6644', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>+ Add Resources Needed</button>
+        </div>
+      )}
+
       {mySignup && (
         <div style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showStatusPicker ? '0.75rem' : 0 }}>
-            <div>
-              <span style={{ color: '#aaa', fontSize: '0.8rem' }}>Your status: </span>
-              {myStatusConf ? (
-                <span style={{ background: myStatusConf.bg, color: myStatusConf.color, fontSize: '0.8rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
-                  {myStatusConf.icon} {myStatusConf.label}
-                </span>
-              ) : (
-                <span style={{ color: '#666', fontSize: '0.8rem' }}>No check-in yet</span>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={() => setShowStatusPicker(!showStatusPicker)} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>
-                {myStatusConf ? 'Update' : 'Check in'}
-              </button>
-              <button onClick={cancelSignup} style={{ background: 'none', border: 'none', color: '#ff6666', cursor: 'pointer', fontSize: '0.8rem' }}>Leave</button>
-            </div>
+          <div style={{ marginBottom: '0.5rem' }}>
+            <span style={{ color: '#aaa', fontSize: '0.8rem' }}>Your status: </span>
+            {myStatusConf ? (
+              <span style={{ background: myStatusConf.bg, color: myStatusConf.color, fontSize: '0.8rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
+                {myStatusConf.icon} {myStatusConf.label}
+              </span>
+            ) : (
+              <span style={{ color: '#666', fontSize: '0.8rem' }}>No check-in yet</span>
+            )}
           </div>
           {showStatusPicker && (
             <div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
                 {Object.entries(STATUS_CONFIG).filter(([k]) => k !== 'no_contact').map(([key, conf]) => (
-                  <button key={key} onClick={() => !submitting && submitCheckIn(key)} disabled={submitting} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: conf.bg, color: conf.color, fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', opacity: submitting ? 0.6 : 1 }}>
+                  <button key={key} onClick={() => setSelectedStatus(key)} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: selectedStatus === key ? conf.color : conf.bg, color: selectedStatus === key ? '#1a1a1a' : conf.color, fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>
                     {conf.icon} {conf.label}
                   </button>
                 ))}
               </div>
-              <input type="text" placeholder="Optional note (e.g. address, what you need)" value={statusNote} onChange={e => setStatusNote(e.target.value)} style={fieldStyle} />
+              <input type='text' placeholder='Optional note (e.g. address, what you need)' value={statusNote} onChange={e => setStatusNote(e.target.value)} style={fieldStyle} />
             </div>
           )}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+            <button onClick={() => { if (showStatusPicker && selectedStatus) { submitCheckIn(selectedStatus) } else { setShowStatusPicker(!showStatusPicker); setSelectedStatus(null) } }} disabled={showStatusPicker && !selectedStatus} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: 'none', background: showStatusPicker && !selectedStatus ? '#666' : '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>
+              {myStatusConf ? 'Update' : 'Check in'}
+            </button>
+            {mySignup.role !== 'coordinator' && <button onClick={switchRole} style={{ background: 'none', border: 'none', color: '#66aaff', cursor: 'pointer', fontSize: '0.8rem' }}>{mySignup.role === 'responder' ? 'Switch to affected' : 'Switch to responder'}</button>}
+            <button onClick={cancelSignup} style={{ background: 'none', border: 'none', color: '#ff6666', cursor: 'pointer', fontSize: '0.8rem' }}>Leave</button>
+          </div>
         </div>
       )}
-
       {!mySignup && (
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           <button onClick={() => setShowSignupForm('responder')} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>I can help</button>
@@ -321,14 +415,15 @@ export default function EventDetail() {
       {tab === 'responders' && (
         responders.length === 0 ? <p style={{ textAlign: 'center', color: '#666', padding: '1.5rem' }}>No responders yet. Be the first to sign up.</p> :
         responders.map(s => (
-          <div key={s.id} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }}>
+          <div key={s.id} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 700 }}>{s.role === 'coordinator' && <span style={{ color: '#66aaff', marginRight: '4px' }} title="Coordinator">&#9733;</span>}{s.display_name}</span>
-              <span style={{ color: '#666', fontSize: '0.75rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
+              <span style={{ color: '#666', fontSize: '0.75rem', marginRight: '1.5rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
             </div>
             {s.skills && s.skills.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.4rem' }}>{s.skills.map(sk => <span key={sk} style={{ background: '#2a2a2a', color: '#4ecca3', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px' }}>{sk}</span>)}</div>}
             {s.availability && <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>Available: {s.availability}</p>}
             {s.notes && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>{s.notes}</p>}
+            {renderSignupMenu(s)}
           </div>
         ))
       )}
@@ -339,16 +434,17 @@ export default function EventDetail() {
           const st = latestStatuses[s.user_id]
           const sc = st ? STATUS_CONFIG[st.status] : null
           return (
-            <div key={s.id} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }}>
+            <div key={s.id} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontWeight: 700 }}>{s.display_name}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1.5rem' }}>
                   {sc && <span style={{ background: sc.bg, color: sc.color, fontSize: '0.7rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>{sc.icon} {sc.label}</span>}
                   <span style={{ color: '#666', fontSize: '0.75rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
               {s.notes && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>{s.notes}</p>}
               {st && st.note && <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.3rem 0 0', fontStyle: 'italic' }}>"{st.note}"</p>}
+              {renderSignupMenu(s)}
             </div>
           )
         })
@@ -438,7 +534,7 @@ export default function EventDetail() {
                           {isFulfilled && <span style={{ background: '#1a3a2a', color: '#4ecca3', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '3px' }}>Fulfilled</span>}
                           {isClaimed && !isFulfilled && <span style={{ background: '#1a2a4a', color: '#66aaff', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '3px' }}>Claimed</span>}
                         </div>
-                        <p style={{ margin: '0.2rem 0 0', fontWeight: 600, fontSize: '0.95rem' }}>{r.item_name} {r.quantity > 1 && <span style={{ color: '#aaa', fontWeight: 400 }}>x{r.quantity}</span>}</p>
+                        <p style={{ margin: '0.2rem 0 0', fontWeight: 600, fontSize: '0.95rem', color: '#fff' }}>{r.item_name} {r.quantity > 1 && <span style={{ color: '#aaa', fontWeight: 400 }}>x{r.quantity}</span>}</p>
                       </div>
                     </div>
                     <span style={{ color: '#666', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(r.created_at)}</span>
