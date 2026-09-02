@@ -2016,3 +2016,47 @@ a:focus:not(:focus-visible) {
   cursor: pointer;
   padding: 0.25rem 0.5rem;
 }
+
+/* ---- Info Tooltip Button ---- */
+.info-tooltip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 1.5px solid #1D9E75;
+  background: transparent;
+  color: #1D9E75;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 0.375rem;
+  flex-shrink: 0;
+}
+.info-tooltip-btn:hover {
+  background: #1D9E75;
+  color: #1a1a1a;
+}
+
+/* ---- Info Tooltip Button ---- */
+.info-tooltip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 1.5px solid #1D9E75;
+  background: transparent;
+  color: #1D9E75;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 0.375rem;
+  flex-shrink: 0;
+}
+.info-tooltip-btn:hover {
+  background: #1D9E75;
+  color: #1a1a1a;
+}

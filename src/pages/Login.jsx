@@ -203,7 +203,7 @@ export default function Login() {
             </div>
             <label className="checkbox-field">
               <input type="checkbox" checked={wantAmbassador} onChange={(e) => setWantAmbassador(e.target.checked)} />
-              <span>I want to sign up as a Hope Ambassador</span>
+              <span>I want to sign up as a Hope Ambassador</span><button type="button" className="info-tooltip-btn" onClick={(e) => { e.preventDefault(); alert('Hope Ambassadors are neighbors who volunteer their time and skills to help others in the community. We will match you with people nearby who need a hand.') }} aria-label="What is a Hope Ambassador?">?</button>
             </label>
             {error && <p className="form-error" role="alert">{error}</p>}
             <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
@@ -276,4 +276,7 @@ export default function Login() {
     </div>
   )
 }
+
+
+
 
