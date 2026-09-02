@@ -2060,3 +2060,12 @@ a:focus:not(:focus-visible) {
   background: #1D9E75;
   color: #1a1a1a;
 }
+
+/* ---- Radius Labels Fix ---- */
+.radius-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #b0b0b0;
+  margin-top: 0.25rem;
+}
