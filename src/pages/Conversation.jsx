@@ -4,11 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
+import { useUnreadCount } from '../context/UnreadCountContext'
 
 export default function Conversation() {
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { refreshUnread } = useUnreadCount()
   const [convo, setConvo] = useState(null)
   const [messages, setMessages] = useState([])
   const [newMsg, setNewMsg] = useState('')
@@ -29,7 +31,7 @@ export default function Conversation() {
             const c = convoRef.current
             if (c) {
                 const readCol = c.helper_id === user.id ? 'last_read_helper' : 'last_read_requester'
-                supabase.from('conversations').update({ [readCol]: new Date().toISOString() }).eq('id', c.id)
+                supabase.from('conversations').update({ [readCol]: new Date().toISOString() }).eq('id', c.id).then(() => refreshUnread())
             }
         }
     }, [id])
@@ -46,7 +48,7 @@ export default function Conversation() {
       setConvo(c)
     convoRef.current = c
     const readCol = c.helper_id === user.id ? "last_read_helper" : "last_read_requester"
-    supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", c.id)
+    supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", c.id).then(() => refreshUnread())
 
     const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
     const { data: otherProfile } = await supabase
@@ -118,7 +120,7 @@ export default function Conversation() {
   return (
     <div className="conversation-page">
       <div className="convo-header">
-        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id) } navigate(-1) }} aria-label="Back">
+        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id); refreshUnread() } navigate(-1) }} aria-label="Back">
           &#8592;
         </button>
         <div className="convo-header-info">

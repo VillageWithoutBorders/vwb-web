@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { useUnreadCount } from '../hooks/useUnreadCount'
+import { useUnreadCount } from '../context/UnreadCountContext'
 
 export default function BottomTabs() {
   const { unreadCount } = useUnreadCount()

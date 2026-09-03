@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useUnreadCount } from '../hooks/useUnreadCount'
+import { useUnreadCount } from '../context/UnreadCountContext'
 import PushBanner from '../components/PushBanner'
 import InstallBanner from '../components/InstallBanner'
 export default function Dashboard() {
