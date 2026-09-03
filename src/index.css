@@ -11,6 +11,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --green: #1D9E75;
   --green-dark: #2d6a4f;
   --green-light: #1a332a;
