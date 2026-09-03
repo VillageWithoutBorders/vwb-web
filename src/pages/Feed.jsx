@@ -296,7 +296,7 @@ export default function Feed() {
                                     </div>
 
                                     <div className="feed-card-who">
-                                        <span className="feed-card-name">{req.requester_name || 'A neighbor'}</span>
+                                        <span className="feed-card-name" onClick={(e) => { e.stopPropagation(); if (req.requester_id) navigate('/u/' + req.requester_id) }} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{req.requester_name || 'A neighbor'}</span>
                                         {req.neighborhood && <span className="feed-card-hood"> in {req.neighborhood}</span>}
                                         {req.is_ambassador && (
                                             <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>
@@ -318,7 +318,7 @@ export default function Feed() {
 
                                     {/* Helper count status */}
                                     <div style={{ fontSize: '0.75rem', color: isFull ? '#2d6a4f' : '#888', marginTop: '0.25rem' }}>
-                                        {isFull ? '✅ ' : '🤝 '}{helperStatus}
+                                        {isFull ? 'âœ… ' : 'ðŸ¤ '}{helperStatus}
                                     </div>
 
                                     <p className={'feed-card-desc' + (isExpanded ? '' : ' feed-card-desc-clamp')}>{req.description}</p>
@@ -332,12 +332,12 @@ export default function Feed() {
                                             )}
                                             {req.requester_id !== user.id && isPending && (
                                                 <span style={{ fontSize: '0.8rem', color: '#b8860b', fontWeight: 600 }}>
-                                                    ⏳ Waiting for response
+                                                    â³ Waiting for response
                                                 </span>
                                             )}
                                             {req.requester_id !== user.id && isFull && !isPending && (
                                                 <span style={{ fontSize: '0.8rem', color: '#2d6a4f', fontWeight: 600 }}>
-                                                    ✅ Enough helpers found
+                                                    âœ… Enough helpers found
                                                 </span>
                                             )}
                                             {req.requester_id && <VouchButton userId={req.requester_id} size="md" showCount={false} />}
@@ -370,7 +370,7 @@ export default function Feed() {
                                     </div>
                                     {offer.poster_name && (
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                                            <span className="feed-card-name">{offer.poster_name}</span>
+                                            <span className="feed-card-name" onClick={(e) => { e.stopPropagation(); if (offer.user_id) navigate('/u/' + offer.user_id) }} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{offer.poster_name}</span>
                                             {offer.is_ambassador && (
                                                 <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
                                                     Hope Ambassador

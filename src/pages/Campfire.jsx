@@ -106,7 +106,7 @@ export default function Campfire() {
             <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
               {!isMe && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.15rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: info.role === 'admin' ? '#66aaff' : '#4ecca3' }}>{info.name}</span>
+                  <span onClick={() => navigate('/u/' + msg.user_id)} style={{ fontSize: '0.75rem', fontWeight: 700, color: info.role === 'admin' ? '#66aaff' : '#4ecca3', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{info.name}</span>
                   {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
                   {info.ambassador && info.role !== 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
                 </div>

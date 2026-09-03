@@ -581,7 +581,7 @@ export default function Messages() {
       {pendingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-            🤝 Help Offers ({pendingOffers.length})
+            Ã°Å¸Â¤Â Help Offers ({pendingOffers.length})
           </div>
           {pendingOffers.map(offer => (
             <div key={offer.id} style={offerCardStyle}>
@@ -595,7 +595,7 @@ export default function Messages() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-                <span style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem' }}>{offer.helper_name}</span>
+                <span onClick={(e) => { e.stopPropagation(); navigate('/u/' + offer.helper_id) }} style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{offer.helper_name}</span>
                 {offer.is_ambassador && (
                   <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
                     Hope Ambassador
@@ -637,7 +637,7 @@ export default function Messages() {
       {myOutgoingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-            ⏳ Your Pending Offers ({myOutgoingOffers.length})
+            Ã¢ÂÂ³ Your Pending Offers ({myOutgoingOffers.length})
           </div>
           {myOutgoingOffers.map(offer => (
             <div key={offer.id} style={{ background: '#2a2518', border: '1px solid #5a4a2a', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -705,7 +705,7 @@ export default function Messages() {
               <span className="message-card-name" style={{ fontWeight: c.hasUnread ? 800 : 600 }}>
                 {isPinned && <span style={{ marginRight: '4px' }} title="Pinned">&#128204;</span>}
                 {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title="Muted">&#128263;</span>}
-                {c.otherName}
+                <span onClick={(e) => { e.stopPropagation(); navigate('/u/' + c.otherId) }} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.otherName}</span>
                 {c.hasUnread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#4ecca3", marginLeft: "6px", flexShrink: 0 }} />}
               </span>
               <span className="message-card-time" style={{ color: c.hasUnread ? "#4ecca3" : undefined }}>{formatTime(c.lastMessageAt)}</span>

@@ -55,10 +55,10 @@ export default function Dashboard() {
           <span className="action-desc">Connect with your neighbors</span>
         </button>
       </div>
-      <button onClick={() => navigate('/emergency')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "1.25rem", padding: "1rem 1.25rem", borderRadius: "12px", border: "2px solid #ff4444", background: "linear-gradient(135deg, #3a1a1a, #4a2020)", cursor: "pointer", textAlign: "left" }}>
+      <button onClick={() => navigate('/emergency')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "1.25rem", padding: "1rem 1.25rem", borderRadius: "12px", border: "2px solid #ffaa44", background: "linear-gradient(135deg, #2e2a1a, #3a3020)", cursor: "pointer", textAlign: "left" }}>
         <span style={{ fontSize: "2rem", lineHeight: 1, color: "#ffaa44" }}>&#9888;</span>
         <div>
-          <span style={{ display: "block", color: "#ff6644", fontWeight: 700, fontSize: "1rem" }}>Emergency Response</span>
+          <span style={{ display: "block", color: "#ffcc00", fontWeight: 700, fontSize: "1rem" }}>Emergency Response</span>
           <span style={{ color: "#cc9999", fontSize: "0.8rem" }}>View active emergencies or report a new one</span>
         </div>
       </button>

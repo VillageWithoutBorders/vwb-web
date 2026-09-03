@@ -135,7 +135,7 @@ export default function CreateEvent() {
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
         <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
-        <h1 style={{ color: '#ff6644', margin: 0, fontSize: '1.5rem' }}>Create Emergency Event</h1>
+        <h1 style={{ color: '#ffcc00', margin: 0, fontSize: '1.5rem' }}>Create Emergency Event</h1>
       </div>
       <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>Alert your community about an emergency. Neighbors can sign up as affected or as responders.</p>
 

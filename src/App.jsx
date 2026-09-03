@@ -20,6 +20,7 @@ import EventDetail from './pages/EventDetail'
 import Admin from './pages/Admin'
 import Campfire from './pages/Campfire'
 import Notifications from './pages/Notifications'
+import PublicProfile from './pages/PublicProfile'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -53,6 +54,7 @@ function AppRoutes() {
         <Route path="admin" element={<Admin />} />
         <Route path="campfire" element={<Campfire />} />
         <Route path="conversation/:id" element={<Conversation />} />
+        <Route path="u/:userId" element={<PublicProfile />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="notifications" element={<Notifications />} />
       </Route>
