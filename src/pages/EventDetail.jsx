@@ -45,6 +45,14 @@ export default function EventDetail() {
   const [openSignupMenu, setOpenSignupMenu] = useState(null)
   const [editingNotes, setEditingNotes] = useState(null)
   const [editNotesVal, setEditNotesVal] = useState('')
+
+  // Close event flow
+  const [showCloseModal, setShowCloseModal] = useState(false)
+  const [closeReason, setCloseReason] = useState(null)
+  const [closeVotes, setCloseVotes] = useState([])
+  const [activeEvents, setActiveEvents] = useState([])
+  const [selectedDuplicate, setSelectedDuplicate] = useState(null)
+  const [closingEvent, setClosingEvent] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState(null)
 
   useEffect(() => { loadAll() }, [id])
@@ -93,6 +101,10 @@ export default function EventDetail() {
       setResources(res.map(r => ({ ...r, offered_by_name: rNameMap[r.offered_by] || 'Neighbor', claimed_by_name: r.claimed_by ? (rNameMap[r.claimed_by] || 'Neighbor') : null })))
     }
 
+
+    // Load close votes
+    const { data: cvotes } = await supabase.from('event_close_votes').select('*').eq('event_id', id)
+    if (cvotes) setCloseVotes(cvotes)
     setLoading(false)
   }
 
@@ -209,10 +221,74 @@ export default function EventDetail() {
     await loadAll()
   }
 
-  async function closeEvent() {
-    if (!confirm('Close this event? It will no longer appear in the active list.')) return
-    await supabase.from('emergency_events').update({ status: 'closed' }).eq('id', id)
-    navigate('/emergency')
+  async function loadActiveEvents() {
+    const { data } = await supabase.from('emergency_events').select('id, title, event_type').eq('status', 'active').neq('id', id).order('created_at', { ascending: false })
+    setActiveEvents(data || [])
+  }
+
+  async function handleCloseEvent() {
+    if (!closeReason) return
+    setClosingEvent(true)
+    const isAdmin = profile?.role === 'admin'
+    const isReporter = event.created_by === user.id
+    const canCloseAlone = isAdmin || isReporter
+
+    if (closeReason === 'resolved') {
+      if (canCloseAlone) {
+        await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
+        setClosingEvent(false)
+        navigate('/emergency')
+        return
+      }
+      await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'resolved' }, { onConflict: 'event_id,voter_id' })
+      const { data: votes } = await supabase.from('event_close_votes').select('id').eq('event_id', id)
+      if (votes && votes.length >= 2) {
+        await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
+        setClosingEvent(false)
+        navigate('/emergency')
+        return
+      }
+      setClosingEvent(false)
+      setShowCloseModal(false)
+      alert('Your vote to close has been recorded. One more vote is needed.')
+      await loadAll()
+      return
+    }
+
+    if (closeReason === 'false_alarm') {
+      if (event.verified) {
+        const { data: admins } = await supabase.rpc('nearest_admin', { lat: event.latitude || 0, lng: event.longitude || 0 })
+        if (admins && admins.length > 0) {
+          for (const admin of admins) {
+            await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'false_alarm_request', title: 'False alarm review needed', body: 'Someone flagged "' + event.title + '" as a false alarm. Please review.', link: '/emergency/' + id, read: false })
+          }
+        }
+        setClosingEvent(false)
+        setShowCloseModal(false)
+        alert('This verified event requires admin approval to mark as false alarm. Admins have been notified.')
+        return
+      }
+      await supabase.from('emergency_events').delete().eq('id', id)
+      setClosingEvent(false)
+      navigate('/emergency')
+      return
+    }
+
+    if (closeReason === 'duplicate' && selectedDuplicate) {
+      const { data: admins } = await supabase.rpc('nearest_admin', { lat: event.latitude || 0, lng: event.longitude || 0 })
+      if (admins && admins.length > 0) {
+        for (const admin of admins) {
+          await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'duplicate_merge_request', title: 'Duplicate event merge request', body: '"' + event.title + '" was flagged as a duplicate. Please review and merge.', link: '/admin', read: false })
+        }
+      }
+      await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'duplicate', duplicate_event_id: selectedDuplicate }, { onConflict: 'event_id,voter_id' })
+      setClosingEvent(false)
+      setShowCloseModal(false)
+      alert('Admins have been notified to review and merge this event.')
+      return
+    }
+
+    setClosingEvent(false)
   }
 
   function toggleSkill(s) {
@@ -246,9 +322,9 @@ export default function EventDetail() {
               </>
             ) : (
               <>
-                <button onClick={() => messageUser(s.user_id)} style={menuBtnStyle}>
+                {s.user_id !== event.created_by && <button onClick={() => messageUser(s.user_id)} style={menuBtnStyle}>
                   <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128172;</span> Message
-                </button>
+                </button>}
                 <button onClick={() => reportUser(s.user_id)} style={menuBtnStyle}>
                   <span style={{ width: '1.2rem', textAlign: 'center', color: '#ff4444' }}>&#9873;</span> Report
                 </button>
@@ -567,8 +643,64 @@ export default function EventDetail() {
         </>
       )}
 
-      {isCoordinator && event.status === 'active' && (
-        <button onClick={closeEvent} style={{ display: 'block', width: '100%', marginTop: '1.5rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', fontWeight: 600, cursor: 'pointer' }}>Close Event</button>
+      {event.status === 'active' && (mySignup || event.created_by === user.id || profile?.role === 'admin') && (
+        <>
+          {closeVotes.length > 0 && !closeVotes.find(v => v.voter_id === user.id) && (
+            <div style={{ background: '#2a2518', border: '1px solid #5a4a2a', borderRadius: '8px', padding: '0.75rem', marginTop: '1rem', textAlign: 'center' }}>
+              <p style={{ color: '#ffaa44', fontSize: '0.85rem', margin: 0 }}>{closeVotes.length} participant{closeVotes.length !== 1 ? 's' : ''} voted to close this event</p>
+            </div>
+          )}
+          <button onClick={() => { setShowCloseModal(true); setCloseReason(null); setSelectedDuplicate(null); loadActiveEvents() }} style={{ display: 'block', width: '100%', marginTop: '1rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', fontWeight: 600, cursor: 'pointer' }}>Close Event</button>
+        </>
+      )}
+
+      {showCloseModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: '#1e1e1e', borderRadius: '14px', padding: '1.5rem', maxWidth: '380px', width: '100%', border: '1px solid #333' }}>
+            <h2 style={{ margin: '0 0 0.75rem', fontSize: '1.2rem', color: '#fff' }}>Close Event</h2>
+            <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>Why is this event being closed?</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+              <button onClick={() => setCloseReason('resolved')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'resolved' ? '2px solid #4ecca3' : '1px solid #444', background: closeReason === 'resolved' ? '#1a3a2a' : '#222', color: '#fff', cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#4ecca3' }}>Event Resolved</div>
+                <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '0.15rem' }}>The emergency is over. Close response and archive.</div>
+              </button>
+              <button onClick={() => setCloseReason('false_alarm')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'false_alarm' ? '2px solid #ffaa44' : '1px solid #444', background: closeReason === 'false_alarm' ? '#2a2518' : '#222', color: '#fff', cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ffaa44' }}>False Alarm</div>
+                <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '0.15rem' }}>{event.verified ? 'Verified events require admin approval.' : 'This event will be removed entirely.'}</div>
+              </button>
+              <button onClick={() => setCloseReason('duplicate')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'duplicate' ? '2px solid #66aaff' : '1px solid #444', background: closeReason === 'duplicate' ? '#1a2a4a' : '#222', color: '#fff', cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#66aaff' }}>Duplicate Event</div>
+                <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '0.15rem' }}>This is the same as another event. Admin will merge.</div>
+              </button>
+            </div>
+
+            {closeReason === 'duplicate' && (
+              <div style={{ marginBottom: '1rem' }}>
+                <p style={{ color: '#aaa', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Select the original event:</p>
+                {activeEvents.length === 0 ? (
+                  <p style={{ color: '#666', fontSize: '0.8rem' }}>No other active events found.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '200px', overflowY: 'auto' }}>
+                    {activeEvents.map(ae => (
+                      <button key={ae.id} onClick={() => setSelectedDuplicate(ae.id)} style={{ padding: '0.6rem', borderRadius: '8px', border: selectedDuplicate === ae.id ? '2px solid #66aaff' : '1px solid #444', background: selectedDuplicate === ae.id ? '#1a2a4a' : '#222', color: '#fff', cursor: 'pointer', textAlign: 'left', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: 600 }}>{ae.title}</span>
+                        {ae.event_type && <span style={{ color: '#888', marginLeft: '0.5rem', fontSize: '0.75rem' }}>{ae.event_type}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={() => setShowCloseModal(false)} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+              <button onClick={handleCloseEvent} disabled={closingEvent || !closeReason || (closeReason === 'duplicate' && !selectedDuplicate)} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: 'none', background: '#ff4444', color: '#fff', fontWeight: 700, cursor: 'pointer', opacity: closingEvent || !closeReason || (closeReason === 'duplicate' && !selectedDuplicate) ? 0.5 : 1 }}>
+                {closingEvent ? 'Closing...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
