@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { createNotification } from '../utils/notificationHelpers'
 
 const DISAPPEAR_STEPS = [
   { label: 'Off', mins: 0 },
@@ -45,13 +46,207 @@ export default function Messages() {
   const [convoSettings, setConvoSettings] = useState({})
   const [showArchived, setShowArchived] = useState(false)
 
+  // Phase 3: Help offers state
+  const [pendingOffers, setPendingOffers] = useState([])
+  const [processingOffer, setProcessingOffer] = useState(null)
+  const [myOutgoingOffers, setMyOutgoingOffers] = useState([])
+
   useEffect(() => { loadAll() }, [location.key])
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadConversations(), loadFolders(), loadAssignments(), loadBlocked(), loadPrefs(), loadConvoSettings()])
+    await Promise.all([loadConversations(), loadFolders(), loadAssignments(), loadBlocked(), loadPrefs(), loadConvoSettings(), loadPendingOffers(), loadMyOutgoingOffers()])
     setLoading(false)
   }
+
+  // =============================================
+  // Phase 3: Pending offers FOR the requester (Accept/Decline)
+  // =============================================
+
+  async function loadPendingOffers() {
+    const { data: myRequests } = await supabase
+      .from('help_requests')
+      .select('id, skill_needed, description, max_helpers')
+      .eq('requester_id', user.id)
+      .in('status', ['open', 'in_progress'])
+
+    if (!myRequests || myRequests.length === 0) {
+      setPendingOffers([])
+      return
+    }
+
+    const requestIds = myRequests.map(r => r.id)
+
+    const { data: matches } = await supabase
+      .from('skill_matches')
+      .select('id, request_id, helper_id, created_at')
+      .in('request_id', requestIds)
+      .is('accepted', null)
+
+    if (!matches || matches.length === 0) {
+      setPendingOffers([])
+      return
+    }
+
+    const { data: acceptedMatches } = await supabase
+      .from('skill_matches')
+      .select('request_id')
+      .in('request_id', requestIds)
+      .eq('accepted', true)
+
+    const acceptedCounts = {}
+    if (acceptedMatches) {
+      for (const m of acceptedMatches) {
+        acceptedCounts[m.request_id] = (acceptedCounts[m.request_id] || 0) + 1
+      }
+    }
+
+    const enriched = await Promise.all(matches.map(async (match) => {
+      const { data: helperProfile } = await supabase
+        .from('helper_profiles')
+        .select('display_name, is_hope_ambassador, created_at, avatar_url')
+        .eq('user_id', match.helper_id)
+        .maybeSingle()
+
+      const { count: vouchCount } = await supabase
+        .from('vouches')
+        .select('id', { count: 'exact', head: true })
+        .eq('vouchee_id', match.helper_id)
+
+      const request = myRequests.find(r => r.id === match.request_id)
+
+      return {
+        ...match,
+        helper_name: helperProfile?.display_name || 'A neighbor',
+        is_ambassador: helperProfile?.is_hope_ambassador || false,
+        member_since: helperProfile?.created_at || null,
+        avatar_url: helperProfile?.avatar_url || null,
+        vouch_count: vouchCount || 0,
+        skill_needed: request?.skill_needed || '',
+        request_description: request?.description || '',
+        max_helpers: request?.max_helpers,
+        accepted_count: acceptedCounts[match.request_id] || 0,
+      }
+    }))
+
+    setPendingOffers(enriched)
+  }
+
+  async function acceptOffer(offer) {
+    setProcessingOffer(offer.id)
+
+    await supabase
+      .from('skill_matches')
+      .update({ accepted: true })
+      .eq('id', offer.id)
+
+    const { data: convo } = await supabase
+      .from('conversations')
+      .insert({
+        request_id: offer.request_id,
+        helper_id: offer.helper_id,
+        requester_id: user.id,
+      })
+      .select()
+      .single()
+
+    if (convo) {
+      await supabase.from('chat_messages').insert({
+        conversation_id: convo.id,
+        sender_id: user.id,
+        body: `${offer.helper_name} has been accepted to help with: ${offer.skill_needed}`,
+      })
+    }
+
+    createNotification({
+      userId: offer.helper_id,
+      type: 'offer_accepted',
+      title: 'Your offer was accepted!',
+      body: `You've been accepted to help with: ${offer.skill_needed}`,
+      link: convo ? '/conversation/' + convo.id : '/tasks',
+    })
+
+    const newAcceptedCount = offer.accepted_count + 1
+    if (offer.max_helpers !== null && newAcceptedCount >= offer.max_helpers) {
+      await supabase
+        .from('help_requests')
+        .update({ status: 'in_progress' })
+        .eq('id', offer.request_id)
+    }
+
+    setProcessingOffer(null)
+    await loadPendingOffers()
+    await loadConversations()
+  }
+
+  async function declineOffer(offer) {
+    setProcessingOffer(offer.id)
+
+    await supabase
+      .from('skill_matches')
+      .delete()
+      .eq('id', offer.id)
+
+    createNotification({
+      userId: offer.helper_id,
+      type: 'offer_declined',
+      title: 'Help update',
+      body: 'The requester found help from someone else. Thank you for offering!',
+      link: '/skillshare',
+    })
+
+    setProcessingOffer(null)
+    await loadPendingOffers()
+  }
+
+  // =============================================
+  // Phase 3: Outgoing offers BY the helper (Withdraw)
+  // =============================================
+
+  async function loadMyOutgoingOffers() {
+    const { data: matches } = await supabase
+      .from('skill_matches')
+      .select('id, request_id, created_at')
+      .eq('helper_id', user.id)
+      .is('accepted', null)
+
+    if (!matches || matches.length === 0) {
+      setMyOutgoingOffers([])
+      return
+    }
+
+    const requestIds = matches.map(m => m.request_id)
+    const { data: requests } = await supabase
+      .from('help_requests')
+      .select('id, skill_needed, requester_id')
+      .in('id', requestIds)
+
+    const enriched = await Promise.all(matches.map(async (match) => {
+      const req = requests?.find(r => r.id === match.request_id)
+      if (!req) return null
+      const { data: p } = await supabase
+        .from('helper_profiles')
+        .select('display_name')
+        .eq('user_id', req.requester_id)
+        .maybeSingle()
+      return {
+        ...match,
+        skill_needed: req.skill_needed,
+        requester_name: p?.display_name || 'A neighbor',
+      }
+    }))
+
+    setMyOutgoingOffers(enriched.filter(Boolean))
+  }
+
+  async function withdrawOffer(matchId) {
+    await supabase.from('skill_matches').delete().eq('id', matchId)
+    await loadMyOutgoingOffers()
+  }
+
+  // =============================================
+  // Existing functions (unchanged)
+  // =============================================
 
   async function loadPrefs() {
     const { data } = await supabase.from('helper_profiles').select('disappear_default_mins, read_receipts_enabled, safety_checkins_enabled, default_help_message').eq('user_id', user.id).maybeSingle()
@@ -278,6 +473,34 @@ export default function Messages() {
   const toggleDot = (on) => ({ width: '40px', height: '22px', borderRadius: '11px', background: on ? '#4ecca3' : '#444', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', border: 'none', padding: 0, flexShrink: 0 })
   const toggleKnob = (on) => ({ position: 'absolute', top: '2px', left: on ? '20px' : '2px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' })
 
+  const offerCardStyle = {
+    background: '#1a2e26',
+    border: '1px solid #2d6a4f',
+    borderRadius: '12px',
+    padding: '1rem',
+    marginBottom: '0.75rem',
+  }
+  const offerBtnAccept = {
+    padding: '0.5rem 1.25rem',
+    borderRadius: '8px',
+    border: 'none',
+    background: '#4ecca3',
+    color: '#1a1a1a',
+    fontWeight: 700,
+    cursor: 'pointer',
+    fontSize: '0.85rem',
+  }
+  const offerBtnDecline = {
+    padding: '0.5rem 1.25rem',
+    borderRadius: '8px',
+    border: '1px solid #666',
+    background: 'none',
+    color: '#aaa',
+    fontWeight: 600,
+    cursor: 'pointer',
+    fontSize: '0.85rem',
+  }
+
   return (
     <div className="messages-page" onClick={() => { if (openMenu) setOpenMenu(null); if (showMuteMenu) setShowMuteMenu(null) }}>
       <div style={overlayStyle} onClick={() => setShowSidebar(false)} />
@@ -354,6 +577,87 @@ export default function Messages() {
         <button onClick={() => setShowSidebar(true)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '1.4rem', padding: '0.25rem' }} title="Settings">&#9881;</button>
       </div>
 
+      {/* ========== Help Offers for Requesters (Accept/Decline) ========== */}
+      {pendingOffers.length > 0 && (
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
+            🤝 Help Offers ({pendingOffers.length})
+          </div>
+          {pendingOffers.map(offer => (
+            <div key={offer.id} style={offerCardStyle}>
+              <div style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '0.5rem' }}>
+                For your request: <span style={{ color: '#4ecca3', fontWeight: 600 }}>{offer.skill_needed}</span>
+                {offer.max_helpers !== null && (
+                  <span style={{ marginLeft: '0.5rem', color: '#888' }}>
+                    ({offer.accepted_count}/{offer.max_helpers} accepted)
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+                <span style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem' }}>{offer.helper_name}</span>
+                {offer.is_ambassador && (
+                  <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
+                    Hope Ambassador
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.8rem', color: '#999', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                {offer.vouch_count > 0 && (
+                  <span>&#x1F91D; {offer.vouch_count} vouch{offer.vouch_count !== 1 ? 'es' : ''}</span>
+                )}
+                {offer.member_since && (
+                  <span>Member since {new Date(offer.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  style={offerBtnAccept}
+                  disabled={processingOffer === offer.id}
+                  onClick={() => acceptOffer(offer)}
+                >
+                  {processingOffer === offer.id ? 'Accepting...' : 'Accept'}
+                </button>
+                <button
+                  style={offerBtnDecline}
+                  disabled={processingOffer === offer.id}
+                  onClick={() => declineOffer(offer)}
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ========== Your Pending Offers (helper side) ========== */}
+      {myOutgoingOffers.length > 0 && (
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
+            ⏳ Your Pending Offers ({myOutgoingOffers.length})
+          </div>
+          {myOutgoingOffers.map(offer => (
+            <div key={offer.id} style={{ background: '#2a2518', border: '1px solid #5a4a2a', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem' }}>{offer.skill_needed}</div>
+                <div style={{ color: '#999', fontSize: '0.8rem' }}>
+                  For {offer.requester_name} &middot; Waiting for response
+                </div>
+              </div>
+              <button
+                onClick={() => { if (confirm('Withdraw your offer to help?')) withdrawOffer(offer.id) }}
+                style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid #666', background: 'none', color: '#aaa', fontSize: '0.8rem', cursor: 'pointer' }}
+              >
+                Withdraw
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
         <button style={tabStyle(activeFolder === 'unread')} onClick={() => setActiveFolder('unread')}>Unread</button>
         <button style={{ ...tabStyle(activeFolder === 'all'), outline: dropTarget === 'all' ? '2px solid #4ecca3' : 'none' }} onClick={() => setActiveFolder('all')} onDragOver={(e) => { e.preventDefault(); setDropTarget('all') }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), 'remove'); setDraggingConvo(null) }}>All</button>
@@ -366,7 +670,7 @@ export default function Messages() {
       </div>
 
       {loading && <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>Loading...</p>}
-      {!loading && sorted.length === 0 && (
+      {!loading && sorted.length === 0 && pendingOffers.length === 0 && myOutgoingOffers.length === 0 && (
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           <p style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{activeFolder === 'all' ? 'No messages yet' : activeFolder === 'archived' ? 'No archived messages' : 'No messages in this folder'}</p>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{activeFolder === 'all' ? 'When you help someone or someone helps you, your conversations will show up here.' : 'Tap the menu on a conversation to move it here.'}</p>

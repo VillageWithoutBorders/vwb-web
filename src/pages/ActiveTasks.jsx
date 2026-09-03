@@ -5,84 +5,210 @@ import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import VouchButton from '../components/VouchButton'
 
-const STATUS_FLOW = {
-  pending:     { label: 'Offered',     className: 'status-pending' },
-  accepted:    { label: 'Accepted',    className: 'status-accepted' },
-  in_progress: { label: 'In Progress', className: 'status-progress' },
-  completed:   { label: 'Completed',   className: 'status-completed' },
-  declined:    { label: 'Declined',    className: 'status-declined' },
-}
-
 export default function ActiveTasks() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
-  const [tab, setTab] = useState('helping')
-  const [matches, setMatches] = useState([])
+  const [tab, setTab] = useState('active')
+  const [myRequests, setMyRequests] = useState([])
+  const [helpingWith, setHelpingWith] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (user?.id) loadMatches()
-  }, [user?.id, tab])
+    if (user?.id) loadTasks()
+  }, [user?.id])
 
-  async function loadMatches() {
+  async function loadTasks() {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('skill_matches')
-      .select('id, accepted, declined, helper_id, requester_confirmed, helper_confirmed, completed_at, created_at, updated_at, help_requests (id, neighborhood, skill_needed, description, urgency, status, requester_id)')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Load matches error:', error)
-      setMatches([])
-    } else {
-      const filtered = (data || []).filter(m => {
-        if (tab === 'helping') return m.helper_id === user.id
-        return m.help_requests?.requester_id === user.id
-      })
-      setMatches(filtered)
-    }
+    await Promise.all([loadMyRequests(), loadHelpingWith()])
     setLoading(false)
   }
 
-  async function updateMatchStatus(matchId, newStatus) {
-    const { error } = await supabase
-      .from('skill_matches')
-      .update(newStatus === 'accepted' ? { accepted: true } : newStatus === 'declined' ? { declined: true } : { accepted: true })
-      .eq('id', matchId)
-    if (error) { console.error('Status update error:', error); return }
+  // =============================================
+  // Load requests I created + their accepted helpers
+  // =============================================
+  async function loadMyRequests() {
+    const { data: requests } = await supabase
+      .from('help_requests')
+      .select('id, skill_needed, description, urgency, neighborhood, status, max_helpers, archived_at, created_at')
+      .eq('requester_id', user.id)
+      .order('created_at', { ascending: false })
 
-    const match = matches.find(m => m.id === matchId)
-    if (newStatus === 'accepted' && match) { const otherUserId = match.helper_id === user.id ? match.help_requests?.requester_id : match.helper_id; const { data: cv } = await supabase.from('conversations').select('id').eq('request_id', match.help_requests?.id).maybeSingle(); createNotification({ userId: otherUserId, type: 'task_update', title: 'Your help request was accepted!', body: match.help_requests?.skill_needed || 'Someone accepted your request.', link: cv ? '/conversation/' + cv.id : '/tasks' }); } if (newStatus === 'accepted' && match?.help_requests?.id) {
-      await supabase.from('help_requests').update({ status: 'matched' }).eq('id', match.help_requests.id)
+    if (!requests || requests.length === 0) {
+      setMyRequests([])
+      return
     }
-    if (newStatus === 'in_progress' && match) { const otherUserId2 = match.helper_id === user.id ? match.help_requests?.requester_id : match.helper_id; const { data: cv2 } = await supabase.from('conversations').select('id').eq('request_id', match.help_requests?.id).maybeSingle(); createNotification({ userId: otherUserId2, type: 'task_update', title: 'Task is now in progress', body: match.help_requests?.skill_needed || 'A task you are part of is in progress.', link: cv2 ? '/conversation/' + cv2.id : '/tasks' }); } if (newStatus === 'in_progress' && match?.help_requests?.id) {
-      await supabase.from('help_requests').update({ status: 'in_progress' }).eq('id', match.help_requests.id)
+
+    const requestIds = requests.map(r => r.id)
+
+    // Get all accepted matches for these requests
+    const { data: matches } = await supabase
+      .from('skill_matches')
+      .select('id, request_id, helper_id, accepted, helper_completed, requester_completed, created_at')
+      .in('request_id', requestIds)
+      .eq('accepted', true)
+
+    // Enrich helpers with names
+    const helperIds = [...new Set((matches || []).map(m => m.helper_id))]
+    const helperProfiles = {}
+    for (const hid of helperIds) {
+      const { data: p } = await supabase
+        .from('helper_profiles')
+        .select('display_name, is_hope_ambassador')
+        .eq('user_id', hid)
+        .maybeSingle()
+      if (p) helperProfiles[hid] = p
     }
-    loadMatches()
+
+    const enriched = requests.map(req => {
+      const reqMatches = (matches || [])
+        .filter(m => m.request_id === req.id)
+        .map(m => ({
+          ...m,
+          helper_name: helperProfiles[m.helper_id]?.display_name || 'A neighbor',
+          is_ambassador: helperProfiles[m.helper_id]?.is_hope_ambassador || false,
+        }))
+
+      const allDone = reqMatches.length > 0 && reqMatches.every(m => m.helper_completed && m.requester_completed)
+
+      return { ...req, matches: reqMatches, allDone }
+    })
+
+    setMyRequests(enriched)
   }
 
-  async function confirmCompletion(matchId) {
-    const match = matches.find(m => m.id === matchId)
-    if (!match) return
-    const isHelper = match.helper_id === user.id
-    const field = isHelper ? 'helper_confirmed' : 'requester_confirmed'
-    const updates = { [field]: true }
-    const otherConfirmed = isHelper ? match.requester_confirmed : match.helper_confirmed
+  // =============================================
+  // Load requests I'm helping with (accepted matches)
+  // =============================================
+  async function loadHelpingWith() {
+    const { data: matches } = await supabase
+      .from('skill_matches')
+      .select('id, request_id, helper_id, accepted, helper_completed, requester_completed, created_at')
+      .eq('helper_id', user.id)
+      .eq('accepted', true)
 
-    if (otherConfirmed) {
-      updates.status = 'completed'
-      updates.completed_at = new Date().toISOString()
+    if (!matches || matches.length === 0) {
+      setHelpingWith([])
+      return
     }
 
-    const { error } = await supabase.from('skill_matches').update(updates).eq('id', matchId)
-    if (error) { console.error('Confirm error:', error); return }
+    const requestIds = matches.map(m => m.request_id)
+    const { data: requests } = await supabase
+      .from('help_requests')
+      .select('id, skill_needed, description, urgency, neighborhood, status, requester_id, archived_at, created_at')
+      .in('id', requestIds)
 
-    if (otherConfirmed && match.help_requests?.id) {
-      await supabase.from('help_requests').update({ status: 'completed' }).eq('id', match.help_requests.id)
-      const completedOther = isHelper ? match.help_requests?.requester_id : match.helper_id
-      const { data: cv3 } = await supabase.from('conversations').select('id').eq('request_id', match.help_requests?.id).maybeSingle(); createNotification({ userId: completedOther, type: 'task_complete', title: 'Task completed!', body: (match.help_requests?.skill_needed || 'A task') + ' has been marked complete.', link: cv3 ? '/conversation/' + cv3.id : '/tasks' })
+    const requesterIds = [...new Set((requests || []).map(r => r.requester_id))]
+    const requesterProfiles = {}
+    for (const rid of requesterIds) {
+      const { data: p } = await supabase
+        .from('helper_profiles')
+        .select('display_name')
+        .eq('user_id', rid)
+        .maybeSingle()
+      if (p) requesterProfiles[rid] = p
     }
-    loadMatches()
+
+    const enriched = matches.map(match => {
+      const req = (requests || []).find(r => r.id === match.request_id)
+      if (!req) return null
+      return {
+        ...match,
+        request: req,
+        requester_name: requesterProfiles[req.requester_id]?.display_name || 'A neighbor',
+        isDone: match.helper_completed && match.requester_completed,
+      }
+    }).filter(Boolean)
+
+    setHelpingWith(enriched)
+  }
+
+  // =============================================
+  // Mark my part complete
+  // =============================================
+  async function markMyPartComplete(matchId, isRequester, match) {
+    const field = isRequester ? 'requester_completed' : 'helper_completed'
+    const otherDone = isRequester ? match.helper_completed : match.requester_completed
+
+    await supabase
+      .from('skill_matches')
+      .update({ [field]: true })
+      .eq('id', matchId)
+
+    // Notify the other person
+    const otherUserId = isRequester ? match.helper_id : match.request?.requester_id
+    if (otherUserId) {
+      createNotification({
+        userId: otherUserId,
+        type: 'task_update',
+        title: otherDone ? 'Task completed!' : 'Your partner marked their part done',
+        body: otherDone
+          ? 'Both sides confirmed. This task is complete!'
+          : 'Tap "Mark my part complete" when you\'re done too.',
+        link: '/tasks',
+      })
+    }
+
+    // If both sides are now done, check if ALL matches on this request are done
+    if (otherDone) {
+      const requestId = match.request_id || match.request?.id
+      if (requestId) {
+        const { data: allMatches } = await supabase
+          .from('skill_matches')
+          .select('id, helper_completed, requester_completed')
+          .eq('request_id', requestId)
+          .eq('accepted', true)
+
+        // This match is now done (we just set our field), so check all others
+        const allComplete = (allMatches || []).every(m =>
+          m.id === matchId ? true : (m.helper_completed && m.requester_completed)
+        )
+
+        if (allComplete) {
+          await supabase
+            .from('help_requests')
+            .update({ status: 'completed' })
+            .eq('id', requestId)
+        }
+      }
+    }
+
+    await loadTasks()
+  }
+
+  // =============================================
+  // Delete request (soft delete via archived_at)
+  // =============================================
+  async function deleteRequest(requestId) {
+    if (!confirm('Archive this request? It will move to your Archived tab.')) return
+    await supabase
+      .from('help_requests')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', requestId)
+    await loadTasks()
+  }
+
+  // =============================================
+  // Message helper/requester
+  // =============================================
+  async function openConversation(requestId, helperId, requesterId) {
+    const { data: existing } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('request_id', requestId)
+      .eq('helper_id', helperId)
+      .eq('requester_id', requesterId)
+      .maybeSingle()
+
+    if (existing) {
+      navigate('/conversation/' + existing.id)
+    } else {
+      const { data: newConvo } = await supabase
+        .from('conversations')
+        .insert({ request_id: requestId, helper_id: helperId, requester_id: requesterId })
+        .select()
+        .single()
+      if (newConvo) navigate('/conversation/' + newConvo.id)
+    }
   }
 
   function timeAgo(dateStr) {
@@ -95,69 +221,215 @@ export default function ActiveTasks() {
     return Math.floor(hrs / 24) + 'd ago'
   }
 
-  const isHelper = tab === 'helping'
+  const URGENCY_LABELS = {
+    now: 'Right now',
+    today: 'Today',
+    this_week: 'This week',
+    flexible: 'Flexible',
+  }
 
+  // =============================================
+  // Filter by Active vs Archived
+  // =============================================
+  const activeRequests = myRequests.filter(r => !r.archived_at && r.status !== 'completed')
+  const activeHelping = helpingWith.filter(h => !h.isDone && !h.request?.archived_at)
+
+  const archivedRequests = myRequests.filter(r => r.archived_at || r.status === 'completed')
+  const archivedHelping = helpingWith.filter(h => h.isDone || h.request?.archived_at)
+
+  const showActive = tab === 'active'
+  const currentRequests = showActive ? activeRequests : archivedRequests
+  const currentHelping = showActive ? activeHelping : archivedHelping
+  const isEmpty = currentRequests.length === 0 && currentHelping.length === 0
+
+  // =============================================
+  // Render
+  // =============================================
   return (
     <div className="tasks-page">
-      <div className="tasks-header"><h1>Active Tasks</h1></div>
-      <div className="tasks-tabs">
-        <button className={'tasks-tab' + (tab === 'helping' ? ' tasks-tab-active' : '')} onClick={() => setTab('helping')}>Helping others</button>
-        <button className={'tasks-tab' + (tab === 'requests' ? ' tasks-tab-active' : '')} onClick={() => setTab('requests')}>My requests</button>
+      <div className="tasks-header"><h1>Tasks</h1></div>
+
+      <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
+        <button className={'tasks-tab' + (tab === 'active' ? ' tasks-tab-active' : '')} onClick={() => setTab('active')}>
+          Active
+        </button>
+        <button className={'tasks-tab' + (tab === 'archived' ? ' tasks-tab-active' : '')} onClick={() => setTab('archived')}>
+          Archived
+          {(archivedRequests.length + archivedHelping.length) > 0 && (
+            <span style={{ marginLeft: '0.35rem', fontSize: '0.75rem', opacity: 0.7 }}>
+              ({archivedRequests.length + archivedHelping.length})
+            </span>
+          )}
+        </button>
       </div>
 
       {loading ? (
         <div className="feed-loading"><div className="feed-loading-spinner" /><p>Loading tasks...</p></div>
-      ) : matches.length === 0 ? (
+      ) : isEmpty ? (
         <div className="feed-empty">
-          <span className="feed-empty-icon">{isHelper ? '\uD83E\uDD32' : '\uD83D\uDCCB'}</span>
-          <h2>{isHelper ? 'No active help tasks' : 'No one has responded yet'}</h2>
-          <p>{isHelper ? 'Check the SkillShare feed for requests near you.' : 'Your requests are visible to nearby helpers. Hang tight.'}</p>
+          <span className="feed-empty-icon">{showActive ? '🌿' : '📋'}</span>
+          <h2>{showActive ? 'No active tasks' : 'Nothing archived yet'}</h2>
+          <p>{showActive ? 'Check the SkillShare feed for requests near you, or post your own.' : 'Completed and archived tasks will show up here.'}</p>
+          {showActive && (
+            <button className="btn btn-primary" onClick={() => navigate('/skillshare')}>Go to SkillShare</button>
+          )}
         </div>
       ) : (
         <div className="tasks-list">
-          {matches.map(match => {
-            const req = match.help_requests
-            if (!req) return null
-            const status = STATUS_FLOW[match.status] || STATUS_FLOW.pending
-            const isCompleted = match.status === 'completed'
-            const isPending = match.status === 'pending'
-            const isAccepted = match.status === 'accepted'
-            const isInProgress = match.status === 'in_progress'
-            const myConfirmed = isHelper ? match.helper_confirmed : match.requester_confirmed
-            const otherConfirmed = isHelper ? match.requester_confirmed : match.helper_confirmed
-            const otherUserId = isHelper ? req.requester_id : match.helper_id
 
-            return (
-              <div key={match.id} className={'task-card task-card-' + match.status}>
-                <div className="task-card-top">
-                  <span className={'task-status-badge ' + status.className}>{status.label}</span>
-                  <span className="feed-card-time">{timeAgo(match.created_at)}</span>
-                </div>
-                <div className="task-card-skill">{req.skill_needed}</div>
-                {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
-                <p className="task-card-desc">{req.description}</p>
-
-                {isInProgress && (
-                  <div className="task-confirm-section">
-                    <div className="task-confirm-status"><span className={'task-confirm-dot' + (myConfirmed ? ' confirmed' : '')} /><span>{myConfirmed ? 'You confirmed' : "You haven't confirmed"}</span></div>
-                    <div className="task-confirm-status"><span className={'task-confirm-dot' + (otherConfirmed ? ' confirmed' : '')} /><span>{otherConfirmed ? (isHelper ? 'Requester' : 'Helper') + ' confirmed' : 'Waiting on ' + (isHelper ? 'requester' : 'helper')}</span></div>
-                  </div>
-                )}
-
-                {isCompleted && <div className="task-completed-banner">Task completed {match.completed_at ? timeAgo(match.completed_at) : ''}</div>}
-
-                <div className="task-card-actions">
-                  {!isHelper && isPending && (
-                    <><button className="btn btn-primary btn-sm" onClick={() => updateMatchStatus(match.id, 'accepted')}>Accept help</button><button className="btn btn-outline btn-sm" onClick={() => updateMatchStatus(match.id, 'declined')}>Decline</button></>
-                  )}
-                  {isAccepted && <button className="btn btn-primary btn-sm" onClick={() => updateMatchStatus(match.id, 'in_progress')}>Mark in progress</button>}
-                  {isInProgress && !myConfirmed && <button className="btn btn-primary btn-sm" onClick={() => confirmCompletion(match.id)}>Confirm done</button>}
-                  {!isCompleted && <button className="btn btn-outline btn-sm" onClick={() => { supabase.from('conversations').select('id').eq('request_id', match.help_requests?.id).eq('helper_id', tab === 'helping' ? user.id : match.helper_id).maybeSingle().then(async ({ data }) => { if (data) { navigate('/conversation/' + data.id) } else { const { data: newConvo } = await supabase.from('conversations').insert({ request_id: match.help_requests?.id, helper_id: tab === 'helping' ? user.id : match.helper_id, requester_id: tab === 'helping' ? match.help_requests?.requester_id : user.id }).select().single(); if (newConvo) navigate('/conversation/' + newConvo.id) } }) }}>Message</button>}
-                  {isCompleted && otherUserId && <VouchButton userId={otherUserId} size="md" showCount={true} />}
-                </div>
+          {/* ========== Requests I Made ========== */}
+          {currentRequests.length > 0 && (
+            <>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: '0.25rem' }}>
+                📋 Your Requests
               </div>
-            )
-          })}
+              {currentRequests.map(req => (
+                <div key={req.id} className="task-card" style={{ borderLeft: '3px solid #2d6a4f' }}>
+                  <div className="task-card-top">
+                    <span className={'urgency-badge urgency-' + req.urgency}>{URGENCY_LABELS[req.urgency] || 'Flexible'}</span>
+                    <span className="feed-card-time">{timeAgo(req.created_at)}</span>
+                  </div>
+
+                  <div className="task-card-skill">{req.skill_needed}</div>
+                  {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
+                  <p className="task-card-desc">{req.description}</p>
+
+                  {/* Helper count */}
+                  <div style={{ fontSize: '0.8rem', color: '#aaa', margin: '0.5rem 0' }}>
+                    {req.matches.length === 0
+                      ? 'No helpers accepted yet'
+                      : `${req.matches.length} helper${req.matches.length !== 1 ? 's' : ''} accepted`
+                    }
+                    {req.max_helpers !== null && req.matches.length > 0 && (
+                      <span style={{ color: '#888' }}> (of {req.max_helpers})</span>
+                    )}
+                  </div>
+
+                  {/* Accepted helpers list */}
+                  {req.matches.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      {req.matches.map(match => {
+                        const bothDone = match.helper_completed && match.requester_completed
+                        return (
+                          <div key={match.id} style={{ background: bothDone ? '#1a2e26' : '#222', border: '1px solid ' + (bothDone ? '#2d6a4f' : '#333'), borderRadius: '8px', padding: '0.6rem 0.75rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.35rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <span style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>{match.helper_name}</span>
+                                {match.is_ambassador && (
+                                  <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>HA</span>
+                                )}
+                              </div>
+                              {bothDone ? (
+                                <span style={{ fontSize: '0.75rem', color: '#4ecca3', fontWeight: 600 }}>✅ Complete</span>
+                              ) : (
+                                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.7rem', color: '#999' }}>
+                                  <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
+                                  <span>{match.helper_completed ? 'Helper done' : 'Helper working'}</span>
+                                  <span style={{ margin: '0 0.15rem' }}>&middot;</span>
+                                  <span className={'task-confirm-dot' + (match.requester_completed ? ' confirmed' : '')} />
+                                  <span>{match.requester_completed ? 'You confirmed' : 'You pending'}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {!bothDone && (
+                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                                {!match.requester_completed && (
+                                  <button className="btn btn-primary btn-sm" onClick={() => markMyPartComplete(match.id, true, match)}>
+                                    Mark my part complete
+                                  </button>
+                                )}
+                                <button className="btn btn-outline btn-sm" onClick={() => openConversation(req.id, match.helper_id, user.id)}>
+                                  Message
+                                </button>
+                              </div>
+                            )}
+
+                            {bothDone && (
+                              <div style={{ marginTop: '0.5rem' }}>
+                                <VouchButton userId={match.helper_id} size="sm" showCount={true} />
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Delete / archive request */}
+                  {!req.archived_at && (
+                    <button
+                      className="btn btn-outline btn-sm"
+                      style={{ color: '#ff6666', borderColor: '#ff6666', marginTop: '0.25rem' }}
+                      onClick={() => deleteRequest(req.id)}
+                    >
+                      Archive request
+                    </button>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* ========== Requests I'm Helping With ========== */}
+          {currentHelping.length > 0 && (
+            <>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: currentRequests.length > 0 ? '1.25rem' : '0.25rem' }}>
+                🤝 Helping Others
+              </div>
+              {currentHelping.map(match => {
+                const req = match.request
+                const bothDone = match.helper_completed && match.requester_completed
+                return (
+                  <div key={match.id} className="task-card" style={{ borderLeft: '3px solid #b8860b' }}>
+                    <div className="task-card-top">
+                      <span className={'urgency-badge urgency-' + req.urgency}>{URGENCY_LABELS[req.urgency] || 'Flexible'}</span>
+                      <span className="feed-card-time">{timeAgo(match.created_at)}</span>
+                    </div>
+
+                    <div className="task-card-skill">{req.skill_needed}</div>
+                    {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
+                    <div style={{ fontSize: '0.8rem', color: '#999', marginBottom: '0.25rem' }}>
+                      Requested by {match.requester_name}
+                    </div>
+                    <p className="task-card-desc">{req.description}</p>
+
+                    {!bothDone && (
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.75rem', color: '#999', margin: '0.5rem 0' }}>
+                        <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
+                        <span>{match.helper_completed ? 'You confirmed' : 'You pending'}</span>
+                        <span style={{ margin: '0 0.15rem' }}>&middot;</span>
+                        <span className={'task-confirm-dot' + (match.requester_completed ? ' confirmed' : '')} />
+                        <span>{match.requester_completed ? 'Requester done' : 'Requester pending'}</span>
+                      </div>
+                    )}
+
+                    {bothDone && (
+                      <div style={{ fontSize: '0.8rem', color: '#4ecca3', fontWeight: 600, margin: '0.5rem 0' }}>
+                        ✅ Complete
+                      </div>
+                    )}
+
+                    <div className="task-card-actions">
+                      {!bothDone && !match.helper_completed && (
+                        <button className="btn btn-primary btn-sm" onClick={() => markMyPartComplete(match.id, false, match)}>
+                          Mark my part complete
+                        </button>
+                      )}
+                      {!bothDone && (
+                        <button className="btn btn-outline btn-sm" onClick={() => openConversation(req.id, user.id, req.requester_id)}>
+                          Message
+                        </button>
+                      )}
+                      {bothDone && (
+                        <VouchButton userId={req.requester_id} size="md" showCount={true} />
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </>
+          )}
         </div>
       )}
     </div>

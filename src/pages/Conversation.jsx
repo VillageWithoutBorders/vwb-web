@@ -17,13 +17,22 @@ export default function Conversation() {
   const [otherName, setOtherName] = useState('Neighbor')
   const [request, setRequest] = useState(null)
   const bottomRef = useRef(null)
-  const pollRef = useRef(null)
+    const pollRef = useRef(null)
+    const convoRef = useRef(null)
   const [selectedMessage, setSelectedMessage] = useState(null)
   
-  useEffect(() => {
-    loadConversation()
-    return () => { if (pollRef.current) clearInterval(pollRef.current) }
-  }, [id])
+    useEffect(() => {
+        loadConversation()
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current)
+            // Mark as read no matter how the user leaves
+            const c = convoRef.current
+            if (c) {
+                const readCol = c.helper_id === user.id ? 'last_read_helper' : 'last_read_requester'
+                supabase.from('conversations').update({ [readCol]: new Date().toISOString() }).eq('id', c.id)
+            }
+        }
+    }, [id])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -34,7 +43,8 @@ export default function Conversation() {
     const { data: c } = await supabase
       .from('conversations').select('*').eq('id', id).single()
     if (!c) { setLoading(false); return }
-    setConvo(c)
+      setConvo(c)
+    convoRef.current = c
     const readCol = c.helper_id === user.id ? "last_read_helper" : "last_read_requester"
     supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", c.id)
 
