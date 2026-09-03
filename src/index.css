@@ -13,16 +13,16 @@
 :root {
   --green: #1D9E75;
   --green-dark: #2d6a4f;
-  --green-light: #e8f5ef;
-  --text: #1a1a1a;
-  --text-secondary: #555;
-  --bg: #f8f9fa;
-  --white: #fff;
-  --border: #ddd;
+  --green-light: #1a332a;
+  --text: #e8e8e8;
+  --text-secondary: #aaa;
+  --bg: #121212;
+  --white: #1e1e1e;
+  --border: #333;
   --error: #c0392b;
   --success: #1D9E75;
   --radius: 10px;
-  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
   --header-height: 52px;
   --tab-height: 60px;
 }
