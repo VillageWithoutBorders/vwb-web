@@ -2084,3 +2084,6 @@ a:focus:not(:focus-visible) {
   color: #b0b0b0;
   margin-top: 0.25rem;
 }
+.feed-sticky { position: sticky; top: 0; z-index: 100; background: var(--bg); padding-bottom: 0.5rem; }
+.feed-scroll { flex: 1; overflow-y: auto; -ms-overflow-style: none; scrollbar-width: none; }
+.feed-scroll::-webkit-scrollbar { display: none; }

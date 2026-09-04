@@ -73,7 +73,7 @@ export default function EventDetail() {
       setMySignup(withNames.find(s => s.user_id === user.id) || null)
     }
 
-    const { data: cats } = await supabase.from('skill_categories').select('title').order('sort_order')
+    const { data: cats } = await supabase.from('skill_categories').select('title').order('title')
     if (cats) setSkillCats(cats.map(c => c.title))
 
     const { data: cins } = await supabase.from('event_check_ins').select('*').eq('event_id', id).order('created_at', { ascending: false })

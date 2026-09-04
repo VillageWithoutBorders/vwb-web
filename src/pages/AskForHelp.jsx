@@ -40,7 +40,7 @@ export default function AskForHelp() {
                 .order('sort_order')
 
             if (data) {
-                setSkills(data.map((s) => s.name))
+                setSkills(data.map((s) => s.title))
             }
         }
         loadSkills()

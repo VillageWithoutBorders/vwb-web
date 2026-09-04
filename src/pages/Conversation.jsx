@@ -21,6 +21,7 @@ export default function Conversation() {
   const [otherAvatar, setOtherAvatar] = useState(null)
   const [otherUserId, setOtherUserId] = useState(null)
   const [myAvatar, setMyAvatar] = useState(null)
+  const [showSettings, setShowSettings] = useState(false)
   const [request, setRequest] = useState(null)
   const bottomRef = useRef(null)
     const pollRef = useRef(null)
@@ -134,6 +135,7 @@ export default function Conversation() {
           <h1>{otherName}</h1>
           {request && <p className="convo-context">{request.skill_needed}</p>}
         </div>
+        <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
 
 
 
@@ -198,6 +200,34 @@ export default function Conversation() {
           onClose={() => { setSelectedMessage(null); loadMessages() }}
         />
       )}
+
+      {showSettings && <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />}
+      <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: '#1a1a1a', borderLeft: '1px solid #333', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Chat Settings</h2>
+          <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#222', borderRadius: '10px', marginBottom: '1.25rem', cursor: 'pointer' }} onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }}>
+          <AvatarDisplay url={otherAvatar} userId={otherUserId} size={44} />
+          <div>
+            <div style={{ fontWeight: 700, color: '#fff' }}>{otherName}</div>
+            <div style={{ color: '#4ecca3', fontSize: '0.8rem' }}>View profile</div>
+          </div>
+        </div>
+
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Actions</div>
+
+        <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+          <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128100;</span> View Profile
+        </button>
+        <button onClick={async () => { if (!confirm('Block ' + otherName + '?')) return; await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: otherUserId }); setShowSettings(false); alert('User blocked.') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+          <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128683;</span> Block User
+        </button>
+        <button onClick={async () => { await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: otherUserId, alert_type: 'flag', description: 'Reported from conversation' }); setShowSettings(false); alert('Report submitted. Thank you for keeping the community safe.') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+          <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9873;</span> Report User
+        </button>
+      </div>
     </div>
   )
 }

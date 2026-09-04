@@ -15,6 +15,9 @@ export default function Campfire() {
   const bottomRef = useRef(null)
   const [myAvatar, setMyAvatar] = useState(null)
   const pollRef = useRef(null)
+  const [showSettings, setShowSettings] = useState(false)
+  const [campfireMuted, setCampfireMuted] = useState(localStorage.getItem('vwb_campfire_muted') === 'true')
+  const [reportingMsg, setReportingMsg] = useState(null)
 
   const hasAccess = profile?.is_hope_ambassador || profile?.role === 'admin'
 
@@ -30,6 +33,30 @@ export default function Campfire() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+
+  function toggleMute() {
+    const next = !campfireMuted
+    setCampfireMuted(next)
+    localStorage.setItem('vwb_campfire_muted', String(next))
+  }
+
+  async function leaveCampfire() {
+    if (!confirm('Leave the Campfire? You can rejoin anytime from the Community page.')) return
+    navigate('/')
+  }
+
+  async function reportMessage(msg) {
+    const info = names[msg.user_id] || { name: 'Unknown' }
+    await supabase.from('safety_alerts').insert({
+      reporter_id: user.id,
+      reported_user_id: msg.user_id,
+      alert_type: 'flag',
+      description: 'Reported Campfire message from ' + info.name + ': "' + (msg.body.length > 100 ? msg.body.slice(0, 100) + '...' : msg.body) + '"'
+    })
+    setReportingMsg(null)
+    alert('Report submitted. An admin will review this message.')
+  }
 
   async function loadMessages() {
     const { data } = await supabase.from('campfire_messages').select('*').order('created_at', { ascending: true }).limit(200)
@@ -90,6 +117,7 @@ export default function Campfire() {
           </h1>
           <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>Ambassadors and admins</p>
         </div>
+        <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
       </div>
 
       <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -145,6 +173,49 @@ export default function Campfire() {
         >
           Send
         </button>
+      </div>
+
+      {showSettings && <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />}
+      <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: '#1a1a1a', borderLeft: '1px solid #333', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Campfire Settings</h2>
+          <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+        </div>
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
+        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>The Campfire is a group chat for Hope Ambassadors and admins. Conversations here are visible to all members with access.</p>
+
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid #2a2a2a' }}>
+          <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{campfireMuted ? 'Muted' : 'Notifications on'}</span>
+          <button onClick={toggleMute} style={{ width: '40px', height: '22px', borderRadius: '11px', background: campfireMuted ? '#444' : '#4ecca3', position: 'relative', cursor: 'pointer', border: 'none', padding: 0 }}>
+            <span style={{ position: 'absolute', top: '2px', left: campfireMuted ? '2px' : '20px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+          </button>
+        </div>
+
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Actions</div>
+        <button onClick={leaveCampfire} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+          &#128682; Leave Campfire
+        </button>
+
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Members ({Object.keys(names).length})</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+          {Object.entries(names).map(([uid, info]) => (
+            <div key={uid} onClick={() => { setShowSettings(false); navigate('/u/' + uid) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: '#222', cursor: 'pointer' }}>
+              <AvatarDisplay url={info.avatar} userId={uid} size={32} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                  <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>{info.name}</span>
+                  {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
+                  {info.ambassador && info.role !== 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: '#888' }}>
+                  {info.joined && <span>Joined {new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>}
+                  <span style={{ color: info.score > 0 ? '#4ecca3' : info.score < 0 ? '#ff6666' : '#888' }}>{info.score > 0 ? '+' : ''}{info.score} rep</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
