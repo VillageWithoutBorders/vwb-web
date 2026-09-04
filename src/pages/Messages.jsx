@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
+import AvatarDisplay from '../components/AvatarDisplay'
 
 const DISAPPEAR_STEPS = [
   { label: 'Off', mins: 0 },
@@ -375,11 +376,11 @@ export default function Messages() {
     if (data) {
       const withNames = await Promise.all(data.map(async (c) => {
         const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
-        const { data: p } = await supabase.from('helper_profiles').select('display_name').eq('user_id', otherId).maybeSingle()
+        const { data: p } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
         const { data: lastMsg } = await supabase.from('chat_messages').select('body, created_at').eq('conversation_id', c.id).is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
         const lastRead = c.helper_id === user.id ? c.last_read_helper : c.last_read_requester
         const hasUnread = lastMsg && (!lastRead || new Date(lastMsg.created_at) > new Date(lastRead))
-        return { ...c, otherId, otherName: p?.display_name || 'Neighbor', lastMessage: lastMsg?.body || null, lastMessageAt: lastMsg?.created_at || c.created_at, hasUnread }
+        return { ...c, otherId, otherName: p?.display_name || 'Neighbor', otherAvatar: p?.avatar_url || null, lastMessage: lastMsg?.body || null, lastMessageAt: lastMsg?.created_at || c.created_at, hasUnread }
       }))
       withNames.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))
       setConvos(withNames)
@@ -581,7 +582,7 @@ export default function Messages() {
       {pendingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-            Ã°Å¸Â¤Â Help Offers ({pendingOffers.length})
+            ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Help Offers ({pendingOffers.length})
           </div>
           {pendingOffers.map(offer => (
             <div key={offer.id} style={offerCardStyle}>
@@ -595,7 +596,7 @@ export default function Messages() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-                <span onClick={(e) => { e.stopPropagation(); navigate('/u/' + offer.helper_id) }} style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{offer.helper_name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={offer.avatar_url} userId={offer.helper_id} size={32} /><span onClick={(e) => { e.stopPropagation(); navigate('/u/' + offer.helper_id) }} style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{offer.helper_name}</span></div>
                 {offer.is_ambassador && (
                   <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
                     Hope Ambassador
@@ -637,7 +638,7 @@ export default function Messages() {
       {myOutgoingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-            Ã¢ÂÂ³ Your Pending Offers ({myOutgoingOffers.length})
+            ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³ Your Pending Offers ({myOutgoingOffers.length})
           </div>
           {myOutgoingOffers.map(offer => (
             <div key={offer.id} style={{ background: '#2a2518', border: '1px solid #5a4a2a', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -700,7 +701,9 @@ export default function Messages() {
         const muted = isMuted(c.id)
         return (
         <div key={c.id} className="message-card" style={{ position: 'relative', cursor: 'grab', opacity: draggingConvo === c.id ? 0.5 : 1, borderLeft: isPinned ? '3px solid #4ecca3' : 'none' }} draggable onDragStart={(e) => { setDraggingConvo(c.id); e.dataTransfer.setData('text/plain', c.id) }} onDragEnd={() => { setDraggingConvo(null); setDropTarget(null) }}>
-          <div onClick={() => { setConvos(prev => prev.map(cv => cv.id === c.id ? { ...cv, hasUnread: false } : cv)); navigate('/conversation/' + c.id) }} style={{ cursor: 'pointer', paddingRight: '2rem' }}>
+          <div onClick={() => { setConvos(prev => prev.map(cv => cv.id === c.id ? { ...cv, hasUnread: false } : cv)); navigate('/conversation/' + c.id) }} style={{ cursor: 'pointer', paddingRight: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <AvatarDisplay url={c.otherAvatar} userId={c.otherId} size={40} />
+            <div style={{ flex: 1, minWidth: 0 }}>
             <div className="message-card-header">
               <span className="message-card-name" style={{ fontWeight: c.hasUnread ? 800 : 600 }}>
                 {isPinned && <span style={{ marginRight: '4px' }} title="Pinned">&#128204;</span>}
@@ -712,6 +715,7 @@ export default function Messages() {
             </div>
             {c.help_requests && (<p className="message-card-skill">{c.help_requests.skill_needed} in {c.help_requests.neighborhood}</p>)}
             {c.lastMessage && (<p className="message-card-preview" style={{ color: c.hasUnread ? "#ddd" : undefined, fontWeight: c.hasUnread ? 600 : 400 }}>{c.lastMessage.length > 80 ? c.lastMessage.slice(0, 80) + '...' : c.lastMessage}</p>)}
+            </div>
           </div>
 
           <button onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === c.id ? null : c.id); setShowMuteMenu(null) }}

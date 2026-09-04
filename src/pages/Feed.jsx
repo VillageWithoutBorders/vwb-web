@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { getCurrentPosition } from '../utils/location'
 import VouchButton from '../components/VouchButton'
 import { createNotification } from '../utils/notificationHelpers'
+import AvatarDisplay from '../components/AvatarDisplay'
 
 async function enrichRequests(reqs) {
     const userIds = [...new Set(reqs.map(r => r.requester_id).filter(Boolean))]
@@ -318,7 +319,7 @@ export default function Feed() {
 
                                     {/* Helper count status */}
                                     <div style={{ fontSize: '0.75rem', color: isFull ? '#2d6a4f' : '#888', marginTop: '0.25rem' }}>
-                                        {isFull ? 'âœ… ' : 'ðŸ¤ '}{helperStatus}
+                                        {isFull ? 'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ ' : 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â '}{helperStatus}
                                     </div>
 
                                     <p className={'feed-card-desc' + (isExpanded ? '' : ' feed-card-desc-clamp')}>{req.description}</p>
@@ -332,12 +333,12 @@ export default function Feed() {
                                             )}
                                             {req.requester_id !== user.id && isPending && (
                                                 <span style={{ fontSize: '0.8rem', color: '#b8860b', fontWeight: 600 }}>
-                                                    â³ Waiting for response
+                                                    ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€šÃ‚Â³ Waiting for response
                                                 </span>
                                             )}
                                             {req.requester_id !== user.id && isFull && !isPending && (
                                                 <span style={{ fontSize: '0.8rem', color: '#2d6a4f', fontWeight: 600 }}>
-                                                    âœ… Enough helpers found
+                                                    ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Enough helpers found
                                                 </span>
                                             )}
                                             {req.requester_id && <VouchButton userId={req.requester_id} size="md" showCount={false} />}

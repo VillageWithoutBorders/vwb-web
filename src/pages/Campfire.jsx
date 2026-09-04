@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import AvatarDisplay from '../components/AvatarDisplay'
 
 export default function Campfire() {
   const { user, profile } = useAuth()
@@ -12,11 +13,13 @@ export default function Campfire() {
   const [loading, setLoading] = useState(true)
   const [names, setNames] = useState({})
   const bottomRef = useRef(null)
+  const [myAvatar, setMyAvatar] = useState(null)
   const pollRef = useRef(null)
 
   const hasAccess = profile?.is_hope_ambassador || profile?.role === 'admin'
 
   useEffect(() => {
+      supabase.from('helper_profiles').select('avatar_url').eq('user_id', user.id).maybeSingle().then(({ data }) => { if (data) setMyAvatar(data.avatar_url || null) })
     if (hasAccess) {
       loadMessages()
       pollRef.current = setInterval(loadMessages, 5000)
@@ -37,8 +40,8 @@ export default function Campfire() {
       if (unknownIds.length > 0) {
         const newNames = { ...names }
         await Promise.all(unknownIds.map(async (uid) => {
-          const { data: p } = await supabase.from('helper_profiles').select('display_name, role, is_hope_ambassador').eq('user_id', uid).maybeSingle()
-          newNames[uid] = { name: p?.display_name || 'Neighbor', role: p?.role, ambassador: p?.is_hope_ambassador }
+          const { data: p } = await supabase.from('helper_profiles').select('display_name, role, is_hope_ambassador, avatar_url').eq('user_id', uid).maybeSingle()
+          newNames[uid] = { name: p?.display_name || 'Neighbor', role: p?.role, ambassador: p?.is_hope_ambassador, avatar: p?.avatar_url || null }
         }))
         setNames(newNames)
       }
@@ -79,7 +82,7 @@ export default function Campfire() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 70px)', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #333', background: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid #333', background: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -89,7 +92,7 @@ export default function Campfire() {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
 
         {!loading && messages.length === 0 && (
@@ -103,7 +106,9 @@ export default function Campfire() {
           const isMe = msg.user_id === user.id
           const info = names[msg.user_id] || { name: 'Neighbor' }
           return (
-            <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
+            <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%', display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+              {!isMe && <AvatarDisplay url={info.avatar} userId={msg.user_id} size={28} />}
+              <div>
               {!isMe && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.15rem' }}>
                   <span onClick={() => navigate('/u/' + msg.user_id)} style={{ fontSize: '0.75rem', fontWeight: 700, color: info.role === 'admin' ? '#66aaff' : '#4ecca3', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{info.name}</span>
@@ -115,6 +120,8 @@ export default function Campfire() {
                 <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.4 }}>{msg.body}</p>
                 <span style={{ display: 'block', fontSize: '0.65rem', marginTop: '0.2rem', opacity: 0.6 }}>{formatTime(msg.created_at)}</span>
               </div>
+              </div>
+              {isMe && <AvatarDisplay url={myAvatar} userId={user.id} size={28} />}
             </div>
           )
         })}

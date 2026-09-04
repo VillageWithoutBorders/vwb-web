@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import { useUnreadCount } from '../context/UnreadCountContext'
+import AvatarDisplay from '../components/AvatarDisplay'
 
 export default function Conversation() {
   const { id } = useParams()
@@ -17,6 +18,9 @@ export default function Conversation() {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [otherName, setOtherName] = useState('Neighbor')
+  const [otherAvatar, setOtherAvatar] = useState(null)
+  const [otherUserId, setOtherUserId] = useState(null)
+  const [myAvatar, setMyAvatar] = useState(null)
   const [request, setRequest] = useState(null)
   const bottomRef = useRef(null)
     const pollRef = useRef(null)
@@ -49,11 +53,13 @@ export default function Conversation() {
     convoRef.current = c
     const readCol = c.helper_id === user.id ? "last_read_helper" : "last_read_requester"
     supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", c.id).then(() => refreshUnread())
-
     const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
-    const { data: otherProfile } = await supabase
-      .from('helper_profiles').select('display_name').eq('user_id', otherId).maybeSingle()
-    if (otherProfile) setOtherName(otherProfile.display_name || 'Neighbor')
+
+    const { data: otherProfile } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
+    setOtherUserId(otherId)
+    if (otherProfile) { setOtherName(otherProfile.display_name || 'Neighbor'); setOtherAvatar(otherProfile.avatar_url || null) }
+    const { data: myProfile } = await supabase.from('helper_profiles').select('avatar_url').eq('user_id', user.id).maybeSingle()
+    if (myProfile) setMyAvatar(myProfile.avatar_url || null)
 
     if (c.request_id) {
       const { data: req } = await supabase
@@ -123,6 +129,7 @@ export default function Conversation() {
         <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id); refreshUnread() } navigate(-1) }} aria-label="Back">
           &#8592;
         </button>
+        <AvatarDisplay url={otherAvatar} userId={otherUserId} size={36} />
         <div className="convo-header-info">
           <h1>{otherName}</h1>
           {request && <p className="convo-context">{request.skill_needed}</p>}
@@ -151,14 +158,14 @@ export default function Conversation() {
         {messages.map((msg) => {
   const isMe = msg.sender_id === user.id
   return (
-    <div
-  key={msg.id}
-  className={'chat-bubble ' + (isMe ? 'mine' : 'theirs')}
-  onClick={() => setSelectedMessage(msg)}
->
-  <p className="chat-body">{msg.body}</p>
-  <span className="chat-time">{formatTime(msg.created_at)}</span>
-</div>
+    <div key={msg.id} style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+      {!isMe && <AvatarDisplay url={otherAvatar} userId={otherUserId} size={24} />}
+      <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs')} onClick={() => setSelectedMessage(msg)}>
+        <p className="chat-body">{msg.body}</p>
+        <span className="chat-time">{formatTime(msg.created_at)}</span>
+      </div>
+      {isMe && <AvatarDisplay url={myAvatar} userId={user.id} size={24} />}
+    </div>
   )
 })}
         <div ref={bottomRef} />

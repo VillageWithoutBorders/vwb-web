@@ -1508,8 +1508,6 @@ a:focus:not(:focus-visible) {
 .convo-messages {
   flex: 1;
   overflow-y: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -2081,3 +2079,7 @@ a:focus:not(:focus-visible) {
   color: #b0b0b0;
   margin-top: 0.25rem;
 }
+
+/* Hide scrollbar on chat areas */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

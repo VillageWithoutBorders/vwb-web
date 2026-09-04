@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import VouchButton from '../components/VouchButton'
+import AvatarDisplay from '../components/AvatarDisplay'
 
 export default function ActiveTasks() {
   const { user, profile } = useAuth()
@@ -53,7 +54,7 @@ export default function ActiveTasks() {
     for (const hid of helperIds) {
       const { data: p } = await supabase
         .from('helper_profiles')
-        .select('display_name, is_hope_ambassador')
+        .select('display_name, is_hope_ambassador, avatar_url')
         .eq('user_id', hid)
         .maybeSingle()
       if (p) helperProfiles[hid] = p
@@ -66,6 +67,7 @@ export default function ActiveTasks() {
           ...m,
           helper_name: helperProfiles[m.helper_id]?.display_name || 'A neighbor',
           is_ambassador: helperProfiles[m.helper_id]?.is_hope_ambassador || false,
+          helper_avatar: helperProfiles[m.helper_id]?.avatar_url || null,
         }))
 
       const allDone = reqMatches.length > 0 && reqMatches.every(m => m.helper_completed && m.requester_completed)
@@ -267,7 +269,7 @@ export default function ActiveTasks() {
         <div className="feed-loading"><div className="feed-loading-spinner" /><p>Loading tasks...</p></div>
       ) : isEmpty ? (
         <div className="feed-empty">
-          <span className="feed-empty-icon">{showActive ? '🌿' : '📋'}</span>
+          <span className="feed-empty-icon">{showActive ? 'ðŸŒ¿' : 'ðŸ“‹'}</span>
           <h2>{showActive ? 'No active tasks' : 'Nothing archived yet'}</h2>
           <p>{showActive ? 'Check the SkillShare feed for requests near you, or post your own.' : 'Completed and archived tasks will show up here.'}</p>
           {showActive && (
@@ -281,7 +283,7 @@ export default function ActiveTasks() {
           {currentRequests.length > 0 && (
             <>
               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: '0.25rem' }}>
-                📋 Your Requests
+                ðŸ“‹ Your Requests
               </div>
               {currentRequests.map(req => (
                 <div key={req.id} className="task-card" style={{ borderLeft: '3px solid #2d6a4f' }}>
@@ -314,13 +316,13 @@ export default function ActiveTasks() {
                           <div key={match.id} style={{ background: bothDone ? '#1a2e26' : '#222', border: '1px solid ' + (bothDone ? '#2d6a4f' : '#333'), borderRadius: '8px', padding: '0.6rem 0.75rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.35rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <span style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>{match.helper_name}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={match.helper_avatar} userId={match.helper_id} size={28} /><span style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>{match.helper_name}</span></div>
                                 {match.is_ambassador && (
                                   <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>HA</span>
                                 )}
                               </div>
                               {bothDone ? (
-                                <span style={{ fontSize: '0.75rem', color: '#4ecca3', fontWeight: 600 }}>✅ Complete</span>
+                                <span style={{ fontSize: '0.75rem', color: '#4ecca3', fontWeight: 600 }}>âœ… Complete</span>
                               ) : (
                                 <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.7rem', color: '#999' }}>
                                   <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
@@ -375,7 +377,7 @@ export default function ActiveTasks() {
           {currentHelping.length > 0 && (
             <>
               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: currentRequests.length > 0 ? '1.25rem' : '0.25rem' }}>
-                🤝 Helping Others
+                ðŸ¤ Helping Others
               </div>
               {currentHelping.map(match => {
                 const req = match.request
@@ -390,7 +392,7 @@ export default function ActiveTasks() {
                     <div className="task-card-skill">{req.skill_needed}</div>
                     {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
                     <div style={{ fontSize: '0.8rem', color: '#999', marginBottom: '0.25rem' }}>
-                      Requested by {match.requester_name}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><AvatarDisplay url={null} userId={match.request?.requester_id} size={20} /> Requested by {match.requester_name}</span>
                     </div>
                     <p className="task-card-desc">{req.description}</p>
 
@@ -406,7 +408,7 @@ export default function ActiveTasks() {
 
                     {bothDone && (
                       <div style={{ fontSize: '0.8rem', color: '#4ecca3', fontWeight: 600, margin: '0.5rem 0' }}>
-                        ✅ Complete
+                        âœ… Complete
                       </div>
                     )}
 
