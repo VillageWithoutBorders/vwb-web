@@ -31,11 +31,16 @@ export default function Profile() {
   const [ambSignupError, setAmbSignupError] = useState('')
 
   const [skillOptions, setSkillOptions] = useState([])
+  const [showAdminApp, setShowAdminApp] = useState(false)
+  const [adminAppRegion, setAdminAppRegion] = useState('')
+  const [adminAppReason, setAdminAppReason] = useState('')
+  const [adminAppSaving, setAdminAppSaving] = useState(false)
+  const [adminAppStatus, setAdminAppStatus] = useState(null)
 
   useEffect(() => {
     async function loadSkills() {
-      const { data } = await supabase.from('skill_categories').select('title').order('id')
-      if (data) setSkillOptions(data.map((s) => s.title))
+      const { data } = await supabase.from('skill_categories').select('name').order('sort_order')
+      if (data) setSkillOptions(data.map((s) => s.name))
     }
     loadSkills()
   }, [])
@@ -51,6 +56,7 @@ export default function Profile() {
       setAmbInterests(profile.interests || '')
     }
   }, [profile])
+  useEffect(() => { if (user?.id && profile?.is_hope_ambassador && !isAdmin) loadAdminAppStatus() }, [user?.id, profile?.is_hope_ambassador])
 
   function toggleSkill(skill) {
     setSelectedSkills((prev) => prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill])
@@ -106,6 +112,23 @@ export default function Profile() {
     await supabase.from('helper_profiles').update({ is_hope_ambassador: true, skills: ambSignupSkills }).eq('user_id', user.id)
     await refreshProfile()
     setShowAmbassadorSignup(false); setMessage('Welcome aboard! You are now a Hope Ambassador.'); setAmbSignupSaving(false)
+  }
+
+  async function loadAdminAppStatus() {
+    const { data } = await supabase.from('admin_applications').select('status').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    if (data) setAdminAppStatus(data.status)
+  }
+
+  async function submitAdminApplication() {
+    if (!adminAppRegion.trim() || !adminAppReason.trim()) return
+    setAdminAppSaving(true)
+    await supabase.from('admin_applications').insert({ user_id: user.id, region: adminAppRegion.trim(), reason: adminAppReason.trim() })
+    setAdminAppSaving(false)
+    setShowAdminApp(false)
+    setAdminAppRegion('')
+    setAdminAppReason('')
+    setAdminAppStatus('pending')
+    setMessage('Your admin application has been submitted!')
   }
 
   function handleAvatarSaved(url, config) {
@@ -246,6 +269,34 @@ export default function Profile() {
           <button className="btn btn-outline btn-full" onClick={() => navigate("/admin")} style={{ marginTop: "0.5rem", borderColor: "#4ecca3", color: "#4ecca3" }}>
             {'\u2699'} Admin Panel
           </button>
+        )}
+        {profile?.is_hope_ambassador && !isAdmin && !adminAppStatus && (
+          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid #66aaff', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
+            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: '#66aaff' }}>Apply to become an Admin</h2>
+            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Admins help coordinate responses in their region and keep the community safe.</p>
+            {!showAdminApp ? (
+              <button className="btn btn-outline btn-full" onClick={() => setShowAdminApp(true)} style={{ borderColor: '#66aaff', color: '#66aaff' }}>Start Application</button>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <input type="text" placeholder="What area would you cover? (e.g. Ringgold, Chickamauga)" value={adminAppRegion} onChange={e => setAdminAppRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
+                <textarea placeholder="Why do you want to help coordinate? What experience do you bring?" value={adminAppReason} onChange={e => setAdminAppReason(e.target.value)} rows={3} maxLength={500} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem', resize: 'vertical' }} />
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-outline" onClick={() => { setShowAdminApp(false); setAdminAppRegion(''); setAdminAppReason('') }} disabled={adminAppSaving}>Cancel</button>
+                  <button className="btn btn-primary" onClick={submitAdminApplication} disabled={adminAppSaving || !adminAppRegion.trim() || !adminAppReason.trim()} style={{ flex: 1 }}>{adminAppSaving ? 'Submitting...' : 'Submit Application'}</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {adminAppStatus === 'pending' && (
+          <div style={{ background: '#1a2a4a', border: '1px solid #66aaff', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
+            <p style={{ color: '#66aaff', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your admin application is under review</p>
+          </div>
+        )}
+        {adminAppStatus === 'declined' && (
+          <div style={{ background: '#2a1a1a', border: '1px solid #ff6666', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
+            <p style={{ color: '#ff6666', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your application was not approved at this time</p>
+          </div>
         )}
       </div>
     )

@@ -13,6 +13,7 @@ export default function Admin() {
   const [users, setUsers] = useState([])
   const [stats, setStats] = useState({})
   const [approvals, setApprovals] = useState([])
+  const [sentInvites, setSentInvites] = useState([])
 
   useEffect(() => { loadAll() }, [])
 
@@ -146,21 +147,29 @@ export default function Admin() {
     }
     await loadApprovals()
   }
-
   async function promoteUser(userId, toRole) {
     if (toRole === 'ambassador') {
       await supabase.from('helper_profiles').update({ is_hope_ambassador: true }).eq('user_id', userId)
+      await loadUsers()
     } else if (toRole === 'admin') {
-      if (!confirm('Promote this user to admin? They will have full management access.')) return
-      await supabase.from('helper_profiles').update({ role: 'admin' }).eq('user_id', userId)
+      if (!confirm('Send admin invitation to this user? They will see it on their profile.')) return
+      const { data: existing } = await supabase.from('admin_applications').select('id, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (existing && (existing.status === 'pending' || existing.status === 'invited')) { alert('This user already has a pending invitation.'); return }
+      await supabase.from('admin_applications').insert({ user_id: userId, region: 'Invited by admin', reason: 'Admin invitation', status: 'invited' })
+      await supabase.from('notifications').insert({ user_id: userId, type: 'admin_invite', title: 'You have been invited to become an Admin', body: 'Check your profile to accept or decline.', link: '/profile', read: false })
+      setSentInvites(prev => [...prev, userId])
     }
-    await loadUsers()
   }
-
   async function demoteUser(userId) {
     if (!confirm('Remove admin role from this user?')) return
     await supabase.from('helper_profiles').update({ role: 'member' }).eq('user_id', userId)
     await loadUsers()
+  }
+  async function messageUser(userId) {
+    const { data: convos } = await supabase.from('conversations').select('id, helper_id, requester_id').or('helper_id.eq.' + userId + ',requester_id.eq.' + userId)
+    const existing = (convos || []).find(c => (c.helper_id === user.id || c.requester_id === user.id) && (c.helper_id === userId || c.requester_id === userId))
+    if (existing) { navigate('/conversation/' + existing.id); return }
+    const { data: newConvo } = await supabase.from('conversations').insert({ helper_id: user.id, requester_id: userId }).select().single()
   }
 
   if (!isAdmin) {
@@ -193,7 +202,7 @@ export default function Admin() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
         <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#4ecca3', flex: 1 }}>Admin Panel</h1>
-        <button onClick={() => navigate('/admin/report')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem' }}>Grant Report</button>
+        <button onClick={() => navigate('/admin/report')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem', display: isFounder ? 'inline-block' : 'none' }}>Grant Report</button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -340,12 +349,13 @@ export default function Admin() {
                 {!u.is_hope_ambassador && (
                   <button onClick={() => promoteUser(u.user_id, 'ambassador')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#2d5a45', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Make Ambassador</button>
                 )}
-                {u.role !== 'admin' && u.user_id !== user.id && (
-                  <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#1a3a5a', color: '#66aaff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Make Admin</button>
+                {isFounder && u.role !== 'admin' && u.role !== 'founder' && u.is_hope_ambassador && u.user_id !== user.id && (
+                  sentInvites.includes(u.user_id) ? <span style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: '#1a3a5a', color: '#66aaff', fontSize: '0.75rem', fontWeight: 600 }}>Invite Sent</span> : <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#1a3a5a', color: '#66aaff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Invite Admin</button>
                 )}
                 {(u.role === 'admin' || u.role === 'founder') && u.user_id !== user.id && (
                   <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem' }}>Remove Admin</button>
                 )}
+                <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.75rem' }}>Message</button>
               </div>
             </div>
           ))}
