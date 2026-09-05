@@ -269,7 +269,7 @@ export default function ActiveTasks() {
         <div className="feed-loading"><div className="feed-loading-spinner" /><p>Loading tasks...</p></div>
       ) : isEmpty ? (
         <div className="feed-empty">
-          <span className="feed-empty-icon">{showActive ? 'ðŸŒ¿' : 'ðŸ“‹'}</span>
+          <span className="feed-empty-icon"></span>
           <h2>{showActive ? 'No active tasks' : 'Nothing archived yet'}</h2>
           <p>{showActive ? 'Check the SkillShare feed for requests near you, or post your own.' : 'Completed and archived tasks will show up here.'}</p>
           {showActive && (
@@ -283,7 +283,7 @@ export default function ActiveTasks() {
           {currentRequests.length > 0 && (
             <>
               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: '0.25rem' }}>
-                ðŸ“‹ Your Requests
+                Your Requests
               </div>
               {currentRequests.map(req => (
                 <div key={req.id} className="task-card" style={{ borderLeft: '3px solid #2d6a4f' }}>
@@ -322,7 +322,7 @@ export default function ActiveTasks() {
                                 )}
                               </div>
                               {bothDone ? (
-                                <span style={{ fontSize: '0.75rem', color: '#4ecca3', fontWeight: 600 }}>âœ… Complete</span>
+                                <span style={{ fontSize: '0.75rem', color: '#4ecca3', fontWeight: 600 }}>Ã¢Å“â€¦ Complete</span>
                               ) : (
                                 <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.7rem', color: '#999' }}>
                                   <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
@@ -377,7 +377,7 @@ export default function ActiveTasks() {
           {currentHelping.length > 0 && (
             <>
               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: currentRequests.length > 0 ? '1.25rem' : '0.25rem' }}>
-                ðŸ¤ Helping Others
+                Helping Others
               </div>
               {currentHelping.map(match => {
                 const req = match.request
@@ -408,7 +408,7 @@ export default function ActiveTasks() {
 
                     {bothDone && (
                       <div style={{ fontSize: '0.8rem', color: '#4ecca3', fontWeight: 600, margin: '0.5rem 0' }}>
-                        âœ… Complete
+                        Ã¢Å“â€¦ Complete
                       </div>
                     )}
 
