@@ -66,8 +66,8 @@ export default function EventDetail() {
     const { data: sups } = await supabase.from('event_signups').select('*').eq('event_id', id)
     if (sups) {
       const withNames = await Promise.all(sups.map(async (s) => {
-        const { data: p } = await supabase.from('helper_profiles').select('display_name').eq('user_id', s.user_id).maybeSingle()
-        return { ...s, display_name: p?.display_name || 'Neighbor' }
+        const { data: p } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', s.user_id).maybeSingle()
+        return { ...s, display_name: p?.display_name || 'Neighbor', avatar_url: p?.avatar_url || null }
       }))
       setSignups(withNames)
       setMySignup(withNames.find(s => s.user_id === user.id) || null)
@@ -81,10 +81,10 @@ export default function EventDetail() {
       const userIds = [...new Set(cins.map(c => c.user_id))]
       const nameMap = {}
       for (const uid of userIds) {
-        const { data: p } = await supabase.from('helper_profiles').select('display_name').eq('user_id', uid).maybeSingle()
-        nameMap[uid] = p?.display_name || 'Neighbor'
+        const { data: p } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
+        nameMap[uid] = { name: p?.display_name || 'Neighbor', avatar_url: p?.avatar_url || null }
       }
-      setCheckIns(cins.map(c => ({ ...c, display_name: nameMap[c.user_id] })))
+      setCheckIns(cins.map(c => ({ ...c, display_name: nameMap[c.user_id]?.name || 'Neighbor', avatar_url: nameMap[c.user_id]?.avatar_url || null })))
       const latest = {}
       cins.forEach(c => { if (!latest[c.user_id]) latest[c.user_id] = c })
       setLatestStatuses(latest)
@@ -96,7 +96,7 @@ export default function EventDetail() {
       const rNameMap = {}
       for (const uid of rUserIds) {
         if (!uid) continue
-        const { data: p } = await supabase.from('helper_profiles').select('display_name').eq('user_id', uid).maybeSingle()
+        const { data: p } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
         rNameMap[uid] = p?.display_name || 'Neighbor'
       }
       setResources(res.map(r => ({ ...r, offered_by_name: rNameMap[r.offered_by] || 'Neighbor', claimed_by_name: r.claimed_by ? (rNameMap[r.claimed_by] || 'Neighbor') : null })))
@@ -547,7 +547,7 @@ export default function EventDetail() {
               <span style={{ background: conf.bg, color: conf.color, fontSize: '1.1rem', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', flexShrink: 0 }}>{conf.icon}</span>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><AvatarDisplay url={null} userId={c.user_id} size={22} /><span onClick={() => navigate('/u/' + c.user_id)} style={{ fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.display_name}</span></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><AvatarDisplay url={c.avatar_url} userId={c.user_id} size={22} /><span onClick={() => navigate('/u/' + c.user_id)} style={{ fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.display_name}</span></div>
                   <span style={{ color: '#666', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
                 </div>
                 <span style={{ color: conf.color, fontSize: '0.8rem', fontWeight: 600 }}>{conf.label}</span>
