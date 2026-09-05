@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -15,6 +15,7 @@ export default function PublicProfile() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [voting, setVoting] = useState(false)
+  const [completedCount, setCompletedCount] = useState(0)
 
   useEffect(() => {
     if (userId) loadProfile()
@@ -57,6 +58,8 @@ export default function PublicProfile() {
     }
 
     setLoading(false)
+    const { count: doneCount } = await supabase.from("help_requests").select("id", { count: "exact", head: true }).eq("requester_id", userId).eq("status", "completed")
+    setCompletedCount(doneCount || 0)
   }
 
   async function loadRequests() {
@@ -64,7 +67,7 @@ export default function PublicProfile() {
       .from('help_requests')
       .select('id, skill_needed, created_at, status')
       .eq('requester_id', userId)
-      .not('archived_at', 'is', null)
+      .or("archived_at.not.is.null,status.eq.completed")
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -209,7 +212,7 @@ export default function PublicProfile() {
       {/* Tabs */}
       <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
         <button className={'tasks-tab' + (tab === 'requests' ? ' tasks-tab-active' : '')} onClick={() => setTab('requests')}>
-          Requests
+          Requests {completedCount > 0 && <span style={{ marginLeft: "0.3rem", background: "#1a4a3a", color: "#4ecca3", fontSize: "0.65rem", fontWeight: 700, padding: "1px 6px", borderRadius: "8px" }}>{completedCount} completed</span>}
         </button>
         <button className={'tasks-tab' + (tab === 'events' ? ' tasks-tab-active' : '')} onClick={() => setTab('events')}>
           Events
