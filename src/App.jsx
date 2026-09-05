@@ -21,6 +21,7 @@ import Admin from './pages/Admin'
 import Campfire from './pages/Campfire'
 import Notifications from './pages/Notifications'
 import PublicProfile from './pages/PublicProfile'
+import GrantReport from './pages/GrantReport'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -52,6 +53,7 @@ function AppRoutes() {
         <Route path="emergency/create" element={<CreateEvent />} />
         <Route path="emergency/:id" element={<EventDetail />} />
         <Route path="admin" element={<Admin />} />
+        <Route path="admin/report" element={<GrantReport />} />
         <Route path="campfire" element={<Campfire />} />
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="u/:userId" element={<PublicProfile />} />
