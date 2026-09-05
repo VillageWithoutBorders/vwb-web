@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 
 export default function GrantReport() {
-  const { user, profile } = useAuth()
+  const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
-  const isAdmin = profile?.role === 'admin'
+  // isAdmin comes from useAuth context
 
   const today = new Date().toISOString().split('T')[0]
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
@@ -75,8 +75,8 @@ export default function GrantReport() {
 
     // Unique users (new signups in range)
     const { data: newUsers } = await supabase
-      .from('profiles')
-      .select('id')
+      .from('helper_profiles')
+      .select('user_id')
       .gte('created_at', from)
       .lte('created_at', to)
 

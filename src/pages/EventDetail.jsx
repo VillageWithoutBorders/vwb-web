@@ -19,7 +19,7 @@ const menuBtnStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', wid
 
 export default function EventDetail() {
   const { id } = useParams()
-  const { user, profile } = useAuth()
+  const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
   const [event, setEvent] = useState(null)
   const [signups, setSignups] = useState([])
@@ -230,7 +230,6 @@ export default function EventDetail() {
   async function handleCloseEvent() {
     if (!closeReason) return
     setClosingEvent(true)
-    const isAdmin = profile?.role === 'admin'
     const isReporter = event.created_by === user.id
     const canCloseAlone = isAdmin || isReporter
 
@@ -257,6 +256,12 @@ export default function EventDetail() {
     }
 
     if (closeReason === 'false_alarm') {
+      if (isAdmin) {
+        await supabase.from('emergency_events').delete().eq('id', id)
+        setClosingEvent(false)
+        navigate('/emergency')
+        return
+      }
       if (event.verified) {
         const { data: admins } = await supabase.rpc('nearest_admin', { lat: event.latitude || 0, lng: event.longitude || 0 })
         if (admins && admins.length > 0) {
@@ -276,6 +281,12 @@ export default function EventDetail() {
     }
 
     if (closeReason === 'duplicate' && selectedDuplicate) {
+      if (isAdmin) {
+        await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'duplicate', duplicate_event_id: selectedDuplicate }, { onConflict: 'event_id,voter_id' })
+        setClosingEvent(false)
+        navigate('/admin')
+        return
+      }
       const { data: admins } = await supabase.rpc('nearest_admin', { lat: event.latitude || 0, lng: event.longitude || 0 })
       if (admins && admins.length > 0) {
         for (const admin of admins) {
@@ -644,7 +655,7 @@ export default function EventDetail() {
         </>
       )}
 
-      {event.status === 'active' && (mySignup || event.created_by === user.id || profile?.role === 'admin') && (
+      {event.status === 'active' && (mySignup || event.created_by === user.id || isAdmin) && (
         <>
           {closeVotes.length > 0 && !closeVotes.find(v => v.voter_id === user.id) && (
             <div style={{ background: '#2a2518', border: '1px solid #5a4a2a', borderRadius: '8px', padding: '0.75rem', marginTop: '1rem', textAlign: 'center' }}>

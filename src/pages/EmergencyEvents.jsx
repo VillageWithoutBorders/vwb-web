@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -7,7 +7,7 @@ import { createNotification } from '../utils/notificationHelpers'
 const VERIFY_THRESHOLD = 2
 
 export default function EmergencyEvents() {
-  const { user, profile } = useAuth()
+  const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
   const [events, setEvents] = useState([])
   const [resolvedEvents, setResolvedEvents] = useState([])
@@ -87,7 +87,7 @@ export default function EmergencyEvents() {
     return Math.floor(hrs / 24) + 'd ago'
   }
 
-  const canVerify = profile?.role === 'admin' || profile?.is_hope_ambassador
+  const canVerify = isAdmin || profile?.is_hope_ambassador
   const verified = events.filter(ev => ev.verified)
   const pending = events.filter(ev => !ev.verified)
 

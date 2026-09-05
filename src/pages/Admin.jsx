@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 
 export default function Admin() {
-  const { user, profile } = useAuth()
+  const { user, profile, isAdmin, isFounder } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab] = useState('emergencies')
   const [loading, setLoading] = useState(true)
@@ -44,7 +44,7 @@ export default function Admin() {
     if (data) {
       const withVouches = await Promise.all(data.map(async (u) => {
         const { count } = await supabase.from('vouches').select('id', { count: 'exact', head: true }).eq('vouched_for_id', u.user_id)
-        const { data: prof } = await supabase.from('profiles').select('role').eq('id', u.user_id).maybeSingle()
+        const { data: prof } = await supabase.from('helper_profiles').select('role').eq('user_id', u.user_id).maybeSingle()
         return { ...u, vouch_count: count || 0, role: prof?.role || 'member' }
       }))
       setUsers(withVouches)
@@ -152,18 +152,18 @@ export default function Admin() {
       await supabase.from('helper_profiles').update({ is_hope_ambassador: true }).eq('user_id', userId)
     } else if (toRole === 'admin') {
       if (!confirm('Promote this user to admin? They will have full management access.')) return
-      await supabase.from('profiles').update({ role: 'admin' }).eq('id', userId)
+      await supabase.from('helper_profiles').update({ role: 'admin' }).eq('user_id', userId)
     }
     await loadUsers()
   }
 
   async function demoteUser(userId) {
     if (!confirm('Remove admin role from this user?')) return
-    await supabase.from('profiles').update({ role: 'member' }).eq('id', userId)
+    await supabase.from('helper_profiles').update({ role: 'member' }).eq('user_id', userId)
     await loadUsers()
   }
 
-  if (profile?.role !== 'admin') {
+  if (!isAdmin) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128274;</p>
@@ -330,7 +330,7 @@ export default function Admin() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontWeight: 700 }}>{u.display_name || 'Unnamed'}</span>
-                  {u.role === 'admin' && <span style={{ marginLeft: '0.4rem', background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
+                  {(u.role === 'admin' || u.role === 'founder') && <span style={{ marginLeft: '0.4rem', background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
                   {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Ambassador</span>}
                 </div>
                 <span style={{ color: '#888', fontSize: '0.7rem' }}>{u.vouch_count} vouches</span>
@@ -343,7 +343,7 @@ export default function Admin() {
                 {u.role !== 'admin' && u.user_id !== user.id && (
                   <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#1a3a5a', color: '#66aaff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Make Admin</button>
                 )}
-                {u.role === 'admin' && u.user_id !== user.id && (
+                {(u.role === 'admin' || u.role === 'founder') && u.user_id !== user.id && (
                   <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem' }}>Remove Admin</button>
                 )}
               </div>

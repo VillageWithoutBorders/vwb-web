@@ -8,9 +8,9 @@ const CAT_ICONS = { 'Emergency Help': '&#9888;', 'Safety': '&#128156;', 'Food': 
 
 export default function Community() {
   const navigate = useNavigate()
-  const { user, profile } = useAuth()
-  const hasCampfire = profile?.is_hope_ambassador || profile?.role === 'admin'
-  const canVerify = profile?.is_hope_ambassador || profile?.role === 'admin'
+  const { user, profile, isAdmin } = useAuth()
+  const hasCampfire = profile?.is_hope_ambassador || isAdmin
+  const canVerify = profile?.is_hope_ambassador || isAdmin
 
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)

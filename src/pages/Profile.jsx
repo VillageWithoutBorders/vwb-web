@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -6,7 +6,7 @@ import AvatarBuilder, { AvatarDisplay } from '../components/AvatarBuilder'
 import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
 
 export default function Profile() {
-  const { user, profile, signOut, refreshProfile } = useAuth()
+  const { user, profile, isAdmin, signOut, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -103,7 +103,7 @@ export default function Profile() {
       availability: ambSignupAvailability.trim(), interests: ambSignupInterests.trim(), is_available: true,
     }).eq('user_id', user.id)
     if (updateError) { setAmbSignupError('Something went wrong. Try again.'); setAmbSignupSaving(false); return }
-    await supabase.from('profiles').update({ is_hope_ambassador: true, skills: ambSignupSkills }).eq('id', user.id)
+    await supabase.from('helper_profiles').update({ is_hope_ambassador: true, skills: ambSignupSkills }).eq('user_id', user.id)
     await refreshProfile()
     setShowAmbassadorSignup(false); setMessage('Welcome aboard! You are now a Hope Ambassador.'); setAmbSignupSaving(false)
   }
@@ -242,7 +242,7 @@ export default function Profile() {
 
         <button className="btn btn-primary btn-full" style={{ marginTop: '1.5rem' }} onClick={startEditing}>Edit profile</button>
         <button className="btn btn-outline btn-full" style={{ marginTop: '0.75rem' }} onClick={signOut}>Sign out</button>
-        {profile?.role === "admin" && (
+        {isAdmin && (
           <button className="btn btn-outline btn-full" onClick={() => navigate("/admin")} style={{ marginTop: "0.5rem", borderColor: "#4ecca3", color: "#4ecca3" }}>
             {'\u2699'} Admin Panel
           </button>
