@@ -808,7 +808,7 @@ body {
 }
 
 /* ---------- SkillShare Feed ---------- */
-  padding-top: 0.5rem;
+ .feed-page {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 60px);
