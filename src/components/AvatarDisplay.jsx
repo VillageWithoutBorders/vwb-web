@@ -25,7 +25,7 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
     setInfo({
       name: p?.display_name || 'Neighbor',
       ambassador: p?.is_hope_ambassador || false,
-      admin: p?.role === 'admin',
+      role: p?.role || null,
       joined: p?.created_at || null,
       score: rep?.net_score || 0,
       vouches: vouchCount || 0,
@@ -96,8 +96,9 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
               <div>
                 <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#fff' }}>{info?.name || 'Loading...'}</div>
                 <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
-                  {info?.admin && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Admin</span>}
-                  {info?.ambassador && !info?.admin && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Hope Ambassador</span>}
+                  {info?.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Founder</span>}
+                  {info?.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Admin</span>}
+                  {info?.ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Hope Ambassador</span>}
                 </div>
               </div>
             </div>
