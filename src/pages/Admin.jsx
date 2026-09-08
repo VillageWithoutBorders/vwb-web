@@ -13,14 +13,29 @@ export default function Admin() {
   const [users, setUsers] = useState([])
   const [stats, setStats] = useState({})
   const [approvals, setApprovals] = useState([])
-  const [sentInvites, setSentInvites] = useState([])
+  const [adminApplications, setAdminApplications] = useState([])
 
   useEffect(() => { loadAll() }, [])
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals()])
+    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications()])
     setLoading(false)
+  }
+
+  async function loadAdminApplications() {
+    const { data } = await supabase.from('admin_applications').select('*').eq('status', 'pending').order('created_at', { ascending: false })
+    if (!data || data.length === 0) { setAdminApplications([]); return }
+    const enriched = await Promise.all(data.map(async (a) => {
+      const { data: prof } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.user_id).maybeSingle()
+      let invitedByName = null
+      if (a.invited_by) {
+        const { data: inviter } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.invited_by).maybeSingle()
+        invitedByName = inviter?.display_name || 'an admin'
+      }
+      return { ...a, applicant_name: prof?.display_name || 'Unnamed', invited_by_name: invitedByName }
+    }))
+    setAdminApplications(enriched)
   }
 
   async function loadPending() {
@@ -46,7 +61,8 @@ export default function Admin() {
       const withVouches = await Promise.all(data.map(async (u) => {
         const { count } = await supabase.from('vouches').select('id', { count: 'exact', head: true }).eq('vouched_for_id', u.user_id)
         const { data: prof } = await supabase.from('helper_profiles').select('role').eq('user_id', u.user_id).maybeSingle()
-        return { ...u, vouch_count: count || 0, role: prof?.role || 'member' }
+        const { data: app } = await supabase.from('admin_applications').select('status').eq('user_id', u.user_id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        return { ...u, vouch_count: count || 0, role: prof?.role || 'member', admin_app_status: app?.status || null }
       }))
       setUsers(withVouches)
     }
@@ -154,11 +170,26 @@ export default function Admin() {
     } else if (toRole === 'admin') {
       if (!confirm('Send admin invitation to this user? They will see it on their profile.')) return
       const { data: existing } = await supabase.from('admin_applications').select('id, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle()
-      if (existing && (existing.status === 'pending' || existing.status === 'invited')) { alert('This user already has a pending invitation.'); return }
-      await supabase.from('admin_applications').insert({ user_id: userId, region: 'Invited by admin', reason: 'Admin invitation', status: 'invited' })
+      if (existing && existing.status === 'invited') { alert("This user already has an invitation waiting — they haven't responded yet."); return }
+      if (existing && existing.status === 'pending') { alert('This user already accepted an invitation. Go to the Approvals tab to finish granting them access.'); setTab('approvals'); return }
+      await supabase.from('admin_applications').insert({ user_id: userId, region: 'Invited by admin', reason: 'Admin invitation', status: 'invited', invited_by: user.id })
       await supabase.from('notifications').insert({ user_id: userId, type: 'admin_invite', title: 'You have been invited to become an Admin', body: 'Check your profile to accept or decline.', link: '/profile', read: false })
-      setSentInvites(prev => [...prev, userId])
+      await loadUsers()
     }
+  }
+  async function approveAdminApplication(app) {
+    if (!confirm('Grant admin access to ' + (app.applicant_name || 'this user') + '?')) return
+    await supabase.from('helper_profiles').update({ role: 'admin' }).eq('user_id', app.user_id)
+    await supabase.from('admin_applications').update({ status: 'approved' }).eq('id', app.id)
+    await supabase.from('notifications').insert({ user_id: app.user_id, type: 'admin_invite_approved', title: 'You are now an Admin', body: 'Your admin access has been confirmed. Find the Admin Panel from your profile.', link: '/admin', read: false })
+    await loadAdminApplications()
+    await loadUsers()
+  }
+  async function declineAdminApplication(app) {
+    if (!confirm('Decline this admin request?')) return
+    await supabase.from('admin_applications').update({ status: 'declined' }).eq('id', app.id)
+    await supabase.from('notifications').insert({ user_id: app.user_id, type: 'admin_invite_declined', title: 'Your admin request was not approved', body: '', link: '/profile', read: false })
+    await loadAdminApplications()
   }
   async function demoteUser(userId) {
     if (!confirm('Remove admin role from this user?')) return
@@ -233,7 +264,7 @@ export default function Admin() {
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', marginBottom: '1rem' }}>
-        <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {approvals.length > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length}</span>}</button>
+        <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length) > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length}</span>}</button>
         <button style={tabStyle(tab === 'emergencies')} onClick={() => setTab('emergencies')}>Emergencies ({pendingEvents.length})</button>
         <button style={tabStyle(tab === 'users')} onClick={() => setTab('users')}>Users ({users.length})</button>
         <button style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports ({alerts.length})</button>
@@ -243,10 +274,39 @@ export default function Admin() {
 
       {!loading && tab === 'approvals' && (
         <>
-          {approvals.length === 0 ? (
+          {approvals.length === 0 && adminApplications.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>No pending approvals</p>
           ) : (
             <>
+              {isFounder && adminApplications.length > 0 && (
+                <>
+                  <h3 style={{ fontSize: '0.85rem', color: '#4ecca3', margin: '0.5rem 0' }}>Admin Access Requests</h3>
+                  {adminApplications.map(a => (
+                    <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid #4ecca3' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ flex: 1 }}>
+                          <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>ADMIN REQUEST</span>
+                          <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}>{a.applicant_name}</h4>
+                        </div>
+                        <span style={{ color: '#888', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(a.created_at)}</span>
+                      </div>
+                      {a.invited_by_name ? (
+                        <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.2rem 0' }}>Accepted the invitation sent by {a.invited_by_name}</p>
+                      ) : (
+                        <>
+                          {a.region && <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.2rem 0' }}>Region: {a.region}</p>}
+                          {a.reason && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.2rem 0' }}>{a.reason}</p>}
+                        </>
+                      )}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                        <button onClick={() => approveAdminApplication(a)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Grant Admin Access</button>
+                        <button onClick={() => declineAdminApplication(a)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem' }}>Decline</button>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
               {falseAlarms.length > 0 && (
                 <>
                   <h3 style={{ fontSize: '0.85rem', color: '#ffaa44', margin: '0.5rem 0' }}>False Alarm Reports</h3>
@@ -350,7 +410,13 @@ export default function Admin() {
                   <button onClick={() => promoteUser(u.user_id, 'ambassador')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#2d5a45', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Make Ambassador</button>
                 )}
                 {isFounder && u.role !== 'admin' && u.role !== 'founder' && u.is_hope_ambassador && u.user_id !== user.id && (
-                  sentInvites.includes(u.user_id) ? <span style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: '#1a3a5a', color: '#66aaff', fontSize: '0.75rem', fontWeight: 600 }}>Invite Sent</span> : <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#1a3a5a', color: '#66aaff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Invite Admin</button>
+                  u.admin_app_status === 'invited' ? (
+                    <span style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: '#1a3a5a', color: '#66aaff', fontSize: '0.75rem', fontWeight: 600 }}>Invite Sent</span>
+                  ) : u.admin_app_status === 'pending' ? (
+                    <button onClick={() => setTab('approvals')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review in Approvals</button>
+                  ) : (
+                    <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#1a3a5a', color: '#66aaff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>{u.admin_app_status === 'declined' ? 'Invite Admin Again' : 'Invite Admin'}</button>
+                  )
                 )}
                 {(u.role === 'admin' || u.role === 'founder') && u.user_id !== user.id && (
                   <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem' }}>Remove Admin</button>
