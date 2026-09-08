@@ -41,6 +41,8 @@ export default function Profile() {
   const [adminAppReason, setAdminAppReason] = useState('')
   const [adminAppSaving, setAdminAppSaving] = useState(false)
   const [adminAppStatus, setAdminAppStatus] = useState(null)
+  const [adminAppId, setAdminAppId] = useState(null)
+  const [adminAppInvitedBy, setAdminAppInvitedBy] = useState(null)
 
   useEffect(() => {
     async function loadSkills() {
@@ -120,8 +122,32 @@ export default function Profile() {
   }
 
   async function loadAdminAppStatus() {
-    const { data } = await supabase.from('admin_applications').select('status').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
-    if (data) setAdminAppStatus(data.status)
+    const { data } = await supabase.from('admin_applications').select('id, status, invited_by').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    if (data) {
+      setAdminAppStatus(data.status)
+      setAdminAppId(data.id)
+      setAdminAppInvitedBy(data.invited_by || null)
+    }
+  }
+
+  async function respondToAdminInvite(accept) {
+    if (!adminAppId) return
+    setAdminAppSaving(true)
+    const newStatus = accept ? 'pending' : 'declined'
+    await supabase.from('admin_applications').update({ status: newStatus }).eq('id', adminAppId)
+    if (adminAppInvitedBy) {
+      await supabase.from('notifications').insert({
+        user_id: adminAppInvitedBy,
+        type: accept ? 'admin_invite_accepted' : 'admin_invite_declined',
+        title: (profile?.display_name || 'A neighbor') + (accept ? ' accepted your admin invitation' : ' declined your admin invitation'),
+        body: accept ? 'Review it in the Admin panel to finish granting access.' : '',
+        link: '/admin',
+        read: false,
+      })
+    }
+    setAdminAppStatus(newStatus)
+    setMessage(accept ? 'Thanks! Your acceptance was sent back for final confirmation.' : 'Invitation declined.')
+    setAdminAppSaving(false)
   }
 
   async function submitAdminApplication() {
@@ -318,6 +344,16 @@ async function handleEmailChange() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+        {adminAppStatus === 'invited' && (
+          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid #66aaff', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
+            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: '#66aaff' }}>You've been invited to become an Admin</h2>
+            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>An admin thinks you'd be a good fit to help coordinate responses in your area. Accepting sends this back to them for final confirmation.</p>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn btn-outline" onClick={() => respondToAdminInvite(false)} disabled={adminAppSaving} style={{ flex: 1 }}>Decline</button>
+              <button className="btn btn-primary" onClick={() => respondToAdminInvite(true)} disabled={adminAppSaving} style={{ flex: 1 }}>Accept</button>
+            </div>
           </div>
         )}
         {adminAppStatus === 'pending' && (
