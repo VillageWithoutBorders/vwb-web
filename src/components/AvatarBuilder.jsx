@@ -60,6 +60,14 @@ function buildCustomUrl(config) {
   // DiceBear 7.x's avataaars fields are all array-typed in its schema, so
   // each one has to be sent as key[]=value, not a plain key=value.
   Object.entries(config).forEach(([key, val]) => { if (val) params.set(key + '[]', val) })
+  // DiceBear only actually draws facial hair or accessories some of the
+  // time by default — it has its own hidden "probability" setting that
+  // defaults to just 10%, even when a specific beard or a specific pair
+  // of glasses has been picked. Without forcing this, a chosen beard
+  // would only show up roughly 1 time in 10. Force it fully on when
+  // something's picked, and fully off when the section is set to "None".
+  params.set('facialHairProbability', config.facialHair ? '100' : '0')
+  params.set('accessoriesProbability', config.accessories ? '100' : '0')
   return BASE + '?' + params.toString()
 }
 
