@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import { AvatarDisplay } from '../components/AvatarBuilder'
+import AvatarDisplay from '../components/AvatarDisplay'
 
 export default function Admin() {
   const { user, profile, isAdmin, isFounder } = useAuth()
@@ -402,9 +402,9 @@ export default function Admin() {
             <div key={u.user_id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <AvatarDisplay url={u.avatar_url} size={32} />
+                  <AvatarDisplay url={u.avatar_url} userId={u.user_id} size={32} />
                   <div>
-                    <span style={{ fontWeight: 700 }}>{u.display_name || 'Unnamed'}</span>
+                    <span onClick={() => navigate('/u/' + u.user_id)} style={{ fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{u.display_name || 'Unnamed'}</span>
                     {u.role === 'founder' && <span style={{ marginLeft: '0.4rem', background: '#3a1a4a', color: '#c77dff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Founder</span>}
                     {u.role === 'admin' && <span style={{ marginLeft: '0.4rem', background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
                     {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Ambassador</span>}
