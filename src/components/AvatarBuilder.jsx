@@ -37,17 +37,24 @@ function makeSeeds(base, count) {
   return seeds
 }
 
-export default function AvatarBuilder({ onSave, onCancel }) {
+export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
-  const [mode] = useState('pick')
-  const [selected, setSelected] = useState(null)
+  const [mode, setMode] = useState(initialConfig?.custom ? 'customize' : 'pick')
+  const [selected, setSelected] = useState(initialConfig?.seed || null)
   const [batch, setBatch] = useState(0)
-  
+  const [config, setConfig] = useState(initialConfig?.custom || {})
+  const [activeSection, setActiveSection] = useState(Object.keys(OPTIONS)[0])
+
   const name = user?.email?.split('@')[0] || 'neighbor'
   const seeds = makeSeeds(name + '-' + batch, 12)
 
   function shuffle() { setBatch(b => b + 1); setSelected(null) }
+
+  function switchMode(next) {
+    setMode(next)
+    if (next === 'customize' && Object.keys(config).length === 0) randomizeCustom()
+  }
 
   function update(key, value) {
     setConfig(prev => {
@@ -102,7 +109,10 @@ export default function AvatarBuilder({ onSave, onCancel }) {
         {onCancel && <button onClick={onCancel} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.3rem', cursor: 'pointer' }}>{'\u2715'}</button>}
       </div>
 
-
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        <button onClick={() => switchMode('pick')} style={tabStyle(mode === 'pick')}>Quick Pick</button>
+        <button onClick={() => switchMode('customize')} style={tabStyle(mode === 'customize')}>Customize</button>
+      </div>
 
       {mode === 'pick' && (
         <>
