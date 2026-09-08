@@ -13,6 +13,11 @@ export default function Profile() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [showAvatarBuilder, setShowAvatarBuilder] = useState(false)
+  const [showEmailChange, setShowEmailChange] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [emailSaving, setEmailSaving] = useState(false)
+  const [emailError, setEmailError] = useState('')
+  const [emailMessage, setEmailMessage] = useState('')
 
   const [displayName, setDisplayName] = useState('')
   const [zipCode, setZipCode] = useState('')
@@ -130,7 +135,16 @@ export default function Profile() {
     setAdminAppStatus('pending')
     setMessage('Your admin application has been submitted!')
   }
-
+async function handleEmailChange() {
+  if (!newEmail.trim() || !newEmail.includes('@')) { setEmailError('Enter a valid email address.'); return }
+  setEmailSaving(true); setEmailError(''); setEmailMessage('')
+  const { error: updateError } = await supabase.auth.updateUser({ email: newEmail.trim() })
+  if (updateError) { setEmailError(updateError.message); setEmailSaving(false); return }
+  setEmailMessage('Check your old and new email for confirmation links. Your login email updates once you confirm.')
+  setEmailSaving(false)
+  setShowEmailChange(false)
+  setNewEmail('')
+}
   function handleAvatarSaved(url, config) {
     setShowAvatarBuilder(false)
     setMessage('Avatar saved!')
@@ -163,7 +177,25 @@ export default function Profile() {
           {profile?.is_hope_ambassador && (
             <span className="ambassador-badge">Hope Ambassador</span>
           )}
-          <p className="profile-email">{user?.email}</p>
+                   <p className="profile-email">{user?.email}</p>
+          {!showEmailChange ? (
+            <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => { setShowEmailChange(true); setEmailError(''); setEmailMessage('') }}>
+              Change email
+            </button>
+          ) : (
+            <div className="form-field" style={{ width: '100%', maxWidth: '320px', textAlign: 'left' }}>
+              <label htmlFor="newEmail">New email address</label>
+              <input id="newEmail" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="you@example.com" />
+              {emailError && <p className="form-error" role="alert">{emailError}</p>}
+              <div className="form-row" style={{ marginTop: '0.5rem' }}>
+                <button type="button" className="btn btn-outline" onClick={() => { setShowEmailChange(false); setNewEmail(''); setEmailError('') }} disabled={emailSaving}>Cancel</button>
+                <button type="button" className="btn btn-primary" onClick={handleEmailChange} disabled={emailSaving} style={{ flex: 1 }}>
+                  {emailSaving ? 'Sending...' : 'Send confirmation'}
+                </button>
+              </div>
+            </div>
+          )}
+          {emailMessage && <p className="form-success" role="status">{emailMessage}</p>}
         </div>
 
         <div className="profile-details">
