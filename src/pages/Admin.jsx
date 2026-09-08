@@ -4,6 +4,16 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
 
+// Logs every Supabase error to the console with context so failures never vanish silently.
+// Pass a userMessage to also alert the person and let the caller bail out; omit it for
+// background reads where a console log is enough. Returns true if there was an error.
+function reportError(context, error, userMessage) {
+  if (!error) return false
+  console.error(`[Admin:${context}]`, error)
+  if (userMessage) alert(userMessage)
+  return true
+}
+
 export default function Admin() {
   const { user, profile, isAdmin, isFounder } = useAuth()
   const navigate = useNavigate()
@@ -25,13 +35,16 @@ export default function Admin() {
   }
 
   async function loadAdminApplications() {
-    const { data } = await supabase.from('admin_applications').select('*').eq('status', 'pending').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('admin_applications').select('*').eq('status', 'pending').order('created_at', { ascending: false })
+    reportError('loadAdminApplications', error)
     if (!data || data.length === 0) { setAdminApplications([]); return }
     const enriched = await Promise.all(data.map(async (a) => {
-      const { data: prof } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', a.user_id).maybeSingle()
+      const { data: prof, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', a.user_id).maybeSingle()
+      reportError('loadAdminApplications:profile', profErr)
       let invitedByName = null
       if (a.invited_by) {
-        const { data: inviter } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.invited_by).maybeSingle()
+        const { data: inviter, error: invErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.invited_by).maybeSingle()
+        reportError('loadAdminApplications:inviter', invErr)
         invitedByName = inviter?.display_name || 'an admin'
       }
       return { ...a, applicant_name: prof?.display_name || 'Unnamed', applicant_avatar: prof?.avatar_url || null, invited_by_name: invitedByName }
@@ -40,16 +53,20 @@ export default function Admin() {
   }
 
   async function loadPending() {
-    const { data } = await supabase.from('emergency_events').select('*').eq('verified', false).eq('status', 'active').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('emergency_events').select('*').eq('verified', false).eq('status', 'active').order('created_at', { ascending: false })
+    reportError('loadPending', error)
     if (data) setPendingEvents(data)
   }
 
   async function loadAlerts() {
-    const { data } = await supabase.from('safety_alerts').select('*').order('created_at', { ascending: false }).limit(50)
+    const { data, error } = await supabase.from('safety_alerts').select('*').order('created_at', { ascending: false }).limit(50)
+    reportError('loadAlerts', error)
     if (data) {
       const withNames = await Promise.all(data.map(async (a) => {
-        const { data: reporter } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.reporter_id).maybeSingle()
-        const { data: reported } = a.reported_user_id ? await supabase.from('helper_profiles').select('display_name').eq('user_id', a.reported_user_id).maybeSingle() : { data: null }
+        const { data: reporter, error: repErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.reporter_id).maybeSingle()
+        reportError('loadAlerts:reporter', repErr)
+        const { data: reported, error: repdErr } = a.reported_user_id ? await supabase.from('helper_profiles').select('display_name').eq('user_id', a.reported_user_id).maybeSingle() : { data: null, error: null }
+        reportError('loadAlerts:reported', repdErr)
         return { ...a, reporter_name: reporter?.display_name || 'Unknown', reported_name: reported?.display_name || 'Unknown' }
       }))
       setAlerts(withNames)
@@ -57,12 +74,16 @@ export default function Admin() {
   }
 
   async function loadUsers() {
-    const { data } = await supabase.from('helper_profiles').select('user_id, display_name, avatar_url, is_hope_ambassador, is_available, created_at').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('helper_profiles').select('user_id, display_name, avatar_url, is_hope_ambassador, is_available, created_at').order('created_at', { ascending: false })
+    reportError('loadUsers', error)
     if (data) {
       const withVouches = await Promise.all(data.map(async (u) => {
-        const { count } = await supabase.from('vouches').select('id', { count: 'exact', head: true }).eq('vouched_for_id', u.user_id)
-        const { data: prof } = await supabase.from('helper_profiles').select('role').eq('user_id', u.user_id).maybeSingle()
-        const { data: app } = await supabase.from('admin_applications').select('status').eq('user_id', u.user_id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        const { count, error: countErr } = await supabase.from('vouches').select('id', { count: 'exact', head: true }).eq('vouched_for_id', u.user_id)
+        reportError('loadUsers:vouchCount', countErr)
+        const { data: prof, error: profErr } = await supabase.from('helper_profiles').select('role').eq('user_id', u.user_id).maybeSingle()
+        reportError('loadUsers:role', profErr)
+        const { data: app, error: appErr } = await supabase.from('admin_applications').select('status').eq('user_id', u.user_id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        reportError('loadUsers:appStatus', appErr)
         return { ...u, vouch_count: count || 0, role: prof?.role || 'member', admin_app_status: app?.status || null }
       }))
       setUsers(withVouches)
@@ -70,17 +91,19 @@ export default function Admin() {
   }
 
   async function loadStats() {
-    const { count: userCount } = await supabase.from('helper_profiles').select('id', { count: 'exact', head: true })
-    const { count: ambassadorCount } = await supabase.from('helper_profiles').select('id', { count: 'exact', head: true }).eq('is_hope_ambassador', true)
-    const { count: requestCount } = await supabase.from('help_requests').select('id', { count: 'exact', head: true })
-    const { count: matchCount } = await supabase.from('skill_matches').select('id', { count: 'exact', head: true })
-    const { count: eventCount } = await supabase.from('emergency_events').select('id', { count: 'exact', head: true }).eq('status', 'active')
-    const { count: alertCount } = await supabase.from('safety_alerts').select('id', { count: 'exact', head: true })
+    const { count: userCount, error: e1 } = await supabase.from('helper_profiles').select('id', { count: 'exact', head: true })
+    const { count: ambassadorCount, error: e2 } = await supabase.from('helper_profiles').select('id', { count: 'exact', head: true }).eq('is_hope_ambassador', true)
+    const { count: requestCount, error: e3 } = await supabase.from('help_requests').select('id', { count: 'exact', head: true })
+    const { count: matchCount, error: e4 } = await supabase.from('skill_matches').select('id', { count: 'exact', head: true })
+    const { count: eventCount, error: e5 } = await supabase.from('emergency_events').select('id', { count: 'exact', head: true }).eq('status', 'active')
+    const { count: alertCount, error: e6 } = await supabase.from('safety_alerts').select('id', { count: 'exact', head: true })
+    ;[e1, e2, e3, e4, e5, e6].forEach((e, i) => reportError('loadStats:' + i, e))
     setStats({ users: userCount || 0, ambassadors: ambassadorCount || 0, requests: requestCount || 0, matches: matchCount || 0, events: eventCount || 0, alerts: alertCount || 0 })
   }
 
   async function loadApprovals() {
-    const { data: notifs } = await supabase.from('notifications').select('*').in('type', ['false_alarm_request', 'duplicate_merge_request']).eq('read', false).order('created_at', { ascending: false })
+    const { data: notifs, error } = await supabase.from('notifications').select('*').in('type', ['false_alarm_request', 'duplicate_merge_request']).eq('read', false).order('created_at', { ascending: false })
+    reportError('loadApprovals', error)
     if (!notifs || notifs.length === 0) { setApprovals([]); return }
     const enriched = await Promise.all(notifs.map(async (n) => {
       const eventId = n.type === 'false_alarm_request' ? n.link?.replace('/emergency/', '') : null
@@ -88,17 +111,21 @@ export default function Admin() {
       let duplicateEvent = null
       let targetEvent = null
       if (n.type === 'false_alarm_request' && eventId) {
-        const { data } = await supabase.from('emergency_events').select('*').eq('id', Number(eventId)).maybeSingle()
+        const { data, error: e1 } = await supabase.from('emergency_events').select('*').eq('id', Number(eventId)).maybeSingle()
+        reportError('loadApprovals:event', e1)
         event = data
       }
       if (n.type === 'duplicate_merge_request') {
-        const { data: votes } = await supabase.from('event_close_votes').select('*').eq('close_reason', 'duplicate').order('created_at', { ascending: false }).limit(10)
+        const { data: votes, error: e2 } = await supabase.from('event_close_votes').select('*').eq('close_reason', 'duplicate').order('created_at', { ascending: false }).limit(10)
+        reportError('loadApprovals:votes', e2)
         const vote = votes?.find(v => {
           return n.body?.includes('"') && n.created_at && Math.abs(new Date(v.created_at) - new Date(n.created_at)) < 60000
         }) || votes?.[0]
         if (vote) {
-          const { data: dup } = await supabase.from('emergency_events').select('*').eq('id', vote.event_id).maybeSingle()
-          const { data: tgt } = await supabase.from('emergency_events').select('*').eq('id', vote.duplicate_event_id).maybeSingle()
+          const { data: dup, error: e3 } = await supabase.from('emergency_events').select('*').eq('id', vote.event_id).maybeSingle()
+          reportError('loadApprovals:dup', e3)
+          const { data: tgt, error: e4 } = await supabase.from('emergency_events').select('*').eq('id', vote.duplicate_event_id).maybeSingle()
+          reportError('loadApprovals:tgt', e4)
           duplicateEvent = dup
           targetEvent = tgt
         }
@@ -109,13 +136,15 @@ export default function Admin() {
   }
 
   async function verifyEvent(eventId) {
-    await supabase.from('emergency_events').update({ verified: true }).eq('id', eventId)
+    const { error } = await supabase.from('emergency_events').update({ verified: true }).eq('id', eventId)
+    if (reportError('verifyEvent', error, 'Could not verify this event. Try again.')) return
     await loadPending()
   }
 
   async function rejectEvent(eventId) {
     if (!confirm('Reject and close this event report?')) return
-    await supabase.from('emergency_events').update({ status: 'closed' }).eq('id', eventId)
+    const { error } = await supabase.from('emergency_events').update({ status: 'closed' }).eq('id', eventId)
+    if (reportError('rejectEvent', error, 'Could not reject this event. Try again.')) return
     await loadPending()
   }
 
@@ -123,21 +152,29 @@ export default function Admin() {
     if (!confirm('Delete this event as a false alarm?')) return
     const eventId = notif.link?.replace('/emergency/', '')
     if (eventId) {
-      await supabase.from('event_signups').delete().eq('event_id', Number(eventId))
-      await supabase.from('event_check_ins').delete().eq('event_id', Number(eventId))
-      await supabase.from('event_resources').delete().eq('event_id', Number(eventId))
-      await supabase.from('event_close_votes').delete().eq('event_id', Number(eventId))
-      await supabase.from('emergency_events').delete().eq('id', Number(eventId))
+      const { error: e1 } = await supabase.from('event_signups').delete().eq('event_id', Number(eventId))
+      reportError('approveFalseAlarm:signups', e1)
+      const { error: e2 } = await supabase.from('event_check_ins').delete().eq('event_id', Number(eventId))
+      reportError('approveFalseAlarm:checkins', e2)
+      const { error: e3 } = await supabase.from('event_resources').delete().eq('event_id', Number(eventId))
+      reportError('approveFalseAlarm:resources', e3)
+      const { error: e4 } = await supabase.from('event_close_votes').delete().eq('event_id', Number(eventId))
+      reportError('approveFalseAlarm:closevotes', e4)
+      const { error: e5 } = await supabase.from('emergency_events').delete().eq('id', Number(eventId))
+      if (reportError('approveFalseAlarm:event', e5, 'Could not delete the event. Try again.')) return
     }
-    await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
+    const { error: e6 } = await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
+    reportError('approveFalseAlarm:notif', e6)
     await loadApprovals()
   }
 
   async function rejectFalseAlarm(notif) {
-    await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
+    const { error: e1 } = await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
+    reportError('rejectFalseAlarm:notif', e1)
     const eventId = notif.link?.replace('/emergency/', '')
     if (eventId) {
-      await supabase.from('event_close_votes').delete().eq('event_id', Number(eventId)).eq('close_reason', 'false_alarm')
+      const { error: e2 } = await supabase.from('event_close_votes').delete().eq('event_id', Number(eventId)).eq('close_reason', 'false_alarm')
+      reportError('rejectFalseAlarm:closevotes', e2)
     }
     await loadApprovals()
   }
@@ -147,61 +184,82 @@ export default function Admin() {
     if (!confirm('Merge "' + notif.duplicateEvent.title + '" into "' + notif.targetEvent.title + '"?')) return
     const dupId = notif.duplicateEvent.id
     const tgtId = notif.targetEvent.id
-    await supabase.from('event_signups').update({ event_id: tgtId }).eq('event_id', dupId)
-    await supabase.from('event_check_ins').update({ event_id: tgtId }).eq('event_id', dupId)
-    await supabase.from('event_resources').update({ event_id: tgtId }).eq('event_id', dupId)
-    await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'duplicate', merged_into_event_id: tgtId }).eq('id', dupId)
-    await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
-    await supabase.from('event_close_votes').delete().eq('event_id', dupId)
+    const { error: e1 } = await supabase.from('event_signups').update({ event_id: tgtId }).eq('event_id', dupId)
+    reportError('approveDuplicateMerge:signups', e1)
+    const { error: e2 } = await supabase.from('event_check_ins').update({ event_id: tgtId }).eq('event_id', dupId)
+    reportError('approveDuplicateMerge:checkins', e2)
+    const { error: e3 } = await supabase.from('event_resources').update({ event_id: tgtId }).eq('event_id', dupId)
+    reportError('approveDuplicateMerge:resources', e3)
+    const { error: e4 } = await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'duplicate', merged_into_event_id: tgtId }).eq('id', dupId)
+    if (reportError('approveDuplicateMerge:event', e4, 'Could not merge the events. Try again.')) return
+    const { error: e5 } = await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
+    reportError('approveDuplicateMerge:notif', e5)
+    const { error: e6 } = await supabase.from('event_close_votes').delete().eq('event_id', dupId)
+    reportError('approveDuplicateMerge:closevotes', e6)
     await loadApprovals()
     await loadPending()
   }
 
   async function rejectDuplicateMerge(notif) {
-    await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
+    const { error: e1 } = await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
+    reportError('rejectDuplicateMerge:notif', e1)
     if (notif.duplicateEvent) {
-      await supabase.from('event_close_votes').delete().eq('event_id', notif.duplicateEvent.id).eq('close_reason', 'duplicate')
+      const { error: e2 } = await supabase.from('event_close_votes').delete().eq('event_id', notif.duplicateEvent.id).eq('close_reason', 'duplicate')
+      reportError('rejectDuplicateMerge:closevotes', e2)
     }
     await loadApprovals()
   }
   async function promoteUser(userId, toRole) {
     if (toRole === 'ambassador') {
-      await supabase.from('helper_profiles').update({ is_hope_ambassador: true }).eq('user_id', userId)
+      const { error } = await supabase.from('helper_profiles').update({ is_hope_ambassador: true }).eq('user_id', userId)
+      if (reportError('promoteUser:ambassador', error, 'Could not update this user. Try again.')) return
       await loadUsers()
     } else if (toRole === 'admin') {
       if (!confirm('Send admin invitation to this user? They will see it on their profile.')) return
-      const { data: existing } = await supabase.from('admin_applications').select('id, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle()
-      if (existing && existing.status === 'invited') { alert("This user already has an invitation waiting — they haven't responded yet."); return }
+      const { data: existing, error: existErr } = await supabase.from('admin_applications').select('id, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (reportError('promoteUser:checkExisting', existErr, 'Could not check this user. Try again.')) return
+      if (existing && existing.status === 'invited') { alert("This user already has an invitation waiting, they haven't responded yet."); return }
       if (existing && existing.status === 'pending') { alert('This user already accepted an invitation. Go to the Approvals tab to finish granting them access.'); setTab('approvals'); return }
-      await supabase.from('admin_applications').insert({ user_id: userId, region: 'Invited by admin', reason: 'Admin invitation', status: 'invited', invited_by: user.id })
-      await supabase.from('notifications').insert({ user_id: userId, type: 'admin_invite', title: 'You have been invited to become an Admin', body: 'Check your profile to accept or decline.', link: '/profile', read: false })
+      const { error: insErr } = await supabase.from('admin_applications').insert({ user_id: userId, region: 'Invited by admin', reason: 'Admin invitation', status: 'invited', invited_by: user.id })
+      if (reportError('promoteUser:insertInvite', insErr, 'Could not send the invitation. Try again.')) return
+      const { error: notifErr } = await supabase.from('notifications').insert({ user_id: userId, type: 'admin_invite', title: 'You have been invited to become an Admin', body: 'Check your profile to accept or decline.', link: '/profile', read: false })
+      reportError('promoteUser:notify', notifErr)
       await loadUsers()
     }
   }
   async function approveAdminApplication(app) {
     if (!confirm('Grant admin access to ' + (app.applicant_name || 'this user') + '?')) return
-    await supabase.from('helper_profiles').update({ role: 'admin' }).eq('user_id', app.user_id)
-    await supabase.from('admin_applications').update({ status: 'approved' }).eq('id', app.id)
-    await supabase.from('notifications').insert({ user_id: app.user_id, type: 'admin_invite_approved', title: 'You are now an Admin', body: 'Your admin access has been confirmed. Find the Admin Panel from your profile.', link: '/admin', read: false })
+    const { error: roleErr } = await supabase.from('helper_profiles').update({ role: 'admin' }).eq('user_id', app.user_id)
+    if (reportError('approveAdminApplication:role', roleErr, 'Could not grant admin access. Try again.')) return
+    const { error: statusErr } = await supabase.from('admin_applications').update({ status: 'approved' }).eq('id', app.id)
+    reportError('approveAdminApplication:status', statusErr)
+    const { error: notifErr } = await supabase.from('notifications').insert({ user_id: app.user_id, type: 'admin_invite_approved', title: 'You are now an Admin', body: 'Your admin access has been confirmed. Find the Admin Panel from your profile.', link: '/admin', read: false })
+    reportError('approveAdminApplication:notify', notifErr)
     await loadAdminApplications()
     await loadUsers()
   }
   async function declineAdminApplication(app) {
     if (!confirm('Decline this admin request?')) return
-    await supabase.from('admin_applications').update({ status: 'declined' }).eq('id', app.id)
-    await supabase.from('notifications').insert({ user_id: app.user_id, type: 'admin_invite_declined', title: 'Your admin request was not approved', body: '', link: '/profile', read: false })
+    const { error } = await supabase.from('admin_applications').update({ status: 'declined' }).eq('id', app.id)
+    if (reportError('declineAdminApplication', error, 'Could not decline this request. Try again.')) return
+    const { error: notifErr } = await supabase.from('notifications').insert({ user_id: app.user_id, type: 'admin_invite_declined', title: 'Your admin request was not approved', body: '', link: '/profile', read: false })
+    reportError('declineAdminApplication:notify', notifErr)
     await loadAdminApplications()
   }
   async function demoteUser(userId) {
     if (!confirm('Remove admin role from this user?')) return
-    await supabase.from('helper_profiles').update({ role: 'member' }).eq('user_id', userId)
+    const { error } = await supabase.from('helper_profiles').update({ role: 'member' }).eq('user_id', userId)
+    if (reportError('demoteUser', error, 'Could not remove admin access. Try again.')) return
     await loadUsers()
   }
   async function messageUser(userId) {
-    const { data: convos } = await supabase.from('conversations').select('id, helper_id, requester_id').or('helper_id.eq.' + userId + ',requester_id.eq.' + userId)
+    const { data: convos, error: convoErr } = await supabase.from('conversations').select('id, helper_id, requester_id').or('helper_id.eq.' + userId + ',requester_id.eq.' + userId)
+    reportError('messageUser:lookup', convoErr)
     const existing = (convos || []).find(c => (c.helper_id === user.id || c.requester_id === user.id) && (c.helper_id === userId || c.requester_id === userId))
     if (existing) { navigate('/conversation/' + existing.id); return }
-    const { data: newConvo } = await supabase.from('conversations').insert({ helper_id: user.id, requester_id: userId }).select().single()
+    const { data: newConvo, error: createErr } = await supabase.from('conversations').insert({ helper_id: user.id, requester_id: userId }).select().single()
+    if (reportError('messageUser:create', createErr, 'Could not start a conversation. Try again.')) return
+    navigate('/conversation/' + newConvo.id)
   }
 
   if (!isAdmin) {
@@ -286,7 +344,7 @@ export default function Admin() {
                     <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid #4ecca3' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                          <AvatarDisplay url={a.applicant_avatar} size={32} />
+                          <AvatarDisplay url={a.applicant_avatar} userId={a.user_id} size={32} />
                           <div>
                             <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>ADMIN REQUEST</span>
                             <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}>{a.applicant_name}</h4>
