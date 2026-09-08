@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { AvatarDisplay } from '../components/AvatarBuilder'
 
 export default function Admin() {
   const { user, profile, isAdmin, isFounder } = useAuth()
@@ -27,13 +28,13 @@ export default function Admin() {
     const { data } = await supabase.from('admin_applications').select('*').eq('status', 'pending').order('created_at', { ascending: false })
     if (!data || data.length === 0) { setAdminApplications([]); return }
     const enriched = await Promise.all(data.map(async (a) => {
-      const { data: prof } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.user_id).maybeSingle()
+      const { data: prof } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', a.user_id).maybeSingle()
       let invitedByName = null
       if (a.invited_by) {
         const { data: inviter } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.invited_by).maybeSingle()
         invitedByName = inviter?.display_name || 'an admin'
       }
-      return { ...a, applicant_name: prof?.display_name || 'Unnamed', invited_by_name: invitedByName }
+      return { ...a, applicant_name: prof?.display_name || 'Unnamed', applicant_avatar: prof?.avatar_url || null, invited_by_name: invitedByName }
     }))
     setAdminApplications(enriched)
   }
@@ -56,7 +57,7 @@ export default function Admin() {
   }
 
   async function loadUsers() {
-    const { data } = await supabase.from('helper_profiles').select('user_id, display_name, is_hope_ambassador, is_available, created_at').order('created_at', { ascending: false })
+    const { data } = await supabase.from('helper_profiles').select('user_id, display_name, avatar_url, is_hope_ambassador, is_available, created_at').order('created_at', { ascending: false })
     if (data) {
       const withVouches = await Promise.all(data.map(async (u) => {
         const { count } = await supabase.from('vouches').select('id', { count: 'exact', head: true }).eq('vouched_for_id', u.user_id)
@@ -284,9 +285,12 @@ export default function Admin() {
                   {adminApplications.map(a => (
                     <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid #4ecca3' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div style={{ flex: 1 }}>
-                          <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>ADMIN REQUEST</span>
-                          <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}>{a.applicant_name}</h4>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+                          <AvatarDisplay url={a.applicant_avatar} size={32} />
+                          <div>
+                            <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>ADMIN REQUEST</span>
+                            <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}>{a.applicant_name}</h4>
+                          </div>
                         </div>
                         <span style={{ color: '#888', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(a.created_at)}</span>
                       </div>
@@ -397,10 +401,13 @@ export default function Admin() {
           {users.map(u => (
             <div key={u.user_id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <span style={{ fontWeight: 700 }}>{u.display_name || 'Unnamed'}</span>
-                  {(u.role === 'admin' || u.role === 'founder') && <span style={{ marginLeft: '0.4rem', background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
-                  {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Ambassador</span>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <AvatarDisplay url={u.avatar_url} size={32} />
+                  <div>
+                    <span style={{ fontWeight: 700 }}>{u.display_name || 'Unnamed'}</span>
+                    {(u.role === 'admin' || u.role === 'founder') && <span style={{ marginLeft: '0.4rem', background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
+                    {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Ambassador</span>}
+                  </div>
                 </div>
                 <span style={{ color: '#888', fontSize: '0.7rem' }}>{u.vouch_count} vouches</span>
               </div>
