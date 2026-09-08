@@ -24,3 +24,13 @@ dist-ssr
 *.sw?
 
 .env
+
+agent.py
+agent.pypy
+config.json
+history.txt
+stdout.txt
+error.txt
+out.txt
+results.txt
+

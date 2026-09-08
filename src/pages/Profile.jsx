@@ -44,6 +44,13 @@ export default function Profile() {
   const [adminAppId, setAdminAppId] = useState(null)
   const [adminAppInvitedBy, setAdminAppInvitedBy] = useState(null)
 
+  const [coverageRegion, setCoverageRegion] = useState('')
+  const [coverageLat, setCoverageLat] = useState(null)
+  const [coverageLng, setCoverageLng] = useState(null)
+  const [coverageLocating, setCoverageLocating] = useState(false)
+  const [coverageSaving, setCoverageSaving] = useState(false)
+  const [coverageError, setCoverageError] = useState('')
+
   useEffect(() => {
     async function loadSkills() {
       const { data } = await supabase.from('skill_categories').select('name').order('sort_order')
@@ -64,6 +71,14 @@ export default function Profile() {
     }
   }, [profile])
   useEffect(() => { if (user?.id && profile?.is_hope_ambassador && !isAdmin) loadAdminAppStatus() }, [user?.id, profile?.is_hope_ambassador])
+
+  useEffect(() => {
+    async function prefillCoverageRegion() {
+      const { data } = await supabase.from('admin_applications').select('region').eq('user_id', user.id).not('region', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (data?.region) setCoverageRegion(data.region)
+    }
+    if (isAdmin && user?.id && profile && !profile.admin_region_name) prefillCoverageRegion()
+  }, [isAdmin, user?.id, profile?.admin_region_name])
 
   function toggleSkill(skill) {
     setSelectedSkills((prev) => prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill])
@@ -161,7 +176,33 @@ export default function Profile() {
     setAdminAppStatus('pending')
     setMessage('Your admin application has been submitted!')
   }
-async function handleEmailChange() {
+function captureCoverageLocation() {
+    setCoverageError('')
+    if (!navigator.geolocation) { setCoverageError('Location is not available on this device.'); return }
+    setCoverageLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setCoverageLat(pos.coords.latitude); setCoverageLng(pos.coords.longitude); setCoverageLocating(false) },
+      () => { setCoverageError('Could not get your location. Check your browser permissions and try again.'); setCoverageLocating(false) },
+      { enableHighAccuracy: false, timeout: 10000 }
+    )
+  }
+
+  async function saveCoverageArea() {
+    if (!coverageRegion.trim()) { setCoverageError('Add a region name first.'); return }
+    if (coverageLat == null || coverageLng == null) { setCoverageError('Share your location first.'); return }
+    setCoverageSaving(true); setCoverageError('')
+    const { error: covErr } = await supabase.from('helper_profiles').update({
+      admin_region_name: coverageRegion.trim(),
+      admin_latitude: coverageLat,
+      admin_longitude: coverageLng,
+    }).eq('user_id', user.id)
+    if (covErr) { setCoverageError('Could not save. Try again.'); setCoverageSaving(false); return }
+    await refreshProfile()
+    setMessage('Your coverage area is set. Reports can now route to you.')
+    setCoverageSaving(false)
+  }
+
+  async function handleEmailChange() {
   if (!newEmail.trim() || !newEmail.includes('@')) { setEmailError('Enter a valid email address.'); return }
   setEmailSaving(true); setEmailError(''); setEmailMessage('')
   const { error: updateError } = await supabase.auth.updateUser({ email: newEmail.trim() })
@@ -327,6 +368,22 @@ async function handleEmailChange() {
           <button className="btn btn-outline btn-full" onClick={() => navigate("/admin")} style={{ marginTop: "0.5rem", borderColor: "#4ecca3", color: "#4ecca3" }}>
             {'\u2699'} Admin Panel
           </button>
+        )}
+        {isAdmin && !profile?.admin_latitude && (
+          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid #66aaff', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
+            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: '#66aaff' }}>Set up your coverage area</h2>
+            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Safety reports route to the nearest admin. Add your area and share your location so nearby reports can reach you.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <input type="text" placeholder="What area do you cover? (e.g. Ringgold, Chickamauga)" value={coverageRegion} onChange={e => setCoverageRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
+              <button type="button" className="btn btn-outline" onClick={captureCoverageLocation} disabled={coverageLocating} style={{ borderColor: '#66aaff', color: '#66aaff' }}>
+                {coverageLocating ? 'Getting your location...' : coverageLat != null ? '\u2713 Location captured' : 'Share my location'}
+              </button>
+              {coverageError && <p className="form-error" role="alert">{coverageError}</p>}
+              <button type="button" className="btn btn-primary" onClick={saveCoverageArea} disabled={coverageSaving || !coverageRegion.trim() || coverageLat == null} style={{ marginTop: '0.25rem' }}>
+                {coverageSaving ? 'Saving...' : 'Save coverage area'}
+              </button>
+            </div>
+          </div>
         )}
         {profile?.is_hope_ambassador && !isAdmin && !adminAppStatus && (
           <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid #66aaff', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
