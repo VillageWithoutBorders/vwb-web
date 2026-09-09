@@ -53,8 +53,9 @@ export default function Profile() {
 
   useEffect(() => {
     async function loadSkills() {
-      const { data } = await supabase.from('skill_categories').select('name').order('sort_order')
-      if (data) setSkillOptions(data.map((s) => s.name))
+      const { data, error } = await supabase.from('skill_categories').select('title').order('title')
+      if (error) { console.error('Failed to load skill categories:', error); return }
+      if (data) setSkillOptions(data.map((s) => s.title))
     }
     loadSkills()
   }, [])

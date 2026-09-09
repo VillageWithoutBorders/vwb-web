@@ -34,10 +34,12 @@ export default function AskForHelp() {
 
     useEffect(() => {
         async function loadSkills() {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('skill_categories')
-                .select('name')
-                .order('sort_order')
+                .select('title')
+                .order('title')
+
+            if (error) { console.error('Failed to load skill categories:', error); return }
 
             if (data) {
                 setSkills(data.map((s) => s.title))
