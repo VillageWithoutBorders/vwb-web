@@ -25,12 +25,21 @@ export default function Admin() {
   const [stats, setStats] = useState({})
   const [approvals, setApprovals] = useState([])
   const [adminApplications, setAdminApplications] = useState([])
+  const [organizations, setOrganizations] = useState([])
+  const [showNewOrgForm, setShowNewOrgForm] = useState(false)
+  const [newOrgName, setNewOrgName] = useState('')
+  const [newOrgDesc, setNewOrgDesc] = useState('')
+  const [newOrgEmail, setNewOrgEmail] = useState('')
+  const [newOrgWebsite, setNewOrgWebsite] = useState('')
+  const [newOrgSocial, setNewOrgSocial] = useState('')
+  const [memberSearchQuery, setMemberSearchQuery] = useState({})
+  const [memberSearchResults, setMemberSearchResults] = useState({})
 
   useEffect(() => { loadAll() }, [])
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications()])
+    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadOrganizations()])
     setLoading(false)
   }
 
@@ -50,6 +59,67 @@ export default function Admin() {
       return { ...a, applicant_name: prof?.display_name || 'Unnamed', applicant_avatar: prof?.avatar_url || null, invited_by_name: invitedByName }
     }))
     setAdminApplications(enriched)
+  }
+
+  async function loadOrganizations() {
+    const { data, error } = await supabase.from('organizations').select('*').order('created_at', { ascending: false })
+    reportError('loadOrganizations', error)
+    if (!data) { setOrganizations([]); return }
+    const withMembers = await Promise.all(data.map(async (org) => {
+      const { data: members, error: memErr } = await supabase.from('organization_members').select('id, user_id, role').eq('organization_id', org.id)
+      reportError('loadOrganizations:members', memErr)
+      const enrichedMembers = await Promise.all((members || []).map(async (m) => {
+        const { data: prof } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', m.user_id).maybeSingle()
+        return { ...m, display_name: prof?.display_name || 'Unnamed' }
+      }))
+      return { ...org, members: enrichedMembers }
+    }))
+    setOrganizations(withMembers)
+  }
+
+  async function createOrganization() {
+    if (!newOrgName.trim()) { alert('Organization name is required.'); return }
+    const social_links = newOrgSocial.trim() ? { primary: newOrgSocial.trim() } : {}
+    const { error } = await supabase.from('organizations').insert({
+      name: newOrgName.trim(),
+      description: newOrgDesc.trim() || null,
+      contact_email: newOrgEmail.trim() || null,
+      website_url: newOrgWebsite.trim() || null,
+      social_links,
+    })
+    if (reportError('createOrganization', error, 'Could not create this organization. Try again.')) return
+    setNewOrgName(''); setNewOrgDesc(''); setNewOrgEmail(''); setNewOrgWebsite(''); setNewOrgSocial('')
+    setShowNewOrgForm(false)
+    await loadOrganizations()
+  }
+
+  async function toggleOrgApproved(org) {
+    const { error } = await supabase.from('organizations').update({ approved: !org.approved }).eq('id', org.id)
+    if (reportError('toggleOrgApproved', error, 'Could not update this organization. Try again.')) return
+    await loadOrganizations()
+  }
+
+  async function searchMembersToAdd(orgId) {
+    const query = (memberSearchQuery[orgId] || '').trim()
+    if (!query) { setMemberSearchResults(prev => ({ ...prev, [orgId]: [] })); return }
+    const { data, error } = await supabase.from('helper_profiles').select('user_id, display_name').ilike('display_name', '%' + query + '%').limit(5)
+    reportError('searchMembersToAdd', error)
+    setMemberSearchResults(prev => ({ ...prev, [orgId]: data || [] }))
+  }
+
+  async function addOrgMember(orgId, userId) {
+    const { error } = await supabase.from('organization_members').insert({ organization_id: orgId, user_id: userId })
+    if (reportError('addOrgMember', error, 'Could not add this member. They may already be in this organization.')) return
+    setMemberSearchResults(prev => ({ ...prev, [orgId]: [] }))
+    setMemberSearchQuery(prev => ({ ...prev, [orgId]: '' }))
+    await loadOrganizations()
+  }
+
+  async function removeOrgMember(memberRowId, orgId) {
+    if (!confirm('Remove this member from the organization?')) return
+    const { error } = await supabase.from('organization_members').delete().eq('id', memberRowId)
+    if (reportError('removeOrgMember', error, 'Could not remove this member. Try again.')) return
+    await loadOrganizations()
   }
 
   async function loadPending() {
@@ -327,6 +397,7 @@ export default function Admin() {
         <button style={tabStyle(tab === 'emergencies')} onClick={() => setTab('emergencies')}>Emergencies ({pendingEvents.length})</button>
         <button style={tabStyle(tab === 'users')} onClick={() => setTab('users')}>Users ({users.length})</button>
         <button style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports ({alerts.length})</button>
+        <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length})</button>
       </div>
 
       {loading && <p style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>Loading...</p>}
@@ -510,6 +581,70 @@ export default function Admin() {
                 {a.reported_user_id && a.reported_name}
               </p>
               {a.description && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{a.description}</p>}
+            </div>
+          ))}
+        </>
+      )}
+
+      {!loading && tab === 'organizations' && (
+        <>
+          <button onClick={() => setShowNewOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewOrgForm ? 'Cancel' : '+ New Organization'}</button>
+
+          {showNewOrgForm && (
+            <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
+              <input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="Organization name *" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+              <textarea value={newOrgDesc} onChange={(e) => setNewOrgDesc(e.target.value)} placeholder="Short description" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem', minHeight: '3rem' }} />
+              <input value={newOrgEmail} onChange={(e) => setNewOrgEmail(e.target.value)} placeholder="Contact email" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+              <input value={newOrgWebsite} onChange={(e) => setNewOrgWebsite(e.target.value)} placeholder="Website URL" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+              <input value={newOrgSocial} onChange={(e) => setNewOrgSocial(e.target.value)} placeholder="Social media link (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+              <button onClick={createOrganization} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create Organization</button>
+            </div>
+          )}
+
+          {organizations.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>No organizations yet</p>
+          ) : organizations.map(org => (
+            <div key={org.id} style={cardStyle}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <span style={{ background: org.approved ? '#1a4a3a' : '#3a2a1a', color: org.approved ? '#4ecca3' : '#ffaa44', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{org.approved ? 'APPROVED' : 'PENDING APPROVAL'}</span>
+                  <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}>{org.name}</h4>
+                </div>
+                <button onClick={() => toggleOrgApproved(org)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: org.approved ? 'none' : '#4ecca3', color: org.approved ? '#ff4444' : '#1a1a1a', border: org.approved ? '1px solid #ff4444' : 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{org.approved ? 'Unapprove' : 'Approve'}</button>
+              </div>
+              {org.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.3rem 0' }}>{org.description}</p>}
+              {(org.contact_email || org.website_url) && (
+                <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0' }}>
+                  {org.contact_email}{org.contact_email && org.website_url ? ' \u00b7 ' : ''}{org.website_url}
+                </p>
+              )}
+
+              <p style={{ color: '#4ecca3', fontSize: '0.75rem', fontWeight: 600, margin: '0.6rem 0 0.3rem' }}>Members ({org.members.length})</p>
+              {org.members.length === 0 && <p style={{ color: '#666', fontSize: '0.75rem', margin: '0 0 0.4rem' }}>No members yet</p>}
+              {org.members.map(m => (
+                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.3rem 0' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#ccc' }}>{m.display_name}</span>
+                  <button onClick={() => removeOrgMember(m.id, org.id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.7rem' }}>Remove</button>
+                </div>
+              ))}
+
+              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
+                <input
+                  value={memberSearchQuery[org.id] || ''}
+                  onChange={(e) => setMemberSearchQuery(prev => ({ ...prev, [org.id]: e.target.value }))}
+                  onKeyDown={(e) => { if (e.key === 'Enter') searchMembersToAdd(org.id) }}
+                  placeholder="Search user by name to add"
+                  style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.8rem' }}
+                />
+                <button onClick={() => searchMembersToAdd(org.id)} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem' }}>Search</button>
+              </div>
+              {(memberSearchResults[org.id] || []).length > 0 && (
+                <div style={{ marginTop: '0.4rem' }}>
+                  {memberSearchResults[org.id].map(u => (
+                    <button key={u.user_id} onClick={() => addOrgMember(org.id, u.user_id)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.35rem 0.5rem', borderRadius: '6px', border: 'none', background: '#2a2a2a', color: '#eee', cursor: 'pointer', fontSize: '0.8rem', marginBottom: '0.2rem' }}>+ Add {u.display_name || 'Unnamed'}</button>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </>

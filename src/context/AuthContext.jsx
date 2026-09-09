@@ -10,6 +10,7 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [organizations, setOrganizations] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -35,6 +36,25 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  async function loadOrganizations(userId) {
+    const { data, error } = await supabase
+      .from('organization_members')
+      .select('organization_id, role, organizations ( id, name, approved )')
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('[AuthContext] loadOrganizations', error)
+      setOrganizations([])
+      return
+    }
+
+    const approved = (data || [])
+      .filter((row) => row.organizations && row.organizations.approved)
+      .map((row) => ({ id: row.organizations.id, name: row.organizations.name, role: row.role }))
+
+    setOrganizations(approved)
+  }
+
   async function ensureProfile(authUser) {
     const { data } = await supabase
       .from('helper_profiles')
@@ -44,6 +64,7 @@ export function AuthProvider({ children }) {
 
     if (data) {
       setProfile(data)
+      loadOrganizations(authUser.id)
 
       // Check for pending ambassador signup
       const pending = localStorage.getItem('vwb_ambassador_pending')
@@ -89,6 +110,7 @@ export function AuthProvider({ children }) {
 
     if (!error) {
       setProfile(newProfile)
+      loadOrganizations(authUser.id)
     }
   }
 
@@ -102,6 +124,7 @@ export function AuthProvider({ children }) {
 
     if (data) {
       setProfile(data)
+      loadOrganizations(user.id)
     }
   }
 
@@ -131,10 +154,11 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    setOrganizations([])
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile, isAdmin: profile?.role === 'admin' || profile?.role === 'founder', isFounder: profile?.role === 'founder' }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile, isAdmin: profile?.role === 'admin' || profile?.role === 'founder', isFounder: profile?.role === 'founder', organizations, isOrgMember: organizations.length > 0 }}>
       {children}
     </AuthContext.Provider>
   )
