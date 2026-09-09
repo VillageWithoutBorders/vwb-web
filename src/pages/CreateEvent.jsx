@@ -46,11 +46,12 @@ export default function CreateEvent() {
   const [dupMatch, setDupMatch] = useState(null)
 
   async function checkDuplicates() {
-    const { data: existing } = await supabase
+    const { data: existing, error: dupErr } = await supabase
       .from('emergency_events')
       .select('*')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
+    if (dupErr) { console.error('Failed to check for duplicate events:', dupErr); return null }
     if (!existing || existing.length === 0) return null
 
     const draft = { eventType, title: title.trim(), description: description.trim(), locationName: locationName.trim() }
@@ -95,11 +96,12 @@ export default function CreateEvent() {
       return
     }
 
-    await supabase.from('event_signups').insert({
+    const { error: signupErr } = await supabase.from('event_signups').insert({
       event_id: data.id,
       user_id: user.id,
       role: 'coordinator',
     })
+    if (signupErr) console.error('Failed to record event creator as coordinator:', signupErr)
 
     setSubmitting(false)
     navigate('/emergency/' + data.id)

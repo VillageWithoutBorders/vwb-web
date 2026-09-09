@@ -75,7 +75,8 @@ export default function Profile() {
 
   useEffect(() => {
     async function prefillCoverageRegion() {
-      const { data } = await supabase.from('admin_applications').select('region').eq('user_id', user.id).not('region', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      const { data, error } = await supabase.from('admin_applications').select('region').eq('user_id', user.id).not('region', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (error) { console.error('Failed to prefill coverage region:', error); return }
       if (data?.region) setCoverageRegion(data.region)
     }
     if (isAdmin && user?.id && profile && !profile.admin_region_name) prefillCoverageRegion()
@@ -132,13 +133,13 @@ export default function Profile() {
       availability: ambSignupAvailability.trim(), interests: ambSignupInterests.trim(), is_available: true,
     }).eq('user_id', user.id)
     if (updateError) { setAmbSignupError('Something went wrong. Try again.'); setAmbSignupSaving(false); return }
-    await supabase.from('helper_profiles').update({ is_hope_ambassador: true, skills: ambSignupSkills }).eq('user_id', user.id)
     await refreshProfile()
     setShowAmbassadorSignup(false); setMessage('Welcome aboard! You are now a Hope Ambassador.'); setAmbSignupSaving(false)
   }
 
   async function loadAdminAppStatus() {
-    const { data } = await supabase.from('admin_applications').select('id, status, invited_by').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    const { data, error } = await supabase.from('admin_applications').select('id, status, invited_by').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    if (error) { console.error('Failed to load admin application status:', error); return }
     if (data) {
       setAdminAppStatus(data.status)
       setAdminAppId(data.id)
@@ -148,11 +149,18 @@ export default function Profile() {
 
   async function respondToAdminInvite(accept) {
     if (!adminAppId) return
-    setAdminAppSaving(true)
+    setAdminAppSaving(true); setError(''); setMessage('')
     const newStatus = accept ? 'pending' : 'declined'
-    await supabase.from('admin_applications').update({ status: newStatus }).eq('id', adminAppId)
+    const { error: statusError } = await supabase.from('admin_applications').update({ status: newStatus }).eq('id', adminAppId)
+    if (statusError) {
+      console.error('Failed to update admin application status:', statusError)
+      setError('Could not save your response. Try again.')
+      setAdminAppSaving(false)
+      return
+    }
+    let notifyFailed = false
     if (adminAppInvitedBy) {
-      await supabase.from('notifications').insert({
+      const { error: notifyError } = await supabase.from('notifications').insert({
         user_id: adminAppInvitedBy,
         type: accept ? 'admin_invite_accepted' : 'admin_invite_declined',
         title: (profile?.display_name || 'A neighbor') + (accept ? ' accepted your admin invitation' : ' declined your admin invitation'),
@@ -160,16 +168,29 @@ export default function Profile() {
         link: '/admin',
         read: false,
       })
+      if (notifyError) { console.error('Failed to notify inviting admin:', notifyError); notifyFailed = true }
     }
     setAdminAppStatus(newStatus)
-    setMessage(accept ? 'Thanks! Your acceptance was sent back for final confirmation.' : 'Invitation declined.')
+    setMessage(
+      accept
+        ? notifyFailed
+          ? 'Thanks! We saved your acceptance, but could not notify the admin who invited you. Let them know directly.'
+          : 'Thanks! Your acceptance was sent back for final confirmation.'
+        : 'Invitation declined.'
+    )
     setAdminAppSaving(false)
   }
 
   async function submitAdminApplication() {
     if (!adminAppRegion.trim() || !adminAppReason.trim()) return
-    setAdminAppSaving(true)
-    await supabase.from('admin_applications').insert({ user_id: user.id, region: adminAppRegion.trim(), reason: adminAppReason.trim() })
+    setAdminAppSaving(true); setError(''); setMessage('')
+    const { error: appError } = await supabase.from('admin_applications').insert({ user_id: user.id, region: adminAppRegion.trim(), reason: adminAppReason.trim() })
+    if (appError) {
+      console.error('Failed to submit admin application:', appError)
+      setError('Could not submit your application. Try again.')
+      setAdminAppSaving(false)
+      return
+    }
     setAdminAppSaving(false)
     setShowAdminApp(false)
     setAdminAppRegion('')
@@ -238,7 +259,7 @@ function captureCoverageLocation() {
           <div onClick={() => setShowAvatarBuilder(true)} style={{ cursor: 'pointer', position: 'relative' }}>
             <AvatarDisplay url={profile?.avatar_url} size={80} />
             <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#4ecca3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#1a1a1a', fontWeight: 700, border: '2px solid #1a1a1a' }}>
-              {'\u270E'}
+              {'✎'}
             </div>
           </div>
           <h1>{name}</h1>
@@ -314,7 +335,7 @@ function captureCoverageLocation() {
 
         {!profile?.is_hope_ambassador && !showAmbassadorSignup && (
           <div className="amb-signup-card">
-            <div className="amb-signup-icon" aria-hidden="true">{'\uD83C\uDF3F'}</div>
+            <div className="amb-signup-icon" aria-hidden="true">{'🌿'}</div>
             <h2 className="amb-signup-title">Become a Hope Ambassador</h2>
             <p className="amb-signup-desc">
               Hope Ambassadors are neighbors who volunteer their time and skills
@@ -362,12 +383,13 @@ function captureCoverageLocation() {
         )}
 
         {message && <p className="form-success" role="status" style={{ marginTop: '1rem' }}>{message}</p>}
+        {error && <p className="form-error" role="alert" style={{ marginTop: '1rem' }}>{error}</p>}
 
         <button className="btn btn-primary btn-full" style={{ marginTop: '1.5rem' }} onClick={startEditing}>Edit profile</button>
         <button className="btn btn-outline btn-full" style={{ marginTop: '0.75rem' }} onClick={signOut}>Sign out</button>
         {isAdmin && (
           <button className="btn btn-outline btn-full" onClick={() => navigate("/admin")} style={{ marginTop: "0.5rem", borderColor: "#4ecca3", color: "#4ecca3" }}>
-            {'\u2699'} Admin Panel
+            {'⚙'} Admin Panel
           </button>
         )}
         {isAdmin && !profile?.admin_latitude && (
@@ -377,7 +399,7 @@ function captureCoverageLocation() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <input type="text" placeholder="What area do you cover? (e.g. Ringgold, Chickamauga)" value={coverageRegion} onChange={e => setCoverageRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
               <button type="button" className="btn btn-outline" onClick={captureCoverageLocation} disabled={coverageLocating} style={{ borderColor: '#66aaff', color: '#66aaff' }}>
-                {coverageLocating ? 'Getting your location...' : coverageLat != null ? '\u2713 Location captured' : 'Share my location'}
+                {coverageLocating ? 'Getting your location...' : coverageLat != null ? '✓ Location captured' : 'Share my location'}
               </button>
               {coverageError && <p className="form-error" role="alert">{coverageError}</p>}
               <button type="button" className="btn btn-primary" onClick={saveCoverageArea} disabled={coverageSaving || !coverageRegion.trim() || coverageLat == null} style={{ marginTop: '0.25rem' }}>
@@ -434,7 +456,7 @@ function captureCoverageLocation() {
         <div onClick={() => setShowAvatarBuilder(true)} style={{ cursor: 'pointer', position: 'relative' }}>
           <AvatarDisplay url={profile?.avatar_url} size={80} />
           <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#4ecca3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#1a1a1a', fontWeight: 700, border: '2px solid #1a1a1a' }}>
-            {'\u270E'}
+            {'✎'}
           </div>
         </div>
         <h1>Edit profile</h1>

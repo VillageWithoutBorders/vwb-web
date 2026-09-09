@@ -34,7 +34,8 @@ export default function Community() {
 
   async function loadResources() {
     setLoading(true)
-    const { data } = await supabase.from('community_resources').select('*').order('category').order('name')
+    const { data, error } = await supabase.from('community_resources').select('*').order('category').order('name')
+    if (error) console.error('Failed to load community resources:', error)
     if (data) setResources(data)
     setLoading(false)
   }
@@ -42,19 +43,25 @@ export default function Community() {
   async function submitResource() {
     if (!subName.trim() || !subCat) return
     setSubmitting(true)
-    await supabase.from('community_resources').insert({
+    const { error } = await supabase.from('community_resources').insert({
       submitted_by: user.id, name: subName.trim(), description: subDesc.trim() || null,
       category: subCat, phone: subPhone.trim() || null, url: subUrl.trim() || null,
       address: subAddress.trim() || null, neighborhood: subHood.trim() || null,
     })
     setSubmitting(false)
+    if (error) {
+      console.error('Failed to submit resource:', error)
+      alert('Could not submit this resource. Try again.')
+      return
+    }
     setSubmitted(true)
     setSubName(''); setSubDesc(''); setSubCat(''); setSubPhone(''); setSubUrl(''); setSubAddress('')
     await loadResources()
   }
 
   async function verifyResource(id) {
-    await supabase.from('community_resources').update({ verified: true, verified_by: user.id }).eq('id', id)
+    const { error } = await supabase.from('community_resources').update({ verified: true, verified_by: user.id }).eq('id', id)
+    if (error) { console.error('Failed to verify resource:', error); alert('Could not verify this resource. Try again.'); return }
     await loadResources()
   }
 
@@ -207,7 +214,14 @@ export default function Community() {
         ) : (
           <>
             <textarea value={feedbackText} onChange={e => setFeedbackText(e.target.value)} placeholder="What would help your community? What should we build next?" rows={3} maxLength={2000} style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.9rem', resize: 'vertical', marginBottom: '0.5rem', boxSizing: 'border-box' }} />
-            <button disabled={!feedbackText.trim() || sendingFeedback} onClick={async () => { setSendingFeedback(true); await supabase.from('feedback').insert({ user_id: user.id, body: feedbackText.trim() }); setSendingFeedback(false); setFeedbackSent(true); setFeedbackText('') }} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: (!feedbackText.trim() || sendingFeedback) ? 0.5 : 1 }}>{sendingFeedback ? 'Sending...' : 'Submit Feedback'}</button>
+            <button disabled={!feedbackText.trim() || sendingFeedback} onClick={async () => {
+              setSendingFeedback(true)
+              const { error } = await supabase.from('feedback').insert({ user_id: user.id, body: feedbackText.trim() })
+              setSendingFeedback(false)
+              if (error) { console.error('Failed to submit feedback:', error); alert('Could not submit your feedback. Try again.'); return }
+              setFeedbackSent(true)
+              setFeedbackText('')
+            }} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: (!feedbackText.trim() || sendingFeedback) ? 0.5 : 1 }}>{sendingFeedback ? 'Sending...' : 'Submit Feedback'}</button>
           </>
         )}
       </div>

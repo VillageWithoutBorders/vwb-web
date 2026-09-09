@@ -12,7 +12,8 @@ async function enrichRequests(reqs) {
     if (userIds.length === 0) return reqs
     const profiles = {}
     for (const uid of userIds) {
-        const { data: p } = await supabase.from('helper_profiles').select('is_hope_ambassador, created_at, avatar_url').eq('user_id', uid).maybeSingle()
+        const { data: p, error } = await supabase.from('helper_profiles').select('is_hope_ambassador, created_at, avatar_url').eq('user_id', uid).maybeSingle()
+        if (error) { console.error('enrichRequests: failed to load profile for', uid, error); continue }
         if (p) profiles[uid] = p
     }
     return reqs.map(r => ({
@@ -28,7 +29,8 @@ async function enrichOffers(items) {
     if (userIds.length === 0) return items
     const profiles = {}
     for (const uid of userIds) {
-        const { data: p } = await supabase.from('helper_profiles').select('display_name, is_hope_ambassador, created_at, avatar_url').eq('user_id', uid).maybeSingle()
+        const { data: p, error } = await supabase.from('helper_profiles').select('display_name, is_hope_ambassador, created_at, avatar_url').eq('user_id', uid).maybeSingle()
+        if (error) { console.error('enrichOffers: failed to load profile for', uid, error); continue }
         if (p) profiles[uid] = p
     }
     return items.map(r => ({
@@ -71,7 +73,8 @@ export default function Feed() {
 
     useEffect(() => {
         async function loadSkills() {
-            const { data } = await supabase.from('skill_categories').select('title').order('title')
+            const { data, error } = await supabase.from('skill_categories').select('title').order('title')
+            if (error) { console.error('Failed to load skill categories:', error); return }
             if (data) setSkillCategories(data.map(s => s.title))
         }
         loadSkills()
@@ -82,11 +85,12 @@ export default function Feed() {
         if (!requestIds.length) return
 
         // Get accepted counts per request
-        const { data: accepted } = await supabase
+        const { data: accepted, error: acceptedErr } = await supabase
             .from('skill_matches')
             .select('request_id')
             .in('request_id', requestIds)
             .eq('accepted', true)
+        if (acceptedErr) console.error('Failed to load accepted helper counts:', acceptedErr)
 
         const counts = {}
         if (accepted) {
@@ -97,12 +101,13 @@ export default function Feed() {
         setAcceptedCounts(counts)
 
         // Get this user's pending offers (accepted is null)
-        const { data: pending } = await supabase
+        const { data: pending, error: pendingErr } = await supabase
             .from('skill_matches')
             .select('request_id')
             .in('request_id', requestIds)
             .eq('helper_id', user.id)
             .is('accepted', null)
+        if (pendingErr) console.error('Failed to load your pending offers:', pendingErr)
 
         setMyPendingOffers(new Set((pending || []).map(m => m.request_id)))
     }
@@ -118,9 +123,11 @@ export default function Feed() {
             const { data, error } = await supabase.rpc('nearby_matching_requests', {
                 helper_lat: loc.lat, helper_lng: loc.lng, helper_radius: radius, helper_skills: helperSkills,
             })
+            if (error) console.error('nearby_matching_requests failed, falling back to unfiltered feed:', error)
             let reqs
             if (error || !data || data.length === 0) {
-                const { data: fallback } = await supabase.from('open_requests_by_urgency').select('*').limit(50)
+                const { data: fallback, error: fallbackErr } = await supabase.from('open_requests_by_urgency').select('*').limit(50)
+                if (fallbackErr) console.error('Failed to load fallback request feed:', fallbackErr)
                 reqs = await enrichRequests(fallback || [])
             } else {
                 reqs = await enrichRequests(data || [])
@@ -129,10 +136,11 @@ export default function Feed() {
             // Also need max_helpers from help_requests for helper count display
             const reqIds = reqs.map(r => r.id)
             if (reqIds.length > 0) {
-                const { data: hrData } = await supabase
+                const { data: hrData, error: hrErr } = await supabase
                     .from('help_requests')
                     .select('id, max_helpers')
                     .in('id', reqIds)
+                if (hrErr) console.error('Failed to load helper limits:', hrErr)
                 const maxMap = {}
                 if (hrData) {
                     for (const hr of hrData) maxMap[hr.id] = hr.max_helpers
@@ -145,7 +153,8 @@ export default function Feed() {
         } else {
             let query = supabase.from('offers').select('*').eq('is_available', true).order('created_at', { ascending: false })
             if (filterOfferCat !== 'all') { query = query.eq('category', filterOfferCat) }
-            const { data } = await query
+            const { data, error: offersErr } = await query
+            if (offersErr) console.error('Failed to load offers:', offersErr)
             setOffers(await enrichOffers(data || []))
         }
         setLoading(false)
@@ -328,7 +337,7 @@ export default function Feed() {
 
                                     {/* Helper count status */}
                                     <div style={{ fontSize: '0.75rem', color: isFull ? '#2d6a4f' : '#888', marginTop: '0.25rem' }}>
-                                        {isFull ? "\u2705 " : "\uD83E\uDD1D "}{helperStatus}
+                                        {isFull ? "✅ " : "🤝 "}{helperStatus}
                                     </div>
 
                                     <p className={'feed-card-desc' + (isExpanded ? '' : ' feed-card-desc-clamp')}>{req.description}</p>
@@ -342,12 +351,12 @@ export default function Feed() {
                                             )}
                                             {req.requester_id !== user.id && isPending && (
                                                 <span style={{ fontSize: '0.8rem', color: '#b8860b', fontWeight: 600 }}>
-                                                    {"\u23F3"} Pending
+                                                    {"⏳"} Pending
                                                 </span>
                                             )}
                                             {req.requester_id !== user.id && isFull && !isPending && (
                                                 <span style={{ fontSize: '0.8rem', color: '#2d6a4f', fontWeight: 600 }}>
-                                                    {"\u2705"} Full
+                                                    {"✅"} Full
                                                 </span>
                                             )}
                                             {req.requester_id && <VouchButton userId={req.requester_id} size="md" showCount={false} />}
@@ -404,26 +413,35 @@ export default function Feed() {
                                             {offer.user_id !== user.id && (
                                                 <button className="btn btn-primary btn-sm" onClick={async (e) => {
                                                     e.stopPropagation()
-                                                    const { data: existing } = await supabase
+                                                    const { data: existing, error: existingErr } = await supabase
                                                         .from('conversations')
                                                         .select('id')
                                                         .eq('helper_id', offer.user_id)
                                                         .eq('requester_id', user.id)
                                                         .maybeSingle()
+                                                    if (existingErr) {
+                                                        console.error('Failed to check for an existing conversation:', existingErr)
+                                                        alert('Something went wrong. Try again.')
+                                                        return
+                                                    }
                                                     if (existing) { navigate('/conversation/' + existing.id); return }
-                                                    const { data: convo } = await supabase
+                                                    const { data: convo, error: convoErr } = await supabase
                                                         .from('conversations')
                                                         .insert({ helper_id: offer.user_id, requester_id: user.id })
                                                         .select()
                                                         .single()
-                                                    if (convo) {
-                                                        await supabase.from('chat_messages').insert({
-                                                            conversation_id: convo.id,
-                                                            sender_id: user.id,
-                                                            body: 'Hi! Interested in your offer: ' + offer.title,
-                                                        })
-                                                        navigate('/conversation/' + convo.id)
+                                                    if (convoErr || !convo) {
+                                                        console.error('Failed to start a conversation:', convoErr)
+                                                        alert('Could not start a conversation. Try again.')
+                                                        return
                                                     }
+                                                    const { error: msgErr } = await supabase.from('chat_messages').insert({
+                                                        conversation_id: convo.id,
+                                                        sender_id: user.id,
+                                                        body: 'Hi! Interested in your offer: ' + offer.title,
+                                                    })
+                                                    if (msgErr) console.error('Failed to send the opening message:', msgErr)
+                                                    navigate('/conversation/' + convo.id)
                                                 }}>I'm interested</button>
                                             )}
                                             <VouchButton userId={offer.user_id} size="md" showCount={true} />

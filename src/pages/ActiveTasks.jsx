@@ -28,11 +28,12 @@ export default function ActiveTasks() {
   // Load requests I created + their accepted helpers
   // =============================================
   async function loadMyRequests() {
-    const { data: requests } = await supabase
+    const { data: requests, error: reqErr } = await supabase
       .from('help_requests')
       .select('id, skill_needed, description, urgency, neighborhood, status, max_helpers, archived_at, created_at')
       .eq('requester_id', user.id)
       .order('created_at', { ascending: false })
+    if (reqErr) console.error('Failed to load your requests:', reqErr)
 
     if (!requests || requests.length === 0) {
       setMyRequests([])
@@ -42,21 +43,23 @@ export default function ActiveTasks() {
     const requestIds = requests.map(r => r.id)
 
     // Get all accepted matches for these requests
-    const { data: matches } = await supabase
+    const { data: matches, error: matchesErr } = await supabase
       .from('skill_matches')
       .select('id, request_id, helper_id, accepted, helper_completed, requester_completed, created_at')
       .in('request_id', requestIds)
       .eq('accepted', true)
+    if (matchesErr) console.error('Failed to load accepted helpers:', matchesErr)
 
     // Enrich helpers with names
     const helperIds = [...new Set((matches || []).map(m => m.helper_id))]
     const helperProfiles = {}
     for (const hid of helperIds) {
-      const { data: p } = await supabase
+      const { data: p, error: profErr } = await supabase
         .from('helper_profiles')
         .select('display_name, is_hope_ambassador, avatar_url')
         .eq('user_id', hid)
         .maybeSingle()
+      if (profErr) console.error('Failed to load helper profile:', profErr)
       if (p) helperProfiles[hid] = p
     }
 
@@ -82,11 +85,12 @@ export default function ActiveTasks() {
   // Load requests I'm helping with (accepted matches)
   // =============================================
   async function loadHelpingWith() {
-    const { data: matches } = await supabase
+    const { data: matches, error: matchesErr } = await supabase
       .from('skill_matches')
       .select('id, request_id, helper_id, accepted, helper_completed, requester_completed, created_at')
       .eq('helper_id', user.id)
       .eq('accepted', true)
+    if (matchesErr) console.error('Failed to load your accepted matches:', matchesErr)
 
     if (!matches || matches.length === 0) {
       setHelpingWith([])
@@ -94,19 +98,21 @@ export default function ActiveTasks() {
     }
 
     const requestIds = matches.map(m => m.request_id)
-    const { data: requests } = await supabase
+    const { data: requests, error: reqErr } = await supabase
       .from('help_requests')
       .select('id, skill_needed, description, urgency, neighborhood, status, requester_id, archived_at, created_at')
       .in('id', requestIds)
+    if (reqErr) console.error('Failed to load requests you are helping with:', reqErr)
 
     const requesterIds = [...new Set((requests || []).map(r => r.requester_id))]
     const requesterProfiles = {}
     for (const rid of requesterIds) {
-      const { data: p } = await supabase
+      const { data: p, error: profErr } = await supabase
         .from('helper_profiles')
         .select('display_name')
         .eq('user_id', rid)
         .maybeSingle()
+      if (profErr) console.error('Failed to load requester profile:', profErr)
       if (p) requesterProfiles[rid] = p
     }
 
@@ -131,10 +137,16 @@ export default function ActiveTasks() {
     const field = isRequester ? 'requester_completed' : 'helper_completed'
     const otherDone = isRequester ? match.helper_completed : match.requester_completed
 
-    await supabase
+    const { error: updateErr } = await supabase
       .from('skill_matches')
       .update({ [field]: true })
       .eq('id', matchId)
+
+    if (updateErr) {
+      console.error('Failed to mark your part complete:', updateErr)
+      alert('Could not save this. Try again.')
+      return
+    }
 
     // Notify the other person
     const otherUserId = isRequester ? match.helper_id : match.request?.requester_id
@@ -154,11 +166,12 @@ export default function ActiveTasks() {
     if (otherDone) {
       const requestId = match.request_id || match.request?.id
       if (requestId) {
-        const { data: allMatches } = await supabase
+        const { data: allMatches, error: allErr } = await supabase
           .from('skill_matches')
           .select('id, helper_completed, requester_completed')
           .eq('request_id', requestId)
           .eq('accepted', true)
+        if (allErr) console.error('Failed to check other matches on this request:', allErr)
 
         // This match is now done (we just set our field), so check all others
         const allComplete = (allMatches || []).every(m =>
@@ -166,10 +179,11 @@ export default function ActiveTasks() {
         )
 
         if (allComplete) {
-          await supabase
+          const { error: statusErr } = await supabase
             .from('help_requests')
             .update({ status: 'completed' })
             .eq('id', requestId)
+          if (statusErr) console.error('Failed to mark request completed:', statusErr)
         }
       }
     }
@@ -182,10 +196,11 @@ export default function ActiveTasks() {
   // =============================================
   async function deleteRequest(requestId) {
     if (!confirm('Archive this request? It will move to your Archived tab.')) return
-    await supabase
+    const { error } = await supabase
       .from('help_requests')
       .update({ archived_at: new Date().toISOString() })
       .eq('id', requestId)
+    if (error) { console.error('Failed to archive request:', error); alert('Could not archive this request. Try again.'); return }
     await loadTasks()
   }
 
@@ -193,23 +208,33 @@ export default function ActiveTasks() {
   // Message helper/requester
   // =============================================
   async function openConversation(requestId, helperId, requesterId) {
-    const { data: existing } = await supabase
+    // Look up any existing conversation with this person regardless of which
+    // request it started from, or which of them was helper/requester that time,
+    // so messages with the same neighbor stay in one thread.
+    const { data: existing, error: existingErr } = await supabase
       .from('conversations')
       .select('id')
-      .eq('request_id', requestId)
-      .eq('helper_id', helperId)
-      .eq('requester_id', requesterId)
+      .or('and(helper_id.eq.' + helperId + ',requester_id.eq.' + requesterId + '),and(helper_id.eq.' + requesterId + ',requester_id.eq.' + helperId + ')')
       .maybeSingle()
+    if (existingErr) { console.error('Failed to check for an existing conversation:', existingErr); alert('Something went wrong. Try again.'); return }
 
     if (existing) {
+      // Point the conversation at this request so its banner reflects what
+      // you're currently talking about, not whichever request started the thread.
+      const { error: updErr } = await supabase
+        .from('conversations')
+        .update({ request_id: requestId })
+        .eq('id', existing.id)
+      if (updErr) console.error('Failed to update conversation context:', updErr)
       navigate('/conversation/' + existing.id)
     } else {
-      const { data: newConvo } = await supabase
+      const { data: newConvo, error: newErr } = await supabase
         .from('conversations')
         .insert({ request_id: requestId, helper_id: helperId, requester_id: requesterId })
         .select()
         .single()
-      if (newConvo) navigate('/conversation/' + newConvo.id)
+      if (newErr || !newConvo) { console.error('Failed to start a conversation:', newErr); alert('Could not start a conversation. Try again.'); return }
+      navigate('/conversation/' + newConvo.id)
     }
   }
 
@@ -322,7 +347,7 @@ export default function ActiveTasks() {
                                 )}
                               </div>
                               {bothDone ? (
-                                <span style={{ fontSize: '0.75rem', color: '#4ecca3', fontWeight: 600 }}>Ã¢Å“â€¦ Complete</span>
+                                <span style={{ fontSize: '0.75rem', color: '#4ecca3', fontWeight: 600 }}>✅ Complete</span>
                               ) : (
                                 <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.7rem', color: '#999' }}>
                                   <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
@@ -408,7 +433,7 @@ export default function ActiveTasks() {
 
                     {bothDone && (
                       <div style={{ fontSize: '0.8rem', color: '#4ecca3', fontWeight: 600, margin: '0.5rem 0' }}>
-                        Ã¢Å“â€¦ Complete
+                        ✅ Complete
                       </div>
                     )}
 

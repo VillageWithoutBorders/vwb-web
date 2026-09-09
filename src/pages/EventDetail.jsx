@@ -6,11 +6,11 @@ import AvatarDisplay from '../components/AvatarDisplay'
 import { createNotification } from '../utils/notificationHelpers'
 
 const STATUS_CONFIG = {
-  safe:        { label: 'Safe',         color: '#4ecca3', bg: '#1a3a2a', icon: '\u2714' },
-  need_help:   { label: 'Needs Help',   color: '#ff6644', bg: '#3a1a1a', icon: '\u26A0' },
-  evacuated:   { label: 'Evacuated',    color: '#66aaff', bg: '#1a2a4a', icon: '\u2192' },
-  sheltering:  { label: 'Sheltering',   color: '#ffaa44', bg: '#3a2a1a', icon: '\u2302' },
-  no_contact:  { label: 'No Contact',   color: '#ff4444', bg: '#4a1a1a', icon: '\u2717' },
+  safe:        { label: 'Safe',         color: '#4ecca3', bg: '#1a3a2a', icon: '✔' },
+  need_help:   { label: 'Needs Help',   color: '#ff6644', bg: '#3a1a1a', icon: '⚠' },
+  evacuated:   { label: 'Evacuated',    color: '#66aaff', bg: '#1a2a4a', icon: '→' },
+  sheltering:  { label: 'Sheltering',   color: '#ffaa44', bg: '#3a2a1a', icon: '⌂' },
+  no_contact:  { label: 'No Contact',   color: '#ff4444', bg: '#4a1a1a', icon: '✗' },
 }
 
 const RESOURCE_CATEGORIES = ['Water', 'Food', 'Shelter', 'Tools', 'Transportation', 'Medical', 'Clothing', 'Power/Fuel', 'Tarps/Building', 'Hygiene', 'Other']
@@ -60,28 +60,34 @@ export default function EventDetail() {
 
   async function loadAll() {
     setLoading(true)
-    const { data: ev } = await supabase.from('emergency_events').select('*').eq('id', id).single()
+    const { data: ev, error: evErr } = await supabase.from('emergency_events').select('*').eq('id', id).single()
+    if (evErr) console.error('Failed to load event:', evErr)
     if (ev) setEvent(ev)
 
-    const { data: sups } = await supabase.from('event_signups').select('*').eq('event_id', id)
+    const { data: sups, error: supsErr } = await supabase.from('event_signups').select('*').eq('event_id', id)
+    if (supsErr) console.error('Failed to load signups:', supsErr)
     if (sups) {
       const withNames = await Promise.all(sups.map(async (s) => {
-        const { data: p } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', s.user_id).maybeSingle()
+        const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', s.user_id).maybeSingle()
+        if (profErr) console.error('Failed to load profile for', s.user_id, profErr)
         return { ...s, display_name: p?.display_name || 'Neighbor', avatar_url: p?.avatar_url || null }
       }))
       setSignups(withNames)
       setMySignup(withNames.find(s => s.user_id === user.id) || null)
     }
 
-    const { data: cats } = await supabase.from('skill_categories').select('title').order('title')
+    const { data: cats, error: catsErr } = await supabase.from('skill_categories').select('title').order('title')
+    if (catsErr) console.error('Failed to load skill categories:', catsErr)
     if (cats) setSkillCats(cats.map(c => c.title))
 
-    const { data: cins } = await supabase.from('event_check_ins').select('*').eq('event_id', id).order('created_at', { ascending: false })
+    const { data: cins, error: cinsErr } = await supabase.from('event_check_ins').select('*').eq('event_id', id).order('created_at', { ascending: false })
+    if (cinsErr) console.error('Failed to load check-ins:', cinsErr)
     if (cins) {
       const userIds = [...new Set(cins.map(c => c.user_id))]
       const nameMap = {}
       for (const uid of userIds) {
-        const { data: p } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
+        const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
+        if (profErr) console.error('Failed to load profile for', uid, profErr)
         nameMap[uid] = { name: p?.display_name || 'Neighbor', avatar_url: p?.avatar_url || null }
       }
       setCheckIns(cins.map(c => ({ ...c, display_name: nameMap[c.user_id]?.name || 'Neighbor', avatar_url: nameMap[c.user_id]?.avatar_url || null })))
@@ -90,13 +96,15 @@ export default function EventDetail() {
       setLatestStatuses(latest)
     }
 
-    const { data: res } = await supabase.from('event_resources').select('*').eq('event_id', id).order('created_at', { ascending: false })
+    const { data: res, error: resErr } = await supabase.from('event_resources').select('*').eq('event_id', id).order('created_at', { ascending: false })
+    if (resErr) console.error('Failed to load resources:', resErr)
     if (res) {
       const rUserIds = [...new Set(res.map(r => r.offered_by).concat(res.filter(r => r.claimed_by).map(r => r.claimed_by)))]
       const rNameMap = {}
       for (const uid of rUserIds) {
         if (!uid) continue
-        const { data: p } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
+        const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
+        if (profErr) console.error('Failed to load profile for', uid, profErr)
         rNameMap[uid] = p?.display_name || 'Neighbor'
       }
       setResources(res.map(r => ({ ...r, offered_by_name: rNameMap[r.offered_by] || 'Neighbor', claimed_by_name: r.claimed_by ? (rNameMap[r.claimed_by] || 'Neighbor') : null })))
@@ -104,24 +112,26 @@ export default function EventDetail() {
 
 
     // Load close votes
-    const { data: cvotes } = await supabase.from('event_close_votes').select('*').eq('event_id', id)
+    const { data: cvotes, error: cvotesErr } = await supabase.from('event_close_votes').select('*').eq('event_id', id)
+    if (cvotesErr) console.error('Failed to load close votes:', cvotesErr)
     if (cvotes) setCloseVotes(cvotes)
     setLoading(false)
   }
 
   async function submitCheckIn(status) {
     setSubmitting(true)
-    await supabase.from('event_check_ins').insert({ event_id: Number(id), user_id: user.id, status, note: statusNote.trim() || null })
+    const { error } = await supabase.from('event_check_ins').insert({ event_id: Number(id), user_id: user.id, status, note: statusNote.trim() || null })
+    setSubmitting(false)
+    if (error) { console.error('Failed to submit check-in:', error); alert('Could not submit your check-in. Try again.'); return }
     setShowStatusPicker(false)
     setStatusNote('')
-    setSubmitting(false)
     await loadAll()
   }
 
   async function submitResource() {
     if (!resCategory || !resItem.trim()) return
     setSubmitting(true)
-    await supabase.from('event_resources').insert({
+    const { error } = await supabase.from('event_resources').insert({
       event_id: Number(id),
       resource_type: showResourceForm,
       category: resCategory,
@@ -130,100 +140,115 @@ export default function EventDetail() {
       offered_by: user.id,
       note: resNote.trim() || null,
     })
+    setSubmitting(false)
+    if (error) { console.error('Failed to add resource:', error); alert('Could not add this item. Try again.'); return }
     setShowResourceForm(null)
     setResCategory('')
     setResItem('')
     setResQty(1)
     setResNote('')
-    setSubmitting(false)
     await loadAll()
   }
 
   async function claimResource(resId) {
-    await supabase.from('event_resources').update({ claimed_by: user.id, status: 'claimed' }).eq('id', resId)
+    const { error } = await supabase.from('event_resources').update({ claimed_by: user.id, status: 'claimed' }).eq('id', resId)
+    if (error) { console.error('Failed to claim resource:', error); alert('Could not claim this item. Try again.'); return }
     await loadAll()
   }
 
   async function unclaimResource(resId) {
-    await supabase.from('event_resources').update({ claimed_by: null, status: 'available' }).eq('id', resId)
+    const { error } = await supabase.from('event_resources').update({ claimed_by: null, status: 'available' }).eq('id', resId)
+    if (error) { console.error('Failed to unclaim resource:', error); alert('Could not unclaim this item. Try again.'); return }
     await loadAll()
   }
 
   async function fulfillResource(resId) {
-    await supabase.from('event_resources').update({ status: 'fulfilled' }).eq('id', resId)
+    const { error } = await supabase.from('event_resources').update({ status: 'fulfilled' }).eq('id', resId)
+    if (error) { console.error('Failed to mark resource fulfilled:', error); alert('Could not update this item. Try again.'); return }
     await loadAll()
   }
 
   async function deleteResource(resId) {
     if (!confirm('Remove this item?')) return
-    await supabase.from('event_resources').delete().eq('id', resId)
+    const { error } = await supabase.from('event_resources').delete().eq('id', resId)
+    if (error) { console.error('Failed to remove resource:', error); alert('Could not remove this item. Try again.'); return }
     await loadAll()
   }
 
   async function handleSignup(role) {
     setSubmitting(true)
-    await supabase.from('event_signups').insert({
+    const { error } = await supabase.from('event_signups').insert({
       event_id: Number(id), user_id: user.id, role,
       skills: role === 'responder' ? selectedSkills : [],
       availability: signupAvail.trim() || null,
       notes: signupNotes.trim() || null,
     })
+    setSubmitting(false)
+    if (error) { console.error('Failed to sign up:', error); alert('Could not sign up. Try again.'); return }
     setShowSignupForm(null)
     setSignupNotes('')
     setSignupAvail('')
     setSelectedSkills([])
-    setSubmitting(false)
     await loadAll()
   }
 
   async function cancelSignup() {
     if (!confirm('Remove yourself from this event?')) return
-    await supabase.from('event_signups').delete().eq('event_id', id).eq('user_id', user.id)
+    const { error } = await supabase.from('event_signups').delete().eq('event_id', id).eq('user_id', user.id)
+    if (error) { console.error('Failed to cancel signup:', error); alert('Could not remove you from this event. Try again.'); return }
     await loadAll()
   }
 
   async function messageUser(userId) {
     setOpenSignupMenu(null)
-    const { data: existing } = await supabase.from('conversations').select('id').or('and(helper_id.eq.' + userId + ',requester_id.eq.' + user.id + '),and(helper_id.eq.' + user.id + ',requester_id.eq.' + userId + ')').maybeSingle()
+    const { data: existing, error: existingErr } = await supabase.from('conversations').select('id').or('and(helper_id.eq.' + userId + ',requester_id.eq.' + user.id + '),and(helper_id.eq.' + user.id + ',requester_id.eq.' + userId + ')').maybeSingle()
+    if (existingErr) { console.error('Failed to check for an existing conversation:', existingErr); alert('Something went wrong. Try again.'); return }
     if (existing) { navigate('/conversation/' + existing.id); return }
-    const { data: convo } = await supabase.from('conversations').insert({ helper_id: userId, requester_id: user.id }).select().single()
-    if (convo) navigate('/conversation/' + convo.id)
+    const { data: convo, error: convoErr } = await supabase.from('conversations').insert({ helper_id: userId, requester_id: user.id }).select().single()
+    if (convoErr || !convo) { console.error('Failed to start a conversation:', convoErr); alert('Could not start a conversation. Try again.'); return }
+    navigate('/conversation/' + convo.id)
   }
 
   async function reportUser(userId) {
-    await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: userId, alert_type: 'flag', description: 'Reported from emergency event' })
+    const { error } = await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: userId, alert_type: 'flag', description: 'Reported from emergency event' })
     setOpenSignupMenu(null)
+    if (error) { console.error('Failed to submit report:', error); alert('Could not submit your report. Try again.'); return }
     alert('Report submitted. Thank you for keeping the community safe.')
   }
 
   async function blockUser(userId) {
     if (!confirm('Block this user?')) return
-    await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: userId })
+    const { error } = await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: userId })
     setOpenSignupMenu(null)
+    if (error) { console.error('Failed to block user:', error); alert('Could not block this user. Try again.'); return }
     alert('User blocked.')
   }
 
   async function deleteSignup(signupId) {
     if (!confirm('Remove this signup?')) return
-    await supabase.from('event_signups').delete().eq('id', signupId)
+    const { error } = await supabase.from('event_signups').delete().eq('id', signupId)
     setOpenSignupMenu(null)
+    if (error) { console.error('Failed to remove signup:', error); alert('Could not remove this signup. Try again.'); return }
     await loadAll()
   }
 
   async function saveNotes(signupId) {
-    await supabase.from('event_signups').update({ notes: editNotesVal.trim() || null }).eq('id', signupId)
+    const { error } = await supabase.from('event_signups').update({ notes: editNotesVal.trim() || null }).eq('id', signupId)
     setEditingNotes(null)
+    if (error) { console.error('Failed to save notes:', error); alert('Could not save your notes. Try again.'); return }
     await loadAll()
   }
 
   async function switchRole() {
     const newRole = mySignup.role === 'responder' ? 'affected' : 'responder'
-    await supabase.from('event_signups').update({ role: newRole }).eq('event_id', id).eq('user_id', user.id)
+    const { error } = await supabase.from('event_signups').update({ role: newRole }).eq('event_id', id).eq('user_id', user.id)
+    if (error) { console.error('Failed to switch role:', error); alert('Could not switch your role. Try again.'); return }
     await loadAll()
   }
 
   async function loadActiveEvents() {
-    const { data } = await supabase.from('emergency_events').select('id, title, event_type').eq('status', 'active').neq('id', id).order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('emergency_events').select('id, title, event_type').eq('status', 'active').neq('id', id).order('created_at', { ascending: false })
+    if (error) console.error('Failed to load active events:', error)
     setActiveEvents(data || [])
   }
 
@@ -235,16 +260,20 @@ export default function EventDetail() {
 
     if (closeReason === 'resolved') {
       if (canCloseAlone) {
-        await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
+        const { error } = await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
         setClosingEvent(false)
+        if (error) { console.error('Failed to close event:', error); alert('Could not close this event. Try again.'); return }
         navigate('/emergency')
         return
       }
-      await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'resolved' }, { onConflict: 'event_id,voter_id' })
-      const { data: votes } = await supabase.from('event_close_votes').select('id').eq('event_id', id)
+      const { error: voteErr } = await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'resolved' }, { onConflict: 'event_id,voter_id' })
+      if (voteErr) { console.error('Failed to record close vote:', voteErr); alert('Could not record your vote. Try again.'); setClosingEvent(false); return }
+      const { data: votes, error: votesErr } = await supabase.from('event_close_votes').select('id').eq('event_id', id)
+      if (votesErr) console.error('Failed to check close votes:', votesErr)
       if (votes && votes.length >= 2) {
-        await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
+        const { error: closeErr } = await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
         setClosingEvent(false)
+        if (closeErr) { console.error('Failed to close event:', closeErr); alert('Could not close this event. Try again.'); return }
         navigate('/emergency')
         return
       }
@@ -257,16 +286,19 @@ export default function EventDetail() {
 
     if (closeReason === 'false_alarm') {
       if (isAdmin) {
-        await supabase.from('emergency_events').delete().eq('id', id)
+        const { error } = await supabase.from('emergency_events').delete().eq('id', id)
         setClosingEvent(false)
+        if (error) { console.error('Failed to remove event:', error); alert('Could not remove this event. Try again.'); return }
         navigate('/emergency')
         return
       }
       if (event.verified) {
-        const { data: admins } = await supabase.rpc('nearest_admin', { lat: event.latitude || 0, lng: event.longitude || 0 })
+        const { data: admins, error: adminsErr } = await supabase.rpc('nearest_admin', { lat: event.latitude || 0, lng: event.longitude || 0 })
+        if (adminsErr) console.error('Failed to look up admins to notify:', adminsErr)
         if (admins && admins.length > 0) {
           for (const admin of admins) {
-            await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'false_alarm_request', title: 'False alarm review needed', body: 'Someone flagged "' + event.title + '" as a false alarm. Please review.', link: '/emergency/' + id, read: false })
+            const { error: notifErr } = await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'false_alarm_request', title: 'False alarm review needed', body: 'Someone flagged "' + event.title + '" as a false alarm. Please review.', link: '/emergency/' + id, read: false })
+            if (notifErr) console.error('Failed to notify admin', admin.user_id, notifErr)
           }
         }
         setClosingEvent(false)
@@ -274,27 +306,32 @@ export default function EventDetail() {
         alert('This verified event requires admin approval to mark as false alarm. Admins have been notified.')
         return
       }
-      await supabase.from('emergency_events').delete().eq('id', id)
+      const { error } = await supabase.from('emergency_events').delete().eq('id', id)
       setClosingEvent(false)
+      if (error) { console.error('Failed to remove event:', error); alert('Could not remove this event. Try again.'); return }
       navigate('/emergency')
       return
     }
 
     if (closeReason === 'duplicate' && selectedDuplicate) {
       if (isAdmin) {
-        await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'duplicate', duplicate_event_id: selectedDuplicate }, { onConflict: 'event_id,voter_id' })
+        const { error } = await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'duplicate', duplicate_event_id: selectedDuplicate }, { onConflict: 'event_id,voter_id' })
         setClosingEvent(false)
+        if (error) { console.error('Failed to record duplicate flag:', error); alert('Could not flag this event as a duplicate. Try again.'); return }
         navigate('/admin')
         return
       }
-      const { data: admins } = await supabase.rpc('nearest_admin', { lat: event.latitude || 0, lng: event.longitude || 0 })
+      const { data: admins, error: adminsErr } = await supabase.rpc('nearest_admin', { lat: event.latitude || 0, lng: event.longitude || 0 })
+      if (adminsErr) console.error('Failed to look up admins to notify:', adminsErr)
       if (admins && admins.length > 0) {
         for (const admin of admins) {
-          await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'duplicate_merge_request', title: 'Duplicate event merge request', body: '"' + event.title + '" was flagged as a duplicate. Please review and merge.', link: '/admin', read: false })
+          const { error: notifErr } = await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'duplicate_merge_request', title: 'Duplicate event merge request', body: '"' + event.title + '" was flagged as a duplicate. Please review and merge.', link: '/admin', read: false })
+          if (notifErr) console.error('Failed to notify admin', admin.user_id, notifErr)
         }
       }
-      await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'duplicate', duplicate_event_id: selectedDuplicate }, { onConflict: 'event_id,voter_id' })
+      const { error: voteErr } = await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'duplicate', duplicate_event_id: selectedDuplicate }, { onConflict: 'event_id,voter_id' })
       setClosingEvent(false)
+      if (voteErr) { console.error('Failed to record duplicate vote:', voteErr); alert('Could not flag this event as a duplicate. Try again.'); return }
       setShowCloseModal(false)
       alert('Admins have been notified to review and merge this event.')
       return
@@ -379,7 +416,7 @@ export default function EventDetail() {
   const tabStyle = (active) => ({ padding: '0.5rem 0.75rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, background: active ? '#ff6644' : '#2a2a2a', color: active ? '#fff' : '#aaa' })
   const chipStyle = (on) => ({ padding: '0.35rem 0.75rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, background: on ? '#4ecca3' : '#2a2a2a', color: on ? '#1a1a1a' : '#aaa', margin: '0.15rem' })
   const fieldStyle = { display: 'block', width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box', marginBottom: '0.5rem' }
-  const resCatIcon = { 'Water': '\uD83D\uDCA7', 'Food': '\uD83C\uDF5E', 'Shelter': '\uD83C\uDFE0', 'Tools': '\uD83D\uDD27', 'Transportation': '\uD83D\uDE97', 'Medical': '\u2695', 'Clothing': '\uD83E\uDDE5', 'Power/Fuel': '\u26A1', 'Tarps/Building': '\uD83C\uDFD7', 'Hygiene': '\uD83E\uDDFC', 'Other': '\uD83D\uDCE6' }
+  const resCatIcon = { 'Water': '💧', 'Food': '🍞', 'Shelter': '🏠', 'Tools': '🔧', 'Transportation': '🚗', 'Medical': '⚕', 'Clothing': '🧥', 'Power/Fuel': '⚡', 'Tarps/Building': '🏗', 'Hygiene': '🧼', 'Other': '📦' }
 
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
@@ -609,7 +646,7 @@ export default function EventDetail() {
               const isClaimed = r.status === 'claimed'
               const isFulfilled = r.status === 'fulfilled'
               const claimedByMe = r.claimed_by === user.id
-              const catIcon = resCatIcon[r.category] || '\uD83D\uDCE6'
+              const catIcon = resCatIcon[r.category] || '📦'
               return (
                 <div key={r.id} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', opacity: isFulfilled ? 0.6 : 1, borderLeft: isNeed ? '3px solid #ff6644' : '3px solid #4ecca3' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

@@ -22,7 +22,10 @@ export default function Campfire() {
   const hasAccess = profile?.is_hope_ambassador || isAdmin
 
   useEffect(() => {
-      supabase.from('helper_profiles').select('avatar_url').eq('user_id', user.id).maybeSingle().then(({ data }) => { if (data) setMyAvatar(data.avatar_url || null) })
+      supabase.from('helper_profiles').select('avatar_url').eq('user_id', user.id).maybeSingle().then(({ data, error }) => {
+        if (error) { console.error('Failed to load your avatar:', error); return }
+        if (data) setMyAvatar(data.avatar_url || null)
+      })
     if (hasAccess) {
       loadMessages()
       pollRef.current = setInterval(loadMessages, 5000)
@@ -48,18 +51,24 @@ export default function Campfire() {
 
   async function reportMessage(msg) {
     const info = names[msg.user_id] || { name: 'Unknown' }
-    await supabase.from('safety_alerts').insert({
+    const { error } = await supabase.from('safety_alerts').insert({
       reporter_id: user.id,
       reported_user_id: msg.user_id,
       alert_type: 'flag',
       description: 'Reported Campfire message from ' + info.name + ': "' + (msg.body.length > 100 ? msg.body.slice(0, 100) + '...' : msg.body) + '"'
     })
     setReportingMsg(null)
+    if (error) {
+      console.error('Failed to submit report:', error)
+      alert('Could not submit your report. Try again.')
+      return
+    }
     alert('Report submitted. An admin will review this message.')
   }
 
   async function loadMessages() {
-    const { data } = await supabase.from('campfire_messages').select('*').order('created_at', { ascending: true }).limit(200)
+    const { data, error } = await supabase.from('campfire_messages').select('*').order('created_at', { ascending: true }).limit(200)
+    if (error) console.error('Failed to load Campfire messages:', error)
     if (data) {
       setMessages(data)
       const userIds = [...new Set(data.map(m => m.user_id))]
@@ -67,7 +76,8 @@ export default function Campfire() {
       if (unknownIds.length > 0) {
         const newNames = { ...names }
         await Promise.all(unknownIds.map(async (uid) => {
-          const { data: p } = await supabase.from('helper_profiles').select('display_name, role, is_hope_ambassador, avatar_url').eq('user_id', uid).maybeSingle()
+          const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, role, is_hope_ambassador, avatar_url').eq('user_id', uid).maybeSingle()
+          if (profErr) console.error('Failed to load profile for', uid, profErr)
           newNames[uid] = { name: p?.display_name || 'Neighbor', role: p?.role, ambassador: p?.is_hope_ambassador, avatar: p?.avatar_url || null }
         }))
         setNames(newNames)
@@ -80,7 +90,13 @@ export default function Campfire() {
     e.preventDefault()
     if (!newMsg.trim() || sending) return
     setSending(true)
-    await supabase.from('campfire_messages').insert({ user_id: user.id, body: newMsg.trim() })
+    const { error } = await supabase.from('campfire_messages').insert({ user_id: user.id, body: newMsg.trim() })
+    if (error) {
+      console.error('Failed to send Campfire message:', error)
+      alert('Could not send your message. Try again.')
+      setSending(false)
+      return
+    }
     setNewMsg('')
     await loadMessages()
     setSending(false)

@@ -20,19 +20,23 @@ export default function EmergencyEvents() {
 
   async function loadEvents() {
     setLoading(true)
-    const { data: active } = await supabase.from('emergency_events').select('*').eq('status', 'active').order('created_at', { ascending: false })
+    const { data: active, error: activeErr } = await supabase.from('emergency_events').select('*').eq('status', 'active').order('created_at', { ascending: false })
+    if (activeErr) console.error('Failed to load active events:', activeErr)
     if (active) setEvents(active)
 
-    const { data: resolved } = await supabase.from('emergency_events').select('*').eq('status', 'closed').order('resolved_at', { ascending: false })
+    const { data: resolved, error: resolvedErr } = await supabase.from('emergency_events').select('*').eq('status', 'closed').order('resolved_at', { ascending: false })
+    if (resolvedErr) console.error('Failed to load resolved events:', resolvedErr)
     if (resolved) setResolvedEvents(resolved)
 
-    const { data: signups } = await supabase.from('event_signups').select('event_id, role').eq('user_id', user.id)
+    const { data: signups, error: signupsErr } = await supabase.from('event_signups').select('event_id, role').eq('user_id', user.id)
+    if (signupsErr) console.error('Failed to load your signups:', signupsErr)
     if (signups) {
       const map = {}
       signups.forEach(s => { map[s.event_id] = s.role })
       setMySignups(map)
     }
-    const { data: upvotes } = await supabase.from('event_upvotes').select('event_id').eq('user_id', user.id)
+    const { data: upvotes, error: upvotesErr } = await supabase.from('event_upvotes').select('event_id').eq('user_id', user.id)
+    if (upvotesErr) console.error('Failed to load your upvotes:', upvotesErr)
     if (upvotes) {
       const map = {}
       upvotes.forEach(u => { map[u.event_id] = true })
@@ -51,22 +55,25 @@ export default function EmergencyEvents() {
       body: ev.title + ' has been verified by the community.',
       link: '/emergency/' + eventId
     })
-    await supabase.from('campfire_messages').insert({
+    const { error } = await supabase.from('campfire_messages').insert({
       user_id: user.id,
-      body: '\ud83d\udea8 Emergency Verified: ' + ev.title + ' (' + (ev.location_name || 'Unknown area') + '). Head to the event page to sign up or add resources.'
+      body: '🚨 Emergency Verified: ' + ev.title + ' (' + (ev.location_name || 'Unknown area') + '). Head to the event page to sign up or add resources.'
     })
+    if (error) console.error('Failed to post Campfire announcement:', error)
   }
 
   async function upvoteEvent(e, eventId) {
     e.stopPropagation()
     if (myUpvotes[eventId]) return
-    await supabase.from('event_upvotes').insert({ event_id: eventId, user_id: user.id })
+    const { error: upErr } = await supabase.from('event_upvotes').insert({ event_id: eventId, user_id: user.id })
+    if (upErr) { console.error('Failed to record upvote:', upErr); alert('Could not record your vote. Try again.'); return }
     const newCount = (events.find(ev => ev.id === eventId)?.upvote_count || 0) + 1
-    await supabase.from('emergency_events').update({
+    const { error: updErr } = await supabase.from('emergency_events').update({
       upvote_count: newCount,
       verified: newCount >= VERIFY_THRESHOLD ? true : undefined
     }).eq('id', eventId)
-    if (newCount >= VERIFY_THRESHOLD) {
+    if (updErr) console.error('Failed to update upvote count:', updErr)
+    if (newCount >= VERIFY_THRESHOLD && !updErr) {
       await notifyAndPost(eventId)
     }
     await loadEvents()
@@ -74,7 +81,8 @@ export default function EmergencyEvents() {
 
   async function adminVerify(e, eventId) {
     e.stopPropagation()
-    await supabase.from('emergency_events').update({ verified: true }).eq('id', eventId)
+    const { error } = await supabase.from('emergency_events').update({ verified: true }).eq('id', eventId)
+    if (error) { console.error('Failed to verify event:', error); alert('Could not verify this event. Try again.'); return }
     await notifyAndPost(eventId)
     await loadEvents()
   }

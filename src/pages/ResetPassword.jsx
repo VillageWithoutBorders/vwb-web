@@ -19,7 +19,8 @@ export default function ResetPassword() {
       }
     })
     // Also check if already in recovery session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) { console.error('Failed to check for a recovery session:', error); return }
       if (session) setReady(true)
     })
     return () => subscription.unsubscribe()

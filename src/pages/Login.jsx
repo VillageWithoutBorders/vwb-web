@@ -12,10 +12,11 @@ export default function Login() {
 
   useEffect(() => {
     async function loadSkills() {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('skill_categories')
         .select('title')
         .order('id')
+      if (error) { console.error('Failed to load skill categories:', error); return }
       if (data) setSkillOptions(data.map((s) => s.title))
     }
     loadSkills()
@@ -276,7 +277,3 @@ export default function Login() {
     </div>
   )
 }
-
-
-
-

@@ -27,7 +27,7 @@ export default function Conversation() {
     const pollRef = useRef(null)
     const convoRef = useRef(null)
   const [selectedMessage, setSelectedMessage] = useState(null)
-  
+
     useEffect(() => {
         loadConversation()
         return () => {
@@ -36,7 +36,10 @@ export default function Conversation() {
             const c = convoRef.current
             if (c) {
                 const readCol = c.helper_id === user.id ? 'last_read_helper' : 'last_read_requester'
-                supabase.from('conversations').update({ [readCol]: new Date().toISOString() }).eq('id', c.id).then(() => refreshUnread())
+                supabase.from('conversations').update({ [readCol]: new Date().toISOString() }).eq('id', c.id).then(({ error }) => {
+                    if (error) console.error('Failed to mark conversation read on exit:', error)
+                    refreshUnread()
+                })
             }
         }
     }, [id])
@@ -47,24 +50,31 @@ export default function Conversation() {
 
   async function loadConversation() {
     setLoading(true)
-    const { data: c } = await supabase
+    const { data: c, error: convoErr } = await supabase
       .from('conversations').select('*').eq('id', id).single()
+    if (convoErr) console.error('Failed to load conversation:', convoErr)
     if (!c) { setLoading(false); return }
       setConvo(c)
     convoRef.current = c
     const readCol = c.helper_id === user.id ? "last_read_helper" : "last_read_requester"
-    supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", c.id).then(() => refreshUnread())
+    supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", c.id).then(({ error }) => {
+      if (error) console.error('Failed to mark conversation read:', error)
+      refreshUnread()
+    })
     const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
 
-    const { data: otherProfile } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
+    const { data: otherProfile, error: otherErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
+    if (otherErr) console.error("Failed to load the other participant's profile:", otherErr)
     setOtherUserId(otherId)
     if (otherProfile) { setOtherName(otherProfile.display_name || 'Neighbor'); setOtherAvatar(otherProfile.avatar_url || null) }
-    const { data: myProfile } = await supabase.from('helper_profiles').select('avatar_url').eq('user_id', user.id).maybeSingle()
+    const { data: myProfile, error: myErr } = await supabase.from('helper_profiles').select('avatar_url').eq('user_id', user.id).maybeSingle()
+    if (myErr) console.error('Failed to load your profile:', myErr)
     if (myProfile) setMyAvatar(myProfile.avatar_url || null)
 
     if (c.request_id) {
-      const { data: req } = await supabase
+      const { data: req, error: reqErr } = await supabase
         .from('help_requests').select('skill_needed, description, urgency').eq('id', c.request_id).single()
+      if (reqErr) console.error('Failed to load request details:', reqErr)
       if (req) setRequest(req)
     }
 
@@ -74,8 +84,9 @@ export default function Conversation() {
   }
 
   async function loadMessages() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('chat_messages').select('*').eq('conversation_id', id).order('created_at', { ascending: true })
+    if (error) { console.error('Failed to load messages:', error); return }
     if (data) setMessages(data)
   }
 
@@ -88,7 +99,10 @@ export default function Conversation() {
       sender_id: user.id,
       body: newMsg.trim(),
     })
-    if (!error) { const recipientId = convo.helper_id === user.id ? convo.requester_id : convo.helper_id; createNotification({ userId: recipientId, type: 'message', title: 'New message from ' + (convo.helper_id === user.id ? 'your helper' : 'your neighbor'), body: newMsg.trim().substring(0, 100), link: '/conversation/' + id }); setNewMsg(''); await loadMessages() }
+    if (!error) { const recipientId = convo.helper_id === user.id ? convo.requester_id : convo.helper_id; createNotification({ userId: recipientId, type: 'message', title: 'New message from ' + (convo.helper_id === user.id ? 'your helper' : 'your neighbor'), body: newMsg.trim().substring(0, 100), link: '/conversation/' + id }); setNewMsg(''); await loadMessages() } else {
+      console.error('Failed to send message:', error)
+      alert('Could not send your message. Try again.')
+    }
     setSending(false)
   }
 
@@ -127,7 +141,7 @@ export default function Conversation() {
   return (
     <div className="conversation-page">
       <div className="convo-header">
-        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id); refreshUnread() } navigate(-1) }} aria-label="Back">
+        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; const { error } = await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id); if (error) console.error('Failed to mark conversation read:', error); refreshUnread() } navigate(-1) }} aria-label="Back">
           &#8592;
         </button>
         <AvatarDisplay url={otherAvatar} userId={otherUserId} size={36} />
@@ -136,9 +150,6 @@ export default function Conversation() {
           {request && <p className="convo-context">{request.skill_needed}</p>}
         </div>
         <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
-
-
-
 
 
 
@@ -221,10 +232,21 @@ export default function Conversation() {
         <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128100;</span> View Profile
         </button>
-        <button onClick={async () => { if (!confirm('Block ' + otherName + '?')) return; await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: otherUserId }); setShowSettings(false); alert('User blocked.') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+        <button onClick={async () => {
+          if (!confirm('Block ' + otherName + '?')) return
+          const { error } = await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: otherUserId })
+          setShowSettings(false)
+          if (error) { console.error('Failed to block user:', error); alert('Could not block this user. Try again.'); return }
+          alert('User blocked.')
+        }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128683;</span> Block User
         </button>
-        <button onClick={async () => { await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: otherUserId, alert_type: 'flag', description: 'Reported from conversation' }); setShowSettings(false); alert('Report submitted. Thank you for keeping the community safe.') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+        <button onClick={async () => {
+          const { error } = await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: otherUserId, alert_type: 'flag', description: 'Reported from conversation' })
+          setShowSettings(false)
+          if (error) { console.error('Failed to submit report:', error); alert('Could not submit your report. Try again.'); return }
+          alert('Report submitted. Thank you for keeping the community safe.')
+        }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9873;</span> Report User
         </button>
       </div>

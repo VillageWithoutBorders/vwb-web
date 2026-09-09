@@ -65,11 +65,12 @@ export default function Messages() {
   // =============================================
 
   async function loadPendingOffers() {
-    const { data: myRequests } = await supabase
+    const { data: myRequests, error: reqErr } = await supabase
       .from('help_requests')
       .select('id, skill_needed, description, max_helpers')
       .eq('requester_id', user.id)
       .in('status', ['open', 'in_progress'])
+    if (reqErr) console.error('Failed to load your requests:', reqErr)
 
     if (!myRequests || myRequests.length === 0) {
       setPendingOffers([])
@@ -78,22 +79,24 @@ export default function Messages() {
 
     const requestIds = myRequests.map(r => r.id)
 
-    const { data: matches } = await supabase
+    const { data: matches, error: matchesErr } = await supabase
       .from('skill_matches')
       .select('id, request_id, helper_id, created_at')
       .in('request_id', requestIds)
       .is('accepted', null)
+    if (matchesErr) console.error('Failed to load pending matches:', matchesErr)
 
     if (!matches || matches.length === 0) {
       setPendingOffers([])
       return
     }
 
-    const { data: acceptedMatches } = await supabase
+    const { data: acceptedMatches, error: acceptedErr } = await supabase
       .from('skill_matches')
       .select('request_id')
       .in('request_id', requestIds)
       .eq('accepted', true)
+    if (acceptedErr) console.error('Failed to load accepted match counts:', acceptedErr)
 
     const acceptedCounts = {}
     if (acceptedMatches) {
@@ -103,16 +106,18 @@ export default function Messages() {
     }
 
     const enriched = await Promise.all(matches.map(async (match) => {
-      const { data: helperProfile } = await supabase
+      const { data: helperProfile, error: profErr } = await supabase
         .from('helper_profiles')
         .select('display_name, is_hope_ambassador, created_at, avatar_url')
         .eq('user_id', match.helper_id)
         .maybeSingle()
+      if (profErr) console.error('Failed to load helper profile:', profErr)
 
-      const { count: vouchCount } = await supabase
+      const { count: vouchCount, error: vouchErr } = await supabase
         .from('vouches')
         .select('id', { count: 'exact', head: true })
         .eq('vouchee_id', match.helper_id)
+      if (vouchErr) console.error('Failed to load vouch count:', vouchErr)
 
       const request = myRequests.find(r => r.id === match.request_id)
 
@@ -136,27 +141,58 @@ export default function Messages() {
   async function acceptOffer(offer) {
     setProcessingOffer(offer.id)
 
-    await supabase
+    const { error: acceptErr } = await supabase
       .from('skill_matches')
       .update({ accepted: true })
       .eq('id', offer.id)
 
-    const { data: convo } = await supabase
+    if (acceptErr) {
+      console.error('Failed to accept offer:', acceptErr)
+      alert('Could not accept this offer. Try again.')
+      setProcessingOffer(null)
+      return
+    }
+
+    // Reuse any existing conversation with this helper, regardless of which
+    // request started it, so messages with the same neighbor group into one
+    // thread instead of splitting per request.
+    const { data: existingConvo, error: existingErr } = await supabase
       .from('conversations')
-      .insert({
-        request_id: offer.request_id,
-        helper_id: offer.helper_id,
-        requester_id: user.id,
-      })
-      .select()
-      .single()
+      .select('id')
+      .or('and(helper_id.eq.' + offer.helper_id + ',requester_id.eq.' + user.id + '),and(helper_id.eq.' + user.id + ',requester_id.eq.' + offer.helper_id + ')')
+      .maybeSingle()
+    if (existingErr) console.error('Failed to check for an existing conversation:', existingErr)
+
+    let convo = existingConvo
+    if (!convo) {
+      const { data: newConvo, error: convoErr } = await supabase
+        .from('conversations')
+        .insert({
+          request_id: offer.request_id,
+          helper_id: offer.helper_id,
+          requester_id: user.id,
+        })
+        .select()
+        .single()
+      if (convoErr) console.error('Failed to create conversation for accepted offer:', convoErr)
+      convo = newConvo
+    } else {
+      // Point the reused conversation at this newest request so its banner
+      // reflects what you're currently talking about, not whatever started the thread.
+      const { error: updErr } = await supabase
+        .from('conversations')
+        .update({ request_id: offer.request_id })
+        .eq('id', convo.id)
+      if (updErr) console.error('Failed to update conversation context:', updErr)
+    }
 
     if (convo) {
-      await supabase.from('chat_messages').insert({
+      const { error: msgErr } = await supabase.from('chat_messages').insert({
         conversation_id: convo.id,
         sender_id: user.id,
         body: `${offer.helper_name} has been accepted to help with: ${offer.skill_needed}`,
       })
+      if (msgErr) console.error('Failed to send acceptance message:', msgErr)
     }
 
     createNotification({
@@ -169,10 +205,11 @@ export default function Messages() {
 
     const newAcceptedCount = offer.accepted_count + 1
     if (offer.max_helpers !== null && newAcceptedCount >= offer.max_helpers) {
-      await supabase
+      const { error: statusErr } = await supabase
         .from('help_requests')
         .update({ status: 'in_progress' })
         .eq('id', offer.request_id)
+      if (statusErr) console.error('Failed to mark request in_progress:', statusErr)
     }
 
     setProcessingOffer(null)
@@ -183,10 +220,17 @@ export default function Messages() {
   async function declineOffer(offer) {
     setProcessingOffer(offer.id)
 
-    await supabase
+    const { error } = await supabase
       .from('skill_matches')
       .delete()
       .eq('id', offer.id)
+
+    if (error) {
+      console.error('Failed to decline offer:', error)
+      alert('Could not decline this offer. Try again.')
+      setProcessingOffer(null)
+      return
+    }
 
     createNotification({
       userId: offer.helper_id,
@@ -205,11 +249,12 @@ export default function Messages() {
   // =============================================
 
   async function loadMyOutgoingOffers() {
-    const { data: matches } = await supabase
+    const { data: matches, error: matchesErr } = await supabase
       .from('skill_matches')
       .select('id, request_id, created_at')
       .eq('helper_id', user.id)
       .is('accepted', null)
+    if (matchesErr) console.error('Failed to load your outgoing offers:', matchesErr)
 
     if (!matches || matches.length === 0) {
       setMyOutgoingOffers([])
@@ -217,19 +262,21 @@ export default function Messages() {
     }
 
     const requestIds = matches.map(m => m.request_id)
-    const { data: requests } = await supabase
+    const { data: requests, error: reqErr } = await supabase
       .from('help_requests')
       .select('id, skill_needed, requester_id')
       .in('id', requestIds)
+    if (reqErr) console.error('Failed to load requests for outgoing offers:', reqErr)
 
     const enriched = await Promise.all(matches.map(async (match) => {
       const req = requests?.find(r => r.id === match.request_id)
       if (!req) return null
-      const { data: p } = await supabase
+      const { data: p, error: profErr } = await supabase
         .from('helper_profiles')
         .select('display_name')
         .eq('user_id', req.requester_id)
         .maybeSingle()
+      if (profErr) console.error('Failed to load requester profile:', profErr)
       return {
         ...match,
         skill_needed: req.skill_needed,
@@ -241,7 +288,8 @@ export default function Messages() {
   }
 
   async function withdrawOffer(matchId) {
-    await supabase.from('skill_matches').delete().eq('id', matchId)
+    const { error } = await supabase.from('skill_matches').delete().eq('id', matchId)
+    if (error) { console.error('Failed to withdraw offer:', error); alert('Could not withdraw your offer. Try again.'); return }
     await loadMyOutgoingOffers()
   }
 
@@ -250,7 +298,8 @@ export default function Messages() {
   // =============================================
 
   async function loadPrefs() {
-    const { data } = await supabase.from('helper_profiles').select('disappear_default_mins, read_receipts_enabled, safety_checkins_enabled, default_help_message').eq('user_id', user.id).maybeSingle()
+    const { data, error } = await supabase.from('helper_profiles').select('disappear_default_mins, read_receipts_enabled, safety_checkins_enabled, default_help_message').eq('user_id', user.id).maybeSingle()
+    if (error) { console.error('Failed to load message preferences:', error); return }
     if (data) {
       setDisappearDefault(data.disappear_default_mins || 0)
       setReadReceipts(data.read_receipts_enabled !== false)
@@ -260,31 +309,39 @@ export default function Messages() {
   }
 
   async function savePref(col, val) {
-    await supabase.from('helper_profiles').update({ [col]: val }).eq('user_id', user.id)
+    const { error } = await supabase.from('helper_profiles').update({ [col]: val }).eq('user_id', user.id)
+    if (error) { console.error(`Failed to save ${col}:`, error); return false }
+    return true
   }
 
   async function saveDisappearPref(mins) {
+    const previous = disappearDefault
     setDisappearDefault(mins)
-    await savePref('disappear_default_mins', mins)
+    const ok = await savePref('disappear_default_mins', mins)
+    if (!ok) { setDisappearDefault(previous); alert('Could not save this setting. Try again.') }
   }
 
   async function toggleReadReceipts() {
     const v = !readReceipts
     setReadReceipts(v)
-    await savePref('read_receipts_enabled', v)
+    const ok = await savePref('read_receipts_enabled', v)
+    if (!ok) { setReadReceipts(!v); alert('Could not save this setting. Try again.') }
   }
 
   async function toggleSafetyCheckins() {
     const v = !safetyCheckins
     setSafetyCheckins(v)
-    await savePref('safety_checkins_enabled', v)
+    const ok = await savePref('safety_checkins_enabled', v)
+    if (!ok) { setSafetyCheckins(!v); alert('Could not save this setting. Try again.') }
   }
 
   async function saveHelpMsg() {
     const trimmed = defaultHelpMsg.trim() || 'I can help!'
+    const previous = defaultHelpMsg
     setDefaultHelpMsg(trimmed)
     setEditingHelpMsg(false)
-    await savePref('default_help_message', trimmed)
+    const ok = await savePref('default_help_message', trimmed)
+    if (!ok) { setDefaultHelpMsg(previous); setEditingHelpMsg(true); alert('Could not save your message. Try again.') }
   }
 
   function getSliderIndex() {
@@ -293,7 +350,8 @@ export default function Messages() {
   }
 
   async function loadConvoSettings() {
-    const { data } = await supabase.from('conversation_user_settings').select('*').eq('user_id', user.id)
+    const { data, error } = await supabase.from('conversation_user_settings').select('*').eq('user_id', user.id)
+    if (error) { console.error('Failed to load conversation settings:', error); return }
     if (data) {
       const map = {}
       data.forEach(s => { map[s.conversation_id] = s })
@@ -303,12 +361,19 @@ export default function Messages() {
 
   async function upsertConvoSetting(convoId, updates) {
     const existing = convoSettings[convoId]
+    let error
     if (existing) {
-      await supabase.from('conversation_user_settings').update(updates).eq('id', existing.id)
+      ({ error } = await supabase.from('conversation_user_settings').update(updates).eq('id', existing.id))
     } else {
-      await supabase.from('conversation_user_settings').insert({ user_id: user.id, conversation_id: convoId, ...updates })
+      ({ error } = await supabase.from('conversation_user_settings').insert({ user_id: user.id, conversation_id: convoId, ...updates }))
+    }
+    if (error) {
+      console.error('Failed to save conversation setting:', error)
+      alert('Could not save that. Try again.')
+      return false
     }
     await loadConvoSettings()
+    return true
   }
 
   async function togglePin(convoId) {
@@ -342,10 +407,12 @@ export default function Messages() {
   }
 
   async function loadBlocked() {
-    const { data } = await supabase.from('blocks').select('id, blocked_id').eq('blocker_id', user.id)
+    const { data, error } = await supabase.from('blocks').select('id, blocked_id').eq('blocker_id', user.id)
+    if (error) { console.error('Failed to load blocked users:', error); return }
     if (data && data.length > 0) {
       const names = await Promise.all(data.map(async (b) => {
-        const { data: p } = await supabase.from('helper_profiles').select('display_name').eq('user_id', b.blocked_id).maybeSingle()
+        const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', b.blocked_id).maybeSingle()
+        if (profErr) console.error('Failed to load blocked user profile:', profErr)
         return { ...b, name: p?.display_name || 'Unknown' }
       }))
       setBlockedUsers(names)
@@ -353,17 +420,20 @@ export default function Messages() {
   }
 
   async function unblockUser(blockId) {
-    await supabase.from('blocks').delete().eq('id', blockId)
+    const { error } = await supabase.from('blocks').delete().eq('id', blockId)
+    if (error) { console.error('Failed to unblock user:', error); alert('Could not unblock this user. Try again.'); return }
     await loadBlocked()
   }
 
   async function loadFolders() {
-    const { data } = await supabase.from('message_folders').select('*').eq('user_id', user.id).order('sort_order', { ascending: true })
+    const { data, error } = await supabase.from('message_folders').select('*').eq('user_id', user.id).order('sort_order', { ascending: true })
+    if (error) { console.error('Failed to load folders:', error); return }
     if (data) setFolders(data)
   }
 
   async function loadAssignments() {
-    const { data } = await supabase.from('conversation_folder_assignments').select('conversation_id, folder_id').eq('user_id', user.id)
+    const { data, error } = await supabase.from('conversation_folder_assignments').select('conversation_id, folder_id').eq('user_id', user.id)
+    if (error) { console.error('Failed to load folder assignments:', error); return }
     if (data) {
       const map = {}
       data.forEach(a => { if (!map[a.conversation_id]) map[a.conversation_id] = []; map[a.conversation_id].push(a.folder_id) })
@@ -372,12 +442,15 @@ export default function Messages() {
   }
 
   async function loadConversations() {
-    const { data } = await supabase.from('conversations').select('id, request_id, helper_id, requester_id, created_at, disappear_after_mins, last_read_helper, last_read_requester, help_requests (skill_needed, neighborhood, urgency)').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('conversations').select('id, request_id, helper_id, requester_id, created_at, disappear_after_mins, last_read_helper, last_read_requester, help_requests (skill_needed, neighborhood, urgency)').order('created_at', { ascending: false })
+    if (error) { console.error('Failed to load conversations:', error); return }
     if (data) {
       const withNames = await Promise.all(data.map(async (c) => {
         const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
-        const { data: p } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
-        const { data: lastMsg } = await supabase.from('chat_messages').select('body, created_at').eq('conversation_id', c.id).is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
+        if (profErr) console.error('Failed to load conversation partner profile:', profErr)
+        const { data: lastMsg, error: msgErr } = await supabase.from('chat_messages').select('body, created_at').eq('conversation_id', c.id).is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        if (msgErr) console.error('Failed to load last message:', msgErr)
         const lastRead = c.helper_id === user.id ? c.last_read_helper : c.last_read_requester
         const hasUnread = lastMsg && (!lastRead || new Date(lastMsg.created_at) > new Date(lastRead))
         return { ...c, otherId, otherName: p?.display_name || 'Neighbor', otherAvatar: p?.avatar_url || null, lastMessage: lastMsg?.body || null, lastMessageAt: lastMsg?.created_at || c.created_at, hasUnread }
@@ -390,14 +463,17 @@ export default function Messages() {
   async function createFolder() {
     const name = newFolderName.trim()
     if (!name) return
-    await supabase.from('message_folders').insert({ user_id: user.id, name, sort_order: folders.length })
+    const { error } = await supabase.from('message_folders').insert({ user_id: user.id, name, sort_order: folders.length })
+    if (error) { console.error('Failed to create folder:', error); alert('Could not create that folder. Try again.'); return }
     setNewFolderName('')
     await loadFolders()
   }
 
   async function deleteFolder(folderId) {
-    await supabase.from('conversation_folder_assignments').delete().eq('folder_id', folderId).eq('user_id', user.id)
-    await supabase.from('message_folders').delete().eq('id', folderId).eq('user_id', user.id)
+    const { error: assignErr } = await supabase.from('conversation_folder_assignments').delete().eq('folder_id', folderId).eq('user_id', user.id)
+    if (assignErr) console.error('Failed to clear folder assignments:', assignErr)
+    const { error: folderErr } = await supabase.from('message_folders').delete().eq('id', folderId).eq('user_id', user.id)
+    if (folderErr) { console.error('Failed to delete folder:', folderErr); alert('Could not delete this folder. Try again.'); return }
     if (activeFolder === folderId) setActiveFolder('all')
     await loadFolders()
     await loadAssignments()
@@ -405,10 +481,13 @@ export default function Messages() {
 
   async function assignToFolder(convoId, folderId) {
     if (folderId === 'remove') {
-      await supabase.from('conversation_folder_assignments').delete().eq('conversation_id', convoId).eq('user_id', user.id)
+      const { error } = await supabase.from('conversation_folder_assignments').delete().eq('conversation_id', convoId).eq('user_id', user.id)
+      if (error) { console.error('Failed to remove folder assignment:', error); alert('Could not update this conversation. Try again.'); return }
     } else {
-      await supabase.from('conversation_folder_assignments').delete().eq('conversation_id', convoId).eq('user_id', user.id)
-      await supabase.from('conversation_folder_assignments').insert({ user_id: user.id, conversation_id: convoId, folder_id: folderId })
+      const { error: delErr } = await supabase.from('conversation_folder_assignments').delete().eq('conversation_id', convoId).eq('user_id', user.id)
+      if (delErr) console.error('Failed to clear previous folder assignment:', delErr)
+      const { error: insErr } = await supabase.from('conversation_folder_assignments').insert({ user_id: user.id, conversation_id: convoId, folder_id: folderId })
+      if (insErr) { console.error('Failed to assign folder:', insErr); alert('Could not move this conversation. Try again.'); return }
     }
     setAssigningConvo(null)
     setOpenMenu(null)
@@ -417,13 +496,16 @@ export default function Messages() {
 
   async function deleteConversation(convoId) {
     if (deleteMode === 'me') {
-      const { data: msgs } = await supabase.from('chat_messages').select('id').eq('conversation_id', convoId)
-      if (msgs) {
+      const { data: msgs, error: msgsErr } = await supabase.from('chat_messages').select('id').eq('conversation_id', convoId)
+      if (msgsErr) { console.error('Failed to load messages to delete:', msgsErr); alert('Could not delete this conversation. Try again.'); return }
+      if (msgs && msgs.length > 0) {
         const inserts = msgs.map(m => ({ message_id: m.id, user_id: user.id }))
-        await supabase.from('message_deletions').upsert(inserts, { onConflict: 'message_id,user_id' })
+        const { error: upsertErr } = await supabase.from('message_deletions').upsert(inserts, { onConflict: 'message_id,user_id' })
+        if (upsertErr) { console.error('Failed to delete conversation for you:', upsertErr); alert('Could not delete this conversation. Try again.'); return }
       }
     } else {
-      await supabase.from('chat_messages').update({ deleted_at: new Date().toISOString() }).eq('conversation_id', convoId)
+      const { error: updErr } = await supabase.from('chat_messages').update({ deleted_at: new Date().toISOString() }).eq('conversation_id', convoId)
+      if (updErr) { console.error('Failed to delete conversation for everyone:', updErr); alert('Could not delete this conversation. Try again.'); return }
     }
     setShowDeleteConfirm(null)
     setOpenMenu(null)
@@ -432,15 +514,21 @@ export default function Messages() {
 
   async function blockUser(otherId, otherName) {
     if (!confirm('Block ' + otherName + '? They will not be able to see your profile or send you messages.')) return
-    await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: otherId })
+    const { error } = await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: otherId })
+    if (error) { console.error('Failed to block user:', error); alert('Could not block this user. Try again.'); return }
     setOpenMenu(null)
     await loadBlocked()
   }
 
   async function reportConversation(convoId, otherId) {
     const reason = prompt('Why are you reporting this conversation? (optional)')
-    await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: otherId, alert_type: 'flag', description: reason || 'Reported from messages' })
+    const { error } = await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: otherId, alert_type: 'flag', description: reason || 'Reported from messages' })
     setOpenMenu(null)
+    if (error) {
+      console.error('Failed to submit report:', error)
+      alert('Could not submit your report. Try again.')
+      return
+    }
     alert('Report submitted. Thank you for helping keep our community safe.')
   }
 
@@ -582,7 +670,7 @@ export default function Messages() {
       {pendingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-            ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Help Offers ({pendingOffers.length})
+            🤝 Help Offers ({pendingOffers.length})
           </div>
           {pendingOffers.map(offer => (
             <div key={offer.id} style={offerCardStyle}>
@@ -638,7 +726,7 @@ export default function Messages() {
       {myOutgoingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-            ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³ Your Pending Offers ({myOutgoingOffers.length})
+            ⏳ Your Pending Offers ({myOutgoingOffers.length})
           </div>
           {myOutgoingOffers.map(offer => (
             <div key={offer.id} style={{ background: '#2a2518', border: '1px solid #5a4a2a', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>

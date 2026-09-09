@@ -31,52 +31,58 @@ export default function PublicProfile() {
   async function loadProfile() {
     setLoading(true)
 
-    const { data: hp } = await supabase
+    const { data: hp, error: hpErr } = await supabase
       .from('helper_profiles')
       .select('user_id, display_name, is_hope_ambassador, avatar_url, created_at, neighborhood, show_location, role')
       .eq('user_id', userId)
       .maybeSingle()
+    if (hpErr) console.error('Failed to load profile:', hpErr)
 
     setProfile(hp)
 
-    const { data: rep } = await supabase
+    const { data: rep, error: repErr } = await supabase
       .from('user_reputation')
       .select('upvotes, downvotes, net_score')
       .eq('user_id', userId)
       .maybeSingle()
+    if (repErr) console.error('Failed to load reputation:', repErr)
 
     setReputation(rep)
 
     if (user?.id && user.id !== userId) {
-      const { data: vote } = await supabase
+      const { data: vote, error: voteErr } = await supabase
         .from('user_votes')
         .select('vote')
         .eq('voter_id', user.id)
         .eq('voted_for_id', userId)
         .maybeSingle()
+      if (voteErr) console.error('Failed to load your vote:', voteErr)
       setMyVote(vote?.vote || null)
     }
 
     setLoading(false)
-    const { count: doneCount } = await supabase.from("help_requests").select("id", { count: "exact", head: true }).eq("requester_id", userId).eq("status", "completed")
+    const { count: doneCount, error: countErr } = await supabase.from("help_requests").select("id", { count: "exact", head: true }).eq("requester_id", userId).eq("status", "completed")
+    if (countErr) console.error('Failed to load completed request count:', countErr)
     setCompletedCount(doneCount || 0)
   }
 
   async function loadRequests() {
-    const { data } = await supabase
+    const { data, error: reqErr } = await supabase
       .from('help_requests')
       .select('id, skill_needed, created_at, status')
       .eq('requester_id', userId)
       .or("archived_at.not.is.null,status.eq.completed")
       .order('created_at', { ascending: false })
       .limit(50)
+    if (reqErr) console.error('Failed to load requests:', reqErr)
 
-    const { data: helped } = await supabase
+    const { data: helped, error: helpedErr } = await supabase
       .from('skill_matches')
       .select('request_id, created_at, help_requests(id, skill_needed, created_at, status)')
       .eq('helper_id', userId)
       .eq('accepted', true)
       .limit(50)
+    if (helpedErr) console.error('Failed to load helped requests:', helpedErr)
 
     const helpedRequests = (helped || [])
       .filter(m => m.help_requests)
@@ -90,11 +96,12 @@ export default function PublicProfile() {
   }
 
   async function loadEvents() {
-    const { data: signups } = await supabase
+    const { data: signups, error: signupsErr } = await supabase
       .from('event_signups')
       .select('event_id, role, created_at, emergency_events(id, title, event_type, created_at, status)')
       .eq('user_id', userId)
       .limit(50)
+    if (signupsErr) console.error('Failed to load event participation:', signupsErr)
 
     setEvents(
       (signups || [])
@@ -108,18 +115,30 @@ export default function PublicProfile() {
     if (!user?.id || user.id === userId || voting) return
     setVoting(true)
 
+    let voteErr = null
     if (myVote === voteValue) {
-      await supabase.from('user_votes').delete().eq('voter_id', user.id).eq('voted_for_id', userId)
-      setMyVote(null)
+      const { error } = await supabase.from('user_votes').delete().eq('voter_id', user.id).eq('voted_for_id', userId)
+      voteErr = error
+      if (!error) setMyVote(null)
     } else if (myVote !== null) {
-      await supabase.from('user_votes').update({ vote: voteValue, updated_at: new Date().toISOString() }).eq('voter_id', user.id).eq('voted_for_id', userId)
-      setMyVote(voteValue)
+      const { error } = await supabase.from('user_votes').update({ vote: voteValue, updated_at: new Date().toISOString() }).eq('voter_id', user.id).eq('voted_for_id', userId)
+      voteErr = error
+      if (!error) setMyVote(voteValue)
     } else {
-      await supabase.from('user_votes').insert({ voter_id: user.id, voted_for_id: userId, vote: voteValue })
-      setMyVote(voteValue)
+      const { error } = await supabase.from('user_votes').insert({ voter_id: user.id, voted_for_id: userId, vote: voteValue })
+      voteErr = error
+      if (!error) setMyVote(voteValue)
     }
 
-    const { data: rep } = await supabase.from('user_reputation').select('upvotes, downvotes, net_score').eq('user_id', userId).maybeSingle()
+    if (voteErr) {
+      console.error('Failed to cast vote:', voteErr)
+      alert('Could not record your vote. Try again.')
+      setVoting(false)
+      return
+    }
+
+    const { data: rep, error: repErr } = await supabase.from('user_reputation').select('upvotes, downvotes, net_score').eq('user_id', userId).maybeSingle()
+    if (repErr) console.error('Failed to refresh reputation:', repErr)
     setReputation(rep)
     setVoting(false)
   }
