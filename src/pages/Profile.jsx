@@ -348,6 +348,16 @@ function captureCoverageLocation() {
           </div>
         )}
 
+        {!profile?.is_hope_ambassador && !isAdmin && !showAmbassadorSignup && (
+          <button onClick={() => setShowAmbassadorSignup(true)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "0.75rem", padding: "0.75rem", background: "linear-gradient(135deg, #3a2a10, #4a3520)", border: "2px solid #ff8844", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
+            <span style={{ fontSize: "1.5rem" }}>&#128293;</span>
+            <div>
+              <span style={{ display: "block", color: "#ffaa44", fontWeight: 700, fontSize: "0.95rem" }}>The Campfire</span>
+              <span style={{ color: "#cc9966", fontSize: "0.75rem" }}>Want in? Become a Hope Ambassador above &#8594;</span>
+            </div>
+          </button>
+        )}
+
         {!profile?.is_hope_ambassador && showAmbassadorSignup && (
           <div className="amb-signup-form">
             <h2 className="amb-signup-title">Hope Ambassador Signup</h2>
@@ -454,6 +464,10 @@ function captureCoverageLocation() {
             <span style={{ color: '#8fc', fontSize: '0.75rem' }}>Visit our website &#8599;</span>
           </div>
         </a>
+
+        <button onClick={() => navigate('/help')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid #444', borderRadius: '10px', padding: '0.6rem', marginTop: '0.75rem', color: '#aaa', fontSize: '0.85rem', cursor: 'pointer' }}>
+          Help &amp; Feedback
+        </button>
       </div>
     )
   }

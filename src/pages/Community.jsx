@@ -10,7 +10,6 @@ const CAT_ICONS = { 'Emergency Help': '&#9888;', 'Safety': '&#128156;', 'Food': 
 export default function Community() {
   const navigate = useNavigate()
   const { user, profile, isAdmin, organizations: myOrgs } = useAuth()
-  const hasCampfire = profile?.is_hope_ambassador || isAdmin
   const canVerify = profile?.is_hope_ambassador || isAdmin
   const canSubmit = (myOrgs && myOrgs.length > 0) || isAdmin
 
@@ -58,11 +57,6 @@ export default function Community() {
   const [evOrgId, setEvOrgId] = useState('')
   const [submittingEvent, setSubmittingEvent] = useState(false)
   const [eventSubmitted, setEventSubmitted] = useState(false)
-
-  // Feedback
-  const [feedbackText, setFeedbackText] = useState('')
-  const [feedbackSent, setFeedbackSent] = useState(false)
-  const [sendingFeedback, setSendingFeedback] = useState(false)
 
   useEffect(() => { loadResources(); loadOrgs(); loadEvents() }, [])
   useEffect(() => { getCurrentPosition().then(setMyLocation) }, [])
@@ -217,8 +211,6 @@ export default function Community() {
       <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', marginBottom: '1rem' }}>
         <button style={communityTabStyle(tab === 'resources')} onClick={() => setTab('resources')}>Resources</button>
         <button style={communityTabStyle(tab === 'events')} onClick={() => setTab('events')}>Events{canVerify && pendingEvents.length > 0 ? ' (' + pendingEvents.length + ')' : ''}</button>
-        <button style={communityTabStyle(tab === 'campfire')} onClick={() => setTab('campfire')}>Campfire</button>
-        <button style={communityTabStyle(tab === 'feedback')} onClick={() => setTab('feedback')}>Feedback</button>
       </div>
 
       {tab === 'resources' && (
@@ -434,48 +426,6 @@ export default function Community() {
             </div>
           ))}
         </>
-      )}
-
-      {tab === 'campfire' && (
-        hasCampfire ? (
-          <button onClick={() => navigate("/campfire")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.75rem", background: "linear-gradient(135deg, #3a2a10, #4a3520)", border: "2px solid #ff8844", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
-            <span style={{ fontSize: "1.5rem" }}>&#128293;</span>
-            <div>
-              <span style={{ display: "block", color: "#ffaa44", fontWeight: 700, fontSize: "0.95rem" }}>The Campfire</span>
-              <span style={{ color: "#cc9966", fontSize: "0.75rem" }}>Chat with fellow ambassadors and admins</span>
-            </div>
-          </button>
-        ) : (
-          <button onClick={() => navigate('/profile')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.75rem", background: "linear-gradient(135deg, #3a2a10, #4a3520)", border: "2px solid #ff8844", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
-            <span style={{ fontSize: "1.5rem" }}>&#128293;</span>
-            <div>
-              <span style={{ display: "block", color: "#ffaa44", fontWeight: 700, fontSize: "0.95rem" }}>The Campfire</span>
-              <span style={{ color: "#cc9966", fontSize: "0.75rem" }}>Want in? Become a Hope Ambassador &#8594;</span>
-            </div>
-          </button>
-        )
-      )}
-
-      {tab === 'feedback' && (
-        <div style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1rem' }}>
-          <h2 style={{ fontSize: '1rem', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><span>&#128172;</span> Feedback</h2>
-          <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Tell us what your community needs. Your input shapes what we build next.</p>
-          {feedbackSent ? (
-            <p style={{ color: '#4ecca3', fontWeight: 600 }}>Thank you! Your feedback has been submitted.</p>
-          ) : (
-            <>
-              <textarea value={feedbackText} onChange={e => setFeedbackText(e.target.value)} placeholder="What would help your community? What should we build next?" rows={3} maxLength={2000} style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.9rem', resize: 'vertical', marginBottom: '0.5rem', boxSizing: 'border-box' }} />
-              <button disabled={!feedbackText.trim() || sendingFeedback} onClick={async () => {
-                setSendingFeedback(true)
-                const { error } = await supabase.from('feedback').insert({ user_id: user.id, body: feedbackText.trim() })
-                setSendingFeedback(false)
-                if (error) { console.error('Failed to submit feedback:', error); alert('Could not submit your feedback. Try again.'); return }
-                setFeedbackSent(true)
-                setFeedbackText('')
-              }} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: (!feedbackText.trim() || sendingFeedback) ? 0.5 : 1 }}>{sendingFeedback ? 'Sending...' : 'Submit Feedback'}</button>
-            </>
-          )}
-        </div>
       )}
 
       {orgProfileOpen && (

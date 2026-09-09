@@ -4,7 +4,7 @@ import { useUnreadCount } from '../context/UnreadCountContext'
 import PushBanner from '../components/PushBanner'
 import InstallBanner from '../components/InstallBanner'
 export default function Dashboard() {
-  const { profile, signOut } = useAuth()
+  const { profile, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const displayName = profile?.display_name || 'Neighbor'
@@ -33,6 +33,11 @@ export default function Dashboard() {
         <p className="welcome-sub">What do you need today?</p>
       </div>
       <div className="quick-actions">
+        <button className="action-card" onClick={() => navigate('/community')}>
+          <span className="action-icon" aria-hidden="true">&#127793;</span>
+          <span className="action-label">Community</span>
+          <span className="action-desc">Resource library and events calendar</span>
+        </button>
         <button className="action-card" onClick={() => navigate('/ask')}>
           <span className="action-icon" aria-hidden="true">&#127384;</span>
           <span className="action-label">Ask for Help</span>
@@ -43,12 +48,13 @@ export default function Dashboard() {
           <span className="action-label">SkillShare</span>
           <span className="action-desc">See what neighbors are offering</span>
         </button>
-        
-        <button className="action-card" onClick={() => navigate('/community')}>
-          <span className="action-icon" aria-hidden="true">&#127793;</span>
-          <span className="action-label">Community</span>
-          <span className="action-desc">Resource library, events, and feedback</span>
-        </button>
+        {(profile?.is_hope_ambassador || isAdmin) && (
+          <button className="action-card" onClick={() => navigate('/campfire')}>
+            <span className="action-icon" aria-hidden="true">&#128293;</span>
+            <span className="action-label">Campfire</span>
+            <span className="action-desc">Chat with fellow ambassadors and admins</span>
+          </button>
+        )}
         <button className="action-card" onClick={() => navigate('/messages')}>
           <span className="action-icon" aria-hidden="true">&#128172;</span>
           <span className="action-label">Messages{unreadCount > 0 && <span style={{ background: "#ff4444", color: "#fff", fontSize: "0.7rem", fontWeight: 700, borderRadius: "9px", padding: "1px 6px", marginLeft: "6px" }}>{unreadCount}</span>}</span>
