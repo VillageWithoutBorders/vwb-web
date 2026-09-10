@@ -1,4 +1,13 @@
 import { precacheAndRoute } from 'workbox-precaching'
+import { clientsClaim } from 'workbox-core'
+
+// Take over from any previously-installed service worker as soon as this
+// one activates, instead of waiting for every open tab/installed app to
+// be fully closed first. Without this, a fresh deploy sits idle in the
+// background and people keep seeing the old cached version until they
+// close the app completely.
+self.skipWaiting()
+clientsClaim()
 
 precacheAndRoute(self.__WB_MANIFEST)
 
