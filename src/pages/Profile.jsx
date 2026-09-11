@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarBuilder, { AvatarDisplay } from '../components/AvatarBuilder'
 import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
+import { resetAccountToBase } from '../utils/resetAccount'
 
 function reportError(context, error, userMessage) {
   if (!error) return false
@@ -13,7 +14,7 @@ function reportError(context, error, userMessage) {
 }
 
 export default function Profile() {
-  const { user, profile, isAdmin, signOut, refreshProfile } = useAuth()
+  const { user, profile, isAdmin, isFounder, signOut, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -58,11 +59,13 @@ export default function Profile() {
   const [coverageSaving, setCoverageSaving] = useState(false)
   const [coverageError, setCoverageError] = useState('')
 
+  const [resetting, setResetting] = useState(false)
+
   useEffect(() => {
     async function loadSkills() {
-      const { data, error } = await supabase.from('skill_categories').select('name').order('name')
+      const { data, error } = await supabase.from('skill_categories').select('title').order('title')
       reportError('loadSkills', error)
-      if (data) setSkillOptions(data.map((s) => s.name))
+      if (data) setSkillOptions(data.map((s) => s.title))
     }
     loadSkills()
   }, [])
@@ -245,6 +248,21 @@ function captureCoverageLocation() {
   setShowEmailChange(false)
   setNewEmail('')
 }
+  // Steps this account back down to a plain Neighbor: clears Ambassador
+  // status and details plus any admin coverage-area info. Also doubles as
+  // Jade's own quick way to reset an account she's testing with. Founder
+  // accounts are never affected (resetAccountToBase guards this too).
+  async function handleResetToBase() {
+    if (!confirm('Reset your account back to a plain Neighbor? This clears your Ambassador status, skills, availability, and any admin coverage area.')) return
+    setResetting(true); setError(''); setMessage('')
+    const { error: resetError } = await resetAccountToBase(user.id, { currentRole: profile?.role })
+    reportError('handleResetToBase', resetError)
+    if (resetError) { setError('Could not reset your account. Try again.'); setResetting(false); return }
+    await refreshProfile()
+    setMessage('Your account has been reset to Neighbor status.')
+    setResetting(false)
+  }
+
   function handleAvatarSaved(url, config) {
     setShowAvatarBuilder(false)
     setMessage('Avatar saved!')
@@ -407,7 +425,14 @@ function captureCoverageLocation() {
         {error && <p className="form-error" role="alert" style={{ marginTop: '1rem' }}>{error}</p>}
 
         <button className="btn btn-primary btn-full" style={{ marginTop: '1.5rem' }} onClick={startEditing}>Edit profile</button>
-        <button className="btn btn-outline btn-full" style={{ marginTop: '0.75rem' }} onClick={signOut}>Sign out</button>
+        <div className="form-row" style={{ marginTop: '0.75rem' }}>
+          <button className="btn btn-outline" style={{ flex: 1 }} onClick={signOut}>Sign out</button>
+          {!isFounder && (profile?.is_hope_ambassador || isAdmin || (profile?.skills?.length > 0)) && (
+            <button className="btn btn-outline" style={{ flex: 1, borderColor: '#666', color: '#999' }} onClick={handleResetToBase} disabled={resetting}>
+              {resetting ? 'Resetting...' : 'Reset to Neighbor'}
+            </button>
+          )}
+        </div>
         {isAdmin && (
           <button className="btn btn-outline btn-full" onClick={() => navigate("/admin")} style={{ marginTop: "0.5rem", borderColor: "#4ecca3", color: "#4ecca3" }}>
             {'⚙'} Admin Panel

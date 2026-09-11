@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import PushBanner from '../components/PushBanner'
 import InstallBanner from '../components/InstallBanner'
+import AmbassadorBanner from '../components/AmbassadorBanner'
 export default function Dashboard() {
   const { profile, isAdmin, signOut } = useAuth()
   const navigate = useNavigate()
@@ -26,6 +27,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <AmbassadorBanner />
       <PushBanner />
       <InstallBanner />
       <div className="welcome-section">

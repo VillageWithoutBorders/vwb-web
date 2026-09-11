@@ -4,6 +4,11 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
 
+// Consecutive messages from the same person within this window are grouped
+// visually (avatar/name shown once) instead of repeating them for every line,
+// so a fast back-and-forth doesn't read as a long wall of near-identical rows.
+const GROUP_WINDOW_MS = 5 * 60 * 1000
+
 export default function Campfire() {
   const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
@@ -17,7 +22,8 @@ export default function Campfire() {
   const pollRef = useRef(null)
   const [showSettings, setShowSettings] = useState(false)
   const [campfireMuted, setCampfireMuted] = useState(localStorage.getItem('vwb_campfire_muted') === 'true')
-  const [reportingMsg, setReportingMsg] = useState(null)
+  const [openMsgMenu, setOpenMsgMenu] = useState(null)
+  const [showPinned, setShowPinned] = useState(true)
 
   const hasAccess = profile?.is_hope_ambassador || isAdmin
 
@@ -34,7 +40,8 @@ export default function Campfire() {
   }, [hasAccess])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    bottomRef.current?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' })
   }, [messages])
 
 
@@ -50,6 +57,8 @@ export default function Campfire() {
   }
 
   async function reportMessage(msg) {
+    setOpenMsgMenu(null)
+    if (!confirm('Report this message to the admins?')) return
     const info = names[msg.user_id] || { name: 'Unknown' }
     const { error } = await supabase.from('safety_alerts').insert({
       reporter_id: user.id,
@@ -57,7 +66,6 @@ export default function Campfire() {
       alert_type: 'flag',
       description: 'Reported Campfire message from ' + info.name + ': "' + (msg.body.length > 100 ? msg.body.slice(0, 100) + '...' : msg.body) + '"'
     })
-    setReportingMsg(null)
     if (error) {
       console.error('Failed to submit report:', error)
       alert('Could not submit your report. Try again.')
@@ -66,11 +74,35 @@ export default function Campfire() {
     alert('Report submitted. An admin will review this message.')
   }
 
+  // Pinning: admins/founder only (matches AuthContext's isAdmin, which already
+  // covers both roles). Requires the `pinned`/`pinned_by`/`pinned_at` columns
+  // and the campfire_pin_update RLS policy on campfire_messages.
+  async function togglePin(msg) {
+    setOpenMsgMenu(null)
+    const next = !msg.pinned
+    const { error } = await supabase
+      .from('campfire_messages')
+      .update(next
+        ? { pinned: true, pinned_by: user.id, pinned_at: new Date().toISOString() }
+        : { pinned: false, pinned_by: null, pinned_at: null })
+      .eq('id', msg.id)
+    if (error) {
+      console.error('Failed to update pin:', error)
+      alert('Could not update the pin on this message. Try again.')
+      return
+    }
+    await loadMessages()
+  }
+
   async function loadMessages() {
     const { data, error } = await supabase.from('campfire_messages').select('*').order('created_at', { ascending: true }).limit(200)
     if (error) console.error('Failed to load Campfire messages:', error)
     if (data) {
       setMessages(data)
+      // Mark caught up while this page is open (including each poll tick), so
+      // the pinned Campfire card in Messages clears its unread dot and picks
+      // a fresh starting point for whatever comes in after you leave.
+      localStorage.setItem('vwb_campfire_last_read', new Date().toISOString())
       const userIds = [...new Set(data.map(m => m.user_id))]
       const unknownIds = userIds.filter(id => !names[id])
       if (unknownIds.length > 0) {
@@ -116,15 +148,17 @@ export default function Campfire() {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
         <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>&#128293;</p>
-        <h2 style={{ color: '#ffaa44', marginBottom: '0.5rem' }}>The Campfire</h2>
-        <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>This is where Hope Ambassadors and admins organize together. Become a Hope Ambassador to join the conversation.</p>
-        <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>Go to Profile</button>
+        <h2 style={{ color: '#ffaa44', marginBottom: '0.5rem' }}>Come sit by the fire</h2>
+        <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>The Campfire is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Become a Hope Ambassador, share whatever skills or time you have to give, and you'll have a seat.</p>
+        <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>Become a Hope Ambassador</button>
       </div>
     )
   }
 
+  const pinnedMessages = messages.filter(m => m.pinned)
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 70px)', maxWidth: '600px', margin: '0 auto' }}>
+    <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 70px)', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid #333', background: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div>
@@ -136,7 +170,32 @@ export default function Campfire() {
         <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
       </div>
 
-      <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {pinnedMessages.length > 0 && (
+        <div style={{ borderBottom: '1px solid #3a2a10', background: '#241c10' }}>
+          <button
+            onClick={() => setShowPinned(p => !p)}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'none', border: 'none', color: '#ffaa44', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}
+          >
+            &#128204; {pinnedMessages.length} pinned message{pinnedMessages.length !== 1 ? 's' : ''}
+            <span style={{ marginLeft: 'auto' }}>{showPinned ? '▲' : '▼'}</span>
+          </button>
+          {showPinned && (
+            <div style={{ padding: '0 1rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '35vh', overflowY: 'auto' }}>
+              {pinnedMessages.map(m => (
+                <div key={m.id} style={{ background: '#1a1a1a', border: '1px solid #444', borderRadius: '8px', padding: '0.5rem 0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffaa44' }}>{names[m.user_id]?.name || 'Neighbor'}</span>
+                    {isAdmin && <button onClick={() => togglePin(m)} style={{ background: 'none', border: 'none', color: '#888', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}>Unpin</button>}
+                  </div>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#ddd', lineHeight: 1.4 }}>{m.body}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="hide-scrollbar" role="log" aria-live="polite" aria-relevant="additions" aria-label="Campfire messages" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
 
         {!loading && messages.length === 0 && (
@@ -146,14 +205,19 @@ export default function Campfire() {
           </div>
         )}
 
-        {messages.map(msg => {
+        {messages.map((msg, idx) => {
           const isMe = msg.user_id === user.id
           const info = names[msg.user_id] || { name: 'Neighbor' }
+          const prevMsg = messages[idx - 1]
+          const isGroupStart = !prevMsg || prevMsg.user_id !== msg.user_id || (new Date(msg.created_at) - new Date(prevMsg.created_at)) > GROUP_WINDOW_MS
+          const fullTime = new Date(msg.created_at).toLocaleString()
           return (
-            <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%', display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-              {!isMe && <AvatarDisplay url={info.avatar} userId={msg.user_id} size={28} />}
+            <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%', display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginTop: isGroupStart ? '0.75rem' : '0.15rem' }}>
+              {!isMe && (isGroupStart
+                ? <AvatarDisplay url={info.avatar} userId={msg.user_id} size={28} />
+                : <div style={{ width: '28px', flexShrink: 0 }} />)}
               <div>
-              {!isMe && (
+              {!isMe && isGroupStart && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.15rem' }}>
                   <span onClick={() => navigate('/u/' + msg.user_id)} style={{ fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? '#c77dff' : info.role === 'admin' ? '#66aaff' : '#4ecca3', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{info.name}</span>
                   {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
@@ -161,12 +225,41 @@ export default function Campfire() {
                   {info.ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
                 </div>
               )}
-              <div style={{ padding: '0.5rem 0.75rem', borderRadius: isMe ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isMe ? '#4ecca3' : '#2a2a2a', color: isMe ? '#1a1a1a' : '#eee', border: isMe ? 'none' : '1px solid #444' }}>
+              <div style={{ position: 'relative', padding: '0.5rem 0.75rem', borderRadius: isMe ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isMe ? '#4ecca3' : '#2a2a2a', color: isMe ? '#1a1a1a' : '#eee', border: isMe ? 'none' : '1px solid #444' }}>
                 <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.4 }}>{msg.body}</p>
-                <span style={{ display: 'block', fontSize: '0.65rem', marginTop: '0.2rem', opacity: 0.6 }}>{formatTime(msg.created_at)}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
+                  {msg.pinned && <span title="Pinned">&#128204;</span>}
+                  <span style={{ fontSize: '0.65rem', opacity: 0.6 }} title={fullTime} aria-label={fullTime}>{formatTime(msg.created_at)}</span>
+                  {(isAdmin || !isMe) && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setOpenMsgMenu(openMsgMenu === msg.id ? null : msg.id) }}
+                      aria-label="Message options"
+                      style={{ background: 'none', border: 'none', color: 'inherit', opacity: 0.6, cursor: 'pointer', fontSize: '0.85rem', padding: 0, marginLeft: 'auto', lineHeight: 1 }}
+                    >&#8943;</button>
+                  )}
+                </div>
+                {openMsgMenu === msg.id && (isAdmin || !isMe) && (
+                  <div
+                    onClick={e => e.stopPropagation()}
+                    style={{ position: 'absolute', top: '100%', [isMe ? 'right' : 'left']: 0, marginTop: '4px', background: '#2a2a2a', border: '1px solid #444', borderRadius: '8px', zIndex: 20, minWidth: '140px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.4)' }}
+                  >
+                    {isAdmin && (
+                      <button onClick={() => togglePin(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>
+                        {msg.pinned ? 'Unpin' : '📌 Pin message'}
+                      </button>
+                    )}
+                    {!isMe && (
+                      <button onClick={() => reportMessage(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>
+                        Report
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               </div>
-              {isMe && <AvatarDisplay url={myAvatar} userId={user.id} size={28} />}
+              {isMe && (isGroupStart
+                ? <AvatarDisplay url={myAvatar} userId={user.id} size={28} />
+                : <div style={{ width: '28px', flexShrink: 0 }} />)}
             </div>
           )
         })}
@@ -180,6 +273,7 @@ export default function Campfire() {
           onChange={e => setNewMsg(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) sendMessage(e) }}
           placeholder="Say something to the group..."
+          aria-label="Message the Campfire"
           disabled={sending}
           style={{ flex: 1, padding: '0.625rem 0.875rem', borderRadius: '1.5rem', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.9rem', outline: 'none' }}
         />

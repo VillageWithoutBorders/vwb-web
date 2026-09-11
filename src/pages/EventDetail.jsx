@@ -76,9 +76,9 @@ export default function EventDetail() {
       setMySignup(withNames.find(s => s.user_id === user.id) || null)
     }
 
-    const { data: cats, error: catsErr } = await supabase.from('skill_categories').select('name').order('name')
+    const { data: cats, error: catsErr } = await supabase.from('skill_categories').select('title').order('title')
     if (catsErr) console.error('Failed to load skill categories:', catsErr)
-    if (cats) setSkillCats(cats.map(c => c.name))
+    if (cats) setSkillCats(cats.map(c => c.title))
 
     const { data: cins, error: cinsErr } = await supabase.from('event_check_ins').select('*').eq('event_id', id).order('created_at', { ascending: false })
     if (cinsErr) console.error('Failed to load check-ins:', cinsErr)
