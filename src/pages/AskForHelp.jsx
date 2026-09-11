@@ -36,13 +36,13 @@ export default function AskForHelp() {
         async function loadSkills() {
             const { data, error } = await supabase
                 .from('skill_categories')
-                .select('name')
-                .order('name')
+                .select('title')
+                .order('title')
 
             if (error) { console.error('Failed to load skill categories:', error); return }
 
             if (data) {
-                setSkills(data.map((s) => s.name))
+                setSkills(data.map((s) => s.title))
             }
         }
         loadSkills()
