@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
+import { resetAccountToBase } from '../utils/resetAccount'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also alert the person and let the caller bail out; omit it for
@@ -323,6 +324,15 @@ export default function Admin() {
     if (reportError('demoteUser', error, 'Could not remove admin access. Try again.')) return
     await loadUsers()
   }
+  // Resets any non-founder user's account back to a plain Neighbor: clears
+  // Ambassador status/details and any admin coverage area, and drops their
+  // role to member. Shares its logic with Profile's own self-service reset.
+  async function resetUserToBase(u) {
+    if (!confirm('Reset ' + (u.display_name || 'this user') + ' back to a plain Neighbor account? This clears their Ambassador status, skills, and admin settings.')) return
+    const { error } = await resetAccountToBase(u.user_id, { currentRole: u.role })
+    if (reportError('resetUserToBase', error, 'Could not reset this user. Try again.')) return
+    await loadUsers()
+  }
   async function messageUser(userId) {
     const { data: convos, error: convoErr } = await supabase.from('conversations').select('id, helper_id, requester_id').or('helper_id.eq.' + userId + ',requester_id.eq.' + userId)
     reportError('messageUser:lookup', convoErr)
@@ -558,6 +568,9 @@ export default function Admin() {
                 )}
                 {(u.role === 'admin' || u.role === 'founder') && u.user_id !== user.id && (
                   <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem' }}>Remove Admin</button>
+                )}
+                {u.role !== 'founder' && u.user_id !== user.id && (u.is_hope_ambassador || u.role === 'admin') && (
+                  <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer', fontSize: '0.75rem' }}>Reset to Neighbor</button>
                 )}
                 <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.75rem' }}>Message</button>
               </div>

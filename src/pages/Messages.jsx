@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
+import { getBlockedUserIds } from '../utils/blockedUsers'
 import AvatarDisplay from '../components/AvatarDisplay'
 
 const DISAPPEAR_STEPS = [
@@ -56,7 +57,11 @@ export default function Messages() {
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadConversations(), loadFolders(), loadAssignments(), loadBlocked(), loadPrefs(), loadConvoSettings(), loadPendingOffers(), loadMyOutgoingOffers()])
+    // Anyone blocked in either direction is filtered out of conversations and
+    // offers below, so a block actually hides someone instead of just being
+    // recorded with no effect.
+    const blockedIds = await getBlockedUserIds(user.id)
+    await Promise.all([loadConversations(blockedIds), loadFolders(), loadAssignments(), loadBlocked(), loadPrefs(), loadConvoSettings(), loadPendingOffers(blockedIds), loadMyOutgoingOffers(blockedIds)])
     setLoading(false)
   }
 
@@ -64,7 +69,7 @@ export default function Messages() {
   // Phase 3: Pending offers FOR the requester (Accept/Decline)
   // =============================================
 
-  async function loadPendingOffers() {
+  async function loadPendingOffers(blockedIds = new Set()) {
     const { data: myRequests, error: reqErr } = await supabase
       .from('help_requests')
       .select('id, skill_needed, description, max_helpers')
@@ -79,12 +84,14 @@ export default function Messages() {
 
     const requestIds = myRequests.map(r => r.id)
 
-    const { data: matches, error: matchesErr } = await supabase
+    const { data: rawMatches, error: matchesErr } = await supabase
       .from('skill_matches')
       .select('id, request_id, helper_id, created_at')
       .in('request_id', requestIds)
       .is('accepted', null)
     if (matchesErr) console.error('Failed to load pending matches:', matchesErr)
+
+    const matches = (rawMatches || []).filter(m => !blockedIds.has(m.helper_id))
 
     if (!matches || matches.length === 0) {
       setPendingOffers([])
@@ -248,7 +255,7 @@ export default function Messages() {
   // Phase 3: Outgoing offers BY the helper (Withdraw)
   // =============================================
 
-  async function loadMyOutgoingOffers() {
+  async function loadMyOutgoingOffers(blockedIds = new Set()) {
     const { data: matches, error: matchesErr } = await supabase
       .from('skill_matches')
       .select('id, request_id, created_at')
@@ -270,7 +277,7 @@ export default function Messages() {
 
     const enriched = await Promise.all(matches.map(async (match) => {
       const req = requests?.find(r => r.id === match.request_id)
-      if (!req) return null
+      if (!req || blockedIds.has(req.requester_id)) return null
       const { data: p, error: profErr } = await supabase
         .from('helper_profiles')
         .select('display_name')
@@ -441,11 +448,15 @@ export default function Messages() {
     }
   }
 
-  async function loadConversations() {
+  async function loadConversations(blockedIds = new Set()) {
     const { data, error } = await supabase.from('conversations').select('id, request_id, helper_id, requester_id, created_at, disappear_after_mins, last_read_helper, last_read_requester, help_requests (skill_needed, neighborhood, urgency)').order('created_at', { ascending: false })
     if (error) { console.error('Failed to load conversations:', error); return }
     if (data) {
-      const withNames = await Promise.all(data.map(async (c) => {
+      const visible = data.filter(c => {
+        const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
+        return !blockedIds.has(otherId)
+      })
+      const withNames = await Promise.all(visible.map(async (c) => {
         const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
         const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
         if (profErr) console.error('Failed to load conversation partner profile:', profErr)

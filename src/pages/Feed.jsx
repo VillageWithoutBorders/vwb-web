@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { getCurrentPosition } from '../utils/location'
 import VouchButton from '../components/VouchButton'
 import { createNotification } from '../utils/notificationHelpers'
+import { getBlockedUserIds } from '../utils/blockedUsers'
 import AvatarDisplay from '../components/AvatarDisplay'
 
 async function enrichRequests(reqs) {
@@ -73,9 +74,9 @@ export default function Feed() {
 
     useEffect(() => {
         async function loadSkills() {
-            const { data, error } = await supabase.from('skill_categories').select('name').order('name')
+            const { data, error } = await supabase.from('skill_categories').select('title').order('title')
             if (error) { console.error('Failed to load skill categories:', error); return }
-            if (data) setSkillCategories(data.map(s => s.name))
+            if (data) setSkillCategories(data.map(s => s.title))
         }
         loadSkills()
     }, [])
@@ -114,7 +115,7 @@ export default function Feed() {
 
     const loadFeed = useCallback(async () => {
         setLoading(true)
-        const loc = await getCurrentPosition()
+        const [loc, blockedIds] = await Promise.all([getCurrentPosition(), getBlockedUserIds(user?.id)])
         setLocationStatus(loc.source === 'browser' ? 'active' : 'default')
 
         if (view === 'requests') {
@@ -132,6 +133,10 @@ export default function Feed() {
             } else {
                 reqs = await enrichRequests(data || [])
             }
+
+            // Blocked either direction: don't surface their requests, and don't
+            // let them show up as someone you could offer to help.
+            reqs = reqs.filter(r => !blockedIds.has(r.requester_id))
 
             // Also need max_helpers from help_requests for helper count display
             const reqIds = reqs.map(r => r.id)
@@ -155,10 +160,11 @@ export default function Feed() {
             if (filterOfferCat !== 'all') { query = query.eq('category', filterOfferCat) }
             const { data, error: offersErr } = await query
             if (offersErr) console.error('Failed to load offers:', offersErr)
-            setOffers(await enrichOffers(data || []))
+            const enrichedOffers = await enrichOffers((data || []).filter(o => !blockedIds.has(o.user_id)))
+            setOffers(enrichedOffers)
         }
         setLoading(false)
-    }, [profile, filterSkill, filterOfferCat, view])
+    }, [profile, filterSkill, filterOfferCat, view, user])
 
     useEffect(() => { loadFeed() }, [loadFeed])
 
