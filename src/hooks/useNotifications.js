@@ -16,7 +16,9 @@ export function useNotifications(intervalMs = 30000) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50)
-    if (!error && data) {
+    if (error) {
+      console.error('[useNotifications] fetchNotifications', error)
+    } else if (data) {
       setNotifications(data)
       setUnreadCount(data.filter(n => !n.read).length)
     }
@@ -26,7 +28,11 @@ export function useNotifications(intervalMs = 30000) {
   const fetchUnreadCount = useCallback(async () => {
     if (!user?.id) return
     const { data, error } = await supabase.rpc('unread_notification_count', { user_uuid: user.id })
-    if (!error && typeof data === 'number') setUnreadCount(data)
+    if (error) {
+      console.error('[useNotifications] fetchUnreadCount', error)
+    } else if (typeof data === 'number') {
+      setUnreadCount(data)
+    }
   }, [user?.id])
 
   useEffect(() => {

@@ -73,9 +73,9 @@ export default function Feed() {
 
     useEffect(() => {
         async function loadSkills() {
-            const { data, error } = await supabase.from('skill_categories').select('title').order('title')
+            const { data, error } = await supabase.from('skill_categories').select('name').order('name')
             if (error) { console.error('Failed to load skill categories:', error); return }
-            if (data) setSkillCategories(data.map(s => s.title))
+            if (data) setSkillCategories(data.map(s => s.name))
         }
         loadSkills()
     }, [])
@@ -416,8 +416,7 @@ export default function Feed() {
                                                     const { data: existing, error: existingErr } = await supabase
                                                         .from('conversations')
                                                         .select('id')
-                                                        .eq('helper_id', offer.user_id)
-                                                        .eq('requester_id', user.id)
+                                                        .or('and(helper_id.eq.' + offer.user_id + ',requester_id.eq.' + user.id + '),and(helper_id.eq.' + user.id + ',requester_id.eq.' + offer.user_id + ')')
                                                         .maybeSingle()
                                                     if (existingErr) {
                                                         console.error('Failed to check for an existing conversation:', existingErr)
