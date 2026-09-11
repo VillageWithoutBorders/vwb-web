@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { getCurrentPosition, distanceMiles } from '../utils/location'
 
-const CATEGORIES = ['Emergency Help', 'Safety', 'Food', 'Tenant Rights', 'Housing', 'Government', 'Other']
-const CAT_ICONS = { 'Emergency Help': '&#9888;', 'Safety': '&#128156;', 'Food': '&#127859;', 'Tenant Rights': '&#127968;', 'Housing': '&#127969;', 'Government': '&#128203;', 'Other': '&#128204;' }
+const CATEGORIES = ['Emergency Help', 'Safety', 'Food', 'Tenant Rights', 'Housing', 'Government', 'Recovery Support', 'Other']
+const CAT_ICONS = { 'Emergency Help': '&#9888;', 'Safety': '&#128156;', 'Food': '&#127859;', 'Tenant Rights': '&#127968;', 'Housing': '&#127969;', 'Government': '&#128203;', 'Recovery Support': '&#129419;', 'Other': '&#128204;' }
 
 export default function Community() {
   const navigate = useNavigate()

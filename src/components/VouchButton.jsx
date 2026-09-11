@@ -17,19 +17,21 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
 
   async function loadVouchData() {
     if (user?.id && !isSelf) {
-      const { data: existing } = await supabase
+      const { data: existing, error: existingErr } = await supabase
         .from('vouches')
         .select('id')
         .eq('voucher_id', user.id)
-        .eq('vouched_for_id', userId)
+        .eq('vouchee_id', userId)
         .maybeSingle()
+      if (existingErr) console.error('[VouchButton] loadVouchData existing', existingErr)
       setHasVouched(!!existing)
     }
-    const { data: vc } = await supabase
+    const { data: vc, error: vcErr } = await supabase
       .from('vouch_counts')
       .select('vouch_count')
       .eq('user_id', userId)
       .maybeSingle()
+    if (vcErr) console.error('[VouchButton] loadVouchData vouch_counts', vcErr)
     setVouchCount(vc?.vouch_count || 0)
   }
 
@@ -42,7 +44,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
         .from('vouches')
         .delete()
         .eq('voucher_id', user.id)
-        .eq('vouched_for_id', userId)
+        .eq('vouchee_id', userId)
       if (!error) {
         setHasVouched(false)
         setVouchCount(prev => Math.max(0, prev - 1))
@@ -53,7 +55,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
     } else {
       const { error } = await supabase
         .from('vouches')
-        .insert({ voucher_id: user.id, vouched_for_id: userId })
+        .insert({ voucher_id: user.id, vouchee_id: userId })
       if (error) {
         if (error.code === '23505') {
           setHasVouched(true)

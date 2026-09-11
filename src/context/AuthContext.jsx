@@ -56,59 +56,77 @@ export function AuthProvider({ children }) {
   }
 
   async function ensureProfile(authUser) {
-    const { data } = await supabase
+    const { data, error: fetchErr } = await supabase
       .from('helper_profiles')
       .select('*')
       .eq('user_id', authUser.id)
       .single()
 
+    // PGRST116 = no row found, which is the expected "new user" case; anything
+    // else is a real failure worth logging (RLS, network, etc).
+    if (fetchErr && fetchErr.code !== 'PGRST116') {
+      console.error('[AuthContext] ensureProfile fetch', fetchErr)
+    }
+
+    // Pending ambassador signup: Login.jsx stashes this in localStorage
+    // because the profile row doesn't exist yet at signup time (the account
+    // needs email confirmation first). Applied here as plain helper_profiles
+    // columns, matching how Profile.jsx's own ambassador signup writes them.
+    const pending = localStorage.getItem('vwb_ambassador_pending')
+    let pendingData = null
+    if (pending) {
+      try { pendingData = JSON.parse(pending) } catch (e) { console.error('Failed to parse pending ambassador data:', e) }
+    }
+
     if (data) {
-      setProfile(data)
-      loadOrganizations(authUser.id)
+      if (pendingData && !data.is_hope_ambassador) {
+        const { data: updated, error } = await supabase
+          .from('helper_profiles')
+          .update({
+            is_hope_ambassador: true,
+            skills: pendingData.skills,
+            availability: pendingData.availability,
+            interests: pendingData.interests,
+            radius_miles: pendingData.radius_miles,
+            is_available: true,
+          })
+          .eq('user_id', authUser.id)
+          .select()
+          .single()
 
-      // Check for pending ambassador signup
-      const pending = localStorage.getItem('vwb_ambassador_pending')
-      if (pending && !data.is_hope_ambassador) {
-        try {
-          const ambassadorData = JSON.parse(pending)
-          const { error } = await supabase
-            .from('hope_ambassadors')
-            .insert({
-              user_id: authUser.id,
-              skills: ambassadorData.skills,
-              availability: ambassadorData.availability,
-              interests: ambassadorData.interests,
-            })
-
-          if (!error) {
-            await supabase
-              .from('helper_profiles')
-              .update({ is_hope_ambassador: true })
-              .eq('user_id', authUser.id)
-
-            localStorage.removeItem('vwb_ambassador_pending')
-            setProfile({ ...data, is_hope_ambassador: true })
-          }
-        } catch (e) {
-          console.error('Failed to save ambassador data:', e)
+        if (error) {
+          console.error('Failed to apply pending ambassador signup:', error)
+          setProfile(data)
+        } else {
+          localStorage.removeItem('vwb_ambassador_pending')
+          setProfile(updated)
         }
+      } else {
+        setProfile(data)
       }
-
+      loadOrganizations(authUser.id)
       return
     }
 
     // No profile yet, create one
     const displayName = authUser.user_metadata?.display_name || ''
+    const insertData = { user_id: authUser.id, display_name: displayName }
+    if (pendingData) {
+      insertData.is_hope_ambassador = true
+      insertData.skills = pendingData.skills
+      insertData.availability = pendingData.availability
+      insertData.interests = pendingData.interests
+      insertData.radius_miles = pendingData.radius_miles
+      insertData.is_available = true
+    }
     const { data: newProfile, error } = await supabase
       .from('helper_profiles')
-      .insert({
-        user_id: authUser.id,
-        display_name: displayName,
-      })
+      .insert(insertData)
       .select()
       .single()
 
     if (!error) {
+      if (pendingData) localStorage.removeItem('vwb_ambassador_pending')
       setProfile(newProfile)
       loadOrganizations(authUser.id)
     }
@@ -116,11 +134,16 @@ export function AuthProvider({ children }) {
 
   async function refreshProfile() {
     if (!user) return
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('helper_profiles')
       .select('*')
       .eq('user_id', user.id)
       .single()
+
+    if (error) {
+      console.error('[AuthContext] refreshProfile', error)
+      return
+    }
 
     if (data) {
       setProfile(data)
@@ -151,7 +174,8 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
-    await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut()
+    if (error) console.error('[AuthContext] signOut', error)
     setUser(null)
     setProfile(null)
     setOrganizations([])
