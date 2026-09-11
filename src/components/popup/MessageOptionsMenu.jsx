@@ -6,13 +6,23 @@ export default function MessageOptionsMenu({ message, onClose, currentUserId, co
   const isMe = message.sender_id === currentUserId
 
   async function deleteForMe() {
-    await supabase.from('message_deletions').upsert({ message_id: message.id, user_id: currentUserId }, { onConflict: 'message_id,user_id' })
+    const { error } = await supabase.from('message_deletions').upsert({ message_id: message.id, user_id: currentUserId }, { onConflict: 'message_id,user_id' })
+    if (error) {
+      console.error('[MessageOptionsMenu] deleteForMe', error)
+      alert('Could not delete this message. Please try again.')
+      return
+    }
     onClose()
   }
 
   async function deleteForEveryone() {
     if (!confirm('Delete this message for everyone? This cannot be undone.')) return
-    await supabase.from('chat_messages').update({ deleted_at: new Date().toISOString() }).eq('id', message.id)
+    const { error } = await supabase.from('chat_messages').update({ deleted_at: new Date().toISOString() }).eq('id', message.id)
+    if (error) {
+      console.error('[MessageOptionsMenu] deleteForEveryone', error)
+      alert('Could not delete this message. Please try again.')
+      return
+    }
     onClose()
   }
 

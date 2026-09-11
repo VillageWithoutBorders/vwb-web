@@ -5,6 +5,13 @@ import { supabase } from '../supabaseClient'
 import AvatarBuilder, { AvatarDisplay } from '../components/AvatarBuilder'
 import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
 
+function reportError(context, error, userMessage) {
+  if (!error) return false
+  console.error(`[Profile:${context}]`, error)
+  if (userMessage) alert(userMessage)
+  return true
+}
+
 export default function Profile() {
   const { user, profile, isAdmin, signOut, refreshProfile } = useAuth()
   const navigate = useNavigate()
@@ -53,9 +60,9 @@ export default function Profile() {
 
   useEffect(() => {
     async function loadSkills() {
-      const { data, error } = await supabase.from('skill_categories').select('title').order('title')
-      if (error) { console.error('Failed to load skill categories:', error); return }
-      if (data) setSkillOptions(data.map((s) => s.title))
+      const { data, error } = await supabase.from('skill_categories').select('name').order('name')
+      reportError('loadSkills', error)
+      if (data) setSkillOptions(data.map((s) => s.name))
     }
     loadSkills()
   }, [])
@@ -76,7 +83,7 @@ export default function Profile() {
   useEffect(() => {
     async function prefillCoverageRegion() {
       const { data, error } = await supabase.from('admin_applications').select('region').eq('user_id', user.id).not('region', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
-      if (error) { console.error('Failed to prefill coverage region:', error); return }
+      reportError('prefillCoverageRegion', error)
       if (data?.region) setCoverageRegion(data.region)
     }
     if (isAdmin && user?.id && profile && !profile.admin_region_name) prefillCoverageRegion()
@@ -120,6 +127,7 @@ export default function Profile() {
       updates.interests = ambInterests.trim()
     }
     const { error: profileError } = await supabase.from('helper_profiles').update(updates).eq('user_id', user.id)
+    reportError('handleSave', profileError)
     if (profileError) { setError('Could not save profile. Try again.'); setSaving(false); return }
     await refreshProfile()
     setMessage('Profile saved.'); setEditing(false); setSaving(false)
@@ -132,6 +140,7 @@ export default function Profile() {
       is_hope_ambassador: true, skills: ambSignupSkills,
       availability: ambSignupAvailability.trim(), interests: ambSignupInterests.trim(), is_available: true,
     }).eq('user_id', user.id)
+    reportError('handleAmbassadorSignup', updateError)
     if (updateError) { setAmbSignupError('Something went wrong. Try again.'); setAmbSignupSaving(false); return }
     await refreshProfile()
     setShowAmbassadorSignup(false); setMessage('Welcome aboard! You are now a Hope Ambassador.'); setAmbSignupSaving(false)
@@ -139,7 +148,7 @@ export default function Profile() {
 
   async function loadAdminAppStatus() {
     const { data, error } = await supabase.from('admin_applications').select('id, status, invited_by').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
-    if (error) { console.error('Failed to load admin application status:', error); return }
+    reportError('loadAdminAppStatus', error)
     if (data) {
       setAdminAppStatus(data.status)
       setAdminAppId(data.id)
@@ -152,8 +161,8 @@ export default function Profile() {
     setAdminAppSaving(true); setError(''); setMessage('')
     const newStatus = accept ? 'pending' : 'declined'
     const { error: statusError } = await supabase.from('admin_applications').update({ status: newStatus }).eq('id', adminAppId)
+    reportError('respondToAdminInvite:status', statusError)
     if (statusError) {
-      console.error('Failed to update admin application status:', statusError)
       setError('Could not save your response. Try again.')
       setAdminAppSaving(false)
       return
@@ -168,7 +177,7 @@ export default function Profile() {
         link: '/admin',
         read: false,
       })
-      if (notifyError) { console.error('Failed to notify inviting admin:', notifyError); notifyFailed = true }
+      if (reportError('respondToAdminInvite:notify', notifyError)) notifyFailed = true
     }
     setAdminAppStatus(newStatus)
     setMessage(
@@ -185,8 +194,8 @@ export default function Profile() {
     if (!adminAppRegion.trim() || !adminAppReason.trim()) return
     setAdminAppSaving(true); setError(''); setMessage('')
     const { error: appError } = await supabase.from('admin_applications').insert({ user_id: user.id, region: adminAppRegion.trim(), reason: adminAppReason.trim() })
+    reportError('submitAdminApplication', appError)
     if (appError) {
-      console.error('Failed to submit admin application:', appError)
       setError('Could not submit your application. Try again.')
       setAdminAppSaving(false)
       return
@@ -218,6 +227,7 @@ function captureCoverageLocation() {
       admin_latitude: coverageLat,
       admin_longitude: coverageLng,
     }).eq('user_id', user.id)
+    reportError('saveCoverageArea', covErr)
     if (covErr) { setCoverageError('Could not save. Try again.'); setCoverageSaving(false); return }
     await refreshProfile()
     setMessage('Your coverage area is set. Reports can now route to you.')
@@ -228,6 +238,7 @@ function captureCoverageLocation() {
   if (!newEmail.trim() || !newEmail.includes('@')) { setEmailError('Enter a valid email address.'); return }
   setEmailSaving(true); setEmailError(''); setEmailMessage('')
   const { error: updateError } = await supabase.auth.updateUser({ email: newEmail.trim() })
+  reportError('handleEmailChange', updateError)
   if (updateError) { setEmailError(updateError.message); setEmailSaving(false); return }
   setEmailMessage('Check your old and new email for confirmation links. Your login email updates once you confirm.')
   setEmailSaving(false)

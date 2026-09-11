@@ -15,6 +15,7 @@ export default function GrantReport() {
   const [endDate, setEndDate] = useState(today)
   const [loading, setLoading] = useState(false)
   const [report, setReport] = useState(null)
+  const [reportErrors, setReportErrors] = useState([])
 
   if (!isAdmin) {
     return (
@@ -27,58 +28,69 @@ export default function GrantReport() {
 
   async function generateReport() {
     setLoading(true)
+    setReportErrors([])
     const from = startDate + 'T00:00:00Z'
     const to = endDate + 'T23:59:59Z'
+    const errors = []
 
     // Help requests in range
-    const { data: requests } = await supabase
+    const { data: requests, error: requestsErr } = await supabase
       .from('help_requests')
       .select('id, skill_needed, urgency, status, neighborhood, max_helpers, created_at')
       .gte('created_at', from)
       .lte('created_at', to)
+    if (requestsErr) { console.error('[GrantReport] help_requests', requestsErr); errors.push('help requests') }
 
     // Skill matches (accepted) in range
-    const { data: matches } = await supabase
+    const { data: matches, error: matchesErr } = await supabase
       .from('skill_matches')
       .select('id, request_id, helper_id, accepted, helper_completed, requester_completed, created_at')
       .eq('accepted', true)
       .gte('created_at', from)
       .lte('created_at', to)
+    if (matchesErr) { console.error('[GrantReport] skill_matches', matchesErr); errors.push('volunteer matches') }
 
     // Emergency events in range
-    const { data: events } = await supabase
+    const { data: events, error: eventsErr } = await supabase
       .from('emergency_events')
       .select('id, title, event_type, status, created_at')
       .gte('created_at', from)
       .lte('created_at', to)
+    if (eventsErr) { console.error('[GrantReport] emergency_events', eventsErr); errors.push('emergency events') }
 
     // Event signups in range
-    const { data: signups } = await supabase
+    const { data: signups, error: signupsErr } = await supabase
       .from('event_signups')
       .select('id, event_id, user_id, role, created_at')
       .gte('created_at', from)
       .lte('created_at', to)
+    if (signupsErr) { console.error('[GrantReport] event_signups', signupsErr); errors.push('event signups') }
 
     // Event resources in range
-    const { data: resources } = await supabase
+    const { data: resources, error: resourcesErr } = await supabase
       .from('event_resources')
       .select('id, event_id, resource_type, category, status, created_at')
       .gte('created_at', from)
       .lte('created_at', to)
+    if (resourcesErr) { console.error('[GrantReport] event_resources', resourcesErr); errors.push('resource coordination') }
 
     // Check-ins in range
-    const { data: checkIns } = await supabase
+    const { data: checkIns, error: checkInsErr } = await supabase
       .from('event_check_ins')
       .select('id, event_id, user_id, status, created_at')
       .gte('created_at', from)
       .lte('created_at', to)
+    if (checkInsErr) { console.error('[GrantReport] event_check_ins', checkInsErr); errors.push('check-ins') }
 
     // Unique users (new signups in range)
-    const { data: newUsers } = await supabase
+    const { data: newUsers, error: newUsersErr } = await supabase
       .from('helper_profiles')
       .select('user_id')
       .gte('created_at', from)
       .lte('created_at', to)
+    if (newUsersErr) { console.error('[GrantReport] helper_profiles', newUsersErr); errors.push('new users') }
+
+    if (errors.length > 0) setReportErrors(errors)
 
     const reqs = requests || []
     const mtch = matches || []
@@ -237,12 +249,40 @@ export default function GrantReport() {
     URL.revokeObjectURL(url)
   }
 
+  function exportPDF() {
+    if (!report) return
+    window.print()
+  }
+
   const cardStyle = { background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '1rem', marginBottom: '0.75rem' }
   const statRow = { display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid #2a2a2a', fontSize: '0.85rem' }
   const sectionTitle = { color: '#4ecca3', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }
 
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
+      <style>{`
+        .print-header { display: none; }
+        @media print {
+          body * { visibility: hidden; }
+          #grant-report-printable, #grant-report-printable * { visibility: visible; }
+          #grant-report-printable {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #fff !important;
+            color: #000 !important;
+          }
+          #grant-report-printable, #grant-report-printable * {
+            background: #fff !important;
+            color: #000 !important;
+            border-color: #ccc !important;
+            box-shadow: none !important;
+          }
+          #grant-report-printable .print-header { display: block !important; }
+        }
+      `}</style>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
         <button onClick={() => navigate('/admin')} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <h1 style={{ margin: 0, fontSize: '1.3rem' }}>Grant Report</h1>
@@ -289,7 +329,7 @@ export default function GrantReport() {
       {!report && !loading && (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#666' }}>
           <p style={{ fontSize: '0.95rem' }}>Pick a date range and hit Generate to build your report.</p>
-          <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>Data exports as CSV for grant applications.</p>
+          <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>Data exports as CSV or PDF for grant applications.</p>
         </div>
       )}
 
@@ -299,12 +339,31 @@ export default function GrantReport() {
 
       {report && !loading && (
         <>
-          {/* Download button */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+          {reportErrors.length > 0 && (
+            <div style={{ background: '#5c1a1a', color: '#ff9999', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              <strong>Heads up:</strong> some data failed to load ({reportErrors.join(', ')}). The numbers below may be incomplete. Try generating again before using this for a grant application.
+            </div>
+          )}
+          {/* Download buttons */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.35rem' }}>
             <button onClick={downloadCSV} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
               Download CSV
             </button>
+            <button onClick={exportPDF} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px dashed #66aaff', background: 'none', color: '#66aaff', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
+              Download PDF
+            </button>
           </div>
+          <p style={{ fontSize: '0.7rem', color: '#666', margin: '0 0 1rem' }}>
+            PDF opens your browser's print dialog. Choose "Save as PDF" as the destination.
+          </p>
+
+          <div id="grant-report-printable">
+            <div className="print-header" style={{ marginBottom: '1rem' }}>
+              <h2 style={{ margin: '0 0 0.25rem' }}>Village Without Borders</h2>
+              <h3 style={{ margin: '0 0 0.5rem', fontWeight: 600 }}>Grant Report</h3>
+              <p style={{ margin: '0.15rem 0' }}>Date range: {report.dateRange.from} to {report.dateRange.to}</p>
+              <p style={{ margin: '0.15rem 0' }}>Generated: {new Date().toLocaleDateString()}</p>
+            </div>
 
           {/* Summary stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -411,6 +470,7 @@ export default function GrantReport() {
               )}
             </div>
           )}
+          </div>
         </>
       )}
     </div>

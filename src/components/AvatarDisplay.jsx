@@ -2,6 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 
+function reportError(context, error) {
+  if (!error) return false
+  console.error(`[AvatarDisplay:${context}]`, error)
+  return true
+}
+
 export default function AvatarDisplay({ url, userId, size = 32 }) {
   const navigate = useNavigate()
   const src = url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId || 'default'}`
@@ -10,16 +16,23 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
 
   async function loadInfo() {
     if (info || !userId) return
-    const { data: p } = await supabase.from('helper_profiles').select('display_name, is_hope_ambassador, role, created_at').eq('user_id', userId).maybeSingle()
-    const { data: rep } = await supabase.from('user_reputation').select('net_score, upvotes, downvotes').eq('user_id', userId).maybeSingle()
-    const { count: vouchCount } = await supabase.from('vouches').select('*', { count: 'exact', head: true }).eq('vouchee_id', userId)
-    const myId = (await supabase.auth.getUser()).data.user?.id
+    const { data: p, error: pErr } = await supabase.from('helper_profiles').select('display_name, is_hope_ambassador, role, created_at').eq('user_id', userId).maybeSingle()
+    reportError('loadInfo:profile', pErr)
+    const { data: rep, error: repErr } = await supabase.from('user_reputation').select('net_score, upvotes, downvotes').eq('user_id', userId).maybeSingle()
+    reportError('loadInfo:reputation', repErr)
+    const { count: vouchCount, error: vouchCountErr } = await supabase.from('vouches').select('*', { count: 'exact', head: true }).eq('vouchee_id', userId)
+    reportError('loadInfo:vouchCount', vouchCountErr)
+    const { data: authData, error: authErr } = await supabase.auth.getUser()
+    reportError('loadInfo:auth', authErr)
+    const myId = authData?.user?.id
     let hasVouched = false
     let myVote = null
     if (myId && myId !== userId) {
-      const { data: myVouch } = await supabase.from('vouches').select('id').eq('voucher_id', myId).eq('vouchee_id', userId).maybeSingle()
+      const { data: myVouch, error: myVouchErr } = await supabase.from('vouches').select('id').eq('voucher_id', myId).eq('vouchee_id', userId).maybeSingle()
+      reportError('loadInfo:myVouch', myVouchErr)
       hasVouched = !!myVouch
-      const { data: voteData } = await supabase.from('user_votes').select('vote').eq('voter_id', myId).eq('voted_for_id', userId).maybeSingle()
+      const { data: voteData, error: voteErr } = await supabase.from('user_votes').select('vote').eq('voter_id', myId).eq('voted_for_id', userId).maybeSingle()
+      reportError('loadInfo:myVote', voteErr)
       myVote = voteData?.vote || null
     }
     setInfo({
@@ -37,14 +50,18 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
   async function castVote(e, voteValue) {
     e.stopPropagation()
     if (!info) return
-    const myId = (await supabase.auth.getUser()).data.user?.id
+    const { data: authData, error: authErr } = await supabase.auth.getUser()
+    reportError('castVote:auth', authErr)
+    const myId = authData?.user?.id
     if (!myId || myId === userId) return
     if (info.myVote === voteValue) {
-      await supabase.from('user_votes').delete().eq('voter_id', myId).eq('voted_for_id', userId)
+      const { error } = await supabase.from('user_votes').delete().eq('voter_id', myId).eq('voted_for_id', userId)
+      if (reportError('castVote:delete', error)) return
       setInfo(prev => ({ ...prev, score: prev.score - voteValue, myVote: null }))
     } else {
       const scoreDiff = info.myVote ? voteValue - info.myVote : voteValue
-      await supabase.from('user_votes').upsert({ voter_id: myId, voted_for_id: userId, vote: voteValue, updated_at: new Date().toISOString() }, { onConflict: 'voter_id,voted_for_id' })
+      const { error } = await supabase.from('user_votes').upsert({ voter_id: myId, voted_for_id: userId, vote: voteValue, updated_at: new Date().toISOString() }, { onConflict: 'voter_id,voted_for_id' })
+      if (reportError('castVote:upsert', error)) return
       setInfo(prev => ({ ...prev, score: prev.score + scoreDiff, myVote: voteValue }))
     }
   }
@@ -52,13 +69,17 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
   async function toggleVouch(e) {
     e.stopPropagation()
     if (!info) return
-    const myId = (await supabase.auth.getUser()).data.user?.id
+    const { data: authData, error: authErr } = await supabase.auth.getUser()
+    reportError('toggleVouch:auth', authErr)
+    const myId = authData?.user?.id
     if (!myId || myId === userId) return
     if (info.hasVouched) {
-      await supabase.from('vouches').delete().eq('voucher_id', myId).eq('vouchee_id', userId)
+      const { error } = await supabase.from('vouches').delete().eq('voucher_id', myId).eq('vouchee_id', userId)
+      if (reportError('toggleVouch:delete', error)) return
       setInfo(prev => ({ ...prev, vouches: prev.vouches - 1, hasVouched: false }))
     } else {
-      await supabase.from('vouches').insert({ voucher_id: myId, vouchee_id: userId })
+      const { error } = await supabase.from('vouches').insert({ voucher_id: myId, vouchee_id: userId })
+      if (reportError('toggleVouch:insert', error)) return
       setInfo(prev => ({ ...prev, vouches: prev.vouches + 1, hasVouched: true }))
     }
   }

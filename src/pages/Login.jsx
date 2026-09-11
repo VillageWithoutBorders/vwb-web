@@ -14,10 +14,10 @@ export default function Login() {
     async function loadSkills() {
       const { data, error } = await supabase
         .from('skill_categories')
-        .select('title')
+        .select('name')
         .order('id')
       if (error) { console.error('Failed to load skill categories:', error); return }
-      if (data) setSkillOptions(data.map((s) => s.title))
+      if (data) setSkillOptions(data.map((s) => s.name))
     }
     loadSkills()
   }, [])

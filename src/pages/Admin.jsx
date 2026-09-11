@@ -69,7 +69,8 @@ export default function Admin() {
       const { data: members, error: memErr } = await supabase.from('organization_members').select('id, user_id, role').eq('organization_id', org.id)
       reportError('loadOrganizations:members', memErr)
       const enrichedMembers = await Promise.all((members || []).map(async (m) => {
-        const { data: prof } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', m.user_id).maybeSingle()
+        const { data: prof, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', m.user_id).maybeSingle()
+        reportError('loadOrganizations:memberProfile', profErr)
         return { ...m, display_name: prof?.display_name || 'Unnamed' }
       }))
       return { ...org, members: enrichedMembers }
@@ -148,7 +149,7 @@ export default function Admin() {
     reportError('loadUsers', error)
     if (data) {
       const withVouches = await Promise.all(data.map(async (u) => {
-        const { count, error: countErr } = await supabase.from('vouches').select('id', { count: 'exact', head: true }).eq('vouched_for_id', u.user_id)
+        const { count, error: countErr } = await supabase.from('vouches').select('id', { count: 'exact', head: true }).eq('vouchee_id', u.user_id)
         reportError('loadUsers:vouchCount', countErr)
         const { data: prof, error: profErr } = await supabase.from('helper_profiles').select('role').eq('user_id', u.user_id).maybeSingle()
         reportError('loadUsers:role', profErr)
