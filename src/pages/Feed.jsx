@@ -13,7 +13,7 @@ async function enrichRequests(reqs) {
     if (userIds.length === 0) return reqs
     const profiles = {}
     for (const uid of userIds) {
-        const { data: p, error } = await supabase.from('helper_profiles').select('is_hope_ambassador, created_at, avatar_url').eq('user_id', uid).maybeSingle()
+        const { data: p, error } = await supabase.from('helper_profiles_public').select('is_hope_ambassador, created_at, avatar_url').eq('user_id', uid).maybeSingle()
         if (error) { console.error('enrichRequests: failed to load profile for', uid, error); continue }
         if (p) profiles[uid] = p
     }
@@ -30,7 +30,7 @@ async function enrichOffers(items) {
     if (userIds.length === 0) return items
     const profiles = {}
     for (const uid of userIds) {
-        const { data: p, error } = await supabase.from('helper_profiles').select('display_name, is_hope_ambassador, created_at, avatar_url').eq('user_id', uid).maybeSingle()
+        const { data: p, error } = await supabase.from('helper_profiles_public').select('display_name, is_hope_ambassador, created_at, avatar_url').eq('user_id', uid).maybeSingle()
         if (error) { console.error('enrichOffers: failed to load profile for', uid, error); continue }
         if (p) profiles[uid] = p
     }

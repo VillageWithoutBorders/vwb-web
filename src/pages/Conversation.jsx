@@ -69,7 +69,7 @@ export default function Conversation() {
     })
     const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
 
-    const { data: otherProfile, error: otherErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
+    const { data: otherProfile, error: otherErr } = await supabase.from('helper_profiles_public').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
     if (otherErr) console.error("Failed to load the other participant's profile:", otherErr)
     setOtherUserId(otherId)
     if (otherProfile) { setOtherName(otherProfile.display_name || 'Neighbor'); setOtherAvatar(otherProfile.avatar_url || null) }

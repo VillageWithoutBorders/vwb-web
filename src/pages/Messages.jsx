@@ -116,7 +116,7 @@ export default function Messages() {
 
     const enriched = await Promise.all(matches.map(async (match) => {
       const { data: helperProfile, error: profErr } = await supabase
-        .from('helper_profiles')
+        .from('helper_profiles_public')
         .select('display_name, is_hope_ambassador, created_at, avatar_url')
         .eq('user_id', match.helper_id)
         .maybeSingle()
@@ -281,7 +281,7 @@ export default function Messages() {
       const req = requests?.find(r => r.id === match.request_id)
       if (!req || blockedIds.has(req.requester_id)) return null
       const { data: p, error: profErr } = await supabase
-        .from('helper_profiles')
+        .from('helper_profiles_public')
         .select('display_name')
         .eq('user_id', req.requester_id)
         .maybeSingle()
@@ -420,7 +420,7 @@ export default function Messages() {
     if (error) { console.error('Failed to load blocked users:', error); return }
     if (data && data.length > 0) {
       const names = await Promise.all(data.map(async (b) => {
-        const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', b.blocked_id).maybeSingle()
+        const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', b.blocked_id).maybeSingle()
         if (profErr) console.error('Failed to load blocked user profile:', profErr)
         return { ...b, name: p?.display_name || 'Unknown' }
       }))
@@ -460,7 +460,7 @@ export default function Messages() {
       })
       const withNames = await Promise.all(visible.map(async (c) => {
         const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
-        const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
+        const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
         if (profErr) console.error('Failed to load conversation partner profile:', profErr)
         const { data: lastMsg, error: msgErr } = await supabase.from('chat_messages').select('body, created_at').eq('conversation_id', c.id).is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
         if (msgErr) console.error('Failed to load last message:', msgErr)
