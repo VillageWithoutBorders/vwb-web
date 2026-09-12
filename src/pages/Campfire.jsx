@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
+import { useMenuPosition } from '../utils/useMenuPosition'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
@@ -24,6 +25,7 @@ export default function Campfire() {
   const [campfireMuted, setCampfireMuted] = useState(localStorage.getItem('vwb_campfire_muted') === 'true')
   const [openMsgMenu, setOpenMsgMenu] = useState(null)
   const [showPinned, setShowPinned] = useState(true)
+  const { menuRef: msgMenuRef, menuStyle: msgMenuStyle, openMenu: positionMsgMenu } = useMenuPosition('right')
 
   const hasAccess = profile?.is_hope_ambassador || isAdmin
 
@@ -232,7 +234,12 @@ export default function Campfire() {
                   <span style={{ fontSize: '0.65rem', opacity: 0.6 }} title={fullTime} aria-label={fullTime}>{formatTime(msg.created_at)}</span>
                   {(isAdmin || !isMe) && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); setOpenMsgMenu(openMsgMenu === msg.id ? null : msg.id) }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const closing = openMsgMenu === msg.id
+                        setOpenMsgMenu(closing ? null : msg.id)
+                        if (!closing) positionMsgMenu(e, isMe ? 'right' : 'left')
+                      }}
                       aria-label="Message options"
                       style={{ background: 'none', border: 'none', color: 'inherit', opacity: 0.6, cursor: 'pointer', fontSize: '0.85rem', padding: 0, marginLeft: 'auto', lineHeight: 1 }}
                     >&#8943;</button>
@@ -240,8 +247,9 @@ export default function Campfire() {
                 </div>
                 {openMsgMenu === msg.id && (isAdmin || !isMe) && (
                   <div
+                    ref={msgMenuRef}
                     onClick={e => e.stopPropagation()}
-                    style={{ position: 'absolute', top: '100%', [isMe ? 'right' : 'left']: 0, marginTop: '4px', background: '#2a2a2a', border: '1px solid #444', borderRadius: '8px', zIndex: 20, minWidth: '140px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.4)' }}
+                    style={{ background: '#2a2a2a', border: '1px solid #444', borderRadius: '8px', minWidth: '140px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', ...msgMenuStyle }}
                   >
                     {isAdmin && (
                       <button onClick={() => togglePin(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>

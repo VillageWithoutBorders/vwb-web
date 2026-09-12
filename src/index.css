@@ -45,8 +45,10 @@ body {
 }
 
 .app-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   height: var(--header-height);
   background: var(--green-dark);
@@ -72,6 +74,7 @@ body {
 .app-main {
   flex: 1;
   padding: 1rem;
+  padding-top: calc(var(--header-height) + 1rem);
   padding-bottom: calc(var(--tab-height) + 1.5rem);
   max-width: 600px;
   width: 100%;
@@ -2230,7 +2233,7 @@ a:focus:not(:focus-visible) {
 @media (min-width: 860px) {
   .app-main {
     max-width: 900px;
-    padding: 2rem 2.5rem calc(var(--tab-height) + 2rem);
+    padding: calc(var(--header-height) + 2rem) 2.5rem calc(var(--tab-height) + 2rem);
   }
 
   .app-header-inner,

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
+import { useMenuPosition } from '../utils/useMenuPosition'
 import AvatarDisplay from '../components/AvatarDisplay'
 
 const DISAPPEAR_STEPS = [
@@ -45,6 +46,7 @@ export default function Messages() {
   const [deleteMode, setDeleteMode] = useState('me')
   const [openMenu, setOpenMenu] = useState(null)
   const [showMuteMenu, setShowMuteMenu] = useState(null)
+  const { menuRef: optionsMenuRef, menuStyle: optionsMenuStyle, openMenu: positionOptionsMenu } = useMenuPosition('right')
   const [convoSettings, setConvoSettings] = useState({})
   const [showArchived, setShowArchived] = useState(false)
 
@@ -817,12 +819,18 @@ export default function Messages() {
             </div>
           </div>
 
-          <button onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === c.id ? null : c.id); setShowMuteMenu(null) }}
+          <button onClick={(e) => {
+              e.stopPropagation()
+              const closing = openMenu === c.id
+              setOpenMenu(closing ? null : c.id)
+              setShowMuteMenu(null)
+              if (!closing) positionOptionsMenu(e)
+            }}
             style={{ position: 'absolute', bottom: '0.6rem', right: '0.6rem', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '1.25rem', padding: '4px 6px', lineHeight: 1 }}
             title="Options">&#8943;</button>
 
           {openMenu === c.id && (
-            <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', right: '0.5rem', top: '100%', marginTop: '4px', background: '#2a2a2a', border: '1px solid #444', borderRadius: '10px', zIndex: 10, minWidth: '180px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
+            <div ref={optionsMenuRef} onClick={(e) => e.stopPropagation()} style={{ background: '#2a2a2a', border: '1px solid #444', borderRadius: '10px', minWidth: '180px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden', ...optionsMenuStyle }}>
               <button style={menuBtn} onClick={() => togglePin(c.id)}>
                 <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128204;</span> {isPinned ? 'Unpin' : 'Pin to top'}
               </button>
