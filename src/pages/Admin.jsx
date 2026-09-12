@@ -364,6 +364,7 @@ export default function Admin() {
 
   const tabStyle = (active) => ({ padding: '0.5rem 0.85rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? '#4ecca3' : '#2a2a2a', color: active ? '#1a1a1a' : '#aaa' })
   const cardStyle = { background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }
+  const statCardStyle = { textAlign: 'center', padding: '0.75rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333', width: '100%', fontFamily: 'inherit' }
 
   const falseAlarms = approvals.filter(a => a.type === 'false_alarm_request')
   const duplicates = approvals.filter(a => a.type === 'duplicate_merge_request')
@@ -377,30 +378,30 @@ export default function Admin() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
-        <div style={{ textAlign: 'center', padding: '0.75rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333' }}>
+        <button type="button" className="admin-stat-card" onClick={() => setTab('users')} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.users}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Users</div>
-        </div>
-        <div style={{ textAlign: 'center', padding: '0.75rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333' }}>
+        </button>
+        <button type="button" className="admin-stat-card" onClick={() => setTab('users')} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.ambassadors}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Ambassadors</div>
-        </div>
-        <div style={{ textAlign: 'center', padding: '0.75rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333' }}>
+        </button>
+        <button type="button" className="admin-stat-card" onClick={() => navigate('/skillshare')} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.requests}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Requests</div>
-        </div>
-        <div style={{ textAlign: 'center', padding: '0.75rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333' }}>
+        </button>
+        <div style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#66aaff' }}>{stats.matches}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Matches</div>
         </div>
-        <div style={{ textAlign: 'center', padding: '0.75rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333' }}>
+        <button type="button" className="admin-stat-card" onClick={() => setTab('emergencies')} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ff6644' }}>{stats.events}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Events</div>
-        </div>
-        <div style={{ textAlign: 'center', padding: '0.75rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333' }}>
+        </button>
+        <button type="button" className="admin-stat-card" onClick={() => setTab('reports')} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: stats.alerts > 0 ? '#ff4444' : '#888' }}>{stats.alerts}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Reports</div>
-        </div>
+        </button>
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', marginBottom: '1rem' }}>
