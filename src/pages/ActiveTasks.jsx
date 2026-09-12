@@ -55,7 +55,7 @@ export default function ActiveTasks() {
     const helperProfiles = {}
     for (const hid of helperIds) {
       const { data: p, error: profErr } = await supabase
-        .from('helper_profiles')
+        .from('helper_profiles_public')
         .select('display_name, is_hope_ambassador, avatar_url')
         .eq('user_id', hid)
         .maybeSingle()
@@ -108,7 +108,7 @@ export default function ActiveTasks() {
     const requesterProfiles = {}
     for (const rid of requesterIds) {
       const { data: p, error: profErr } = await supabase
-        .from('helper_profiles')
+        .from('helper_profiles_public')
         .select('display_name')
         .eq('user_id', rid)
         .maybeSingle()

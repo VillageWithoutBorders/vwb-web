@@ -70,7 +70,7 @@ export default function EventDetail() {
     if (supsErr) console.error('Failed to load signups:', supsErr)
     if (sups) {
       const withNames = await Promise.all(sups.map(async (s) => {
-        const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', s.user_id).maybeSingle()
+        const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name, avatar_url').eq('user_id', s.user_id).maybeSingle()
         if (profErr) console.error('Failed to load profile for', s.user_id, profErr)
         return { ...s, display_name: p?.display_name || 'Neighbor', avatar_url: p?.avatar_url || null }
       }))
@@ -88,7 +88,7 @@ export default function EventDetail() {
       const userIds = [...new Set(cins.map(c => c.user_id))]
       const nameMap = {}
       for (const uid of userIds) {
-        const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
+        const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
         if (profErr) console.error('Failed to load profile for', uid, profErr)
         nameMap[uid] = { name: p?.display_name || 'Neighbor', avatar_url: p?.avatar_url || null }
       }
@@ -105,7 +105,7 @@ export default function EventDetail() {
       const rNameMap = {}
       for (const uid of rUserIds) {
         if (!uid) continue
-        const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
+        const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name, avatar_url').eq('user_id', uid).maybeSingle()
         if (profErr) console.error('Failed to load profile for', uid, profErr)
         rNameMap[uid] = p?.display_name || 'Neighbor'
       }

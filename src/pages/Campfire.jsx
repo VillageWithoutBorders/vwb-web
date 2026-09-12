@@ -25,6 +25,7 @@ export default function Campfire() {
   const [campfireMuted, setCampfireMuted] = useState(localStorage.getItem('vwb_campfire_muted') === 'true')
   const [openMsgMenu, setOpenMsgMenu] = useState(null)
   const [showPinned, setShowPinned] = useState(true)
+  const [memberSearch, setMemberSearch] = useState('')
   const { menuRef: msgMenuRef, menuStyle: msgMenuStyle, openMenu: positionMsgMenu } = useMenuPosition('right')
 
   const hasAccess = profile?.is_hope_ambassador || isAdmin
@@ -110,7 +111,7 @@ export default function Campfire() {
       if (unknownIds.length > 0) {
         const newNames = { ...names }
         await Promise.all(unknownIds.map(async (uid) => {
-          const { data: p, error: profErr } = await supabase.from('helper_profiles').select('display_name, role, is_hope_ambassador, avatar_url').eq('user_id', uid).maybeSingle()
+          const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name, role, is_hope_ambassador, avatar_url').eq('user_id', uid).maybeSingle()
           if (profErr) console.error('Failed to load profile for', uid, profErr)
           newNames[uid] = { name: p?.display_name || 'Neighbor', role: p?.role, ambassador: p?.is_hope_ambassador, avatar: p?.avatar_url || null }
         }))
@@ -162,7 +163,7 @@ export default function Campfire() {
   return (
     <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 70px)', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid #333', background: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => navigate('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span>&#128293;</span> The Campfire
@@ -317,8 +318,19 @@ export default function Campfire() {
         </button>
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Members ({Object.keys(names).length})</div>
+        {Object.keys(names).length > 8 && (
+          <input
+            type="text"
+            value={memberSearch}
+            onChange={(e) => setMemberSearch(e.target.value)}
+            placeholder="Search members..."
+            aria-label="Search members"
+            style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#eee', fontSize: '0.85rem' }}
+          />
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
           {Object.entries(names)
+            .filter(([, info]) => (info.name || 'Neighbor').toLowerCase().includes(memberSearch.trim().toLowerCase()))
             .sort(([, a], [, b]) => (a.name || '').localeCompare(b.name || ''))
             .map(([uid, info]) => (
             <div key={uid} onClick={() => { setShowSettings(false); navigate('/u/' + uid) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: '#222', cursor: 'pointer' }}>
@@ -337,6 +349,9 @@ export default function Campfire() {
               </div>
             </div>
           ))}
+          {memberSearch.trim() && Object.entries(names).filter(([, info]) => (info.name || 'Neighbor').toLowerCase().includes(memberSearch.trim().toLowerCase())).length === 0 && (
+            <p style={{ color: '#666', fontSize: '0.8rem', textAlign: 'center', padding: '0.75rem 0' }}>No members match "{memberSearch.trim()}".</p>
+          )}
         </div>
       </div>
     </div>

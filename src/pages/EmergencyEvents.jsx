@@ -67,7 +67,18 @@ export default function EmergencyEvents() {
     if (myUpvotes[eventId]) return
     const { error: upErr } = await supabase.from('event_upvotes').insert({ event_id: eventId, user_id: user.id })
     if (upErr) { console.error('Failed to record upvote:', upErr); alert('Could not record your vote. Try again.'); return }
-    const newCount = (events.find(ev => ev.id === eventId)?.upvote_count || 0) + 1
+    // Count votes straight from event_upvotes (the source of truth) instead of
+    // incrementing the number in local component state. Reading a cached
+    // count and writing count+1 is a classic read-then-write race: two people
+    // upvoting close together can both read the same stale number and one
+    // vote silently gets lost. Re-counting here narrows that window from
+    // "however stale the local state is" down to the moment between this
+    // count and the update below.
+    const { count: newCount, error: countErr } = await supabase
+      .from('event_upvotes')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+    if (countErr) { console.error('Failed to read current upvote count:', countErr); await loadEvents(); return }
     const { error: updErr } = await supabase.from('emergency_events').update({
       upvote_count: newCount,
       verified: newCount >= VERIFY_THRESHOLD ? true : undefined
@@ -112,7 +123,7 @@ export default function EmergencyEvents() {
           <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#ffcc00' }}>Emergency Response</h1>
           <p style={{ color: '#888', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>Events in your area</p>
         </div>
-        <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => navigate('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
       </div>
 
       <button onClick={() => navigate('/emergency/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '1rem', borderRadius: '10px', border: '2px solid #ffaa44', background: 'linear-gradient(135deg, #2e2a1a, #3a3020)', cursor: 'pointer', textAlign: 'left', marginBottom: '1.25rem' }}>

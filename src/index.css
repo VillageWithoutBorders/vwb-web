@@ -1410,51 +1410,6 @@ a:focus:not(:focus-visible) {
 .amb-signup-form .amb-signup-desc {
   text-align: left;
 }
-/* ---------- Ambassador Signup Card ---------- */
-.amb-signup-card {
-  margin-top: 1.25rem;
-  background: var(--card-bg, #2a2a2a);
-  border: 1px solid var(--green);
-  border-radius: var(--radius);
-  padding: 1.5rem 1.25rem;
-  text-align: center;
-}
-
-.amb-signup-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.amb-signup-title {
-  font-size: 1.125rem;
-  font-weight: 800;
-  margin-bottom: 0.375rem;
-  color: var(--text);
-}
-
-.amb-signup-desc {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 1rem;
-}
-
-/* ---------- Ambassador Signup Form ---------- */
-.amb-signup-form {
-  margin-top: 1.25rem;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-}
-
-.amb-signup-form .amb-signup-title {
-  text-align: left;
-}
-
-.amb-signup-form .amb-signup-desc {
-  text-align: left;
-}
 
 /* ---------- Conversation / Messaging ---------- */
 .conversation-page {
@@ -2068,28 +2023,6 @@ a:focus:not(:focus-visible) {
   color: #1a1a1a;
 }
 
-/* ---- Info Tooltip Button ---- */
-.info-tooltip-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 50%;
-  border: 1.5px solid #1D9E75;
-  background: transparent;
-  color: #1D9E75;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-  margin-left: 0.375rem;
-  flex-shrink: 0;
-}
-.info-tooltip-btn:hover {
-  background: #1D9E75;
-  color: #1a1a1a;
-}
-
 /* ---- Radius Labels Fix ---- */
 .radius-labels {
   display: flex;
@@ -2244,5 +2177,19 @@ a:focus:not(:focus-visible) {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
+  }
+
+  /* Text-heavy list pages (feed cards, the message inbox, community
+     resources) get a narrower, centered reading column instead of
+     stretching to the full 900px shared width — long lines of body text
+     are harder to read the wider they get. Dashboard is left alone since
+     its quick-actions grid above is meant to use the full width. */
+  .feed-page,
+  .messages-page,
+  .community-page {
+    max-width: 700px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
   }
 }

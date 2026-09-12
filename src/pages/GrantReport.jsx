@@ -284,7 +284,7 @@ export default function GrantReport() {
       `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => navigate('/admin')} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => navigate('/admin')} aria-label="Back to Admin Panel" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <h1 style={{ margin: 0, fontSize: '1.3rem' }}>Grant Report</h1>
       </div>
 

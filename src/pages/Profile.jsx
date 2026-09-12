@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import AvatarBuilder, { AvatarDisplay } from '../components/AvatarBuilder'
+import AvatarBuilder, { AvatarPreview } from '../components/AvatarBuilder'
 import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
 import { resetAccountToBase } from '../utils/resetAccount'
 
@@ -286,7 +286,7 @@ function captureCoverageLocation() {
       <div className="profile-page">
         <div className="profile-header-section">
           <div onClick={() => setShowAvatarBuilder(true)} style={{ cursor: 'pointer', position: 'relative' }}>
-            <AvatarDisplay url={profile?.avatar_url} size={80} />
+            <AvatarPreview url={profile?.avatar_url} size={80} />
             <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#4ecca3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#1a1a1a', fontWeight: 700, border: '2px solid #1a1a1a' }}>
               {'✎'}
             </div>
@@ -512,7 +512,7 @@ function captureCoverageLocation() {
     <div className="profile-page">
       <div className="profile-header-section">
         <div onClick={() => setShowAvatarBuilder(true)} style={{ cursor: 'pointer', position: 'relative' }}>
-          <AvatarDisplay url={profile?.avatar_url} size={80} />
+          <AvatarPreview url={profile?.avatar_url} size={80} />
           <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#4ecca3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#1a1a1a', fontWeight: 700, border: '2px solid #1a1a1a' }}>
             {'✎'}
           </div>

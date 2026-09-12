@@ -16,7 +16,7 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
 
   async function loadInfo() {
     if (info || !userId) return
-    const { data: p, error: pErr } = await supabase.from('helper_profiles').select('display_name, is_hope_ambassador, role, created_at').eq('user_id', userId).maybeSingle()
+    const { data: p, error: pErr } = await supabase.from('helper_profiles_public').select('display_name, is_hope_ambassador, role, created_at').eq('user_id', userId).maybeSingle()
     reportError('loadInfo:profile', pErr)
     const { data: rep, error: repErr } = await supabase.from('user_reputation').select('net_score, upvotes, downvotes').eq('user_id', userId).maybeSingle()
     reportError('loadInfo:reputation', repErr)
