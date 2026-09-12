@@ -318,7 +318,9 @@ export default function Campfire() {
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Members ({Object.keys(names).length})</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-          {Object.entries(names).map(([uid, info]) => (
+          {Object.entries(names)
+            .sort(([, a], [, b]) => (a.name || '').localeCompare(b.name || ''))
+            .map(([uid, info]) => (
             <div key={uid} onClick={() => { setShowSettings(false); navigate('/u/' + uid) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: '#222', cursor: 'pointer' }}>
               <AvatarDisplay url={info.avatar} userId={uid} size={32} />
               <div style={{ flex: 1, minWidth: 0 }}>
