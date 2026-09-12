@@ -7,6 +7,12 @@ import { createNotification } from '../utils/notificationHelpers'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import AvatarDisplay from '../components/AvatarDisplay'
 
+// Consecutive messages from the same person within this window are grouped
+// visually (avatar shown once, tighter spacing) instead of repeating the
+// avatar for every line - same convention as the Campfire group chat, so a
+// quick back-and-forth doesn't take up more room than it needs to.
+const GROUP_WINDOW_MS = 5 * 60 * 1000
+
 export default function Conversation() {
   const { id } = useParams()
   const { user } = useAuth()
@@ -168,16 +174,22 @@ export default function Conversation() {
         {messages.length === 0 && (
           <p className="convo-empty">No messages yet. Say hello!</p>
         )}
-        {messages.map((msg) => {
+        {messages.map((msg, idx) => {
   const isMe = msg.sender_id === user.id
+  const prevMsg = messages[idx - 1]
+  const isGroupStart = !prevMsg || prevMsg.sender_id !== msg.sender_id || (new Date(msg.created_at) - new Date(prevMsg.created_at)) > GROUP_WINDOW_MS
   return (
-    <div key={msg.id} style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-      {!isMe && <AvatarDisplay url={otherAvatar} userId={otherUserId} size={24} />}
+    <div key={msg.id} style={{ display: 'flex', alignItems: 'flex-end', gap: '0.4rem', justifyContent: isMe ? 'flex-end' : 'flex-start', marginTop: isGroupStart ? '0.5rem' : '0.15rem' }}>
+      {!isMe && (isGroupStart
+        ? <AvatarDisplay url={otherAvatar} userId={otherUserId} size={24} />
+        : <div style={{ width: '24px', flexShrink: 0 }} />)}
       <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs')} onClick={() => setSelectedMessage(msg)}>
         <p className="chat-body">{msg.body}</p>
         <span className="chat-time">{formatTime(msg.created_at)}</span>
       </div>
-      {isMe && <AvatarDisplay url={myAvatar} userId={user.id} size={24} />}
+      {isMe && (isGroupStart
+        ? <AvatarDisplay url={myAvatar} userId={user.id} size={24} />
+        : <div style={{ width: '24px', flexShrink: 0 }} />)}
     </div>
   )
 })}
