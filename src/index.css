@@ -49,12 +49,18 @@ body {
   top: 0;
   z-index: 100;
   height: var(--header-height);
+  background: var(--green-dark);
+  color: var(--white);
+}
+
+.app-header-inner {
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem;
-  background: var(--green-dark);
-  color: var(--white);
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .app-title {
@@ -80,12 +86,18 @@ body {
   right: 0;
   z-index: 100;
   height: var(--tab-height);
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
   background: var(--white);
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.bottom-tabs-inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .tab-item {
@@ -2207,4 +2219,28 @@ a:focus:not(:focus-visible) {
   font-size: 0.875rem;
   color: var(--text-secondary);
   font-weight: 400;
+}
+
+/* ---------- Desktop layout ----------
+   Below this width the app looks and behaves like it always has (full-bleed
+   mobile header/tab bar, single column). Above it, page content, the header
+   bar, and the bottom tab bar all share one wider centered column instead of
+   the header/tabs stretching edge-to-edge while the content stays pinned to
+   a narrow 600px strip in the middle of the screen. */
+@media (min-width: 860px) {
+  .app-main {
+    max-width: 900px;
+    padding: 2rem 2.5rem calc(var(--tab-height) + 2rem);
+  }
+
+  .app-header-inner,
+  .bottom-tabs-inner {
+    max-width: 900px;
+  }
+
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
 }
