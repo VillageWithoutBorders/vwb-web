@@ -10,18 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dicebear/collection": "^9.4.2",
-    "@dicebear/core": "^9.4.3",
     "@supabase/supabase-js": "^2.112.4",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "json2csv": "^6.0.0-alpha.2",
-    "multer": "^2.3.0",
-    "pdfkit": "^0.20.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-router-dom": "^7.18.2",
-    "sqlite3": "^6.0.1"
+    "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",

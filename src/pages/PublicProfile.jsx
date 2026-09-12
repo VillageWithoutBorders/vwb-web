@@ -32,7 +32,7 @@ export default function PublicProfile() {
     setLoading(true)
 
     const { data: hp, error: hpErr } = await supabase
-      .from('helper_profiles')
+      .from('helper_profiles_public')
       .select('user_id, display_name, is_hope_ambassador, avatar_url, created_at, neighborhood, show_location, role')
       .eq('user_id', userId)
       .maybeSingle()

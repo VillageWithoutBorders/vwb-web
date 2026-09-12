@@ -13,7 +13,7 @@ export default defineConfig({
         name: 'Village Without Borders',
         short_name: 'VWB',
         description: 'Mutual aid resources for Northwest Georgia',
-        theme_color: '#2d6a4f',
+        theme_color: '#1a1a1a',
         background_color: '#ffffff',
         display: 'standalone',
         scope: '/',

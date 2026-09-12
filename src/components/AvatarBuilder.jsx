@@ -249,7 +249,12 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
   )
 }
 
-export function AvatarDisplay({ url, size = 40, style = {} }) {
+// Renamed from AvatarDisplay (Sep 12): this is a plain static image/placeholder
+// renderer with no fetch, no userId, no reputation or vouch data — a totally
+// different component from the interactive components/AvatarDisplay.jsx that
+// shares that name. Same name, different component was a maintainability
+// trap, so this one is now AvatarPreview.
+export function AvatarPreview({ url, size = 40, style = {} }) {
   if (!url) {
     return (
       <div style={{ width: size, height: size, borderRadius: '50%', background: '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: size * 0.5, flexShrink: 0, ...style }}>

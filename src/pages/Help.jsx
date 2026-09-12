@@ -77,6 +77,7 @@ export default function Help() {
               value={feedbackText}
               onChange={e => setFeedbackText(e.target.value)}
               placeholder="What would help your community? What should we build next?"
+              aria-label="Feedback for Village Without Borders"
               rows={3}
               maxLength={2000}
               style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.9rem', resize: 'vertical', marginBottom: '0.5rem', boxSizing: 'border-box' }}
