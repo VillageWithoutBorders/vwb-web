@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
 import { createNotification } from '../utils/notificationHelpers'
+import { useMenuPosition } from '../utils/useMenuPosition'
 
 const STATUS_CONFIG = {
   safe:        { label: 'Safe',         color: '#4ecca3', bg: '#1a3a2a', icon: '✔' },
@@ -44,6 +45,7 @@ export default function EventDetail() {
   const [resNote, setResNote] = useState('')
   const [resFilter, setResFilter] = useState('all')
   const [openSignupMenu, setOpenSignupMenu] = useState(null)
+  const { menuRef: signupMenuRef, menuStyle: signupMenuStyle, openMenu: positionSignupMenu } = useMenuPosition('right')
   const [editingNotes, setEditingNotes] = useState(null)
   const [editNotesVal, setEditNotesVal] = useState('')
 
@@ -357,9 +359,14 @@ export default function EventDetail() {
   function renderSignupMenu(s) {
     return (
       <>
-        <button onClick={(e) => { e.stopPropagation(); setOpenSignupMenu(openSignupMenu === s.id ? null : s.id) }} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '1.25rem', padding: '4px 6px' }}>&#8943;</button>
+        <button onClick={(e) => {
+            e.stopPropagation()
+            const closing = openSignupMenu === s.id
+            setOpenSignupMenu(closing ? null : s.id)
+            if (!closing) positionSignupMenu(e)
+          }} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '1.25rem', padding: '4px 6px' }}>&#8943;</button>
         {openSignupMenu === s.id && (
-          <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', right: '0.5rem', top: '2rem', background: '#2a2a2a', border: '1px solid #444', borderRadius: '10px', zIndex: 10, minWidth: '160px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
+          <div ref={signupMenuRef} onClick={(e) => e.stopPropagation()} style={{ background: '#2a2a2a', border: '1px solid #444', borderRadius: '10px', minWidth: '160px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden', ...signupMenuStyle }}>
             {s.user_id === user.id ? (
               <>
                 <button onClick={() => { setEditingNotes(s.id); setEditNotesVal(s.notes || ''); setOpenSignupMenu(null) }} style={menuBtnStyle}>
