@@ -34,6 +34,9 @@ export default function Login() {
   const [availability, setAvailability] = useState('')
   const [interests, setInterests] = useState('')
   const [radiusMiles, setRadiusMiles] = useState(10)
+  // Opt-in, off by default, mirrors the field on the in-app ambassador
+  // signup in Profile.jsx. See that file for the reasoning.
+  const [campfireNotify, setCampfireNotify] = useState(false)
 
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -107,6 +110,7 @@ export default function Login() {
     if (wantAmbassador) {
       localStorage.setItem('vwb_ambassador_pending', JSON.stringify({
         skills: selectedSkills, availability, interests, radius_miles: radiusMiles,
+        campfire_notifications_enabled: campfireNotify,
       }))
     }
     setMessage('Check your email to confirm your account, then sign in.')
@@ -271,6 +275,13 @@ export default function Login() {
             <label htmlFor="interests">Anything else you'd like us to know?</label>
             <textarea id="interests" value={interests} onChange={(e) => setInterests(e.target.value)} placeholder="Your interests, experience, or why you want to help" rows={3} />
           </div>
+          <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
+            <input type="checkbox" checked={campfireNotify} onChange={(e) => setCampfireNotify(e.target.checked)} />
+            <span>
+              <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Notify me about Campfire messages</strong>
+              The Campfire is the group chat for Ambassadors and admins. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Campfire's settings.
+            </span>
+          </label>
           {error && <p className="form-error" role="alert">{error}</p>}
           <div className="form-row">
             <button type="button" className="btn btn-outline" onClick={() => setStep(1)}>Back</button>

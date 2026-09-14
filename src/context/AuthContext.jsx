@@ -89,6 +89,7 @@ export function AuthProvider({ children }) {
             interests: pendingData.interests,
             radius_miles: pendingData.radius_miles,
             is_available: true,
+            campfire_notifications_enabled: pendingData.campfire_notifications_enabled ?? false,
           })
           .eq('user_id', authUser.id)
           .select()
@@ -118,6 +119,7 @@ export function AuthProvider({ children }) {
       insertData.interests = pendingData.interests
       insertData.radius_miles = pendingData.radius_miles
       insertData.is_available = true
+      insertData.campfire_notifications_enabled = pendingData.campfire_notifications_enabled ?? false
     }
     const { data: newProfile, error } = await supabase
       .from('helper_profiles')

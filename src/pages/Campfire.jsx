@@ -11,7 +11,7 @@ import { useMenuPosition } from '../utils/useMenuPosition'
 const GROUP_WINDOW_MS = 5 * 60 * 1000
 
 export default function Campfire() {
-  const { user, profile, isAdmin } = useAuth()
+  const { user, profile, isAdmin, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const [messages, setMessages] = useState([])
   const [newMsg, setNewMsg] = useState('')
@@ -22,7 +22,7 @@ export default function Campfire() {
   const [myAvatar, setMyAvatar] = useState(null)
   const pollRef = useRef(null)
   const [showSettings, setShowSettings] = useState(false)
-  const [campfireMuted, setCampfireMuted] = useState(localStorage.getItem('vwb_campfire_muted') === 'true')
+  const [muteSaving, setMuteSaving] = useState(false)
   const [openMsgMenu, setOpenMsgMenu] = useState(null)
   const [showPinned, setShowPinned] = useState(true)
   const [memberSearch, setMemberSearch] = useState('')
@@ -48,10 +48,23 @@ export default function Campfire() {
   }, [messages])
 
 
-  function toggleMute() {
-    const next = !campfireMuted
-    setCampfireMuted(next)
-    localStorage.setItem('vwb_campfire_muted', String(next))
+  // Backed by helper_profiles.campfire_notifications_enabled (not
+  // localStorage) so it's the same on/off switch set at Hope Ambassador
+  // signup, holds across devices, and is what the push trigger checks
+  // before pinging you for a new Campfire message.
+  const campfireMuted = !profile?.campfire_notifications_enabled
+
+  async function toggleMute() {
+    setMuteSaving(true)
+    const { error } = await supabase.from('helper_profiles').update({ campfire_notifications_enabled: campfireMuted }).eq('user_id', user.id)
+    if (error) {
+      console.error('Failed to update Campfire notification setting:', error)
+      alert('Could not save that. Try again.')
+      setMuteSaving(false)
+      return
+    }
+    await refreshProfile()
+    setMuteSaving(false)
   }
 
   async function leaveCampfire() {
@@ -125,13 +138,20 @@ export default function Campfire() {
     e.preventDefault()
     if (!newMsg.trim() || sending) return
     setSending(true)
-    const { error } = await supabase.from('campfire_messages').insert({ user_id: user.id, body: newMsg.trim() })
+    const { data, error } = await supabase.from('campfire_messages').insert({ user_id: user.id, body: newMsg.trim() }).select('id').single()
     if (error) {
       console.error('Failed to send Campfire message:', error)
       alert('Could not send your message. Try again.')
       setSending(false)
       return
     }
+    // Fans out a notification to every Ambassador/admin who's opted in
+    // (helper_profiles.campfire_notifications_enabled). Done via this RPC,
+    // not a client-side loop, because RLS locks helper_profiles to your own
+    // row or admin/founder, so a regular member's browser can't see who
+    // else has notifications on. See notify_campfire_recipients migration.
+    const { error: notifyError } = await supabase.rpc('notify_campfire_recipients', { p_message_id: data.id })
+    if (notifyError) console.error('Failed to notify Campfire recipients:', notifyError)
     setNewMsg('')
     await loadMessages()
     setSending(false)
@@ -307,7 +327,7 @@ export default function Campfire() {
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid #2a2a2a' }}>
           <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{campfireMuted ? 'Muted' : 'Notifications on'}</span>
-          <button onClick={toggleMute} style={{ width: '40px', height: '22px', borderRadius: '11px', background: campfireMuted ? '#444' : '#4ecca3', position: 'relative', cursor: 'pointer', border: 'none', padding: 0 }}>
+          <button onClick={toggleMute} disabled={muteSaving} style={{ width: '40px', height: '22px', borderRadius: '11px', background: campfireMuted ? '#444' : '#4ecca3', position: 'relative', cursor: 'pointer', border: 'none', padding: 0, opacity: muteSaving ? 0.6 : 1 }}>
             <span style={{ position: 'absolute', top: '2px', left: campfireMuted ? '2px' : '20px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
           </button>
         </div>

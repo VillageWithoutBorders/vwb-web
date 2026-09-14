@@ -40,6 +40,11 @@ export default function Profile() {
   const [ambSignupSkills, setAmbSignupSkills] = useState([])
   const [ambSignupAvailability, setAmbSignupAvailability] = useState('')
   const [ambSignupInterests, setAmbSignupInterests] = useState('')
+  // Opt-in, off by default: Campfire is a group chat, and defaulting people
+  // into push notifications for it is what led to the overwhelm this field
+  // exists to prevent. They can flip it on any time from Campfire's own
+  // settings panel too.
+  const [ambSignupCampfireNotify, setAmbSignupCampfireNotify] = useState(false)
   const [ambSignupSaving, setAmbSignupSaving] = useState(false)
   const [ambSignupError, setAmbSignupError] = useState('')
 
@@ -142,6 +147,7 @@ export default function Profile() {
     const { error: updateError } = await supabase.from('helper_profiles').update({
       is_hope_ambassador: true, skills: ambSignupSkills,
       availability: ambSignupAvailability.trim(), interests: ambSignupInterests.trim(), is_available: true,
+      campfire_notifications_enabled: ambSignupCampfireNotify,
     }).eq('user_id', user.id)
     reportError('handleAmbassadorSignup', updateError)
     if (updateError) { setAmbSignupError('Something went wrong. Try again.'); setAmbSignupSaving(false); return }
@@ -411,9 +417,16 @@ function captureCoverageLocation() {
               <label htmlFor="ambAbout">Anything else you want neighbors to know?</label>
               <textarea id="ambAbout" value={ambSignupInterests} onChange={(e) => setAmbSignupInterests(e.target.value)} placeholder="Your experience, why you want to help, or anything else" rows={3} />
             </div>
+            <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
+              <input type="checkbox" checked={ambSignupCampfireNotify} onChange={(e) => setAmbSignupCampfireNotify(e.target.checked)} />
+              <span>
+                <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Notify me about Campfire messages</strong>
+                The Campfire is the group chat for Ambassadors and admins. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Campfire's settings.
+              </span>
+            </label>
             {ambSignupError && <p className="form-error" role="alert">{ambSignupError}</p>}
             <div className="form-row" style={{ marginTop: '0.5rem' }}>
-              <button type="button" className="btn btn-outline" onClick={() => { setShowAmbassadorSignup(false); setAmbSignupSkills([]); setAmbSignupAvailability(''); setAmbSignupInterests(''); setAmbSignupError('') }} disabled={ambSignupSaving}>Cancel</button>
+              <button type="button" className="btn btn-outline" onClick={() => { setShowAmbassadorSignup(false); setAmbSignupSkills([]); setAmbSignupAvailability(''); setAmbSignupInterests(''); setAmbSignupCampfireNotify(false); setAmbSignupError('') }} disabled={ambSignupSaving}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={handleAmbassadorSignup} disabled={ambSignupSaving} style={{ flex: 1 }}>
                 {ambSignupSaving ? 'Saving...' : 'Become an Ambassador'}
               </button>
