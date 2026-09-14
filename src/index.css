@@ -2186,7 +2186,13 @@ a:focus:not(:focus-visible) {
      its quick-actions grid above is meant to use the full width. */
   .feed-page,
   .messages-page,
-  .community-page {
+  .community-page,
+  .tasks-page,
+  .ask-page,
+  .help-page,
+  .notifications-page,
+  .conversation-page,
+  .profile-page {
     max-width: 700px;
     width: 100%;
     margin-left: auto;
