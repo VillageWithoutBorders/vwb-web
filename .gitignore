@@ -15,6 +15,7 @@ dist-ssr
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+.vs/
 .idea
 .DS_Store
 *.suo
@@ -38,3 +39,8 @@ results.txt
 src/project/
 src/interactive/
 
+# Supabase CLI local state (project ref, org id -- not for a public repo)
+supabase/.temp/
+
+# Reference-only files kept outside the repo (see ../reference/)
+vwb-complete-schema.sql
