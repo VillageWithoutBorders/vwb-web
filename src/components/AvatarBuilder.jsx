@@ -149,7 +149,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
     <div style={{ padding: '1rem', maxWidth: '500px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
         <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{mode === 'pick' ? 'Pick Your Avatar' : 'Customize Avatar'}</h2>
-        {onCancel && <button onClick={onCancel} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.3rem', cursor: 'pointer' }}>{'✕'}</button>}
+        {onCancel && <button onClick={onCancel} aria-label="Close avatar picker" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.3rem', cursor: 'pointer' }}>{'✕'}</button>}
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -160,15 +160,15 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
       {mode === 'pick' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
-            {seeds.map(seed => (
-              <div key={seed} onClick={() => setSelected(seed)} style={{
+            {seeds.map((seed, seedIndex) => (
+              <button key={seed} type="button" onClick={() => setSelected(seed)} aria-pressed={selected === seed} aria-label={'Avatar option ' + (seedIndex + 1) + (selected === seed ? ', selected' : '')} style={{
                 width: '100%', aspectRatio: '1', borderRadius: '50%', overflow: 'hidden',
                 border: selected === seed ? '3px solid #4ecca3' : '3px solid transparent',
-                background: '#2a2a2a', cursor: 'pointer',
+                background: '#2a2a2a', cursor: 'pointer', padding: 0,
                 boxShadow: selected === seed ? '0 0 12px rgba(78,204,163,0.4)' : 'none',
               }}>
                 <img src={BASE + '?seed=' + encodeURIComponent(seed)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
+              </button>
             ))}
           </div>
           <button onClick={shuffle} style={{ display: 'block', width: '100%', marginBottom: '1rem', padding: '0.6rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.9rem' }}>{'🎲'} Shuffle for more</button>
@@ -257,7 +257,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
 export function AvatarPreview({ url, size = 40, style = {} }) {
   if (!url) {
     return (
-      <div style={{ width: size, height: size, borderRadius: '50%', background: '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', fontSize: size * 0.5, flexShrink: 0, ...style }}>
+      <div style={{ width: size, height: size, borderRadius: '50%', background: '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8a8a', fontSize: size * 0.5, flexShrink: 0, ...style }}>
         {'👤'}
       </div>
     )

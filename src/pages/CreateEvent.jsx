@@ -161,7 +161,7 @@ export default function CreateEvent() {
 
         <label style={labelStyle}>Response radius: {radius} miles</label>
         <input type="range" min={5} max={50} step={5} value={radius} onChange={e => setRadius(parseInt(e.target.value))} style={{ width: '100%', accentColor: '#ff6644', cursor: 'pointer' }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', fontSize: '0.7rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#8a8a8a', fontSize: '0.7rem' }}>
           <span>5 mi</span><span>25 mi</span><span>50 mi</span>
         </div>
 
@@ -182,7 +182,7 @@ export default function CreateEvent() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   <span style={{ background: '#ff6644', color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{dupMatch.event_type}</span>
                   {dupMatch.verified && <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.6rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>&#10003; Verified</span>}
-                  <span style={{ color: '#666', fontSize: '0.75rem', marginLeft: 'auto' }}>{timeAgo(dupMatch.created_at)}</span>
+                  <span style={{ color: '#8a8a8a', fontSize: '0.75rem', marginLeft: 'auto' }}>{timeAgo(dupMatch.created_at)}</span>
                 </div>
                 <p style={{ margin: '0 0 0.35rem', fontWeight: 700, fontSize: '1rem', color: '#fff' }}>{dupMatch.title}</p>
                 {dupMatch.location_name && <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.25rem' }}>{dupMatch.location_name}</p>}

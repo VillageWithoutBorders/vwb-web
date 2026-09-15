@@ -303,7 +303,7 @@ export default function Feed() {
                             const helperStatus = getHelperStatus(req)
 
                             return (
-                                <div key={req.id} className={'feed-card' + (isExpanded ? ' feed-card-expanded' : '')} onClick={() => setExpandedId(isExpanded ? null : req.id)}>
+                                <div key={req.id} className={'feed-card' + (isExpanded ? ' feed-card-expanded' : '')} onClick={() => setExpandedId(isExpanded ? null : req.id)} role="button" tabIndex={0} aria-expanded={isExpanded} aria-label={(isExpanded ? 'Collapse' : 'Expand') + ' request: ' + req.skill_needed} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(isExpanded ? null : req.id) } }}>
                                     <div className="feed-card-top">
                                         <span className={'urgency-badge ' + urg.className}>{urg.label}</span>
                                         {req.requester_id === user.id && (
@@ -329,7 +329,7 @@ export default function Feed() {
                                             </span>
                                         )}
                                         {req.member_since && (
-                                            <span style={{ color: '#666', fontSize: '0.7rem', marginLeft: '0.35rem' }}>
+                                            <span style={{ color: '#8a8a8a', fontSize: '0.7rem', marginLeft: '0.35rem' }}>
                                                 Member since {new Date(req.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                                             </span>
                                         )}
@@ -385,7 +385,7 @@ export default function Feed() {
                         {offers.map(offer => {
                             const isExpanded = expandedId === offer.id
                             return (
-                                <div key={offer.id} className={'feed-card' + (isExpanded ? ' feed-card-expanded' : '')} onClick={() => setExpandedId(isExpanded ? null : offer.id)}>
+                                <div key={offer.id} className={'feed-card' + (isExpanded ? ' feed-card-expanded' : '')} onClick={() => setExpandedId(isExpanded ? null : offer.id)} role="button" tabIndex={0} aria-expanded={isExpanded} aria-label={(isExpanded ? 'Collapse' : 'Expand') + ' offer: ' + offer.category} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(isExpanded ? null : offer.id) } }}>
                                     <div className="feed-card-top">
                                         <span className="offer-badge">{offer.category}</span>
                                         <span className="feed-card-time">{timeAgo(offer.created_at)}</span>
@@ -402,7 +402,7 @@ export default function Feed() {
                                                 </span>
                                             )}
                                             {offer.member_since && (
-                                                <span style={{ color: '#666', fontSize: '0.7rem' }}>
+                                                <span style={{ color: '#8a8a8a', fontSize: '0.7rem' }}>
                                                     Member since {new Date(offer.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                                                 </span>
                                             )}
