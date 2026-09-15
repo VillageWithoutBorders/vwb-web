@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
 import Layout from './pages/Layout'
+import Welcome from './pages/Welcome'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
@@ -38,6 +39,7 @@ function PublicRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/welcome" element={<PublicRoute><Welcome /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>

@@ -327,7 +327,7 @@ export default function GrantReport() {
       </div>
 
       {!report && !loading && (
-        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#666' }}>
+        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#8a8a8a' }}>
           <p style={{ fontSize: '0.95rem' }}>Pick a date range and hit Generate to build your report.</p>
           <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>Data exports as CSV or PDF for grant applications.</p>
         </div>
@@ -353,7 +353,7 @@ export default function GrantReport() {
               Download PDF
             </button>
           </div>
-          <p style={{ fontSize: '0.7rem', color: '#666', margin: '0 0 1rem' }}>
+          <p style={{ fontSize: '0.7rem', color: '#8a8a8a', margin: '0 0 1rem' }}>
             PDF opens your browser's print dialog. Choose "Save as PDF" as the destination.
           </p>
 
@@ -392,7 +392,7 @@ export default function GrantReport() {
               </div>
             ))}
             {Object.keys(report.helpRequests.categoryBreakdown).length === 0 && (
-              <p style={{ color: '#666', fontSize: '0.85rem', margin: '0.25rem 0' }}>No requests in this period.</p>
+              <p style={{ color: '#8a8a8a', fontSize: '0.85rem', margin: '0.25rem 0' }}>No requests in this period.</p>
             )}
             <div style={{ marginTop: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid #333' }}>
               <div style={statRow}><span style={{ color: '#aaa' }}>Unique requesters</span><span style={{ color: '#fff' }}>{report.helpRequests.uniqueRequesters}</span></div>

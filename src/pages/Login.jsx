@@ -1,11 +1,14 @@
 ﻿import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvailabilityPicker from '../components/AvailabilityPicker'
 
 export default function Login() {
-  const [mode, setMode] = useState('signin')
+  const [searchParams] = useSearchParams()
+  // /welcome links here with ?mode=signup so "Get Started" drops people
+  // straight into account creation instead of the sign-in form.
+  const [mode, setMode] = useState(searchParams.get('mode') === 'signup' ? 'signup' : 'signin')
   const [step, setStep] = useState(1)
 
   const [skillOptions, setSkillOptions] = useState([])
