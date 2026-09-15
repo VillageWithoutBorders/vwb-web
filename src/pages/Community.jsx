@@ -241,7 +241,7 @@ export default function Community() {
               <div style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1.25rem', maxWidth: '400px', width: '90%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <h3 style={{ margin: 0, color: '#4ecca3' }}>Submit a Resource</h3>
-                  <button onClick={() => setShowSubmit(false)} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
+                  <button onClick={() => setShowSubmit(false)} aria-label="Close" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
                 </div>
                 {submitted ? (
                   <p style={{ color: '#4ecca3', fontWeight: 600, margin: 0 }}>Thank you! Your resource has been submitted for review.</p>
@@ -335,7 +335,7 @@ export default function Community() {
           })}
 
           {!loadingResources && filteredVerifiedResources.length === 0 && (
-            <p style={{ textAlign: 'center', color: '#666', padding: '1.5rem' }}>No resources yet. Be the first to add one.</p>
+            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem' }}>No resources yet. Be the first to add one.</p>
           )}
         </>
       )}
@@ -360,7 +360,7 @@ export default function Community() {
               <div style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1.25rem', maxWidth: '400px', width: '90%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <h3 style={{ margin: 0, color: '#4ecca3' }}>Submit an Event</h3>
-                  <button onClick={() => setShowEventSubmit(false)} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
+                  <button onClick={() => setShowEventSubmit(false)} aria-label="Close" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
                 </div>
                 {eventSubmitted ? (
                   <p style={{ color: '#4ecca3', fontWeight: 600, margin: 0 }}>Thank you! Your event has been submitted for review.</p>
@@ -410,7 +410,7 @@ export default function Community() {
           {loadingEvents && <p style={{ textAlign: 'center', color: '#888', padding: '1rem' }}>Loading...</p>}
 
           {!loadingEvents && upcomingEvents.length === 0 && (
-            <p style={{ textAlign: 'center', color: '#666', padding: '1.5rem' }}>No upcoming events yet. Be the first to add one.</p>
+            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem' }}>No upcoming events yet. Be the first to add one.</p>
           )}
 
           {!loadingEvents && upcomingEvents.map(ev => (
@@ -433,7 +433,7 @@ export default function Community() {
           <div style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1.25rem', maxWidth: '380px', width: '90%' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <h3 style={{ margin: 0, color: '#4ecca3' }}>{orgProfileOpen.name}</h3>
-              <button onClick={() => setOrgProfileOpen(null)} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
+              <button onClick={() => setOrgProfileOpen(null)} aria-label="Close" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
             </div>
             {orgProfileOpen.description && <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.5rem', lineHeight: 1.4 }}>{orgProfileOpen.description}</p>}
             {orgProfileOpen.contact_email && <p style={{ color: '#888', fontSize: '0.8rem', margin: '0.2rem 0' }}>{orgProfileOpen.contact_email}</p>}

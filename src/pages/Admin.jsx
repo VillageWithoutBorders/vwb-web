@@ -417,7 +417,7 @@ export default function Admin() {
       {!loading && tab === 'approvals' && (
         <>
           {approvals.length === 0 && adminApplications.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>No pending approvals</p>
+            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No pending approvals</p>
           ) : (
             <>
               {isFounder && adminApplications.length > 0 && (
@@ -491,7 +491,7 @@ export default function Admin() {
                           <p style={{ fontSize: '0.85rem', color: '#eee', margin: 0, fontWeight: 600 }}>{n.duplicateEvent?.title || 'Unknown'}</p>
                           {n.duplicateEvent?.location_name && <p style={{ fontSize: '0.7rem', color: '#aaa', margin: '0.2rem 0 0' }}>{n.duplicateEvent.location_name}</p>}
                         </div>
-                        <span style={{ color: '#666', fontSize: '1.2rem' }}>&#8594;</span>
+                        <span style={{ color: '#8a8a8a', fontSize: '1.2rem' }}>&#8594;</span>
                         <div style={{ background: '#1a2a1a', borderRadius: '8px', padding: '0.5rem', border: '1px solid #4ecca3' }}>
                           <p style={{ fontSize: '0.7rem', color: '#4ecca3', margin: '0 0 0.2rem', fontWeight: 600 }}>Keep</p>
                           <p style={{ fontSize: '0.85rem', color: '#eee', margin: 0, fontWeight: 600 }}>{n.targetEvent?.title || 'Unknown'}</p>
@@ -515,7 +515,7 @@ export default function Admin() {
       {!loading && tab === 'emergencies' && (
         <>
           {pendingEvents.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>No pending emergency reports</p>
+            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No pending emergency reports</p>
           ) : pendingEvents.map(ev => (
             <div key={ev.id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -545,7 +545,7 @@ export default function Admin() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <AvatarDisplay url={u.avatar_url} userId={u.user_id} size={32} />
                   <div>
-                    <span onClick={() => navigate('/u/' + u.user_id)} style={{ fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{u.display_name || 'Unnamed'}</span>
+                    <button type="button" onClick={() => navigate('/u/' + u.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{u.display_name || 'Unnamed'}</button>
                     {u.role === 'founder' && <span style={{ marginLeft: '0.4rem', background: '#3a1a4a', color: '#c77dff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Founder</span>}
                     {u.role === 'admin' && <span style={{ marginLeft: '0.4rem', background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
                     {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Ambassador</span>}
@@ -583,7 +583,7 @@ export default function Admin() {
       {!loading && tab === 'reports' && (
         <>
           {alerts.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>No safety reports</p>
+            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No safety reports</p>
           ) : alerts.map(a => (
             <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid #ff4444' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -617,7 +617,7 @@ export default function Admin() {
           )}
 
           {organizations.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>No organizations yet</p>
+            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No organizations yet</p>
           ) : organizations.map(org => (
             <div key={org.id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -635,7 +635,7 @@ export default function Admin() {
               )}
 
               <p style={{ color: '#4ecca3', fontSize: '0.75rem', fontWeight: 600, margin: '0.6rem 0 0.3rem' }}>Members ({org.members.length})</p>
-              {org.members.length === 0 && <p style={{ color: '#666', fontSize: '0.75rem', margin: '0 0 0.4rem' }}>No members yet</p>}
+              {org.members.length === 0 && <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0 0 0.4rem' }}>No members yet</p>}
               {org.members.map(m => (
                 <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.3rem 0' }}>
                   <span style={{ fontSize: '0.8rem', color: '#ccc' }}>{m.display_name}</span>

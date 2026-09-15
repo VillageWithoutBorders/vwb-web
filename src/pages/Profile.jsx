@@ -66,6 +66,10 @@ export default function Profile() {
 
   const [resetting, setResetting] = useState(false)
 
+  const [readReceipts, setReadReceipts] = useState(true)
+  const [safetyCheckins, setSafetyCheckins] = useState(true)
+  const [blockedUsers, setBlockedUsers] = useState([])
+
   useEffect(() => {
     async function loadSkills() {
       const { data, error } = await supabase.from('skill_categories').select('title').order('title')
@@ -96,6 +100,32 @@ export default function Profile() {
     }
     if (isAdmin && user?.id && profile && !profile.admin_region_name) prefillCoverageRegion()
   }, [isAdmin, user?.id, profile?.admin_region_name])
+
+  useEffect(() => {
+    async function loadPrivacyPrefs() {
+      const { data, error } = await supabase.from('helper_profiles').select('read_receipts_enabled, safety_checkins_enabled').eq('user_id', user.id).maybeSingle()
+      reportError('loadPrivacyPrefs', error)
+      if (data) {
+        setReadReceipts(data.read_receipts_enabled !== false)
+        setSafetyCheckins(data.safety_checkins_enabled !== false)
+      }
+    }
+    async function loadBlockedUsers() {
+      const { data, error } = await supabase.from('blocks').select('id, blocked_id').eq('blocker_id', user.id)
+      reportError('loadBlockedUsers', error)
+      if (data && data.length > 0) {
+        const names = await Promise.all(data.map(async (b) => {
+          const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', b.blocked_id).maybeSingle()
+          if (profErr) console.error('[Profile:loadBlockedUsers]', profErr)
+          return { ...b, name: p?.display_name || 'Unknown' }
+        }))
+        setBlockedUsers(names)
+      } else {
+        setBlockedUsers([])
+      }
+    }
+    if (user?.id) { loadPrivacyPrefs(); loadBlockedUsers() }
+  }, [user?.id])
 
   function toggleSkill(skill) {
     setSelectedSkills((prev) => prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill])
@@ -269,6 +299,32 @@ function captureCoverageLocation() {
     setResetting(false)
   }
 
+  async function savePrivacyPref(col, val) {
+    const { error } = await supabase.from('helper_profiles').update({ [col]: val }).eq('user_id', user.id)
+    reportError('savePrivacyPref', error)
+    return !error
+  }
+
+  async function toggleReadReceipts() {
+    const v = !readReceipts
+    setReadReceipts(v)
+    const ok = await savePrivacyPref('read_receipts_enabled', v)
+    if (!ok) { setReadReceipts(!v); alert('Could not save this setting. Try again.') }
+  }
+
+  async function toggleSafetyCheckins() {
+    const v = !safetyCheckins
+    setSafetyCheckins(v)
+    const ok = await savePrivacyPref('safety_checkins_enabled', v)
+    if (!ok) { setSafetyCheckins(!v); alert('Could not save this setting. Try again.') }
+  }
+
+  async function unblockUser(blockId) {
+    const { error } = await supabase.from('blocks').delete().eq('id', blockId)
+    if (error) { console.error('[Profile:unblockUser]', error); alert('Could not unblock this user. Try again.'); return }
+    setBlockedUsers((prev) => prev.filter((b) => b.id !== blockId))
+  }
+
   function handleAvatarSaved(url, config) {
     setShowAvatarBuilder(false)
     setMessage('Avatar saved!')
@@ -291,12 +347,12 @@ function captureCoverageLocation() {
     return (
       <div className="profile-page">
         <div className="profile-header-section">
-          <div onClick={() => setShowAvatarBuilder(true)} style={{ cursor: 'pointer', position: 'relative' }}>
+          <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label="Change avatar" style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
             <AvatarPreview url={profile?.avatar_url} size={80} />
             <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#4ecca3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#1a1a1a', fontWeight: 700, border: '2px solid #1a1a1a' }}>
               {'✎'}
             </div>
-          </div>
+          </button>
           <h1>{name}</h1>
           {profile?.is_hope_ambassador && (
             <span className="ambassador-badge">Hope Ambassador</span>
@@ -454,7 +510,7 @@ function captureCoverageLocation() {
         {isAdmin && !profile?.admin_latitude && (
           <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid #66aaff', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
             <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: '#66aaff' }}>Set up your coverage area</h2>
-            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Safety reports route to the nearest admin. Add your area and share your location so nearby reports can reach you.</p>
+            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Emergency dispute reviews (a false alarm or duplicate flag) route to the nearest admin, so add your area and share your location to catch the ones near you. Reports about a person or message go to every admin right away, wherever they're located.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <input type="text" placeholder="What area do you cover? (e.g. Ringgold, Chickamauga)" value={coverageRegion} onChange={e => setCoverageRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
               <button type="button" className="btn btn-outline" onClick={captureCoverageLocation} disabled={coverageLocating} style={{ borderColor: '#66aaff', color: '#66aaff' }}>
@@ -506,6 +562,66 @@ function captureCoverageLocation() {
           </div>
         )}
 
+        <div className="profile-details" style={{ marginTop: '1rem' }}>
+          <div className="detail-section-header">Privacy &amp; Safety</div>
+          <div className="privacy-toggle-row">
+            <div>
+              <span className="privacy-toggle-label">Read receipts</span>
+              <p className="privacy-toggle-desc">Let others see when you have read their messages</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={readReceipts}
+              aria-label="Read receipts"
+              className={`toggle-switch${readReceipts ? ' on' : ''}`}
+              onClick={toggleReadReceipts}
+            >
+              <span className="toggle-switch-knob" />
+            </button>
+          </div>
+          <div className="privacy-toggle-row">
+            <div>
+              <span className="privacy-toggle-label">Safety check-ins</span>
+              <p className="privacy-toggle-desc">Receive periodic check-in prompts during active help sessions</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={safetyCheckins}
+              aria-label="Safety check-ins"
+              className={`toggle-switch${safetyCheckins ? ' on' : ''}`}
+              onClick={toggleSafetyCheckins}
+            >
+              <span className="toggle-switch-knob" />
+            </button>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">More message settings</span>
+            <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => navigate('/messages')}>
+              Open Messages
+            </button>
+          </div>
+        </div>
+
+        <div className="profile-details" style={{ marginTop: '0.75rem' }}>
+          <div className="detail-section-header">Blocked Neighbors</div>
+          {blockedUsers.length === 0 ? (
+            <div className="detail-row">
+              <span className="detail-value" style={{ textAlign: 'left' }}>You haven't blocked anyone</span>
+            </div>
+          ) : (
+            blockedUsers.map((b) => (
+              <div key={b.id} className="blocked-user-row">
+                <span className="privacy-toggle-label">{b.name}</span>
+                <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => unblockUser(b.id)}>
+                  Unblock
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
         <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'linear-gradient(135deg, #1a4a3a, #2d5a45)', border: '2px solid #4ecca3', borderRadius: '12px', textDecoration: 'none', marginTop: '0.75rem' }}>
           <img src="/images/vwb_header.png" alt="VWB" style={{ height: '40px', borderRadius: '50%' }} />
           <div>
@@ -524,12 +640,12 @@ function captureCoverageLocation() {
   return (
     <div className="profile-page">
       <div className="profile-header-section">
-        <div onClick={() => setShowAvatarBuilder(true)} style={{ cursor: 'pointer', position: 'relative' }}>
+        <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label="Change avatar" style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
           <AvatarPreview url={profile?.avatar_url} size={80} />
           <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#4ecca3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#1a1a1a', fontWeight: 700, border: '2px solid #1a1a1a' }}>
             {'✎'}
           </div>
-        </div>
+        </button>
         <h1>Edit profile</h1>
       </div>
       <div className="edit-form">

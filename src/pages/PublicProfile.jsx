@@ -209,6 +209,7 @@ export default function PublicProfile() {
                 cursor: 'pointer', fontSize: '1rem', lineHeight: 1,
               }}
               title="Upvote"
+              aria-label="Upvote"
             >
               &#9650;
             </button>
@@ -221,6 +222,7 @@ export default function PublicProfile() {
                 cursor: 'pointer', fontSize: '1rem', lineHeight: 1,
               }}
               title="Downvote"
+              aria-label="Downvote"
             >
               &#9660;
             </button>

@@ -122,6 +122,21 @@ export default function Conversation() {
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
   }
 
+  // Fan a safety report out to every admin right away, rather than letting it
+  // sit in the Reports tab until someone happens to open it. Mirrors the
+  // nearest_admin notify loop in EventDetail.jsx, but goes to every admin
+  // since a report about a person isn't tied to a place the way an
+  // emergency event is.
+  async function notifyAdminsOfReport(title, body, link) {
+    const { data: admins, error: adminsErr } = await supabase.from('helper_profiles').select('user_id').in('role', ['admin', 'founder'])
+    if (adminsErr) { console.error('Failed to load admins to notify:', adminsErr); return }
+    if (!admins || admins.length === 0) return
+    for (const admin of admins) {
+      const { error: notifErr } = await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'safety_report', title, body, link, read: false })
+      if (notifErr) console.error('Failed to notify admin', admin.user_id, notifErr)
+    }
+  }
+
   if (loading) {
     return (
       <div className="conversation-page">
@@ -155,7 +170,7 @@ export default function Conversation() {
           <h1>{otherName}</h1>
           {request && <p className="convo-context">{request.skill_needed}</p>}
         </div>
-        <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
+        <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
 
 
 
@@ -183,7 +198,7 @@ export default function Conversation() {
       {!isMe && (isGroupStart
         ? <AvatarDisplay url={otherAvatar} userId={otherUserId} size={24} />
         : <div style={{ width: '24px', flexShrink: 0 }} />)}
-      <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs')} onClick={() => setSelectedMessage(msg)}>
+      <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs')} onClick={() => setSelectedMessage(msg)} role="button" tabIndex={0} aria-label="Message actions" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedMessage(msg) } }}>
         <p className="chat-body">{msg.body}</p>
         <span className="chat-time">{formatTime(msg.created_at)}</span>
       </div>
@@ -228,16 +243,16 @@ export default function Conversation() {
       <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: '#1a1a1a', borderLeft: '1px solid #333', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Chat Settings</h2>
-          <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <button onClick={() => setShowSettings(false)} aria-label="Close chat settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#222', borderRadius: '10px', marginBottom: '1.25rem', cursor: 'pointer' }} onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }}>
+        <button type="button" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#222', borderRadius: '10px', marginBottom: '1.25rem', cursor: 'pointer', border: 'none', width: '100%', textAlign: 'left' }} onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }}>
           <AvatarDisplay url={otherAvatar} userId={otherUserId} size={44} />
           <div>
             <div style={{ fontWeight: 700, color: '#fff' }}>{otherName}</div>
             <div style={{ color: '#4ecca3', fontSize: '0.8rem' }}>View profile</div>
           </div>
-        </div>
+        </button>
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Actions</div>
 
@@ -257,6 +272,7 @@ export default function Conversation() {
           const { error } = await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: otherUserId, alert_type: 'flag', description: 'Reported from conversation' })
           setShowSettings(false)
           if (error) { console.error('Failed to submit report:', error); alert('Could not submit your report. Try again.'); return }
+          await notifyAdminsOfReport('New safety report', 'A report was filed about ' + otherName + ' from a conversation.', '/admin')
           alert('Report submitted. Thank you for keeping the community safe.')
         }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9873;</span> Report User

@@ -163,7 +163,7 @@ export default function EmergencyEvents() {
                 const myRole = mySignups[ev.id]
                 const voted = myUpvotes[ev.id]
                 return (
-                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} style={{ background: '#1e1e1e', border: '1px solid #444', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #ffaa44', opacity: 0.9 }}>
+                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: '#1e1e1e', border: '1px solid #444', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #ffaa44', opacity: 0.9 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <span style={{ background: '#ffaa44', color: '#1a1a1a', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>Unverified</span>
@@ -178,7 +178,7 @@ export default function EmergencyEvents() {
                       <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid #4ecca3' : '1px solid #666', background: voted ? '#1a3a2a' : 'none', color: voted ? '#4ecca3' : '#aaa', cursor: voted ? 'default' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
                         &#9650; {ev.upvote_count || 0}
                       </button>
-                      <span style={{ color: '#666', fontSize: '0.75rem' }}>{(ev.upvote_count || 0) + ' verified'}</span>
+                      <span style={{ color: '#8a8a8a', fontSize: '0.75rem' }}>{(ev.upvote_count || 0) + ' verified'}</span>
                       {canVerify && !voted && (
                         <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Verify</button>
                       )}
@@ -195,7 +195,7 @@ export default function EmergencyEvents() {
               {verified.map(ev => {
                 const myRole = mySignups[ev.id]
                 return (
-                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #ffcc00' }}>
+                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #ffcc00' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <span style={{ background: '#ffcc00', color: '#1a1a1a', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type || 'Emergency'}</span>
@@ -233,7 +233,7 @@ export default function EmergencyEvents() {
             resolvedEvents.map(ev => {
               const myRole = mySignups[ev.id]
               return (
-                <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2d6a4f', opacity: 0.8 }}>
+                <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2d6a4f', opacity: 0.8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
@@ -242,7 +242,7 @@ export default function EmergencyEvents() {
                       {ev.event_type && <span style={{ color: '#888', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>{ev.event_type}</span>}
                       <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.05rem', color: '#ccc' }}>{ev.title}</h3>
                     </div>
-                    <span style={{ color: '#666', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                    <span style={{ color: '#8a8a8a', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
                       {ev.resolved_at ? timeAgo(ev.resolved_at) : timeAgo(ev.created_at)}
                     </span>
                   </div>

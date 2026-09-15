@@ -72,6 +72,18 @@ export default function Campfire() {
     navigate('/')
   }
 
+  // Fan a safety report out to every admin right away, rather than letting it
+  // sit in the Reports tab until someone happens to open it.
+  async function notifyAdminsOfReport(title, body, link) {
+    const { data: admins, error: adminsErr } = await supabase.from('helper_profiles').select('user_id').in('role', ['admin', 'founder'])
+    if (adminsErr) { console.error('Failed to load admins to notify:', adminsErr); return }
+    if (!admins || admins.length === 0) return
+    for (const admin of admins) {
+      const { error: notifErr } = await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'safety_report', title, body, link, read: false })
+      if (notifErr) console.error('Failed to notify admin', admin.user_id, notifErr)
+    }
+  }
+
   async function reportMessage(msg) {
     setOpenMsgMenu(null)
     if (!confirm('Report this message to the admins?')) return
@@ -87,6 +99,7 @@ export default function Campfire() {
       alert('Could not submit your report. Try again.')
       return
     }
+    await notifyAdminsOfReport('New safety report', 'A Campfire message from ' + info.name + ' was reported.', '/admin')
     alert('Report submitted. An admin will review this message.')
   }
 
@@ -190,7 +203,7 @@ export default function Campfire() {
           </h1>
           <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>Ambassadors and admins</p>
         </div>
-        <button onClick={() => setShowSettings(true)} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
+        <button onClick={() => setShowSettings(true)} aria-label="Campfire settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
       </div>
 
       {pinnedMessages.length > 0 && (
@@ -222,7 +235,7 @@ export default function Campfire() {
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
 
         {!loading && messages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#8a8a8a' }}>
             <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128293;</p>
             <p>The fire is lit. Be the first to speak.</p>
           </div>
@@ -242,7 +255,7 @@ export default function Campfire() {
               <div>
               {!isMe && isGroupStart && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.15rem' }}>
-                  <span onClick={() => navigate('/u/' + msg.user_id)} style={{ fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? '#c77dff' : info.role === 'admin' ? '#66aaff' : '#4ecca3', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{info.name}</span>
+                  <button type="button" onClick={() => navigate('/u/' + msg.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? '#c77dff' : info.role === 'admin' ? '#66aaff' : '#4ecca3', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{info.name}</button>
                   {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
                   {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
                   {info.ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
@@ -319,7 +332,7 @@ export default function Campfire() {
       <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: '#1a1a1a', borderLeft: '1px solid #333', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Campfire Settings</h2>
-          <button onClick={() => setShowSettings(false)} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <button onClick={() => setShowSettings(false)} aria-label="Close Campfire settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
         <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>The Campfire is a group chat for Hope Ambassadors and admins. Conversations here are visible to all members with access.</p>
@@ -327,7 +340,7 @@ export default function Campfire() {
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid #2a2a2a' }}>
           <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{campfireMuted ? 'Muted' : 'Notifications on'}</span>
-          <button onClick={toggleMute} disabled={muteSaving} style={{ width: '40px', height: '22px', borderRadius: '11px', background: campfireMuted ? '#444' : '#4ecca3', position: 'relative', cursor: 'pointer', border: 'none', padding: 0, opacity: muteSaving ? 0.6 : 1 }}>
+          <button onClick={toggleMute} disabled={muteSaving} role="switch" aria-checked={!campfireMuted} aria-label="Campfire notifications" style={{ width: '40px', height: '22px', borderRadius: '11px', background: campfireMuted ? '#444' : '#4ecca3', position: 'relative', cursor: 'pointer', border: 'none', padding: 0, opacity: muteSaving ? 0.6 : 1 }}>
             <span style={{ position: 'absolute', top: '2px', left: campfireMuted ? '2px' : '20px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
           </button>
         </div>
@@ -353,7 +366,7 @@ export default function Campfire() {
             .filter(([, info]) => (info.name || 'Neighbor').toLowerCase().includes(memberSearch.trim().toLowerCase()))
             .sort(([, a], [, b]) => (a.name || '').localeCompare(b.name || ''))
             .map(([uid, info]) => (
-            <div key={uid} onClick={() => { setShowSettings(false); navigate('/u/' + uid) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: '#222', cursor: 'pointer' }}>
+            <button type="button" key={uid} onClick={() => { setShowSettings(false); navigate('/u/' + uid) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: '#222', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}>
               <AvatarDisplay url={info.avatar} userId={uid} size={32} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
@@ -367,10 +380,10 @@ export default function Campfire() {
                   <span style={{ color: info.score > 0 ? '#4ecca3' : info.score < 0 ? '#ff6666' : '#888' }}>{info.score > 0 ? '+' : ''}{info.score} rep</span>
                 </div>
               </div>
-            </div>
+            </button>
           ))}
           {memberSearch.trim() && Object.entries(names).filter(([, info]) => (info.name || 'Neighbor').toLowerCase().includes(memberSearch.trim().toLowerCase())).length === 0 && (
-            <p style={{ color: '#666', fontSize: '0.8rem', textAlign: 'center', padding: '0.75rem 0' }}>No members match "{memberSearch.trim()}".</p>
+            <p style={{ color: '#8a8a8a', fontSize: '0.8rem', textAlign: 'center', padding: '0.75rem 0' }}>No members match "{memberSearch.trim()}".</p>
           )}
         </div>
       </div>

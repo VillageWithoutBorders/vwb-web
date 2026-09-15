@@ -533,6 +533,18 @@ export default function Messages() {
     await loadBlocked()
   }
 
+  // Fan a safety report out to every admin right away, rather than letting it
+  // sit in the Reports tab until someone happens to open it.
+  async function notifyAdminsOfReport(title, body, link) {
+    const { data: admins, error: adminsErr } = await supabase.from('helper_profiles').select('user_id').in('role', ['admin', 'founder'])
+    if (adminsErr) { console.error('Failed to load admins to notify:', adminsErr); return }
+    if (!admins || admins.length === 0) return
+    for (const admin of admins) {
+      const { error: notifErr } = await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'safety_report', title, body, link, read: false })
+      if (notifErr) console.error('Failed to notify admin', admin.user_id, notifErr)
+    }
+  }
+
   async function reportConversation(convoId, otherId) {
     const reason = prompt('Why are you reporting this conversation? (optional)')
     const { error } = await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: otherId, alert_type: 'flag', description: reason || 'Reported from messages' })
@@ -542,6 +554,8 @@ export default function Messages() {
       alert('Could not submit your report. Try again.')
       return
     }
+    const reportedConvo = convos.find(c => c.id === convoId)
+    await notifyAdminsOfReport('New safety report', 'A conversation with ' + (reportedConvo?.otherName || 'a neighbor') + ' was reported.', '/admin')
     alert('Report submitted. Thank you for helping keep our community safe.')
   }
 
@@ -609,7 +623,7 @@ export default function Messages() {
       <div style={sidebarStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Settings</h2>
-          <button onClick={() => setShowSidebar(false)} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <button onClick={() => setShowSidebar(false)} aria-label="Close settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
 
         <div style={sectionTitle}>Folders</div>
@@ -638,16 +652,16 @@ export default function Messages() {
         <div style={sectionTitle}>Privacy</div>
         <div style={toggleRow}>
           <span style={{ color: '#ddd', fontSize: '0.9rem' }}>Read receipts</span>
-          <button style={toggleDot(readReceipts)} onClick={toggleReadReceipts}><span style={toggleKnob(readReceipts)} /></button>
+          <button role="switch" aria-checked={readReceipts} aria-label="Read receipts" style={toggleDot(readReceipts)} onClick={toggleReadReceipts}><span style={toggleKnob(readReceipts)} /></button>
         </div>
-        <p style={{ color: '#666', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Let others see when you have read their messages</p>
+        <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Let others see when you have read their messages</p>
 
         <div style={sectionTitle}>Safety</div>
         <div style={toggleRow}>
           <span style={{ color: '#ddd', fontSize: '0.9rem' }}>Safety check-ins</span>
-          <button style={toggleDot(safetyCheckins)} onClick={toggleSafetyCheckins}><span style={toggleKnob(safetyCheckins)} /></button>
+          <button role="switch" aria-checked={safetyCheckins} aria-label="Safety check-ins" style={toggleDot(safetyCheckins)} onClick={toggleSafetyCheckins}><span style={toggleKnob(safetyCheckins)} /></button>
         </div>
-        <p style={{ color: '#666', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Receive periodic check-in prompts during active help sessions</p>
+        <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Receive periodic check-in prompts during active help sessions</p>
 
         <div style={sectionTitle}>Default greeting</div>
         {editingHelpMsg ? (
@@ -661,11 +675,11 @@ export default function Messages() {
             <button onClick={() => setEditingHelpMsg(true)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem' }}>Edit</button>
           </div>
         )}
-        <p style={{ color: '#666', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Auto-sent when you tap "I can help" on a request</p>
+        <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Auto-sent when you tap "I can help" on a request</p>
 
         <div style={sectionTitle}>Blocked Users</div>
         {blockedUsers.length === 0 ? (
-          <p style={{ color: '#666', fontSize: '0.85rem' }}>No blocked users</p>
+          <p style={{ color: '#8a8a8a', fontSize: '0.85rem' }}>No blocked users</p>
         ) : blockedUsers.map(b => (
           <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid #2a2a2a' }}>
             <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{b.name}</span>
@@ -676,7 +690,7 @@ export default function Messages() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
         <h1 style={{ margin: 0 }}>Messages</h1>
-        <button onClick={() => setShowSidebar(true)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '1.4rem', padding: '0.25rem' }} title="Settings">&#9881;</button>
+        <button onClick={() => setShowSidebar(true)} aria-label="Message settings" style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '1.4rem', padding: '0.25rem' }} title="Settings">&#9881;</button>
       </div>
 
       {/* ========== Help Offers for Requesters (Accept/Decline) ========== */}
@@ -802,14 +816,14 @@ export default function Messages() {
         const muted = isMuted(c.id)
         return (
         <div key={c.id} className="message-card" style={{ position: 'relative', cursor: 'grab', opacity: draggingConvo === c.id ? 0.5 : 1, borderLeft: isPinned ? '3px solid #4ecca3' : 'none' }} draggable onDragStart={(e) => { setDraggingConvo(c.id); e.dataTransfer.setData('text/plain', c.id) }} onDragEnd={() => { setDraggingConvo(null); setDropTarget(null) }}>
-          <div onClick={() => { setConvos(prev => prev.map(cv => cv.id === c.id ? { ...cv, hasUnread: false } : cv)); navigate('/conversation/' + c.id) }} style={{ cursor: 'pointer', paddingRight: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div onClick={() => { setConvos(prev => prev.map(cv => cv.id === c.id ? { ...cv, hasUnread: false } : cv)); navigate('/conversation/' + c.id) }} role="button" tabIndex={0} aria-label={'Open conversation with ' + c.otherName} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setConvos(prev => prev.map(cv => cv.id === c.id ? { ...cv, hasUnread: false } : cv)); navigate('/conversation/' + c.id) } }} style={{ cursor: 'pointer', paddingRight: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <AvatarDisplay url={c.otherAvatar} userId={c.otherId} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
             <div className="message-card-header">
               <span className="message-card-name" style={{ fontWeight: c.hasUnread ? 800 : 600 }}>
                 {isPinned && <span style={{ marginRight: '4px' }} title="Pinned">&#128204;</span>}
                 {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title="Muted">&#128263;</span>}
-                <span onClick={(e) => { e.stopPropagation(); navigate('/u/' + c.otherId) }} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.otherName}</span>
+                <button type="button" onClick={(e) => { e.stopPropagation(); navigate('/u/' + c.otherId) }} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.otherName}</button>
                 {c.hasUnread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#4ecca3", marginLeft: "6px", flexShrink: 0 }} />}
               </span>
               <span className="message-card-time" style={{ color: c.hasUnread ? "#4ecca3" : undefined }}>{formatTime(c.lastMessageAt)}</span>
@@ -826,6 +840,7 @@ export default function Messages() {
               setShowMuteMenu(null)
               if (!closing) positionOptionsMenu(e)
             }}
+            aria-label={'Options for conversation with ' + c.otherName}
             style={{ position: 'absolute', bottom: '0.6rem', right: '0.6rem', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '1.25rem', padding: '4px 6px', lineHeight: 1 }}
             title="Options">&#8943;</button>
 

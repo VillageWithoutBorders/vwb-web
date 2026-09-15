@@ -211,10 +211,27 @@ export default function EventDetail() {
     navigate('/conversation/' + convo.id)
   }
 
+  // Fan a safety report out to every admin right away, rather than letting it
+  // sit in the Reports tab until someone happens to open it. Separate from
+  // the nearest_admin loop used below for event-closure disputes: a report
+  // about a person isn't tied to a place the way an emergency event is, so
+  // this goes to every admin rather than just the nearest one.
+  async function notifyAdminsOfReport(title, body, link) {
+    const { data: admins, error: adminsErr } = await supabase.from('helper_profiles').select('user_id').in('role', ['admin', 'founder'])
+    if (adminsErr) { console.error('Failed to load admins to notify:', adminsErr); return }
+    if (!admins || admins.length === 0) return
+    for (const admin of admins) {
+      const { error: notifErr } = await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'safety_report', title, body, link, read: false })
+      if (notifErr) console.error('Failed to notify admin', admin.user_id, notifErr)
+    }
+  }
+
   async function reportUser(userId) {
     const { error } = await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: userId, alert_type: 'flag', description: 'Reported from emergency event' })
     setOpenSignupMenu(null)
     if (error) { console.error('Failed to submit report:', error); alert('Could not submit your report. Try again.'); return }
+    const reportedSignup = signups.find(s => s.user_id === userId)
+    await notifyAdminsOfReport('New safety report', 'A report was filed about ' + (reportedSignup?.display_name || 'a neighbor') + ' from an emergency event.', '/admin')
     alert('Report submitted. Thank you for keeping the community safe.')
   }
 
@@ -364,7 +381,7 @@ export default function EventDetail() {
             const closing = openSignupMenu === s.id
             setOpenSignupMenu(closing ? null : s.id)
             if (!closing) positionSignupMenu(e)
-          }} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '1.25rem', padding: '4px 6px' }}>&#8943;</button>
+          }} aria-label={'Options for ' + (s.display_name || 'this neighbor')} style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '1.25rem', padding: '4px 6px' }}>&#8943;</button>
         {openSignupMenu === s.id && (
           <div ref={signupMenuRef} onClick={(e) => e.stopPropagation()} style={{ background: '#2a2a2a', border: '1px solid #444', borderRadius: '10px', minWidth: '160px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden', ...signupMenuStyle }}>
             {s.user_id === user.id ? (
@@ -428,7 +445,7 @@ export default function EventDetail() {
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => navigate('/emergency')} style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => navigate('/emergency')} aria-label="Back to emergency events" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div style={{ flex: 1 }}>
           <span style={{ background: '#ff6644', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{event.event_type}</span>
           <h1 style={{ margin: '0.25rem 0 0', fontSize: '1.3rem' }}>{event.title}</h1>
@@ -474,7 +491,7 @@ export default function EventDetail() {
                 {myStatusConf.icon} {myStatusConf.label}
               </span>
             ) : (
-              <span style={{ color: '#666', fontSize: '0.8rem' }}>No check-in yet</span>
+              <span style={{ color: '#8a8a8a', fontSize: '0.8rem' }}>No check-in yet</span>
             )}
           </div>
           {showStatusPicker && (
@@ -545,12 +562,12 @@ export default function EventDetail() {
       )}
 
       {tab === 'responders' && (
-        responders.length === 0 ? <p style={{ textAlign: 'center', color: '#666', padding: '1.5rem' }}>No responders yet. Be the first to sign up.</p> :
+        responders.length === 0 ? <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem' }}>No responders yet. Be the first to sign up.</p> :
         responders.map(s => (
           <div key={s.id} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={s.avatar_url} userId={s.user_id} size={28} /><span style={{ fontWeight: 700 }}>{s.role === 'coordinator' && <span style={{ color: '#66aaff', marginRight: '4px' }} title="Coordinator">&#9733;</span>}<span onClick={() => navigate('/u/' + s.user_id)} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{s.display_name}</span></span></div>
-              <span style={{ color: '#666', fontSize: '0.75rem', marginRight: '1.5rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={s.avatar_url} userId={s.user_id} size={28} /><span style={{ fontWeight: 700 }}>{s.role === 'coordinator' && <span style={{ color: '#66aaff', marginRight: '4px' }} title="Coordinator">&#9733;</span>}<button type="button" onClick={() => navigate('/u/' + s.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{s.display_name}</button></span></div>
+              <span style={{ color: '#8a8a8a', fontSize: '0.75rem', marginRight: '1.5rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
             </div>
             {s.skills && s.skills.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.4rem' }}>{s.skills.map(sk => <span key={sk} style={{ background: '#2a2a2a', color: '#4ecca3', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px' }}>{sk}</span>)}</div>}
             {s.availability && <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>Available: {s.availability}</p>}
@@ -561,17 +578,17 @@ export default function EventDetail() {
       )}
 
       {tab === 'affected' && (
-        affected.length === 0 ? <p style={{ textAlign: 'center', color: '#666', padding: '1.5rem' }}>No affected neighbors signed up yet.</p> :
+        affected.length === 0 ? <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem' }}>No affected neighbors signed up yet.</p> :
         affected.map(s => {
           const st = latestStatuses[s.user_id]
           const sc = st ? STATUS_CONFIG[st.status] : null
           return (
             <div key={s.id} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span onClick={() => navigate('/u/' + s.user_id)} style={{ fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{s.display_name}</span>
+                <button type="button" onClick={() => navigate('/u/' + s.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{s.display_name}</button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1.5rem' }}>
                   {sc && <span style={{ background: sc.bg, color: sc.color, fontSize: '0.7rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>{sc.icon} {sc.label}</span>}
-                  <span style={{ color: '#666', fontSize: '0.75rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
+                  <span style={{ color: '#8a8a8a', fontSize: '0.75rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
               {s.notes && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>{s.notes}</p>}
@@ -583,7 +600,7 @@ export default function EventDetail() {
       )}
 
       {tab === 'check-ins' && (
-        checkIns.length === 0 ? <p style={{ textAlign: 'center', color: '#666', padding: '1.5rem' }}>No check-ins yet.</p> :
+        checkIns.length === 0 ? <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem' }}>No check-ins yet.</p> :
         checkIns.map(c => {
           const conf = STATUS_CONFIG[c.status] || STATUS_CONFIG.safe
           return (
@@ -591,8 +608,8 @@ export default function EventDetail() {
               <span style={{ background: conf.bg, color: conf.color, fontSize: '1.1rem', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', flexShrink: 0 }}>{conf.icon}</span>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><AvatarDisplay url={c.avatar_url} userId={c.user_id} size={22} /><span onClick={() => navigate('/u/' + c.user_id)} style={{ fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.display_name}</span></div>
-                  <span style={{ color: '#666', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><AvatarDisplay url={c.avatar_url} userId={c.user_id} size={22} /><button type="button" onClick={() => navigate('/u/' + c.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.display_name}</button></div>
+                  <span style={{ color: '#8a8a8a', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
                 </div>
                 <span style={{ color: conf.color, fontSize: '0.8rem', fontWeight: 600 }}>{conf.label}</span>
                 {c.note && <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{c.note}</p>}
@@ -642,7 +659,7 @@ export default function EventDetail() {
           </div>
 
           {filteredResources.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#8a8a8a' }}>
               <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128230;</p>
               <p>No resources listed yet. Add what you need or can provide.</p>
             </div>
@@ -669,7 +686,7 @@ export default function EventDetail() {
                         <p style={{ margin: '0.2rem 0 0', fontWeight: 600, fontSize: '0.95rem', color: '#fff' }}>{r.item_name} {r.quantity > 1 && <span style={{ color: '#aaa', fontWeight: 400 }}>x{r.quantity}</span>}</p>
                       </div>
                     </div>
-                    <span style={{ color: '#666', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(r.created_at)}</span>
+                    <span style={{ color: '#8a8a8a', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(r.created_at)}</span>
                   </div>
                   {r.note && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.35rem 0 0 1.8rem' }}>{r.note}</p>}
                   <div style={{ margin: '0.35rem 0 0 1.8rem', fontSize: '0.75rem', color: '#888' }}>
@@ -735,7 +752,7 @@ export default function EventDetail() {
               <div style={{ marginBottom: '1rem' }}>
                 <p style={{ color: '#aaa', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Select the original event:</p>
                 {activeEvents.length === 0 ? (
-                  <p style={{ color: '#666', fontSize: '0.8rem' }}>No other active events found.</p>
+                  <p style={{ color: '#8a8a8a', fontSize: '0.8rem' }}>No other active events found.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '200px', overflowY: 'auto' }}>
                     {activeEvents.map(ae => (

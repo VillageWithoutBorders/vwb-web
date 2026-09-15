@@ -126,17 +126,17 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
             {info && (
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                 <div style={{ flex: 1, textAlign: 'center', padding: '0.35rem', background: '#222', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
-                  <button onClick={(e) => castVote(e, 1)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: info.myVote === 1 ? '#4ecca3' : '#666', padding: '2px' }}>&#9650;</button>
+                  <button onClick={(e) => castVote(e, 1)} aria-label="Vouch up" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: info.myVote === 1 ? '#4ecca3' : '#666', padding: '2px' }}>&#9650;</button>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '1rem', color: info.score > 0 ? '#4ecca3' : info.score < 0 ? '#ff6666' : '#888', lineHeight: 1 }}>{info.score > 0 ? '+' : ''}{info.score}</div>
                     <div style={{ fontSize: '0.6rem', color: '#888' }}>Rep</div>
                   </div>
-                  <button onClick={(e) => castVote(e, -1)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: info.myVote === -1 ? '#ff6666' : '#666', padding: '2px' }}>&#9660;</button>
+                  <button onClick={(e) => castVote(e, -1)} aria-label="Vouch down" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: info.myVote === -1 ? '#ff6666' : '#666', padding: '2px' }}>&#9660;</button>
                 </div>
-                <div onClick={toggleVouch} style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: info.hasVouched ? '#1a4a3a' : '#222', borderRadius: '8px', cursor: 'pointer', border: info.hasVouched ? '1px solid #4ecca3' : '1px solid transparent', transition: 'all 0.2s' }}>
+                <button type="button" onClick={toggleVouch} aria-label={info.hasVouched ? 'Remove your vouch' : 'Vouch for this neighbor'} style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: info.hasVouched ? '#1a4a3a' : '#222', borderRadius: '8px', cursor: 'pointer', border: info.hasVouched ? '1px solid #4ecca3' : '1px solid transparent', transition: 'all 0.2s' }}>
                   <div style={{ fontWeight: 700, fontSize: '1rem', color: '#4ecca3' }}>{info.vouches}</div>
                   <div style={{ fontSize: '0.65rem', color: info.hasVouched ? '#4ecca3' : '#888' }}>{info.hasVouched ? 'Vouched' : 'Vouch'}</div>
-                </div>
+                </button>
                 {info.joined && (
                   <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: '#222', borderRadius: '8px' }}>
                     <div style={{ fontWeight: 700, fontSize: '0.75rem', color: '#fff' }}>{new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</div>
