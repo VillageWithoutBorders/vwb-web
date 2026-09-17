@@ -85,7 +85,10 @@ export default function Notifications() {
   return (
     <div className="notifications-page">
       <div className="notifications-header">
-        <h1>Notifications</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+          <h1>Notifications</h1>
+        </div>
         <div className="notifications-actions">
           {unreadCount > 0 && (
             <button className="btn-mark-all-read" onClick={handleMarkAllRead}>

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import VouchButton from '../components/VouchButton'
 
 export default function PublicProfile() {
   const { userId } = useParams()
+  const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [tab, setTab] = useState('requests')
   const [requests, setRequests] = useState([])
@@ -95,13 +96,19 @@ export default function PublicProfile() {
   }
 
   if (!profile) {
-    return <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>Profile not found</div>
+    return (
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
+        <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
+        <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>Profile not found</div>
+      </div>
+    )
   }
 
   const avatarUrl = profile.avatar_url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId}`
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
+      <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', marginBottom: '0.5rem' }}>&#8592;</button>
 
       {/* Profile header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
