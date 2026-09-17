@@ -36,6 +36,14 @@ export default function Campfire() {
   const [villages, setVillages] = useState([])
   const [viewVillageId, setViewVillageId] = useState(null)
   const { menuRef: msgMenuRef, menuStyle: msgMenuStyle, openMenu: positionMsgMenu } = useMenuPosition('right')
+  // Active, verified emergencies surface as a dismissible banner instead of
+  // a chat bubble, so they read as an alert you can act on rather than one
+  // more message in the scrollback. Dismissals are remembered locally so a
+  // banner you've already seen and acted on doesn't keep reappearing here.
+  const [activeEmergencies, setActiveEmergencies] = useState([])
+  const [dismissedEmergencyIds, setDismissedEmergencyIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('vwb_dismissed_emergency_ids') || '[]') } catch { return [] }
+  })
 
   const hasAccess = profile?.is_hope_ambassador || isAdmin
 
@@ -64,6 +72,24 @@ export default function Campfire() {
     pollRef.current = setInterval(loadMessages, 5000)
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [hasAccess, viewVillageId])
+
+  useEffect(() => {
+    function loadActiveEmergencies() {
+      supabase.from('emergency_events').select('id, title, location_name, event_type').eq('status', 'active').eq('verified', true).order('created_at', { ascending: false }).then(({ data, error }) => {
+        if (error) { console.error('Failed to load active emergencies:', error); return }
+        if (data) setActiveEmergencies(data)
+      })
+    }
+    loadActiveEmergencies()
+    const timer = setInterval(loadActiveEmergencies, 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  function dismissEmergency(id) {
+    const next = [...dismissedEmergencyIds, id]
+    setDismissedEmergencyIds(next)
+    try { localStorage.setItem('vwb_dismissed_emergency_ids', JSON.stringify(next)) } catch {}
+  }
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -215,6 +241,10 @@ export default function Campfire() {
   }
 
   const pinnedMessages = messages.filter(m => m.pinned)
+  const visibleEmergencies = activeEmergencies.filter(e => !dismissedEmergencyIds.includes(e.id))
+  // The old chat-log announcement is now redundant with the banner above,
+  // so it's left out of the scrollback instead of showing up twice.
+  const visibleMessages = messages.filter(m => !m.body.startsWith('🚨 Emergency Verified:'))
   const currentVillageName = villages.find(v => v.id === viewVillageId)?.name
 
   return (
@@ -240,6 +270,24 @@ export default function Campfire() {
         </div>
         <button onClick={() => setShowSettings(true)} aria-label="Campfire settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
       </div>
+
+      {visibleEmergencies.length > 0 && (
+        <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid #3a3020', background: '#2e2a1a' }}>
+          {visibleEmergencies.map(ev => (
+            <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', border: '2px solid #ffaa44', borderRadius: '12px', padding: '0.65rem 0.85rem', background: '#241f14' }}>
+              <span style={{ fontSize: '1.5rem', lineHeight: 1, color: '#ffaa44', flexShrink: 0 }}>&#9888;</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, color: '#ffcc00', fontWeight: 700, fontSize: '0.9rem' }}>{ev.title}</p>
+                <p style={{ margin: '0.1rem 0 0', color: '#cc9999', fontSize: '0.75rem' }}>{ev.location_name || 'Location not given'} &middot; Active emergency</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
+                <button onClick={() => navigate('/emergency/' + ev.id)} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: '#ffaa44', color: '#1a1a1a', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}>Organize help</button>
+                <button onClick={() => dismissEmergency(ev.id)} style={{ padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid #665', background: 'none', color: '#aaa', fontSize: '0.7rem', cursor: 'pointer' }}>Dismiss</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {pinnedMessages.length > 0 && (
         <div style={{ borderBottom: '1px solid #3a2a10', background: '#241c10' }}>
@@ -269,18 +317,18 @@ export default function Campfire() {
       <div className="hide-scrollbar" role="log" aria-live="polite" aria-relevant="additions" aria-label="Campfire messages" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
 
-        {!loading && messages.length === 0 && (
+        {!loading && visibleMessages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '2rem', color: '#8a8a8a' }}>
             <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128293;</p>
             <p>The fire is lit. Be the first to speak.</p>
           </div>
         )}
 
-        {messages.map((msg, idx) => {
+        {visibleMessages.map((msg, idx) => {
           const isMe = msg.user_id === user.id
           const info = names[msg.user_id] || { name: 'Neighbor' }
-          const prevMsg = messages[idx - 1]
-          const nextMsg = messages[idx + 1]
+          const prevMsg = visibleMessages[idx - 1]
+          const nextMsg = visibleMessages[idx + 1]
           const isGroupStart = !prevMsg || prevMsg.user_id !== msg.user_id || (new Date(msg.created_at) - new Date(prevMsg.created_at)) > GROUP_WINDOW_MS
           const isGroupEnd = !nextMsg || nextMsg.user_id !== msg.user_id || (new Date(nextMsg.created_at) - new Date(msg.created_at)) > GROUP_WINDOW_MS
           const fullTime = new Date(msg.created_at).toLocaleString()
