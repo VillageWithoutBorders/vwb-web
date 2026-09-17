@@ -30,11 +30,18 @@ export default function LogoMenu() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [sharePanelOpen, setSharePanelOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  // A custom modal instead of window.confirm(): the native dialog doesn't
+  // fire reliably in every environment the app runs in (it's silently
+  // blocked in some in-app preview browsers, and renders inconsistently
+  // once this is installed as a PWA on a phone), so logging out could
+  // silently do nothing depending on where you opened the app from.
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false)
 
   function closeAll() {
     setMenuOpen(false)
     setSharePanelOpen(false)
     setCopied(false)
+    setConfirmLogoutOpen(false)
   }
 
   async function handleNativeShare() {
@@ -58,7 +65,11 @@ export default function LogoMenu() {
   }
 
   function handleLogout() {
-    if (!confirm('Log out of Village Without Borders?')) return
+    setMenuOpen(false)
+    setConfirmLogoutOpen(true)
+  }
+
+  function confirmLogout() {
     closeAll()
     signOut()
   }
@@ -106,6 +117,20 @@ export default function LogoMenu() {
               )}
               <button type="button" className="btn btn-outline btn-full" onClick={handleCopyLink}>{copied ? 'Copied!' : 'Copy link'}</button>
               <button type="button" className="link-button" onClick={closeAll} style={{ marginTop: '0.25rem' }}>Close</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {confirmLogoutOpen && (
+        <>
+          <button type="button" aria-label="Close" onClick={closeAll} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', border: 'none', padding: 0, cursor: 'pointer', zIndex: 210 }} />
+          <div role="dialog" aria-label="Confirm log out" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#242424', border: '1px solid #444', borderRadius: '16px', padding: '1.5rem', zIndex: 211, width: '90%', maxWidth: '320px', textAlign: 'center' }}>
+            <h2 style={{ margin: '0 0 0.5rem', color: '#eee', fontSize: '1.1rem' }}>Log out?</h2>
+            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 1.25rem' }}>You'll need to sign back in to get to your account again.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button type="button" onClick={confirmLogout} style={{ padding: '0.7rem', borderRadius: '10px', border: 'none', background: '#ff8888', color: '#1a1a1a', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}>Log out</button>
+              <button type="button" className="link-button" onClick={closeAll} style={{ marginTop: '0.1rem' }}>Cancel</button>
             </div>
           </div>
         </>
