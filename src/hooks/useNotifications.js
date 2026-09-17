@@ -10,10 +10,16 @@ export function useNotifications(intervalMs = 30000) {
 
   const fetchNotifications = useCallback(async () => {
     if (!user?.id) return
+    // 'message' notifications are excluded here on purpose: the Messages tab
+    // already has its own unread badge for new messages, and a new message
+    // used to bump both badges at once. The row still gets created (it's
+    // what triggers the push notification), it just isn't counted or shown
+    // in this bell feed anymore, so there's one clear signal per event.
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
+      .neq('type', 'message')
       .order('created_at', { ascending: false })
       .limit(50)
     if (error) {

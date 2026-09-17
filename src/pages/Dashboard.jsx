@@ -1,6 +1,5 @@
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useUnreadCount } from '../context/UnreadCountContext'
 import PushBanner from '../components/PushBanner'
 import InstallBanner from '../components/InstallBanner'
 import AmbassadorBanner from '../components/AmbassadorBanner'
@@ -9,7 +8,6 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const location = useLocation()
   const displayName = profile?.display_name || 'Neighbor'
-  const { unreadCount } = useUnreadCount()
   const successMessage = location.state?.message
   return (
     <div className="dashboard">
@@ -34,21 +32,14 @@ export default function Dashboard() {
         <h1>Welcome back, {displayName}</h1>
         <p className="welcome-sub">What do you need today?</p>
       </div>
+      {/* Community, SkillShare, and Messages already live in the bottom tab
+          bar, so they're deliberately left out here rather than repeated.
+          What's left are the things that don't have a tab of their own. */}
       <div className="quick-actions">
-        <button className="action-card" onClick={() => navigate('/community')}>
-          <span className="action-icon" aria-hidden="true">&#127793;</span>
-          <span className="action-label">Community</span>
-          <span className="action-desc">Resource library and events calendar</span>
-        </button>
         <button className="action-card" onClick={() => navigate('/ask')}>
           <span className="action-icon" aria-hidden="true">&#127384;</span>
           <span className="action-label">Ask for Help</span>
           <span className="action-desc">Post a request for your community</span>
-        </button>
-        <button className="action-card" onClick={() => navigate('/skillshare')}>
-          <span className="action-icon" aria-hidden="true">&#128260;</span>
-          <span className="action-label">SkillShare</span>
-          <span className="action-desc">See what neighbors are offering</span>
         </button>
         {(profile?.is_hope_ambassador || isAdmin) && (
           <button className="action-card" onClick={() => navigate('/campfire')}>
@@ -57,11 +48,6 @@ export default function Dashboard() {
             <span className="action-desc">Chat with fellow ambassadors and admins</span>
           </button>
         )}
-        <button className="action-card" onClick={() => navigate('/messages')}>
-          <span className="action-icon" aria-hidden="true">&#128172;</span>
-          <span className="action-label">Messages{unreadCount > 0 && <span style={{ background: "#ff4444", color: "#fff", fontSize: "0.7rem", fontWeight: 700, borderRadius: "9px", padding: "1px 6px", marginLeft: "6px" }}>{unreadCount}</span>}</span>
-          <span className="action-desc">Connect with your neighbors</span>
-        </button>
       </div>
       <button onClick={() => navigate('/emergency')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "1.25rem", padding: "1rem 1.25rem", borderRadius: "12px", border: "2px solid #ffaa44", background: "linear-gradient(135deg, #2e2a1a, #3a3020)", cursor: "pointer", textAlign: "left" }}>
         <span style={{ fontSize: "2rem", lineHeight: 1, color: "#ffaa44" }}>&#9888;</span>
