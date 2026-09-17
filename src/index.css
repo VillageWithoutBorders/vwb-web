@@ -2223,6 +2223,21 @@ a:focus:not(:focus-visible) {
   font-weight: 400;
 }
 
+/* ---------- Campfire message meta (timestamp / options) ----------
+   Hidden by default so a run of short messages doesn't carry a permanent
+   row of chrome under every bubble. Revealed by hovering the bubble on
+   desktop, or by tapping it on touch devices (JS toggles
+   campfire-msg-meta-visible via React state — see Campfire.jsx). */
+.campfire-msg-meta {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.campfire-bubble:hover .campfire-msg-meta,
+.campfire-msg-meta-visible {
+  opacity: 0.6;
+}
+
 /* ---------- Desktop layout ----------
    Below this width the app looks and behaves like it always has (full-bleed
    mobile header/tab bar, single column). Above it, page content, the header

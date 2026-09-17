@@ -26,21 +26,44 @@ export default function Campfire() {
   const [openMsgMenu, setOpenMsgMenu] = useState(null)
   const [showPinned, setShowPinned] = useState(true)
   const [memberSearch, setMemberSearch] = useState('')
+  // Timestamp/menu row is hidden by default and only shown for the bubble
+  // that's hovered (desktop) or tapped (mobile, via this state) — cuts the
+  // amount of always-on chrome under every single message.
+  const [revealedMeta, setRevealedMeta] = useState(null)
+  // Every village has its own Campfire room. Ambassadors only ever see
+  // their own village's room; admins/founders get a switcher so they can
+  // check in on a village that's just getting started elsewhere.
+  const [villages, setVillages] = useState([])
+  const [viewVillageId, setViewVillageId] = useState(null)
   const { menuRef: msgMenuRef, menuStyle: msgMenuStyle, openMenu: positionMsgMenu } = useMenuPosition('right')
 
   const hasAccess = profile?.is_hope_ambassador || isAdmin
 
   useEffect(() => {
-      supabase.from('helper_profiles').select('avatar_url').eq('user_id', user.id).maybeSingle().then(({ data, error }) => {
-        if (error) { console.error('Failed to load your avatar:', error); return }
-        if (data) setMyAvatar(data.avatar_url || null)
-      })
-    if (hasAccess) {
-      loadMessages()
-      pollRef.current = setInterval(loadMessages, 5000)
-    }
+    supabase.from('helper_profiles').select('avatar_url').eq('user_id', user.id).maybeSingle().then(({ data, error }) => {
+      if (error) { console.error('Failed to load your avatar:', error); return }
+      if (data) setMyAvatar(data.avatar_url || null)
+    })
+    // Small table, cheap to fetch for everyone: admins get the switcher,
+    // ambassadors just get their own village's name in the header.
+    supabase.from('villages').select('*').eq('active', true).order('name').then(({ data, error }) => {
+      if (error) { console.error('Failed to load villages:', error); return }
+      if (data) setVillages(data)
+    })
+  }, [])
+
+  // Default to the viewer's own village as soon as the profile's loaded;
+  // admins can then switch away from it with the picker in the header.
+  useEffect(() => {
+    if (profile?.village_id && viewVillageId === null) setViewVillageId(profile.village_id)
+  }, [profile])
+
+  useEffect(() => {
+    if (!hasAccess || !viewVillageId) return
+    loadMessages()
+    pollRef.current = setInterval(loadMessages, 5000)
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
-  }, [hasAccess])
+  }, [hasAccess, viewVillageId])
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -124,7 +147,7 @@ export default function Campfire() {
   }
 
   async function loadMessages() {
-    const { data, error } = await supabase.from('campfire_messages').select('*').order('created_at', { ascending: true }).limit(200)
+    const { data, error } = await supabase.from('campfire_messages').select('*').eq('village_id', viewVillageId).order('created_at', { ascending: true }).limit(200)
     if (error) console.error('Failed to load Campfire messages:', error)
     if (data) {
       setMessages(data)
@@ -151,7 +174,7 @@ export default function Campfire() {
     e.preventDefault()
     if (!newMsg.trim() || sending) return
     setSending(true)
-    const { data, error } = await supabase.from('campfire_messages').insert({ user_id: user.id, body: newMsg.trim() }).select('id').single()
+    const { data, error } = await supabase.from('campfire_messages').insert({ user_id: user.id, body: newMsg.trim(), village_id: viewVillageId }).select('id').single()
     if (error) {
       console.error('Failed to send Campfire message:', error)
       alert('Could not send your message. Try again.')
@@ -192,6 +215,7 @@ export default function Campfire() {
   }
 
   const pinnedMessages = messages.filter(m => m.pinned)
+  const currentVillageName = villages.find(v => v.id === viewVillageId)?.name
 
   return (
     <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 70px)', maxWidth: '600px', margin: '0 auto' }}>
@@ -201,7 +225,18 @@ export default function Campfire() {
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span>&#128293;</span> The Campfire
           </h1>
-          <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>Ambassadors and admins</p>
+          {isAdmin && villages.length > 1 ? (
+            <select
+              value={viewVillageId || ''}
+              onChange={(e) => setViewVillageId(e.target.value)}
+              aria-label="Village"
+              style={{ marginTop: '2px', fontSize: '0.75rem', background: '#222', color: '#4ecca3', border: '1px solid #333', borderRadius: '6px', padding: '1px 4px' }}
+            >
+              {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+            </select>
+          ) : (
+            <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{currentVillageName ? currentVillageName + ' · ' : ''}Ambassadors and admins</p>
+          )}
         </div>
         <button onClick={() => setShowSettings(true)} aria-label="Campfire settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
       </div>
@@ -245,8 +280,17 @@ export default function Campfire() {
           const isMe = msg.user_id === user.id
           const info = names[msg.user_id] || { name: 'Neighbor' }
           const prevMsg = messages[idx - 1]
+          const nextMsg = messages[idx + 1]
           const isGroupStart = !prevMsg || prevMsg.user_id !== msg.user_id || (new Date(msg.created_at) - new Date(prevMsg.created_at)) > GROUP_WINDOW_MS
+          const isGroupEnd = !nextMsg || nextMsg.user_id !== msg.user_id || (new Date(nextMsg.created_at) - new Date(msg.created_at)) > GROUP_WINDOW_MS
           const fullTime = new Date(msg.created_at).toLocaleString()
+          const metaVisible = revealedMeta === msg.id || openMsgMenu === msg.id
+          // Full rounding on the outer corners; flatten the corner(s) that
+          // touch a neighboring bubble from the same person so a run of
+          // messages reads as one connected shape, not a repeated stack.
+          const near = isGroupStart ? '1rem' : '0.25rem'
+          const far = isGroupEnd ? '0.25rem' : '1rem'
+          const bubbleRadius = isMe ? `1rem ${near} ${far} 1rem` : `${near} 1rem 1rem ${far}`
           return (
             <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%', display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginTop: isGroupStart ? '0.75rem' : '0.15rem' }}>
               {!isMe && (isGroupStart
@@ -261,13 +305,22 @@ export default function Campfire() {
                   {info.ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
                 </div>
               )}
-              <div style={{ position: 'relative', padding: '0.5rem 0.75rem', borderRadius: isMe ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isMe ? '#4ecca3' : '#2a2a2a', color: isMe ? '#1a1a1a' : '#eee', border: isMe ? 'none' : '1px solid #444' }}>
+              <div
+                className="campfire-bubble"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setRevealedMeta(prev => prev === msg.id ? null : msg.id)
+                  if (openMsgMenu && openMsgMenu !== msg.id) setOpenMsgMenu(null)
+                }}
+                style={{ position: 'relative', padding: '0.5rem 0.75rem', borderRadius: bubbleRadius, background: isMe ? '#4ecca3' : '#2a2a2a', color: isMe ? '#1a1a1a' : '#eee', border: isMe ? 'none' : '1px solid #444' }}
+              >
                 <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.4 }}>{msg.body}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
                   {msg.pinned && <span title="Pinned">&#128204;</span>}
-                  <span style={{ fontSize: '0.65rem', opacity: 0.6 }} title={fullTime} aria-label={fullTime}>{formatTime(msg.created_at)}</span>
+                  <span className={'campfire-msg-meta' + (metaVisible ? ' campfire-msg-meta-visible' : '')} style={{ fontSize: '0.65rem' }} title={fullTime} aria-label={fullTime}>{formatTime(msg.created_at)}</span>
                   {(isAdmin || !isMe) && (
                     <button
+                      className={'campfire-msg-meta' + (metaVisible ? ' campfire-msg-meta-visible' : '')}
                       onClick={(e) => {
                         e.stopPropagation()
                         const closing = openMsgMenu === msg.id
@@ -275,7 +328,7 @@ export default function Campfire() {
                         if (!closing) positionMsgMenu(e, isMe ? 'right' : 'left')
                       }}
                       aria-label="Message options"
-                      style={{ background: 'none', border: 'none', color: 'inherit', opacity: 0.6, cursor: 'pointer', fontSize: '0.85rem', padding: 0, marginLeft: 'auto', lineHeight: 1 }}
+                      style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.85rem', padding: 0, marginLeft: 'auto', lineHeight: 1 }}
                     >&#8943;</button>
                   )}
                 </div>
