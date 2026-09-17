@@ -5,7 +5,7 @@ import PushBanner from '../components/PushBanner'
 import InstallBanner from '../components/InstallBanner'
 import AmbassadorBanner from '../components/AmbassadorBanner'
 export default function Dashboard() {
-  const { profile, isAdmin, signOut } = useAuth()
+  const { profile, isAdmin } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const displayName = profile?.display_name || 'Neighbor'
@@ -70,7 +70,6 @@ export default function Dashboard() {
           <span style={{ color: "#cc9999", fontSize: "0.8rem" }}>View active emergencies or report a new one</span>
         </div>
       </button>
-      <button onClick={signOut} style={{ width: '100%', marginTop: '1.5rem', padding: '0.75rem', background: 'none', border: '1px solid #555', borderRadius: '10px', color: '#aaa', fontSize: '0.9rem', cursor: 'pointer' }}>Log out</button>
     </div>
   )
 }
