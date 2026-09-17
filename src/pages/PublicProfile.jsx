@@ -1,20 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import VouchButton from '../components/VouchButton'
 
 export default function PublicProfile() {
   const { userId } = useParams()
-  const { user } = useAuth()
   const [profile, setProfile] = useState(null)
-  const [reputation, setReputation] = useState(null)
-  const [myVote, setMyVote] = useState(null)
   const [tab, setTab] = useState('requests')
   const [requests, setRequests] = useState([])
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
-  const [voting, setVoting] = useState(false)
   const [completedCount, setCompletedCount] = useState(0)
 
   useEffect(() => {
@@ -39,26 +34,6 @@ export default function PublicProfile() {
     if (hpErr) console.error('Failed to load profile:', hpErr)
 
     setProfile(hp)
-
-    const { data: rep, error: repErr } = await supabase
-      .from('user_reputation')
-      .select('upvotes, downvotes, net_score')
-      .eq('user_id', userId)
-      .maybeSingle()
-    if (repErr) console.error('Failed to load reputation:', repErr)
-
-    setReputation(rep)
-
-    if (user?.id && user.id !== userId) {
-      const { data: vote, error: voteErr } = await supabase
-        .from('user_votes')
-        .select('vote')
-        .eq('voter_id', user.id)
-        .eq('voted_for_id', userId)
-        .maybeSingle()
-      if (voteErr) console.error('Failed to load your vote:', voteErr)
-      setMyVote(vote?.vote || null)
-    }
 
     setLoading(false)
     const { count: doneCount, error: countErr } = await supabase.from("help_requests").select("id", { count: "exact", head: true }).eq("requester_id", userId).eq("status", "completed")
@@ -111,38 +86,6 @@ export default function PublicProfile() {
     )
   }
 
-  async function castVote(voteValue) {
-    if (!user?.id || user.id === userId || voting) return
-    setVoting(true)
-
-    let voteErr = null
-    if (myVote === voteValue) {
-      const { error } = await supabase.from('user_votes').delete().eq('voter_id', user.id).eq('voted_for_id', userId)
-      voteErr = error
-      if (!error) setMyVote(null)
-    } else if (myVote !== null) {
-      const { error } = await supabase.from('user_votes').update({ vote: voteValue, updated_at: new Date().toISOString() }).eq('voter_id', user.id).eq('voted_for_id', userId)
-      voteErr = error
-      if (!error) setMyVote(voteValue)
-    } else {
-      const { error } = await supabase.from('user_votes').insert({ voter_id: user.id, voted_for_id: userId, vote: voteValue })
-      voteErr = error
-      if (!error) setMyVote(voteValue)
-    }
-
-    if (voteErr) {
-      console.error('Failed to cast vote:', voteErr)
-      alert('Could not record your vote. Try again.')
-      setVoting(false)
-      return
-    }
-
-    const { data: rep, error: repErr } = await supabase.from('user_reputation').select('upvotes, downvotes, net_score').eq('user_id', userId).maybeSingle()
-    if (repErr) console.error('Failed to refresh reputation:', repErr)
-    setReputation(rep)
-    setVoting(false)
-  }
-
   function formatDate(dateStr) {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
@@ -155,9 +98,7 @@ export default function PublicProfile() {
     return <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>Profile not found</div>
   }
 
-  const isOwnProfile = user?.id === userId
   const avatarUrl = profile.avatar_url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId}`
-  const netScore = reputation?.net_score || 0
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
@@ -187,47 +128,9 @@ export default function PublicProfile() {
         </div>
       </div>
 
-      {/* Reputation + Vouches row */}
+      {/* Vouches */}
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem', padding: '0.75rem 1rem', background: '#1a1a1a', borderRadius: '12px', border: '1px solid #333' }}>
         <VouchButton userId={userId} size="sm" showCount={true} />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ color: netScore > 0 ? '#4ecca3' : netScore < 0 ? '#ff6666' : '#888', fontWeight: 700, fontSize: '1.1rem' }}>
-            {netScore > 0 ? '+' : ''}{netScore}
-          </span>
-          <span style={{ color: '#888', fontSize: '0.8rem' }}>reputation</span>
-        </div>
-
-        {!isOwnProfile && user?.id && (
-          <div style={{ display: 'flex', gap: '0.35rem', marginLeft: 'auto' }}>
-            <button
-              onClick={() => castVote(1)}
-              disabled={voting}
-              style={{
-                padding: '0.35rem 0.6rem', borderRadius: '8px', border: '1px solid ' + (myVote === 1 ? '#4ecca3' : '#444'),
-                background: myVote === 1 ? '#1a4a3a' : 'transparent', color: myVote === 1 ? '#4ecca3' : '#888',
-                cursor: 'pointer', fontSize: '1rem', lineHeight: 1,
-              }}
-              title="Upvote"
-              aria-label="Upvote"
-            >
-              &#9650;
-            </button>
-            <button
-              onClick={() => castVote(-1)}
-              disabled={voting}
-              style={{
-                padding: '0.35rem 0.6rem', borderRadius: '8px', border: '1px solid ' + (myVote === -1 ? '#ff6666' : '#444'),
-                background: myVote === -1 ? '#3a1a1a' : 'transparent', color: myVote === -1 ? '#ff6666' : '#888',
-                cursor: 'pointer', fontSize: '1rem', lineHeight: 1,
-              }}
-              title="Downvote"
-              aria-label="Downvote"
-            >
-              &#9660;
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Tabs */}

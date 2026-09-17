@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { canVouch } from '../utils/vouchEligibility'
 
 function reportError(context, error) {
   if (!error) return false
@@ -18,57 +19,34 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
     if (info || !userId) return
     const { data: p, error: pErr } = await supabase.from('helper_profiles_public').select('display_name, is_hope_ambassador, role, created_at').eq('user_id', userId).maybeSingle()
     reportError('loadInfo:profile', pErr)
-    const { data: rep, error: repErr } = await supabase.from('user_reputation').select('net_score, upvotes, downvotes').eq('user_id', userId).maybeSingle()
-    reportError('loadInfo:reputation', repErr)
     const { count: vouchCount, error: vouchCountErr } = await supabase.from('vouches').select('*', { count: 'exact', head: true }).eq('vouchee_id', userId)
     reportError('loadInfo:vouchCount', vouchCountErr)
     const { data: authData, error: authErr } = await supabase.auth.getUser()
     reportError('loadInfo:auth', authErr)
     const myId = authData?.user?.id
     let hasVouched = false
-    let myVote = null
+    let eligible = false
     if (myId && myId !== userId) {
       const { data: myVouch, error: myVouchErr } = await supabase.from('vouches').select('id').eq('voucher_id', myId).eq('vouchee_id', userId).maybeSingle()
       reportError('loadInfo:myVouch', myVouchErr)
       hasVouched = !!myVouch
-      const { data: voteData, error: voteErr } = await supabase.from('user_votes').select('vote').eq('voter_id', myId).eq('voted_for_id', userId).maybeSingle()
-      reportError('loadInfo:myVote', voteErr)
-      myVote = voteData?.vote || null
+      eligible = await canVouch(myId, userId)
     }
     setInfo({
       name: p?.display_name || 'Neighbor',
       ambassador: p?.is_hope_ambassador || false,
       role: p?.role || null,
       joined: p?.created_at || null,
-      score: rep?.net_score || 0,
       vouches: vouchCount || 0,
       hasVouched,
-      myVote,
+      eligible,
     })
-  }
-
-  async function castVote(e, voteValue) {
-    e.stopPropagation()
-    if (!info) return
-    const { data: authData, error: authErr } = await supabase.auth.getUser()
-    reportError('castVote:auth', authErr)
-    const myId = authData?.user?.id
-    if (!myId || myId === userId) return
-    if (info.myVote === voteValue) {
-      const { error } = await supabase.from('user_votes').delete().eq('voter_id', myId).eq('voted_for_id', userId)
-      if (reportError('castVote:delete', error)) return
-      setInfo(prev => ({ ...prev, score: prev.score - voteValue, myVote: null }))
-    } else {
-      const scoreDiff = info.myVote ? voteValue - info.myVote : voteValue
-      const { error } = await supabase.from('user_votes').upsert({ voter_id: myId, voted_for_id: userId, vote: voteValue, updated_at: new Date().toISOString() }, { onConflict: 'voter_id,voted_for_id' })
-      if (reportError('castVote:upsert', error)) return
-      setInfo(prev => ({ ...prev, score: prev.score + scoreDiff, myVote: voteValue }))
-    }
   }
 
   async function toggleVouch(e) {
     e.stopPropagation()
     if (!info) return
+    if (!info.eligible && !info.hasVouched) return
     const { data: authData, error: authErr } = await supabase.auth.getUser()
     reportError('toggleVouch:auth', authErr)
     const myId = authData?.user?.id
@@ -125,18 +103,17 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
             </div>
             {info && (
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                <div style={{ flex: 1, textAlign: 'center', padding: '0.35rem', background: '#222', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
-                  <button onClick={(e) => castVote(e, 1)} aria-label="Vouch up" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: info.myVote === 1 ? '#4ecca3' : '#666', padding: '2px' }}>&#9650;</button>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: info.score > 0 ? '#4ecca3' : info.score < 0 ? '#ff6666' : '#888', lineHeight: 1 }}>{info.score > 0 ? '+' : ''}{info.score}</div>
-                    <div style={{ fontSize: '0.6rem', color: '#888' }}>Rep</div>
+                {(info.eligible || info.hasVouched) ? (
+                  <button type="button" onClick={toggleVouch} aria-label={info.hasVouched ? 'Remove your vouch' : 'Vouch for this neighbor'} style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: info.hasVouched ? '#1a4a3a' : '#222', borderRadius: '8px', cursor: 'pointer', border: info.hasVouched ? '1px solid #4ecca3' : '1px solid transparent', transition: 'all 0.2s' }}>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: '#4ecca3' }}>{info.vouches}</div>
+                    <div style={{ fontSize: '0.65rem', color: info.hasVouched ? '#4ecca3' : '#888' }}>{info.hasVouched ? 'Vouched' : 'Vouch'}</div>
+                  </button>
+                ) : (
+                  <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: '#222', borderRadius: '8px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: '#4ecca3' }}>{info.vouches}</div>
+                    <div style={{ fontSize: '0.65rem', color: '#888' }}>Vouches</div>
                   </div>
-                  <button onClick={(e) => castVote(e, -1)} aria-label="Vouch down" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: info.myVote === -1 ? '#ff6666' : '#666', padding: '2px' }}>&#9660;</button>
-                </div>
-                <button type="button" onClick={toggleVouch} aria-label={info.hasVouched ? 'Remove your vouch' : 'Vouch for this neighbor'} style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: info.hasVouched ? '#1a4a3a' : '#222', borderRadius: '8px', cursor: 'pointer', border: info.hasVouched ? '1px solid #4ecca3' : '1px solid transparent', transition: 'all 0.2s' }}>
-                  <div style={{ fontWeight: 700, fontSize: '1rem', color: '#4ecca3' }}>{info.vouches}</div>
-                  <div style={{ fontSize: '0.65rem', color: info.hasVouched ? '#4ecca3' : '#888' }}>{info.hasVouched ? 'Vouched' : 'Vouch'}</div>
-                </button>
+                )}
                 {info.joined && (
                   <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: '#222', borderRadius: '8px' }}>
                     <div style={{ fontWeight: 700, fontSize: '0.75rem', color: '#fff' }}>{new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</div>
