@@ -101,7 +101,10 @@ export default function AskForHelp() {
 
     return (
         <div className="ask-page">
-            <h1>Ask for help</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+                <h1 style={{ margin: 0 }}>Ask for help</h1>
+            </div>
             <p className="ask-intro">
                 Tell us what you need. Only Hope Ambassadors in your area will see this.
                 No personal details are shared until you say so.
