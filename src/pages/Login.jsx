@@ -12,6 +12,8 @@ export default function Login() {
   const [step, setStep] = useState(1)
 
   const [skillOptions, setSkillOptions] = useState([])
+  const [villages, setVillages] = useState([])
+  const [villageId, setVillageId] = useState('')
 
   useEffect(() => {
     async function loadSkills() {
@@ -23,6 +25,26 @@ export default function Login() {
       if (data) setSkillOptions(data.map((s) => s.title))
     }
     loadSkills()
+  }, [])
+
+  // Only asked about explicitly when there's an actual choice to make. With
+  // one active village, everyone just lands there, no need to make someone
+  // pick from a list of one.
+  useEffect(() => {
+    async function loadVillages() {
+      const { data, error } = await supabase
+        .from('villages')
+        .select('id, name, region_label, is_default')
+        .eq('active', true)
+        .order('name')
+      if (error) { console.error('Failed to load villages:', error); return }
+      if (data) {
+        setVillages(data)
+        const def = data.find((c) => c.is_default) || data[0]
+        if (def) setVillageId(def.id)
+      }
+    }
+    loadVillages()
   }, [])
 
   const [displayName, setDisplayName] = useState('')
@@ -108,6 +130,7 @@ export default function Login() {
   async function handleSignUp() {
     setError('')
     setSubmitting(true)
+    if (villageId) localStorage.setItem('vwb_pending_village_id', villageId)
     const { error } = await signUp(email, password, displayName.trim(), wantAmbassador)
     if (error) { setError(error.message); setSubmitting(false); return }
     if (wantAmbassador) {
@@ -212,6 +235,16 @@ export default function Login() {
                 </div>
               )}
             </div>
+            {villages.length > 1 && (
+              <div className="form-field">
+                <label htmlFor="villageSelect">Your village</label>
+                <select id="villageSelect" value={villageId} onChange={(e) => setVillageId(e.target.value)}>
+                  {villages.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}{c.region_label ? ' — ' + c.region_label : ''}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
               <input type="checkbox" checked={wantAmbassador} onChange={(e) => setWantAmbassador(e.target.checked)} />
               <span>

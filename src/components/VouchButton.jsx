@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
+import { canVouch } from '../utils/vouchEligibility'
 
 export default function VouchButton({ userId, size = 'sm', showCount = true, onVouchChange }) {
   const { user } = useAuth()
   const [vouchCount, setVouchCount] = useState(0)
   const [hasVouched, setHasVouched] = useState(false)
+  const [eligible, setEligible] = useState(false)
   const [loading, setLoading] = useState(false)
   const isSelf = user?.id === userId
 
@@ -25,6 +27,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
         .maybeSingle()
       if (existingErr) console.error('[VouchButton] loadVouchData existing', existingErr)
       setHasVouched(!!existing)
+      setEligible(await canVouch(user.id, userId))
     }
     const { data: vc, error: vcErr } = await supabase
       .from('vouch_counts')
@@ -36,7 +39,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
   }
 
   async function handleVouch() {
-    if (isSelf || loading || !user?.id) return
+    if (isSelf || loading || !user?.id || (!hasVouched && !eligible)) return
     setLoading(true)
 
     if (hasVouched) {
@@ -81,7 +84,7 @@ export default function VouchButton({ userId, size = 'sm', showCount = true, onV
           &#10022; {vouchCount} vouch{vouchCount !== 1 ? 'es' : ''}
         </span>
       )}
-      {!isSelf && user?.id && (
+      {!isSelf && user?.id && (eligible || hasVouched) && (
         <button
           className={`vouch-btn vouch-btn-${size} ${hasVouched ? 'vouch-btn-done' : ''}`}
           onClick={handleVouch}

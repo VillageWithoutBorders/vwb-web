@@ -35,13 +35,65 @@ export default function Admin() {
   const [newOrgSocial, setNewOrgSocial] = useState('')
   const [memberSearchQuery, setMemberSearchQuery] = useState({})
   const [memberSearchResults, setMemberSearchResults] = useState({})
+  const [villages, setVillages] = useState([])
+  const [showNewVillageForm, setShowNewVillageForm] = useState(false)
+  const [newVillageName, setNewVillageName] = useState('')
+  const [newVillageRegion, setNewVillageRegion] = useState('')
 
   useEffect(() => { loadAll() }, [])
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadOrganizations()])
+    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadOrganizations(), loadVillages()])
     setLoading(false)
+  }
+
+  async function loadVillages() {
+    const { data, error } = await supabase.from('villages').select('*').order('created_at', { ascending: true })
+    reportError('loadVillages', error)
+    if (!data) { setVillages([]); return }
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const withCounts = await Promise.all(data.map(async (c) => {
+      const { count, error: countErr } = await supabase.from('helper_profiles').select('id', { count: 'exact', head: true }).eq('village_id', c.id)
+      reportError('loadVillages:count', countErr)
+      // Activity, not growth: a quick read on whether a village's Campfire
+      // is actually being used, not a metric meant to chase engagement.
+      const { count: msgWeekCount, error: msgWeekErr } = await supabase.from('campfire_messages').select('id', { count: 'exact', head: true }).eq('village_id', c.id).gte('created_at', weekAgo)
+      reportError('loadVillages:msgWeek', msgWeekErr)
+      const { data: lastMsg, error: lastMsgErr } = await supabase.from('campfire_messages').select('created_at').eq('village_id', c.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      reportError('loadVillages:lastMsg', lastMsgErr)
+      return { ...c, member_count: count || 0, messages_this_week: msgWeekCount || 0, last_message_at: lastMsg?.created_at || null }
+    }))
+    setVillages(withCounts)
+  }
+
+  function slugifyVillageName(name) {
+    return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  }
+
+  async function createVillage() {
+    if (!newVillageName.trim()) { alert('Village name is required.'); return }
+    const { error } = await supabase.from('villages').insert({
+      name: newVillageName.trim(),
+      region_label: newVillageRegion.trim() || null,
+      slug: slugifyVillageName(newVillageName),
+    })
+    if (reportError('createVillage', error, 'Could not create this village. It may already exist. Try again.')) return
+    setNewVillageName(''); setNewVillageRegion('')
+    setShowNewVillageForm(false)
+    await loadVillages()
+  }
+
+  async function toggleVillageActive(village) {
+    const { error } = await supabase.from('villages').update({ active: !village.active }).eq('id', village.id)
+    if (reportError('toggleVillageActive', error, 'Could not update this village. Try again.')) return
+    await loadVillages()
+  }
+
+  async function reassignUserVillage(userId, villageId) {
+    const { error } = await supabase.from('helper_profiles').update({ village_id: villageId || null }).eq('user_id', userId)
+    if (reportError('reassignUserVillage', error, 'Could not move this person to that village. Try again.')) return
+    await Promise.all([loadUsers(), loadVillages()])
   }
 
   async function loadAdminApplications() {
@@ -146,7 +198,7 @@ export default function Admin() {
   }
 
   async function loadUsers() {
-    const { data, error } = await supabase.from('helper_profiles').select('user_id, display_name, avatar_url, is_hope_ambassador, is_available, created_at').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('helper_profiles').select('user_id, display_name, avatar_url, is_hope_ambassador, is_available, created_at, village_id').order('created_at', { ascending: false })
     reportError('loadUsers', error)
     if (data) {
       const withVouches = await Promise.all(data.map(async (u) => {
@@ -410,6 +462,7 @@ export default function Admin() {
         <button style={tabStyle(tab === 'users')} onClick={() => setTab('users')}>Users ({users.length})</button>
         <button style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports ({alerts.length})</button>
         <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length})</button>
+        <button style={tabStyle(tab === 'villages')} onClick={() => setTab('villages')}>Villages ({villages.length})</button>
       </div>
 
       {loading && <p style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>Loading...</p>}
@@ -574,6 +627,17 @@ export default function Admin() {
                   <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer', fontSize: '0.75rem' }}>Reset to Neighbor</button>
                 )}
                 <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.75rem' }}>Message</button>
+                {villages.length > 1 && (
+                  <select
+                    value={u.village_id || ''}
+                    onChange={(e) => reassignUserVillage(u.user_id, e.target.value)}
+                    aria-label={'Village for ' + (u.display_name || 'this person')}
+                    style={{ padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#aaa', fontSize: '0.75rem' }}
+                  >
+                    <option value="">No village</option>
+                    {villages.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                )}
               </div>
             </div>
           ))}
@@ -660,6 +724,57 @@ export default function Admin() {
                   ))}
                 </div>
               )}
+            </div>
+          ))}
+        </>
+      )}
+
+      {!loading && tab === 'villages' && (
+        <>
+          <p style={{ color: '#888', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
+            Each village gets its own Campfire room. Someone's village is set when they sign up, or you can move them from the Users tab.
+          </p>
+          <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? 'Cancel' : '+ New Village'}</button>
+
+          {showNewVillageForm && (
+            <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
+              <input value={newVillageName} onChange={(e) => setNewVillageName(e.target.value)} placeholder="Village name * (e.g. Bay Area, CA)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+              <input value={newVillageRegion} onChange={(e) => setNewVillageRegion(e.target.value)} placeholder="Region description (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+              <button onClick={createVillage} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create Village</button>
+            </div>
+          )}
+
+          {villages.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No villages yet</p>
+          ) : villages.map(c => (
+            <div key={c.id} style={cardStyle}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#eee' }}>{c.name}</h4>
+                    {c.is_default && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Default</span>}
+                    {!c.active && <span style={{ fontSize: '0.6rem', background: '#3a2a1a', color: '#ffaa44', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Inactive</span>}
+                  </div>
+                  {c.region_label && <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>{c.region_label}</p>}
+                </div>
+                {!c.is_default && (
+                  <button onClick={() => toggleVillageActive(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: c.active ? 'none' : '#4ecca3', color: c.active ? '#ff4444' : '#1a1a1a', border: c.active ? '1px solid #ff4444' : 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{c.active ? 'Deactivate' : 'Activate'}</button>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: '#161616', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#4ecca3' }}>{c.member_count}</div>
+                  <div style={{ fontSize: '0.65rem', color: '#888' }}>member{c.member_count !== 1 ? 's' : ''}</div>
+                </div>
+                <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: '#161616', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: c.messages_this_week > 0 ? '#4ecca3' : '#666' }}>{c.messages_this_week}</div>
+                  <div style={{ fontSize: '0.65rem', color: '#888' }}>msg{c.messages_this_week !== 1 ? 's' : ''} this week</div>
+                </div>
+                <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: '#161616', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.8rem', color: c.last_message_at ? '#eee' : '#666' }}>{c.last_message_at ? timeAgo(c.last_message_at) : 'No activity'}</div>
+                  <div style={{ fontSize: '0.65rem', color: '#888' }}>last message</div>
+                </div>
+              </div>
             </div>
           ))}
         </>
