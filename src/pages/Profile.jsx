@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarBuilder, { AvatarPreview } from '../components/AvatarBuilder'
 import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
-import { resetAccountToBase } from '../utils/resetAccount'
 
 function reportError(context, error, userMessage) {
   if (!error) return false
@@ -14,18 +13,13 @@ function reportError(context, error, userMessage) {
 }
 
 export default function Profile() {
-  const { user, profile, isAdmin, isFounder, signOut, refreshProfile } = useAuth()
+  const { user, profile, isAdmin, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [showAvatarBuilder, setShowAvatarBuilder] = useState(false)
-  const [showEmailChange, setShowEmailChange] = useState(false)
-  const [newEmail, setNewEmail] = useState('')
-  const [emailSaving, setEmailSaving] = useState(false)
-  const [emailError, setEmailError] = useState('')
-  const [emailMessage, setEmailMessage] = useState('')
 
   const [displayName, setDisplayName] = useState('')
   const [zipCode, setZipCode] = useState('')
@@ -64,12 +58,6 @@ export default function Profile() {
   const [coverageSaving, setCoverageSaving] = useState(false)
   const [coverageError, setCoverageError] = useState('')
 
-  const [resetting, setResetting] = useState(false)
-
-  const [readReceipts, setReadReceipts] = useState(true)
-  const [safetyCheckins, setSafetyCheckins] = useState(true)
-  const [blockedUsers, setBlockedUsers] = useState([])
-
   useEffect(() => {
     async function loadSkills() {
       const { data, error } = await supabase.from('skill_categories').select('title').order('title')
@@ -100,32 +88,6 @@ export default function Profile() {
     }
     if (isAdmin && user?.id && profile && !profile.admin_region_name) prefillCoverageRegion()
   }, [isAdmin, user?.id, profile?.admin_region_name])
-
-  useEffect(() => {
-    async function loadPrivacyPrefs() {
-      const { data, error } = await supabase.from('helper_profiles').select('read_receipts_enabled, safety_checkins_enabled').eq('user_id', user.id).maybeSingle()
-      reportError('loadPrivacyPrefs', error)
-      if (data) {
-        setReadReceipts(data.read_receipts_enabled !== false)
-        setSafetyCheckins(data.safety_checkins_enabled !== false)
-      }
-    }
-    async function loadBlockedUsers() {
-      const { data, error } = await supabase.from('blocks').select('id, blocked_id').eq('blocker_id', user.id)
-      reportError('loadBlockedUsers', error)
-      if (data && data.length > 0) {
-        const names = await Promise.all(data.map(async (b) => {
-          const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', b.blocked_id).maybeSingle()
-          if (profErr) console.error('[Profile:loadBlockedUsers]', profErr)
-          return { ...b, name: p?.display_name || 'Unknown' }
-        }))
-        setBlockedUsers(names)
-      } else {
-        setBlockedUsers([])
-      }
-    }
-    if (user?.id) { loadPrivacyPrefs(); loadBlockedUsers() }
-  }, [user?.id])
 
   function toggleSkill(skill) {
     setSelectedSkills((prev) => prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill])
@@ -273,58 +235,6 @@ function captureCoverageLocation() {
     setCoverageSaving(false)
   }
 
-  async function handleEmailChange() {
-  if (!newEmail.trim() || !newEmail.includes('@')) { setEmailError('Enter a valid email address.'); return }
-  setEmailSaving(true); setEmailError(''); setEmailMessage('')
-  const { error: updateError } = await supabase.auth.updateUser({ email: newEmail.trim() })
-  reportError('handleEmailChange', updateError)
-  if (updateError) { setEmailError(updateError.message); setEmailSaving(false); return }
-  setEmailMessage('Check your old and new email for confirmation links. Your login email updates once you confirm.')
-  setEmailSaving(false)
-  setShowEmailChange(false)
-  setNewEmail('')
-}
-  // Steps this account back down to a plain Neighbor: clears Ambassador
-  // status and details plus any admin coverage-area info. Also doubles as
-  // Jade's own quick way to reset an account she's testing with. Founder
-  // accounts are never affected (resetAccountToBase guards this too).
-  async function handleResetToBase() {
-    if (!confirm('Reset your account back to a plain Neighbor? This clears your Ambassador status, skills, availability, and any admin coverage area.')) return
-    setResetting(true); setError(''); setMessage('')
-    const { error: resetError } = await resetAccountToBase(user.id, { currentRole: profile?.role })
-    reportError('handleResetToBase', resetError)
-    if (resetError) { setError('Could not reset your account. Try again.'); setResetting(false); return }
-    await refreshProfile()
-    setMessage('Your account has been reset to Neighbor status.')
-    setResetting(false)
-  }
-
-  async function savePrivacyPref(col, val) {
-    const { error } = await supabase.from('helper_profiles').update({ [col]: val }).eq('user_id', user.id)
-    reportError('savePrivacyPref', error)
-    return !error
-  }
-
-  async function toggleReadReceipts() {
-    const v = !readReceipts
-    setReadReceipts(v)
-    const ok = await savePrivacyPref('read_receipts_enabled', v)
-    if (!ok) { setReadReceipts(!v); alert('Could not save this setting. Try again.') }
-  }
-
-  async function toggleSafetyCheckins() {
-    const v = !safetyCheckins
-    setSafetyCheckins(v)
-    const ok = await savePrivacyPref('safety_checkins_enabled', v)
-    if (!ok) { setSafetyCheckins(!v); alert('Could not save this setting. Try again.') }
-  }
-
-  async function unblockUser(blockId) {
-    const { error } = await supabase.from('blocks').delete().eq('id', blockId)
-    if (error) { console.error('[Profile:unblockUser]', error); alert('Could not unblock this user. Try again.'); return }
-    setBlockedUsers((prev) => prev.filter((b) => b.id !== blockId))
-  }
-
   function handleAvatarSaved(url, config) {
     setShowAvatarBuilder(false)
     setMessage('Avatar saved!')
@@ -358,24 +268,6 @@ function captureCoverageLocation() {
             <span className="ambassador-badge">Hope Ambassador</span>
           )}
                    <p className="profile-email">{user?.email}</p>
-          {!showEmailChange ? (
-            <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => { setShowEmailChange(true); setEmailError(''); setEmailMessage('') }}>
-              Change email
-            </button>
-          ) : (
-            <div className="form-field" style={{ width: '100%', maxWidth: '320px', textAlign: 'left' }}>
-              <label htmlFor="newEmail">New email address</label>
-              <input id="newEmail" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="you@example.com" />
-              {emailError && <p className="form-error" role="alert">{emailError}</p>}
-              <div className="form-row" style={{ marginTop: '0.5rem' }}>
-                <button type="button" className="btn btn-outline" onClick={() => { setShowEmailChange(false); setNewEmail(''); setEmailError('') }} disabled={emailSaving}>Cancel</button>
-                <button type="button" className="btn btn-primary" onClick={handleEmailChange} disabled={emailSaving} style={{ flex: 1 }}>
-                  {emailSaving ? 'Sending...' : 'Send confirmation'}
-                </button>
-              </div>
-            </div>
-          )}
-          {emailMessage && <p className="form-success" role="status">{emailMessage}</p>}
         </div>
 
         <div className="profile-details">
@@ -494,14 +386,9 @@ function captureCoverageLocation() {
         {error && <p className="form-error" role="alert" style={{ marginTop: '1rem' }}>{error}</p>}
 
         <button className="btn btn-primary btn-full" style={{ marginTop: '1.5rem' }} onClick={startEditing}>Edit profile</button>
-        <div className="form-row" style={{ marginTop: '0.75rem' }}>
-          <button className="btn btn-outline" style={{ flex: 1 }} onClick={signOut}>Sign out</button>
-          {!isFounder && (profile?.is_hope_ambassador || isAdmin || (profile?.skills?.length > 0)) && (
-            <button className="btn btn-outline" style={{ flex: 1, borderColor: '#666', color: '#999' }} onClick={handleResetToBase} disabled={resetting}>
-              {resetting ? 'Resetting...' : 'Reset to Neighbor'}
-            </button>
-          )}
-        </div>
+        <button className="btn btn-outline btn-full" onClick={() => navigate('/settings')} style={{ marginTop: '0.5rem' }}>
+          {'⚙'} Settings &amp; Privacy
+        </button>
         {isAdmin && (
           <button className="btn btn-outline btn-full" onClick={() => navigate("/admin")} style={{ marginTop: "0.5rem", borderColor: "#4ecca3", color: "#4ecca3" }}>
             {'⚙'} Admin Panel
@@ -561,66 +448,6 @@ function captureCoverageLocation() {
             <p style={{ color: '#ff6666', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your application was not approved at this time</p>
           </div>
         )}
-
-        <div className="profile-details" style={{ marginTop: '1rem' }}>
-          <div className="detail-section-header">Privacy &amp; Safety</div>
-          <div className="privacy-toggle-row">
-            <div>
-              <span className="privacy-toggle-label">Read receipts</span>
-              <p className="privacy-toggle-desc">Let others see when you have read their messages</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={readReceipts}
-              aria-label="Read receipts"
-              className={`toggle-switch${readReceipts ? ' on' : ''}`}
-              onClick={toggleReadReceipts}
-            >
-              <span className="toggle-switch-knob" />
-            </button>
-          </div>
-          <div className="privacy-toggle-row">
-            <div>
-              <span className="privacy-toggle-label">Safety check-ins</span>
-              <p className="privacy-toggle-desc">Receive periodic check-in prompts during active help sessions</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={safetyCheckins}
-              aria-label="Safety check-ins"
-              className={`toggle-switch${safetyCheckins ? ' on' : ''}`}
-              onClick={toggleSafetyCheckins}
-            >
-              <span className="toggle-switch-knob" />
-            </button>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">More message settings</span>
-            <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => navigate('/messages')}>
-              Open Messages
-            </button>
-          </div>
-        </div>
-
-        <div className="profile-details" style={{ marginTop: '0.75rem' }}>
-          <div className="detail-section-header">Blocked Neighbors</div>
-          {blockedUsers.length === 0 ? (
-            <div className="detail-row">
-              <span className="detail-value" style={{ textAlign: 'left' }}>You haven't blocked anyone</span>
-            </div>
-          ) : (
-            blockedUsers.map((b) => (
-              <div key={b.id} className="blocked-user-row">
-                <span className="privacy-toggle-label">{b.name}</span>
-                <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => unblockUser(b.id)}>
-                  Unblock
-                </button>
-              </div>
-            ))
-          )}
-        </div>
 
         <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'linear-gradient(135deg, #1a4a3a, #2d5a45)', border: '2px solid #4ecca3', borderRadius: '12px', textDecoration: 'none', marginTop: '0.75rem' }}>
           <img src="/images/vwb_header.png" alt="VWB" style={{ height: '40px', borderRadius: '50%' }} />

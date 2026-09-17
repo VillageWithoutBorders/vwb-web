@@ -8,6 +8,7 @@ import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Feed from './pages/Feed'
 import Profile from './pages/Profile'
+import Settings from './pages/Settings'
 import Help from './pages/Help'
 import AskForHelp from './pages/AskForHelp'
 import PostOffer from './pages/PostOffer'
@@ -47,6 +48,7 @@ function AppRoutes() {
         <Route path="skillshare" element={<Feed />} />
         <Route path="tasks" element={<ActiveTasks />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="settings" element={<Settings />} />
         <Route path="community" element={<Community />} />
         <Route path="help" element={<Help />} />
         <Route path="ask" element={<AskForHelp />} />
