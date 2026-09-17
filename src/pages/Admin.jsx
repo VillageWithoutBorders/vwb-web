@@ -456,11 +456,12 @@ export default function Admin() {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', marginBottom: '1rem' }}>
+      {/* Users, Emergencies, and Reports each already have a stat tile above that
+          jumps here on click, so they don't need a second entry point in this row.
+          Wraps instead of scrolling so nothing is ever hidden off-screen as more
+          sections get added. */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
         <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length) > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length}</span>}</button>
-        <button style={tabStyle(tab === 'emergencies')} onClick={() => setTab('emergencies')}>Emergencies ({pendingEvents.length})</button>
-        <button style={tabStyle(tab === 'users')} onClick={() => setTab('users')}>Users ({users.length})</button>
-        <button style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports ({alerts.length})</button>
         <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length})</button>
         <button style={tabStyle(tab === 'villages')} onClick={() => setTab('villages')}>Villages ({villages.length})</button>
       </div>
