@@ -23,6 +23,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [pendingEvents, setPendingEvents] = useState([])
   const [alerts, setAlerts] = useState([])
+  const [checkinAlerts, setCheckinAlerts] = useState([])
   const [users, setUsers] = useState([])
   const [stats, setStats] = useState({})
   const [approvals, setApprovals] = useState([])
@@ -232,7 +233,7 @@ export default function Admin() {
   }
 
   async function loadAlerts() {
-    const { data, error } = await supabase.from('safety_alerts').select('*').order('created_at', { ascending: false }).limit(50)
+    const { data, error } = await supabase.from('user_reports').select('*').order('created_at', { ascending: false }).limit(50)
     reportError('loadAlerts', error)
     if (data) {
       const withNames = await Promise.all(data.map(async (a) => {
@@ -240,10 +241,29 @@ export default function Admin() {
         reportError('loadAlerts:reporter', repErr)
         const { data: reported, error: repdErr } = a.reported_user_id ? await supabase.from('helper_profiles').select('display_name').eq('user_id', a.reported_user_id).maybeSingle() : { data: null, error: null }
         reportError('loadAlerts:reported', repdErr)
-        return { ...a, reporter_name: reporter?.display_name || 'Unknown', reported_name: reported?.display_name || 'Unknown' }
+        return { ...a, reporter_name: reporter?.display_name || 'Unknown', reported_name: a.reported_user_id ? (reported?.display_name || 'Unknown') : 'a removed account' }
       }))
       setAlerts(withNames)
     }
+
+    // Task safety check-ins ("no response", "feel unsafe") live in their own table.
+    const { data: checkins, error: checkinErr } = await supabase.from('safety_alerts').select('id, match_id, reporter_id, alert_type, notes, created_at').order('created_at', { ascending: false }).limit(20)
+    reportError('loadAlerts:checkins', checkinErr)
+    if (checkins) {
+      const withReporter = await Promise.all(checkins.map(async (c) => {
+        const { data: rp, error: rpErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', c.reporter_id).maybeSingle()
+        reportError('loadAlerts:checkinReporter', rpErr)
+        return { ...c, reporter_name: rp?.display_name || 'Unknown' }
+      }))
+      setCheckinAlerts(withReporter)
+    }
+  }
+
+  async function reviewReport(id, status) {
+    const { data, error } = await supabase.from('user_reports').update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq('id', id).select('id')
+    if (reportError('reviewReport', error, 'Could not update this report. Try again.')) return
+    if (!data || data.length === 0) { alert('Could not update this report. Try again.'); return }
+    await Promise.all([loadAlerts(), loadStats()])
   }
 
   async function loadUsers() {
@@ -269,8 +289,10 @@ export default function Admin() {
     const { count: requestCount, error: e3 } = await supabase.from('help_requests').select('id', { count: 'exact', head: true })
     const { count: matchCount, error: e4 } = await supabase.from('skill_matches').select('id', { count: 'exact', head: true })
     const { count: eventCount, error: e5 } = await supabase.from('emergency_events').select('id', { count: 'exact', head: true }).eq('status', 'active')
-    const { count: alertCount, error: e6 } = await supabase.from('safety_alerts').select('id', { count: 'exact', head: true })
-    ;[e1, e2, e3, e4, e5, e6].forEach((e, i) => reportError('loadStats:' + i, e))
+    const { count: openReportCount, error: e6 } = await supabase.from('user_reports').select('id', { count: 'exact', head: true }).eq('status', 'open')
+    const { count: checkinCount, error: e7 } = await supabase.from('safety_alerts').select('id', { count: 'exact', head: true })
+    ;[e1, e2, e3, e4, e5, e6, e7].forEach((e, i) => reportError('loadStats:' + i, e))
+    const alertCount = (openReportCount || 0) + (checkinCount || 0)
     setStats({ users: userCount || 0, ambassadors: ambassadorCount || 0, requests: requestCount || 0, matches: matchCount || 0, events: eventCount || 0, alerts: alertCount || 0 })
   }
 
@@ -729,22 +751,50 @@ export default function Admin() {
       {!loading && tab === 'reports' && (
         <>
           {alerts.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No safety reports</p>
-          ) : alerts.map(a => (
-            <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid #ff4444' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ background: '#3a1a1a', color: '#ff6666', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{a.alert_type}</span>
-                <span style={{ color: '#888', fontSize: '0.75rem' }}>{timeAgo(a.created_at)}</span>
+            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No reports about people</p>
+          ) : alerts.map(a => {
+            const open = a.status === 'open'
+            const sourceLabel = { profile: 'From a profile', conversation: 'From a chat', messages: 'From messages', campfire: 'From the Campfire', event: 'From an event' }[a.source] || a.source
+            const linkBtn = { background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', padding: '0.25rem 0', fontWeight: 600 }
+            return (
+              <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (open ? '#ff4444' : '#555'), opacity: open ? 1 : 0.7 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ background: open ? '#3a1a1a' : '#2a2a2a', color: open ? '#ff6666' : '#999', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{open ? 'Open' : a.status === 'reviewed' ? 'Reviewed' : 'Dismissed'}</span>
+                  <span style={{ color: '#888', fontSize: '0.75rem' }}>{sourceLabel} &middot; {timeAgo(a.created_at)}</span>
+                </div>
+                <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
+                  <span style={{ color: '#aaa' }}>Reported by:</span> {a.reporter_name}
+                  <span style={{ color: '#aaa' }}> about </span>
+                  {a.reported_name}
+                </p>
+                {a.reason && <p style={{ color: '#ddd', fontSize: '0.85rem', fontWeight: 600, margin: '0.2rem 0' }}>{a.reason}</p>}
+                {a.details && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{a.details}</p>}
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
+                  {a.reported_user_id && <button type="button" onClick={() => navigate('/u/' + a.reported_user_id)} style={linkBtn}>View their profile</button>}
+                  {open && <button type="button" onClick={() => reviewReport(a.id, 'reviewed')} style={linkBtn}>Mark reviewed</button>}
+                  {open && <button type="button" onClick={() => reviewReport(a.id, 'dismissed')} style={{ ...linkBtn, color: '#999' }}>Dismiss</button>}
+                </div>
               </div>
-              <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
-                <span style={{ color: '#aaa' }}>Reported by:</span> {a.reporter_name}
-                {a.reported_user_id && <span style={{ color: '#aaa' }}> about </span>}
-                {a.reported_user_id && a.reported_name}
-              </p>
-              {a.description && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{a.description}</p>}
-              {a.reported_user_id && <button type="button" onClick={() => navigate('/u/' + a.reported_user_id)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', padding: '0.25rem 0', fontWeight: 600 }}>View their profile</button>}
-            </div>
-          ))}
+            )
+          })}
+
+          {checkinAlerts.length > 0 && (
+            <>
+              <h3 style={{ fontSize: '0.85rem', color: '#aaa', margin: '1.25rem 0 0.5rem', fontWeight: 700 }}>Safety check-in alerts</h3>
+              {checkinAlerts.map(c => (
+                <div key={'checkin-' + c.id} style={{ ...cardStyle, borderLeft: '3px solid #ffaa44' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ background: '#2e2a1a', color: '#ffaa44', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{String(c.alert_type).replace(/_/g, ' ')}</span>
+                    <span style={{ color: '#888', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
+                  </div>
+                  <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
+                    <span style={{ color: '#aaa' }}>Task check-in from:</span> {c.reporter_name}
+                  </p>
+                  {c.notes && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{c.notes}</p>}
+                </div>
+              ))}
+            </>
+          )}
         </>
       )}
 

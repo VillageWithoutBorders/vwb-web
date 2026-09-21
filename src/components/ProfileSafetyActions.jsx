@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { submitUserReport } from '../utils/submitUserReport'
 
 // Block and report buttons for someone else's profile.
 //
@@ -91,11 +92,9 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
     setBusy(true)
     setError('')
     const extra = details.trim().slice(0, 500)
-    const description = 'Reported from profile. Reason: ' + reason + (extra ? '. Details: ' + extra : '')
-    const { error: err } = await supabase.from('safety_alerts').insert({ reporter_id: myId, reported_user_id: userId, alert_type: 'flag', description })
+    const { error: err } = await submitUserReport({ reporterId: myId, reportedUserId: userId, source: 'profile', reason, details: extra })
     setBusy(false)
     if (err) {
-      console.error('[ProfileSafetyActions] report failed', err)
       setError('Could not send your report. Try again.')
       return
     }

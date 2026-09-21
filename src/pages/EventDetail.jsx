@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
 import { createNotification } from '../utils/notificationHelpers'
 import { useMenuPosition } from '../utils/useMenuPosition'
+import { submitUserReport } from '../utils/submitUserReport'
 
 const STATUS_CONFIG = {
   safe:        { label: 'Safe',         color: '#4ecca3', bg: '#1a3a2a', icon: '✔' },
@@ -211,27 +212,10 @@ export default function EventDetail() {
     navigate('/conversation/' + convo.id)
   }
 
-  // Fan a safety report out to every admin right away, rather than letting it
-  // sit in the Reports tab until someone happens to open it. Separate from
-  // the nearest_admin loop used below for event-closure disputes: a report
-  // about a person isn't tied to a place the way an emergency event is, so
-  // this goes to every admin rather than just the nearest one.
-  async function notifyAdminsOfReport(title, body, link) {
-    const { data: admins, error: adminsErr } = await supabase.from('helper_profiles').select('user_id').in('role', ['admin', 'founder'])
-    if (adminsErr) { console.error('Failed to load admins to notify:', adminsErr); return }
-    if (!admins || admins.length === 0) return
-    for (const admin of admins) {
-      const { error: notifErr } = await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'safety_report', title, body, link, read: false })
-      if (notifErr) console.error('Failed to notify admin', admin.user_id, notifErr)
-    }
-  }
-
   async function reportUser(userId) {
-    const { error } = await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: userId, alert_type: 'flag', description: 'Reported from emergency event' })
+    const { error } = await submitUserReport({ reporterId: user.id, reportedUserId: userId, source: 'event', details: 'Reported from an emergency event' })
     setOpenSignupMenu(null)
-    if (error) { console.error('Failed to submit report:', error); alert('Could not submit your report. Try again.'); return }
-    const reportedSignup = signups.find(s => s.user_id === userId)
-    await notifyAdminsOfReport('New safety report', 'A report was filed about ' + (reportedSignup?.display_name || 'a neighbor') + ' from an emergency event.', '/admin')
+    if (error) { alert(error); return }
     alert('Report submitted. Thank you for keeping the community safe.')
   }
 

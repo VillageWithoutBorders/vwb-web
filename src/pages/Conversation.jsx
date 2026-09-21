@@ -7,6 +7,7 @@ import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import AvatarDisplay from '../components/AvatarDisplay'
+import { submitUserReport } from '../utils/submitUserReport'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar shown once, tighter spacing) instead of repeating the
@@ -118,21 +119,6 @@ export default function Conversation() {
     if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago'
     if (diff < 86400000) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
-  }
-
-  // Fan a safety report out to every admin right away, rather than letting it
-  // sit in the Reports tab until someone happens to open it. Mirrors the
-  // nearest_admin notify loop in EventDetail.jsx, but goes to every admin
-  // since a report about a person isn't tied to a place the way an
-  // emergency event is.
-  async function notifyAdminsOfReport(title, body, link) {
-    const { data: admins, error: adminsErr } = await supabase.from('helper_profiles').select('user_id').in('role', ['admin', 'founder'])
-    if (adminsErr) { console.error('Failed to load admins to notify:', adminsErr); return }
-    if (!admins || admins.length === 0) return
-    for (const admin of admins) {
-      const { error: notifErr } = await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'safety_report', title, body, link, read: false })
-      if (notifErr) console.error('Failed to notify admin', admin.user_id, notifErr)
-    }
   }
 
   if (loading) {
@@ -269,10 +255,9 @@ export default function Conversation() {
           <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128683;</span> Block User
         </button>
         <button onClick={async () => {
-          const { error } = await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: otherUserId, alert_type: 'flag', description: 'Reported from conversation' })
+          const { error } = await submitUserReport({ reporterId: user.id, reportedUserId: otherUserId, source: 'conversation', details: 'Reported from a conversation' })
           setShowSettings(false)
-          if (error) { console.error('Failed to submit report:', error); alert('Could not submit your report. Try again.'); return }
-          await notifyAdminsOfReport('New safety report', 'A report was filed about ' + otherName + ' from a conversation.', '/admin')
+          if (error) { alert(error); return }
           alert('Report submitted. Thank you for keeping the community safe.')
         }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9873;</span> Report User
