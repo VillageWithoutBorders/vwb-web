@@ -318,13 +318,18 @@ export default function Admin() {
     const { count: userCount, error: e1 } = await supabase.from('helper_profiles').select('id', { count: 'exact', head: true })
     const { count: ambassadorCount, error: e2 } = await supabase.from('helper_profiles').select('id', { count: 'exact', head: true }).eq('is_hope_ambassador', true)
     const { count: requestCount, error: e3 } = await supabase.from('help_requests').select('id', { count: 'exact', head: true })
-    const { count: matchCount, error: e4 } = await supabase.from('skill_matches').select('id', { count: 'exact', head: true })
+    // A row in skill_matches is one neighbor's offer to help on a request.
+    // Empty "accepted" = waiting for the requester, true = the requester said
+    // yes, and completed = both people marked the task done.
+    const { count: waitingCount, error: e4 } = await supabase.from('skill_matches').select('id', { count: 'exact', head: true }).is('accepted', null)
+    const { count: acceptedCount, error: e8 } = await supabase.from('skill_matches').select('id', { count: 'exact', head: true }).eq('accepted', true)
+    const { count: completedCount, error: e9 } = await supabase.from('skill_matches').select('id', { count: 'exact', head: true }).eq('helper_completed', true).eq('requester_completed', true)
     const { count: eventCount, error: e5 } = await supabase.from('emergency_events').select('id', { count: 'exact', head: true }).eq('status', 'active')
     const { count: openReportCount, error: e6 } = await supabase.from('user_reports').select('id', { count: 'exact', head: true }).eq('status', 'open')
     const { count: checkinCount, error: e7 } = await supabase.from('safety_alerts').select('id', { count: 'exact', head: true })
-    ;[e1, e2, e3, e4, e5, e6, e7].forEach((e, i) => reportError('loadStats:' + i, e))
+    ;[e1, e2, e3, e4, e5, e6, e7, e8, e9].forEach((e, i) => reportError('loadStats:' + i, e))
     const alertCount = (openReportCount || 0) + (checkinCount || 0)
-    setStats({ users: userCount || 0, ambassadors: ambassadorCount || 0, requests: requestCount || 0, matches: matchCount || 0, events: eventCount || 0, alerts: alertCount || 0 })
+    setStats({ users: userCount || 0, ambassadors: ambassadorCount || 0, requests: requestCount || 0, offersWaiting: waitingCount || 0, accepted: acceptedCount || 0, completed: completedCount || 0, events: eventCount || 0, alerts: alertCount || 0 })
   }
 
   async function loadApprovals() {
@@ -552,7 +557,7 @@ export default function Admin() {
 
   const tabStyle = (active) => ({ padding: '0.5rem 0.85rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? '#4ecca3' : '#2a2a2a', color: active ? '#1a1a1a' : '#aaa' })
   const cardStyle = { background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }
-  const statCardStyle = { textAlign: 'center', padding: '0.75rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333', width: '100%', fontFamily: 'inherit' }
+  const statCardStyle = { textAlign: 'center', padding: '0.75rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333', width: '100%', fontFamily: 'inherit', gridColumn: 'span 2' }
 
   const falseAlarms = approvals.filter(a => a.type === 'false_alarm_request')
   const duplicates = approvals.filter(a => a.type === 'duplicate_merge_request')
@@ -565,7 +570,7 @@ export default function Admin() {
         <button onClick={() => navigate('/admin/report')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem', display: isFounder ? 'inline-block' : 'none' }}>Grant Report</button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
         <button type="button" className="admin-stat-card" onClick={() => setTab('users')} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.users}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Users</div>
@@ -578,15 +583,23 @@ export default function Admin() {
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.requests}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Requests</div>
         </button>
-        <div style={statCardStyle}>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#66aaff' }}>{stats.matches}</div>
-          <div style={{ fontSize: '0.7rem', color: '#888' }}>Matches</div>
+        <div style={statCardStyle} title="Neighbors who offered to help and are waiting for the requester to say yes or no">
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#66aaff' }}>{stats.offersWaiting}</div>
+          <div style={{ fontSize: '0.7rem', color: '#888' }}>Offers waiting</div>
         </div>
-        <button type="button" className="admin-stat-card" onClick={() => setTab('emergencies')} style={statCardStyle}>
+        <div style={statCardStyle} title="Offers the requester said yes to">
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#66aaff' }}>{stats.accepted}</div>
+          <div style={{ fontSize: '0.7rem', color: '#888' }}>Accepted</div>
+        </div>
+        <div style={statCardStyle} title="Tasks both people marked done">
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#66aaff' }}>{stats.completed}</div>
+          <div style={{ fontSize: '0.7rem', color: '#888' }}>Completed</div>
+        </div>
+        <button type="button" className="admin-stat-card" onClick={() => setTab('emergencies')} style={{ ...statCardStyle, gridColumn: 'span 3' }}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ff6644' }}>{stats.events}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Events</div>
         </button>
-        <button type="button" className="admin-stat-card" onClick={() => setTab('reports')} style={statCardStyle}>
+        <button type="button" className="admin-stat-card" onClick={() => setTab('reports')} style={{ ...statCardStyle, gridColumn: 'span 3' }}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: stats.alerts > 0 ? '#ff4444' : '#888' }}>{stats.alerts}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Reports</div>
         </button>
