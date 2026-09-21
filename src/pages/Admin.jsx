@@ -742,6 +742,7 @@ export default function Admin() {
                 {a.reported_user_id && a.reported_name}
               </p>
               {a.description && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{a.description}</p>}
+              {a.reported_user_id && <button type="button" onClick={() => navigate('/u/' + a.reported_user_id)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', padding: '0.25rem 0', fontWeight: 600 }}>View their profile</button>}
             </div>
           ))}
         </>
