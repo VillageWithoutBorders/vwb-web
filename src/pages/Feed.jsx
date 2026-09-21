@@ -192,6 +192,9 @@ export default function Feed() {
     async function handleOfferHelp(e, req) {
         e.stopPropagation()
 
+        // Make sure it was on purpose. The requester is told the moment you offer.
+        if (!confirm('Offer to help with ' + req.skill_needed + '?\n\nThe person is told right away. You can take your offer back until they say yes.')) return
+
         // Check if request is already full
         const accepted = acceptedCounts[req.id] || 0
         if (req.max_helpers !== null && accepted >= req.max_helpers) {
@@ -226,7 +229,40 @@ export default function Feed() {
         // Update local state so the card shows "Pending" immediately
         setMyPendingOffers(prev => new Set([...prev, req.id]))
 
-        alert('Your offer has been sent! The requester will review it and get back to you.')
+        alert('Your offer has been sent! The requester will review it and get back to you. You can take it back with Withdraw, here or in Messages.')
+    }
+
+    // Take back an offer that has not been answered yet.
+    async function handleWithdrawOffer(e, req) {
+        e.stopPropagation()
+        if (!confirm('Take back your offer to help with ' + req.skill_needed + '?')) return
+
+        const { data: mine, error: findErr } = await supabase
+            .from('skill_matches')
+            .select('id')
+            .eq('request_id', req.id)
+            .eq('helper_id', user.id)
+            .is('accepted', null)
+            .maybeSingle()
+        if (findErr || !mine) {
+            console.error('Failed to find your offer to withdraw:', findErr)
+            alert('Could not find your offer. It may already have been answered. Refresh to see where it stands.')
+            return
+        }
+
+        const { error } = await supabase.rpc('withdraw_offer', { p_match_id: mine.id })
+        if (error) {
+            console.error('Failed to withdraw offer:', error)
+            alert(error.code === '55000' || error.code === 'P0002' ? error.message : 'Could not withdraw your offer. Try again.')
+            return
+        }
+
+        setMyPendingOffers(prev => {
+            const next = new Set(prev)
+            next.delete(req.id)
+            return next
+        })
+        alert('Your offer was withdrawn.')
     }
 
     function getHelperStatus(req) {
@@ -377,9 +413,14 @@ export default function Feed() {
                                                 </button>
                                             )}
                                             {req.requester_id !== user.id && isPending && (
-                                                <span style={{ fontSize: '0.8rem', color: '#b8860b', fontWeight: 600 }}>
-                                                    {"⏳"} Pending
-                                                </span>
+                                                <>
+                                                    <span style={{ fontSize: '0.8rem', color: '#b8860b', fontWeight: 600 }}>
+                                                        {"⏳"} Pending
+                                                    </span>
+                                                    <button className="btn btn-outline btn-sm" onClick={(e) => handleWithdrawOffer(e, req)}>
+                                                        Withdraw
+                                                    </button>
+                                                </>
                                             )}
                                             {req.requester_id !== user.id && isFull && !isPending && (
                                                 <span style={{ fontSize: '0.8rem', color: '#2d6a4f', fontWeight: 600 }}>
@@ -451,6 +492,7 @@ export default function Feed() {
                                                         return
                                                     }
                                                     if (existing) { navigate('/conversation/' + existing.id); return }
+                                                    if (!confirm('Message ' + (offer.poster_name || 'this neighbor') + ' about "' + offer.title + '"?\n\nThis starts a chat and sends them a message right away.')) return
                                                     const { data: convo, error: convoErr } = await supabase
                                                         .from('conversations')
                                                         .insert({ helper_id: offer.user_id, requester_id: user.id })
