@@ -6,6 +6,7 @@ import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import AvatarDisplay from '../components/AvatarDisplay'
+import { submitUserReport } from '../utils/submitUserReport'
 
 const DISAPPEAR_STEPS = [
   { label: 'Off', mins: 0 },
@@ -533,29 +534,11 @@ export default function Messages() {
     await loadBlocked()
   }
 
-  // Fan a safety report out to every admin right away, rather than letting it
-  // sit in the Reports tab until someone happens to open it.
-  async function notifyAdminsOfReport(title, body, link) {
-    const { data: admins, error: adminsErr } = await supabase.from('helper_profiles').select('user_id').in('role', ['admin', 'founder'])
-    if (adminsErr) { console.error('Failed to load admins to notify:', adminsErr); return }
-    if (!admins || admins.length === 0) return
-    for (const admin of admins) {
-      const { error: notifErr } = await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'safety_report', title, body, link, read: false })
-      if (notifErr) console.error('Failed to notify admin', admin.user_id, notifErr)
-    }
-  }
-
   async function reportConversation(convoId, otherId) {
     const reason = prompt('Why are you reporting this conversation? (optional)')
-    const { error } = await supabase.from('safety_alerts').insert({ reporter_id: user.id, reported_user_id: otherId, alert_type: 'flag', description: reason || 'Reported from messages' })
+    const { error } = await submitUserReport({ reporterId: user.id, reportedUserId: otherId, source: 'messages', details: reason || 'Reported from messages' })
     setOpenMenu(null)
-    if (error) {
-      console.error('Failed to submit report:', error)
-      alert('Could not submit your report. Try again.')
-      return
-    }
-    const reportedConvo = convos.find(c => c.id === convoId)
-    await notifyAdminsOfReport('New safety report', 'A conversation with ' + (reportedConvo?.otherName || 'a neighbor') + ' was reported.', '/admin')
+    if (error) { alert(error); return }
     alert('Report submitted. Thank you for helping keep our community safe.')
   }
 

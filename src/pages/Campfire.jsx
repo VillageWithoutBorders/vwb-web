@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
 import { useMenuPosition } from '../utils/useMenuPosition'
+import { submitUserReport } from '../utils/submitUserReport'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
@@ -125,34 +126,17 @@ export default function Campfire() {
     navigate('/')
   }
 
-  // Fan a safety report out to every admin right away, rather than letting it
-  // sit in the Reports tab until someone happens to open it.
-  async function notifyAdminsOfReport(title, body, link) {
-    const { data: admins, error: adminsErr } = await supabase.from('helper_profiles').select('user_id').in('role', ['admin', 'founder'])
-    if (adminsErr) { console.error('Failed to load admins to notify:', adminsErr); return }
-    if (!admins || admins.length === 0) return
-    for (const admin of admins) {
-      const { error: notifErr } = await supabase.from('notifications').insert({ user_id: admin.user_id, type: 'safety_report', title, body, link, read: false })
-      if (notifErr) console.error('Failed to notify admin', admin.user_id, notifErr)
-    }
-  }
-
   async function reportMessage(msg) {
     setOpenMsgMenu(null)
     if (!confirm('Report this message to the admins?')) return
     const info = names[msg.user_id] || { name: 'Unknown' }
-    const { error } = await supabase.from('safety_alerts').insert({
-      reporter_id: user.id,
-      reported_user_id: msg.user_id,
-      alert_type: 'flag',
-      description: 'Reported Campfire message from ' + info.name + ': "' + (msg.body.length > 100 ? msg.body.slice(0, 100) + '...' : msg.body) + '"'
+    const { error } = await submitUserReport({
+      reporterId: user.id,
+      reportedUserId: msg.user_id,
+      source: 'campfire',
+      details: 'Campfire message from ' + info.name + ': "' + (msg.body.length > 100 ? msg.body.slice(0, 100) + '...' : msg.body) + '"'
     })
-    if (error) {
-      console.error('Failed to submit report:', error)
-      alert('Could not submit your report. Try again.')
-      return
-    }
-    await notifyAdminsOfReport('New safety report', 'A Campfire message from ' + info.name + ' was reported.', '/admin')
+    if (error) { alert(error); return }
     alert('Report submitted. An admin will review this message.')
   }
 
