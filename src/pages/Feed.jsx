@@ -86,7 +86,7 @@ export default function Feed() {
 
     // Load match data for visible requests
     async function loadMatchData(requestIds) {
-        if (!requestIds.length) return {}
+        if (!requestIds.length) return { counts: {}, ended: new Set() }
 
         // Get accepted counts per request
         const { data: accepted, error: acceptedErr } = await supabase
@@ -114,7 +114,18 @@ export default function Feed() {
         if (pendingErr) console.error('Failed to load your pending offers:', pendingErr)
 
         setMyPendingOffers(new Set((pending || []).map(m => m.request_id)))
-        return counts
+
+        // Offers of mine that ended (I stepped back, or the requester closed them
+        // out). The request stays off my feed so I cannot offer on it twice.
+        const { data: endedRows, error: endedErr } = await supabase
+            .from('skill_matches')
+            .select('request_id')
+            .in('request_id', requestIds)
+            .eq('helper_id', user.id)
+            .eq('accepted', false)
+        if (endedErr) console.error('Failed to load your ended offers:', endedErr)
+
+        return { counts, ended: new Set((endedRows || []).map(m => m.request_id)) }
     }
 
     const loadFeed = useCallback(async () => {
@@ -161,8 +172,8 @@ export default function Feed() {
             // Once a request has its helpers it is no longer public. The requester
             // and the accepted helper find it under Tasks instead.
             reqs = reqs.filter(r => !NO_LONGER_OPEN.includes(r.status))
-            const counts = await loadMatchData(reqs.map(r => r.id))
-            reqs = reqs.filter(r => r.max_helpers === null || (counts[r.id] || 0) < r.max_helpers)
+            const { counts, ended } = await loadMatchData(reqs.map(r => r.id))
+            reqs = reqs.filter(r => !ended.has(r.id) && (r.max_helpers === null || (counts[r.id] || 0) < r.max_helpers))
 
             setRequests(reqs)
         } else {
