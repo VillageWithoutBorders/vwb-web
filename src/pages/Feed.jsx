@@ -8,6 +8,9 @@ import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
 import AvatarDisplay from '../components/AvatarDisplay'
 
+// Request statuses that mean "not looking for helpers anymore".
+const NO_LONGER_OPEN = ['in_progress', 'matched', 'completed', 'cancelled', 'closed', 'archived']
+
 async function enrichRequests(reqs) {
     const userIds = [...new Set(reqs.map(r => r.requester_id).filter(Boolean))]
     if (userIds.length === 0) return reqs
@@ -83,7 +86,7 @@ export default function Feed() {
 
     // Load match data for visible requests
     async function loadMatchData(requestIds) {
-        if (!requestIds.length) return
+        if (!requestIds.length) return {}
 
         // Get accepted counts per request
         const { data: accepted, error: acceptedErr } = await supabase
@@ -111,6 +114,7 @@ export default function Feed() {
         if (pendingErr) console.error('Failed to load your pending offers:', pendingErr)
 
         setMyPendingOffers(new Set((pending || []).map(m => m.request_id)))
+        return counts
     }
 
     const loadFeed = useCallback(async () => {
@@ -143,18 +147,24 @@ export default function Feed() {
             if (reqIds.length > 0) {
                 const { data: hrData, error: hrErr } = await supabase
                     .from('help_requests')
-                    .select('id, max_helpers')
+                    .select('id, max_helpers, status')
                     .in('id', reqIds)
                 if (hrErr) console.error('Failed to load helper limits:', hrErr)
                 const maxMap = {}
+                const statusMap = {}
                 if (hrData) {
-                    for (const hr of hrData) maxMap[hr.id] = hr.max_helpers
+                    for (const hr of hrData) { maxMap[hr.id] = hr.max_helpers; statusMap[hr.id] = hr.status }
                 }
-                reqs = reqs.map(r => ({ ...r, max_helpers: maxMap[r.id] ?? 1 }))
+                reqs = reqs.map(r => ({ ...r, max_helpers: maxMap[r.id] ?? 1, status: statusMap[r.id] ?? r.status }))
             }
 
+            // Once a request has its helpers it is no longer public. The requester
+            // and the accepted helper find it under Tasks instead.
+            reqs = reqs.filter(r => !NO_LONGER_OPEN.includes(r.status))
+            const counts = await loadMatchData(reqs.map(r => r.id))
+            reqs = reqs.filter(r => r.max_helpers === null || (counts[r.id] || 0) < r.max_helpers)
+
             setRequests(reqs)
-            await loadMatchData(reqIds)
         } else {
             let query = supabase.from('offers').select('*').eq('is_available', true).order('created_at', { ascending: false })
             if (filterOfferCat !== 'all') { query = query.eq('category', filterOfferCat) }
