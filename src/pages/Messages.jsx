@@ -230,10 +230,13 @@ export default function Messages() {
   async function declineOffer(offer) {
     setProcessingOffer(offer.id)
 
-    const { error } = await supabase
+    const { data: deleted, error: declineErr } = await supabase
       .from('skill_matches')
       .delete()
       .eq('id', offer.id)
+      .select('id')
+    // The database can refuse a delete without an error. Treat "nothing removed" as a failure.
+    const error = declineErr || (!deleted || deleted.length === 0 ? { message: 'No offer was removed.' } : null)
 
     if (error) {
       console.error('Failed to decline offer:', error)
@@ -298,8 +301,11 @@ export default function Messages() {
   }
 
   async function withdrawOffer(matchId) {
-    const { error } = await supabase.from('skill_matches').delete().eq('id', matchId)
-    if (error) { console.error('Failed to withdraw offer:', error); alert('Could not withdraw your offer. Try again.'); return }
+    const { error } = await supabase.rpc('withdraw_offer', { p_match_id: matchId })
+    if (error) {
+      console.error('Failed to withdraw offer:', error)
+      alert(error.code === '55000' || error.code === 'P0002' ? error.message : 'Could not withdraw your offer. Try again.')
+    }
     await loadMyOutgoingOffers()
   }
 
