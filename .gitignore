@@ -44,3 +44,6 @@ supabase/.temp/
 
 # Reference-only files kept outside the repo (see ../reference/)
 vwb-complete-schema.sql
+
+# Local drafts and screenshots, not for the public repo
+drafts/
