@@ -41,6 +41,18 @@ export default function Profile() {
   const [ambSignupCampfireNotify, setAmbSignupCampfireNotify] = useState(false)
   const [ambSignupSaving, setAmbSignupSaving] = useState(false)
   const [ambSignupError, setAmbSignupError] = useState('')
+  const [ambSignupHowKnown, setAmbSignupHowKnown] = useState('')
+  // The most recent Ambassador application, so the page can say "your
+  // application is in" instead of offering the signup form again.
+  const [ambApplication, setAmbApplication] = useState(null)
+
+  useEffect(() => {
+    if (!user?.id || profile?.is_hope_ambassador) { setAmbApplication(null); return }
+    supabase.from('ambassador_applications').select('id, status, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle().then(({ data, error }) => {
+      if (error) { console.error('Failed to load your ambassador application:', error); return }
+      setAmbApplication(data || null)
+    })
+  }, [user?.id, profile?.is_hope_ambassador])
 
   const [skillOptions, setSkillOptions] = useState([])
   const [showAdminApp, setShowAdminApp] = useState(false)
@@ -135,16 +147,28 @@ export default function Profile() {
 
   async function handleAmbassadorSignup() {
     if (ambSignupSkills.length === 0) { setAmbSignupError('Pick at least one skill you can help with.'); return }
+    if (!ambSignupHowKnown.trim()) { setAmbSignupError('Tell us how you know this community, or who can vouch for you.'); return }
     setAmbSignupSaving(true); setAmbSignupError('')
+    // Details about you save right away. The Ambassador badge does not: an
+    // admin hands it out when they approve the application, and the database
+    // makes sure nobody can skip that step.
     const { error: updateError } = await supabase.from('helper_profiles').update({
-      is_hope_ambassador: true, skills: ambSignupSkills,
+      skills: ambSignupSkills,
       availability: ambSignupAvailability.trim(), interests: ambSignupInterests.trim(), is_available: true,
       campfire_notifications_enabled: ambSignupCampfireNotify,
     }).eq('user_id', user.id)
     reportError('handleAmbassadorSignup', updateError)
     if (updateError) { setAmbSignupError('Something went wrong. Try again.'); setAmbSignupSaving(false); return }
+    const { data: waiting, error: waitingError } = await supabase.from('ambassador_applications').select('id').eq('user_id', user.id).eq('status', 'pending').limit(1).maybeSingle()
+    reportError('handleAmbassadorSignup:existing', waitingError)
+    if (!waiting) {
+      const { data: app, error: appError } = await supabase.from('ambassador_applications').insert({ user_id: user.id, how_known: ambSignupHowKnown.trim() }).select('id, status, created_at').single()
+      reportError('handleAmbassadorSignup:apply', appError)
+      if (appError) { setAmbSignupError('Something went wrong sending your application. Try again.'); setAmbSignupSaving(false); return }
+      setAmbApplication(app)
+    }
     await refreshProfile()
-    setShowAmbassadorSignup(false); setMessage('Welcome aboard! You are now a Hope Ambassador.'); setAmbSignupSaving(false)
+    setShowAmbassadorSignup(false); setMessage('Application sent. An admin will look it over, and you will get a notification when there is an answer.'); setAmbSignupSaving(false)
   }
 
   async function loadAdminAppStatus() {
@@ -316,34 +340,46 @@ function captureCoverageLocation() {
           </div>
         )}
 
-        {!profile?.is_hope_ambassador && !showAmbassadorSignup && (
+        {!profile?.is_hope_ambassador && ambApplication?.status === 'pending' && (
+          <div className="amb-signup-card">
+            <div className="amb-signup-icon" aria-hidden="true">{'🌿'}</div>
+            <h2 className="amb-signup-title">Your application is in</h2>
+            <p className="amb-signup-desc">
+              An admin will look it over and let you know. Until then you can ask
+              for help, offer help, and look around.
+            </p>
+          </div>
+        )}
+
+        {!profile?.is_hope_ambassador && ambApplication?.status !== 'pending' && !showAmbassadorSignup && (
           <div className="amb-signup-card">
             <div className="amb-signup-icon" aria-hidden="true">{'🌿'}</div>
             <h2 className="amb-signup-title">Become a Hope Ambassador</h2>
             <p className="amb-signup-desc">
               Hope Ambassadors are neighbors who volunteer their time and skills
-              to help others in the community. Sign up and we will match you with
-              people nearby who need a hand.
+              to help others in the community. An admin looks over each application
+              so this stays a community people can trust.
+              {ambApplication?.status === 'declined' && ' Your last application was not approved. You can apply again, or reach out to an admin.'}
             </p>
             <button className="btn btn-primary btn-full" onClick={() => setShowAmbassadorSignup(true)}>
-              Sign me up
+              Apply
             </button>
           </div>
         )}
 
-        {!profile?.is_hope_ambassador && !isAdmin && !showAmbassadorSignup && (
+        {!profile?.is_hope_ambassador && !isAdmin && ambApplication?.status !== 'pending' && !showAmbassadorSignup && (
           <button onClick={() => setShowAmbassadorSignup(true)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "0.75rem", padding: "0.75rem", background: "linear-gradient(135deg, #3a2a10, #4a3520)", border: "2px solid #ff8844", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
             <span style={{ fontSize: "1.5rem" }}>&#128293;</span>
             <div>
               <span style={{ display: "block", color: "#ffaa44", fontWeight: 700, fontSize: "0.95rem" }}>The Campfire</span>
-              <span style={{ color: "#cc9966", fontSize: "0.75rem" }}>Want in? Become a Hope Ambassador above &#8594;</span>
+              <span style={{ color: "#cc9966", fontSize: "0.75rem" }}>Want in? Apply to be a Hope Ambassador above &#8594;</span>
             </div>
           </button>
         )}
 
         {!profile?.is_hope_ambassador && showAmbassadorSignup && (
           <div className="amb-signup-form">
-            <h2 className="amb-signup-title">Hope Ambassador Signup</h2>
+            <h2 className="amb-signup-title">Hope Ambassador Application</h2>
             <p className="amb-signup-desc" style={{ marginBottom: '1rem' }}>
               Tell us a little about how you can help.
             </p>
@@ -365,6 +401,10 @@ function captureCoverageLocation() {
               <label htmlFor="ambAbout">Anything else you want neighbors to know?</label>
               <textarea id="ambAbout" value={ambSignupInterests} onChange={(e) => setAmbSignupInterests(e.target.value)} placeholder="Your experience, why you want to help, or anything else" rows={3} />
             </div>
+            <div className="form-field">
+              <label htmlFor="ambHowKnown">How do you know this community, or who can vouch for you?</label>
+              <textarea id="ambHowKnown" value={ambSignupHowKnown} onChange={(e) => setAmbSignupHowKnown(e.target.value)} placeholder="A neighbor, a group, an event, or a name an admin can reach out to" rows={2} />
+            </div>
             <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
               <input type="checkbox" checked={ambSignupCampfireNotify} onChange={(e) => setAmbSignupCampfireNotify(e.target.checked)} />
               <span>
@@ -376,7 +416,7 @@ function captureCoverageLocation() {
             <div className="form-row" style={{ marginTop: '0.5rem' }}>
               <button type="button" className="btn btn-outline" onClick={() => { setShowAmbassadorSignup(false); setAmbSignupSkills([]); setAmbSignupAvailability(''); setAmbSignupInterests(''); setAmbSignupCampfireNotify(false); setAmbSignupError('') }} disabled={ambSignupSaving}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={handleAmbassadorSignup} disabled={ambSignupSaving} style={{ flex: 1 }}>
-                {ambSignupSaving ? 'Saving...' : 'Become an Ambassador'}
+                {ambSignupSaving ? 'Sending...' : 'Send application'}
               </button>
             </div>
           </div>
