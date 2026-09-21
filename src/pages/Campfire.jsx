@@ -73,17 +73,24 @@ export default function Campfire() {
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [hasAccess, viewVillageId])
 
+  // Scoped to the village being viewed, so an emergency in one village never
+  // shows up as a banner in another village's room. Re-runs when an admin
+  // switches villages.
   useEffect(() => {
+    if (!viewVillageId) return
+    let cancelled = false
+    setActiveEmergencies([])
     function loadActiveEmergencies() {
-      supabase.from('emergency_events').select('id, title, location_name, event_type').eq('status', 'active').eq('verified', true).order('created_at', { ascending: false }).then(({ data, error }) => {
+      supabase.from('emergency_events').select('id, title, location_name, event_type').eq('status', 'active').eq('verified', true).eq('village_id', viewVillageId).order('created_at', { ascending: false }).then(({ data, error }) => {
+        if (cancelled) return
         if (error) { console.error('Failed to load active emergencies:', error); return }
         if (data) setActiveEmergencies(data)
       })
     }
     loadActiveEmergencies()
     const timer = setInterval(loadActiveEmergencies, 60000)
-    return () => clearInterval(timer)
-  }, [])
+    return () => { cancelled = true; clearInterval(timer) }
+  }, [viewVillageId])
 
   function dismissEmergency(id) {
     const next = [...dismissedEmergencyIds, id]
