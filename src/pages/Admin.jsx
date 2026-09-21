@@ -16,6 +16,18 @@ function reportError(context, error, userMessage) {
   return true
 }
 
+// Ways to narrow the Users tab. Key, then the label on the button.
+const USER_FILTERS = [
+  ['all', 'Everyone'],
+  ['neighbors', 'Neighbors'],
+  ['ambassadors', 'Ambassadors'],
+  ['waiting', 'Waiting for approval'],
+  ['admins', 'Admins'],
+  ['no_vouches', 'No vouches yet'],
+  ['unfinished', 'No profile yet'],
+]
+const USER_PAGE_SIZE = 50
+
 export default function Admin() {
   const { user, profile, isAdmin, isFounder } = useAuth()
   const navigate = useNavigate()
@@ -25,6 +37,11 @@ export default function Admin() {
   const [alerts, setAlerts] = useState([])
   const [checkinAlerts, setCheckinAlerts] = useState([])
   const [users, setUsers] = useState([])
+  const [userQuery, setUserQuery] = useState('')
+  const [userFilter, setUserFilter] = useState('all')
+  const [userVillage, setUserVillage] = useState('all')
+  const [userSort, setUserSort] = useState('newest')
+  const [userLimit, setUserLimit] = useState(USER_PAGE_SIZE)
   const [stats, setStats] = useState({})
   const [approvals, setApprovals] = useState([])
   const [adminApplications, setAdminApplications] = useState([])
@@ -267,20 +284,34 @@ export default function Admin() {
   }
 
   async function loadUsers() {
-    const { data, error } = await supabase.from('helper_profiles').select('user_id, display_name, avatar_url, is_hope_ambassador, is_available, created_at, village_id').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('helper_profiles').select('user_id, display_name, avatar_url, is_hope_ambassador, is_available, created_at, village_id, role').order('created_at', { ascending: false })
     reportError('loadUsers', error)
-    if (data) {
-      const withVouches = await Promise.all(data.map(async (u) => {
-        const { count, error: countErr } = await supabase.from('vouches').select('id', { count: 'exact', head: true }).eq('vouchee_id', u.user_id)
-        reportError('loadUsers:vouchCount', countErr)
-        const { data: prof, error: profErr } = await supabase.from('helper_profiles').select('role').eq('user_id', u.user_id).maybeSingle()
-        reportError('loadUsers:role', profErr)
-        const { data: app, error: appErr } = await supabase.from('admin_applications').select('status').eq('user_id', u.user_id).order('created_at', { ascending: false }).limit(1).maybeSingle()
-        reportError('loadUsers:appStatus', appErr)
-        return { ...u, vouch_count: count || 0, role: prof?.role || 'member', admin_app_status: app?.status || null }
-      }))
-      setUsers(withVouches)
-    }
+    if (!data) return
+
+    // Two lookups for everyone at once, instead of three per person.
+    const { data: vouchRows, error: vouchErr } = await supabase.from('vouches').select('vouchee_id')
+    reportError('loadUsers:vouches', vouchErr)
+    const vouchCounts = {}
+    ;(vouchRows || []).forEach(v => { vouchCounts[v.vouchee_id] = (vouchCounts[v.vouchee_id] || 0) + 1 })
+
+    const { data: appRows, error: appErr } = await supabase.from('admin_applications').select('user_id, status, created_at').order('created_at', { ascending: false })
+    reportError('loadUsers:appStatus', appErr)
+    const latestApp = {}
+    ;(appRows || []).forEach(a => { if (!latestApp[a.user_id]) latestApp[a.user_id] = a.status })
+
+    const withProfiles = data.map(u => ({ ...u, vouch_count: vouchCounts[u.user_id] || 0, role: u.role || 'member', admin_app_status: latestApp[u.user_id] || null }))
+
+    // People who signed up but have no profile yet (a profile is made the first
+    // time someone signs in after confirming their email). If the database
+    // function is not installed yet, this quietly returns nothing.
+    const { data: unfinished, error: unfinishedErr } = await supabase.rpc('admin_accounts_without_profile')
+    reportError('loadUsers:unfinished', unfinishedErr)
+    const noProfile = (unfinished || []).map(a => ({
+      user_id: a.user_id, display_name: a.display_name, email_hint: a.email_hint, created_at: a.created_at,
+      email_confirmed: a.email_confirmed, last_sign_in_at: a.last_sign_in_at,
+      no_profile: true, role: 'member', is_hope_ambassador: false, vouch_count: 0, village_id: null,
+    }))
+    setUsers([...withProfiles, ...noProfile])
   }
 
   async function loadStats() {
@@ -487,6 +518,37 @@ export default function Admin() {
     if (hrs < 24) return hrs + 'h ago'
     return Math.floor(hrs / 24) + 'd ago'
   }
+
+  // Users tab: search, filter, and sort. Counts on the buttons ignore the
+  // search box so they always show how many people fit each group.
+  const waitingIds = new Set(ambApplications.map(a => a.user_id))
+  const isAdminRole = (u) => u.role === 'admin' || u.role === 'founder'
+  const userMatches = {
+    all: () => true,
+    neighbors: (u) => !u.no_profile && !u.is_hope_ambassador && !isAdminRole(u),
+    ambassadors: (u) => !!u.is_hope_ambassador,
+    waiting: (u) => waitingIds.has(u.user_id),
+    admins: (u) => isAdminRole(u),
+    no_vouches: (u) => !u.no_profile && u.vouch_count === 0,
+    unfinished: (u) => !!u.no_profile,
+  }
+  const userCounts = {}
+  USER_FILTERS.forEach(([key]) => { userCounts[key] = users.filter(userMatches[key]).length })
+  const userSearch = userQuery.trim().toLowerCase()
+  const visibleUsers = users
+    .filter(u => userMatches[userFilter](u))
+    .filter(u => userVillage === 'all' || (userVillage === 'none' ? !u.village_id : u.village_id === userVillage))
+    .filter(u => !userSearch || (u.display_name || 'unnamed').toLowerCase().includes(userSearch))
+    .sort((a, b) => {
+      if (userSort === 'oldest') return new Date(a.created_at) - new Date(b.created_at)
+      if (userSort === 'name') return (a.display_name || 'Unnamed').localeCompare(b.display_name || 'Unnamed', undefined, { sensitivity: 'base' })
+      if (userSort === 'vouches') return (b.vouch_count - a.vouch_count) || (new Date(b.created_at) - new Date(a.created_at))
+      return new Date(b.created_at) - new Date(a.created_at)
+    })
+  const filtersActive = userFilter !== 'all' || userVillage !== 'all' || userSearch !== ''
+  function clearUserFilters() { setUserFilter('all'); setUserVillage('all'); setUserQuery(''); setUserLimit(USER_PAGE_SIZE) }
+  const hiddenLabel = { position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }
+  const filterSelect = { padding: '0.4rem 0.5rem', minHeight: '36px', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#ccc', fontSize: '0.8rem' }
 
   const tabStyle = (active) => ({ padding: '0.5rem 0.85rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? '#4ecca3' : '#2a2a2a', color: active ? '#1a1a1a' : '#aaa' })
   const cardStyle = { background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }
@@ -696,7 +758,52 @@ export default function Admin() {
 
       {!loading && tab === 'users' && (
         <>
-          {users.map(u => (
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label htmlFor="user-search" style={hiddenLabel}>Search people by name</label>
+            <input id="user-search" type="search" value={userQuery} onChange={(e) => { setUserQuery(e.target.value); setUserLimit(USER_PAGE_SIZE) }} placeholder="Search by name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
+            <div role="group" aria-label="Filter people" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+              {USER_FILTERS.map(([key, label]) => (
+                <button key={key} type="button" aria-pressed={userFilter === key} onClick={() => { setUserFilter(key); setUserLimit(USER_PAGE_SIZE) }} style={{ ...tabStyle(userFilter === key), minHeight: '36px' }}>
+                  {label} <span style={{ opacity: 0.7 }}>{userCounts[key]}</span>
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.5rem' }}>
+              <select value={userSort} onChange={(e) => setUserSort(e.target.value)} aria-label="Sort people" style={filterSelect}>
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="name">Name A to Z</option>
+                <option value="vouches">Most vouches</option>
+              </select>
+              {villages.length > 1 && (
+                <select value={userVillage} onChange={(e) => { setUserVillage(e.target.value); setUserLimit(USER_PAGE_SIZE) }} aria-label="Filter by village" style={filterSelect}>
+                  <option value="all">All villages</option>
+                  {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                  <option value="none">No village</option>
+                </select>
+              )}
+              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, padding: '0.25rem' }}>Clear filters</button>}
+              <span role="status" style={{ marginLeft: 'auto', color: '#888', fontSize: '0.75rem' }}>Showing {Math.min(userLimit, visibleUsers.length)} of {visibleUsers.length}{visibleUsers.length !== users.length ? ' (' + users.length + ' total)' : ''}</span>
+            </div>
+          </div>
+
+          {visibleUsers.slice(0, userLimit).map(u => u.no_profile ? (
+            <div key={u.user_id} style={{ ...cardStyle, borderLeft: '3px solid #666' }}>
+              <div>
+                <span style={{ fontWeight: 700 }}>{u.display_name || 'No name given'}</span>
+                <span style={{ marginLeft: '0.4rem', background: '#2a2a2a', color: '#bbb', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>No profile yet</span>
+              </div>
+              <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>{u.email_hint || 'No email'} &middot; Signed up {new Date(u.created_at).toLocaleDateString()}</p>
+              <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>{u.email_confirmed ? 'Email confirmed' : 'Email not confirmed yet'} &middot; {u.last_sign_in_at ? 'Last signed in ' + new Date(u.last_sign_in_at).toLocaleDateString() : 'Never signed in'}</p>
+              <p style={{ color: '#777', fontSize: '0.72rem', margin: '0.3rem 0 0' }}>
+                {!u.email_confirmed
+                  ? 'They need to confirm their email and sign in. Their profile is made the first time they sign in.'
+                  : u.last_sign_in_at
+                    ? 'They signed in, but no profile was made. Ask them to sign in again.'
+                    : 'They confirmed their email but have not signed in yet.'}
+              </p>
+            </div>
+          ) : (
             <div key={u.user_id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -745,6 +852,16 @@ export default function Admin() {
               </div>
             </div>
           ))}
+
+          {visibleUsers.length > userLimit && (
+            <button type="button" onClick={() => setUserLimit(n => n + USER_PAGE_SIZE)} style={{ width: '100%', padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#4ecca3', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Show {Math.min(USER_PAGE_SIZE, visibleUsers.length - userLimit)} more</button>
+          )}
+          {visibleUsers.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#8a8a8a' }}>
+              <p>{users.length === 0 ? 'No one has signed up yet.' : 'No one matches.'}</p>
+              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontWeight: 600 }}>Clear filters</button>}
+            </div>
+          )}
         </>
       )}
 
