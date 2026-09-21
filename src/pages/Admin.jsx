@@ -36,6 +36,14 @@ const TASK_ISSUE_LABELS = {
   felt_off: 'Ended it: something felt off',
 }
 
+// Ways to narrow the SkillShare tab.
+const CONTENT_FILTERS = [
+  ['dupes', 'Possible duplicates'],
+  ['requests', 'Requests'],
+  ['offers', 'Offers'],
+  ['all', 'Everything'],
+]
+
 export default function Admin() {
   const { user, profile, isAdmin, isFounder } = useAuth()
   const navigate = useNavigate()
@@ -71,12 +79,17 @@ export default function Admin() {
   const [editingVillageId, setEditingVillageId] = useState(null)
   const [editVillageName, setEditVillageName] = useState('')
   const [editVillageRegion, setEditVillageRegion] = useState('')
+  const [content, setContent] = useState([])
+  const [contentQuery, setContentQuery] = useState('')
+  const [contentFilter, setContentFilter] = useState('dupes')
+  const [deletingKey, setDeletingKey] = useState(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
 
   useEffect(() => { loadAll() }, [])
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadAmbassadorApplications(), loadOrganizations(), loadVillages()])
+    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadAmbassadorApplications(), loadOrganizations(), loadVillages(), loadContent()])
     setLoading(false)
   }
 
@@ -97,6 +110,92 @@ export default function Admin() {
       return { ...c, member_count: count || 0, messages_this_week: msgWeekCount || 0, last_message_at: lastMsg?.created_at || null }
     }))
     setVillages(withCounts)
+  }
+
+  // SkillShare content: every request and offer, admin/founder only, so
+  // duplicates or stray posts can be permanently removed. A duplicate here
+  // means the same person posted the same thing more than once (same
+  // requester and skill, or same poster and title) - an exact match on who
+  // and what, not a guess about similar wording, so it only flags real
+  // repeats and never two neighbors asking for the same kind of help.
+  async function loadContent() {
+    const { data: reqs, error: reqErr } = await supabase.from('help_requests').select('id, requester_id, skill_needed, description, urgency, neighborhood, status, created_at').order('created_at', { ascending: false }).limit(300)
+    reportError('loadContent:requests', reqErr)
+    const { data: offs, error: offErr } = await supabase.from('offers').select('id, user_id, category, title, description, neighborhood, is_available, created_at').order('created_at', { ascending: false }).limit(300)
+    reportError('loadContent:offers', offErr)
+
+    const userIds = [...new Set([...(reqs || []).map(r => r.requester_id), ...(offs || []).map(o => o.user_id)].filter(Boolean))]
+    const { data: nameRows, error: nameErr } = userIds.length > 0 ? await supabase.from('helper_profiles').select('user_id, display_name').in('user_id', userIds) : { data: [], error: null }
+    reportError('loadContent:names', nameErr)
+    const nameOf = {}
+    ;(nameRows || []).forEach(n => { nameOf[n.user_id] = n.display_name })
+
+    const reqKeyCounts = {}
+    ;(reqs || []).forEach(r => {
+      const key = r.requester_id + '|' + (r.skill_needed || '').trim().toLowerCase()
+      reqKeyCounts[key] = (reqKeyCounts[key] || 0) + 1
+    })
+    const offKeyCounts = {}
+    ;(offs || []).forEach(o => {
+      const key = o.user_id + '|' + (o.title || '').trim().toLowerCase()
+      offKeyCounts[key] = (offKeyCounts[key] || 0) + 1
+    })
+
+    const reqItems = (reqs || []).map(r => ({
+      kind: 'request',
+      id: r.id,
+      poster_id: r.requester_id,
+      poster_name: nameOf[r.requester_id] || 'Unknown',
+      title: r.skill_needed,
+      description: r.description,
+      tag: r.urgency,
+      neighborhood: r.neighborhood,
+      status: r.status,
+      created_at: r.created_at,
+      is_duplicate: reqKeyCounts[r.requester_id + '|' + (r.skill_needed || '').trim().toLowerCase()] > 1,
+    }))
+    const offItems = (offs || []).map(o => ({
+      kind: 'offer',
+      id: o.id,
+      poster_id: o.user_id,
+      poster_name: nameOf[o.user_id] || 'Unknown',
+      title: o.title,
+      description: o.description,
+      tag: o.category,
+      neighborhood: o.neighborhood,
+      status: o.is_available ? 'open' : 'not available',
+      created_at: o.created_at,
+      is_duplicate: offKeyCounts[o.user_id + '|' + (o.title || '').trim().toLowerCase()] > 1,
+    }))
+
+    setContent([...reqItems, ...offItems].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
+  }
+
+  function askDeleteContent(item) { setDeletingKey(item.kind + '-' + item.id) }
+  function cancelDeleteContent() { setDeletingKey(null) }
+
+  // Permanent. The database keeps a private log of who deleted what and
+  // when, but the request or offer itself is gone for good.
+  async function confirmDeleteContent(item) {
+    setDeleteBusy(true)
+    const { error } = item.kind === 'request'
+      ? await supabase.rpc('admin_delete_help_request', { p_request_id: item.id })
+      : await supabase.rpc('admin_delete_offer', { p_offer_id: item.id })
+    setDeleteBusy(false)
+    if (error) {
+      // "Already gone" (P0002) isn't really a failure from the admin's seat -
+      // someone else may have deleted it, or it moved on. Just drop it from
+      // the list instead of alarming with an error.
+      if (error.code === 'P0002') {
+        setContent(prev => prev.filter(c => !(c.kind === item.kind && c.id === item.id)))
+        setDeletingKey(null)
+        return
+      }
+      reportError('confirmDeleteContent', error, error.message || 'Could not delete this. Try again.')
+      return
+    }
+    setContent(prev => prev.filter(c => !(c.kind === item.kind && c.id === item.id)))
+    setDeletingKey(null)
   }
 
   function slugifyVillageName(name) {
@@ -598,6 +697,14 @@ export default function Admin() {
     })
   const filtersActive = userFilter !== 'all' || userVillage !== 'all' || userSearch !== ''
   function clearUserFilters() { setUserFilter('all'); setUserVillage('all'); setUserQuery(''); setUserLimit(USER_PAGE_SIZE) }
+
+  // SkillShare tab: search and filter, same idea as Users above.
+  const duplicateCount = content.filter(c => c.is_duplicate).length
+  const contentCounts = { dupes: duplicateCount, requests: content.filter(c => c.kind === 'request').length, offers: content.filter(c => c.kind === 'offer').length, all: content.length }
+  const contentSearch = contentQuery.trim().toLowerCase()
+  const visibleContent = content
+    .filter(c => contentFilter === 'all' || (contentFilter === 'dupes' ? c.is_duplicate : c.kind === contentFilter.slice(0, -1)))
+    .filter(c => !contentSearch || [c.title, c.description, c.poster_name, c.neighborhood].filter(Boolean).join(' ').toLowerCase().includes(contentSearch))
   const hiddenLabel = { position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }
   const filterSelect = { padding: '0.4rem 0.5rem', minHeight: '36px', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#ccc', fontSize: '0.8rem' }
 
@@ -659,6 +766,7 @@ export default function Admin() {
         <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length + ambApplications.length) > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length + ambApplications.length}</span>}</button>
         <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length})</button>
         <button style={tabStyle(tab === 'villages')} onClick={() => setTab('villages')}>Villages ({villages.length})</button>
+        <button style={tabStyle(tab === 'content')} onClick={() => setTab('content')}>SkillShare {duplicateCount > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{duplicateCount}</span>}</button>
       </div>
 
       {loading && <p style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>Loading...</p>}
@@ -1132,6 +1240,64 @@ export default function Admin() {
               </div>
             </div>
           ))}
+        </>
+      )}
+
+      {!loading && tab === 'content' && (
+        <>
+          <p style={{ color: '#888', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
+            Deleting here is permanent. It removes the request or offer from SkillShare for good; any chat about it stays.
+          </p>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label htmlFor="content-search" style={hiddenLabel}>Search SkillShare posts</label>
+            <input id="content-search" type="search" value={contentQuery} onChange={(e) => setContentQuery(e.target.value)} placeholder="Search by skill, title, or name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
+            <div role="group" aria-label="Filter SkillShare posts" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+              {CONTENT_FILTERS.map(([key, label]) => (
+                <button key={key} type="button" aria-pressed={contentFilter === key} onClick={() => setContentFilter(key)} style={{ ...tabStyle(contentFilter === key), minHeight: '36px' }}>
+                  {label} <span style={{ opacity: 0.7 }}>{contentCounts[key]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {visibleContent.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>
+              {contentFilter === 'dupes' ? 'No possible duplicates found.' : 'Nothing matches.'}
+            </p>
+          ) : visibleContent.map(c => {
+            const key = c.kind + '-' + c.id
+            const confirming = deletingKey === key
+            return (
+              <div key={key} style={{ ...cardStyle, borderLeft: '3px solid ' + (c.is_duplicate ? '#ffaa44' : '#444') }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.3rem' }}>
+                  <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                    <span style={{ background: c.kind === 'request' ? '#1a3a5a' : '#1a4a3a', color: c.kind === 'request' ? '#66aaff' : '#4ecca3', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{c.kind === 'request' ? 'Request' : 'Offer'}</span>
+                    {c.is_duplicate && <span style={{ background: '#3a2a1a', color: '#ffaa44', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>POSSIBLE DUPLICATE</span>}
+                    <span style={{ background: '#2a2a2a', color: '#999', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>{c.status}</span>
+                  </div>
+                  <span style={{ color: '#888', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
+                </div>
+                <h4 style={{ margin: '0.4rem 0 0.15rem', fontSize: '0.95rem', color: '#eee' }}>{c.title || 'Untitled'}</h4>
+                <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.15rem 0' }}>
+                  <button type="button" onClick={() => navigate('/u/' + c.poster_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#4ecca3', cursor: 'pointer', textDecoration: 'underline' }}>{c.poster_name}</button>
+                  {c.neighborhood ? ' · ' + c.neighborhood : ''}{c.tag ? ' · ' + String(c.tag).replace(/_/g, ' ') : ''}
+                </p>
+                {c.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.2rem 0' }}>{c.description}</p>}
+
+                {confirming ? (
+                  <div style={{ marginTop: '0.5rem', padding: '0.6rem', background: '#2a1414', border: '1px solid #ff4444', borderRadius: '8px' }}>
+                    <p style={{ color: '#ffb3b3', fontSize: '0.8rem', margin: '0 0 0.5rem', fontWeight: 600 }}>Delete this {c.kind} for good? This can't be undone.</p>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button type="button" disabled={deleteBusy} onClick={() => confirmDeleteContent(c)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#ff4444', color: '#fff', fontWeight: 700, cursor: deleteBusy ? 'default' : 'pointer', fontSize: '0.85rem', opacity: deleteBusy ? 0.6 : 1 }}>{deleteBusy ? 'Deleting…' : 'Delete for good'}</button>
+                      <button type="button" disabled={deleteBusy} onClick={cancelDeleteContent} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => askDeleteContent(c)} style={{ marginTop: '0.4rem', padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Delete permanently</button>
+                )}
+              </div>
+            )
+          })}
         </>
       )}
     </div>
