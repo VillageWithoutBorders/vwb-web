@@ -57,6 +57,7 @@ export default function EmergencyEvents() {
     })
     const { error } = await supabase.from('campfire_messages').insert({
       user_id: user.id,
+      village_id: ev.village_id || profile?.village_id || null,
       body: '🚨 Emergency Verified: ' + ev.title + ' (' + (ev.location_name || 'Unknown area') + '). Head to the event page to sign up or add resources.'
     })
     if (error) console.error('Failed to post Campfire announcement:', error)
