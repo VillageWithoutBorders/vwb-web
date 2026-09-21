@@ -2,10 +2,16 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import VouchButton from '../components/VouchButton'
+import { useAuth } from '../context/AuthContext'
+import { startConversation } from '../utils/startConversation'
+import ProfileSafetyActions from '../components/ProfileSafetyActions'
 
 export default function PublicProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const [messaging, setMessaging] = useState(false)
+  const [blockedThem, setBlockedThem] = useState(false)
   const [profile, setProfile] = useState(null)
   const [tab, setTab] = useState('requests')
   const [requests, setRequests] = useState([])
@@ -87,6 +93,15 @@ export default function PublicProfile() {
     )
   }
 
+  async function messageThem() {
+    if (!user || messaging) return
+    setMessaging(true)
+    const { id, error } = await startConversation(user.id, userId)
+    setMessaging(false)
+    if (error) { alert(error); return }
+    navigate('/conversation/' + id)
+  }
+
   function formatDate(dateStr) {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
@@ -132,6 +147,10 @@ export default function PublicProfile() {
           {profile.show_location && profile.neighborhood && (
             <div style={{ color: '#888', fontSize: '0.8rem' }}>{profile.neighborhood}</div>
           )}
+          {user && user.id !== userId && !blockedThem && (
+            <button type="button" onClick={messageThem} disabled={messaging} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Opening...' : 'Message'}</button>
+          )}
+          <ProfileSafetyActions userId={userId} name={profile.display_name} myId={user?.id} onBlockChange={setBlockedThem} />
         </div>
       </div>
 

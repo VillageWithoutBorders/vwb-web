@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { canVouch } from '../utils/vouchEligibility'
+import { startConversation } from '../utils/startConversation'
 
 function reportError(context, error) {
   if (!error) return false
@@ -14,6 +15,7 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
   const src = url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId || 'default'}`
   const [showPopup, setShowPopup] = useState(false)
   const [info, setInfo] = useState(null)
+  const [messaging, setMessaging] = useState(false)
 
   async function loadInfo() {
     if (info || !userId) return
@@ -40,6 +42,7 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
       vouches: vouchCount || 0,
       hasVouched,
       eligible,
+      myId: myId || null,
     })
   }
 
@@ -60,6 +63,17 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
       if (reportError('toggleVouch:insert', error)) return
       setInfo(prev => ({ ...prev, vouches: prev.vouches + 1, hasVouched: true }))
     }
+  }
+
+  async function messageThem(e) {
+    e.stopPropagation()
+    if (!info?.myId || messaging) return
+    setMessaging(true)
+    const { id, error } = await startConversation(info.myId, userId)
+    setMessaging(false)
+    if (error) { alert(error); return }
+    setShowPopup(false)
+    navigate('/conversation/' + id)
   }
 
   function handleClick(e) {
@@ -121,6 +135,9 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
                   </div>
                 )}
               </div>
+            )}
+            {info?.myId && info.myId !== userId && (
+              <button type="button" onClick={messageThem} disabled={messaging} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.65rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Opening...' : 'Message'}</button>
             )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Close</button>
