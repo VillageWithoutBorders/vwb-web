@@ -178,6 +178,8 @@ export function AuthProvider({ children }) {
       if (pendingVillageId) localStorage.removeItem('vwb_pending_village_id')
       setProfile(newProfile)
       loadOrganizations(authUser.id)
+    } else {
+      console.error('[AuthContext] ensureProfile insert failed', error)
     }
   }
 
