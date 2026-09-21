@@ -28,6 +28,14 @@ const USER_FILTERS = [
 ]
 const USER_PAGE_SIZE = 50
 
+// Task feedback that an admin should look at, and how to say it.
+const TASK_ISSUE_OUTCOMES = ['went_wrong', 'no_show', 'felt_off']
+const TASK_ISSUE_LABELS = {
+  went_wrong: 'Said the task went wrong',
+  no_show: 'Ended it: the helper did not show up',
+  felt_off: 'Ended it: something felt off',
+}
+
 export default function Admin() {
   const { user, profile, isAdmin, isFounder } = useAuth()
   const navigate = useNavigate()
@@ -36,6 +44,7 @@ export default function Admin() {
   const [pendingEvents, setPendingEvents] = useState([])
   const [alerts, setAlerts] = useState([])
   const [checkinAlerts, setCheckinAlerts] = useState([])
+  const [taskIssues, setTaskIssues] = useState([])
   const [users, setUsers] = useState([])
   const [userQuery, setUserQuery] = useState('')
   const [userFilter, setUserFilter] = useState('all')
@@ -263,6 +272,35 @@ export default function Admin() {
       setAlerts(withNames)
     }
 
+    // Tasks that went wrong, a helper who did not show, or something that felt off.
+    const { data: issues, error: issuesErr } = await supabase
+      .from('task_feedback')
+      .select('id, request_id, from_user_id, about_user_id, kind, outcome, note, status, created_at')
+      .in('outcome', TASK_ISSUE_OUTCOMES)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    reportError('loadAlerts:taskIssues', issuesErr)
+    if (issues && issues.length > 0) {
+      const userIds = [...new Set(issues.flatMap(i => [i.from_user_id, i.about_user_id]).filter(Boolean))]
+      const reqIds = [...new Set(issues.map(i => i.request_id).filter(Boolean))]
+      const { data: nameRows, error: nameErr } = await supabase.from('helper_profiles').select('user_id, display_name').in('user_id', userIds)
+      reportError('loadAlerts:taskIssueNames', nameErr)
+      const { data: reqRows, error: reqErr } = reqIds.length > 0 ? await supabase.from('help_requests').select('id, skill_needed').in('id', reqIds) : { data: [], error: null }
+      reportError('loadAlerts:taskIssueRequests', reqErr)
+      const nameOf = {}
+      ;(nameRows || []).forEach(n => { nameOf[n.user_id] = n.display_name })
+      const skillOf = {}
+      ;(reqRows || []).forEach(r => { skillOf[r.id] = r.skill_needed })
+      setTaskIssues(issues.map(i => ({
+        ...i,
+        from_name: nameOf[i.from_user_id] || 'Unknown',
+        about_name: i.about_user_id ? (nameOf[i.about_user_id] || 'Unknown') : 'a removed account',
+        skill: skillOf[i.request_id] || 'a request',
+      })))
+    } else if (issues) {
+      setTaskIssues([])
+    }
+
     // Task safety check-ins ("no response", "feel unsafe") live in their own table.
     const { data: checkins, error: checkinErr } = await supabase.from('safety_alerts').select('id, match_id, reporter_id, alert_type, notes, created_at').order('created_at', { ascending: false }).limit(20)
     reportError('loadAlerts:checkins', checkinErr)
@@ -280,6 +318,13 @@ export default function Admin() {
     const { data, error } = await supabase.from('user_reports').update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq('id', id).select('id')
     if (reportError('reviewReport', error, 'Could not update this report. Try again.')) return
     if (!data || data.length === 0) { alert('Could not update this report. Try again.'); return }
+    await Promise.all([loadAlerts(), loadStats()])
+  }
+
+  async function reviewTaskIssue(id, status) {
+    const { data, error } = await supabase.from('task_feedback').update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq('id', id).select('id')
+    if (reportError('reviewTaskIssue', error, 'Could not update this. Try again.')) return
+    if (!data || data.length === 0) { alert('Could not update this. Try again.'); return }
     await Promise.all([loadAlerts(), loadStats()])
   }
 
@@ -327,8 +372,9 @@ export default function Admin() {
     const { count: eventCount, error: e5 } = await supabase.from('emergency_events').select('id', { count: 'exact', head: true }).eq('status', 'active')
     const { count: openReportCount, error: e6 } = await supabase.from('user_reports').select('id', { count: 'exact', head: true }).eq('status', 'open')
     const { count: checkinCount, error: e7 } = await supabase.from('safety_alerts').select('id', { count: 'exact', head: true })
-    ;[e1, e2, e3, e4, e5, e6, e7, e8, e9].forEach((e, i) => reportError('loadStats:' + i, e))
-    const alertCount = (openReportCount || 0) + (checkinCount || 0)
+    const { count: openIssueCount, error: e10 } = await supabase.from('task_feedback').select('id', { count: 'exact', head: true }).eq('status', 'open').in('outcome', TASK_ISSUE_OUTCOMES)
+    ;[e1, e2, e3, e4, e5, e6, e7, e8, e9, e10].forEach((e, i) => reportError('loadStats:' + i, e))
+    const alertCount = (openReportCount || 0) + (checkinCount || 0) + (openIssueCount || 0)
     setStats({ users: userCount || 0, ambassadors: ambassadorCount || 0, requests: requestCount || 0, offersWaiting: waitingCount || 0, accepted: acceptedCount || 0, completed: completedCount || 0, events: eventCount || 0, alerts: alertCount || 0 })
   }
 
@@ -907,6 +953,36 @@ export default function Admin() {
               </div>
             )
           })}
+
+          {taskIssues.length > 0 && (
+            <>
+              <h3 style={{ fontSize: '0.85rem', color: '#aaa', margin: '1.25rem 0 0.5rem', fontWeight: 700 }}>Tasks that did not go well</h3>
+              {taskIssues.map(t => {
+                const open = t.status === 'open'
+                const linkBtn = { background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', padding: '0.25rem 0', fontWeight: 600 }
+                return (
+                  <div key={'issue-' + t.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (open ? '#ffaa44' : '#555'), opacity: open ? 1 : 0.7 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ background: open ? '#2e2a1a' : '#2a2a2a', color: open ? '#ffaa44' : '#999', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{open ? 'Open' : t.status === 'reviewed' ? 'Reviewed' : 'Dismissed'}</span>
+                      <span style={{ color: '#888', fontSize: '0.75rem' }}>{timeAgo(t.created_at)}</span>
+                    </div>
+                    <p style={{ color: '#ddd', fontSize: '0.85rem', fontWeight: 600, margin: '0.4rem 0 0.2rem' }}>{TASK_ISSUE_LABELS[t.outcome] || t.outcome}</p>
+                    <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0.2rem 0' }}>
+                      <span style={{ color: '#aaa' }}>From:</span> {t.from_name}
+                      <span style={{ color: '#aaa' }}> about </span>{t.about_name}
+                      <span style={{ color: '#aaa' }}> &middot; task: </span>{t.skill}
+                    </p>
+                    {t.note && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{t.note}</p>}
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
+                      {t.about_user_id && <button type="button" onClick={() => navigate('/u/' + t.about_user_id)} style={linkBtn}>View their profile</button>}
+                      {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'reviewed')} style={linkBtn}>Mark reviewed</button>}
+                      {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'dismissed')} style={{ ...linkBtn, color: '#999' }}>Dismiss</button>}
+                    </div>
+                  </div>
+                )
+              })}
+            </>
+          )}
 
           {checkinAlerts.length > 0 && (
             <>

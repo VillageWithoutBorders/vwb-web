@@ -6,6 +6,22 @@ import { createNotification } from '../utils/notificationHelpers'
 import VouchButton from '../components/VouchButton'
 import AvatarDisplay from '../components/AvatarDisplay'
 
+// Reasons for ending a helper's part before the task is finished.
+const END_REASONS = {
+  requester: [
+    { value: 'no_show', label: 'They did not show up' },
+    { value: 'sorted_elsewhere', label: 'I found help another way' },
+    { value: 'felt_off', label: 'Something felt off' },
+  ],
+  helper: [
+    { value: 'plans_changed', label: 'My plans changed' },
+    { value: 'cant_do_it', label: "I can't do this after all" },
+    { value: 'felt_off', label: 'Something felt off' },
+  ],
+}
+// These reasons also send a note to the admins.
+const ADMIN_SEES = ['no_show', 'felt_off']
+
 export default function ActiveTasks() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
@@ -13,6 +29,18 @@ export default function ActiveTasks() {
   const [myRequests, setMyRequests] = useState([])
   const [helpingWith, setHelpingWith] = useState([])
   const [loading, setLoading] = useState(true)
+  // "How did it go?" after a task is finished
+  const [myFeedback, setMyFeedback] = useState({})
+  const [feedbackReady, setFeedbackReady] = useState(false)
+  const [answeredNow, setAnsweredNow] = useState({})
+  const [feedbackFor, setFeedbackFor] = useState(null)
+  const [feedbackNote, setFeedbackNote] = useState('')
+  const [feedbackBusy, setFeedbackBusy] = useState(false)
+  // Stepping back / ending a helper's part
+  const [ending, setEnding] = useState(null)
+  const [endReason, setEndReason] = useState('')
+  const [endNote, setEndNote] = useState('')
+  const [endBusy, setEndBusy] = useState(false)
 
   useEffect(() => {
     if (user?.id) loadTasks()
@@ -20,7 +48,7 @@ export default function ActiveTasks() {
 
   async function loadTasks() {
     setLoading(true)
-    await Promise.all([loadMyRequests(), loadHelpingWith()])
+    await Promise.all([loadMyRequests(), loadHelpingWith(), loadMyFeedback()])
     setLoading(false)
   }
 
@@ -131,6 +159,77 @@ export default function ActiveTasks() {
   }
 
   // =============================================
+  // My private "how did it go" answers
+  // =============================================
+  async function loadMyFeedback() {
+    const { data, error } = await supabase
+      .from('task_feedback')
+      .select('match_id, outcome')
+      .eq('from_user_id', user.id)
+      .eq('kind', 'finished')
+    if (error) {
+      console.error('Failed to load your task feedback:', error)
+      setFeedbackReady(false)
+      return
+    }
+    const map = {}
+    for (const f of data || []) if (f.match_id) map[f.match_id] = f.outcome
+    setMyFeedback(map)
+    setFeedbackReady(true)
+  }
+
+  async function submitFeedback(matchId, outcome) {
+    if (feedbackBusy) return
+    setFeedbackBusy(true)
+    const { error } = await supabase.rpc('submit_task_feedback', {
+      p_match_id: matchId,
+      p_outcome: outcome,
+      p_note: outcome === 'went_wrong' ? (feedbackNote.trim() || null) : null,
+    })
+    setFeedbackBusy(false)
+    if (error) {
+      console.error('Failed to save task feedback:', error)
+      alert(error.code === '55000' ? error.message : 'Could not save this. Try again.')
+      return
+    }
+    setMyFeedback(prev => ({ ...prev, [matchId]: outcome }))
+    setAnsweredNow(prev => ({ ...prev, [matchId]: true }))
+    setFeedbackFor(null)
+    setFeedbackNote('')
+  }
+
+  // =============================================
+  // Step back (helper) or end a helper's part (requester)
+  // =============================================
+  function openEnd(matchId, isRequester) {
+    setEnding({ matchId, isRequester })
+    setEndReason('')
+    setEndNote('')
+  }
+
+  async function confirmEnd() {
+    if (!ending || !endReason || endBusy) return
+    setEndBusy(true)
+    const { data: reopened, error } = await supabase.rpc('end_task_match', {
+      p_match_id: ending.matchId,
+      p_outcome: endReason,
+      p_note: endNote.trim() || null,
+    })
+    setEndBusy(false)
+    if (error) {
+      console.error('Failed to end this helper match:', error)
+      alert(error.code === '55000' ? error.message : 'Could not do that. Try again.')
+      return
+    }
+    const wasRequester = ending.isRequester
+    setEnding(null)
+    alert(wasRequester
+      ? (reopened ? 'Done. Your request is back on the feed.' : 'Done. Their part has been closed out.')
+      : 'Done. Thank you for letting them know.')
+    await loadTasks()
+  }
+
+  // =============================================
   // Mark my part complete
   // =============================================
   async function markMyPartComplete(matchId, isRequester, match) {
@@ -156,7 +255,7 @@ export default function ActiveTasks() {
         type: 'task_update',
         title: otherDone ? 'Task completed!' : 'Your partner marked their part done',
         body: otherDone
-          ? 'Both sides confirmed. This task is complete!'
+          ? 'Both sides confirmed. Open Tasks to say how it went, and to vouch for them if it went well.'
           : 'Tap "Mark my part complete" when you\'re done too.',
         link: '/tasks',
       })
@@ -258,11 +357,119 @@ export default function ActiveTasks() {
   // =============================================
   // Filter by Active vs Archived
   // =============================================
-  const activeRequests = myRequests.filter(r => !r.archived_at && r.status !== 'completed')
-  const activeHelping = helpingWith.filter(h => !h.isDone && !h.request?.archived_at)
+  // A finished task stays under Active until you have said how it went.
+  const showPanel = (matchId) => feedbackReady && (!myFeedback[matchId] || answeredNow[matchId])
+  const stillNeedsAnswer = (r) => r.matches.some(m => m.helper_completed && m.requester_completed && showPanel(m.id))
 
-  const archivedRequests = myRequests.filter(r => r.archived_at || r.status === 'completed')
-  const archivedHelping = helpingWith.filter(h => h.isDone || h.request?.archived_at)
+  const activeRequests = myRequests.filter(r => !r.archived_at && (r.status !== 'completed' || stillNeedsAnswer(r)))
+  const activeHelping = helpingWith.filter(h => !h.request?.archived_at && (!h.isDone || showPanel(h.id)))
+
+  const archivedRequests = myRequests.filter(r => r.archived_at || (r.status === 'completed' && !stillNeedsAnswer(r)))
+  const archivedHelping = helpingWith.filter(h => h.request?.archived_at || (h.isDone && !showPanel(h.id)))
+
+  // The form that opens when you tap "Step back" or "End their help".
+  function renderEndForm(matchId, isRequester, otherName) {
+    if (!ending || ending.matchId !== matchId) return null
+    const reasons = END_REASONS[isRequester ? 'requester' : 'helper']
+    return (
+      <div style={{ marginTop: '0.6rem', padding: '0.75rem', background: '#1d1d1d', border: '1px solid #444', borderRadius: '8px' }}>
+        <div style={{ color: '#eee', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+          {isRequester ? 'End ' + otherName + "'s help?" : 'Step back from this task?'}
+        </div>
+        <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>
+          {isRequester
+            ? 'Your request goes back on the feed if it still needs helpers. They are told you closed it out, but not why.'
+            : 'The request goes back on the feed so someone else can offer. They are told you can no longer help, but not why.'}
+        </p>
+        <div role="radiogroup" aria-label="Reason" style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+          {reasons.map(r => (
+            <label key={r.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ddd', fontSize: '0.85rem', cursor: 'pointer' }}>
+              <input type="radio" name={'end-reason-' + matchId} value={r.value} checked={endReason === r.value} onChange={() => setEndReason(r.value)} />
+              {r.label}
+            </label>
+          ))}
+        </div>
+        {ADMIN_SEES.includes(endReason) && (
+          <p style={{ color: '#ffaa44', fontSize: '0.78rem', margin: '0.5rem 0 0' }}>An admin will be told, so they can look into it.</p>
+        )}
+        <textarea
+          value={endNote}
+          onChange={e => setEndNote(e.target.value)}
+          maxLength={500}
+          placeholder="Anything else you want to share? (optional, only admins see it)"
+          aria-label="Anything else you want to share"
+          style={{ width: '100%', marginTop: '0.6rem', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem', minHeight: '3.5rem', boxSizing: 'border-box' }}
+        />
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+          <button className="btn btn-primary btn-sm" disabled={!endReason || endBusy} onClick={confirmEnd}>
+            {endBusy ? 'Saving...' : isRequester ? 'End their help' : 'Step back'}
+          </button>
+          <button className="btn btn-outline btn-sm" disabled={endBusy} onClick={() => setEnding(null)}>Cancel</button>
+        </div>
+      </div>
+    )
+  }
+
+  // Shown on a finished task: ask how it went, then offer the vouch.
+  function renderFinishedPanel(matchId, otherUserId, otherName) {
+    if (!feedbackReady) {
+      return <div style={{ marginTop: '0.5rem' }}><VouchButton userId={otherUserId} size="sm" showCount={true} /></div>
+    }
+    const answer = myFeedback[matchId]
+    const box = { marginTop: '0.6rem', padding: '0.75rem', background: '#1a2e26', border: '1px solid #2d6a4f', borderRadius: '8px' }
+    const title = { color: '#eee', fontWeight: 600, fontSize: '0.9rem' }
+    const small = { color: '#aaa', fontSize: '0.8rem', margin: '0.25rem 0 0.5rem' }
+
+    if (answer === 'went_well') {
+      return (
+        <div style={box}>
+          <div style={title}>Thank you. We are glad it went well.</div>
+          <p style={small}>A vouch tells other neighbors they can trust {otherName}.</p>
+          <VouchButton userId={otherUserId} size="sm" showCount={true} />
+        </div>
+      )
+    }
+    if (answer === 'went_wrong') {
+      return (
+        <div style={{ ...box, background: '#2a2320', border: '1px solid #6b4f2d' }}>
+          <div style={title}>Thank you for telling us.</div>
+          <p style={{ ...small, marginBottom: 0 }}>An admin will take a look. Only admins see what you shared.</p>
+        </div>
+      )
+    }
+    if (feedbackFor === matchId) {
+      return (
+        <div style={box}>
+          <div style={title}>What happened?</div>
+          <p style={small}>Only admins see this. {otherName} is not told.</p>
+          <textarea
+            value={feedbackNote}
+            onChange={e => setFeedbackNote(e.target.value)}
+            maxLength={500}
+            placeholder="Tell us in your own words (optional)"
+            aria-label="What happened"
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem', minHeight: '4rem', boxSizing: 'border-box' }}
+          />
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+            <button className="btn btn-primary btn-sm" disabled={feedbackBusy} onClick={() => submitFeedback(matchId, 'went_wrong')}>
+              {feedbackBusy ? 'Saving...' : 'Send to the admins'}
+            </button>
+            <button className="btn btn-outline btn-sm" disabled={feedbackBusy} onClick={() => { setFeedbackFor(null); setFeedbackNote('') }}>Back</button>
+          </div>
+        </div>
+      )
+    }
+    return (
+      <div style={box}>
+        <div style={title}>How did it go with {otherName}?</div>
+        <p style={small}>This is private. Only admins can see your answer.</p>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button className="btn btn-primary btn-sm" disabled={feedbackBusy} onClick={() => submitFeedback(matchId, 'went_well')}>It went well</button>
+          <button className="btn btn-outline btn-sm" disabled={feedbackBusy} onClick={() => { setFeedbackFor(matchId); setFeedbackNote('') }}>Something went wrong</button>
+        </div>
+      </div>
+    )
+  }
 
   const showActive = tab === 'active'
   const currentRequests = showActive ? activeRequests : archivedRequests
@@ -369,14 +576,15 @@ export default function ActiveTasks() {
                                 <button className="btn btn-outline btn-sm" onClick={() => openConversation(req.id, match.helper_id, user.id)}>
                                   Message
                                 </button>
+                                <button className="btn btn-outline btn-sm" onClick={() => openEnd(match.id, true)}>
+                                  End their help
+                                </button>
                               </div>
                             )}
 
-                            {bothDone && (
-                              <div style={{ marginTop: '0.5rem' }}>
-                                <VouchButton userId={match.helper_id} size="sm" showCount={true} />
-                              </div>
-                            )}
+                            {!bothDone && renderEndForm(match.id, true, match.helper_name)}
+
+                            {bothDone && renderFinishedPanel(match.id, match.helper_id, match.helper_name)}
                           </div>
                         )
                       })}
@@ -448,10 +656,16 @@ export default function ActiveTasks() {
                           Message
                         </button>
                       )}
-                      {bothDone && (
-                        <VouchButton userId={req.requester_id} size="md" showCount={true} />
+                      {!bothDone && (
+                        <button className="btn btn-outline btn-sm" onClick={() => openEnd(match.id, false)}>
+                          Step back
+                        </button>
                       )}
                     </div>
+
+                    {!bothDone && renderEndForm(match.id, false, match.requester_name)}
+
+                    {bothDone && renderFinishedPanel(match.id, req.requester_id, match.requester_name)}
                   </div>
                 )
               })}
