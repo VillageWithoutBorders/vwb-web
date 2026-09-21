@@ -33,6 +33,9 @@ export default function ActiveTasks() {
   const [myFeedback, setMyFeedback] = useState({})
   const [feedbackReady, setFeedbackReady] = useState(false)
   const [answeredNow, setAnsweredNow] = useState({})
+  // Which finished tasks both people have answered (only yes or no, never what was said)
+  const [bothRated, setBothRated] = useState({})
+  const [ratedReady, setRatedReady] = useState(false)
   const [feedbackFor, setFeedbackFor] = useState(null)
   const [feedbackNote, setFeedbackNote] = useState('')
   const [feedbackBusy, setFeedbackBusy] = useState(false)
@@ -48,7 +51,12 @@ export default function ActiveTasks() {
 
   async function loadTasks() {
     setLoading(true)
-    await Promise.all([loadMyRequests(), loadHelpingWith(), loadMyFeedback()])
+    const [reqs, helping] = await Promise.all([loadMyRequests(), loadHelpingWith(), loadMyFeedback()])
+    const doneIds = [
+      ...(reqs || []).flatMap(r => r.matches).filter(m => m.helper_completed && m.requester_completed).map(m => m.id),
+      ...(helping || []).filter(h => h.isDone).map(h => h.id),
+    ]
+    await refreshRated([...new Set(doneIds)])
     setLoading(false)
   }
 
@@ -65,7 +73,7 @@ export default function ActiveTasks() {
 
     if (!requests || requests.length === 0) {
       setMyRequests([])
-      return
+      return []
     }
 
     const requestIds = requests.map(r => r.id)
@@ -107,6 +115,7 @@ export default function ActiveTasks() {
     })
 
     setMyRequests(enriched)
+    return enriched
   }
 
   // =============================================
@@ -122,7 +131,7 @@ export default function ActiveTasks() {
 
     if (!matches || matches.length === 0) {
       setHelpingWith([])
-      return
+      return []
     }
 
     const requestIds = matches.map(m => m.request_id)
@@ -156,6 +165,7 @@ export default function ActiveTasks() {
     }).filter(Boolean)
 
     setHelpingWith(enriched)
+    return enriched
   }
 
   // =============================================
@@ -178,6 +188,24 @@ export default function ActiveTasks() {
     setFeedbackReady(true)
   }
 
+  // Ask which of these finished tasks both people have answered.
+  async function refreshRated(ids) {
+    if (!ids.length) return
+    const { data, error } = await supabase.rpc('both_rated_matches', { p_match_ids: ids })
+    if (error) {
+      console.error('Failed to check who has answered:', error)
+      setRatedReady(false)
+      return
+    }
+    setRatedReady(true)
+    setBothRated(prev => {
+      const next = { ...prev }
+      for (const id of ids) next[id] = false
+      for (const row of data || []) next[row.match_id] = true
+      return next
+    })
+  }
+
   async function submitFeedback(matchId, outcome) {
     if (feedbackBusy) return
     setFeedbackBusy(true)
@@ -196,6 +224,7 @@ export default function ActiveTasks() {
     setAnsweredNow(prev => ({ ...prev, [matchId]: true }))
     setFeedbackFor(null)
     setFeedbackNote('')
+    await refreshRated([matchId])
   }
 
   // =============================================
@@ -357,15 +386,21 @@ export default function ActiveTasks() {
   // =============================================
   // Filter by Active vs Archived
   // =============================================
-  // A finished task stays under Active until you have said how it went.
-  const showPanel = (matchId) => feedbackReady && (!myFeedback[matchId] || answeredNow[matchId])
-  const stillNeedsAnswer = (r) => r.matches.some(m => m.helper_completed && m.requester_completed && showPanel(m.id))
+  // A finished task stays under Active until BOTH people have said how it went.
+  // (If the database check is not available, it moves once you have answered.)
+  // After you answer, it stays on screen for the rest of the visit so you can vouch.
+  const holdOpen = (matchId) => {
+    if (!feedbackReady) return false
+    if (answeredNow[matchId]) return true
+    return ratedReady ? !bothRated[matchId] : !myFeedback[matchId]
+  }
+  const stillNeedsAnswer = (r) => r.matches.some(m => m.helper_completed && m.requester_completed && holdOpen(m.id))
 
   const activeRequests = myRequests.filter(r => !r.archived_at && (r.status !== 'completed' || stillNeedsAnswer(r)))
-  const activeHelping = helpingWith.filter(h => !h.request?.archived_at && (!h.isDone || showPanel(h.id)))
+  const activeHelping = helpingWith.filter(h => !h.request?.archived_at && (!h.isDone || holdOpen(h.id)))
 
   const archivedRequests = myRequests.filter(r => r.archived_at || (r.status === 'completed' && !stillNeedsAnswer(r)))
-  const archivedHelping = helpingWith.filter(h => h.request?.archived_at || (h.isDone && !showPanel(h.id)))
+  const archivedHelping = helpingWith.filter(h => h.request?.archived_at || (h.isDone && !holdOpen(h.id)))
 
   // The form that opens when you tap "Step back" or "End their help".
   function renderEndForm(matchId, isRequester, otherName) {
@@ -419,6 +454,9 @@ export default function ActiveTasks() {
     const box = { marginTop: '0.6rem', padding: '0.75rem', background: '#1a2e26', border: '1px solid #2d6a4f', borderRadius: '8px' }
     const title = { color: '#eee', fontWeight: 600, fontSize: '0.9rem' }
     const small = { color: '#aaa', fontSize: '0.8rem', margin: '0.25rem 0 0.5rem' }
+    const waiting = ratedReady && !bothRated[matchId]
+      ? <p style={{ ...small, marginBottom: 0, fontStyle: 'italic' }}>Waiting for {otherName} to answer. This task moves to Archived once you have both answered.</p>
+      : null
 
     if (answer === 'went_well') {
       return (
@@ -426,6 +464,7 @@ export default function ActiveTasks() {
           <div style={title}>Thank you. We are glad it went well.</div>
           <p style={small}>A vouch tells other neighbors they can trust {otherName}.</p>
           <VouchButton userId={otherUserId} size="sm" showCount={true} />
+          {waiting}
         </div>
       )
     }
@@ -433,7 +472,8 @@ export default function ActiveTasks() {
       return (
         <div style={{ ...box, background: '#2a2320', border: '1px solid #6b4f2d' }}>
           <div style={title}>Thank you for telling us.</div>
-          <p style={{ ...small, marginBottom: 0 }}>An admin will take a look. Only admins see what you shared.</p>
+          <p style={{ ...small, marginBottom: waiting ? '0.5rem' : 0 }}>An admin will take a look. Only admins see what you shared.</p>
+          {waiting}
         </div>
       )
     }
