@@ -1,8 +1,76 @@
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { supabase } from '../supabaseClient'
+import { getCurrentPosition } from '../utils/location'
 import PushBanner from '../components/PushBanner'
 import InstallBanner from '../components/InstallBanner'
 import AmbassadorBanner from '../components/AmbassadorBanner'
+
+// A few tiles for Hope Ambassadors and admins: how much open need there is
+// nearby right now, grouped by urgency. Same radius idea as the SkillShare
+// feed, but not filtered to your own skills, since this is meant to show
+// the community's need as a whole.
+function NearbyNeedTiles() {
+  const { profile } = useAuth()
+  const navigate = useNavigate()
+  const [counts, setCounts] = useState(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      const loc = await getCurrentPosition()
+      const radius = profile?.radius_miles || 10
+      const { data, error } = await supabase.rpc('nearby_open_request_counts', {
+        helper_lat: loc.lat, helper_lng: loc.lng, helper_radius: radius,
+      })
+      if (cancelled) return
+      if (error) { console.error('Failed to load nearby request counts:', error); setReady(false); return }
+      const byUrgency = {}
+      for (const row of data || []) byUrgency[row.urgency] = row.request_count
+      setCounts(byUrgency)
+      setReady(true)
+    }
+    load()
+    return () => { cancelled = true }
+  }, [profile?.radius_miles])
+
+  if (!ready) return null
+
+  const now = counts.now || 0
+  const today = counts.today || 0
+  const later = (counts.this_week || 0) + (counts.flexible || 0)
+  const total = now + today + later
+
+  const tiles = [
+    { label: 'Open near you', value: total, color: '#4ecca3' },
+    { label: 'Right now', value: now, color: '#ff6666' },
+    { label: 'Today', value: today, color: '#ffaa44' },
+    { label: 'This week or later', value: later, color: '#8fc' },
+  ]
+
+  return (
+    <div style={{ marginBottom: '1.25rem' }}>
+      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
+        Need nearby
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem' }}>
+        {tiles.map(t => (
+          <button
+            key={t.label}
+            onClick={() => navigate('/skillshare')}
+            style={{ textAlign: 'left', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #333', background: '#1e1e1e', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: t.color }}>{t.value}</div>
+            <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.15rem' }}>{t.label}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const { profile, isAdmin } = useAuth()
   const navigate = useNavigate()
@@ -26,6 +94,7 @@ export default function Dashboard() {
         </div>
       )}
       <AmbassadorBanner />
+      {(profile?.is_hope_ambassador || isAdmin) && <NearbyNeedTiles />}
       <PushBanner />
       <InstallBanner />
       <div className="welcome-section">
@@ -46,6 +115,13 @@ export default function Dashboard() {
             <span className="action-icon" aria-hidden="true">&#128293;</span>
             <span className="action-label">Campfire</span>
             <span className="action-desc">Chat with fellow ambassadors and admins</span>
+          </button>
+        )}
+        {isAdmin && (
+          <button className="action-card" onClick={() => navigate('/admin')}>
+            <span className="action-icon" aria-hidden="true">&#9881;</span>
+            <span className="action-label">Admin Panel</span>
+            <span className="action-desc">Reports, users, villages, and approvals</span>
           </button>
         )}
       </div>
