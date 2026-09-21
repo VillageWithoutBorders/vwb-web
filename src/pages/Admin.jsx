@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
+import { availabilityDisplayString } from '../components/AvailabilityPicker'
 import { resetAccountToBase } from '../utils/resetAccount'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
@@ -26,6 +27,7 @@ export default function Admin() {
   const [stats, setStats] = useState({})
   const [approvals, setApprovals] = useState([])
   const [adminApplications, setAdminApplications] = useState([])
+  const [ambApplications, setAmbApplications] = useState([])
   const [organizations, setOrganizations] = useState([])
   const [showNewOrgForm, setShowNewOrgForm] = useState(false)
   const [newOrgName, setNewOrgName] = useState('')
@@ -39,12 +41,15 @@ export default function Admin() {
   const [showNewVillageForm, setShowNewVillageForm] = useState(false)
   const [newVillageName, setNewVillageName] = useState('')
   const [newVillageRegion, setNewVillageRegion] = useState('')
+  const [editingVillageId, setEditingVillageId] = useState(null)
+  const [editVillageName, setEditVillageName] = useState('')
+  const [editVillageRegion, setEditVillageRegion] = useState('')
 
   useEffect(() => { loadAll() }, [])
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadOrganizations(), loadVillages()])
+    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadAmbassadorApplications(), loadOrganizations(), loadVillages()])
     setLoading(false)
   }
 
@@ -84,6 +89,29 @@ export default function Admin() {
     await loadVillages()
   }
 
+  function startEditVillage(village) {
+    setEditingVillageId(village.id)
+    setEditVillageName(village.name || '')
+    setEditVillageRegion(village.region_label || '')
+  }
+
+  // Only the name and region description change here. The slug stays as it
+  // was on purpose: it's the village's stable ID-by-name, so renaming a
+  // village never breaks anything that refers to it.
+  async function saveVillageEdit() {
+    if (!editVillageName.trim()) { alert('Village name is required.'); return }
+    const { data, error } = await supabase.from('villages').update({
+      name: editVillageName.trim(),
+      region_label: editVillageRegion.trim() || null,
+    }).eq('id', editingVillageId).select('id')
+    if (reportError('saveVillageEdit', error, 'Could not save these changes. Try again.')) return
+    // Supabase can filter an update down to zero rows without raising an error
+    // (for example if permissions block it), so check that a row really changed.
+    if (!data || data.length === 0) { alert('Nothing was saved. You may not have permission to edit villages.'); return }
+    setEditingVillageId(null)
+    await loadVillages()
+  }
+
   async function toggleVillageActive(village) {
     const { error } = await supabase.from('villages').update({ active: !village.active }).eq('id', village.id)
     if (reportError('toggleVillageActive', error, 'Could not update this village. Try again.')) return
@@ -112,6 +140,27 @@ export default function Admin() {
       return { ...a, applicant_name: prof?.display_name || 'Unnamed', applicant_avatar: prof?.avatar_url || null, invited_by_name: invitedByName }
     }))
     setAdminApplications(enriched)
+  }
+
+  async function loadAmbassadorApplications() {
+    const { data, error } = await supabase.from('ambassador_applications').select('*').eq('status', 'pending').order('created_at', { ascending: true })
+    reportError('loadAmbassadorApplications', error)
+    if (!data || data.length === 0) { setAmbApplications([]); return }
+    const enriched = await Promise.all(data.map(async (a) => {
+      const { data: prof, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url, skills, availability, interests, village_id').eq('user_id', a.user_id).maybeSingle()
+      reportError('loadAmbassadorApplications:profile', profErr)
+      return { ...a, applicant: prof || {} }
+    }))
+    setAmbApplications(enriched)
+  }
+
+  // Approving or declining goes through one database function so the
+  // decision, the Ambassador badge, and the notice to the applicant all
+  // happen together or not at all.
+  async function reviewAmbassadorApplication(applicationId, approve) {
+    const { error } = await supabase.rpc('review_ambassador_application', { p_application_id: applicationId, p_approve: approve })
+    if (reportError('reviewAmbassadorApplication', error, 'Could not save that decision. Try again.')) return
+    await Promise.all([loadAmbassadorApplications(), loadUsers(), loadStats()])
   }
 
   async function loadOrganizations() {
@@ -337,7 +386,10 @@ export default function Admin() {
     if (toRole === 'ambassador') {
       const { error } = await supabase.from('helper_profiles').update({ is_hope_ambassador: true }).eq('user_id', userId)
       if (reportError('promoteUser:ambassador', error, 'Could not update this user. Try again.')) return
-      await loadUsers()
+      // If they had an application waiting, mark it approved so it leaves the queue.
+      const { error: closeErr } = await supabase.from('ambassador_applications').update({ status: 'approved', reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq('user_id', userId).eq('status', 'pending')
+      reportError('promoteUser:closeApplication', closeErr)
+      await Promise.all([loadUsers(), loadAmbassadorApplications()])
     } else if (toRole === 'admin') {
       if (!confirm('Send admin invitation to this user? They will see it on their profile.')) return
       const { data: existing, error: existErr } = await supabase.from('admin_applications').select('id, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle()
@@ -461,7 +513,7 @@ export default function Admin() {
           Wraps instead of scrolling so nothing is ever hidden off-screen as more
           sections get added. */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length) > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length}</span>}</button>
+        <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length + ambApplications.length) > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length + ambApplications.length}</span>}</button>
         <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length})</button>
         <button style={tabStyle(tab === 'villages')} onClick={() => setTab('villages')}>Villages ({villages.length})</button>
       </div>
@@ -470,10 +522,39 @@ export default function Admin() {
 
       {!loading && tab === 'approvals' && (
         <>
-          {approvals.length === 0 && adminApplications.length === 0 ? (
+          {approvals.length === 0 && adminApplications.length === 0 && ambApplications.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No pending approvals</p>
           ) : (
             <>
+              {ambApplications.length > 0 && (
+                <>
+                  <h3 style={{ fontSize: '0.85rem', color: '#ffaa44', margin: '0.5rem 0' }}>Hope Ambassador Applications</h3>
+                  {ambApplications.map(a => {
+                    const villageName = villages.find(v => v.id === a.applicant.village_id)?.name
+                    const skillList = Array.isArray(a.applicant.skills) ? a.applicant.skills.join(', ') : ''
+                    const when = typeof a.applicant.availability === 'string' ? availabilityDisplayString(a.applicant.availability) : ''
+                    return (
+                      <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid #ffaa44' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <AvatarDisplay url={a.applicant.avatar_url} userId={a.user_id} size={32} />
+                          <div>
+                            <strong style={{ color: '#eee', fontSize: '0.9rem' }}>{a.applicant.display_name || 'Unnamed'}</strong>
+                            <div style={{ color: '#888', fontSize: '0.7rem' }}>Applied {timeAgo(a.created_at)}{villageName ? ' \u00b7 ' + villageName : ''}</div>
+                          </div>
+                        </div>
+                        <p style={{ color: '#ddd', fontSize: '0.8rem', margin: '0.5rem 0 0.25rem' }}><strong style={{ color: '#ffaa44' }}>How they know us:</strong> {a.how_known || 'Not given'}</p>
+                        {skillList && <p style={{ color: '#aaa', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>Skills:</strong> {skillList}</p>}
+                        {when && <p style={{ color: '#aaa', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>Available:</strong> {when}</p>}
+                        {typeof a.applicant.interests === 'string' && a.applicant.interests && <p style={{ color: '#aaa', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>About:</strong> {a.applicant.interests}</p>}
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                          <button onClick={() => reviewAmbassadorApplication(a.id, true)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Approve</button>
+                          <button onClick={() => reviewAmbassadorApplication(a.id, false)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem' }}>Decline</button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </>
+              )}
               {isFounder && adminApplications.length > 0 && (
                 <>
                   <h3 style={{ fontSize: '0.85rem', color: '#4ecca3', margin: '0.5rem 0' }}>Admin Access Requests</h3>
@@ -750,6 +831,16 @@ export default function Admin() {
           ) : villages.map(c => (
             <div key={c.id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                {editingVillageId === c.id ? (
+                  <div style={{ flex: 1 }}>
+                    <input value={editVillageName} onChange={(e) => setEditVillageName(e.target.value)} placeholder="Village name *" aria-label="Village name" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+                    <input value={editVillageRegion} onChange={(e) => setEditVillageRegion(e.target.value)} placeholder="Region description (optional)" aria-label="Region description" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button onClick={saveVillageEdit} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Save</button>
+                      <button onClick={() => setEditingVillageId(null)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#eee' }}>{c.name}</h4>
@@ -758,8 +849,14 @@ export default function Admin() {
                   </div>
                   {c.region_label && <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>{c.region_label}</p>}
                 </div>
+                )}
+                {editingVillageId !== c.id && (
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start' }}>
+                    <button onClick={() => startEditVillage(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: '#4ecca3', border: '1px solid #4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Edit</button>
                 {!c.is_default && (
                   <button onClick={() => toggleVillageActive(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: c.active ? 'none' : '#4ecca3', color: c.active ? '#ff4444' : '#1a1a1a', border: c.active ? '1px solid #ff4444' : 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{c.active ? 'Deactivate' : 'Activate'}</button>
+                )}
+                  </div>
                 )}
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>

@@ -1,10 +1,14 @@
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import BottomTabs from '../components/BottomTabs'
 import LogoMenu from '../components/LogoMenu'
 import { useNotifications } from '../hooks/useNotifications'
 
 export default function Layout() {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  // Chats fill the space between the top bar and the tabs, edge to edge,
+  // instead of sitting inside the padded page column.
+  const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/')
   const { unreadCount } = useNotifications()
 
   return (
@@ -18,7 +22,7 @@ export default function Layout() {
           </button>
         </div>
       </header>
-      <main className="app-main">
+      <main className={'app-main' + (isChat ? ' app-main-chat' : '')}>
         <Outlet />
       </main>
       <BottomTabs />

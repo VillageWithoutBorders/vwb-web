@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../supabaseClient'
 
 // Encourages any Neighbor who isn't already a Hope Ambassador to become one.
 // Dismissible like InstallBanner/PushBanner, and re-appears after a couple
@@ -19,7 +20,10 @@ export default function AmbassadorBanner() {
       const dismissedAt = parseInt(dismissed, 10)
       if (Date.now() - dismissedAt < 14 * 24 * 60 * 60 * 1000) return
     }
-    setVisible(true)
+    // Someone whose application is already with the admins does not need the nudge.
+    supabase.from('ambassador_applications').select('id').eq('user_id', profile.user_id).eq('status', 'pending').limit(1).maybeSingle().then(({ data }) => {
+      if (!data) setVisible(true)
+    })
   }, [profile, isAdmin])
 
   function handleDismiss() {
@@ -34,12 +38,12 @@ export default function AmbassadorBanner() {
       <div className="push-banner-content">
         <span className="push-banner-icon" aria-hidden="true">&#9733;</span>
         <div className="push-banner-text">
-          <strong>Become a Hope Ambassador</strong>
-          <p>Share a skill, an hour, or a ride, and we'll match you with neighbors nearby who need one. Most people who join VWB sign up as an Ambassador.</p>
+          <strong>Apply to be a Hope Ambassador</strong>
+          <p>Share a skill, an hour, or a ride, and we'll match you with neighbors nearby who need one. An admin looks over each application.</p>
         </div>
       </div>
       <div className="push-banner-actions">
-        <button className="btn btn-primary btn-sm" onClick={() => navigate('/profile')}>Get started</button>
+        <button className="btn btn-primary btn-sm" onClick={() => navigate('/profile')}>Apply</button>
         <button className="push-banner-dismiss" onClick={handleDismiss}>Not now</button>
       </div>
     </div>

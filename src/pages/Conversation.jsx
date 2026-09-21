@@ -1,6 +1,7 @@
 import MessageOptionsMenu from '../components/popup/MessageOptionsMenu'
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useChatScroll } from '../hooks/useChatScroll'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
@@ -29,7 +30,6 @@ export default function Conversation() {
   const [myAvatar, setMyAvatar] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [request, setRequest] = useState(null)
-  const bottomRef = useRef(null)
     const pollRef = useRef(null)
     const convoRef = useRef(null)
   const [selectedMessage, setSelectedMessage] = useState(null)
@@ -50,9 +50,7 @@ export default function Conversation() {
         }
     }, [id])
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  const { containerRef, onScroll, showNew, jumpToNewest } = useChatScroll(messages, user?.id, !loading)
 
   async function loadConversation() {
     setLoading(true)
@@ -185,7 +183,7 @@ export default function Conversation() {
         </div>
       )}
 
-      <div className="convo-messages">
+      <div className="convo-messages" ref={containerRef} onScroll={onScroll}>
         {messages.length === 0 && (
           <p className="convo-empty">No messages yet. Say hello!</p>
         )}
@@ -208,7 +206,9 @@ export default function Conversation() {
     </div>
   )
 })}
-        <div ref={bottomRef} />
+        {showNew && (
+          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
+        )}
       </div>
 
       <div className="convo-input-bar">

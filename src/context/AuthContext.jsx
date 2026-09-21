@@ -7,6 +7,27 @@ export function useAuth() {
   return useContext(AuthContext)
 }
 
+// Sends a Hope Ambassador application for review. The Ambassador badge is
+// never handed out by the app itself: an admin approves it, and the database
+// enforces that. Safe to call twice (an application already waiting counts
+// as done). Returns true when an application is on file.
+async function submitAmbassadorApplication(userId, howKnown) {
+  const { data: existing, error: existErr } = await supabase
+    .from('ambassador_applications')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('status', 'pending')
+    .limit(1)
+    .maybeSingle()
+  if (existErr) { console.error('[AuthContext] submitAmbassadorApplication:check', existErr); return false }
+  if (existing) return true
+  const { error } = await supabase
+    .from('ambassador_applications')
+    .insert({ user_id: userId, how_known: howKnown || null })
+  if (error) { console.error('[AuthContext] submitAmbassadorApplication', error); return false }
+  return true
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -83,7 +104,6 @@ export function AuthProvider({ children }) {
         const { data: updated, error } = await supabase
           .from('helper_profiles')
           .update({
-            is_hope_ambassador: true,
             skills: pendingData.skills,
             availability: pendingData.availability,
             interests: pendingData.interests,
@@ -99,7 +119,11 @@ export function AuthProvider({ children }) {
           console.error('Failed to apply pending ambassador signup:', error)
           setProfile(data)
         } else {
-          localStorage.removeItem('vwb_ambassador_pending')
+          // Profile details are saved, but the Ambassador badge waits for an
+          // admin to approve the application. Keep the stash until the
+          // application is really on file, so a hiccup can retry next load.
+          const applied = await submitAmbassadorApplication(authUser.id, pendingData.how_known)
+          if (applied) localStorage.removeItem('vwb_ambassador_pending')
           setProfile(updated)
         }
       } else {
@@ -113,7 +137,6 @@ export function AuthProvider({ children }) {
     const displayName = authUser.user_metadata?.display_name || ''
     const insertData = { user_id: authUser.id, display_name: displayName }
     if (pendingData) {
-      insertData.is_hope_ambassador = true
       insertData.skills = pendingData.skills
       insertData.availability = pendingData.availability
       insertData.interests = pendingData.interests
@@ -148,7 +171,10 @@ export function AuthProvider({ children }) {
       .single()
 
     if (!error) {
-      if (pendingData) localStorage.removeItem('vwb_ambassador_pending')
+      if (pendingData) {
+        const applied = await submitAmbassadorApplication(authUser.id, pendingData.how_known)
+        if (applied) localStorage.removeItem('vwb_ambassador_pending')
+      }
       if (pendingVillageId) localStorage.removeItem('vwb_pending_village_id')
       setProfile(newProfile)
       loadOrganizations(authUser.id)

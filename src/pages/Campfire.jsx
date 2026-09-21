@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useChatScroll } from '../hooks/useChatScroll'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
@@ -18,7 +19,6 @@ export default function Campfire() {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [names, setNames] = useState({})
-  const bottomRef = useRef(null)
   const [myAvatar, setMyAvatar] = useState(null)
   const pollRef = useRef(null)
   const [showSettings, setShowSettings] = useState(false)
@@ -46,6 +46,7 @@ export default function Campfire() {
   })
 
   const hasAccess = profile?.is_hope_ambassador || isAdmin
+  const { containerRef, onScroll, showNew, jumpToNewest, resetScroll } = useChatScroll(messages, user?.id, hasAccess && !loading)
 
   useEffect(() => {
     supabase.from('helper_profiles').select('avatar_url').eq('user_id', user.id).maybeSingle().then(({ data, error }) => {
@@ -68,6 +69,7 @@ export default function Campfire() {
 
   useEffect(() => {
     if (!hasAccess || !viewVillageId) return
+    resetScroll()
     loadMessages()
     pollRef.current = setInterval(loadMessages, 5000)
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
@@ -97,11 +99,6 @@ export default function Campfire() {
     setDismissedEmergencyIds(next)
     try { localStorage.setItem('vwb_dismissed_emergency_ids', JSON.stringify(next)) } catch {}
   }
-
-  useEffect(() => {
-    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    bottomRef.current?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' })
-  }, [messages])
 
 
   // Backed by helper_profiles.campfire_notifications_enabled (not
@@ -241,8 +238,8 @@ export default function Campfire() {
       <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
         <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>&#128293;</p>
         <h2 style={{ color: '#ffaa44', marginBottom: '0.5rem' }}>Come sit by the fire</h2>
-        <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>The Campfire is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Become a Hope Ambassador, share whatever skills or time you have to give, and you'll have a seat.</p>
-        <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>Become a Hope Ambassador</button>
+        <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>The Campfire is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Apply to become a Hope Ambassador. An admin looks over each application so this stays a place people can trust, and once you're in, you'll have a seat.</p>
+        <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>Apply to be a Hope Ambassador</button>
       </div>
     )
   }
@@ -255,7 +252,7 @@ export default function Campfire() {
   const currentVillageName = villages.find(v => v.id === viewVillageId)?.name
 
   return (
-    <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 70px)', maxWidth: '600px', margin: '0 auto' }}>
+    <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1a1a1a' }}>
       <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid #333', background: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <button onClick={() => navigate('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div>
@@ -321,7 +318,7 @@ export default function Campfire() {
         </div>
       )}
 
-      <div className="hide-scrollbar" role="log" aria-live="polite" aria-relevant="additions" aria-label="Campfire messages" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+      <div ref={containerRef} onScroll={onScroll} className="hide-scrollbar" role="log" aria-live="polite" aria-relevant="additions" aria-label="Campfire messages" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
 
         {!loading && visibleMessages.length === 0 && (
@@ -413,7 +410,9 @@ export default function Campfire() {
             </div>
           )
         })}
-        <div ref={bottomRef} />
+        {showNew && (
+          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem 1rem', borderTop: '1px solid #333', background: '#1a1a1a' }}>

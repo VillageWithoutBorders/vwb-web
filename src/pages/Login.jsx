@@ -58,6 +58,7 @@ export default function Login() {
   const [selectedSkills, setSelectedSkills] = useState([])
   const [availability, setAvailability] = useState('')
   const [interests, setInterests] = useState('')
+  const [howKnown, setHowKnown] = useState('')
   const [radiusMiles, setRadiusMiles] = useState(10)
   // Opt-in, off by default, mirrors the field on the in-app ambassador
   // signup in Profile.jsx. See that file for the reasoning.
@@ -136,6 +137,7 @@ export default function Login() {
     if (wantAmbassador) {
       localStorage.setItem('vwb_ambassador_pending', JSON.stringify({
         skills: selectedSkills, availability, interests, radius_miles: radiusMiles,
+        how_known: howKnown.trim(),
         campfire_notifications_enabled: campfireNotify,
       }))
     }
@@ -148,6 +150,7 @@ export default function Login() {
   async function handleStep2Submit(e) {
     e.preventDefault()
     if (selectedSkills.length === 0) { setError('Please select at least one skill.'); return }
+    if (!howKnown.trim()) { setError('Please tell us how you know this community, or who can vouch for you.'); return }
     handleSignUp()
   }
 
@@ -248,8 +251,8 @@ export default function Login() {
             <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
               <input type="checkbox" checked={wantAmbassador} onChange={(e) => setWantAmbassador(e.target.checked)} />
               <span>
-                <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Join as a Hope Ambassador</strong>
-                Most neighbors who join do. Share a few skills and hours you can spare, and we'll match you with people nearby who need a hand. Uncheck this if you'd rather just look around for now.
+                <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Apply to be a Hope Ambassador</strong>
+                Share a few skills and hours you can spare. An admin looks over each application so this stays a community people can trust. Uncheck this if you'd rather just look around for now.
               </span>
             </label>
             {error && <p className="form-error" role="alert">{error}</p>}
@@ -274,7 +277,7 @@ export default function Login() {
       <div className="login-card">
         <div className="login-header">
           <h1>Village Without Borders</h1>
-          <p className="login-subtitle">Become a Hope Ambassador</p>
+          <p className="login-subtitle">Apply to be a Hope Ambassador</p>
         </div>
         <form onSubmit={handleStep2Submit} className="login-form">
           <div className="step-indicator">
@@ -311,6 +314,11 @@ export default function Login() {
             <label htmlFor="interests">Anything else you'd like us to know?</label>
             <textarea id="interests" value={interests} onChange={(e) => setInterests(e.target.value)} placeholder="Your interests, experience, or why you want to help" rows={3} />
           </div>
+          <div className="form-field">
+            <label htmlFor="howKnown">How do you know this community, or who can vouch for you?</label>
+            <textarea id="howKnown" value={howKnown} onChange={(e) => setHowKnown(e.target.value)} placeholder="A neighbor, a group, an event, or a name an admin can reach out to" rows={2} />
+          </div>
+          <p style={{ fontSize: '0.8rem', color: '#888', margin: '0 0 0.75rem' }}>An admin reads every application before anyone joins the Campfire. Until then you can still ask for help, offer help, and look around.</p>
           <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
             <input type="checkbox" checked={campfireNotify} onChange={(e) => setCampfireNotify(e.target.checked)} />
             <span>

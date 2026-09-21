@@ -13,7 +13,9 @@ const TYPE_ICONS = {
   emergency: '\u{1F6A8}',
   vouch: '\u2B50',
   task_complete: '\u2705',
-  resource_approved: '\u{1F4DA}'
+  resource_approved: '\u{1F4DA}',
+  ambassador_application: '\u{1F33F}',
+  ambassador_approved: '\u2705'
 }
 
 const TYPE_COLORS = {
@@ -25,7 +27,9 @@ const TYPE_COLORS = {
   emergency: '#dc2626',
   vouch: '#eab308',
   task_complete: '#10b981',
-  resource_approved: '#06b6d4'
+  resource_approved: '#06b6d4',
+  ambassador_application: '#f59e0b',
+  ambassador_approved: '#10b981'
 }
 
 function timeAgo(dateStr) {
