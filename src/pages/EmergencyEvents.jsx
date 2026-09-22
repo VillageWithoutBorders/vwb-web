@@ -66,6 +66,13 @@ export default function EmergencyEvents() {
   async function upvoteEvent(e, eventId) {
     e.stopPropagation()
     if (myUpvotes[eventId]) return
+    // Capture whether this event was already verified BEFORE this vote, so
+    // we only announce it once, on the vote that actually crosses the
+    // threshold. Without this, every additional upvote past the threshold
+    // re-posted the same "Emergency Verified" Campfire announcement and
+    // re-notified the reporter, which got noisy fast on a busy event.
+    const ev = events.find(e2 => e2.id === eventId)
+    const wasVerified = !!ev?.verified
     const { error: upErr } = await supabase.from('event_upvotes').insert({ event_id: eventId, user_id: user.id })
     if (upErr) { console.error('Failed to record upvote:', upErr); alert('Could not record your vote. Try again.'); return }
     // Count votes straight from event_upvotes (the source of truth) instead of
@@ -85,7 +92,7 @@ export default function EmergencyEvents() {
       verified: newCount >= VERIFY_THRESHOLD ? true : undefined
     }).eq('id', eventId)
     if (updErr) console.error('Failed to update upvote count:', updErr)
-    if (newCount >= VERIFY_THRESHOLD && !updErr) {
+    if (!wasVerified && newCount >= VERIFY_THRESHOLD && !updErr) {
       await notifyAndPost(eventId)
     }
     await loadEvents()
