@@ -28,6 +28,30 @@ async function submitAmbassadorApplication(userId, howKnown) {
   return true
 }
 
+// Pending organization invite: JoinOrg.jsx stashes this in localStorage when
+// someone accepts an invite before they have an account yet, or before they've
+// signed in -- same pending-in-localStorage pattern as the ambassador and
+// village signup data above. Applied here once we actually have a signed-in
+// user. Only cleared on success, so a hiccup (or an email-confirm gap) just
+// retries on the next load, same as the ambassador stash.
+async function applyPendingOrgInvite() {
+  const pending = localStorage.getItem('vwb_pending_org_invite')
+  if (!pending) return
+  let invite = null
+  try { invite = JSON.parse(pending) } catch (e) { console.error('Failed to parse pending org invite:', e) }
+  if (!invite || !invite.token) { localStorage.removeItem('vwb_pending_org_invite'); return }
+  const { error } = await supabase.rpc('accept_organization_invitation', {
+    p_token: invite.token,
+    p_name: invite.name,
+    p_description: invite.description || null,
+    p_contact_email: invite.contact_email || null,
+    p_website_url: invite.website_url || null,
+    p_social_link: invite.social_link || null,
+  })
+  if (error) { console.error('[AuthContext] applyPendingOrgInvite', error); return }
+  localStorage.removeItem('vwb_pending_org_invite')
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -130,6 +154,7 @@ export function AuthProvider({ children }) {
         setProfile(data)
       }
       loadOrganizations(authUser.id)
+      applyPendingOrgInvite()
       return
     }
 
@@ -178,6 +203,7 @@ export function AuthProvider({ children }) {
       if (pendingVillageId) localStorage.removeItem('vwb_pending_village_id')
       setProfile(newProfile)
       loadOrganizations(authUser.id)
+      applyPendingOrgInvite()
     } else {
       console.error('[AuthContext] ensureProfile insert failed', error)
     }

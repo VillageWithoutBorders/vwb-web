@@ -70,6 +70,12 @@ export default function Admin() {
   const [newOrgEmail, setNewOrgEmail] = useState('')
   const [newOrgWebsite, setNewOrgWebsite] = useState('')
   const [newOrgSocial, setNewOrgSocial] = useState('')
+  const [orgInvitations, setOrgInvitations] = useState([])
+  const [showInviteOrgForm, setShowInviteOrgForm] = useState(false)
+  const [inviteContactName, setInviteContactName] = useState('')
+  const [inviteContactEmail, setInviteContactEmail] = useState('')
+  const [inviteNote, setInviteNote] = useState('')
+  const [creatingInvite, setCreatingInvite] = useState(false)
   const [memberSearchQuery, setMemberSearchQuery] = useState({})
   const [memberSearchResults, setMemberSearchResults] = useState({})
   const [villages, setVillages] = useState([])
@@ -89,7 +95,7 @@ export default function Admin() {
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadAmbassadorApplications(), loadOrganizations(), loadVillages(), loadContent()])
+    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadAmbassadorApplications(), loadOrganizations(), loadOrgInvitations(), loadVillages(), loadContent()])
     setLoading(false)
   }
 
@@ -349,6 +355,44 @@ export default function Admin() {
     const { error } = await supabase.from('organization_members').delete().eq('id', memberRowId)
     if (reportError('removeOrgMember', error, 'Could not remove this member. Try again.')) return
     await loadOrganizations()
+  }
+
+  async function loadOrgInvitations() {
+    const { data, error } = await supabase.from('organization_invitations').select('*').order('created_at', { ascending: false })
+    reportError('loadOrgInvitations', error)
+    setOrgInvitations(data || [])
+  }
+
+  async function createOrgInvitation() {
+    setCreatingInvite(true)
+    const { error } = await supabase.from('organization_invitations').insert({
+      invited_by: user.id,
+      contact_name: inviteContactName.trim() || null,
+      contact_email: inviteContactEmail.trim() || null,
+      note: inviteNote.trim() || null,
+    })
+    setCreatingInvite(false)
+    if (reportError('createOrgInvitation', error, 'Could not create the invite. Try again.')) return
+    setInviteContactName(''); setInviteContactEmail(''); setInviteNote('')
+    setShowInviteOrgForm(false)
+    await loadOrgInvitations()
+  }
+
+  async function revokeOrgInvitation(id) {
+    if (!confirm('Revoke this invite link? It will stop working right away.')) return
+    const { error } = await supabase.from('organization_invitations').update({ status: 'revoked' }).eq('id', id)
+    if (reportError('revokeOrgInvitation', error, 'Could not revoke this invite. Try again.')) return
+    await loadOrgInvitations()
+  }
+
+  function inviteLink(token) {
+    return `${window.location.origin}/join-org?token=${token}`
+  }
+
+  function copyInviteLink(token) {
+    navigator.clipboard.writeText(inviteLink(token))
+      .then(() => alert('Invite link copied.'))
+      .catch(() => alert('Could not copy automatically. Long-press or select the link to copy it.'))
   }
 
   async function loadPending() {
@@ -1124,6 +1168,43 @@ export default function Admin() {
               <input value={newOrgWebsite} onChange={(e) => setNewOrgWebsite(e.target.value)} placeholder="Website URL" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
               <input value={newOrgSocial} onChange={(e) => setNewOrgSocial(e.target.value)} placeholder="Social media link (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
               <button onClick={createOrganization} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create Organization</button>
+            </div>
+          )}
+
+          <button onClick={() => setShowInviteOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showInviteOrgForm ? 'Cancel' : '+ Invite an Organization'}</button>
+
+          {showInviteOrgForm && (
+            <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
+              <p style={{ color: '#999', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>Generates a link you send yourself (text, email, whatever). Whoever opens it fills in their own organization's details and joins as its first member -- it lands here as PENDING APPROVAL just like one you create yourself.</p>
+              <input value={inviteContactName} onChange={(e) => setInviteContactName(e.target.value)} placeholder="Contact name (for your reference)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+              <input value={inviteContactEmail} onChange={(e) => setInviteContactEmail(e.target.value)} placeholder="Contact email (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+              <textarea value={inviteNote} onChange={(e) => setInviteNote(e.target.value)} placeholder="A short note they'll see on the invite page (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem', minHeight: '3rem' }} />
+              <button onClick={createOrgInvitation} disabled={creatingInvite} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{creatingInvite ? 'Creating...' : 'Generate Invite Link'}</button>
+            </div>
+          )}
+
+          {orgInvitations.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ color: '#4ecca3', fontSize: '0.8rem', fontWeight: 600, margin: '0 0 0.4rem' }}>Sent invites</p>
+              {orgInvitations.map(inv => (
+                <div key={inv.id} style={{ ...cardStyle, marginBottom: '0.5rem', padding: '0.6rem 0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <div>
+                      <span style={{ background: inv.status === 'accepted' ? '#1a4a3a' : inv.status === 'revoked' ? '#3a1a1a' : '#3a2a1a', color: inv.status === 'accepted' ? '#4ecca3' : inv.status === 'revoked' ? '#ff6666' : '#ffaa44', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{inv.status.toUpperCase()}</span>
+                      <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: '#eee' }}>{inv.contact_name || 'No name given'}{inv.contact_email ? ` · ${inv.contact_email}` : ''}</p>
+                    </div>
+                    {inv.status === 'pending' && (
+                      <button onClick={() => revokeOrgInvitation(inv.id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>Revoke</button>
+                    )}
+                  </div>
+                  {inv.status === 'pending' && (
+                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
+                      <input readOnly value={inviteLink(inv.token)} onFocus={(e) => e.target.select()} style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#aaa', fontSize: '0.75rem' }} />
+                      <button onClick={() => copyInviteLink(inv.token)} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Copy Link</button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
