@@ -6,7 +6,7 @@ import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import AvatarDisplay from '../components/AvatarDisplay'
-import { submitUserReport } from '../utils/submitUserReport'
+import { decryptFromSender, getDeviceId } from '../lib/e2ee'
 
 const DISAPPEAR_STEPS = [
   { label: 'Off', mins: 0 },
@@ -465,15 +465,31 @@ export default function Messages() {
         const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
         return !blockedIds.has(otherId)
       })
+      // Fetched once, not per conversation -- decrypting a preview below
+      // needs this device's own id, which never changes mid-load.
+      const deviceId = await getDeviceId()
       const withNames = await Promise.all(visible.map(async (c) => {
         const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
         const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
         if (profErr) console.error('Failed to load conversation partner profile:', profErr)
-        const { data: lastMsg, error: msgErr } = await supabase.from('chat_messages').select('body, created_at').eq('conversation_id', c.id).is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        const { data: lastMsg, error: msgErr } = await supabase.from('chat_messages').select('id, body, sender_id, created_at').eq('conversation_id', c.id).is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
         if (msgErr) console.error('Failed to load last message:', msgErr)
+        // An empty body means it's encrypted -- look up this device's copy
+        // and decrypt it client-side for the preview snippet. Falls back to
+        // a placeholder rather than showing nothing if this device has no
+        // copy of it (e.g. it was added after that message was sent).
+        let lastMessageText = lastMsg?.body || null
+        if (lastMsg && !lastMsg.body) {
+          if (deviceId) {
+            const { data: copy, error: copyErr } = await supabase.from('encrypted_message_copies').select('ciphertext, nonce').eq('message_id', lastMsg.id).eq('user_id', user.id).eq('device_id', deviceId).maybeSingle()
+            if (copyErr) console.error('Failed to load encrypted preview:', copyErr)
+            if (copy) lastMessageText = await decryptFromSender(copy.ciphertext, copy.nonce, lastMsg.sender_id)
+          }
+          if (!lastMessageText) lastMessageText = '[Encrypted message]'
+        }
         const lastRead = c.helper_id === user.id ? c.last_read_helper : c.last_read_requester
         const hasUnread = lastMsg && (!lastRead || new Date(lastMsg.created_at) > new Date(lastRead))
-        return { ...c, otherId, otherName: p?.display_name || 'Neighbor', otherAvatar: p?.avatar_url || null, lastMessage: lastMsg?.body || null, lastMessageAt: lastMsg?.created_at || c.created_at, hasUnread }
+        return { ...c, otherId, otherName: p?.display_name || 'Neighbor', otherAvatar: p?.avatar_url || null, lastMessage: lastMessageText, lastMessageAt: lastMsg?.created_at || c.created_at, hasUnread }
       }))
       withNames.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))
       setConvos(withNames)
@@ -540,12 +556,13 @@ export default function Messages() {
     await loadBlocked()
   }
 
-  async function reportConversation(convoId, otherId) {
-    const reason = prompt('Why are you reporting this conversation? (optional)')
-    const { error } = await submitUserReport({ reporterId: user.id, reportedUserId: otherId, source: 'messages', details: reason || 'Reported from messages' })
+  // Opens the real report flow inside the conversation itself, rather than
+  // a bare prompt() with no way to attach evidence: since messages are
+  // end-to-end encrypted, a report filed from here would otherwise leave
+  // admins with nothing to go on. Conversation.jsx watches for this flag.
+  function reportConversation(convoId) {
     setOpenMenu(null)
-    if (error) { alert(error); return }
-    alert('Report submitted. Thank you for helping keep our community safe.')
+    navigate('/conversation/' + convoId, { state: { openReport: true } })
   }
 
   let filtered = activeFolder === 'all' ? convos : activeFolder === 'unread' ? convos.filter(c => c.hasUnread) : activeFolder === 'archived' ? convos : convos.filter(c => (assignments[c.id] || []).includes(activeFolder))
@@ -862,7 +879,7 @@ export default function Messages() {
                   <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128193;</span> Move to folder
                 </button>
               )}
-              <button style={menuBtn} onClick={() => reportConversation(c.id, c.otherId)}>
+              <button style={menuBtn} onClick={() => reportConversation(c.id)}>
                 <span style={{ width: '1.2rem', textAlign: 'center', color: '#ff4444' }}>&#9873;</span> Report
               </button>
               <button style={menuBtn} onClick={() => blockUser(c.otherId, c.otherName)}>
