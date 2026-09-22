@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useInstallPrompt } from '../hooks/useInstallPrompt'
 
 // Wherever the app is actually running (production, a preview deploy, or
 // localhost), not a hardcoded domain, so the shared link and QR code always
@@ -27,8 +28,10 @@ const menuItemStyle = {
 // log out. No page needs its own logout button because of this.
 export default function LogoMenu() {
   const { signOut } = useAuth()
+  const { canInstall, isStandalone, isIOS, promptInstall } = useInstallPrompt()
   const [menuOpen, setMenuOpen] = useState(false)
   const [sharePanelOpen, setSharePanelOpen] = useState(false)
+  const [installInfoOpen, setInstallInfoOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   // A custom modal instead of window.confirm(): the native dialog doesn't
   // fire reliably in every environment the app runs in (it's silently
@@ -40,8 +43,23 @@ export default function LogoMenu() {
   function closeAll() {
     setMenuOpen(false)
     setSharePanelOpen(false)
+    setInstallInfoOpen(false)
     setCopied(false)
     setConfirmLogoutOpen(false)
+  }
+
+  // On browsers that support it (Chrome/Edge, most Android browsers), this
+  // shows the real install dialog directly. Everywhere else -- iOS Safari,
+  // which never offers that dialog at all, or a browser that hasn't decided
+  // this page is installable yet -- it falls back to plain instructions
+  // instead of doing nothing, so the menu item always does something useful.
+  async function handleInstallClick() {
+    setMenuOpen(false)
+    if (canInstall) {
+      await promptInstall()
+      return
+    }
+    setInstallInfoOpen(true)
   }
 
   async function handleNativeShare() {
@@ -90,6 +108,11 @@ export default function LogoMenu() {
             <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" onClick={closeAll} style={{ ...menuItemStyle, textDecoration: 'none', display: 'flex', borderTop: '1px solid #333' }}>
               <span aria-hidden="true">{'\u{1F310}'}</span> Visit our website
             </a>
+            {!isStandalone && (
+              <button type="button" onClick={handleInstallClick} style={{ ...menuItemStyle, borderTop: '1px solid #333' }}>
+                <span aria-hidden="true">{'\u{1F4F2}'}</span> Install app
+              </button>
+            )}
             <button type="button" onClick={handleLogout} style={{ ...menuItemStyle, color: '#ff8888', borderTop: '1px solid #333' }}>
               <span aria-hidden="true">{'\u{1F6AA}'}</span> Log out
             </button>
@@ -118,6 +141,25 @@ export default function LogoMenu() {
               <button type="button" className="btn btn-outline btn-full" onClick={handleCopyLink}>{copied ? 'Copied!' : 'Copy link'}</button>
               <button type="button" className="link-button" onClick={closeAll} style={{ marginTop: '0.25rem' }}>Close</button>
             </div>
+          </div>
+        </>
+      )}
+
+      {installInfoOpen && (
+        <>
+          <button type="button" aria-label="Close" onClick={closeAll} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', border: 'none', padding: 0, cursor: 'pointer', zIndex: 210 }} />
+          <div role="dialog" aria-label="Install Village Without Borders" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#242424', border: '1px solid #444', borderRadius: '16px', padding: '1.5rem', zIndex: 211, width: '90%', maxWidth: '340px', textAlign: 'center' }}>
+            <h2 style={{ margin: '0 0 0.5rem', color: '#4ecca3', fontSize: '1.1rem' }}>Install Village Without Borders</h2>
+            {isIOS ? (
+              <p style={{ color: '#ccc', fontSize: '0.9rem', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
+                Tap the share button <span style={{ fontSize: '1.1em' }}>&#x2B06;&#xFE0F;</span> at the bottom of Safari, then "Add to Home Screen."
+              </p>
+            ) : (
+              <p style={{ color: '#ccc', fontSize: '0.9rem', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
+                Look for "Install app" or "Add to Home Screen" in your browser's menu -- usually behind an icon in the address bar, or your browser's main menu (the three dots or lines).
+              </p>
+            )}
+            <button type="button" className="btn btn-primary btn-full" onClick={closeAll}>Got it</button>
           </div>
         </>
       )}
