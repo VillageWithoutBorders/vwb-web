@@ -1,54 +1,37 @@
 import { useState, useEffect } from 'react'
+import { useInstallPrompt } from '../hooks/useInstallPrompt'
 
 export default function InstallBanner() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [visible, setVisible] = useState(false)
-  const [isIOS, setIsIOS] = useState(false)
+  const { canInstall, isStandalone, isIOS, promptInstall } = useInstallPrompt()
+  const [dismissedRecently, setDismissedRecently] = useState(true)
 
   useEffect(() => {
-    if (window.matchMedia('(display-mode: standalone)').matches) return
-    if (navigator.standalone) return
-
     const dismissed = localStorage.getItem('vwb_install_dismissed')
     if (dismissed) {
       const dismissedAt = parseInt(dismissed, 10)
-      if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return
+      setDismissedRecently(Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000)
+    } else {
+      setDismissedRecently(false)
     }
-
-    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
-    setIsIOS(ios)
-
-    if (ios) {
-      setVisible(true)
-      return
-    }
-
-    function handlePrompt(e) {
-      e.preventDefault()
-      setDeferredPrompt(e)
-      setVisible(true)
-    }
-
-    window.addEventListener('beforeinstallprompt', handlePrompt)
-    return () => window.removeEventListener('beforeinstallprompt', handlePrompt)
   }, [])
 
   async function handleInstall() {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
+    const outcome = await promptInstall()
     if (outcome === 'accepted') {
-      setVisible(false)
+      setDismissedRecently(true)
     }
-    setDeferredPrompt(null)
   }
 
   function handleDismiss() {
     localStorage.setItem('vwb_install_dismissed', Date.now().toString())
-    setVisible(false)
+    setDismissedRecently(true)
   }
 
-  if (!visible) return null
+  // Same "install app" access is always available permanently from the
+  // logo menu in the header (see LogoMenu.jsx) -- this banner is just an
+  // early, dismissible nudge toward it, not the only way in.
+  if (isStandalone || dismissedRecently) return null
+  if (!isIOS && !canInstall) return null
 
   return (
     <div className="install-banner">
