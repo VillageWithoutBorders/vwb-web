@@ -24,11 +24,19 @@ import Campfire from './pages/Campfire'
 import Notifications from './pages/Notifications'
 import PublicProfile from './pages/PublicProfile'
 import GrantReport from './pages/GrantReport'
+import CommunityGuidelines from './pages/CommunityGuidelines'
+import JoinOrg from './pages/JoinOrg'
 
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
+  const { user, profile, loading, refreshProfile } = useAuth()
   if (loading) return null
-  return user ? children : <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/login" replace />
+  // Wait for the profile row to load before deciding anything, same as the
+  // loading check above, so a brand-new signup never flashes real content
+  // before we know whether guidelines have been accepted.
+  if (!profile) return null
+  if (!profile.guidelines_accepted_at) return <CommunityGuidelines onAgree={refreshProfile} />
+  return children
 }
 
 function PublicRoute({ children }) {
@@ -43,6 +51,7 @@ function AppRoutes() {
       <Route path="/welcome" element={<PublicRoute><Welcome /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/join-org" element={<JoinOrg />} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="skillshare" element={<Feed />} />
