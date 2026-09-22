@@ -16,12 +16,24 @@
 //
 // libsodium-wrappers is loaded with a dynamic import inside each function
 // rather than a static import at the top of the file. That's deliberate:
-// a static import that fails to resolve (like right now, before
-// `npm install` has been run) crashes every module that imports this
-// one, which is the whole app, since AuthContext.jsx uses it. A dynamic
-// import's failure happens at runtime, inside the try/catch below, so a
-// missing dependency degrades to "encryption quietly does nothing" rather
-// than "the app won't load."
+// a static import that fails to resolve crashes every module that imports
+// this one, which is the whole app, since AuthContext.jsx uses it. A
+// dynamic import's failure happens at runtime, inside the try/catch below,
+// so a missing dependency degrades to "encryption quietly does nothing"
+// rather than "the app won't load."
+//
+// This must NOT carry a /* @vite-ignore */ comment. That comment tells
+// Vite to leave the import specifier untouched instead of resolving and
+// bundling it -- which is exactly what shipped here for a while, and it
+// silently broke encryption in production: the browser received a literal
+// import('libsodium-wrappers') with no import map to resolve a bare
+// package name against, so it failed every single time with "Failed to
+// resolve module specifier," caught by the try/catch below and logged as
+// if the package just wasn't installed yet. It looked identical to the
+// original "not installed" case in the console, which is what let it hide.
+// Vite bundles a real, installed dependency like this one correctly on its
+// own; @vite-ignore was only ever the right call while the package
+// genuinely wasn't in node_modules.
 //
 // Private keys are generated on-device and never sent anywhere. Only the
 // public key is written to Supabase. There is no backup: losing the
@@ -78,7 +90,7 @@ function randomDeviceId() {
 // someone from logging in.
 export async function ensureDeviceKeypair(userId) {
   try {
-    const sodium = (await import(/* @vite-ignore */ 'libsodium-wrappers')).default
+    const sodium = (await import('libsodium-wrappers')).default
     await sodium.ready
     const existing = await idbGet(IDENTITY_KEY)
     if (existing) return existing
@@ -145,7 +157,7 @@ export async function getDeviceId() {
 // published a key.
 export async function encryptForConversation(plaintext, senderUserId, recipientUserId) {
   try {
-    const sodium = (await import(/* @vite-ignore */ 'libsodium-wrappers')).default
+    const sodium = (await import('libsodium-wrappers')).default
     await sodium.ready
     const identity = await idbGet(IDENTITY_KEY)
     if (!identity) return []
@@ -189,7 +201,7 @@ export async function encryptForConversation(plaintext, senderUserId, recipientU
 // the page.
 export async function decryptFromSender(ciphertextB64, nonceB64, senderUserId) {
   try {
-    const sodium = (await import(/* @vite-ignore */ 'libsodium-wrappers')).default
+    const sodium = (await import('libsodium-wrappers')).default
     await sodium.ready
     const identity = await idbGet(IDENTITY_KEY)
     if (!identity) return null
