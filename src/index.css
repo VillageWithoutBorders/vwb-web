@@ -892,19 +892,6 @@ body {
 }
 
 /* ---------- SkillShare Feed ---------- */
- .feed-page {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 60px);
-  padding-top: 0.5rem;
-}
-
-.feed-page h1 {
-  font-size: 1.375rem;
-  color: var(--green-dark);
-  margin-bottom: 1rem;
-}
-
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
@@ -1019,6 +1006,7 @@ a:focus:not(:focus-visible) {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
   margin-bottom: 1rem;
 }
 
