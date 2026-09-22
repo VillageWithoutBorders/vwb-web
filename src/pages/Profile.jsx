@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarBuilder, { AvatarPreview } from '../components/AvatarBuilder'
@@ -15,6 +15,7 @@ function reportError(context, error, userMessage) {
 export default function Profile() {
   const { user, profile, isAdmin, refreshProfile } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -90,6 +91,18 @@ export default function Profile() {
       setAmbInterests(profile.interests || '')
     }
   }, [profile])
+
+  // The header account menu's "Edit Profile" item navigates here with
+  // this flag set (since Profile.jsx no longer has its own Edit profile
+  // button -- see AccountMenu.jsx) so it lands straight in the edit form
+  // instead of just the read-only view. Clear the flag right after so
+  // it doesn't re-trigger on a later re-render or a back/forward nav.
+  useEffect(() => {
+    if (location.state?.openEdit && profile) {
+      startEditing()
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.state, profile])
   useEffect(() => { if (user?.id && profile?.is_hope_ambassador && !isAdmin) loadAdminAppStatus() }, [user?.id, profile?.is_hope_ambassador])
 
   useEffect(() => {
@@ -425,15 +438,6 @@ function captureCoverageLocation() {
         {message && <p className="form-success" role="status" style={{ marginTop: '1rem' }}>{message}</p>}
         {error && <p className="form-error" role="alert" style={{ marginTop: '1rem' }}>{error}</p>}
 
-        <button className="btn btn-primary btn-full" style={{ marginTop: '1.5rem' }} onClick={startEditing}>Edit profile</button>
-        <button className="btn btn-outline btn-full" onClick={() => navigate('/settings')} style={{ marginTop: '0.5rem' }}>
-          {'⚙'} Settings &amp; Privacy
-        </button>
-        {isAdmin && (
-          <button className="btn btn-outline btn-full" onClick={() => navigate("/admin")} style={{ marginTop: "0.5rem", borderColor: "#4ecca3", color: "#4ecca3" }}>
-            {'⚙'} Admin Panel
-          </button>
-        )}
         {isAdmin && !profile?.admin_latitude && (
           <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid #66aaff', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
             <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: '#66aaff' }}>Set up your coverage area</h2>
