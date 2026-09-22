@@ -271,7 +271,7 @@ export default function EventDetail() {
       }
       const { error: voteErr } = await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'resolved' }, { onConflict: 'event_id,voter_id' })
       if (voteErr) { console.error('Failed to record close vote:', voteErr); alert('Could not record your vote. Try again.'); setClosingEvent(false); return }
-      const { data: votes, error: votesErr } = await supabase.from('event_close_votes').select('id').eq('event_id', id)
+      const { data: votes, error: votesErr } = await supabase.from('event_close_votes').select('id').eq('event_id', id).eq('close_reason', 'resolved')
       if (votesErr) console.error('Failed to check close votes:', votesErr)
       if (votes && votes.length >= 2) {
         const { error: closeErr } = await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
@@ -309,10 +309,34 @@ export default function EventDetail() {
         alert('This verified event requires admin approval to mark as false alarm. Admins have been notified.')
         return
       }
-      const { error } = await supabase.from('emergency_events').delete().eq('id', id)
+      // Unverified events used to be deletable, permanently, by ANY
+      // signed-up participant -- not just the person who reported it.
+      // Deleting is a hard delete with no undo, so it now follows the same
+      // rule as closing an event as resolved: the reporter can retract
+      // their own report alone, but anyone else needs a second person to
+      // agree first.
+      if (isReporter) {
+        const { error } = await supabase.from('emergency_events').delete().eq('id', id)
+        setClosingEvent(false)
+        if (error) { console.error('Failed to remove event:', error); alert('Could not remove this event. Try again.'); return }
+        navigate('/emergency')
+        return
+      }
+      const { error: voteErr } = await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'false_alarm' }, { onConflict: 'event_id,voter_id' })
+      if (voteErr) { console.error('Failed to record close vote:', voteErr); alert('Could not record your vote. Try again.'); setClosingEvent(false); return }
+      const { data: faVotes, error: faVotesErr } = await supabase.from('event_close_votes').select('id').eq('event_id', id).eq('close_reason', 'false_alarm')
+      if (faVotesErr) console.error('Failed to check close votes:', faVotesErr)
+      if (faVotes && faVotes.length >= 2) {
+        const { error: delErr } = await supabase.from('emergency_events').delete().eq('id', id)
+        setClosingEvent(false)
+        if (delErr) { console.error('Failed to remove event:', delErr); alert('Could not remove this event. Try again.'); return }
+        navigate('/emergency')
+        return
+      }
       setClosingEvent(false)
-      if (error) { console.error('Failed to remove event:', error); alert('Could not remove this event. Try again.'); return }
-      navigate('/emergency')
+      setShowCloseModal(false)
+      alert('Your vote to mark this a false alarm has been recorded. One more vote is needed before the event is removed.')
+      await loadAll()
       return
     }
 
@@ -724,7 +748,7 @@ export default function EventDetail() {
               </button>
               <button onClick={() => setCloseReason('false_alarm')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'false_alarm' ? '2px solid #ffaa44' : '1px solid #444', background: closeReason === 'false_alarm' ? '#2a2518' : '#222', color: '#fff', cursor: 'pointer', textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ffaa44' }}>False Alarm</div>
-                <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '0.15rem' }}>{event.verified ? 'Verified events require admin approval.' : 'This event will be removed entirely.'}</div>
+                <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '0.15rem' }}>{event.verified ? 'Verified events require admin approval.' : (event.created_by === user.id ? 'This will permanently remove your report. This can\'t be undone.' : 'This will permanently remove the event once one other participant agrees. This can\'t be undone.')}</div>
               </button>
               <button onClick={() => setCloseReason('duplicate')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'duplicate' ? '2px solid #66aaff' : '1px solid #444', background: closeReason === 'duplicate' ? '#1a2a4a' : '#222', color: '#fff', cursor: 'pointer', textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#66aaff' }}>Duplicate Event</div>
