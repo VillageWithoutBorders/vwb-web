@@ -53,8 +53,9 @@ const CARDS = [
     title: 'What stays private',
     body: "Your exact address is never shown to anyone. You choose what shows up on your public profile.",
     points: [
-      "Messages you send are stored, so they can be looked into if someone files a report",
-      "Nobody reads your messages otherwise",
+      'Direct messages are end-to-end encrypted. Only you and the person you\'re messaging can read them, not even us',
+      'If someone files a report, they attach their own copy of the messages being reported. We can\'t pull up a conversation ourselves',
+      "Campfire (the group chat) isn't encrypted the same way. Admins can see what's posted there, so keep sensitive details out of it",
       "Please don't share someone else's personal information without asking them first",
     ],
     footer: null,

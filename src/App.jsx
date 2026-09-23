@@ -26,6 +26,7 @@ import PublicProfile from './pages/PublicProfile'
 import GrantReport from './pages/GrantReport'
 import CommunityGuidelines from './pages/CommunityGuidelines'
 import JoinOrg from './pages/JoinOrg'
+import Terms from './pages/Terms'
 
 function ProtectedRoute({ children }) {
   const { user, profile, loading, refreshProfile } = useAuth()
@@ -52,6 +53,7 @@ function AppRoutes() {
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/join-org" element={<JoinOrg />} />
+      <Route path="/terms" element={<Terms />} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="skillshare" element={<Feed />} />
