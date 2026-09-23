@@ -45,7 +45,7 @@ export default function Terms() {
         <p>Our community has a trust system with four levels:</p>
         <ul>
           <li><strong>Neighbor.</strong> Any verified member. Can post help requests, browse offers, and send messages.</li>
-          <li><strong>Hope Ambassador.</strong> A neighbor who has opted in to actively help others. Community-verified through vouches from other members.</li>
+          <li><strong>Hope Ambassador.</strong> A neighbor who has applied to actively help others. An admin reviews and approves each application before Campfire access is granted.</li>
           <li><strong>Admin.</strong> A trusted member who helps manage the platform. Earned through an application process reviewed by existing leadership.</li>
           <li><strong>Founder.</strong> The creator and steward of VWB.</li>
         </ul>
@@ -181,7 +181,7 @@ export default function Terms() {
       <div className="help-section">
         <h2>10. Your account</h2>
         <p>You are responsible for keeping your login credentials secure. Do not share your account with others.</p>
-        <p>You may delete your account at any time. When you delete your account, your profile and associated data are removed from the platform. Some records (such as safety reports involving your account) may be retained for community safety purposes.</p>
+        <p>To delete your account, contact us through the Help page in the app or at info@villagewithoutborders.org. When your account is deleted, your profile and associated data are removed from the platform. Some records (such as safety reports involving your account) may be retained for community safety purposes.</p>
         <p>VWB reserves the right to suspend or permanently remove any account that violates these terms.</p>
       </div>
 
