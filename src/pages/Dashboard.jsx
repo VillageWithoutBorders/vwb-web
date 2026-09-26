@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { getCurrentPosition } from '../utils/location'
+import { peekReturnTo } from '../utils/returnTo'
 import PushBanner from '../components/PushBanner'
 import InstallBanner from '../components/InstallBanner'
 import AmbassadorBanner from '../components/AmbassadorBanner'
@@ -77,6 +78,14 @@ export default function Dashboard() {
   const location = useLocation()
   const displayName = profile?.display_name || 'Neighbor'
   const successMessage = location.state?.message
+
+  // Coming back from "confirm your email" after tapping Sign up on an event:
+  // send them to that event instead of leaving them on the home screen.
+  useEffect(() => {
+    const back = peekReturnTo()
+    if (back) navigate(back, { replace: true })
+  }, [navigate])
+
   return (
     <div className="dashboard">
       {successMessage && (
@@ -109,6 +118,11 @@ export default function Dashboard() {
           <span className="action-icon" aria-hidden="true">&#127384;</span>
           <span className="action-label">Ask for Help</span>
           <span className="action-desc">Post a request for your community</span>
+        </button>
+        <button className="action-card" onClick={() => navigate('/calendar')}>
+          <span className="action-icon" aria-hidden="true">&#128197;</span>
+          <span className="action-label">Calendar</span>
+          <span className="action-desc">Events and volunteer sign-ups near you</span>
         </button>
         {(profile?.is_hope_ambassador || isAdmin) && (
           <button className="action-card" onClick={() => navigate('/campfire')}>
