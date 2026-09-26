@@ -6,6 +6,9 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt'
 // localhost), not a hardcoded domain, so the shared link and QR code always
 // point somewhere real.
 const APP_URL = window.location.origin
+// The QR code skips the landing page and opens the sign-up form directly,
+// so someone scanning at an event is one step from joining.
+const SIGNUP_URL = `${APP_URL}/login?mode=signup`
 const SHARE_TEXT = 'Village Without Borders is a mutual aid network where neighbors help neighbors. Join us:'
 
 const menuItemStyle = {
@@ -125,13 +128,13 @@ export default function LogoMenu() {
           <button type="button" aria-label="Close" onClick={closeAll} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', border: 'none', padding: 0, cursor: 'pointer', zIndex: 210 }} />
           <div role="dialog" aria-label="Share Village Without Borders" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#242424', border: '1px solid #444', borderRadius: '16px', padding: '1.5rem', zIndex: 211, width: '90%', maxWidth: '340px', textAlign: 'center' }}>
             <h2 style={{ margin: '0 0 0.5rem', color: '#4ecca3', fontSize: '1.1rem' }}>Share Village Without Borders</h2>
-            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 1rem' }}>Invite a neighbor to join. Just a plain link, nothing tracked.</p>
+            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 1rem' }}>Scan with your phone camera to sign up. Just a plain link, nothing tracked.</p>
             <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(APP_URL)}`}
-              alt="QR code linking to Village Without Borders"
-              width={180}
-              height={180}
-              style={{ borderRadius: '8px', background: '#fff', padding: '8px' }}
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=520x520&margin=0&data=${encodeURIComponent(SIGNUP_URL)}`}
+              alt="QR code that opens the Village Without Borders sign-up form"
+              width={260}
+              height={260}
+              style={{ width: '100%', maxWidth: '260px', height: 'auto', aspectRatio: '1 / 1', borderRadius: '8px', background: '#fff', padding: '12px', boxSizing: 'border-box' }}
             />
             <p style={{ color: '#ccc', fontSize: '0.8rem', margin: '1rem 0 0.75rem', wordBreak: 'break-all' }}>{APP_URL}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

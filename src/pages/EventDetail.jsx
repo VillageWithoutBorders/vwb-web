@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import GroupedSkillChips from '../components/GroupedSkillChips'
+import { loadSkillCategories } from '../utils/skillGroups'
 import AvatarDisplay from '../components/AvatarDisplay'
 import { createNotification } from '../utils/notificationHelpers'
 import { useMenuPosition } from '../utils/useMenuPosition'
@@ -79,9 +81,7 @@ export default function EventDetail() {
       setMySignup(withNames.find(s => s.user_id === user.id) || null)
     }
 
-    const { data: cats, error: catsErr } = await supabase.from('skill_categories').select('title').order('title')
-    if (catsErr) console.error('Failed to load skill categories:', catsErr)
-    if (cats) setSkillCats(cats.map(c => c.title))
+    setSkillCats(await loadSkillCategories())
 
     const { data: cins, error: cinsErr } = await supabase.from('event_check_ins').select('*').eq('event_id', id).order('created_at', { ascending: false })
     if (cinsErr) console.error('Failed to load check-ins:', cinsErr)
@@ -538,8 +538,8 @@ export default function EventDetail() {
           {showSignupForm === 'responder' && (
             <>
               <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>What skills can you offer?</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.75rem' }}>
-                {skillCats.map(s => <button key={s} type="button" onClick={() => toggleSkill(s)} style={chipStyle(selectedSkills.includes(s))}>{s}</button>)}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <GroupedSkillChips skills={skillCats} gridClassName="" gridStyle={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }} renderChip={(s) => <button key={s} type="button" onClick={() => toggleSkill(s)} style={chipStyle(selectedSkills.includes(s))}>{s}</button>} />
               </div>
               <input type="text" placeholder="When are you available?" value={signupAvail} onChange={e => setSignupAvail(e.target.value)} style={fieldStyle} />
             </>
