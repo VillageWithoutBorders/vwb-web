@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES, OFFER_ITEMS_GROUP } from '../utils/skillGroups'
 import { getCurrentPosition } from '../utils/location'
 import VouchButton from '../components/VouchButton'
 import { createNotification } from '../utils/notificationHelpers'
@@ -52,7 +53,6 @@ const URGENCY_CONFIG = {
     flexible: { label: 'Flexible', className: 'urgency-flexible' },
 }
 
-const OFFER_CATEGORIES = ['Food and Meals', 'Supplies', 'Clothes', 'Labor', 'Furniture', 'Transportation', 'Other']
 
 export default function Feed() {
     const { user, profile } = useAuth()
@@ -77,9 +77,7 @@ export default function Feed() {
 
     useEffect(() => {
         async function loadSkills() {
-            const { data, error } = await supabase.from('skill_categories').select('title').order('title')
-            if (error) { console.error('Failed to load skill categories:', error); return }
-            if (data) setSkillCategories(data.map(s => s.title))
+            setSkillCategories(await loadSkillCategories())
         }
         loadSkills()
     }, [])
@@ -326,12 +324,28 @@ export default function Feed() {
                 {view === 'requests' ? (
                     <select className="feed-filter-select" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} aria-label="Filter by skill">
                         <option value="all">All skills</option>
-                        {skillCategories.map(s => <option key={s} value={s}>{s}</option>)}
+                        {groupSkills(skillCategories).map(g => (
+                            <optgroup key={g.group} label={g.group}>
+                                {g.skills.map(s => <option key={s} value={s}>{s}</option>)}
+                            </optgroup>
+                        ))}
                     </select>
                 ) : (
                     <select className="feed-filter-select" value={filterOfferCat} onChange={e => setFilterOfferCat(e.target.value)} aria-label="Filter by category">
                         <option value="all">All offers</option>
-                        {OFFER_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        <optgroup label={OFFER_ITEMS_GROUP}>
+                            {OFFER_ITEM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </optgroup>
+                        {groupSkills(offerSkillRows(skillCategories)).map(g => (
+                            <optgroup key={g.group} label={g.group}>
+                                {g.skills.map(c => <option key={c} value={c}>{c}</option>)}
+                            </optgroup>
+                        ))}
+                        {/* Labor was an offer category before skills were used here; kept so older offers can still be found. */}
+                        <optgroup label="Other">
+                            <option value="Other">Other</option>
+                            <option value="Labor">Labor (older posts)</option>
+                        </optgroup>
                     </select>
                 )}
                 <button className="btn btn-sm btn-outline" onClick={loadFeed} aria-label="Refresh feed">&#x21bb; Refresh</button>

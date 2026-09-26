@@ -2,6 +2,8 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import GroupedSkillChips from '../components/GroupedSkillChips'
+import { loadSkillCategories } from '../utils/skillGroups'
 import AvailabilityPicker from '../components/AvailabilityPicker'
 
 export default function Login() {
@@ -17,12 +19,7 @@ export default function Login() {
 
   useEffect(() => {
     async function loadSkills() {
-      const { data, error } = await supabase
-        .from('skill_categories')
-        .select('title')
-        .order('id')
-      if (error) { console.error('Failed to load skill categories:', error); return }
-      if (data) setSkillOptions(data.map((s) => s.title))
+      setSkillOptions(await loadSkillCategories())
     }
     loadSkills()
   }, [])
@@ -289,13 +286,11 @@ export default function Login() {
           <h2>Tell us about your skills</h2>
           <div className="form-field">
             <label>What can you help with?</label>
-            <div className="skill-grid">
-              {skillOptions.map((skill) => (
-                <button key={skill} type="button" className={`skill-chip ${selectedSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleSkill(skill)}>
-                  {skill}
-                </button>
-              ))}
-            </div>
+            <GroupedSkillChips skills={skillOptions} renderChip={(skill) => (
+              <button key={skill} type="button" className={`skill-chip ${selectedSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleSkill(skill)}>
+                {skill}
+              </button>
+            )} />
           </div>
           <div className="form-field">
             <label>How far can you help? ({radiusMiles} miles)</label>

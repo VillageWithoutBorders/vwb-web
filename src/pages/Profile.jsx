@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import GroupedSkillChips from '../components/GroupedSkillChips'
+import { loadSkillCategories } from '../utils/skillGroups'
 import AvatarBuilder, { AvatarPreview } from '../components/AvatarBuilder'
 import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
 
@@ -73,9 +75,7 @@ export default function Profile() {
 
   useEffect(() => {
     async function loadSkills() {
-      const { data, error } = await supabase.from('skill_categories').select('title').order('title')
-      reportError('loadSkills', error)
-      if (data) setSkillOptions(data.map((s) => s.title))
+      setSkillOptions(await loadSkillCategories())
     }
     loadSkills()
   }, [])
@@ -398,13 +398,11 @@ function captureCoverageLocation() {
             </p>
             <div className="form-field">
               <label>What skills can you offer?</label>
-              <div className="skill-grid">
-                {skillOptions.map((skill) => (
-                  <button key={skill} type="button" className={`skill-chip ${ambSignupSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleAmbSignupSkill(skill)}>
-                    {skill}
-                  </button>
-                ))}
-              </div>
+              <GroupedSkillChips skills={skillOptions} renderChip={(skill) => (
+                <button key={skill} type="button" className={`skill-chip ${ambSignupSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleAmbSignupSkill(skill)}>
+                  {skill}
+                </button>
+              )} />
             </div>
             <div className="form-field">
               <label>When are you usually available?</label>
@@ -534,13 +532,11 @@ function captureCoverageLocation() {
         </div>
         <div className="form-field">
           <label>Skills</label>
-          <div className="skill-grid">
-            {skillOptions.map((skill) => (
-              <button key={skill} type="button" className={`skill-chip ${selectedSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleSkill(skill)}>
-                {skill}
-              </button>
-            ))}
-          </div>
+          <GroupedSkillChips skills={skillOptions} renderChip={(skill) => (
+            <button key={skill} type="button" className={`skill-chip ${selectedSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleSkill(skill)}>
+              {skill}
+            </button>
+          )} />
         </div>
         <div className="form-field">
           <label htmlFor="editRadius">How far can you help? ({radiusMiles} miles)</label>

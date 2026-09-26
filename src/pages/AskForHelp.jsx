@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import GroupedSkillChips from '../components/GroupedSkillChips'
+import { loadSkillCategories } from '../utils/skillGroups'
 import { getCurrentPosition } from '../utils/location'
 
 const URGENCY_OPTIONS = [
@@ -34,16 +36,7 @@ export default function AskForHelp() {
 
     useEffect(() => {
         async function loadSkills() {
-            const { data, error } = await supabase
-                .from('skill_categories')
-                .select('title')
-                .order('title')
-
-            if (error) { console.error('Failed to load skill categories:', error); return }
-
-            if (data) {
-                setSkills(data.map((s) => s.title))
-            }
+            setSkills(await loadSkillCategories())
         }
         loadSkills()
     }, [])
@@ -114,18 +107,16 @@ export default function AskForHelp() {
 
                 <div className="form-field">
                     <label htmlFor="skillNeeded">What kind of help do you need?</label>
-                    <div className="skill-grid">
-                        {skills.map((skill) => (
-                            <button
-                                key={skill}
-                                type="button"
-                                className={`skill-chip ${skillNeeded === skill ? 'active' : ''}`}
-                                onClick={() => setSkillNeeded(skill)}
-                            >
-                                {skill}
-                            </button>
-                        ))}
-                    </div>
+                    <GroupedSkillChips skills={skills} renderChip={(skill) => (
+                        <button
+                            key={skill}
+                            type="button"
+                            className={`skill-chip ${skillNeeded === skill ? 'active' : ''}`}
+                            onClick={() => setSkillNeeded(skill)}
+                        >
+                            {skill}
+                        </button>
+                    )} />
                 </div>
 
                 <div className="form-field">
