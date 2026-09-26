@@ -3,11 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { getCurrentPosition } from '../utils/location'
+import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES, OFFER_ITEMS_GROUP } from '../utils/skillGroups'
 
-const OFFER_CATEGORIES = [
-  'Food and Meals', 'Supplies', 'Clothes', 'Labor',
-  'Furniture', 'Transportation', 'Other'
-]
 
 const fieldStyle = { display: 'block', width: '100%', marginBottom: '0.5rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid #444', background: '#1a1a1a', color: '#fff', fontSize: '1rem' }
 const labelStyle = { display: 'block', marginBottom: '0.25rem', marginTop: '1rem', fontWeight: 600, color: '#ccc' }
@@ -17,6 +14,11 @@ export default function PostOffer() {
   const navigate = useNavigate()
 
   const [category, setCategory] = useState('')
+  const [skillRows, setSkillRows] = useState([])
+
+  useEffect(() => {
+    loadSkillCategories().then((rows) => setSkillRows(offerSkillRows(rows)))
+  }, [])
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [neighborhood, setNeighborhood] = useState('')
@@ -84,9 +86,15 @@ export default function PostOffer() {
         <label style={labelStyle} htmlFor="offer-category">Category</label>
         <select id="offer-category" style={fieldStyle} value={category} onChange={e => setCategory(e.target.value)}>
           <option value="">Choose a category</option>
-          {OFFER_CATEGORIES.map(c => (
-            <option key={c} value={c}>{c}</option>
+          <optgroup label={OFFER_ITEMS_GROUP}>
+            {OFFER_ITEM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </optgroup>
+          {groupSkills(skillRows).map(g => (
+            <optgroup key={g.group} label={g.group}>
+              {g.skills.map(c => <option key={c} value={c}>{c}</option>)}
+            </optgroup>
           ))}
+          <option value="Other">Other</option>
         </select>
 
         <label style={labelStyle} htmlFor="offer-title">What are you offering?</label>
