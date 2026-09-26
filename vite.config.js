@@ -37,7 +37,7 @@ export default defineConfig({
         short_name: 'VWB',
         description: 'Mutual aid resources for Northwest Georgia',
         theme_color: '#1a1a1a',
-        background_color: '#ffffff',
+        background_color: '#173131',
         display: 'standalone',
         scope: '/',
         start_url: '/',
