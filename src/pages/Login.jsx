@@ -2,6 +2,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { peekReturnTo } from '../utils/returnTo'
 import GroupedSkillChips from '../components/GroupedSkillChips'
 import { loadSkillCategories } from '../utils/skillGroups'
 import AvailabilityPicker from '../components/AvailabilityPicker'
@@ -101,7 +102,7 @@ export default function Login() {
       setError(error.message)
       setShowForgot(true)
     } else {
-      navigate('/')
+      navigate(peekReturnTo() || '/')
     }
     setSubmitting(false)
   }

@@ -27,6 +27,11 @@ import GrantReport from './pages/GrantReport'
 import CommunityGuidelines from './pages/CommunityGuidelines'
 import JoinOrg from './pages/JoinOrg'
 import Terms from './pages/Terms'
+import Calendar from './pages/Calendar'
+import CalendarEventForm from './pages/CalendarEventForm'
+import CalendarEmbed from './pages/CalendarEmbed'
+import EventPage from './pages/EventPage'
+import { peekReturnTo } from './utils/returnTo'
 
 function ProtectedRoute({ children }) {
   const { user, profile, loading, refreshProfile } = useAuth()
@@ -43,7 +48,8 @@ function ProtectedRoute({ children }) {
 function PublicRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return null
-  return user ? <Navigate to="/" replace /> : children
+  // Someone who signed in from an event page goes back to that event.
+  return user ? <Navigate to={peekReturnTo() || '/'} replace /> : children
 }
 
 function AppRoutes() {
@@ -54,6 +60,9 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/join-org" element={<JoinOrg />} />
       <Route path="/terms" element={<Terms />} />
+      {/* Public on purpose: the website calendar and shared event links work without an account. */}
+      <Route path="/calendar/embed" element={<CalendarEmbed />} />
+      <Route path="/events/:id" element={<EventPage />} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="skillshare" element={<Feed />} />
@@ -74,6 +83,9 @@ function AppRoutes() {
         <Route path="u/:userId" element={<PublicProfile />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="notifications" element={<Notifications />} />
+        <Route path="calendar" element={<Calendar />} />
+        <Route path="calendar/new" element={<CalendarEventForm />} />
+        <Route path="calendar/:id/edit" element={<CalendarEventForm />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
