@@ -55,7 +55,9 @@
         }
         var seen = false
         try { seen = sessionStorage.getItem('vwb_splash_seen') === '1'; sessionStorage.setItem('vwb_splash_seen', '1') } catch (e) {}
-        if (seen) { el.parentNode.removeChild(el); return }
+        // Never inside the website's calendar window, or when opened in a frame.
+        var embedded = window.self !== window.top || location.pathname.indexOf('/calendar/embed') === 0
+        if (seen || embedded) { el.parentNode.removeChild(el); return }
         el.addEventListener('click', hide)
         var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
         if (reduce) {
