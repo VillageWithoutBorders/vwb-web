@@ -7,8 +7,78 @@
     <meta name="theme-color" content="#1a1a1a" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <title>Village Without Borders</title>
+    <style>
+      /* Opening splash: Jade's animated logo from the original Android app.
+         Lives here (not in React) so it shows the instant the page opens,
+         before the app's JavaScript has even downloaded. */
+      #vwb-splash {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; align-items: center; justify-content: center;
+        background: #173131;
+        transition: opacity 0.45s ease;
+        cursor: pointer;
+      }
+      #vwb-splash.vwb-splash-hide { opacity: 0; pointer-events: none; }
+      #vwb-splash video, #vwb-splash img {
+        width: min(80vw, 80vh, 420px); height: auto; aspect-ratio: 1 / 1;
+        display: block;
+        /* Fade the video's square edges into the page so only the round
+           logo shows (video compression shifts the background color a hair). */
+        -webkit-mask-image: radial-gradient(circle closest-side, #000 86%, transparent 96%);
+        mask-image: radial-gradient(circle closest-side, #000 86%, transparent 96%);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #vwb-splash { transition: none; }
+      }
+    </style>
   </head>
   <body>
+    <div id="vwb-splash" role="img" aria-label="Village Without Borders. Building community, one neighbor at a time.">
+      <video id="vwb-splash-video" muted playsinline preload="auto" poster="/splash/vwb-splash-start.webp" width="420" height="420" aria-hidden="true">
+        <source src="/splash/vwb-splash.webm" type="video/webm" />
+        <source src="/splash/vwb-splash.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <script>
+      // Plays once per visit (a fresh open of the installed app counts as a
+      // new visit). Tap anywhere to skip. If the video can't play for any
+      // reason, or takes too long, the splash just gets out of the way.
+      (function () {
+        var el = document.getElementById('vwb-splash')
+        var video = document.getElementById('vwb-splash-video')
+        var done = false
+        function hide() {
+          if (done) return
+          done = true
+          el.classList.add('vwb-splash-hide')
+          setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el) }, 500)
+        }
+        var seen = false
+        try { seen = sessionStorage.getItem('vwb_splash_seen') === '1'; sessionStorage.setItem('vwb_splash_seen', '1') } catch (e) {}
+        if (seen) { el.parentNode.removeChild(el); return }
+        el.addEventListener('click', hide)
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        if (reduce) {
+          // No animation: show the finished logo briefly instead.
+          var img = new Image()
+          img.src = '/splash/vwb-splash-end.webp'
+          img.alt = ''
+          img.width = 420
+          img.height = 420
+          video.parentNode.replaceChild(img, video)
+          setTimeout(hide, 1400)
+          return
+        }
+        video.addEventListener('ended', function () { setTimeout(hide, 350) })
+        // Only the last source failing means nothing can play (the browser
+        // quietly moves on to the next source when an earlier one fails).
+        var sources = video.getElementsByTagName('source')
+        sources[sources.length - 1].addEventListener('error', hide)
+        setTimeout(hide, 6000)
+        var p = video.play()
+        if (p && p.catch) p.catch(hide)
+      })()
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

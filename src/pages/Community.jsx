@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { getCurrentPosition, distanceMiles } from '../utils/location'
 
-const CATEGORIES = ['Emergency Help', 'Safety', 'Food', 'Donation Points', 'Tenant Rights', 'Housing', 'Government', 'Recovery Support', 'Other']
-const CAT_ICONS = { 'Emergency Help': '&#9888;', 'Safety': '&#128156;', 'Food': '&#127859;', 'Donation Points': '&#128230;', 'Tenant Rights': '&#127968;', 'Housing': '&#127969;', 'Government': '&#128203;', 'Recovery Support': '&#129419;', 'Other': '&#128204;' }
+const CATEGORIES = ['Emergency Help', 'Safety', 'Food', 'Donation Points', 'Tenant Rights', 'Housing', 'Government', 'Recovery Support', 'Advocacy and Organizing', 'Other']
+const CAT_ICONS = { 'Emergency Help': '&#9888;', 'Safety': '&#128156;', 'Food': '&#127859;', 'Donation Points': '&#128230;', 'Tenant Rights': '&#127968;', 'Housing': '&#127969;', 'Government': '&#128203;', 'Recovery Support': '&#129419;', 'Advocacy and Organizing': '&#9994;', 'Other': '&#128204;' }
 
 // A resource can now belong to more than one category. Falls back to the
 // old single `category` field for any row that hasn't been migrated yet.
