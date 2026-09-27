@@ -9,7 +9,7 @@ export default function Layout() {
   const { pathname } = useLocation()
   // Chats fill the space between the top bar and the tabs, edge to edge,
   // instead of sitting inside the padded page column.
-  const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/')
+  const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
   const { unreadCount } = useNotifications()
 
   return (
