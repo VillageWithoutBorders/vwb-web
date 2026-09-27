@@ -503,10 +503,10 @@ export default function Feed() {
                                                         return
                                                     }
                                                     if (existing) { navigate('/conversation/' + existing.id); return }
-                                                    if (!confirm('Message ' + (offer.poster_name || 'this neighbor') + ' about "' + offer.title + '"?\n\nThis starts a chat and sends them a message right away.')) return
+                                                    if (!confirm('Message ' + (offer.poster_name || 'this neighbor') + ' about "' + offer.title + '"?\n\nThis opens a private chat with them.')) return
                                                     const { data: convo, error: convoErr } = await supabase
                                                         .from('conversations')
-                                                        .insert({ helper_id: offer.user_id, requester_id: user.id })
+                                                        .insert({ helper_id: offer.user_id, requester_id: user.id, offer_id: offer.id })
                                                         .select()
                                                         .single()
                                                     if (convoErr || !convo) {
@@ -514,12 +514,10 @@ export default function Feed() {
                                                         alert('Could not start a conversation. Try again.')
                                                         return
                                                     }
-                                                    const { error: msgErr } = await supabase.from('chat_messages').insert({
-                                                        conversation_id: convo.id,
-                                                        sender_id: user.id,
-                                                        body: 'Hi! Interested in your offer: ' + offer.title,
-                                                    })
-                                                    if (msgErr) console.error('Failed to send the opening message:', msgErr)
+                                                    // No automatic opening message: it used to be stored as
+                                                    // plain text. The chat's banner shows which offer this is
+                                                    // about (conversations.offer_id), and the person writes
+                                                    // their own first message, encrypted like any other.
                                                     navigate('/conversation/' + convo.id)
                                                 }}>I'm interested</button>
                                             )}

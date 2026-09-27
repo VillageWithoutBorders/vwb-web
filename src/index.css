@@ -1821,6 +1821,46 @@ a:focus:not(:focus-visible) {
   opacity: 0.7;
 }
 
+/* A message waiting on this device for the other person's key (see
+   e2ee.js outbox). Dashed outline instead of the solid green fill, so it
+   reads as "not sent yet" without relying on color alone. */
+.chat-bubble.mine.queued {
+  background: transparent;
+  color: inherit;
+  border: 2px dashed var(--green);
+  cursor: pointer;
+}
+
+.chat-bubble.mine.queued .chat-time {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.convo-waiting-note {
+  align-self: stretch;
+  margin: 0.75rem 0 0;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(78, 204, 163, 0.1);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.convo-request-status {
+  margin: 0.375rem 0 0;
+  color: #4ecca3;
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.convo-send-error {
+  margin: 0;
+  padding: 0.5rem 1rem 0;
+  color: #ff9b8f;
+  font-size: 0.875rem;
+}
+
 .convo-input-bar {
   display: flex;
   gap: 0.5rem;
