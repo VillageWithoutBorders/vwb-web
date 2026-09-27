@@ -4,10 +4,14 @@ import { TOWNS, DISTANCE_OPTIONS, groupByDay, timeRange, VISIBILITY } from '../u
 import { getCurrentPosition } from '../utils/location'
 
 // Town dropdown (plus "Use my location") and a "how far" dropdown.
-// `origin` is { name, lat, lng }. Used by the app calendar and the website one.
+// `origin` is { name, lat, lng }, or null when we don't know the person's
+// area yet (then every event shows, with a nudge to pick). `isArea` marks
+// the member's own saved area, `isMe` a location shared this visit.
+// Used by the app calendar and the website one.
 export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChange }) {
   const [locating, setLocating] = useState(false)
   const MY_LOCATION = '__me__'
+  const MY_AREA = '__area__'
 
   async function handleTown(value) {
     if (value === MY_LOCATION) {
@@ -21,6 +25,7 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
       }
       return
     }
+    if (value === MY_AREA) return
     const t = TOWNS.find((x) => x.name === value)
     if (t) onOriginChange(t)
   }
@@ -29,7 +34,9 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
     <div className="cal-location">
       <label>
         Near
-        <select value={origin?.isMe ? MY_LOCATION : origin?.name} onChange={(e) => handleTown(e.target.value)} aria-label="Choose your town">
+        <select value={origin?.isMe ? MY_LOCATION : origin?.isArea ? MY_AREA : (origin?.name || '')} onChange={(e) => handleTown(e.target.value)} aria-label="Choose your town">
+          {!origin && <option value="" disabled>Choose your area</option>}
+          {origin?.isArea && <option value={MY_AREA}>{origin.name}</option>}
           {TOWNS.map((t) => <option key={t.name} value={t.name}>{t.name}</option>)}
           <option value={MY_LOCATION}>{locating ? 'Finding you...' : 'Use my location'}</option>
         </select>
@@ -40,6 +47,9 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
           {DISTANCE_OPTIONS.map((m) => <option key={m} value={m}>{m} miles</option>)}
         </select>
       </label>
+      {!origin && (
+        <p className="cal-hint" role="status">Showing every event. Choose your area to see what's close to you.</p>
+      )}
     </div>
   )
 }

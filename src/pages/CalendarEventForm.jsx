@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import { TOWNS, DISTANCE_OPTIONS, VISIBILITY, loadSavedTown, DEFAULT_TOWN } from '../utils/calendar'
+import { TOWNS, DISTANCE_OPTIONS, VISIBILITY, loadSavedTown } from '../utils/calendar'
 
 const VWB_HOST = 'vwb'
 
@@ -25,7 +25,9 @@ export default function CalendarEventForm() {
     ...hostOrgs.map((o) => ({ id: o.id, name: o.name })),
   ]
 
-  const startTown = loadSavedTown() || DEFAULT_TOWN
+  // Starts on the town this browser last picked on the calendar, or blank.
+  // The host picks where the event is; we don't assume Ringgold.
+  const startTown = loadSavedTown()
   const [form, setForm] = useState({
     host: hostChoices[0]?.id || '',
     title: '',
@@ -35,7 +37,7 @@ export default function CalendarEventForm() {
     endTime: '',
     locationName: '',
     address: '',
-    town: startTown.name,
+    town: startTown ? startTown.name : '',
     radius: 25,
     visibility: 'public',
     hideAddress: false,
@@ -59,7 +61,7 @@ export default function CalendarEventForm() {
         endTime: data.ends_at ? toTimeInput(data.ends_at) : '',
         locationName: data.location_name || '',
         address: data.address || '',
-        town: data.town || startTown.name,
+        town: data.town || (startTown ? startTown.name : ''),
         radius: Number(data.show_radius_miles) || 25,
         visibility: data.visibility,
         hideAddress: !!data.hide_address,
@@ -93,7 +95,8 @@ export default function CalendarEventForm() {
     const limit = form.signupLimit ? parseInt(form.signupLimit, 10) : null
     if (form.signupEnabled && form.signupLimit && (!limit || limit < 1)) { setError('The number of spots should be 1 or more, or left blank for no limit.'); return }
 
-    const town = TOWNS.find((t) => t.name === form.town) || DEFAULT_TOWN
+    const town = TOWNS.find((t) => t.name === form.town)
+    if (!town) { setError('Pick the town where the event is happening.'); return }
     const row = {
       organization_id: form.host === VWB_HOST ? null : form.host,
       title: form.title.trim(),
@@ -185,7 +188,8 @@ export default function CalendarEventForm() {
 
         <div className="form-field">
           <label htmlFor="ev-town">Town</label>
-          <select id="ev-town" value={form.town} onChange={(e) => set('town', e.target.value)}>
+          <select id="ev-town" value={form.town} onChange={(e) => set('town', e.target.value)} required>
+            <option value="" disabled>Pick a town</option>
             {TOWNS.map((t) => <option key={t.name} value={t.name}>{t.name}</option>)}
           </select>
         </div>
@@ -219,7 +223,7 @@ export default function CalendarEventForm() {
           <div className="form-field" style={{ marginTop: '0.75rem' }}>
             <label htmlFor="ev-radius">Show it to people within</label>
             <select id="ev-radius" value={form.radius} onChange={(e) => set('radius', Number(e.target.value))}>
-              {DISTANCE_OPTIONS.map((m) => <option key={m} value={m}>{m} miles of {form.town}</option>)}
+              {DISTANCE_OPTIONS.map((m) => <option key={m} value={m}>{m} miles of {form.town || 'the event'}</option>)}
             </select>
           </div>
         )}
