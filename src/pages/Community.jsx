@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import { getCurrentPosition, distanceMiles } from '../utils/location'
+import { getCurrentPosition, getMyLocation, distanceMiles } from '../utils/location'
 
 const CATEGORIES = ['Emergency Help', 'Safety', 'Food', 'Donation Points', 'Tenant Rights', 'Housing', 'Government', 'Recovery Support', 'Advocacy and Organizing', 'Other']
 const CAT_ICONS = { 'Emergency Help': '&#9888;', 'Safety': '&#128156;', 'Food': '&#127859;', 'Donation Points': '&#128230;', 'Tenant Rights': '&#127968;', 'Housing': '&#127969;', 'Government': '&#128203;', 'Recovery Support': '&#129419;', 'Advocacy and Organizing': '&#9994;', 'Other': '&#128204;' }
@@ -105,7 +105,9 @@ export default function Community() {
 
   useEffect(() => { loadResources(); loadOrgs(); loadEvents(); loadVoteCounts(); loadReviews(); loadEditHistory() }, [])
   useEffect(() => { loadMyVotes() }, [user])
-  useEffect(() => { getCurrentPosition().then(setMyLocation) }, [])
+  // Distances only show when we already know the person's area. We never ask
+  // the phone on page load, and never guess.
+  useEffect(() => { setMyLocation(getMyLocation(profile)) }, [profile?.latitude, profile?.longitude])
 
   // Submit a Resource: move focus in on open, trap Tab inside it, close on Escape.
   useEffect(() => {
@@ -311,9 +313,10 @@ export default function Community() {
   async function captureSubLocation() {
     setCapturingSubLocation(true)
     const loc = await getCurrentPosition()
+    setCapturingSubLocation(false)
+    if (!loc) { alert("We couldn't get your phone's location. You can type the address instead."); return }
     setSubLat(loc.lat)
     setSubLng(loc.lng)
-    setCapturingSubLocation(false)
   }
 
   async function submitResource() {

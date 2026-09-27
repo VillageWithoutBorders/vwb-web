@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import { getCurrentPosition } from '../utils/location'
+import { getMyLocation } from '../utils/location'
 import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES, OFFER_ITEMS_GROUP } from '../utils/skillGroups'
 
 
@@ -43,10 +43,9 @@ export default function PostOffer() {
 
     let lat = null
     let lng = null
-    try {
-      const loc = await getCurrentPosition()
-      if (loc && loc.lat) { lat = loc.lat; lng = loc.lng }
-    } catch (err) {}
+    // The area they chose (zip or phone, never a guess). No area, no location.
+    const loc = getMyLocation(profile)
+    if (loc) { lat = loc.lat; lng = loc.lng }
 
     const { error: insertErr } = await supabase.from('offers').insert({
       user_id: user.id,

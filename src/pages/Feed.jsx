@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES, OFFER_ITEMS_GROUP } from '../utils/skillGroups'
-import { getCurrentPosition } from '../utils/location'
+import { getMyLocation } from '../utils/location'
+import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import VouchButton from '../components/VouchButton'
 import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
@@ -64,7 +65,7 @@ export default function Feed() {
     const [requests, setRequests] = useState([])
     const [offers, setOffers] = useState([])
     const [loading, setLoading] = useState(true)
-    const [locationStatus, setLocationStatus] = useState('checking')
+    const [myLoc, setMyLoc] = useState(null)
     const [filterSkill, setFilterSkill] = useState('all')
     const [filterOfferCat, setFilterOfferCat] = useState('all')
     const [skillCategories, setSkillCategories] = useState([])
@@ -128,24 +129,23 @@ export default function Feed() {
 
     const loadFeed = useCallback(async () => {
         setLoading(true)
-        const [loc, blockedIds] = await Promise.all([getCurrentPosition(), getBlockedUserIds(user?.id)])
-        setLocationStatus(loc.source === 'browser' ? 'active' : 'default')
+        // Never a guess: no location means we ask for a zip (see LocationPrompt).
+        const loc = getMyLocation(profile)
+        setMyLoc(loc)
+        const blockedIds = await getBlockedUserIds(user?.id)
 
         if (view === 'requests') {
             const helperSkills = filterSkill === 'all' ? [] : [filterSkill]
             const radius = profile?.radius_miles || 10
-            const { data, error } = await supabase.rpc('nearby_matching_requests', {
-                helper_lat: loc.lat, helper_lng: loc.lng, helper_radius: radius, helper_skills: helperSkills,
-            })
+            const { data, error } = loc
+                ? await supabase.rpc('nearby_matching_requests', {
+                    helper_lat: loc.lat, helper_lng: loc.lng, helper_radius: radius, helper_skills: helperSkills,
+                })
+                : { data: null, error: null }
             if (error) console.error('nearby_matching_requests failed, falling back to unfiltered feed:', error)
-            let reqs
-            if (error || !data || data.length === 0) {
-                const { data: fallback, error: fallbackErr } = await supabase.from('open_requests_by_urgency').select('*').limit(50)
-                if (fallbackErr) console.error('Failed to load fallback request feed:', fallbackErr)
-                reqs = await enrichRequests(fallback || [])
-            } else {
-                reqs = await enrichRequests(data || [])
-            }
+            // Only ever nearby requests. (The old "show everything" fallback
+            // pointed at a view that no longer exists, so it always came back empty.)
+            let reqs = await enrichRequests(data || [])
 
             // Blocked either direction: don't surface their requests, and don't
             // let them show up as someone you could offer to help.
@@ -313,12 +313,9 @@ export default function Feed() {
                 <button className={'tasks-tab' + (view === 'offers' ? ' tasks-tab-active' : '')} onClick={() => { setView('offers'); setExpandedId(null) }}>Offers</button>
             </div>
 
-            <div className={`location-banner location-${locationStatus}`}>
-                <span className="location-dot" />
-                {locationStatus === 'active'
-                    ? `Showing within ${profile?.radius_miles || 10} miles`
-                    : 'Using approximate location. Enable location for better matches.'}
-            </div>
+            {myLoc
+                ? <LocationBar loc={myLoc} prefix={`Within ${profile?.radius_miles || 10} miles of`} onChanged={loadFeed} />
+                : <LocationPrompt onDone={loadFeed} intro="Enter your zip code to see requests near you. We never guess where you are." />}
 
             <div className="feed-filters">
                 {view === 'requests' ? (
@@ -357,7 +354,7 @@ export default function Feed() {
             {loading ? (
                 <div className="feed-loading"><div className="feed-loading-spinner" /><p>Loading...</p></div>
             ) : view === 'requests' ? (
-                sortedRequests.length === 0 ? (
+                !myLoc ? null : sortedRequests.length === 0 ? (
                     <div className="feed-empty">
                         <span className="feed-empty-icon">&#x1F33F;</span>
                         <h2>No requests right now</h2>
@@ -536,7 +533,9 @@ export default function Feed() {
                 )
             )}
 
-            <button className="fab" onClick={() => navigate(view === 'offers' ? '/post-offer' : '/ask')} aria-label="Ask for help">+</button>
+            <button type="button" className="fab fab-labeled" onClick={() => navigate(view === 'offers' ? '/post-offer' : '/ask')}>
+                <span aria-hidden="true">+</span> {view === 'offers' ? 'Offer something' : 'Ask for help'}
+            </button>
             </div>
         </div>
     )

@@ -14,7 +14,7 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
       setLocating(true)
       const loc = await getCurrentPosition()
       setLocating(false)
-      if (loc.source === 'browser') {
+      if (loc) {
         onOriginChange({ name: 'My location', lat: loc.lat, lng: loc.lng, isMe: true })
       } else {
         alert("We couldn't get your location. Pick your town from the list instead.")

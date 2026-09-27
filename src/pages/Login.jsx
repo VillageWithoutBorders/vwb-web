@@ -285,9 +285,13 @@ export default function Login() {
             </div>
           </div>
           <h2>Tell us about your skills</h2>
+          <div className="later-note">
+            <span className="later-note-icon" aria-hidden="true">{'\u{1F331}'}</span>
+            <span>No need to get it perfect. Pick at least one skill to start. You can change your skills, distance, and hours anytime in your Profile.</span>
+          </div>
           <div className="form-field">
             <label>What can you help with?</label>
-            <GroupedSkillChips skills={skillOptions} renderChip={(skill) => (
+            <GroupedSkillChips selected={selectedSkills} skills={skillOptions} renderChip={(skill) => (
               <button key={skill} type="button" className={`skill-chip ${selectedSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleSkill(skill)}>
                 {skill}
               </button>
