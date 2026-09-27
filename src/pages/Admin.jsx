@@ -95,8 +95,15 @@ export default function Admin() {
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadAmbassadorApplications(), loadOrganizations(), loadOrgInvitations(), loadVillages(), loadContent()])
-    setLoading(false)
+    // allSettled + finally: if one loader throws, the rest still show and the
+    // panel never gets stuck on Loading... The failing one gets reported.
+    const loaders = ['pending', 'alerts', 'users', 'stats', 'approvals', 'adminApps', 'ambApps', 'orgs', 'orgInvites', 'villages', 'content']
+    try {
+      const results = await Promise.allSettled([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadAmbassadorApplications(), loadOrganizations(), loadOrgInvitations(), loadVillages(), loadContent()])
+      results.forEach((r, i) => { if (r.status === 'rejected') reportError('loadAll:' + loaders[i], r.reason) })
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function loadVillages() {
@@ -768,15 +775,15 @@ export default function Admin() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button type="button" className="admin-stat-card" onClick={() => setTab('users')} style={statCardStyle}>
+        <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('all'); setTab('users') }} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.users}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Users</div>
         </button>
-        <button type="button" className="admin-stat-card" onClick={() => setTab('users')} style={statCardStyle}>
+        <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('ambassadors'); setTab('users') }} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.ambassadors}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Ambassadors</div>
         </button>
-        <button type="button" className="admin-stat-card" onClick={() => navigate('/skillshare')} style={statCardStyle}>
+        <button type="button" className="admin-stat-card" onClick={() => { setContentFilter('requests'); setTab('content') }} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.requests}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Requests</div>
         </button>
