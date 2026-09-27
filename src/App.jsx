@@ -31,6 +31,9 @@ import Calendar from './pages/Calendar'
 import CalendarEventForm from './pages/CalendarEventForm'
 import CalendarEmbed from './pages/CalendarEmbed'
 import EventPage from './pages/EventPage'
+import Groups from './pages/Groups'
+import GroupBoard from './pages/GroupBoard'
+import JoinGroup from './pages/JoinGroup'
 import { peekReturnTo } from './utils/returnTo'
 
 function ProtectedRoute({ children }) {
@@ -63,6 +66,7 @@ function AppRoutes() {
       {/* Public on purpose: the website calendar and shared event links work without an account. */}
       <Route path="/calendar/embed" element={<CalendarEmbed />} />
       <Route path="/events/:id" element={<EventPage />} />
+      <Route path="/groups/join/:token" element={<JoinGroup />} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="skillshare" element={<Feed />} />
@@ -86,6 +90,8 @@ function AppRoutes() {
         <Route path="calendar" element={<Calendar />} />
         <Route path="calendar/new" element={<CalendarEventForm />} />
         <Route path="calendar/:id/edit" element={<CalendarEventForm />} />
+        <Route path="groups" element={<Groups />} />
+        <Route path="groups/:id" element={<GroupBoard />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
