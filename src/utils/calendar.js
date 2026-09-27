@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient'
-import { distanceMiles } from './location'
+import { distanceMiles, getMyLocation } from './location'
 
 // Towns for the location dropdown (website calendar, app calendar, and the
 // "where is it" picker when posting an event). Coordinates are town centers,
@@ -21,7 +21,20 @@ export const TOWNS = [
   { name: 'Cleveland, TN', lat: 35.160, lng: -84.877 },
 ]
 
-export const DEFAULT_TOWN = TOWNS[0]
+// Where the calendar starts. Never a guess (no more defaulting to
+// Ringgold). In order:
+//   1. A town this browser picked before on the calendar.
+//   2. The member's own area: this visit's shared location, or the zip
+//      saved on their profile. Shown as "Your area (Ringgold, GA)".
+//   3. Nothing. The calendar shows every public event and asks them to
+//      pick an area.
+export function startingOrigin(profile) {
+  const saved = loadSavedTown()
+  if (saved) return saved
+  const mine = getMyLocation(profile)
+  if (mine) return { name: 'Your area' + (mine.label ? ' (' + mine.label + ')' : ''), lat: mine.lat, lng: mine.lng, isArea: true }
+  return null
+}
 
 export const DISTANCE_OPTIONS = [5, 10, 25, 50, 100]
 
