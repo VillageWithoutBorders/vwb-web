@@ -2603,6 +2603,13 @@ a:focus:not(:focus-visible) {
   margin-bottom: 1rem;
 }
 
+.cal-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
 .cal-location label {
   display: flex;
   flex-direction: column;

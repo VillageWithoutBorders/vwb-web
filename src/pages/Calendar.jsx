@@ -1,19 +1,28 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { fetchCalendarEvents, filterByDistance, loadSavedTown, saveTown, DEFAULT_TOWN } from '../utils/calendar'
+import { fetchCalendarEvents, filterByDistance, saveTown, startingOrigin } from '../utils/calendar'
 import { CalendarLocationBar, CalendarEventList } from '../components/CalendarParts'
 
 export default function Calendar() {
-  const { isAdmin, organizations } = useAuth()
+  const { isAdmin, organizations, profile } = useAuth()
   const navigate = useNavigate()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
-  const [origin, setOrigin] = useState(() => loadSavedTown() || DEFAULT_TOWN)
+  const [origin, setOrigin] = useState(() => startingOrigin(profile))
   const [miles, setMiles] = useState(25)
 
   const canPost = isAdmin || organizations.some((o) => o.role === 'admin' || o.role === 'organizer')
+
+  // The profile can arrive after the page first draws. If we had nothing
+  // to start from yet, use the member's area as soon as we know it.
+  useEffect(() => {
+    if (!origin && profile) {
+      const start = startingOrigin(profile)
+      if (start) setOrigin(start)
+    }
+  }, [profile]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let alive = true
@@ -30,7 +39,7 @@ export default function Calendar() {
 
   function changeOrigin(o) {
     setOrigin(o)
-    if (!o.isMe) saveTown(o.name)
+    if (!o.isMe && !o.isArea) saveTown(o.name)
   }
 
   return (
