@@ -434,3 +434,110 @@ export async function decryptFromSender(ciphertextB64, nonceB64, senderUserId) {
     return null
   }
 }
+
+// ---------------------------------------------------------------------
+// Group boards
+//
+// Same locks as private messages: each post is encrypted once for every
+// device of every current member (including your own devices), and VWB
+// only ever stores the locked copies. The post row itself has no text.
+// Members who have never opened VWB have no key yet, so they can't read
+// posts made before they do; they're counted in `missed`.
+// ---------------------------------------------------------------------
+
+// Returns { status: 'sent' | 'not-ready' | 'error', missed }.
+export async function sendGroupPost({ groupId, senderId, memberIds, text }) {
+  let sodium
+  try {
+    sodium = (await import('libsodium-wrappers')).default
+    await sodium.ready
+  } catch (e) {
+    console.error('[e2ee] encryption library failed to load', e?.message || e)
+    return { status: 'not-ready', missed: 0 }
+  }
+  const identity = await ensureDeviceKeypair(senderId)
+  if (!identity) return { status: 'not-ready', missed: 0 }
+
+  const ids = Array.from(new Set([...(memberIds || []), senderId]))
+  const { data: devices, error: devErr } = await supabase
+    .from('user_devices')
+    .select('user_id, device_id, public_key')
+    .in('user_id', ids)
+  if (devErr) { console.error('[e2ee] failed to fetch member keys', devErr); return { status: 'error', missed: 0 } }
+
+  const targets = (devices || []).map(d => ({ userId: d.user_id, deviceId: d.device_id, publicKey: d.public_key }))
+  if (!targets.some(t => t.userId === senderId && t.deviceId === identity.deviceId)) {
+    targets.push({ userId: senderId, deviceId: identity.deviceId, publicKey: identity.publicKey })
+  }
+  const withKeys = new Set(targets.map(t => t.userId))
+  const missed = ids.filter(id => !withKeys.has(id)).length
+
+  let rows
+  try {
+    rows = encryptCopies(sodium, identity, text, targets)
+  } catch (e) {
+    console.error('[e2ee] failed to encrypt group post', e)
+    return { status: 'error', missed }
+  }
+
+  const { data: post, error } = await supabase
+    .from('community_group_posts')
+    .insert({ group_id: groupId, sender_id: senderId })
+    .select('id')
+    .single()
+  if (error || !post) { console.error('[e2ee] failed to save group post', error); return { status: 'error', missed } }
+
+  const { error: copyErr } = await supabase
+    .from('community_group_post_copies')
+    .insert(rows.map(r => ({ ...r, post_id: post.id })))
+  if (copyErr) {
+    console.error('[e2ee] failed to save locked copies of group post', copyErr)
+    const { error: undoErr } = await supabase
+      .from('community_group_posts')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', post.id)
+    if (undoErr) console.error('[e2ee] failed to take down the unreadable post', undoErr)
+    return { status: 'error', missed }
+  }
+  return { status: 'sent', missed }
+}
+
+// Opens many copies at once (a whole board), looking up each sender's
+// keys only once. `copies` is [{ key, ciphertext, nonce, senderId }].
+// Returns a Map of key -> text (missing if it couldn't be opened).
+export async function decryptMany(copies) {
+  const out = new Map()
+  if (!copies || copies.length === 0) return out
+  try {
+    const sodium = (await import('libsodium-wrappers')).default
+    await sodium.ready
+    const identity = await idbGet(IDENTITY_KEY)
+    if (!identity) return out
+    const senders = Array.from(new Set(copies.map(c => c.senderId)))
+    const { data: devices, error } = await supabase
+      .from('user_devices')
+      .select('user_id, public_key')
+      .in('user_id', senders)
+    if (error) { console.error('[e2ee] failed to fetch sender keys', error); return out }
+    const keysBySender = {}
+    for (const d of devices || []) (keysBySender[d.user_id] ||= []).push(d.public_key)
+    const myPrivate = sodium.from_base64(identity.privateKey)
+    for (const c of copies) {
+      for (const pub of keysBySender[c.senderId] || []) {
+        try {
+          const bytes = sodium.crypto_box_open_easy(
+            sodium.from_base64(c.ciphertext),
+            sodium.from_base64(c.nonce),
+            sodium.from_base64(pub),
+            myPrivate
+          )
+          out.set(c.key, sodium.to_string(bytes))
+          break
+        } catch { /* not this device of theirs; try the next */ }
+      }
+    }
+  } catch (e) {
+    console.error('[e2ee] failed to open group posts', e)
+  }
+  return out
+}
