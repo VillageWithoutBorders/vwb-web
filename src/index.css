@@ -2593,6 +2593,32 @@ a:focus:not(:focus-visible) {
   box-sizing: border-box;
 }
 
+.cal-embed-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.25rem 0 1rem;
+}
+
+.cal-embed-head img {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.cal-embed-head h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #4ecca3;
+}
+
+.cal-embed-head p {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
 .cal-embed-foot {
   margin-top: 1rem;
   text-align: center;

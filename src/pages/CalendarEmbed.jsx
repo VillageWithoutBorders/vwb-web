@@ -31,8 +31,23 @@ export default function CalendarEmbed() {
     if (!o.isMe) saveTown(o.name)
   }
 
+  // Opened on its own (from the website's "View Calendar" button) it gets a
+  // small branded header. Inside a frame on another page it stays bare.
+  const standalone = typeof window !== 'undefined' && window.self === window.top
+
   return (
     <main className="cal-embed">
+      {standalone && (
+        <header className="cal-embed-head">
+          <a href="https://villagewithoutborders.org" aria-label="Village Without Borders website">
+            <img src="/images/vwb_header.png" alt="" width="44" height="44" />
+          </a>
+          <div>
+            <h1>Community Calendar</h1>
+            <p>Gatherings, drives, and ways to help near you</p>
+          </div>
+        </header>
+      )}
       <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} />
       {loading
         ? <p className="cal-empty">Loading events...</p>
