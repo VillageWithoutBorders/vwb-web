@@ -9,3 +9,10 @@ entrypoint = "./functions/send-push-notification/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/send-push-notification/*.html" ]
+
+[functions.archive-group-messages]
+enabled = true
+# Called by a Supabase cron job, not by a signed-in member. It checks its
+# own secret header (ARCHIVE_CRON_SECRET) instead.
+verify_jwt = false
+entrypoint = "./functions/archive-group-messages/index.ts"
