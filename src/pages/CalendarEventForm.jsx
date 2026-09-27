@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { TOWNS, DISTANCE_OPTIONS, VISIBILITY, loadSavedTown } from '../utils/calendar'
+import { EVENT_TEMPLATES, addMinutes } from '../utils/eventTemplates'
 
 const VWB_HOST = 'vwb'
 
@@ -44,6 +45,11 @@ export default function CalendarEventForm() {
     signupEnabled: false,
     signupLimit: '',
   })
+  // New events start by picking a kind of event (see eventTemplates.js),
+  // or "Start from scratch". null = still choosing.
+  const [templateKey, setTemplateKey] = useState(editing ? 'editing' : null)
+  const [durationMins, setDurationMins] = useState(0)
+  const [endTouched, setEndTouched] = useState(false)
   const [loaded, setLoaded] = useState(!editing)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -72,9 +78,41 @@ export default function CalendarEventForm() {
     })
   }, [editing, id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  function applyTemplate(t) {
+    if (!t) {
+      setTemplateKey('blank')
+      setDurationMins(0)
+      return
+    }
+    setForm((f) => ({
+      ...f,
+      title: t.title,
+      description: t.description,
+      // Members-only needs a group behind it; VWB-hosted falls back to invite-only.
+      visibility: t.visibility === 'members' && f.host === VWB_HOST ? 'invite' : t.visibility,
+      signupEnabled: t.signupEnabled,
+      signupLimit: t.signupLimit ? String(t.signupLimit) : '',
+      hideAddress: t.hideAddress,
+      radius: t.radius,
+      endTime: f.startTime && !endTouched ? addMinutes(f.startTime, t.durationMins) : f.endTime,
+    }))
+    setDurationMins(t.durationMins)
+    setTemplateKey(t.key)
+  }
+
+  function changeTemplate() {
+    if ((form.title || form.description) && !confirm('Pick a different kind of event? This replaces the name and description you have now.')) return
+    setForm((f) => ({ ...f, title: '', description: '' }))
+    setTemplateKey(null)
+  }
+
   function set(field, value) {
+    if (field === 'endTime') setEndTouched(true)
     setForm((f) => {
       const next = { ...f, [field]: value }
+      // Fill in the end time from the event type's usual length, until the
+      // host sets an end time themselves.
+      if (field === 'startTime' && durationMins && !endTouched) next.endTime = addMinutes(value, durationMins)
       // "Members only" needs a group behind it.
       if (field === 'host' && value === VWB_HOST && f.visibility === 'members') next.visibility = 'public'
       return next
@@ -142,12 +180,50 @@ export default function CalendarEventForm() {
 
   if (!loaded) return <p className="cal-empty">Loading...</p>
 
+  if (!editing && templateKey === null) {
+    return (
+      <div className="cal-page">
+        <div className="cal-head">
+          <h1>New event</h1>
+          <button type="button" onClick={() => navigate(-1)} className="link-button" style={{ minHeight: '44px' }}>Cancel</button>
+        </div>
+        <h2 className="evt-pick-title">What kind of event?</h2>
+        <p className="cal-sub">Pick one to get a head start. You can change anything after.</p>
+        <div className="evt-pick-grid">
+          {EVENT_TEMPLATES.map((t) => (
+            <button key={t.key} type="button" className="evt-pick" onClick={() => applyTemplate(t)}>
+              <span className="evt-pick-icon" aria-hidden="true">{t.icon}</span>
+              <span className="evt-pick-name">{t.name}</span>
+              <span className="evt-pick-blurb">{t.blurb}</span>
+            </button>
+          ))}
+          <button type="button" className="evt-pick evt-pick-blank" onClick={() => applyTemplate(null)}>
+            <span className="evt-pick-icon" aria-hidden="true">{'\u270F\uFE0F'}</span>
+            <span className="evt-pick-name">Start from scratch</span>
+            <span className="evt-pick-blurb">A blank form</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const chosen = EVENT_TEMPLATES.find((t) => t.key === templateKey)
+
   return (
     <div className="cal-page">
       <div className="cal-head">
         <h1>{editing ? 'Edit event' : 'New event'}</h1>
         <button type="button" onClick={() => navigate(-1)} className="link-button" style={{ minHeight: '44px' }}>Cancel</button>
       </div>
+
+      {!editing && (
+        <p className="evt-chosen">
+          {chosen ? <><span aria-hidden="true">{chosen.icon}</span> {chosen.name}</> : 'Starting from scratch'}
+          {' · '}
+          <button type="button" className="link-button" onClick={changeTemplate}>Change</button>
+        </p>
+      )}
+      {chosen && <p className="cal-sub">We filled in a starting outline. Replace the parts after each colon with your details, and delete any lines you don't need.</p>}
 
       {error && <p className="cal-error" role="alert">{error}</p>}
 
@@ -168,7 +244,7 @@ export default function CalendarEventForm() {
 
         <div className="form-field">
           <label htmlFor="ev-desc">What's happening? (optional)</label>
-          <textarea id="ev-desc" rows={4} maxLength={4000} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="What people will do, what to bring, who it's for" />
+          <textarea id="ev-desc" rows={chosen ? 12 : 4} maxLength={4000} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="What people will do, what to bring, who it's for" />
         </div>
 
         <div className="form-field">
