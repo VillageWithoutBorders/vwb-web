@@ -350,6 +350,94 @@ body {
   }
 }
 
+/* Collapsible skill sections (GroupedSkillChips collapsible) */
+.skill-groups-collapsible {
+  gap: 0.5rem;
+}
+
+.skill-groups-hint {
+  margin: 0 0 0.125rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.skill-group-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.skill-group-box.open {
+  border-color: var(--green-dark);
+}
+
+.skill-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.625rem 0.875rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.skill-group-toggle:active {
+  background: var(--green-light);
+}
+
+.skill-group-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-shrink: 0;
+}
+
+.skill-group-count {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.skill-group-chevron {
+  color: var(--green);
+  font-size: 1.25rem;
+  line-height: 1;
+  width: 1.25rem;
+  text-align: center;
+}
+
+.skill-group-panel {
+  padding: 0 0.875rem 0.875rem;
+}
+
+/* "You can change this later" note on signup and the ambassador application */
+.later-note {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  background: var(--green-light);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.later-note-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
 /* ---------- Buttons ---------- */
 .btn {
   display: inline-flex;
@@ -377,7 +465,8 @@ body {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--green-dark);
+  /* Lighter on hover, not darker: the dark text stays readable (was about 2.6:1). */
+  background: #2bbf8e;
 }
 
 .btn-outline {
@@ -419,7 +508,7 @@ body {
 
 .form-error {
   color: var(--error);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   margin-bottom: 0.75rem;
   padding: 0.5rem 0.75rem;
   background: #fdf0ef;
@@ -953,6 +1042,7 @@ a:focus:not(:focus-visible) {
 
   .form-error {
     background: #3a1a1a;
+    color: #ff9b8f; /* the base red was too dark to read on this background */
   }
 
   .ambassador-banner {
@@ -1025,6 +1115,124 @@ a:focus:not(:focus-visible) {
 
 .location-default .location-dot {
   background: #d4913d;
+}
+
+/* ---------- Location prompt and bar (LocationPrompt.jsx) ---------- */
+.location-prompt {
+  background: var(--white);
+  border: 1px solid var(--green-dark);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.location-prompt-title {
+  font-size: 1.1rem;
+  margin: 0 0 0.375rem;
+}
+
+.location-prompt-text {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 0 0 0.75rem;
+}
+
+.location-prompt-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.location-prompt-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  font-size: 1.125rem;
+  letter-spacing: 0.1em;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.location-prompt-row .btn {
+  min-height: 48px;
+  min-width: 80px;
+}
+
+.location-prompt-place {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+}
+
+.location-prompt-place .link-button {
+  font-size: 0.9375rem;
+  font-weight: 400;
+  min-height: 44px;
+}
+
+.location-prompt-remember {
+  background: var(--green-light);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  align-items: flex-start;
+  font-size: 1rem;
+}
+
+.location-prompt-found .btn {
+  min-height: 48px;
+}
+
+.location-prompt-alt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.location-prompt-alt .link-button {
+  min-height: 44px;
+  font-size: 0.9375rem;
+}
+
+.location-prompt-fine {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0.25rem 0 0;
+}
+
+.location-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--green-light);
+  color: var(--text);
+  font-size: 0.9375rem;
+  margin-bottom: 0.75rem;
+}
+
+.location-bar .location-dot {
+  background: var(--green);
+}
+
+.location-bar-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.location-bar-change {
+  min-height: 44px;
 }
 
 /* ---------- Feed Filters ---------- */
@@ -2633,4 +2841,430 @@ a:focus:not(:focus-visible) {
 @media (prefers-reduced-motion: reduce) {
   .cal-card { transition: none; }
   .cal-card:active { transform: none; }
+}
+
+/* ---------- App tour (AppTour.jsx) ---------- */
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Lift the tab bar above the dimmed page so the lit tab can be seen. */
+.tour-open .bottom-tabs {
+  z-index: 301;
+}
+
+.tour-open .tab-item[data-tour] {
+  opacity: 0.45;
+}
+
+html[data-tour-tab="home"] .tab-item[data-tour="home"],
+html[data-tour-tab="community"] .tab-item[data-tour="community"],
+html[data-tour-tab="skillshare"] .tab-item[data-tour="skillshare"],
+html[data-tour-tab="messages"] .tab-item[data-tour="messages"],
+html[data-tour-tab="tasks"] .tab-item[data-tour="tasks"],
+html[data-tour-tab="profile"] .tab-item[data-tour="profile"] {
+  opacity: 1;
+  color: var(--white);
+  background: var(--green);
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.45);
+  animation: tour-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes tour-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.45); }
+  50% { box-shadow: 0 0 0 7px rgba(29, 158, 117, 0.15); }
+}
+
+.tour-sheet {
+  position: fixed;
+  z-index: 302;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px) + 12px);
+  width: calc(100% - 24px);
+  max-width: 480px;
+  max-height: calc(100dvh - var(--tab-height) - 40px);
+  overflow-y: auto;
+  background: var(--white);
+  border: 1px solid var(--green-dark);
+  border-radius: 16px;
+  padding: 1rem 1.25rem 1.25rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.tour-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tour-count {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.tour-skip {
+  background: none;
+  border: none;
+  color: var(--green);
+  font-size: 0.9375rem;
+  text-decoration: underline;
+  min-height: 44px;
+  padding: 0 0.25rem;
+  cursor: pointer;
+}
+
+.tour-dots {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.tour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: #3a3a3a;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.tour-dot.done { background: var(--green-dark); }
+.tour-dot.active { width: 20px; background: var(--green); }
+
+.tour-icon {
+  font-size: 2.25rem;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.tour-title {
+  font-size: 1.3rem;
+  margin: 0 0 0.5rem;
+  outline: none;
+}
+
+.tour-body {
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--text);
+  margin: 0 0 0.5rem;
+}
+
+.tour-hint {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 0.25rem;
+}
+
+.tour-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.tour-btn {
+  flex: 1;
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+.tour-btn-main {
+  flex: 2;
+}
+
+.help-tour-card {
+  border: 1px solid var(--green-dark);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.help-tour-card .btn {
+  min-height: 48px;
+  margin-top: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-tour-tab] .tab-item[data-tour] { animation: none; }
+}
+
+/* ---------- Top bar: logo home link, Alerts, Menu (Layout.jsx, AppMenu.jsx) ---------- */
+.header-logo {
+  display: flex;
+  align-items: center;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+}
+
+.header-logo img {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Icon with a word under it, same idea as the bottom tabs. */
+.header-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: 52px;
+  min-height: 48px;
+  padding: 2px 6px;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.header-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: #fff;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.header-btn-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+}
+
+.header-btn:active,
+.header-btn[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.header-btn .bell-badge {
+  top: 0;
+  right: 6px;
+  font-size: 0.7rem;
+  min-width: 18px;
+  height: 18px;
+}
+
+/* The normal green focus ring disappears on the green bar, so use white here. */
+.app-header :focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 1px;
+}
+
+.app-menu {
+  position: relative;
+}
+
+.app-menu-scrim,
+.app-dialog-scrim {
+  position: fixed;
+  inset: 0;
+  border: none;
+  padding: 0;
+  cursor: default;
+}
+
+.app-menu-scrim {
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.app-menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 201;
+  width: min(300px, calc(100vw - 24px));
+  max-height: calc(100dvh - var(--header-height) - var(--tab-height) - 24px);
+  overflow-y: auto;
+  background: #242424;
+  border: 1px solid #444;
+  border-radius: 14px;
+  padding: 0.25rem 0 0.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.app-menu-heading {
+  margin: 0.75rem 1rem 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #aaa;
+}
+
+.app-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  color: #eee;
+  font-size: 1rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.app-menu-item:hover,
+.app-menu-item:active {
+  background: #333;
+}
+
+.app-menu-item:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: -3px;
+}
+
+.app-menu-logout {
+  margin-top: 0.5rem;
+  border-top: 1px solid #3a3a3a;
+  color: #ff9b8f;
+}
+
+.app-dialog-scrim {
+  z-index: 210;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.app-dialog {
+  position: fixed;
+  z-index: 211;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 32px);
+  max-width: 360px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  background: #242424;
+  border: 1px solid #444;
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.app-dialog-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+  color: #eee;
+}
+
+.app-dialog-text {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #ccc;
+}
+
+.app-dialog-qr {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+}
+
+.app-dialog-link {
+  margin: 1rem 0 0.75rem;
+  font-size: 0.875rem;
+  color: #ccc;
+  word-break: break-all;
+}
+
+.app-dialog-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.app-dialog-buttons .btn {
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+.app-dialog-danger {
+  background: #ff9b8f;
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+/* Tour step about the top bar: lift it and light up Alerts and Menu. */
+.tour-open .app-header {
+  z-index: 301;
+}
+
+.tour-open .app-header .header-btn,
+.tour-open .app-header .header-logo {
+  opacity: 0.45;
+}
+
+html[data-tour-tab="top"] .app-header .header-btn {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6);
+}
+
+/* Buttons at the top of a page say what they do, not just an icon. */
+.page-top-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  padding: 0.25rem 0.75rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--green);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.page-top-btn:active {
+  background: var(--green-light);
+}
+
+.profile-edit-btn {
+  margin-top: 0.75rem;
+  min-height: 44px;
+  gap: 0.375rem;
+}
+
+/* The + button on SkillShare now says what it does. */
+.fab.fab-labeled {
+  width: auto;
+  height: 52px;
+  padding: 0 1.25rem 0 1rem;
+  border-radius: 26px;
+  gap: 0.375rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.fab.fab-labeled span {
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1;
 }

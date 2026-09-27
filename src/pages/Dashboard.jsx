@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { getCurrentPosition } from '../utils/location'
+import { getMyLocation } from '../utils/location'
 import { peekReturnTo } from '../utils/returnTo'
 import PushBanner from '../components/PushBanner'
 import InstallBanner from '../components/InstallBanner'
@@ -21,7 +21,9 @@ function NearbyNeedTiles() {
   useEffect(() => {
     let cancelled = false
     async function load() {
-      const loc = await getCurrentPosition()
+      // No known location means no tiles. We never guess.
+      const loc = getMyLocation(profile)
+      if (!loc) { setReady(false); return }
       const radius = profile?.radius_miles || 10
       const { data, error } = await supabase.rpc('nearby_open_request_counts', {
         helper_lat: loc.lat, helper_lng: loc.lng, helper_radius: radius,
@@ -35,7 +37,7 @@ function NearbyNeedTiles() {
     }
     load()
     return () => { cancelled = true }
-  }, [profile?.radius_miles])
+  }, [profile?.radius_miles, profile?.latitude, profile?.longitude])
 
   if (!ready) return null
 

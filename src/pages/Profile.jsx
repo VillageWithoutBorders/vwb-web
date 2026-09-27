@@ -153,7 +153,12 @@ export default function Profile() {
     }
     const { error: profileError } = await supabase.from('helper_profiles').update(updates).eq('user_id', user.id)
     reportError('handleSave', profileError)
-    if (profileError) { setError('Could not save profile. Try again.'); setSaving(false); return }
+    if (profileError) {
+      // 22023 = the database's "we couldn't find that zip code" message.
+      setError(profileError.code === '22023' ? profileError.message : 'Could not save profile. Try again.')
+      setSaving(false)
+      return
+    }
     await refreshProfile()
     setMessage('Profile saved.'); setEditing(false); setSaving(false)
   }
@@ -305,6 +310,9 @@ function captureCoverageLocation() {
             <span className="ambassador-badge">Hope Ambassador</span>
           )}
                    <p className="profile-email">{user?.email}</p>
+          <button type="button" className="btn btn-outline profile-edit-btn" onClick={startEditing}>
+            <span aria-hidden="true">&#9998;</span> Edit my profile
+          </button>
         </div>
 
         <div className="profile-details">
@@ -396,9 +404,13 @@ function captureCoverageLocation() {
             <p className="amb-signup-desc" style={{ marginBottom: '1rem' }}>
               Tell us a little about how you can help.
             </p>
+            <div className="later-note">
+              <span className="later-note-icon" aria-hidden="true">{'\u{1F331}'}</span>
+              <span>No need to get it perfect. Pick at least one skill to start. You can change your skills anytime by editing your Profile.</span>
+            </div>
             <div className="form-field">
               <label>What skills can you offer?</label>
-              <GroupedSkillChips skills={skillOptions} renderChip={(skill) => (
+              <GroupedSkillChips selected={ambSignupSkills} skills={skillOptions} renderChip={(skill) => (
                 <button key={skill} type="button" className={`skill-chip ${ambSignupSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleAmbSignupSkill(skill)}>
                   {skill}
                 </button>
@@ -524,7 +536,8 @@ function captureCoverageLocation() {
         </div>
         <div className="form-field">
           <label htmlFor="editZip">Zip code</label>
-          <input id="editZip" type="text" value={zipCode} onChange={(e) => setZipCode(e.target.value)} placeholder="e.g., 30736" maxLength={10} />
+          <input id="editZip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" value={zipCode} onChange={(e) => setZipCode(e.target.value.replace(/[^0-9]/g, ''))} placeholder="e.g., 30736" maxLength={5} />
+          <span className="field-hint">Used to show neighbors near you. Only you and VWB admins can see it. Leave it blank if you'd rather not say, and the app will ask when it needs an area.</span>
         </div>
         <div className="form-field">
           <label htmlFor="editHood">Neighborhood or area</label>
@@ -532,7 +545,7 @@ function captureCoverageLocation() {
         </div>
         <div className="form-field">
           <label>Skills</label>
-          <GroupedSkillChips skills={skillOptions} renderChip={(skill) => (
+          <GroupedSkillChips selected={selectedSkills} skills={skillOptions} renderChip={(skill) => (
             <button key={skill} type="button" className={`skill-chip ${selectedSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleSkill(skill)}>
               {skill}
             </button>

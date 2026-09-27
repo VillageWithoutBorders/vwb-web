@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import { getCurrentPosition } from '../utils/location'
+import { getCurrentPosition, getMyLocation } from '../utils/location'
 
 const EVENT_TYPES = ['Flood', 'Storm', 'Tornado', 'Fire', 'Ice/Snow', 'Power Outage', 'Housing Crisis', 'Other']
 
@@ -34,7 +34,7 @@ function eventSimilarity(draft, existing) {
 }
 
 export default function CreateEvent() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -74,10 +74,10 @@ export default function CreateEvent() {
 
     let lat = null
     let lng = null
-    try {
-      const loc = await getCurrentPosition()
-      if (loc && loc.lat) { lat = loc.lat; lng = loc.lng }
-    } catch (err) {}
+    // Emergencies: the phone's location if they allow it (rounded), otherwise
+    // the area they chose. Never a guess.
+    const loc = (await getCurrentPosition()) || getMyLocation(profile)
+    if (loc) { lat = loc.lat; lng = loc.lng }
 
     const { data, error: insertErr } = await supabase.from('emergency_events').insert({
       title: title.trim(),

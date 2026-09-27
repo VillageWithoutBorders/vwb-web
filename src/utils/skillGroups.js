@@ -60,12 +60,18 @@ export const SKILL_GROUPS = [
 
 export const OTHER_GROUP = 'More Ways to Help'
 
+// "Food & Meals" and "Food and Meals" are the same skill. The live database
+// uses "&" for a few older titles, so match on a normalized key.
+function skillKey(title) {
+  return String(title).toLowerCase().replace(/\s*&\s*/g, ' and ').replace(/\s+/g, ' ').trim()
+}
+
 const GROUP_OF = {}
 const ORDER_OF = {}
 SKILL_GROUPS.forEach((g, gi) => {
   g.skills.forEach((s, si) => {
-    GROUP_OF[s.toLowerCase()] = g.name
-    ORDER_OF[s.toLowerCase()] = gi * 100 + si
+    GROUP_OF[skillKey(s)] = g.name
+    ORDER_OF[skillKey(s)] = gi * 100 + si
   })
 })
 
@@ -82,14 +88,14 @@ export async function loadSkillCategories() {
     .filter((row) => row.title)
     .map((row) => ({
       title: row.title,
-      group: row.group_name || GROUP_OF[row.title.toLowerCase()] || OTHER_GROUP,
+      group: row.group_name || GROUP_OF[skillKey(row.title)] || OTHER_GROUP,
     }))
     .sort((a, b) => {
       const ga = groupIndex(a.group)
       const gb = groupIndex(b.group)
       if (ga !== gb) return ga - gb
-      const oa = ORDER_OF[a.title.toLowerCase()] ?? 9999
-      const ob = ORDER_OF[b.title.toLowerCase()] ?? 9999
+      const oa = ORDER_OF[skillKey(a.title)] ?? 9999
+      const ob = ORDER_OF[skillKey(b.title)] ?? 9999
       if (oa !== ob) return oa - ob
       return a.title.localeCompare(b.title)
     })
@@ -122,5 +128,6 @@ export const OFFER_ITEMS_GROUP = 'Things to Give'
 // Skill rows minus anything already listed as a thing to give, so
 // "Food and Meals" only shows up once.
 export function offerSkillRows(rows) {
-  return rows.filter((r) => !OFFER_ITEM_CATEGORIES.includes(r.title))
+  const items = OFFER_ITEM_CATEGORIES.map(skillKey)
+  return rows.filter((r) => !items.includes(skillKey(r.title)))
 }
