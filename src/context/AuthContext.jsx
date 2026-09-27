@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { ensureDeviceKeypair } from '../lib/e2ee'
+import { ensureDeviceKeypair, flushOutbox } from '../lib/e2ee'
 
 const AuthContext = createContext({})
 
@@ -156,7 +156,7 @@ export function AuthProvider({ children }) {
       }
       loadOrganizations(authUser.id)
       applyPendingOrgInvite()
-      ensureDeviceKeypair(authUser.id)
+      ensureDeviceKeypair(authUser.id).then(() => flushOutbox(authUser.id))
       return
     }
 
@@ -206,7 +206,7 @@ export function AuthProvider({ children }) {
       setProfile(newProfile)
       loadOrganizations(authUser.id)
       applyPendingOrgInvite()
-      ensureDeviceKeypair(authUser.id)
+      ensureDeviceKeypair(authUser.id).then(() => flushOutbox(authUser.id))
     } else {
       console.error('[AuthContext] ensureProfile insert failed', error)
     }

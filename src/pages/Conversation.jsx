@@ -8,7 +8,7 @@ import { createNotification } from '../utils/notificationHelpers'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import AvatarDisplay from '../components/AvatarDisplay'
 import { submitUserReport } from '../utils/submitUserReport'
-import { encryptForConversation, decryptFromSender, getDeviceId } from '../lib/e2ee'
+import { sendPrivateMessage, flushOutbox, getQueuedMessages, cancelQueuedMessage, decryptFromSender, getDeviceId } from '../lib/e2ee'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar shown once, tighter spacing) instead of repeating the
@@ -46,6 +46,9 @@ export default function Conversation() {
   const [myAvatar, setMyAvatar] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [request, setRequest] = useState(null)
+  const [accepted, setAccepted] = useState(false)
+  const [offer, setOffer] = useState(null)
+  const [sendNote, setSendNote] = useState('')
   const [reportDialog, setReportDialog] = useState(null) // 'report' | 'reported' | null
   const [reportReason, setReportReason] = useState('')
   const [reportDetails, setReportDetails] = useState('')
@@ -108,11 +111,24 @@ export default function Conversation() {
     if (myErr) console.error('Failed to load your profile:', myErr)
     if (myProfile) setMyAvatar(myProfile.avatar_url || null)
 
+    // The banner at the top says what this chat is about. It's built from
+    // the request or offer itself, so the app never has to post a
+    // "you've been accepted" style message into the chat (those used to
+    // be stored as plain text).
     if (c.request_id) {
       const { data: req, error: reqErr } = await supabase
         .from('help_requests').select('skill_needed, description, urgency').eq('id', c.request_id).single()
       if (reqErr) console.error('Failed to load request details:', reqErr)
       if (req) setRequest(req)
+      const { data: match, error: matchErr } = await supabase
+        .from('skill_matches').select('id').eq('request_id', c.request_id).eq('helper_id', c.helper_id).eq('accepted', true).limit(1).maybeSingle()
+      if (matchErr) console.error('Failed to check whether this helper was accepted:', matchErr)
+      setAccepted(!!match)
+    } else if (c.offer_id) {
+      const { data: off, error: offErr } = await supabase
+        .from('offers').select('title, description, category').eq('id', c.offer_id).maybeSingle()
+      if (offErr) console.error('Failed to load offer details:', offErr)
+      if (off) setOffer(off)
     }
 
     await loadMessages()
@@ -128,11 +144,26 @@ export default function Conversation() {
   // plaintext in that case) -- either way it's shown as-is. Everything else
   // is decrypted client-side, in one batched lookup rather than one query
   // per message.
+  //
+  // Messages still waiting in this device's outbox (the other person has
+  // never opened VWB, so they have no key yet) are shown at the end as
+  // "Waiting to send." Each load first tries to send them, so they go out
+  // within a few seconds of the other person's key showing up.
+  //
+  // Deleted messages are left out: "Delete for everyone" (deleted_at) and
+  // "Delete for me" (message_deletions) were being saved but the chat
+  // kept showing them anyway.
   async function loadMessages() {
-    const { data, error } = await supabase
-      .from('chat_messages').select('*').eq('conversation_id', id).order('created_at', { ascending: true })
+    await flushOutbox(user.id)
+    const [{ data: rawData, error }, { data: hidden, error: hiddenErr }] = await Promise.all([
+      supabase.from('chat_messages').select('*').eq('conversation_id', id).is('deleted_at', null).order('created_at', { ascending: true }),
+      supabase.from('message_deletions').select('message_id').eq('user_id', user.id),
+    ])
     if (error) { console.error('Failed to load messages:', error); return }
-    if (!data) return
+    if (!rawData) return
+    if (hiddenErr) console.error('Failed to load messages you deleted:', hiddenErr)
+    const hiddenIds = new Set((hidden || []).map(h => h.message_id))
+    const data = rawData.filter(m => !hiddenIds.has(m.id))
 
     const deviceId = await getDeviceId()
     const encryptedIds = data.filter(m => !m.body).map(m => m.id)
@@ -155,39 +186,43 @@ export default function Conversation() {
       const plaintext = await decryptFromSender(copy.ciphertext, copy.nonce, msg.sender_id)
       return { ...msg, displayBody: plaintext ?? '[Unable to decrypt this message]' }
     }))
-    setMessages(withPlaintext)
+    const queued = (await getQueuedMessages(user.id, id)).map(q => ({
+      id: 'queued-' + q.id,
+      localId: q.id,
+      queued: true,
+      sender_id: user.id,
+      created_at: q.createdAt,
+      displayBody: q.text,
+    }))
+    setMessages([...withPlaintext, ...queued])
   }
 
-  // Encrypts the message for every device of the recipient (and every
-  // device of ours, so we can still read it back later -- see e2ee.js)
-  // before it ever reaches the server. If that comes back empty --
-  // libsodium isn't installed, or the recipient has never published a
-  // device key -- the message is sent as plain text instead, the same
-  // way it always worked, rather than silently failing to send.
+  async function cancelWaiting(msg) {
+    if (!confirm('Take back this message? It has not been sent yet.')) return
+    await cancelQueuedMessage(msg.localId)
+    loadMessages()
+  }
+
+  // Every message is encrypted on this device before it goes anywhere
+  // (see e2ee.js). There is no plain-text fallback. If the other person
+  // has never opened VWB, the message waits on this device instead and
+  // they get a nudge to open the app.
   async function sendMessage(e) {
     e.preventDefault()
     if (!newMsg.trim() || sending) return
     setSending(true)
-    const plaintext = newMsg.trim()
+    setSendNote('')
+    const text = newMsg.trim()
     const recipientId = convo.helper_id === user.id ? convo.requester_id : convo.helper_id
-    const copies = await encryptForConversation(plaintext, user.id, recipientId)
-    const { data: inserted, error } = await supabase.from('chat_messages').insert({
-      conversation_id: Number(id),
-      sender_id: user.id,
-      body: copies.length > 0 ? '' : plaintext,
-    }).select().single()
-    if (!error && inserted) {
-      if (copies.length > 0) {
-        const rows = copies.map(c => ({ message_id: inserted.id, user_id: c.userId, device_id: c.deviceId, ciphertext: c.ciphertext, nonce: c.nonce }))
-        const { error: copyErr } = await supabase.from('encrypted_message_copies').insert(rows)
-        if (copyErr) console.error('Failed to store encrypted message copies:', copyErr)
+    const result = await sendPrivateMessage({ conversationId: id, senderId: user.id, recipientId, text })
+    if (result === 'failed') {
+      setSendNote('Could not send your message. Check your connection and try again.')
+    } else {
+      if (result === 'sent') {
+        createNotification({ userId: recipientId, type: 'message', title: 'New message from ' + (convo.helper_id === user.id ? 'your helper' : 'your neighbor'), body: 'You have a new message.', link: '/conversation/' + id })
       }
-      createNotification({ userId: recipientId, type: 'message', title: 'New message from ' + (convo.helper_id === user.id ? 'your helper' : 'your neighbor'), body: 'You have a new message.', link: '/conversation/' + id })
       setNewMsg('')
       await loadMessages()
-    } else {
-      console.error('Failed to send message:', error)
-      alert('Could not send your message. Try again.')
     }
     setSending(false)
   }
@@ -280,6 +315,15 @@ export default function Conversation() {
           <span className={'urgency-badge urgency-' + request.urgency}>{urgencyLabel}</span>
           <span className="convo-request-skill">{request.skill_needed}</span>
           <p className="convo-request-desc">{request.description}</p>
+          {accepted && (
+            <p className="convo-request-status">&#10003; {convo.helper_id === user.id ? 'You were accepted to help with this' : otherName + ' was accepted to help with this'}</p>
+          )}
+        </div>
+      )}
+      {!request && offer && (
+        <div className="convo-request-banner">
+          <span className="convo-request-skill">{convo.helper_id === user.id ? 'About your offer' : 'About their offer'}: {offer.title}</span>
+          {offer.description && <p className="convo-request-desc">{offer.description}</p>}
         </div>
       )}
 
@@ -296,9 +340,9 @@ export default function Conversation() {
       {!isMe && (isGroupStart
         ? <AvatarDisplay url={otherAvatar} userId={otherUserId} size={24} />
         : <div style={{ width: '24px', flexShrink: 0 }} />)}
-      <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs')} onClick={() => setSelectedMessage(msg)} role="button" tabIndex={0} aria-label="Message actions" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedMessage(msg) } }}>
+      <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs') + (msg.queued ? ' queued' : '')} onClick={() => msg.queued ? cancelWaiting(msg) : setSelectedMessage(msg)} role="button" tabIndex={0} aria-label={msg.queued ? 'Waiting to send. Tap to take it back.' : 'Message actions'} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (msg.queued) cancelWaiting(msg); else setSelectedMessage(msg) } }}>
         <p className="chat-body">{msg.displayBody ?? msg.body}</p>
-        <span className="chat-time">{formatTime(msg.created_at)}</span>
+        <span className="chat-time">{msg.queued ? 'Waiting to send' : formatTime(msg.created_at)}</span>
       </div>
       {isMe && (isGroupStart
         ? <AvatarDisplay url={myAvatar} userId={user.id} size={24} />
@@ -306,11 +350,17 @@ export default function Conversation() {
     </div>
   )
 })}
+        {messages.some(m => m.queued) && (
+          <p className="convo-waiting-note" role="status">
+            {otherName} hasn't opened VWB since private messages started, so your message is waiting on this device. We let them know. It sends by itself once they open VWB and you have VWB open.
+          </p>
+        )}
         {showNew && (
           <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
         )}
       </div>
 
+      {sendNote && <p className="convo-send-error" role="alert">{sendNote}</p>}
       <div className="convo-input-bar">
         <input
           type="text"

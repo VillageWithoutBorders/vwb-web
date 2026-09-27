@@ -6,7 +6,7 @@ import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import AvatarDisplay from '../components/AvatarDisplay'
-import { decryptFromSender, getDeviceId } from '../lib/e2ee'
+import { decryptFromSender, getDeviceId, flushOutbox, getQueuedMessages } from '../lib/e2ee'
 
 const DISAPPEAR_STEPS = [
   { label: 'Off', mins: 0 },
@@ -196,14 +196,9 @@ export default function Messages() {
       if (updErr) console.error('Failed to update conversation context:', updErr)
     }
 
-    if (convo) {
-      const { error: msgErr } = await supabase.from('chat_messages').insert({
-        conversation_id: convo.id,
-        sender_id: user.id,
-        body: `${offer.helper_name} has been accepted to help with: ${offer.skill_needed}`,
-      })
-      if (msgErr) console.error('Failed to send acceptance message:', msgErr)
-    }
+    // No "has been accepted" message is posted into the chat any more (it
+    // was stored as plain text). Conversation.jsx's banner shows the
+    // acceptance instead, straight from skill_matches.
 
     createNotification({
       userId: offer.helper_id,
@@ -458,6 +453,10 @@ export default function Messages() {
   }
 
   async function loadConversations(blockedIds = new Set()) {
+    // Send anything waiting in this device's outbox first (see e2ee.js),
+    // so the list below reflects it.
+    await flushOutbox(user.id)
+    const waiting = await getQueuedMessages(user.id)
     const { data, error } = await supabase.from('conversations').select('id, request_id, helper_id, requester_id, created_at, disappear_after_mins, last_read_helper, last_read_requester, help_requests (skill_needed, neighborhood, urgency)').order('created_at', { ascending: false })
     if (error) { console.error('Failed to load conversations:', error); return }
     if (data) {
@@ -489,6 +488,9 @@ export default function Messages() {
         }
         const lastRead = c.helper_id === user.id ? c.last_read_helper : c.last_read_requester
         const hasUnread = lastMsg && (!lastRead || new Date(lastMsg.created_at) > new Date(lastRead))
+        // A message still waiting on this device is always the newest one.
+        const queued = waiting.filter(q => q.conversationId === c.id).pop()
+        if (queued) return { ...c, otherId, otherName: p?.display_name || 'Neighbor', otherAvatar: p?.avatar_url || null, lastMessage: 'Waiting to send: ' + queued.text, lastMessageAt: queued.createdAt, hasUnread }
         return { ...c, otherId, otherName: p?.display_name || 'Neighbor', otherAvatar: p?.avatar_url || null, lastMessage: lastMessageText, lastMessageAt: lastMsg?.created_at || c.created_at, hasUnread }
       }))
       withNames.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))
