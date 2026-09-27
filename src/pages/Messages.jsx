@@ -696,7 +696,9 @@ export default function Messages() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
         <h1 style={{ margin: 0 }}>Messages</h1>
-        <button onClick={() => setShowSidebar(true)} aria-label="Message settings" style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '1.4rem', padding: '0.25rem' }} title="Settings">&#9881;</button>
+        <button type="button" onClick={() => setShowSidebar(true)} className="page-top-btn" aria-label="Message settings">
+          <span aria-hidden="true">&#9881;&#65039;</span> Settings
+        </button>
       </div>
 
       {/* ========== Help Offers for Requesters (Accept/Decline) ========== */}

@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import GroupedSkillChips from '../components/GroupedSkillChips'
 import { loadSkillCategories } from '../utils/skillGroups'
-import { getCurrentPosition } from '../utils/location'
+import { getMyLocation } from '../utils/location'
+import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 
 const URGENCY_OPTIONS = [
     { value: 'now', label: 'Right now', desc: 'Emergency or same-day need' },
@@ -33,6 +34,9 @@ export default function AskForHelp() {
 
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')
+    // Bumped when the person sets or changes their area, to re-read it.
+    const [, setLocTick] = useState(0)
+    const myLoc = getMyLocation(profile)
 
     useEffect(() => {
         async function loadSkills() {
@@ -60,14 +64,16 @@ export default function AskForHelp() {
             return
         }
 
-        setSubmitting(true)
+        // Neighbors are matched by area, so we need one. Never a guess.
+        if (!myLoc) {
+            setError('Add your zip code at the top so neighbors near you can see this.')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+            return
+        }
 
-        let lat = null
-        let lng = null
-        try {
-            const loc = await getCurrentPosition()
-            if (loc && loc.lat) { lat = loc.lat; lng = loc.lng }
-        } catch (err) { }
+        setSubmitting(true)
+        const lat = myLoc.lat
+        const lng = myLoc.lng
 
         const { error: insertError } = await supabase
             .from('help_requests')
@@ -103,11 +109,19 @@ export default function AskForHelp() {
                 No personal details are shared until you say so.
             </p>
 
+            {myLoc
+                ? <LocationBar loc={myLoc} prefix="Neighbors near" onChanged={() => setLocTick(t => t + 1)} />
+                : <LocationPrompt
+                    title="Where do you need help?"
+                    intro="Enter your zip code so neighbors nearby can see your request. We never guess where you are, and we never share your address."
+                    onDone={() => { setError(''); setLocTick(t => t + 1) }}
+                  />}
+
             <form onSubmit={handleSubmit} className="ask-form">
 
                 <div className="form-field">
                     <label htmlFor="skillNeeded">What kind of help do you need?</label>
-                    <GroupedSkillChips skills={skills} renderChip={(skill) => (
+                    <GroupedSkillChips selected={skillNeeded ? [skillNeeded] : []} skills={skills} renderChip={(skill) => (
                         <button
                             key={skill}
                             type="button"
@@ -177,7 +191,7 @@ export default function AskForHelp() {
                 </div>
 
                 <div className="form-field">
-                    <label htmlFor="neighborhood">Your general area</label>
+                    <label htmlFor="neighborhood">Town or neighborhood to show (optional)</label>
                     <input
                         id="neighborhood"
                         type="text"

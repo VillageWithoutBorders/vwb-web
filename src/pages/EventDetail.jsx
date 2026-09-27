@@ -446,7 +446,6 @@ export default function EventDetail() {
   const offersAvailable = offers.filter(r => r.status === 'available').length
 
   const tabStyle = (active) => ({ padding: '0.5rem 0.75rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, background: active ? '#ff6644' : '#2a2a2a', color: active ? '#fff' : '#aaa' })
-  const chipStyle = (on) => ({ padding: '0.35rem 0.75rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, background: on ? '#4ecca3' : '#2a2a2a', color: on ? '#1a1a1a' : '#aaa', margin: '0.15rem' })
   const fieldStyle = { display: 'block', width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box', marginBottom: '0.5rem' }
   const resCatIcon = { 'Water': '💧', 'Food': '🍞', 'Shelter': '🏠', 'Tools': '🔧', 'Transportation': '🚗', 'Medical': '⚕', 'Clothing': '🧥', 'Power/Fuel': '⚡', 'Tarps/Building': '🏗', 'Hygiene': '🧼', 'Other': '📦' }
 
@@ -539,7 +538,7 @@ export default function EventDetail() {
             <>
               <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>What skills can you offer?</p>
               <div style={{ marginBottom: '0.75rem' }}>
-                <GroupedSkillChips skills={skillCats} gridClassName="" gridStyle={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }} renderChip={(s) => <button key={s} type="button" onClick={() => toggleSkill(s)} style={chipStyle(selectedSkills.includes(s))}>{s}</button>} />
+                <GroupedSkillChips selected={selectedSkills} skills={skillCats} renderChip={(s) => <button key={s} type="button" className={`skill-chip ${selectedSkills.includes(s) ? 'active' : ''}`} onClick={() => toggleSkill(s)}>{s}</button>} />
               </div>
               <input type="text" placeholder="When are you available?" value={signupAvail} onChange={e => setSignupAvail(e.target.value)} style={fieldStyle} />
             </>
