@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -32,6 +33,7 @@ export default function JoinGroup() {
   async function join() {
     setState('joining')
     const { data: groupId, error } = await supabase.rpc('join_community_group_by_link', { p_token: token })
+    if (error && /New accounts can/i.test(error.message || '')) { setState('newaccount'); return }
     if (error || !groupId) { console.error('Join by link failed:', error); setState('error'); return }
     navigate('/groups/' + groupId, { replace: true })
   }
@@ -60,12 +62,13 @@ export default function JoinGroup() {
           </>
         )}
 
-        {user && preview && (state === 'ready' || state === 'joining' || state === 'error') && (
+        {user && preview && (state === 'ready' || state === 'joining' || state === 'error' || state === 'newaccount') && (
           <>
             <h2 className="groups-card-title">{preview.name}</h2>
             {preview.description && <p className="groups-card-desc">{preview.description}</p>}
             <p className="groups-note">{preview.member_count} {Number(preview.member_count) === 1 ? 'member' : 'members'}. Its board is private to members. Some groups ask a member to let new people in first.</p>
             {state === 'error' && <p className="form-error" role="alert">Could not join. The link may have just been turned off. Try again, or ask for a new link.</p>}
+            {state === 'newaccount' && <p className="form-error" role="alert">{NEW_ACCOUNT_NOTE} You can also ask someone in the group to invite you by name.</p>}
             <button type="button" className="btn btn-primary btn-full" onClick={join} disabled={state === 'joining'}>{state === 'joining' ? 'Joining...' : 'Join group'}</button>
             <button type="button" className="btn btn-outline btn-full" style={{ marginTop: '0.5rem' }} onClick={() => navigate('/')}>Not now</button>
           </>

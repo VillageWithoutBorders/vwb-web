@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient'
+import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from './newAccount'
 import { getBlockedUserIds } from './blockedUsers'
 
 // Opens the direct conversation between two people, starting one if they
@@ -31,6 +32,7 @@ export async function startConversation(myId, otherId) {
     .select('id')
     .single()
   if (createErr || !created) {
+    if (isNewAccountBlock(createErr)) return { error: NEW_ACCOUNT_NOTE }
     console.error('[startConversation] create failed', createErr)
     return { error: 'Could not start a conversation. Try again.' }
   }

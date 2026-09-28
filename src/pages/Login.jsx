@@ -6,6 +6,19 @@ import { peekReturnTo } from '../utils/returnTo'
 import GroupedSkillChips from '../components/GroupedSkillChips'
 import { loadSkillCategories } from '../utils/skillGroups'
 import AvailabilityPicker from '../components/AvailabilityPicker'
+import Turnstile, { TURNSTILE_SITE_KEY } from '../components/Turnstile'
+
+// Shown when a banned account tries to log in, or gets signed out by the
+// ban check in AuthContext.
+const CAPTCHA_MESSAGE = 'Please finish the quick "are you a person?" check, then try again.'
+
+// Supabase says "captcha verification process failed" when the human
+// check token is missing, used up, or expired.
+function isCaptchaError(error) {
+  return /captcha/i.test(error?.message || '')
+}
+
+const BANNED_MESSAGE = 'This account has been removed for breaking the community guidelines. To appeal, email info@villagewithoutborders.org.'
 
 export default function Login() {
   const [searchParams] = useSearchParams()
@@ -62,7 +75,19 @@ export default function Login() {
   // signup in Profile.jsx. See that file for the reasoning.
   const [campfireNotify, setCampfireNotify] = useState(false)
 
-  const [error, setError] = useState('')
+  // Human check (Turnstile). A token works once, so bump captchaKey after
+  // every try to get a fresh one.
+  const [captcha, setCaptcha] = useState('')
+  const [captchaKey, setCaptchaKey] = useState(0)
+  const needCaptcha = !!TURNSTILE_SITE_KEY && !captcha
+
+  // If the ban check just signed this account out, explain why once.
+  const [error, setError] = useState(() => {
+    try {
+      if (localStorage.getItem('vwb_banned_notice')) { localStorage.removeItem('vwb_banned_notice'); return BANNED_MESSAGE }
+    } catch { /* private mode */ }
+    return ''
+  })
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -97,8 +122,15 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setSubmitting(true)
-    const { error } = await signIn(email, password)
+    const { error } = await signIn(email, password, captcha)
+    setCaptchaKey((k) => k + 1)
     if (error) {
+      if (isCaptchaError(error)) { setError(CAPTCHA_MESSAGE); setSubmitting(false); return }
+      if (error.code === 'user_banned' || /banned/i.test(error.message || '')) {
+        setError(BANNED_MESSAGE)
+        setSubmitting(false)
+        return
+      }
       setError(error.message)
       setShowForgot(true)
     } else {
@@ -109,10 +141,13 @@ export default function Login() {
 
   async function handleForgotPassword() {
     if (!email.trim()) { setError('Enter your email first, then tap Forgot password.'); return }
+    if (needCaptcha) { setError(CAPTCHA_MESSAGE); return }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + '/reset-password',
+      captchaToken: captcha || undefined,
     })
-    if (error) { setError(error.message); return }
+    setCaptchaKey((k) => k + 1)
+    if (error) { setError(isCaptchaError(error) ? CAPTCHA_MESSAGE : error.message); return }
     setResetSent(true)
     setError('')
   }
@@ -130,8 +165,17 @@ export default function Login() {
     setError('')
     setSubmitting(true)
     if (villageId) localStorage.setItem('vwb_pending_village_id', villageId)
-    const { error } = await signUp(email, password, displayName.trim(), wantAmbassador)
-    if (error) { setError(error.message); setSubmitting(false); return }
+    const { error } = await signUp(email, password, displayName.trim(), wantAmbassador, captcha)
+    setCaptchaKey((k) => k + 1)
+    if (error) {
+      // A banned email or a throwaway email service is refused by the
+      // database, which Supabase reports as "Database error saving new user".
+      setError(isCaptchaError(error) ? CAPTCHA_MESSAGE
+        : /database error/i.test(error.message || '') ? "We couldn't create an account with this email. Please use your regular email, not a temporary one. If you think this is a mistake, email info@villagewithoutborders.org."
+        : error.message)
+      setSubmitting(false)
+      return
+    }
     if (wantAmbassador) {
       localStorage.setItem('vwb_ambassador_pending', JSON.stringify({
         skills: selectedSkills, availability, interests, radius_miles: radiusMiles,
@@ -181,7 +225,8 @@ export default function Login() {
                 Forgot password?
               </button>
             )}
-            <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
+            <Turnstile onToken={setCaptcha} resetKey={captchaKey} />
+            <button type="submit" className="btn btn-primary btn-full" disabled={submitting || needCaptcha}>
               {submitting ? 'Signing in...' : 'Sign in'}
             </button>
             <p className="login-toggle">
@@ -254,7 +299,8 @@ export default function Login() {
               </span>
             </label>
             {error && <p className="form-error" role="alert">{error}</p>}
-            <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
+            {!wantAmbassador && <Turnstile onToken={setCaptcha} resetKey={captchaKey} />}
+            <button type="submit" className="btn btn-primary btn-full" disabled={submitting || (!wantAmbassador && needCaptcha)}>
               {wantAmbassador ? 'Next' : submitting ? 'Creating account...' : 'Create account'}
             </button>
             <p className="login-toggle">
@@ -327,9 +373,10 @@ export default function Login() {
             </span>
           </label>
           {error && <p className="form-error" role="alert">{error}</p>}
+          <Turnstile onToken={setCaptcha} resetKey={captchaKey} />
           <div className="form-row">
             <button type="button" className="btn btn-outline" onClick={() => setStep(1)}>Back</button>
-            <button type="submit" className="btn btn-primary" disabled={submitting} style={{ flex: 1 }}>
+            <button type="submit" className="btn btn-primary" disabled={submitting || needCaptcha} style={{ flex: 1 }}>
               {submitting ? 'Creating account...' : 'Create account'}
             </button>
           </div>

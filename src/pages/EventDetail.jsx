@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -208,7 +209,7 @@ export default function EventDetail() {
     if (existingErr) { console.error('Failed to check for an existing conversation:', existingErr); alert('Something went wrong. Try again.'); return }
     if (existing) { navigate('/conversation/' + existing.id); return }
     const { data: convo, error: convoErr } = await supabase.from('conversations').insert({ helper_id: userId, requester_id: user.id }).select().single()
-    if (convoErr || !convo) { console.error('Failed to start a conversation:', convoErr); alert('Could not start a conversation. Try again.'); return }
+    if (convoErr || !convo) { if (isNewAccountBlock(convoErr)) { alert(NEW_ACCOUNT_NOTE); return } console.error('Failed to start a conversation:', convoErr); alert('Could not start a conversation. Try again.'); return }
     navigate('/conversation/' + convo.id)
   }
 

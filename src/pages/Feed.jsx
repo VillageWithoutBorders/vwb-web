@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -510,6 +511,7 @@ export default function Feed() {
                                                         .select()
                                                         .single()
                                                     if (convoErr || !convo) {
+                                                        if (isNewAccountBlock(convoErr)) { alert(NEW_ACCOUNT_NOTE); return }
                                                         console.error('Failed to start a conversation:', convoErr)
                                                         alert('Could not start a conversation. Try again.')
                                                         return
