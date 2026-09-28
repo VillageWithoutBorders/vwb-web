@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { BanDialog, BannedAccountsPanel } from '../components/AdminBans'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -54,6 +55,8 @@ export default function Admin() {
   const [checkinAlerts, setCheckinAlerts] = useState([])
   const [taskIssues, setTaskIssues] = useState([])
   const [users, setUsers] = useState([])
+  const [banTarget, setBanTarget] = useState(null)
+  const [banRefresh, setBanRefresh] = useState(0)
   const [userQuery, setUserQuery] = useState('')
   const [userFilter, setUserFilter] = useState('all')
   const [userVillage, setUserVillage] = useState('all')
@@ -976,6 +979,10 @@ export default function Admin() {
 
       {!loading && tab === 'users' && (
         <>
+          <BannedAccountsPanel refreshKey={banRefresh} onChange={loadUsers} />
+          {banTarget && (
+            <BanDialog target={banTarget} onClose={() => setBanTarget(null)} onDone={() => { setBanTarget(null); setBanRefresh(n => n + 1); loadUsers() }} />
+          )}
           <div style={{ marginBottom: '0.75rem' }}>
             <label htmlFor="user-search" style={hiddenLabel}>Search people by name</label>
             <input id="user-search" type="search" value={userQuery} onChange={(e) => { setUserQuery(e.target.value); setUserLimit(USER_PAGE_SIZE) }} placeholder="Search by name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
@@ -1054,6 +1061,9 @@ export default function Admin() {
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.is_hope_ambassador || u.role === 'admin') && (
                   <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer', fontSize: '0.75rem' }}>Reset to Neighbor</button>
+                )}
+                {u.role !== 'founder' && u.user_id !== user.id && (u.role !== 'admin' || isFounder) && (
+                  <button type="button" onClick={() => setBanTarget({ userId: u.user_id, name: u.display_name || 'this person', role: u.role })} className="ban-row-btn">Ban</button>
                 )}
                 <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.75rem' }}>Message</button>
                 {villages.length > 1 && (
@@ -1390,4 +1400,4 @@ export default function Admin() {
       )}
     </div>
   )
-}
+}

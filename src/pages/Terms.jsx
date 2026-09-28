@@ -183,6 +183,20 @@ export default function Terms() {
         <p>You are responsible for keeping your login credentials secure. Do not share your account with others.</p>
         <p>To delete your account, contact us through the Help page in the app or at info@villagewithoutborders.org. When your account is deleted, your profile and associated data are removed from the platform. Some records (such as safety reports involving your account) may be retained for community safety purposes.</p>
         <p>VWB reserves the right to suspend or permanently remove any account that violates these terms.</p>
+        <h3 style={{ fontSize: '0.95rem', margin: '1rem 0 0.4rem' }}>Reasons an account can be removed</h3>
+        <p>An admin may ban an account for any of the conduct listed in these terms, including:</p>
+        <ul>
+          <li>Harassment, threats, or continued contact after being blocked or asked to stop</li>
+          <li>Predatory, exploitative, or unsafe behavior toward any member</li>
+          <li>Scams, or asking members for money, bank details, or private information</li>
+          <li>Hate speech or discrimination</li>
+          <li>Pretending to be someone else, or using a fake account</li>
+          <li>Spam, advertising, or selling</li>
+          <li>Retaliating against someone who filed a safety report</li>
+          <li>Getting around a block or an earlier ban, including by making a new account</li>
+        </ul>
+        <p>When an account is banned, the person is signed out and can&apos;t log back in, the email address can&apos;t be used to sign up again, and their requests, offers, and posts are hidden from other members. VWB keeps a record of the ban and the reason. If there is a safety concern, VWB may share relevant information with law enforcement when required by law.</p>
+        <p>If you believe your account was removed by mistake, you can appeal by emailing info@villagewithoutborders.org. A person, not a computer, will review your appeal.</p>
       </div>
 
       <div className="help-section">

@@ -157,6 +157,8 @@ export function AuthProvider({ children }) {
       loadOrganizations(authUser.id)
       applyPendingOrgInvite()
       ensureDeviceKeypair(authUser.id).then(() => flushOutbox(authUser.id))
+      checkBanned()
+      checkEstablished()
       return
     }
 
@@ -207,6 +209,7 @@ export function AuthProvider({ children }) {
       loadOrganizations(authUser.id)
       applyPendingOrgInvite()
       ensureDeviceKeypair(authUser.id).then(() => flushOutbox(authUser.id))
+      checkEstablished()
     } else {
       console.error('[AuthContext] ensureProfile insert failed', error)
     }
@@ -231,11 +234,13 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function signUp(email, password, displayName, isAmbassador = false) {
+  // captchaToken comes from the Turnstile human check (components/Turnstile.jsx).
+  async function signUp(email, password, displayName, isAmbassador = false, captchaToken = undefined) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        captchaToken: captchaToken || undefined,
         data: {
           display_name: displayName,
           is_hope_ambassador: isAmbassador,
@@ -245,12 +250,34 @@ export function AuthProvider({ children }) {
     return { data, error }
   }
 
-  async function signIn(email, password) {
+  async function signIn(email, password, captchaToken = undefined) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: { captchaToken: captchaToken || undefined },
     })
     return { data, error }
+  }
+
+  // Whether this account has earned trust yet (vwb-new-account-safety.sql).
+  // null = not known yet; screens treat that as "don't block".
+  const [established, setEstablished] = useState(null)
+  async function checkEstablished() {
+    const { data, error } = await supabase.rpc('am_i_established')
+    if (error) { if (error.code !== 'PGRST202') console.error('[AuthContext] am_i_established', error); setEstablished(true); return }
+    setEstablished(data === true)
+  }
+
+  // Backstop for a session that was already open when an admin banned
+  // this account (vwb-bans.sql). Signs them out and leaves a note for the
+  // login page to explain and give the appeal address.
+  async function checkBanned() {
+    const { data, error } = await supabase.rpc('am_i_banned')
+    if (error) { if (error.code !== 'PGRST202') console.error('[AuthContext] am_i_banned', error); return }
+    if (data === true) {
+      try { localStorage.setItem('vwb_banned_notice', '1') } catch { /* private mode */ }
+      await signOut()
+    }
   }
 
   async function signOut() {
@@ -262,7 +289,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile, isAdmin: profile?.role === 'admin' || profile?.role === 'founder', isFounder: profile?.role === 'founder', organizations, isOrgMember: organizations.length > 0 }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile, isAdmin: profile?.role === 'admin' || profile?.role === 'founder', isFounder: profile?.role === 'founder', organizations, isOrgMember: organizations.length > 0, established, refreshEstablished: checkEstablished }}>
       {children}
     </AuthContext.Provider>
   )
