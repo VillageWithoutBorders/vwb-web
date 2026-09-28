@@ -16,6 +16,8 @@ import AskForHelp from './pages/AskForHelp'
 import PostOffer from './pages/PostOffer'
 import ActiveTasks from './pages/ActiveTasks'
 import Community from './pages/Community'
+import CommunityResources from './pages/CommunityResources'
+import OrgPage from './pages/OrgPage'
 import Conversation from './pages/Conversation'
 import MessagesPage from './pages/Messages'
 import EmergencyEvents from './pages/EmergencyEvents'
@@ -103,6 +105,8 @@ function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="settings" element={<Settings />} />
         <Route path="community" element={<Community />} />
+        <Route path="community/resources" element={<CommunityResources />} />
+        <Route path="orgs/:id" element={<OrgPage />} />
         <Route path="help" element={<Help />} />
         <Route path="ask" element={<AskForHelp />} />
         <Route path="post-offer" element={<PostOffer />} />
