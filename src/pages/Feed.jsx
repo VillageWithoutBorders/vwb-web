@@ -176,11 +176,25 @@ export default function Feed() {
 
             setRequests(reqs)
         } else {
-            let query = supabase.from('offers').select('*').eq('is_available', true).order('created_at', { ascending: false })
-            if (filterOfferCat !== 'all') { query = query.eq('category', filterOfferCat) }
-            const { data, error: offersErr } = await query
-            if (offersErr) console.error('Failed to load offers:', offersErr)
-            const enrichedOffers = await enrichOffers((data || []).filter(o => !blockedIds.has(o.user_id)))
+            // Only offers near you, same as requests (vwb-nearby-offers.sql).
+            // The database hands back just offer numbers and distances; the
+            // offers themselves load the normal way, so blocks and bans apply.
+            // No area set means no offers, never the whole app's list.
+            let data = []
+            if (loc) {
+                const radius = profile?.radius_miles || 10
+                const { data: near, error: nearErr } = await supabase.rpc('nearby_offers', { p_lat: loc.lat, p_lng: loc.lng, p_radius: radius })
+                if (nearErr) console.error('nearby_offers failed:', nearErr)
+                const distById = new Map((near || []).map(r => [r.offer_id, r.distance_miles]))
+                if (distById.size > 0) {
+                    let query = supabase.from('offers').select('*').eq('is_available', true).in('id', [...distById.keys()]).order('created_at', { ascending: false })
+                    if (filterOfferCat !== 'all') { query = query.eq('category', filterOfferCat) }
+                    const { data: rows, error: offersErr } = await query
+                    if (offersErr) console.error('Failed to load offers:', offersErr)
+                    data = (rows || []).map(o => ({ ...o, distance_miles: distById.get(o.id) ?? null }))
+                }
+            }
+            const enrichedOffers = await enrichOffers(data.filter(o => !blockedIds.has(o.user_id)))
             setOffers(enrichedOffers)
         }
         setLoading(false)
@@ -466,6 +480,7 @@ export default function Feed() {
                                     </div>
                                     <div className="feed-card-meta">
                                         <span className="feed-card-skill">{offer.title}</span>
+                                        {offer.distance_miles != null && <span className="feed-card-distance">{offer.distance_miles} mi</span>}
                                     </div>
                                     {offer.poster_name && (
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
