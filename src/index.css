@@ -2937,6 +2937,12 @@ a:focus:not(:focus-visible) {
   z-index: 301;
 }
 
+/* First-time tour for a new member: the tabs light up but can't be tapped
+   until they reach the end and tap I agree. */
+.tour-required .bottom-tabs {
+  pointer-events: none;
+}
+
 .tour-open .tab-item[data-tour] {
   opacity: 0.45;
 }

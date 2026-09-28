@@ -65,8 +65,10 @@ export default function Campfire() {
   // Default to the viewer's own village as soon as the profile's loaded;
   // admins can then switch away from it with the picker in the header.
   useEffect(() => {
-    if (profile?.village_id && viewVillageId === null) setViewVillageId(profile.village_id)
-  }, [profile])
+    if (viewVillageId !== null) return
+    if (profile?.village_id) setViewVillageId(profile.village_id)
+    else if (isAdmin && villages.length > 0) setViewVillageId(villages[0].id)
+  }, [profile, villages])
 
   useEffect(() => {
     if (!hasAccess || !viewVillageId) return
@@ -224,6 +226,19 @@ export default function Campfire() {
         <h2 style={{ color: '#ffaa44', marginBottom: '0.5rem' }}>Come sit by the fire</h2>
         <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>The Campfire is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Apply to become a Hope Ambassador. An admin looks over each application so this stays a place people can trust, and once you're in, you'll have a seat.</p>
         <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>Apply to be a Hope Ambassador</button>
+      </div>
+    )
+  }
+
+  // Villages come from the zip on your profile. No zip yet means no
+  // village yet, so there's no room to show. Admins can always pick one.
+  if (!profile?.village_id && !isAdmin) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
+        <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>&#128293;</p>
+        <h2 style={{ color: '#ffaa44', marginBottom: '0.5rem' }}>Find your area's Campfire</h2>
+        <p style={{ color: '#ccc', marginBottom: '1.5rem', lineHeight: 1.5 }}>Each area has its own Campfire. Add your zip code to your profile and you'll join the one near you. If there isn't one yet, you'll start it.</p>
+        <button onClick={() => navigate('/profile')} style={{ minHeight: '44px', padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '1rem' }}>Add my zip code</button>
       </div>
     )
   }
