@@ -11,7 +11,15 @@ export function UnreadCountProvider({ children }) {
   const refresh = useCallback(async () => {
     if (!user?.id) return
     const { data, error } = await supabase.rpc('unread_conversation_count', { user_uuid: user.id })
-    if (!error && typeof data === 'number') setCount(data)
+    if (error || typeof data !== 'number') return
+    // Chats you marked unread yourself (Messages > Mark as unread) count too.
+    // If that column isn't there yet, just use the regular count.
+    const { count: marked, error: markedErr } = await supabase
+      .from('conversation_user_settings')
+      .select('conversation_id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('marked_unread', true)
+    setCount(data + (markedErr ? 0 : (marked || 0)))
   }, [user?.id])
 
   useEffect(() => {

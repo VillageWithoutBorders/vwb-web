@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useUnreadCount } from '../context/UnreadCountContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
@@ -24,7 +25,8 @@ const MUTE_OPTIONS = [
 ]
 
 export default function Messages() {
-  const { user } = useAuth()
+  const { user, profile, isAdmin } = useAuth()
+  const { refreshUnread } = useUnreadCount()
   const navigate = useNavigate()
   const location = useLocation()
   const [convos, setConvos] = useState([])
@@ -50,6 +52,11 @@ export default function Messages() {
   const { menuRef: optionsMenuRef, menuStyle: optionsMenuStyle, openMenu: positionOptionsMenu } = useMenuPosition('right')
   const [convoSettings, setConvoSettings] = useState({})
   const [showArchived, setShowArchived] = useState(false)
+  // Campfire shows as a pinned card at the top of the list for Hope
+  // Ambassadors and admins, so it lives with the rest of their messages
+  // instead of only on the Home screen.
+  const hasCampfire = !!(profile?.is_hope_ambassador || isAdmin)
+  const [campfire, setCampfire] = useState(null)
 
   // Phase 3: Help offers state
   const [pendingOffers, setPendingOffers] = useState([])
@@ -64,7 +71,7 @@ export default function Messages() {
     // offers below, so a block actually hides someone instead of just being
     // recorded with no effect.
     const blockedIds = await getBlockedUserIds(user.id)
-    await Promise.all([loadConversations(blockedIds), loadFolders(), loadAssignments(), loadBlocked(), loadPrefs(), loadConvoSettings(), loadPendingOffers(blockedIds), loadMyOutgoingOffers(blockedIds)])
+    await Promise.all([loadConversations(blockedIds), loadFolders(), loadAssignments(), loadBlocked(), loadPrefs(), loadConvoSettings(), loadPendingOffers(blockedIds), loadMyOutgoingOffers(blockedIds), loadCampfire()])
     setLoading(false)
   }
 
@@ -417,6 +424,61 @@ export default function Messages() {
     return new Date(s.muted_until) > new Date()
   }
 
+  // Newest Campfire message in your own village's room. Campfire.jsx saves
+  // 'vwb_campfire_last_read' while it's open, so anything newer from
+  // someone else shows as unread here.
+  async function loadCampfire() {
+    if (!hasCampfire) { setCampfire(null); return }
+    if (!profile?.village_id) { setCampfire({ last: null, name: null, unread: false, noVillage: true }); return }
+    const { data: last, error } = await supabase.from('campfire_messages').select('id, user_id, body, created_at').eq('village_id', profile.village_id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    if (error) { console.error('Failed to load Campfire preview:', error); setCampfire({ last: null, name: null, unread: false }); return }
+    if (!last) { setCampfire({ last: null, name: null, unread: false }); return }
+    let name = 'You'
+    if (last.user_id !== user.id) {
+      const { data: p, error: pErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', last.user_id).maybeSingle()
+      if (pErr) console.error('Failed to load Campfire sender name:', pErr)
+      name = p?.display_name || 'Neighbor'
+    }
+    let lastRead = null
+    try { lastRead = localStorage.getItem('vwb_campfire_last_read') } catch {}
+    const unread = last.user_id !== user.id && (!lastRead || new Date(last.created_at) > new Date(lastRead))
+    setCampfire({ last, name, unread })
+  }
+
+  // Mark as unread is saved as your own flag, not by moving your "last
+  // read" time back. That way the other person's read receipt never
+  // changes because you wanted a reminder. Opening the chat clears it.
+  async function markUnread(convoId) {
+    setOpenMenu(null)
+    if (await upsertConvoSetting(convoId, { marked_unread: true })) refreshUnread()
+  }
+
+  async function markRead(convo) {
+    setOpenMenu(null)
+    const readCol = convo.helper_id === user.id ? 'last_read_helper' : 'last_read_requester'
+    const { error } = await supabase.from('conversations').update({ [readCol]: new Date().toISOString() }).eq('id', convo.id)
+    if (error) { console.error('Failed to mark conversation read:', error); alert('Could not mark that as read. Try again.'); return }
+    setConvos(prev => prev.map(cv => cv.id === convo.id ? { ...cv, hasUnread: false } : cv))
+    if (convoSettings[convo.id]?.marked_unread) await upsertConvoSetting(convo.id, { marked_unread: false })
+    refreshUnread()
+  }
+
+  async function toggleFollowUp(convoId) {
+    setOpenMenu(null)
+    const current = convoSettings[convoId]?.follow_up || false
+    await upsertConvoSetting(convoId, { follow_up: !current })
+  }
+
+  function isUnread(c) {
+    return !!(c.hasUnread || convoSettings[c.id]?.marked_unread)
+  }
+
+  function openConvo(c) {
+    setConvos(prev => prev.map(cv => cv.id === c.id ? { ...cv, hasUnread: false } : cv))
+    setConvoSettings(prev => prev[c.id]?.marked_unread ? { ...prev, [c.id]: { ...prev[c.id], marked_unread: false } } : prev)
+    navigate('/conversation/' + c.id)
+  }
+
   async function loadBlocked() {
     const { data, error } = await supabase.from('blocks').select('id, blocked_id').eq('blocker_id', user.id)
     if (error) { console.error('Failed to load blocked users:', error); return }
@@ -567,7 +629,7 @@ export default function Messages() {
     navigate('/conversation/' + convoId, { state: { openReport: true } })
   }
 
-  let filtered = activeFolder === 'all' ? convos : activeFolder === 'unread' ? convos.filter(c => c.hasUnread) : activeFolder === 'archived' ? convos : convos.filter(c => (assignments[c.id] || []).includes(activeFolder))
+  let filtered = activeFolder === 'all' ? convos : activeFolder === 'unread' ? convos.filter(isUnread) : activeFolder === 'followup' ? convos.filter(c => convoSettings[c.id]?.follow_up) : activeFolder === 'archived' ? convos : convos.filter(c => (assignments[c.id] || []).includes(activeFolder))
   if (activeFolder === 'archived') {
     filtered = filtered.filter(c => convoSettings[c.id]?.archived)
   } else {
@@ -577,6 +639,8 @@ export default function Messages() {
   const unpinned = filtered.filter(c => !convoSettings[c.id]?.pinned)
   const sorted = [...pinned, ...unpinned]
   const archivedCount = convos.filter(c => convoSettings[c.id]?.archived).length
+  const followUpCount = convos.filter(c => convoSettings[c.id]?.follow_up && !convoSettings[c.id]?.archived).length
+  const showCampfireCard = hasCampfire && campfire && (activeFolder === 'all' || (activeFolder === 'unread' && campfire.unread))
 
   function formatTime(ts) {
     const d = new Date(ts)
@@ -795,16 +859,19 @@ export default function Messages() {
         {folders.map(f => (
           <button key={f.id} style={{ ...tabStyle(activeFolder === f.id), outline: dropTarget === f.id ? '2px solid #4ecca3' : 'none' }} onClick={() => setActiveFolder(f.id)} onDragOver={(e) => { e.preventDefault(); setDropTarget(f.id) }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), f.id); setDraggingConvo(null) }}>{f.name}</button>
         ))}
+        {(followUpCount > 0 || activeFolder === 'followup') && (
+          <button style={tabStyle(activeFolder === 'followup')} onClick={() => setActiveFolder('followup')}>&#128681; Follow up ({followUpCount})</button>
+        )}
         {archivedCount > 0 && (
           <button style={tabStyle(activeFolder === 'archived')} onClick={() => setActiveFolder('archived')}>Archived ({archivedCount})</button>
         )}
       </div>
 
       {loading && <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>Loading...</p>}
-      {!loading && sorted.length === 0 && pendingOffers.length === 0 && myOutgoingOffers.length === 0 && (
+      {!loading && sorted.length === 0 && !showCampfireCard && pendingOffers.length === 0 && myOutgoingOffers.length === 0 && (
         <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{activeFolder === 'all' ? 'No messages yet' : activeFolder === 'archived' ? 'No archived messages' : 'No messages in this folder'}</p>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{activeFolder === 'all' ? 'When you help someone or someone helps you, your conversations will show up here.' : 'Tap the menu on a conversation to move it here.'}</p>
+          <p style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{activeFolder === 'all' ? 'No messages yet' : activeFolder === 'archived' ? 'No archived messages' : activeFolder === 'unread' ? 'You\u2019re all caught up' : activeFolder === 'followup' ? 'Nothing to follow up on' : 'No messages in this folder'}</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{activeFolder === 'all' ? 'When you help someone or someone helps you, your conversations will show up here.' : activeFolder === 'unread' ? 'No new messages right now.' : activeFolder === 'followup' ? 'Tap \u22EF on a conversation and pick Follow up to save it here.' : 'Tap the menu on a conversation to move it here.'}</p>
         </div>
       )}
 
@@ -825,26 +892,50 @@ export default function Messages() {
         </div>
       )}
 
+      {!loading && showCampfireCard && (
+        <div className="message-card" style={{ position: 'relative', borderLeft: '3px solid #e8833a' }}>
+          <div onClick={() => navigate('/campfire')} role="button" tabIndex={0} aria-label={'Open Campfire' + (campfire.unread ? ', new messages' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/campfire') } }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#3a2a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>&#128293;</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="message-card-header">
+                <span className="message-card-name" style={{ fontWeight: campfire.unread ? 800 : 600 }}>
+                  Campfire
+                  {campfire.unread && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#4ecca3', marginLeft: '6px' }} />}
+                </span>
+                {campfire.last && <span className="message-card-time" style={{ color: campfire.unread ? '#4ecca3' : undefined }}>{formatTime(campfire.last.created_at)}</span>}
+              </div>
+              <p className="message-card-skill">Ambassadors and admins</p>
+              <p className="message-card-preview" style={{ color: campfire.unread ? '#ddd' : undefined, fontWeight: campfire.unread ? 600 : 400 }}>
+                {campfire.noVillage ? 'Add your zip code to join your area\u2019s Campfire.' : campfire.last ? campfire.name + ': ' + ((campfire.last.body || '').length > 70 ? campfire.last.body.slice(0, 70) + '...' : (campfire.last.body || '')) : 'Say hello to your fellow ambassadors.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!loading && sorted.map((c) => {
         const isPinned = convoSettings[c.id]?.pinned
         const isArchived = convoSettings[c.id]?.archived
         const muted = isMuted(c.id)
+        const unread = isUnread(c)
+        const followUp = convoSettings[c.id]?.follow_up
         return (
         <div key={c.id} className="message-card" style={{ position: 'relative', cursor: 'grab', opacity: draggingConvo === c.id ? 0.5 : 1, borderLeft: isPinned ? '3px solid #4ecca3' : 'none' }} draggable onDragStart={(e) => { setDraggingConvo(c.id); e.dataTransfer.setData('text/plain', c.id) }} onDragEnd={() => { setDraggingConvo(null); setDropTarget(null) }}>
-          <div onClick={() => { setConvos(prev => prev.map(cv => cv.id === c.id ? { ...cv, hasUnread: false } : cv)); navigate('/conversation/' + c.id) }} role="button" tabIndex={0} aria-label={'Open conversation with ' + c.otherName} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setConvos(prev => prev.map(cv => cv.id === c.id ? { ...cv, hasUnread: false } : cv)); navigate('/conversation/' + c.id) } }} style={{ cursor: 'pointer', paddingRight: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div onClick={() => openConvo(c)} role="button" tabIndex={0} aria-label={'Open conversation with ' + c.otherName + (unread ? ', unread' : '') + (followUp ? ', marked follow up' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openConvo(c) } }} style={{ cursor: 'pointer', paddingRight: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <AvatarDisplay url={c.otherAvatar} userId={c.otherId} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
             <div className="message-card-header">
-              <span className="message-card-name" style={{ fontWeight: c.hasUnread ? 800 : 600 }}>
+              <span className="message-card-name" style={{ fontWeight: unread ? 800 : 600 }}>
                 {isPinned && <span style={{ marginRight: '4px' }} title="Pinned">&#128204;</span>}
                 {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title="Muted">&#128263;</span>}
+                {followUp && <span style={{ marginRight: '4px' }} title="Follow up">&#128681;</span>}
                 <button type="button" onClick={(e) => { e.stopPropagation(); navigate('/u/' + c.otherId) }} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.otherName}</button>
-                {c.hasUnread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#4ecca3", marginLeft: "6px", flexShrink: 0 }} />}
+                {unread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#4ecca3", marginLeft: "6px", flexShrink: 0 }} />}
               </span>
-              <span className="message-card-time" style={{ color: c.hasUnread ? "#4ecca3" : undefined }}>{formatTime(c.lastMessageAt)}</span>
+              <span className="message-card-time" style={{ color: unread ? "#4ecca3" : undefined }}>{formatTime(c.lastMessageAt)}</span>
             </div>
             {c.help_requests && (<p className="message-card-skill">{c.help_requests.skill_needed} in {c.help_requests.neighborhood}</p>)}
-            {c.lastMessage && (<p className="message-card-preview" style={{ color: c.hasUnread ? "#ddd" : undefined, fontWeight: c.hasUnread ? 600 : 400 }}>{c.lastMessage.length > 80 ? c.lastMessage.slice(0, 80) + '...' : c.lastMessage}</p>)}
+            {c.lastMessage && (<p className="message-card-preview" style={{ color: unread ? "#ddd" : undefined, fontWeight: unread ? 600 : 400 }}>{c.lastMessage.length > 80 ? c.lastMessage.slice(0, 80) + '...' : c.lastMessage}</p>)}
             </div>
           </div>
 
@@ -861,6 +952,18 @@ export default function Messages() {
 
           {openMenu === c.id && (
             <div ref={optionsMenuRef} onClick={(e) => e.stopPropagation()} style={{ background: '#2a2a2a', border: '1px solid #444', borderRadius: '10px', minWidth: '180px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden', ...optionsMenuStyle }}>
+              {unread ? (
+                <button style={menuBtn} onClick={() => markRead(c)}>
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9993;</span> Mark as read
+                </button>
+              ) : (
+                <button style={menuBtn} onClick={() => markUnread(c.id)}>
+                  <span style={{ width: '1.2rem', textAlign: 'center', color: '#4ecca3' }}>&#9679;</span> Mark as unread
+                </button>
+              )}
+              <button style={menuBtn} onClick={() => toggleFollowUp(c.id)}>
+                <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128681;</span> {followUp ? 'Done following up' : 'Follow up'}
+              </button>
               <button style={menuBtn} onClick={() => togglePin(c.id)}>
                 <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128204;</span> {isPinned ? 'Unpin' : 'Pin to top'}
               </button>

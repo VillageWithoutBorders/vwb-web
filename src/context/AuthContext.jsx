@@ -195,24 +195,9 @@ export function AuthProvider({ children }) {
       insertData.campfire_notifications_enabled = pendingData.campfire_notifications_enabled ?? false
     }
 
-    // Village assignment: Login.jsx stashes the village the person picked at
-    // signup here, same pending-in-localStorage pattern as the ambassador
-    // data above (the profile row doesn't exist yet at signup time). If
-    // nothing was stashed (e.g. there was only one active village to pick
-    // from, so Login.jsx skipped the picker), fall back to whichever village
-    // is marked as the default.
-    const pendingVillageId = localStorage.getItem('vwb_pending_village_id')
-    if (pendingVillageId) {
-      insertData.village_id = pendingVillageId
-    } else {
-      const { data: defaultVillage, error: villageErr } = await supabase
-        .from('villages')
-        .select('id')
-        .eq('is_default', true)
-        .maybeSingle()
-      if (villageErr) console.error('[AuthContext] ensureProfile:defaultVillage', villageErr)
-      if (defaultVillage) insertData.village_id = defaultVillage.id
-    }
+    // No village is set here. The database places people in a village from
+    // the zip on their profile (vwb-villages-by-zip.sql), so nobody is ever
+    // guessed into an area they don't live in.
 
     const { data: newProfile, error } = await supabase
       .from('helper_profiles')
@@ -225,7 +210,7 @@ export function AuthProvider({ children }) {
         const applied = await submitAmbassadorApplication(authUser.id, pendingData.how_known)
         if (applied) localStorage.removeItem('vwb_ambassador_pending')
       }
-      if (pendingVillageId) localStorage.removeItem('vwb_pending_village_id')
+      try { localStorage.removeItem('vwb_pending_village_id') } catch {}
       setProfile(newProfile)
       loadOrganizations(authUser.id)
       applyPendingOrgInvite()

@@ -88,6 +88,10 @@ export default function Admin() {
   const [editingVillageId, setEditingVillageId] = useState(null)
   const [editVillageName, setEditVillageName] = useState('')
   const [editVillageRegion, setEditVillageRegion] = useState('')
+  const [newVillageZip, setNewVillageZip] = useState('')
+  const [newVillageRadius, setNewVillageRadius] = useState('30')
+  const [editVillageZip, setEditVillageZip] = useState('')
+  const [editVillageRadius, setEditVillageRadius] = useState('30')
   const [content, setContent] = useState([])
   const [contentQuery, setContentQuery] = useState('')
   const [contentFilter, setContentFilter] = useState('dupes')
@@ -220,13 +224,18 @@ export default function Admin() {
 
   async function createVillage() {
     if (!newVillageName.trim()) { alert('Village name is required.'); return }
+    if (!/^\d{5}$/.test(newVillageZip.trim())) { alert('Add a 5-digit zip code for the center of the village. People inside its distance join it.'); return }
+    const radius = Number(newVillageRadius)
+    if (!(radius >= 1 && radius <= 150)) { alert('Distance should be between 1 and 150 miles.'); return }
     const { error } = await supabase.from('villages').insert({
       name: newVillageName.trim(),
       region_label: newVillageRegion.trim() || null,
       slug: slugifyVillageName(newVillageName),
+      center_zip: newVillageZip.trim(),
+      radius_miles: radius,
     })
-    if (reportError('createVillage', error, 'Could not create this village. It may already exist. Try again.')) return
-    setNewVillageName(''); setNewVillageRegion('')
+    if (reportError('createVillage', error, /zip/i.test(error?.message || '') ? 'That zip code wasn\u2019t found. Check the center zip and try again.' : 'Could not create this village. It may already exist. Try again.')) return
+    setNewVillageName(''); setNewVillageRegion(''); setNewVillageZip(''); setNewVillageRadius('30')
     setShowNewVillageForm(false)
     await loadVillages()
   }
@@ -235,6 +244,8 @@ export default function Admin() {
     setEditingVillageId(village.id)
     setEditVillageName(village.name || '')
     setEditVillageRegion(village.region_label || '')
+    setEditVillageZip(village.center_zip || '')
+    setEditVillageRadius(String(village.radius_miles ?? 30))
   }
 
   // Only the name and region description change here. The slug stays as it
@@ -242,11 +253,17 @@ export default function Admin() {
   // village never breaks anything that refers to it.
   async function saveVillageEdit() {
     if (!editVillageName.trim()) { alert('Village name is required.'); return }
-    const { data, error } = await supabase.from('villages').update({
-      name: editVillageName.trim(),
-      region_label: editVillageRegion.trim() || null,
-    }).eq('id', editingVillageId).select('id')
-    if (reportError('saveVillageEdit', error, 'Could not save these changes. Try again.')) return
+    const radius = Number(editVillageRadius)
+    if (!(radius >= 1 && radius <= 150)) { alert('Distance should be between 1 and 150 miles.'); return }
+    const zip = editVillageZip.trim()
+    if (zip && !/^\d{5}$/.test(zip)) { alert('The center zip should be 5 digits.'); return }
+    const current = villages.find(v => v.id === editingVillageId)
+    const updates = { name: editVillageName.trim(), region_label: editVillageRegion.trim() || null, radius_miles: radius }
+    // Only send the zip when it changed, so an ambassador-started village
+    // (which has a center but no zip) keeps its center.
+    if (zip !== (current?.center_zip || '')) updates.center_zip = zip || null
+    const { data, error } = await supabase.from('villages').update(updates).eq('id', editingVillageId).select('id')
+    if (reportError('saveVillageEdit', error, /zip/i.test(error?.message || '') ? 'That zip code wasn\u2019t found. Check the center zip and try again.' : 'Could not save these changes. Try again.')) return
     // Supabase can filter an update down to zero rows without raising an error
     // (for example if permissions block it), so check that a row really changed.
     if (!data || data.length === 0) { alert('Nothing was saved. You may not have permission to edit villages.'); return }
@@ -1277,7 +1294,7 @@ export default function Admin() {
       {!loading && tab === 'villages' && (
         <>
           <p style={{ color: '#888', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
-            Each village gets its own Campfire room. Someone's village is set when they sign up, or you can move them from the Users tab.
+            Each village has its own Campfire. People join the nearest village they live inside, based on the zip on their profile. When a Hope Ambassador lives outside every village, a new one starts for their area and you get an alert. You can still move someone from the Users tab.
           </p>
           <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? 'Cancel' : '+ New Village'}</button>
 
@@ -1285,6 +1302,14 @@ export default function Admin() {
             <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
               <input value={newVillageName} onChange={(e) => setNewVillageName(e.target.value)} placeholder="Village name * (e.g. Bay Area, CA)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
               <input value={newVillageRegion} onChange={(e) => setNewVillageRegion(e.target.value)} placeholder="Region description (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <label style={{ flex: '1 1 8rem', fontSize: '0.8rem', color: '#ccc' }}>Center zip *
+                  <input value={newVillageZip} onChange={(e) => setNewVillageZip(e.target.value)} inputMode="numeric" autoComplete="off" maxLength={5} placeholder="30736" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '1rem' }} />
+                </label>
+                <label style={{ flex: '1 1 8rem', fontSize: '0.8rem', color: '#ccc' }}>Distance (miles)
+                  <input value={newVillageRadius} onChange={(e) => setNewVillageRadius(e.target.value)} inputMode="numeric" type="number" min="1" max="150" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '1rem' }} />
+                </label>
+              </div>
               <button onClick={createVillage} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create Village</button>
             </div>
           )}
@@ -1298,6 +1323,14 @@ export default function Admin() {
                   <div style={{ flex: 1 }}>
                     <input value={editVillageName} onChange={(e) => setEditVillageName(e.target.value)} placeholder="Village name *" aria-label="Village name" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
                     <input value={editVillageRegion} onChange={(e) => setEditVillageRegion(e.target.value)} placeholder="Region description (optional)" aria-label="Region description" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <label style={{ flex: '1 1 8rem', fontSize: '0.8rem', color: '#ccc' }}>Center zip
+                        <input value={editVillageZip} onChange={(e) => setEditVillageZip(e.target.value)} inputMode="numeric" autoComplete="off" maxLength={5} placeholder={c.auto_started && !c.center_zip ? 'Set by the ambassador' : '30736'} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '1rem' }} />
+                      </label>
+                      <label style={{ flex: '1 1 8rem', fontSize: '0.8rem', color: '#ccc' }}>Distance (miles)
+                        <input value={editVillageRadius} onChange={(e) => setEditVillageRadius(e.target.value)} inputMode="numeric" type="number" min="1" max="150" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '1rem' }} />
+                      </label>
+                    </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button onClick={saveVillageEdit} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Save</button>
                       <button onClick={() => setEditingVillageId(null)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
@@ -1309,8 +1342,12 @@ export default function Admin() {
                     <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#eee' }}>{c.name}</h4>
                     {c.is_default && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Default</span>}
                     {!c.active && <span style={{ fontSize: '0.6rem', background: '#3a2a1a', color: '#ffaa44', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Inactive</span>}
+                    {c.auto_started && <span style={{ fontSize: '0.6rem', background: '#2a2a3a', color: '#aab4ff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Started by an ambassador</span>}
                   </div>
-                  {c.region_label && <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>{c.region_label}</p>}
+                  {c.region_label && c.region_label !== c.name && <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>{c.region_label}</p>}
+                  <p style={{ color: c.latitude == null ? '#ffaa44' : '#aaa', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>
+                    {c.latitude == null ? 'No center yet. Edit to add a center zip, or nobody can join.' : (c.center_zip ? 'Center ' + c.center_zip : 'Centered on where it started') + ' \u00b7 ' + c.radius_miles + ' miles'}
+                  </p>
                 </div>
                 )}
                 {editingVillageId !== c.id && (

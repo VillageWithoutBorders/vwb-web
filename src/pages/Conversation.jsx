@@ -101,6 +101,11 @@ export default function Conversation() {
       if (error) console.error('Failed to mark conversation read:', error)
       refreshUnread()
     })
+    // Opening a chat you marked unread clears that mark.
+    supabase.from('conversation_user_settings').update({ marked_unread: false }).eq('user_id', user.id).eq('conversation_id', c.id).eq('marked_unread', true).then(({ error }) => {
+      if (error) console.error('Failed to clear marked-unread:', error)
+      else refreshUnread()
+    })
     const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
 
     const { data: otherProfile, error: otherErr } = await supabase.from('helper_profiles_public').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
