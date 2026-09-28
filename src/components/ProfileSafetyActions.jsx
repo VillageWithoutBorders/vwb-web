@@ -18,7 +18,7 @@ const REASONS = [
 
 const ghost = { padding: '0.5rem 1rem', minHeight: '40px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#ccc', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }
 
-export default function ProfileSafetyActions({ userId, name, myId, onBlockChange }) {
+export default function ProfileSafetyActions({ userId, name, myId, onBlockChange, openWith, onOpened }) {
   const [blocked, setBlocked] = useState(null)
   const [dialog, setDialog] = useState(null) // 'block' | 'report' | 'reported' | null
   const [reason, setReason] = useState('')
@@ -39,6 +39,15 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
     })
     return () => { cancelled = true }
   }, [myId, userId])
+
+  // Open Block or Report straight away when asked (for example, right
+  // after someone takes back a vouch). Waits until we know whether they're
+  // already blocked, and skips Block if they are.
+  useEffect(() => {
+    if (!openWith || blocked === null) return
+    if (openWith === 'report' || (openWith === 'block' && !blocked)) setDialog(openWith)
+    if (onOpened) onOpened()
+  }, [openWith, blocked])
 
   useEffect(() => {
     if (!dialog) return
