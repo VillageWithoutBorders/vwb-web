@@ -119,8 +119,8 @@ export default function CommunityGuidelines({ onAgree }) {
   }
 
   return (
-    <div style={{ background: COLORS.bg, color: COLORS.text, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ maxWidth: '480px', width: '100%', margin: '0 auto', padding: '1.5rem 1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+    <div className="guide-shell" style={{ background: COLORS.bg, color: COLORS.text, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="guide-column">
 
         {/* Progress dots */}
         <div
@@ -151,7 +151,7 @@ export default function CommunityGuidelines({ onAgree }) {
           key={card.title}
           role="group"
           aria-label={`${index + 1} of ${CARDS.length}: ${card.title}`}
-          style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+          className="guide-card"
         >
           <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }} aria-hidden="true">{card.icon}</div>
           <h1 style={{ fontSize: '1.4rem', textAlign: 'center', margin: '0 0 1rem', color: COLORS.text }}>{card.title}</h1>
