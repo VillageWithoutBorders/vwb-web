@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
@@ -37,6 +38,32 @@ import GroupBoard from './pages/GroupBoard'
 import JoinGroup from './pages/JoinGroup'
 import { peekReturnTo } from './utils/returnTo'
 
+function ProfileWait() {
+  const { profileError, retryProfile, signOut } = useAuth()
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setSlow(true), 8000)
+    return () => clearTimeout(t)
+  }, [])
+  return (
+    <div className="login-page">
+      <div className="login-card" role="status" aria-live="polite">
+        <div className="login-header">
+          <h1>Village Without Borders</h1>
+        </div>
+        {!profileError && <p className="groups-note">Setting up your account...</p>}
+        {(profileError || slow) && (
+          <>
+            <p className="form-error" role="alert">{profileError || 'This is taking longer than it should.'}</p>
+            <button type="button" className="btn btn-primary btn-full" onClick={() => retryProfile()}>Try again</button>
+            <button type="button" className="btn btn-outline btn-full" style={{ marginTop: '0.5rem' }} onClick={() => signOut()}>Sign out</button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function ProtectedRoute({ children }) {
   const { user, profile, loading, refreshProfile } = useAuth()
   if (loading) return null
@@ -44,7 +71,8 @@ function ProtectedRoute({ children }) {
   // Wait for the profile row to load before deciding anything, same as the
   // loading check above, so a brand-new signup never flashes real content
   // before we know whether guidelines have been accepted.
-  if (!profile) return null
+  // Never a blank screen: say what's happening, with a way out if it fails.
+  if (!profile) return <ProfileWait />
   if (!profile.guidelines_accepted_at) return <CommunityGuidelines onAgree={refreshProfile} />
   return children
 }
