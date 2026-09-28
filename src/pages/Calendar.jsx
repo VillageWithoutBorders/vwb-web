@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { fetchCalendarEvents, filterByDistance, saveTown, startingOrigin } from '../utils/calendar'
+import { fetchCalendarEvents, filterByDistance, savePlace, startingOrigin, memberArea } from '../utils/calendar'
 import { CalendarLocationBar, CalendarEventList } from '../components/CalendarParts'
 
 export default function Calendar() {
@@ -39,7 +39,7 @@ export default function Calendar() {
 
   function changeOrigin(o) {
     setOrigin(o)
-    if (!o.isMe && !o.isArea) saveTown(o.name)
+    savePlace(o)
   }
 
   return (
@@ -56,7 +56,7 @@ export default function Calendar() {
         )}
       </div>
 
-      <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} />
+      <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
 
       {loading && <p className="cal-empty">Loading events...</p>}
       {!loading && loadError && (

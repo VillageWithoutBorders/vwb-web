@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { VouchRequestsForMe } from '../components/PersonalVouches'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -314,6 +315,8 @@ function captureCoverageLocation() {
             <span aria-hidden="true">&#9998;</span> Edit my profile
           </button>
         </div>
+
+        <VouchRequestsForMe myId={user?.id} />
 
         <div className="profile-details">
           <div className="detail-row">
