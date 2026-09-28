@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchCalendarEvents, filterByDistance, loadSavedTown, saveTown } from '../utils/calendar'
+import { fetchCalendarEvents, filterByDistance, loadSavedPlace, savePlace } from '../utils/calendar'
 import { CalendarLocationBar, CalendarEventList } from '../components/CalendarParts'
 
 // The public calendar shown on villagewithoutborders.org (inside the
@@ -10,9 +10,9 @@ import { CalendarLocationBar, CalendarEventList } from '../components/CalendarPa
 export default function CalendarEmbed() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
-  // Website visitors: a town they picked before, or nothing (every public
-  // event, plus a nudge to pick an area). Never a guess.
-  const [origin, setOrigin] = useState(() => loadSavedTown())
+  // Website visitors: a place they picked before on this browser, or
+  // nothing (every public event, plus a nudge to choose). Never a guess.
+  const [origin, setOrigin] = useState(() => loadSavedPlace())
   const [miles, setMiles] = useState(25)
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function CalendarEmbed() {
 
   function changeOrigin(o) {
     setOrigin(o)
-    if (!o.isMe) saveTown(o.name)
+    savePlace(o)
   }
 
   // Opened on its own (from the website's "View Calendar" button) it gets a

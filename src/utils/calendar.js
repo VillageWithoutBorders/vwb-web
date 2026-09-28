@@ -1,39 +1,25 @@
 import { supabase } from '../supabaseClient'
-import { distanceMiles, getMyLocation } from './location'
+import { distanceMiles, getMyLocation, lookupZip } from './location'
 
-// Towns for the location dropdown (website calendar, app calendar, and the
-// "where is it" picker when posting an event). Coordinates are town centers,
-// which is all the distance filter needs, and it means nobody's exact
-// location is ever stored or shared just to place an event on the map.
-export const TOWNS = [
-  { name: 'Ringgold, GA', lat: 34.916, lng: -85.109 },
-  { name: 'Fort Oglethorpe, GA', lat: 34.949, lng: -85.257 },
-  { name: 'Rossville, GA', lat: 34.983, lng: -85.286 },
-  { name: 'Chickamauga, GA', lat: 34.871, lng: -85.291 },
-  { name: 'LaFayette, GA', lat: 34.705, lng: -85.282 },
-  { name: 'Tunnel Hill, GA', lat: 34.841, lng: -85.043 },
-  { name: 'Dalton, GA', lat: 34.770, lng: -84.970 },
-  { name: 'Trenton, GA', lat: 34.872, lng: -85.509 },
-  { name: 'Chattanooga, TN', lat: 35.046, lng: -85.310 },
-  { name: 'East Ridge, TN', lat: 35.014, lng: -85.252 },
-  { name: 'Hixson, TN', lat: 35.149, lng: -85.240 },
-  { name: 'Ooltewah, TN', lat: 35.075, lng: -85.062 },
-  { name: 'Cleveland, TN', lat: 35.160, lng: -84.877 },
-]
+// Where to look for events. Never a guess, and never a fixed town list:
+// people pick a place by zip code (anywhere in the US), share their
+// location for this visit, or use the area saved on their own profile.
+// An origin is { name, lat, lng, kind } where kind is 'zip', 'me', or
+// 'area'. Zip centers are rounded (see zip_codes), so nobody's exact spot
+// is ever used or stored.
 
-// Where the calendar starts. Never a guess (no more defaulting to
-// Ringgold). In order:
-//   1. A town this browser picked before on the calendar.
-//   2. The member's own area: this visit's shared location, or the zip
-//      saved on their profile. Shown as "Your area (Ringgold, GA)".
-//   3. Nothing. The calendar shows every public event and asks them to
-//      pick an area.
-export function startingOrigin(profile) {
-  const saved = loadSavedTown()
-  if (saved) return saved
+// The member's own area (their saved zip, or a place shared this visit).
+export function memberArea(profile) {
   const mine = getMyLocation(profile)
-  if (mine) return { name: 'Your area' + (mine.label ? ' (' + mine.label + ')' : ''), lat: mine.lat, lng: mine.lng, isArea: true }
-  return null
+  if (!mine) return null
+  return { name: 'Your area' + (mine.label ? ' (' + mine.label + ')' : ''), lat: mine.lat, lng: mine.lng, kind: 'area' }
+}
+
+// Where the calendar starts: a place this browser picked before, then the
+// member's own area, then nothing (every event shows, with a nudge to
+// choose). There is no built-in default place.
+export function startingOrigin(profile) {
+  return loadSavedPlace() || memberArea(profile)
 }
 
 export const DISTANCE_OPTIONS = [5, 10, 25, 50, 100]
@@ -177,14 +163,28 @@ export function downloadIcs(ev) {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove() }, 1000)
 }
 
-// Remembered town for the calendar (a per-browser convenience only).
-export function loadSavedTown() {
+// Remembered place for the calendar: a per-browser convenience only,
+// kept on this device. Replaces the old town-name setting.
+const PLACE_KEY = 'vwb_calendar_place'
+
+export function loadSavedPlace() {
   try {
-    const name = localStorage.getItem('vwb_calendar_town')
-    return TOWNS.find((t) => t.name === name) || null
-  } catch { return null }
+    localStorage.removeItem('vwb_calendar_town')
+    const p = JSON.parse(localStorage.getItem(PLACE_KEY) || 'null')
+    if (p && p.name && typeof p.lat === 'number' && typeof p.lng === 'number') return { name: p.name, lat: p.lat, lng: p.lng, zip: p.zip, kind: 'zip' }
+  } catch { /* private mode or bad data */ }
+  return null
 }
 
-export function saveTown(name) {
-  try { localStorage.setItem('vwb_calendar_town', name) } catch { /* private mode */ }
+export function savePlace(origin) {
+  try {
+    if (origin && origin.kind === 'zip') localStorage.setItem(PLACE_KEY, JSON.stringify({ name: origin.name, lat: origin.lat, lng: origin.lng, zip: origin.zip }))
+  } catch { /* private mode */ }
+}
+
+// Look up a 5-digit zip for the calendar. Returns an origin or null.
+export async function placeFromZip(zip) {
+  const place = await lookupZip(zip)
+  if (!place) return null
+  return { name: place.label, lat: place.latitude, lng: place.longitude, zip: place.zip, kind: 'zip' }
 }

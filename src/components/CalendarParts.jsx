@@ -1,54 +1,64 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { TOWNS, DISTANCE_OPTIONS, groupByDay, timeRange, VISIBILITY } from '../utils/calendar'
+import { DISTANCE_OPTIONS, groupByDay, timeRange, VISIBILITY, placeFromZip } from '../utils/calendar'
 import { getCurrentPosition } from '../utils/location'
 
-// Town dropdown (plus "Use my location") and a "how far" dropdown.
-// `origin` is { name, lat, lng }, or null when we don't know the person's
-// area yet (then every event shows, with a nudge to pick). `isArea` marks
-// the member's own saved area, `isMe` a location shared this visit.
-// Used by the app calendar and the website one.
-export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChange }) {
-  const [locating, setLocating] = useState(false)
-  const MY_LOCATION = '__me__'
-  const MY_AREA = '__area__'
+// Where to look: a zip code (any US zip), "Use my location" (this visit
+// only), or "Back to my area" (the member's saved area), plus how far.
+// `origin` is null when we don't know the person's area yet: then every
+// event shows, with a nudge to choose. No place is ever assumed.
+// Used by the app calendar and the website one (no `homeArea` there).
+export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChange, homeArea }) {
+  const [zip, setZip] = useState('')
+  const [busy, setBusy] = useState('')
+  const [note, setNote] = useState('')
 
-  async function handleTown(value) {
-    if (value === MY_LOCATION) {
-      setLocating(true)
-      const loc = await getCurrentPosition()
-      setLocating(false)
-      if (loc) {
-        onOriginChange({ name: 'My location', lat: loc.lat, lng: loc.lng, isMe: true })
-      } else {
-        alert("We couldn't get your location. Pick your town from the list instead.")
-      }
-      return
-    }
-    if (value === MY_AREA) return
-    const t = TOWNS.find((x) => x.name === value)
-    if (t) onOriginChange(t)
+  async function useZip(e) {
+    e.preventDefault()
+    const clean = zip.replace(/[^0-9]/g, '')
+    if (clean.length !== 5) { setNote('Enter a 5-digit zip code.'); return }
+    setBusy('zip'); setNote('')
+    const place = await placeFromZip(clean)
+    setBusy('')
+    if (!place) { setNote("We couldn't find that zip code. Check it and try again."); return }
+    setZip('')
+    onOriginChange(place)
+  }
+
+  async function useMyLocation() {
+    setBusy('me'); setNote('')
+    const loc = await getCurrentPosition()
+    setBusy('')
+    if (!loc) { setNote("We couldn't get your location. Enter a zip code instead."); return }
+    onOriginChange({ name: 'your current location', lat: loc.lat, lng: loc.lng, kind: 'me' })
   }
 
   return (
     <div className="cal-location">
-      <label>
-        Near
-        <select value={origin?.isMe ? MY_LOCATION : origin?.isArea ? MY_AREA : (origin?.name || '')} onChange={(e) => handleTown(e.target.value)} aria-label="Choose your town">
-          {!origin && <option value="" disabled>Choose your area</option>}
-          {origin?.isArea && <option value={MY_AREA}>{origin.name}</option>}
-          {TOWNS.map((t) => <option key={t.name} value={t.name}>{t.name}</option>)}
-          <option value={MY_LOCATION}>{locating ? 'Finding you...' : 'Use my location'}</option>
-        </select>
-      </label>
-      <label>
-        Within
-        <select value={miles} onChange={(e) => onMilesChange(Number(e.target.value))} aria-label="How far you can travel">
-          {DISTANCE_OPTIONS.map((m) => <option key={m} value={m}>{m} miles</option>)}
-        </select>
-      </label>
-      {!origin && (
-        <p className="cal-hint" role="status">Showing every event. Choose your area to see what's close to you.</p>
+      <p className="cal-near" role="status">
+        {origin ? <>Showing events near <strong>{origin.name}</strong></> : "Showing every event. Choose your area to see what's close to you."}
+      </p>
+      <form className="cal-zip-form" onSubmit={useZip} noValidate>
+        <label htmlFor="cal-zip">{origin ? 'Look somewhere else (zip code)' : 'Your zip code'}</label>
+        <div className="cal-zip-row">
+          <input id="cal-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} value={zip} onChange={(e) => { setZip(e.target.value.replace(/[^0-9]/g, '')); setNote('') }} placeholder="12345" aria-describedby={note ? 'cal-zip-note' : undefined} />
+          <button type="submit" className="btn btn-primary" disabled={busy === 'zip'}>{busy === 'zip' ? '...' : 'Go'}</button>
+        </div>
+      </form>
+      {note && <p id="cal-zip-note" className="cal-error" role="alert">{note}</p>}
+      <div className="cal-loc-actions">
+        <button type="button" className="btn btn-outline" onClick={useMyLocation} disabled={busy === 'me'}>{busy === 'me' ? 'Finding you...' : 'Use my location'}</button>
+        {homeArea && origin?.kind !== 'area' && (
+          <button type="button" className="btn btn-outline" onClick={() => onOriginChange(homeArea)}>Back to my area</button>
+        )}
+      </div>
+      {origin && (
+        <label className="cal-within">
+          Within
+          <select value={miles} onChange={(e) => onMilesChange(Number(e.target.value))} aria-label="How far you can travel">
+            {DISTANCE_OPTIONS.map((m) => <option key={m} value={m}>{m} miles</option>)}
+          </select>
+        </label>
       )}
     </div>
   )

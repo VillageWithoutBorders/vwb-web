@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import VouchButton from '../components/VouchButton'
+import { KnowsVouchList } from '../components/PersonalVouches'
 import { useAuth } from '../context/AuthContext'
 import { startConversation } from '../utils/startConversation'
 import ProfileSafetyActions from '../components/ProfileSafetyActions'
@@ -10,6 +11,9 @@ export default function PublicProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  // Arriving with { safety: 'block' | 'report' } (after taking back a
+  // vouch) opens that dialog right away.
+  const location = useLocation()
   const [messaging, setMessaging] = useState(false)
   const [blockedThem, setBlockedThem] = useState(false)
   const [profile, setProfile] = useState(null)
@@ -150,13 +154,15 @@ export default function PublicProfile() {
           {user && user.id !== userId && !blockedThem && (
             <button type="button" onClick={messageThem} disabled={messaging} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Opening...' : 'Message'}</button>
           )}
-          <ProfileSafetyActions userId={userId} name={profile.display_name} myId={user?.id} onBlockChange={setBlockedThem} />
+          <ProfileSafetyActions userId={userId} name={profile.display_name} myId={user?.id} onBlockChange={setBlockedThem} openWith={location.state?.safety} onOpened={() => navigate(location.pathname, { replace: true, state: {} })} />
         </div>
       </div>
 
       {/* Vouches */}
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem', padding: '0.75rem 1rem', background: '#1a1a1a', borderRadius: '12px', border: '1px solid #333' }}>
-        <VouchButton userId={userId} size="sm" showCount={true} />
+        <VouchButton userId={userId} name={profile.display_name || 'this neighbor'} size="sm" showCount={true} allowPersonal={!blockedThem} />
+        <KnowsVouchList userId={userId} />
+        <p className="vouch-caution">Vouches show that neighbors trust this person. They aren't a background check. Meet somewhere public the first time, and trust your own judgment.</p>
       </div>
 
       {/* Tabs */}
@@ -224,4 +230,4 @@ export default function PublicProfile() {
       )}
     </div>
   )
-}
+}

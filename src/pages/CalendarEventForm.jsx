@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import { TOWNS, DISTANCE_OPTIONS, VISIBILITY, loadSavedTown } from '../utils/calendar'
+import { DISTANCE_OPTIONS, VISIBILITY, placeFromZip } from '../utils/calendar'
 import { EVENT_TEMPLATES, addMinutes } from '../utils/eventTemplates'
 
 const VWB_HOST = 'vwb'
@@ -26,9 +26,12 @@ export default function CalendarEventForm() {
     ...hostOrgs.map((o) => ({ id: o.id, name: o.name })),
   ]
 
-  // Starts on the town this browser last picked on the calendar, or blank.
-  // The host picks where the event is; we don't assume Ringgold.
-  const startTown = loadSavedTown()
+  // Where the event is: the host types the zip code, and we look up the
+  // town name and the zip's center point. Starts blank. No place is ever
+  // assumed. `place` is { name, lat, lng } once found.
+  const [zip, setZip] = useState('')
+  const [place, setPlace] = useState(null)
+  const [zipState, setZipState] = useState('') // '' | 'looking' | 'notfound'
   const [form, setForm] = useState({
     host: hostChoices[0]?.id || '',
     title: '',
@@ -38,7 +41,6 @@ export default function CalendarEventForm() {
     endTime: '',
     locationName: '',
     address: '',
-    town: startTown ? startTown.name : '',
     radius: 25,
     visibility: 'public',
     hideAddress: false,
@@ -67,13 +69,15 @@ export default function CalendarEventForm() {
         endTime: data.ends_at ? toTimeInput(data.ends_at) : '',
         locationName: data.location_name || '',
         address: data.address || '',
-        town: data.town || (startTown ? startTown.name : ''),
         radius: Number(data.show_radius_miles) || 25,
         visibility: data.visibility,
         hideAddress: !!data.hide_address,
         signupEnabled: !!data.signup_enabled,
         signupLimit: data.signup_limit ? String(data.signup_limit) : '',
       })
+      if (data.town && data.latitude != null && data.longitude != null) {
+        setPlace({ name: data.town, lat: Number(data.latitude), lng: Number(data.longitude) })
+      }
       setLoaded(true)
     })
   }, [editing, id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -106,6 +110,15 @@ export default function CalendarEventForm() {
     setTemplateKey(null)
   }
 
+  async function changeZip(value) {
+    const clean = value.replace(/[^0-9]/g, '').slice(0, 5)
+    setZip(clean)
+    if (clean.length < 5) { setZipState(''); if (!editing) setPlace(null); return }
+    setZipState('looking')
+    const found = await placeFromZip(clean)
+    if (found) { setPlace({ name: found.name, lat: found.lat, lng: found.lng }); setZipState('') } else { setPlace(null); setZipState('notfound') }
+  }
+
   function set(field, value) {
     if (field === 'endTime') setEndTouched(true)
     setForm((f) => {
@@ -133,8 +146,7 @@ export default function CalendarEventForm() {
     const limit = form.signupLimit ? parseInt(form.signupLimit, 10) : null
     if (form.signupEnabled && form.signupLimit && (!limit || limit < 1)) { setError('The number of spots should be 1 or more, or left blank for no limit.'); return }
 
-    const town = TOWNS.find((t) => t.name === form.town)
-    if (!town) { setError('Pick the town where the event is happening.'); return }
+    if (!place) { setError("Enter the zip code where the event is happening."); return }
     const row = {
       organization_id: form.host === VWB_HOST ? null : form.host,
       title: form.title.trim(),
@@ -143,9 +155,9 @@ export default function CalendarEventForm() {
       ends_at: endsAt,
       location_name: form.locationName.trim() || null,
       address: form.address.trim() || null,
-      town: town.name,
-      latitude: town.lat,
-      longitude: town.lng,
+      town: place.name,
+      latitude: place.lat,
+      longitude: place.lng,
       show_radius_miles: form.radius,
       visibility: form.visibility,
       hide_address: form.hideAddress,
@@ -263,15 +275,18 @@ export default function CalendarEventForm() {
         </div>
 
         <div className="form-field">
-          <label htmlFor="ev-town">Town</label>
-          <select id="ev-town" value={form.town} onChange={(e) => set('town', e.target.value)} required>
-            <option value="" disabled>Pick a town</option>
-            {TOWNS.map((t) => <option key={t.name} value={t.name}>{t.name}</option>)}
-          </select>
+          <label htmlFor="ev-zip">{editing && place ? 'Zip code (to change the town)' : 'Zip code where it\'s happening'}</label>
+          <input id="ev-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} value={zip} onChange={(e) => changeZip(e.target.value)} placeholder="12345" aria-describedby="ev-zip-note" required={!place} />
+          <p id="ev-zip-note" className={'evt-zip-note' + (zipState === 'notfound' ? ' is-error' : '')} role="status">
+            {zipState === 'looking' && 'Looking it up...'}
+            {zipState === 'notfound' && "We couldn't find that zip code. Check it and try again."}
+            {!zipState && place && <>&#10003; {place.name}. The calendar shows this town, and measures distance from the middle of the zip code.</>}
+            {!zipState && !place && 'We use it to show the town and to reach people nearby.'}
+          </p>
         </div>
         <div className="form-field">
           <label htmlFor="ev-place">Place name (optional)</label>
-          <input id="ev-place" type="text" value={form.locationName} onChange={(e) => set('locationName', e.target.value)} placeholder="For example: Ringgold Public Library" />
+          <input id="ev-place" type="text" value={form.locationName} onChange={(e) => set('locationName', e.target.value)} placeholder="For example: the public library" />
         </div>
         <div className="form-field">
           <label htmlFor="ev-address">Street address (optional)</label>
@@ -299,7 +314,7 @@ export default function CalendarEventForm() {
           <div className="form-field" style={{ marginTop: '0.75rem' }}>
             <label htmlFor="ev-radius">Show it to people within</label>
             <select id="ev-radius" value={form.radius} onChange={(e) => set('radius', Number(e.target.value))}>
-              {DISTANCE_OPTIONS.map((m) => <option key={m} value={m}>{m} miles of {form.town || 'the event'}</option>)}
+              {DISTANCE_OPTIONS.map((m) => <option key={m} value={m}>{m} miles of {place?.name || 'the event'}</option>)}
             </select>
           </div>
         )}
