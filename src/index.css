@@ -4026,3 +4026,60 @@ html[data-tour-tab="top"] .app-header .header-btn {
   min-height: 65px;
   margin: 0.5rem 0;
 }
+
+/* ---------- Community guidelines walkthrough ----------
+   Phones: fills the screen, Back/Next sit at the bottom in thumb reach.
+   Bigger screens: one centered card, with the buttons right under the
+   words instead of far down at the bottom of a tall window. */
+.guide-column {
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) and (min-height: 560px) {
+  .guide-shell {
+    padding: 2rem 1rem;
+  }
+
+  .guide-column {
+    flex: 0 1 auto;
+    max-width: 560px;
+    margin: auto;
+    padding: 2rem 2.25rem;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .guide-card {
+    flex: 0 0 auto;
+    min-height: 320px;
+  }
+}
+
+/* Big screens: scale the whole walkthrough card up (text, icons, buttons
+   and spacing together) so it fills the screen instead of looking tiny. */
+@media (min-width: 1024px) and (min-height: 700px) {
+  .guide-column {
+    max-width: 620px;
+    zoom: 1.25;
+  }
+}
+
+@media (min-width: 1440px) and (min-height: 880px) {
+  .guide-column {
+    zoom: 1.4;
+  }
+}
