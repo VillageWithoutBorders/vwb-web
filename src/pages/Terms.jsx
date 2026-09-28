@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 // Public page, reachable at /terms whether or not someone is logged in --
 // linked from the last card of CommunityGuidelines.jsx. Reuses the existing
@@ -6,6 +7,23 @@ import { useNavigate } from 'react-router-dom'
 // new styles.
 export default function Terms() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const listRef = useRef(null)
+
+  // A link like /terms#terms-10 opens that section and scrolls to it.
+  useEffect(() => {
+    const id = decodeURIComponent((location.hash || '').slice(1))
+    if (!id) return
+    const el = document.getElementById(id)
+    if (el && el.tagName === 'DETAILS') {
+      el.open = true
+      el.scrollIntoView({ block: 'start' })
+    }
+  }, [location.hash])
+
+  function setAll(open) {
+    listRef.current?.querySelectorAll('details').forEach(d => { d.open = open })
+  }
 
   return (
     <div className="help-page" style={{ maxWidth: '720px', margin: '0 auto' }}>
@@ -20,15 +38,33 @@ export default function Terms() {
         <p>These terms exist to keep our community safe. Please read them carefully. If you have questions, reach out through the Help page in the app.</p>
       </div>
 
-      <div className="help-section">
-        <h2>1. Who can use this platform</h2>
+      <div className="terms-tools">
+        <p className="terms-tools-note">Tap a section to open it.</p>
+        <div className="terms-tools-buttons">
+          <button type="button" className="btn btn-outline terms-tool-btn" onClick={() => setAll(true)}>Open all</button>
+          <button type="button" className="btn btn-outline terms-tool-btn" onClick={() => setAll(false)}>Close all</button>
+        </div>
+      </div>
+
+      <div ref={listRef} className="terms-list">
+      <details className="help-section terms-section" id="terms-1">
+        <summary>
+          <span className="terms-summary-title">1. Who can use this platform</span>
+          <span className="terms-summary-hint">Age 18 and up, your email, and your display name</span>
+        </summary>
+        <div className="terms-body">
         <p>You must be 18 years or older to create an account.</p>
         <p>You need a working email address to sign up. Your email is used only for account verification and important safety notifications. It is never shared with other members.</p>
         <p>You choose your own display name. It does not have to be your legal name. Your display name is visible to other members.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>2. What this platform is (and is not)</h2>
+      <details className="help-section terms-section" id="terms-2">
+        <summary>
+          <span className="terms-summary-title">2. What this platform is (and is not)</span>
+          <span className="terms-summary-hint">Not 911, not a background check, not a place to sell things</span>
+        </summary>
+        <div className="terms-body">
         <p>VWB is a space for neighbors to share skills, time, and resources with each other freely.</p>
         <p><strong>VWB is not:</strong></p>
         <ul>
@@ -38,10 +74,15 @@ export default function Terms() {
           <li>A marketplace, gig economy, or paid labor platform</li>
         </ul>
         <p>&quot;Verified&quot; on this platform means a member has confirmed a working email address. It does not mean we have verified their identity, skills, or background. Use your own judgment when accepting help or meeting someone in person.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>3. Roles and trust</h2>
+      <details className="help-section terms-section" id="terms-3">
+        <summary>
+          <span className="terms-summary-title">3. Roles and trust</span>
+          <span className="terms-summary-hint">Neighbor, Hope Ambassador, Admin, and Founder</span>
+        </summary>
+        <div className="terms-body">
         <p>Our community has a trust system with four levels:</p>
         <ul>
           <li><strong>Neighbor.</strong> Any verified member. Can post help requests, browse offers, and send messages.</li>
@@ -50,10 +91,15 @@ export default function Terms() {
           <li><strong>Founder.</strong> The creator and steward of VWB.</li>
         </ul>
         <p>Having a higher trust role does not grant anyone the right to demand personal information from you, pressure you into tasks, or override your boundaries.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>4. Protecting your personal information</h2>
+      <details className="help-section terms-section" id="terms-4">
+        <summary>
+          <span className="terms-summary-title">4. Protecting your personal information</span>
+          <span className="terms-summary-hint">What others can see, and what to keep private</span>
+        </summary>
+        <div className="terms-body">
         <p><strong>What is visible to other members:</strong></p>
         <ul>
           <li>Your display name</li>
@@ -82,10 +128,15 @@ export default function Terms() {
         </ul>
         <p>If you need to share sensitive details to coordinate help, do so only in private 1:1 messages with a specific person you have chosen to trust.</p>
         <p><strong>We are not responsible for information you voluntarily post in public areas of the app.</strong> Once something is posted publicly, other members may see it before it can be removed.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>5. Prohibited conduct</h2>
+      <details className="help-section terms-section" id="terms-5">
+        <summary>
+          <span className="terms-summary-title">5. Prohibited conduct</span>
+          <span className="terms-summary-hint">What can get someone removed</span>
+        </summary>
+        <div className="terms-body">
         <p>The following behaviors will result in immediate action, up to and including permanent removal from the platform:</p>
 
         <h3 style={{ fontSize: '0.95rem', margin: '1rem 0 0.4rem' }}>Predatory behavior</h3>
@@ -125,10 +176,15 @@ export default function Terms() {
           <li>Admins accessing or sharing member information for any purpose outside of platform safety</li>
           <li>Using a trust role to build personal authority, recruit followers, or promote political campaigns or causes within the platform</li>
         </ul>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>6. Safety tools</h2>
+      <details className="help-section terms-section" id="terms-6">
+        <summary>
+          <span className="terms-summary-title">6. Safety tools</span>
+          <span className="terms-summary-hint">Blocking, reporting, and vouching</span>
+        </summary>
+        <div className="terms-body">
         <p>This platform is built on community trust, not constant moderation. Every member has safety tools in their own hands.</p>
         <p><strong>Blocking.</strong> You can block any member at any time. Blocking is mutual and immediate. Once you block someone, your conversations with them disappear from both sides. They cannot see your profile, send you messages, or interact with your posts. Because direct messages are end-to-end encrypted, we can&apos;t pull up or review a blocked conversation ourselves. If a safety concern is involved, you can attach your own copy of the messages when you file a report.</p>
         <p><strong>Reporting.</strong> You can report any message, post, or profile using the Report option in the app. You can also report someone you have already blocked. If something feels wrong, report it. You do not need to be sure a rule was broken.</p>
@@ -136,10 +192,15 @@ export default function Terms() {
         <p><strong>Consent before connection.</strong> Both sides must agree before any match or conversation happens. No one is connected to a stranger without saying yes first.</p>
         <p><strong>Retaliation against anyone who files a safety report is itself a violation of these terms and will be treated accordingly.</strong></p>
         <p>Reports are reviewed when action is needed. This platform does not have a full-time moderation team. We rely on the tools above and on members looking out for each other. When a report requires action beyond blocking, it will be handled by platform leadership, up to and including permanent removal.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>7. Content and communications</h2>
+      <details className="help-section terms-section" id="terms-7">
+        <summary>
+          <span className="terms-summary-title">7. Content and communications</span>
+          <span className="terms-summary-hint">What stays private and what everyone can see</span>
+        </summary>
+        <div className="terms-body">
         <p>Everything you post in public spaces (Campfire, help requests, offers, the community feed) may be visible to all members.</p>
         <p>Direct messages between two people are end-to-end encrypted. That means only the two people in the conversation can ever read them, not admins, not the founder, not us. If you need to report something from a private conversation, you attach your own copy of the messages you&apos;re reporting, the same way you&apos;d forward a text message.</p>
         <p>Campfire (our group chat) works differently. It is not end-to-end encrypted, and admins can see what&apos;s posted there, so keep sensitive details out of it.</p>
@@ -152,10 +213,15 @@ export default function Terms() {
           <li>A violation of someone else&apos;s privacy</li>
         </ul>
         <p>VWB reserves the right to remove any content that violates these terms.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>8. Emergency events</h2>
+      <details className="help-section terms-section" id="terms-8">
+        <summary>
+          <span className="terms-summary-title">8. Emergency events</span>
+          <span className="terms-summary-hint">Only for real, urgent community needs</span>
+        </summary>
+        <div className="terms-body">
         <p>The emergency events feature is for real, time-sensitive community needs (severe weather, flooding, infrastructure failures, etc.).</p>
         <p>Do not use this feature to:</p>
         <ul>
@@ -164,10 +230,15 @@ export default function Terms() {
           <li>Promote political events or campaigns</li>
         </ul>
         <p>Misuse of the emergency system is a serious violation and may result in immediate removal.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>9. No guarantees</h2>
+      <details className="help-section terms-section" id="terms-9">
+        <summary>
+          <span className="terms-summary-title">9. No guarantees</span>
+          <span className="terms-summary-hint">Volunteers run this, so use your own judgment</span>
+        </summary>
+        <div className="terms-body">
         <p>VWB is run by volunteers. We do our best to maintain a safe and functional platform, but we cannot guarantee:</p>
         <ul>
           <li>That help will be available when you need it</li>
@@ -176,10 +247,15 @@ export default function Terms() {
           <li>The quality, safety, or outcome of any help exchanged between members</li>
         </ul>
         <p>You use this platform at your own risk. VWB, its founder, admins, and volunteers are not liable for any harm, loss, or damage that results from interactions on or through this platform.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>10. Your account</h2>
+      <details className="help-section terms-section" id="terms-10">
+        <summary>
+          <span className="terms-summary-title">10. Your account</span>
+          <span className="terms-summary-hint">Keeping your account safe, deleting it, bans, and appeals</span>
+        </summary>
+        <div className="terms-body">
         <p>You are responsible for keeping your login credentials secure. Do not share your account with others.</p>
         <p>To delete your account, contact us through the Help page in the app or at info@villagewithoutborders.org. When your account is deleted, your profile and associated data are removed from the platform. Some records (such as safety reports involving your account) may be retained for community safety purposes.</p>
         <p>VWB reserves the right to suspend or permanently remove any account that violates these terms.</p>
@@ -197,26 +273,43 @@ export default function Terms() {
         </ul>
         <p>When an account is banned, the person is signed out and can&apos;t log back in, the email address can&apos;t be used to sign up again, and their requests, offers, and posts are hidden from other members. VWB keeps a record of the ban and the reason. If there is a safety concern, VWB may share relevant information with law enforcement when required by law.</p>
         <p>If you believe your account was removed by mistake, you can appeal by emailing info@villagewithoutborders.org. A person, not a computer, will review your appeal.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>11. Changes to these terms</h2>
+      <details className="help-section terms-section" id="terms-11">
+        <summary>
+          <span className="terms-summary-title">11. Changes to these terms</span>
+          <span className="terms-summary-hint">How we tell you about updates</span>
+        </summary>
+        <div className="terms-body">
         <p>We may update these terms as the platform grows. When we do, we will note the date of the update at the top of this page. Continued use of the platform after changes are posted means you accept the updated terms.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>12. Governing law</h2>
+      <details className="help-section terms-section" id="terms-12">
+        <summary>
+          <span className="terms-summary-title">12. Governing law</span>
+          <span className="terms-summary-hint">Georgia law applies</span>
+        </summary>
+        <div className="terms-body">
         <p>This platform is operated from the state of Georgia, United States. Any disputes arising from these terms or your use of the platform will be governed by the laws of the state of Georgia.</p>
-      </div>
+        </div>
+      </details>
 
-      <div className="help-section">
-        <h2>13. Contact</h2>
+      <details className="help-section terms-section" id="terms-13">
+        <summary>
+          <span className="terms-summary-title">13. Contact</span>
+          <span className="terms-summary-hint">How to reach us</span>
+        </summary>
+        <div className="terms-body">
         <p>If you have questions about these terms, need to report a safety concern outside the app, or want to request your data, contact:</p>
         <p>
           <strong>Village Without Borders</strong><br />
           Email: <a href="mailto:info@villagewithoutborders.org">info@villagewithoutborders.org</a><br />
           Website: <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer">villagewithoutborders.org</a>
         </p>
+        </div>
+      </details>
       </div>
 
       <p style={{ textAlign: 'center', color: '#8a8a8a', fontSize: '0.85rem', fontStyle: 'italic', margin: '1.5rem 0' }}>

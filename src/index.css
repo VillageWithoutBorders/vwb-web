@@ -4083,3 +4083,136 @@ html[data-tour-tab="top"] .app-header .header-btn {
     zoom: 1.4;
   }
 }
+
+/* ---------- Terms of Use: sections that open and close ---------- */
+.terms-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.terms-tools-note {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.terms-tools-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.terms-tool-btn {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+}
+
+.terms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 1.5rem;
+}
+
+.terms-section {
+  margin-bottom: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  scroll-margin-top: calc(var(--header-height) + 1rem);
+}
+
+.terms-section > summary {
+  list-style: none;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 0.75rem;
+  align-items: center;
+  min-height: 56px;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+
+.terms-section > summary::-webkit-details-marker { display: none; }
+
+/* The open/close arrow */
+.terms-section > summary::after {
+  content: '';
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--green);
+  border-bottom: 2px solid var(--green);
+  transform: rotate(45deg);
+  margin-top: -4px;
+  transition: transform 0.2s;
+}
+
+.terms-section[open] > summary::after {
+  transform: rotate(-135deg);
+  margin-top: 4px;
+}
+
+.terms-section > summary:hover { background: var(--green-light); }
+.terms-section > summary:active { transform: scale(0.99); }
+.terms-section > summary:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
+}
+
+.terms-summary-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.terms-summary-hint {
+  grid-column: 1;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.terms-section[open] > summary {
+  border-bottom: 1px solid var(--border);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.terms-body {
+  padding: 0.75rem 1rem 1rem;
+}
+
+.terms-body p,
+.terms-body li {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.terms-body p + p,
+.terms-body p + ul,
+.terms-body ul + p {
+  margin-top: 0.6rem;
+}
+
+.terms-body ul {
+  padding-left: 1.25rem;
+}
+
+.terms-body h3 {
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terms-section > summary,
+  .terms-section > summary::after { transition: none; }
+  .terms-section > summary:active { transform: none; }
+}
