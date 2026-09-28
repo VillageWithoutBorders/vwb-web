@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -10,7 +11,7 @@ const fieldStyle = { display: 'block', width: '100%', marginBottom: '0.5rem', pa
 const labelStyle = { display: 'block', marginBottom: '0.25rem', marginTop: '1rem', fontWeight: 600, color: '#ccc' }
 
 export default function PostOffer() {
-  const { user, profile } = useAuth()
+  const { user, profile, established } = useAuth()
   const navigate = useNavigate()
 
   const [category, setCategory] = useState('')
@@ -60,6 +61,7 @@ export default function PostOffer() {
     setSubmitting(false)
 
     if (insertErr) {
+      if (isNewAccountBlock(insertErr)) { setError(NEW_ACCOUNT_NOTE); return }
       console.error('Offer insert error:', insertErr)
       setError('Something went wrong. Please try again.')
       return
@@ -78,6 +80,10 @@ export default function PostOffer() {
       <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>
         Let your neighbors know what you have to share. Free meals, supplies, labor, rides, anything helps.
       </p>
+
+      {established === false && (
+        <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE}</p>
+      )}
 
       <form onSubmit={handleSubmit}>
         {error && <div style={{ background: '#5c1a1a', color: '#ff9999', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}

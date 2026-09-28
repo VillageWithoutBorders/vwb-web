@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -7,7 +8,7 @@ import { supabase } from '../supabaseClient'
 // Every group has its own board (its own Campfire), end-to-end encrypted.
 // See vwb-groups.sql for the rules the database enforces.
 export default function Groups() {
-  const { user, organizations } = useAuth()
+  const { user, organizations, established } = useAuth()
   // Organizations this person heads or is an organizer (trusted liaison)
   // for. They can start a group for one of them and be its steward.
   const orgsIHead = (organizations || []).filter(o => o.role === 'admin' || o.role === 'organizer')
@@ -73,7 +74,7 @@ export default function Groups() {
     setBusy(null)
     if (error || !newId) {
       console.error('Failed to start group:', error)
-      setStartError('Could not start your group. Try again.')
+      setStartError(/New accounts can/i.test(error?.message || '') ? NEW_ACCOUNT_NOTE : 'Could not start your group. Try again.')
       return
     }
     navigate('/groups/' + newId, { state: { justStarted: true } })
@@ -105,7 +106,9 @@ export default function Groups() {
       </div>
 
       {!showStart ? (
-        <button type="button" className="btn btn-primary btn-full groups-start-btn" onClick={() => setShowStart(true)}>
+        established === false ? (
+          <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE} A member can still invite you to their group.</p>
+        ) : <button type="button" className="btn btn-primary btn-full groups-start-btn" onClick={() => setShowStart(true)}>
           + Start a group
         </button>
       ) : (

@@ -3908,3 +3908,90 @@ html[data-tour-tab="top"] .app-header .header-btn {
   color: var(--text-secondary);
   font-size: 0.875rem;
 }
+
+/* ---------- Admin: bans ---------- */
+.ban-panel {
+  margin-bottom: 1rem;
+  border: 1px solid #5a2a2a;
+  border-radius: 12px;
+  background: #1e1616;
+}
+
+.ban-panel-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  color: #ffb3a8;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ban-panel-toggle:focus-visible,
+.ban-row-btn:focus-visible {
+  outline: 2px solid #ff9b8f;
+  outline-offset: 2px;
+}
+
+.ban-panel-body {
+  padding: 0 1rem 1rem;
+}
+
+.ban-email-form label {
+  display: block;
+  font-weight: 600;
+}
+
+.ban-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0;
+  border-top: 1px solid #3a2626;
+}
+
+.ban-row-main {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.btn.ban-btn-danger {
+  min-height: 44px;
+  border: none;
+  background: #c0392b;
+  color: #fff;
+  font-weight: 700;
+}
+
+.ban-row-btn {
+  padding: 0.35rem 0.6rem;
+  min-height: 32px;
+  border: 1px solid #ff6b5b;
+  border-radius: 6px;
+  background: none;
+  color: #ff9b8f;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+/* ---------- New accounts and the human check ---------- */
+.new-account-note {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #4ecca3;
+  border-radius: 12px;
+  background: rgba(78, 204, 163, 0.08);
+  line-height: 1.5;
+}
+
+.turnstile-box {
+  min-height: 65px;
+  margin: 0.5rem 0;
+}
