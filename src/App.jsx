@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
+import { NotificationsProvider } from './context/NotificationsContext'
 import Layout from './pages/Layout'
 import Welcome from './pages/Welcome'
 import Login from './pages/Login'
@@ -103,7 +104,9 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <UnreadCountProvider>
-          <AppRoutes />
+          <NotificationsProvider>
+            <AppRoutes />
+          </NotificationsProvider>
         </UnreadCountProvider>
       </AuthProvider>
     </BrowserRouter>

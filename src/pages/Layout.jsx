@@ -10,7 +10,7 @@ export default function Layout() {
   // Chats fill the space between the top bar and the tabs, edge to edge,
   // instead of sitting inside the padded page column.
   const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
-  const { unreadCount } = useNotifications()
+  const { badgeCount: unreadCount } = useNotifications()
 
   return (
     <div className="app-shell">

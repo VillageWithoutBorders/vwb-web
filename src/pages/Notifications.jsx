@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../hooks/useNotifications'
@@ -48,9 +48,13 @@ function timeAgo(dateStr) {
 
 export default function Notifications() {
   const { user } = useAuth()
-  const { notifications, unreadCount, loading, refresh } = useNotifications()
+  const { notifications, unreadCount, loading, refresh, markSeen } = useNotifications()
   const navigate = useNavigate()
   const [filter, setFilter] = useState('all')
+
+  // Opening this page clears the top-bar badge right away. Alerts you
+  // haven't tapped still show under "New" until you do.
+  useEffect(() => { markSeen(); refresh() }, [markSeen, refresh])
 
   const filtered = filter === 'unread'
     ? notifications.filter(n => !n.read)
@@ -92,8 +96,8 @@ export default function Notifications() {
     <div className="notifications-page">
       <div className="notifications-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
-          <h1>Notifications</h1>
+          <button onClick={() => navigate(-1)} aria-label="Go back" className="notifications-back">&#8592;</button>
+          <h1>Alerts</h1>
         </div>
         <div className="notifications-actions">
           {unreadCount > 0 && (
@@ -106,12 +110,16 @@ export default function Notifications() {
 
       <div className="notifications-filters">
         <button
+          type="button"
+          aria-pressed={filter === 'all'}
           className={'filter-chip' + (filter === 'all' ? ' active' : '')}
           onClick={() => setFilter('all')}
         >
           All
         </button>
         <button
+          type="button"
+          aria-pressed={filter === 'unread'}
           className={'filter-chip' + (filter === 'unread' ? ' active' : '')}
           onClick={() => setFilter('unread')}
         >
@@ -158,9 +166,10 @@ function NotificationCard({ notification, onTap, onDelete }) {
       onClick={() => onTap(notification)}
       role="button"
       tabIndex={0}
-      onKeyDown={e => { if (e.key === 'Enter') onTap(notification) }}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTap(notification) } }}
+      aria-label={(notification.read ? '' : 'New. ') + notification.title}
     >
-      <div className="notification-icon" style={{ background: color + '20', color: color }}>
+      <div className="notification-icon" aria-hidden="true" style={{ background: color + '26', color: color }}>
         {icon}
       </div>
       <div className="notification-content">
@@ -171,7 +180,7 @@ function NotificationCard({ notification, onTap, onDelete }) {
         <div className="notification-time">{timeAgo(notification.created_at)}</div>
       </div>
       <div className="notification-actions">
-        {!notification.read && <span className="unread-dot" />}
+        {!notification.read && <span className="unread-dot" aria-hidden="true" />}
         <button
           className="notification-delete"
           onClick={(e) => onDelete(e, notification.id)}
@@ -182,4 +191,4 @@ function NotificationCard({ notification, onTap, onDelete }) {
       </div>
     </div>
   )
-}
+}
