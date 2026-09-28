@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { ensureDeviceKeypair, flushOutbox } from '../lib/e2ee'
 
@@ -58,6 +58,13 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [organizations, setOrganizations] = useState([])
   const [loading, setLoading] = useState(true)
+  // Set when a signed-in account's profile can't be loaded or created, so
+  // the app can say so (with Try again / Sign out) instead of a blank screen.
+  const [profileError, setProfileError] = useState('')
+  // getSession and onAuthStateChange both fire on page load (and right
+  // after an email confirmation link). Share one run so a brand-new account
+  // never tries to create its profile twice at the same moment.
+  const profileRun = useRef(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -101,17 +108,31 @@ export function AuthProvider({ children }) {
     setOrganizations(approved)
   }
 
-  async function ensureProfile(authUser) {
-    const { data, error: fetchErr } = await supabase
+  function ensureProfile(authUser) {
+    if (profileRun.current && profileRun.current.userId === authUser.id) return profileRun.current.promise
+    const promise = ensureProfileOnce(authUser).finally(() => {
+      if (profileRun.current?.promise === promise) profileRun.current = null
+    })
+    profileRun.current = { userId: authUser.id, promise }
+    return promise
+  }
+
+  async function ensureProfileOnce(authUser) {
+    setProfileError('')
+    const { data: rows, error: fetchErr } = await supabase
       .from('helper_profiles')
       .select('*')
       .eq('user_id', authUser.id)
-      .single()
+      .order('created_at', { ascending: true })
+      .limit(1)
+    const data = rows?.[0] || null
 
-    // PGRST116 = no row found, which is the expected "new user" case; anything
-    // else is a real failure worth logging (RLS, network, etc).
-    if (fetchErr && fetchErr.code !== 'PGRST116') {
+    // A real failure (network, permissions). Don't guess that this is a new
+    // person and try to create a second profile. Say so instead.
+    if (fetchErr) {
       console.error('[AuthContext] ensureProfile fetch', fetchErr)
+      setProfileError("We couldn't load your account. Check your connection and try again.")
+      return
     }
 
     // Pending ambassador signup: Login.jsx stashes this in localStorage
@@ -210,8 +231,22 @@ export function AuthProvider({ children }) {
       applyPendingOrgInvite()
       ensureDeviceKeypair(authUser.id).then(() => flushOutbox(authUser.id))
       checkEstablished()
+    } else if (error.code === '23505') {
+      // Already created a moment ago (for example, in another tab). Load it.
+      const { data: again, error: againErr } = await supabase
+        .from('helper_profiles').select('*').eq('user_id', authUser.id)
+        .order('created_at', { ascending: true }).limit(1)
+      if (againErr || !again?.[0]) {
+        console.error('[AuthContext] ensureProfile reload after duplicate', againErr)
+        setProfileError("We couldn't finish setting up your account. Try again in a moment.")
+        return
+      }
+      setProfile(again[0])
+      loadOrganizations(authUser.id)
+      checkEstablished()
     } else {
-      console.error('[AuthContext] ensureProfile insert failed', error)
+      console.error('[AuthContext] ensureProfile insert failed', error.code, error.message, error.details, error.hint)
+      setProfileError("We couldn't finish setting up your account. Try again in a moment. If it keeps happening, email info@villagewithoutborders.org.")
     }
   }
 
@@ -289,7 +324,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile, isAdmin: profile?.role === 'admin' || profile?.role === 'founder', isFounder: profile?.role === 'founder', organizations, isOrgMember: organizations.length > 0, established, refreshEstablished: checkEstablished }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile, isAdmin: profile?.role === 'admin' || profile?.role === 'founder', isFounder: profile?.role === 'founder', organizations, isOrgMember: organizations.length > 0, established, refreshEstablished: checkEstablished, profileError, retryProfile: () => user && ensureProfile(user) }}>
       {children}
     </AuthContext.Provider>
   )
