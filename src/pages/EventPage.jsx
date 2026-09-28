@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import CommunityGuidelines from './CommunityGuidelines'
-import { fetchCalendarEvent, fullDateTime, googleCalendarLink, downloadIcs, eventUrl, VISIBILITY } from '../utils/calendar'
+import { fetchCalendarEvent, fullDateTime, googleCalendarLink, androidCalendarLink, isAndroid, downloadIcs, eventUrl, VISIBILITY } from '../utils/calendar'
 import { setReturnTo, clearReturnTo } from '../utils/returnTo'
 
 // One event. Public route on purpose: this is the page people land on from
@@ -208,8 +208,17 @@ export default function EventPage() {
           <section className="cal-box" aria-label="Save or share">
             <h2>Save or share</h2>
             <div className="cal-actions">
-              <a className="btn btn-outline btn-full" href={googleCalendarLink(ev)} target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>
-              <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Add to Apple or Outlook calendar</button>
+              {isAndroid() ? (
+                <>
+                  <a className="btn btn-outline btn-full" href={androidCalendarLink(ev)}>Add to my calendar</a>
+                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Download a calendar file</button>
+                </>
+              ) : (
+                <>
+                  <a className="btn btn-outline btn-full" href={googleCalendarLink(ev)} target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>
+                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Add to Apple or Outlook calendar</button>
+                </>
+              )}
               {ev.visibility === 'public' && (
                 <button type="button" className="btn btn-outline btn-full" onClick={share}>{copied === 'share' ? 'Link copied!' : 'Share this event'}</button>
               )}

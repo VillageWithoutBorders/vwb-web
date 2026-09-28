@@ -133,6 +133,26 @@ export function googleCalendarLink(ev) {
   return 'https://calendar.google.com/calendar/render?' + params.toString()
 }
 
+export function isAndroid() {
+  return typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent || '')
+}
+
+// Android: open the phone's own calendar with a new event already filled in.
+// The Google link above gets grabbed by the Google Calendar app on Android,
+// which can't open it ("hasn't been synchronized yet").
+export function androidCalendarLink(ev) {
+  const extra = (key, value) => (value ? key + '=' + encodeURIComponent(value) + ';' : '')
+  return 'intent:#Intent;' +
+    'action=android.intent.action.INSERT;' +
+    'type=vnd.android.cursor.item/event;' +
+    extra('S.title', ev.title) +
+    extra('S.description', (ev.description ? ev.description + '\n\n' : '') + eventUrl(ev, false)) +
+    extra('S.eventLocation', whereText(ev)) +
+    'l.beginTime=' + new Date(ev.starts_at).getTime() + ';' +
+    'l.endTime=' + new Date(endOrDefault(ev)).getTime() + ';' +
+    'end'
+}
+
 function icsEscape(s) {
   return String(s || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;')
 }

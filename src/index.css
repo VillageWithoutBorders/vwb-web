@@ -4216,3 +4216,240 @@ html[data-tour-tab="top"] .app-header .header-btn {
   .terms-section > summary::after { transition: none; }
   .terms-section > summary:active { transform: none; }
 }
+
+/* ---------- Community hub (Sep 28) ---------- */
+.hub-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 0.25rem;
+  color: #4ecca3;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hub-place {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.hub-place p {
+  margin: 0;
+  flex: 1 1 12rem;
+  color: var(--text-secondary);
+}
+
+.hub-place strong {
+  color: var(--text);
+}
+
+.hub-place .btn,
+.hub-search .btn {
+  min-height: 44px;
+}
+
+.hub-link-btn {
+  min-height: 44px;
+  padding: 0 0.25rem;
+  background: none;
+  border: none;
+  color: #4ecca3;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.hub-section {
+  margin-top: 1.75rem;
+}
+
+.hub-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.hub-section-head h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text);
+}
+
+.hub-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #4ecca3;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.hub-day {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4ecca3;
+}
+
+.hub-empty {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--text-secondary);
+}
+
+.hub-org-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.hub-org-next {
+  display: block;
+  color: #7fe0bf;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.hub-org .cal-card-meta,
+.hub-resource .cal-card-meta {
+  display: block;
+}
+
+.hub-nudge {
+  border-style: dashed;
+}
+
+.hub-search {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.hub-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.hub-search input:focus-visible {
+  outline: 2px solid #4ecca3;
+  outline-offset: 1px;
+}
+
+.hub-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.hub-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 56px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.hub-tile:hover,
+.hub-tile:focus-visible {
+  border-color: #4ecca3;
+}
+
+.hub-tile:active {
+  transform: scale(0.98);
+}
+
+.hub-tile-icon {
+  font-size: 1.35rem;
+  flex: 0 0 auto;
+}
+
+.hub-org-name {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #4ecca3;
+}
+
+.hub-member-note {
+  display: inline-block;
+  margin: 0.5rem 0 0;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #1a332a;
+  color: #7fe0bf;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.hub-org-about {
+  margin: 0.75rem 0 0;
+  white-space: pre-line;
+}
+
+.hub-resource-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.4rem;
+}
+
+.hub-resource-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #4ecca3;
+  font-weight: 600;
+}
+
+.hub-note {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 480px) {
+  .hub-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-tile,
+  .hub-tile:active {
+    transition: none;
+    transform: none;
+  }
+}
