@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { resetAccountToBase } from '../utils/resetAccount'
+import { startAppTour } from '../components/AppTour'
 
 function reportError(context, error, userMessage) {
   if (!error) return false
@@ -114,6 +115,10 @@ export default function Settings() {
         <button onClick={() => navigate('/profile')} aria-label="Back to Profile" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#4ecca3' }}>Settings &amp; Privacy</h1>
       </div>
+
+      <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '44px', marginBottom: '1rem' }}>
+        <span aria-hidden="true">{'\u{1F9ED}'}</span> Take the app tour again
+      </button>
 
       <div className="profile-details">
         <div className="detail-row">

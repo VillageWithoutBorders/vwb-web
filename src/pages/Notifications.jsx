@@ -7,6 +7,7 @@ import { markNotificationRead, markAllNotificationsRead, deleteNotification } fr
 const TYPE_ICONS = {
   event_signup: '\u{1F4C5}',
   event_signup_cancel: '\u{1F4C5}',
+  village: '\u{1F525}',
   message: '\u{1F4AC}',
   match_request: '\u{1F91D}',
   match_accepted: '\u2705',
@@ -24,6 +25,7 @@ const TYPE_ICONS = {
 const TYPE_COLORS = {
   event_signup: '#10b981',
   event_signup_cancel: '#f59e0b',
+  village: '#e8833a',
   message: '#3b82f6',
   match_request: '#8b5cf6',
   match_accepted: '#10b981',
