@@ -33,29 +33,3 @@ export async function deleteNotification(notificationId) {
     .eq('id', notificationId)
   if (error) console.error('Failed to delete notification:', error)
 }
-
-// Flags an alert (or un-flags it) so you can come back to it. Only your
-// own alerts can be changed. Needs vwb-notification-followup.sql.
-export async function setNotificationFollowUp(notificationId, value) {
-  const { error } = await supabase
-    .from('notifications')
-    .update({ follow_up: !!value })
-    .eq('id', notificationId)
-  if (error) console.error('Failed to change follow up flag:', error)
-  return { error }
-}
-
-// Deletes every alert you can see, except the ones flagged to follow up.
-// Message alerts are left alone: they never show in the list, they only
-// exist to trigger push notifications.
-export async function clearAllNotifications(userId) {
-  if (!userId) return { error: null }
-  const { error } = await supabase
-    .from('notifications')
-    .delete()
-    .eq('user_id', userId)
-    .eq('follow_up', false)
-    .neq('type', 'message')
-  if (error) console.error('Failed to clear alerts:', error)
-  return { error }
-}
