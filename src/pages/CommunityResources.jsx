@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { getCurrentPosition, distanceMiles } from '../utils/location'
 import { startingOrigin } from '../utils/calendar'
 import { CATEGORIES, CAT_ICONS, resourceCats, resourceMatches } from '../utils/resourceCategories'
+import { searchScore } from '../utils/resourceSearch'
 
 // Keeps Tab/Shift+Tab cycling inside an open dialog instead of leaking focus
 // out to the page behind it.
@@ -321,7 +322,7 @@ export default function CommunityResources() {
   const pendingResources = resources.filter(r => !r.verified)
   const allRegions = [...new Set(verifiedResources.map(r => r.region).filter(Boolean))].sort()
   const filteredVerifiedResources = verifiedResources.filter(r => {
-    if (query.trim() && !resourceMatches(r, query)) return false
+    if (query.trim() && !resourceMatches(r, query) && searchScore(r, query) === 0) return false
     if (orgFilter !== 'all' && r.organization_id !== orgFilter) return false
     if (regionFilter !== 'all' && r.region !== regionFilter) return false
     if (radiusFilter !== 'all') {
@@ -364,7 +365,7 @@ export default function CommunityResources() {
 
       <form className="hub-search" role="search" onSubmit={(e) => e.preventDefault()}>
         <label htmlFor="res-search" className="sr-only">Search resources</label>
-        <input id="res-search" type="search" inputMode="search" enterKeyHint="search" placeholder="What do you need? (food, rent, rides...)" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input id="res-search" type="search" inputMode="search" enterKeyHint="search" placeholder="What do you need? (food, rent, rides, power bill...)" value={query} onChange={(e) => setQuery(e.target.value)} />
         {query && <button type="button" className="btn btn-outline" onClick={() => setQuery('')}>Clear</button>}
       </form>
 
@@ -625,9 +626,16 @@ export default function CommunityResources() {
           })}
 
           {!loadingResources && filteredVerifiedResources.length === 0 && (
-            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem' }}>
-              {query.trim() ? 'Nothing matches "' + query.trim() + '". Try a shorter word, or pick a category from Community.' : (orgFilter !== 'all' || regionFilter !== 'all' || radiusFilter !== 'all') ? 'No resources match your filters -- try widening them.' : 'No resources yet. Be the first to add one.'}
-            </p>
+            <>
+              <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem 1.5rem 0.75rem' }}>
+                {query.trim() ? 'Nothing found for "' + query.trim() + '". Try a shorter word, or ask for help and a neighbor can point you the right way.' : (orgFilter !== 'all' || regionFilter !== 'all' || radiusFilter !== 'all') ? 'No resources match your filters -- try widening them.' : 'No resources yet. Be the first to add one.'}
+              </p>
+              {query.trim() && (
+                <div style={{ textAlign: 'center', paddingBottom: '1rem' }}>
+                  <Link to="/ask" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', padding: '0 1.25rem' }}>Ask for help instead</Link>
+                </div>
+              )}
+            </>
           )}
 
     </div>
