@@ -1,0 +1,583 @@
+diff --git a/src/components/AlertsMenu.jsx b/src/components/AlertsMenu.jsx
+new file mode 100644
+index 0000000..4291664
+--- /dev/null
++++ b/src/components/AlertsMenu.jsx
+@@ -0,0 +1,117 @@
++import { useEffect, useRef, useState } from 'react'
++import { useNavigate } from 'react-router-dom'
++import { useNotifications } from '../hooks/useNotifications'
++import { markNotificationRead } from '../utils/notificationHelpers'
++import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
++
++// The Alerts button in the top bar. Tapping it opens a small popout with
++// your 5 newest alerts and a "See all alerts" button that opens the full
++// Alerts page (where Mark all read, Clear all, and Follow up live).
++// Built the same way as AppMenu so the two behave alike.
++
++const SHOW = 5
++
++export default function AlertsMenu() {
++  const navigate = useNavigate()
++  // badgeCount = new since you last opened Alerts (the same number the top
++  // bar has always shown). It clears when the popout opens.
++  const { notifications, badgeCount, refresh, markSeen } = useNotifications()
++  const [open, setOpen] = useState(false)
++  const [top, setTop] = useState(64)
++  const buttonRef = useRef(null)
++  const menuRef = useRef(null)
++
++  const recent = [...(notifications || [])]
++    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
++    .slice(0, SHOW)
++
++  // Open: focus the first item. Escape closes and returns focus to the button.
++  useEffect(() => {
++    if (!open) return
++    menuRef.current?.querySelector('button')?.focus()
++    function onKey(e) {
++      if (e.key === 'Escape') { setOpen(false); buttonRef.current?.focus() }
++    }
++    window.addEventListener('keydown', onKey)
++    return () => window.removeEventListener('keydown', onKey)
++  }, [open])
++
++  function toggle() {
++    const next = !open
++    if (next) {
++      // Sit the popout just under the top bar, pinned to the right edge of
++      // the screen, so it never runs off a small phone.
++      const r = buttonRef.current?.getBoundingClientRect()
++      if (r) setTop(Math.round(r.bottom + 8))
++    }
++    setOpen(next)
++    if (next) {
++      // Same as opening the page: the top-bar badge clears right away.
++      markSeen?.()
++      refresh?.()
++    }
++  }
++
++  async function openAlert(n) {
++    setOpen(false)
++    if (!n.read) await markNotificationRead(n.id)
++    await refresh?.()
++    navigate(n.link || '/notifications')
++  }
++
++  function seeAll() {
++    setOpen(false)
++    navigate('/notifications')
++  }
++
++  return (
++    <div className="app-menu">
++      <button
++        ref={buttonRef}
++        type="button"
++        className="header-btn"
++        onClick={toggle}
++        aria-expanded={open}
++        aria-controls="alertsMenuList"
++        aria-haspopup="true"
++        aria-label={badgeCount > 0 ? 'Alerts, ' + badgeCount + ' new' : 'Alerts'}
++      >
++        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" /></svg>
++        <span className="header-btn-label" aria-hidden="true">Alerts</span>
++        {badgeCount > 0 && <span className="bell-badge" aria-hidden="true">{badgeCount > 9 ? '9+' : badgeCount}</span>}
++      </button>
++
++      {open && (
++        <>
++          <button type="button" className="app-menu-scrim" aria-label="Close alerts" tabIndex={-1} onClick={() => setOpen(false)} />
++          <div id="alertsMenuList" className="app-menu-list alerts-popout" ref={menuRef} style={{ position: 'fixed', top: top + 'px', right: '0.75rem', left: 'auto' }}>
++            <p className="app-menu-heading">Latest alerts</p>
++            {recent.length === 0 ? (
++              <p className="alerts-popout-empty">You're all caught up.</p>
++            ) : recent.map(n => {
++              const color = TYPE_COLORS[n.type] || '#6b7280'
++              return (
++                <button key={n.id} type="button" className={'alerts-popout-item' + (n.read ? '' : ' unread')} onClick={() => openAlert(n)}>
++                  <span className="alerts-popout-icon" aria-hidden="true" style={{ background: color + '26', color }}>
++                    {TYPE_ICONS[n.type] || '\u{1F514}'}
++                  </span>
++                  <span className="alerts-popout-text">
++                    {!n.read && <span className="sr-only">New. </span>}
++                    {n.follow_up && <span className="sr-only">Flagged to follow up. </span>}
++                    <span className="alerts-popout-title">{n.title}</span>
++                    <span className="alerts-popout-time">
++                      {timeAgo(n.created_at)}
++                      {n.follow_up && <span className="alerts-popout-flag" aria-hidden="true"> {'\u2691'} Follow up</span>}
++                    </span>
++                  </span>
++                  {!n.read && <span className="unread-dot" aria-hidden="true" />}
++                </button>
++              )
++            })}
++            <button type="button" className="alerts-popout-more" onClick={seeAll}>See all alerts</button>
++          </div>
++        </>
++      )}
++    </div>
++  )
++}
+diff --git a/src/pages/Layout.jsx b/src/pages/Layout.jsx
+index 494d21a..8bcda7f 100644
+--- a/src/pages/Layout.jsx
++++ b/src/pages/Layout.jsx
+@@ -1,16 +1,14 @@
+-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
++import { Link, Outlet, useLocation } from 'react-router-dom'
+ import BottomTabs from '../components/BottomTabs'
+ import AppMenu from '../components/AppMenu'
+-import { useNotifications } from '../hooks/useNotifications'
++import AlertsMenu from '../components/AlertsMenu'
+ import AppTour from '../components/AppTour'
+ 
+ export default function Layout() {
+-  const navigate = useNavigate()
+   const { pathname } = useLocation()
+   // Chats fill the space between the top bar and the tabs, edge to edge,
+   // instead of sitting inside the padded page column.
+   const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
+-  const { badgeCount: unreadCount } = useNotifications()
+ 
+   return (
+     <div className="app-shell">
+@@ -21,16 +19,8 @@ export default function Layout() {
+             <img src="/images/vwb_header.png" alt="" width="40" height="40" />
+           </Link>
+           <div className="header-actions">
+-            <button
+-              type="button"
+-              className="header-btn"
+-              onClick={() => navigate('/notifications')}
+-              aria-label={unreadCount > 0 ? `Alerts, ${unreadCount} new` : 'Alerts'}
+-            >
+-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" /></svg>
+-              <span className="header-btn-label" aria-hidden="true">Alerts</span>
+-              {unreadCount > 0 && <span className="bell-badge" aria-hidden="true">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+-            </button>
++            {/* Tap for your 5 newest alerts, with "See all alerts" at the bottom. */}
++            <AlertsMenu />
+             <AppMenu />
+           </div>
+         </div>
+diff --git a/src/pages/Notifications.jsx b/src/pages/Notifications.jsx
+index f4881ff..e2658f7 100644
+--- a/src/pages/Notifications.jsx
++++ b/src/pages/Notifications.jsx
+@@ -2,73 +2,55 @@ import { useEffect, useState } from 'react'
+ import { useNavigate } from 'react-router-dom'
+ import { useAuth } from '../context/AuthContext'
+ import { useNotifications } from '../hooks/useNotifications'
+-import { markNotificationRead, markAllNotificationsRead, deleteNotification } from '../utils/notificationHelpers'
+-
+-const TYPE_ICONS = {
+-  event_signup: '\u{1F4C5}',
+-  event_signup_cancel: '\u{1F4C5}',
+-  village: '\u{1F525}',
+-  message: '\u{1F4AC}',
+-  match_request: '\u{1F91D}',
+-  match_accepted: '\u2705',
+-  match_declined: '\u274C',
+-  task_update: '\u{1F4CB}',
+-  emergency: '\u{1F6A8}',
+-  vouch: '\u2B50',
+-  task_complete: '\u2705',
+-  resource_approved: '\u{1F4DA}',
+-  ambassador_application: '\u{1F33F}',
+-  ambassador_approved: '\u2705',
+-  safety_report: '\u{1F6A9}'
+-}
+-
+-const TYPE_COLORS = {
+-  event_signup: '#10b981',
+-  event_signup_cancel: '#f59e0b',
+-  village: '#e8833a',
+-  message: '#3b82f6',
+-  match_request: '#8b5cf6',
+-  match_accepted: '#10b981',
+-  match_declined: '#ef4444',
+-  task_update: '#f59e0b',
+-  emergency: '#dc2626',
+-  vouch: '#eab308',
+-  task_complete: '#10b981',
+-  resource_approved: '#06b6d4',
+-  ambassador_application: '#f59e0b',
+-  ambassador_approved: '#10b981',
+-  safety_report: '#ef4444'
+-}
+-
+-function timeAgo(dateStr) {
+-  const diff = Date.now() - new Date(dateStr).getTime()
+-  const mins = Math.floor(diff / 60000)
+-  if (mins < 1) return 'Just now'
+-  if (mins < 60) return mins + 'm ago'
+-  const hrs = Math.floor(mins / 60)
+-  if (hrs < 24) return hrs + 'h ago'
+-  const days = Math.floor(hrs / 24)
+-  if (days < 7) return days + 'd ago'
+-  return new Date(dateStr).toLocaleDateString()
+-}
++import {
++  markNotificationRead,
++  markAllNotificationsRead,
++  deleteNotification,
++  setNotificationFollowUp,
++  clearAllNotifications
++} from '../utils/notificationHelpers'
++import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
+ 
+ export default function Notifications() {
+   const { user } = useAuth()
+   const { notifications, unreadCount, loading, refresh, markSeen } = useNotifications()
+   const navigate = useNavigate()
+   const [filter, setFilter] = useState('all')
++  const [confirmClear, setConfirmClear] = useState(false)
++  const [busy, setBusy] = useState(false)
++  const [error, setError] = useState('')
+ 
+   // Opening this page clears the top-bar badge right away. Alerts you
+   // haven't tapped still show under "New" until you do.
+   useEffect(() => { markSeen(); refresh() }, [markSeen, refresh])
+ 
++  // Escape closes the "Clear all" window.
++  useEffect(() => {
++    if (!confirmClear) return
++    function onKey(e) { if (e.key === 'Escape') setConfirmClear(false) }
++    window.addEventListener('keydown', onKey)
++    return () => window.removeEventListener('keydown', onKey)
++  }, [confirmClear])
++
++  const followUps = notifications.filter(n => n.follow_up)
++  const clearable = notifications.filter(n => !n.follow_up)
++
+   const filtered = filter === 'unread'
+     ? notifications.filter(n => !n.read)
+-    : notifications
++    : filter === 'followup'
++      ? followUps
++      : notifications
+ 
+   const unread = filtered.filter(n => !n.read)
+   const read = filtered.filter(n => n.read)
+ 
++  function showError(err) {
++    // 42703 means the follow_up column isn't in the database yet.
++    setError(err && err.code === '42703'
++      ? 'Follow up needs a quick database update first (vwb-notification-followup.sql).'
++      : 'Something went wrong. Please try again.')
++  }
++
+   async function handleTap(notification) {
+     if (!notification.read) {
+       await markNotificationRead(notification.id)
+@@ -80,16 +62,36 @@ export default function Notifications() {
+   }
+ 
+   async function handleMarkAllRead() {
++    setError('')
+     await markAllNotificationsRead(user?.id)
+     await refresh()
+   }
+ 
+   async function handleDelete(e, id) {
+     e.stopPropagation()
++    setError('')
+     await deleteNotification(id)
+     await refresh()
+   }
+ 
++  async function handleToggleFollowUp(e, notification) {
++    e.stopPropagation()
++    setError('')
++    const { error: err } = await setNotificationFollowUp(notification.id, !notification.follow_up)
++    if (err) { showError(err); return }
++    await refresh()
++  }
++
++  async function handleClearAll() {
++    setBusy(true)
++    setError('')
++    const { error: err } = await clearAllNotifications(user?.id)
++    setBusy(false)
++    setConfirmClear(false)
++    if (err) { showError(err); return }
++    await refresh()
++  }
++
+   if (loading) {
+     return (
+       <div className="notifications-page">
+@@ -98,6 +100,16 @@ export default function Notifications() {
+     )
+   }
+ 
++  const card = n => (
++    <NotificationCard
++      key={n.id}
++      notification={n}
++      onTap={handleTap}
++      onDelete={handleDelete}
++      onToggleFollowUp={handleToggleFollowUp}
++    />
++  )
++
+   return (
+     <div className="notifications-page">
+       <div className="notifications-header">
+@@ -107,10 +119,15 @@ export default function Notifications() {
+         </div>
+         <div className="notifications-actions">
+           {unreadCount > 0 && (
+-            <button className="btn-mark-all-read" onClick={handleMarkAllRead}>
++            <button type="button" className="btn-mark-all-read" onClick={handleMarkAllRead}>
+               Mark all read
+             </button>
+           )}
++          {clearable.length > 0 && (
++            <button type="button" className="btn-mark-all-read btn-clear-all" onClick={() => setConfirmClear(true)}>
++              Clear all
++            </button>
++          )}
+         </div>
+       </div>
+ 
+@@ -131,49 +148,89 @@ export default function Notifications() {
+         >
+           {'Unread' + (unreadCount > 0 ? ' (' + unreadCount + ')' : '')}
+         </button>
++        <button
++          type="button"
++          aria-pressed={filter === 'followup'}
++          className={'filter-chip' + (filter === 'followup' ? ' active' : '')}
++          onClick={() => setFilter('followup')}
++        >
++          {'Follow up' + (followUps.length > 0 ? ' (' + followUps.length + ')' : '')}
++        </button>
+       </div>
+ 
++      {error && <p className="form-error" role="alert">{error}</p>}
++
+       {filtered.length === 0 ? (
+         <div className="notifications-empty">
+-          <span className="empty-icon">{'\u{1F514}'}</span>
+-          <p>{filter === 'unread' ? "You're all caught up!" : 'No notifications yet'}</p>
++          <span className="empty-icon" aria-hidden="true">{filter === 'followup' ? '\u2691' : '\u{1F514}'}</span>
++          <p>
++            {filter === 'unread'
++              ? "You're all caught up!"
++              : filter === 'followup'
++                ? 'Nothing flagged. Tap the flag on an alert to come back to it later.'
++                : 'No notifications yet'}
++          </p>
+         </div>
+       ) : (
+         <div className="notifications-list">
+-          {unread.length > 0 && (
++          {filter === 'followup' ? (
++            filtered.map(card)
++          ) : (
+             <>
+-              <div className="notifications-section-label">New</div>
+-              {unread.map(n => (
+-                <NotificationCard key={n.id} notification={n} onTap={handleTap} onDelete={handleDelete} />
+-              ))}
+-            </>
+-          )}
+-          {read.length > 0 && filter === 'all' && (
+-            <>
+-              <div className="notifications-section-label">Earlier</div>
+-              {read.map(n => (
+-                <NotificationCard key={n.id} notification={n} onTap={handleTap} onDelete={handleDelete} />
+-              ))}
++              {unread.length > 0 && (
++                <>
++                  <div className="notifications-section-label">New</div>
++                  {unread.map(card)}
++                </>
++              )}
++              {read.length > 0 && filter === 'all' && (
++                <>
++                  <div className="notifications-section-label">Earlier</div>
++                  {read.map(card)}
++                </>
++              )}
+             </>
+           )}
+         </div>
+       )}
++
++      {confirmClear && (
++        <>
++          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setConfirmClear(false)} />
++          <div role="dialog" aria-modal="true" aria-labelledby="clearAlertsTitle" className="app-dialog">
++            <h2 id="clearAlertsTitle" className="app-dialog-title">Clear all alerts?</h2>
++            <p className="app-dialog-text">
++              This deletes your alerts for good.
++              {followUps.length > 0 ? ' Alerts you flagged to follow up will stay.' : ''}
++            </p>
++            <div className="app-dialog-buttons">
++              <button type="button" className="btn btn-full app-dialog-danger" onClick={handleClearAll} disabled={busy}>
++                {busy ? 'Clearing...' : 'Clear all'}
++              </button>
++              <button type="button" className="btn btn-outline btn-full" onClick={() => setConfirmClear(false)} autoFocus>Cancel</button>
++            </div>
++          </div>
++        </>
++      )}
+     </div>
+   )
+ }
+ 
+-function NotificationCard({ notification, onTap, onDelete }) {
++function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
+   const icon = TYPE_ICONS[notification.type] || '\u{1F514}'
+   const color = TYPE_COLORS[notification.type] || '#6b7280'
++  const flagged = !!notification.follow_up
+ 
+   return (
+     <div
+-      className={'notification-card ' + (notification.read ? 'read' : 'unread')}
++      className={'notification-card ' + (notification.read ? 'read' : 'unread') + (flagged ? ' flagged' : '')}
+       onClick={() => onTap(notification)}
+       role="button"
+       tabIndex={0}
+-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTap(notification) } }}
+-      aria-label={(notification.read ? '' : 'New. ') + notification.title}
++      // Only react when the card itself has focus, so pressing Enter on the
++      // flag or delete button doesn't also open the alert.
++      onKeyDown={e => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onTap(notification) } }}
++      aria-label={(notification.read ? '' : 'New. ') + (flagged ? 'Flagged to follow up. ' : '') + notification.title}
+     >
+       <div className="notification-icon" aria-hidden="true" style={{ background: color + '26', color: color }}>
+         {icon}
+@@ -183,11 +240,26 @@ function NotificationCard({ notification, onTap, onDelete }) {
+         {notification.body && (
+           <div className="notification-body">{notification.body}</div>
+         )}
+-        <div className="notification-time">{timeAgo(notification.created_at)}</div>
++        <div className="notification-meta">
++          <span className="notification-time">{timeAgo(notification.created_at)}</span>
++          {flagged && (
++            <span className="notification-followup-badge"><span aria-hidden="true">{'\u2691'}</span> Follow up</span>
++          )}
++        </div>
+       </div>
+       <div className="notification-actions">
+         {!notification.read && <span className="unread-dot" aria-hidden="true" />}
+         <button
++          type="button"
++          className="notification-flag"
++          aria-pressed={flagged}
++          onClick={(e) => onToggleFollowUp(e, notification)}
++          aria-label={flagged ? 'Remove follow up flag' : 'Flag to follow up'}
++        >
++          <span aria-hidden="true">{'\u2691'}</span>
++        </button>
++        <button
++          type="button"
+           className="notification-delete"
+           onClick={(e) => onDelete(e, notification.id)}
+           aria-label="Delete notification"
+@@ -197,4 +269,4 @@ function NotificationCard({ notification, onTap, onDelete }) {
+       </div>
+     </div>
+   )
+-}
+\ No newline at end of file
++}
+diff --git a/src/utils/notificationDisplay.js b/src/utils/notificationDisplay.js
+new file mode 100644
+index 0000000..c584fb2
+--- /dev/null
++++ b/src/utils/notificationDisplay.js
+@@ -0,0 +1,50 @@
++// Icons, colors, and "5m ago" text for alerts. Used by the Alerts popout
++// in the top bar and by the full Alerts page, so they always match.
++
++export const TYPE_ICONS = {
++  event_signup: '\u{1F4C5}',
++  event_signup_cancel: '\u{1F4C5}',
++  village: '\u{1F525}',
++  message: '\u{1F4AC}',
++  match_request: '\u{1F91D}',
++  match_accepted: '\u2705',
++  match_declined: '\u274C',
++  task_update: '\u{1F4CB}',
++  emergency: '\u{1F6A8}',
++  vouch: '\u2B50',
++  task_complete: '\u2705',
++  resource_approved: '\u{1F4DA}',
++  ambassador_application: '\u{1F33F}',
++  ambassador_approved: '\u2705',
++  safety_report: '\u{1F6A9}'
++}
++
++export const TYPE_COLORS = {
++  event_signup: '#10b981',
++  event_signup_cancel: '#f59e0b',
++  village: '#e8833a',
++  message: '#3b82f6',
++  match_request: '#8b5cf6',
++  match_accepted: '#10b981',
++  match_declined: '#ef4444',
++  task_update: '#f59e0b',
++  emergency: '#dc2626',
++  vouch: '#eab308',
++  task_complete: '#10b981',
++  resource_approved: '#06b6d4',
++  ambassador_application: '#f59e0b',
++  ambassador_approved: '#10b981',
++  safety_report: '#ef4444'
++}
++
++export function timeAgo(dateStr) {
++  const diff = Date.now() - new Date(dateStr).getTime()
++  const mins = Math.floor(diff / 60000)
++  if (mins < 1) return 'Just now'
++  if (mins < 60) return mins + 'm ago'
++  const hrs = Math.floor(mins / 60)
++  if (hrs < 24) return hrs + 'h ago'
++  const days = Math.floor(hrs / 24)
++  if (days < 7) return days + 'd ago'
++  return new Date(dateStr).toLocaleDateString()
++}
+diff --git a/src/utils/notificationHelpers.js b/src/utils/notificationHelpers.js
+index 8dbf469..51298eb 100644
+--- a/src/utils/notificationHelpers.js
++++ b/src/utils/notificationHelpers.js
+@@ -32,4 +32,30 @@ export async function deleteNotification(notificationId) {
+     .delete()
+     .eq('id', notificationId)
+   if (error) console.error('Failed to delete notification:', error)
+-}
+\ No newline at end of file
++}
++
++// Flags an alert (or un-flags it) so you can come back to it. Only your
++// own alerts can be changed. Needs vwb-notification-followup.sql.
++export async function setNotificationFollowUp(notificationId, value) {
++  const { error } = await supabase
++    .from('notifications')
++    .update({ follow_up: !!value })
++    .eq('id', notificationId)
++  if (error) console.error('Failed to change follow up flag:', error)
++  return { error }
++}
++
++// Deletes every alert you can see, except the ones flagged to follow up.
++// Message alerts are left alone: they never show in the list, they only
++// exist to trigger push notifications.
++export async function clearAllNotifications(userId) {
++  if (!userId) return { error: null }
++  const { error } = await supabase
++    .from('notifications')
++    .delete()
++    .eq('user_id', userId)
++    .eq('follow_up', false)
++    .neq('type', 'message')
++  if (error) console.error('Failed to clear alerts:', error)
++  return { error }
++}
