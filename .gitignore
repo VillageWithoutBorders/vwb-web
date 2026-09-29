@@ -47,3 +47,8 @@ vwb-complete-schema.sql
 
 # Claude session outputs (SQL drafts, screenshots) -- kept local, not for a public repo
 Claude outputs/
+
+# Handoff files from Claude
+*.patch
+vwb-*.css
+vwb-*.sql
