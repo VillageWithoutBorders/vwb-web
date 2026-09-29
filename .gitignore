@@ -57,3 +57,8 @@ vwb-*.sql
 *.patch
 vwb-*.css
 vwb-*.sql
+
+# Handoff files from Claude
+*.patch
+vwb-*.css
+vwb-*.sql
