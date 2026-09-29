@@ -4517,3 +4517,8 @@ html[data-tour-tab="top"] .app-header .header-btn {
 }
 .notification-flag[aria-pressed="true"] { color: #f59e0b; opacity: 1; }
 .notification-flag:hover, .notification-flag:focus-visible { opacity: 1; }
+
+/* Alerts popout: light text on the dark panel (Sep 29 fix) */
+.alerts-popout-item, .alerts-popout-title { color: #f0f0f0; }
+.alerts-popout-time { color: #b8b8b8; opacity: 1; }
+.alerts-popout-empty { color: #d0d0d0; }
