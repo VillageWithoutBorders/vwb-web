@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { resetAccountToBase } from '../utils/resetAccount'
 import { startAppTour } from '../components/AppTour'
+import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
 
 function reportError(context, error, userMessage) {
   if (!error) return false
@@ -29,6 +30,23 @@ export default function Settings() {
   const [readReceipts, setReadReceipts] = useState(true)
   const [safetyCheckins, setSafetyCheckins] = useState(true)
   const [blockedUsers, setBlockedUsers] = useState([])
+  const [devices, setDevices] = useState([])
+  const [thisDeviceId, setThisDeviceId] = useState(null)
+  const [devicesLoaded, setDevicesLoaded] = useState(false)
+  const [removingDevice, setRemovingDevice] = useState(null)
+  const [deviceNote, setDeviceNote] = useState('')
+
+  useEffect(() => {
+    if (!user) return
+    let alive = true
+    Promise.all([fetchMyDevices(user.id), getDeviceId()]).then(([list, mine]) => {
+      if (!alive) return
+      setDevices(list)
+      setThisDeviceId(mine)
+      setDevicesLoaded(true)
+    })
+    return () => { alive = false }
+  }, [user])
 
   useEffect(() => {
     async function loadPrivacyPrefs() {
@@ -107,6 +125,20 @@ export default function Settings() {
     const { error } = await supabase.from('blocks').delete().eq('id', blockId)
     if (error) { console.error('[Settings:unblockUser]', error); alert('Could not unblock this user. Try again.'); return }
     setBlockedUsers((prev) => prev.filter((b) => b.id !== blockId))
+  }
+
+  async function removeDevice(d) {
+    if (!confirm('Remove ' + (d.label || 'this device') + '? New private messages will stop being sent to it. Messages already on it stay readable there.')) return
+    setRemovingDevice(d.deviceId); setDeviceNote('')
+    const ok = await removeMyDevice(user.id, d.deviceId)
+    setRemovingDevice(null)
+    if (!ok) { setDeviceNote("We couldn't remove that device. Try again."); return }
+    setDevices((prev) => prev.filter((x) => x.deviceId !== d.deviceId))
+    setDeviceNote('Removed.')
+  }
+
+  function shortDate(iso) {
+    return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null
   }
 
   return (
@@ -205,6 +237,42 @@ export default function Settings() {
             </div>
           ))
         )}
+      </div>
+
+      <div className="profile-details" style={{ marginTop: '0.75rem' }}>
+        <div className="detail-section-header">Your Devices</div>
+        <div className="detail-row">
+          <span className="detail-value" style={{ textAlign: 'left', fontSize: '0.8125rem' }}>
+            Private messages are locked separately for each device. Open VWB once on each device you use so it can read new messages. A new device can't read messages sent before it was added.
+          </span>
+        </div>
+        {devicesLoaded && devices.length === 0 && (
+          <div className="detail-row">
+            <span className="detail-value" style={{ textAlign: 'left' }}>No devices found yet</span>
+          </div>
+        )}
+        {devices.map((d) => {
+          const mine = d.deviceId === thisDeviceId
+          const stale = d.lastSeen && Date.now() - new Date(d.lastSeen).getTime() > 60 * 24 * 3600 * 1000
+          return (
+            <div key={d.deviceId} className="blocked-user-row">
+              <div>
+                <span className="privacy-toggle-label">{d.label || 'Device (name not saved yet)'}{mine ? ' (this device)' : ''}</span>
+                <p className="privacy-toggle-desc">
+                  Added {shortDate(d.addedAt)}
+                  {d.lastSeen ? ' \u00b7 Last used ' + shortDate(d.lastSeen) : ''}
+                  {stale ? ' \u00b7 Not used in a while' : ''}
+                </p>
+              </div>
+              {!mine && (
+                <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => removeDevice(d)} disabled={removingDevice === d.deviceId}>
+                  {removingDevice === d.deviceId ? 'Removing...' : 'Remove'}
+                </button>
+              )}
+            </div>
+          )
+        })}
+        {deviceNote && <p className="form-success" role="status" style={{ padding: '0 1rem 0.75rem' }}>{deviceNote}</p>}
       </div>
 
       {resetMessage && <p className="form-success" role="status" style={{ marginTop: '1rem' }}>{resetMessage}</p>}
