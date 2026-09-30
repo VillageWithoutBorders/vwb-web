@@ -736,6 +736,12 @@ export default function Admin() {
     if (reportError('resetUserToBase', error, 'Could not reset this user. Try again.')) return
     await loadUsers()
   }
+  async function resetTwoStep(u) {
+    if (!confirm('Reset two-step login for ' + (u.display_name || 'this person') + '? Only do this after they asked for help and you are sure it is them. They can turn it back on in Settings.')) return
+    const { error } = await supabase.rpc('admin_reset_two_step', { p_user: u.user_id })
+    if (reportError('resetTwoStep', error, 'Could not reset two-step login. Try again.')) return
+    alert('Two-step login was reset. They can sign in with just their password now.')
+  }
   async function messageUser(userId) {
     const { data: convos, error: convoErr } = await supabase.from('conversations').select('id, helper_id, requester_id').or('helper_id.eq.' + userId + ',requester_id.eq.' + userId)
     reportError('messageUser:lookup', convoErr)
@@ -1106,6 +1112,9 @@ export default function Admin() {
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.role !== 'admin' || isFounder) && (
                   <button type="button" onClick={() => setBanTarget({ userId: u.user_id, name: u.display_name || 'this person', role: u.role })} className="ban-row-btn">Ban</button>
+                )}
+                {u.role !== 'founder' && u.user_id !== user.id && (u.role !== 'admin' || isFounder) && (
+                  <button onClick={() => resetTwoStep(u)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer', fontSize: '0.75rem' }}>Reset two-step</button>
                 )}
                 <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.75rem' }}>Message</button>
                 {villages.length > 1 && (

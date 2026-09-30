@@ -20,6 +20,7 @@ import CommunityResources from './pages/CommunityResources'
 import PublicResources from './pages/PublicResources'
 import OrgPage from './pages/OrgPage'
 import OrgDashboard from './pages/OrgDashboard'
+import MfaChallenge from './pages/MfaChallenge'
 import Conversation from './pages/Conversation'
 import MessagesPage from './pages/Messages'
 import EmergencyEvents from './pages/EmergencyEvents'
@@ -69,9 +70,12 @@ function ProfileWait() {
 }
 
 function ProtectedRoute({ children }) {
-  const { user, profile, loading, refreshProfile } = useAuth()
+  const { user, profile, loading, refreshProfile, mfaRequired } = useAuth()
   if (loading) return null
   if (!user) return <Navigate to="/login" replace />
+  // Two-step login: nothing shows until the authenticator code is entered.
+  if (mfaRequired === null) return null
+  if (mfaRequired) return <MfaChallenge />
   // Wait for the profile row to load before deciding anything, same as the
   // loading check above, so a brand-new signup never flashes real content
   // before we know whether guidelines have been accepted.
@@ -82,8 +86,10 @@ function ProtectedRoute({ children }) {
 }
 
 function PublicRoute({ children }) {
-  const { user, loading } = useAuth()
+  const { user, loading, mfaRequired } = useAuth()
   if (loading) return null
+  if (user && mfaRequired === null) return null
+  if (user && mfaRequired) return <MfaChallenge />
   // Someone who signed in from an event page goes back to that event.
   return user ? <Navigate to={peekReturnTo() || '/'} replace /> : children
 }
