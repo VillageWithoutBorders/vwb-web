@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import GroupedSkillChips from '../components/GroupedSkillChips'
@@ -22,7 +22,13 @@ const HELPER_COUNT_OPTIONS = [
 ]
 
 export default function AskForHelp() {
-    const { user, profile } = useAuth()
+    const { user, profile, organizations } = useAuth()
+    const [searchParams] = useSearchParams()
+    const managedOrgs = organizations.filter((o) => o.role === 'admin' || o.role === 'organizer')
+    const [postAs, setPostAs] = useState(() => {
+        const want = searchParams.get('org')
+        return managedOrgs.some((o) => o.id === want) ? want : ''
+    })
     const navigate = useNavigate()
 
     const [skills, setSkills] = useState([])
@@ -86,6 +92,7 @@ export default function AskForHelp() {
                 neighborhood: neighborhood.trim(),
                 latitude: lat || null,
                 longitude: lng || null,
+                organization_id: postAs || null,
             })
 
         if (insertError) {
@@ -203,6 +210,17 @@ export default function AskForHelp() {
                         Just your town or neighborhood. We never share your exact address.
                     </span>
                 </div>
+
+                {managedOrgs.length > 0 && (
+                    <div className="form-field">
+                        <label htmlFor="postAs">Post as</label>
+                        <select id="postAs" value={postAs} onChange={(e) => setPostAs(e.target.value)}>
+                            <option value="">Myself</option>
+                            {managedOrgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                        </select>
+                        <span className="field-hint">Posting as your group lists it on your organization dashboard.</span>
+                    </div>
+                )}
 
                 {error && <p className="form-error" role="alert">{error}</p>}
 
