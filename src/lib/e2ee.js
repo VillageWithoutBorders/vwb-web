@@ -97,6 +97,74 @@ function randomDeviceId() {
   return 'device-' + Math.random().toString(36).slice(2) + Date.now().toString(36)
 }
 
+// A plain-words name for this device, like "Chrome on Windows". It is shown
+// only to its owner, in Settings, so you can tell your devices apart.
+function describeThisDevice() {
+  try {
+    const ua = navigator.userAgent || ''
+    const installed = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true
+    let os = 'this device'
+    if (/iPhone/.test(ua)) os = 'iPhone'
+    else if (/iPad/.test(ua)) os = 'iPad'
+    else if (/Android/.test(ua)) os = 'Android'
+    else if (/Windows/.test(ua)) os = 'Windows'
+    else if (/Mac OS X|Macintosh/.test(ua)) os = 'Mac'
+    else if (/CrOS/.test(ua)) os = 'Chromebook'
+    else if (/Linux/.test(ua)) os = 'Linux'
+    if (installed) return 'Installed app on ' + os
+    let browser = 'Browser'
+    if (/Edg\//.test(ua)) browser = 'Edge'
+    else if (/OPR\/|Opera/.test(ua)) browser = 'Opera'
+    else if (/SamsungBrowser/.test(ua)) browser = 'Samsung Internet'
+    else if (/Firefox|FxiOS/.test(ua)) browser = 'Firefox'
+    else if (/Chrome|CriOS/.test(ua)) browser = 'Chrome'
+    else if (/Safari/.test(ua)) browser = 'Safari'
+    return browser + ' on ' + os
+  } catch {
+    return 'Unknown device'
+  }
+}
+
+// Saves this device's name and "last used" time, once per app start. A
+// failure here (for example before the database file has been run) never
+// affects messaging.
+async function recordDeviceInfo(userId, deviceId) {
+  const { error } = await supabase
+    .from('user_device_info')
+    .upsert(
+      { user_id: userId, device_id: deviceId, label: describeThisDevice(), last_seen_at: new Date().toISOString() },
+      { onConflict: 'user_id,device_id' }
+    )
+  if (error) console.error('[e2ee] could not save device name', error)
+}
+
+// Every device on file for this person, with its name and last-used time
+// where known, for the "Your devices" list in Settings.
+export async function fetchMyDevices(userId) {
+  const [keys, info] = await Promise.all([
+    supabase.from('user_devices').select('device_id, created_at').eq('user_id', userId).order('created_at', { ascending: false }),
+    supabase.from('user_device_info').select('device_id, label, last_seen_at').eq('user_id', userId),
+  ])
+  if (keys.error) { console.error('[e2ee] failed to list devices', keys.error); return [] }
+  const names = new Map((info.data || []).map(r => [r.device_id, r]))
+  return (keys.data || []).map(r => ({
+    deviceId: r.device_id,
+    addedAt: r.created_at,
+    label: names.get(r.device_id)?.label || null,
+    lastSeen: names.get(r.device_id)?.last_seen_at || null,
+  }))
+}
+
+// Stops new messages from being locked for a device. Messages already on
+// that device stay readable there. If the device is still in use, it adds
+// itself back the next time it opens the app.
+export async function removeMyDevice(userId, deviceId) {
+  const { error } = await supabase.from('user_devices').delete().eq('user_id', userId).eq('device_id', deviceId)
+  if (error) { console.error('[e2ee] failed to remove device', error); return false }
+  await supabase.from('user_device_info').delete().eq('user_id', userId).eq('device_id', deviceId)
+  return true
+}
+
 // Loads this device's keypair from IndexedDB, generating and publishing a
 // new one on first use. Safe to call every time the app starts; it's a
 // no-op after the first run on a given device. Never throws: a failure
@@ -131,6 +199,7 @@ async function setUpDeviceKeypair(userId) {
           { onConflict: 'user_id,device_id' }
         )
       if (error) console.error('[e2ee] failed to re-publish device key', error)
+      await recordDeviceInfo(userId, existing.deviceId)
       return existing
     }
 
@@ -149,6 +218,7 @@ async function setUpDeviceKeypair(userId) {
         { onConflict: 'user_id,device_id' }
       )
     if (error) console.error('[e2ee] failed to publish device key', error)
+    await recordDeviceInfo(userId, stored.deviceId)
 
     return stored
   } catch (e) {
