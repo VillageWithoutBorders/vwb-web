@@ -34,6 +34,16 @@ export default function OrgDashboard() {
   const [found, setFound] = useState([])
   const [searched, setSearched] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [allOrgs, setAllOrgs] = useState([])
+
+  // Founders and admins can open any approved group, member or not.
+  useEffect(() => {
+    if (!isAdmin || id) return
+    supabase.from('organizations').select('id, name').eq('approved', true).order('name').then(({ data, error }) => {
+      if (error) console.error('Failed to load groups:', error)
+      setAllOrgs(data || [])
+    })
+  }, [isAdmin, id])
 
   const load = useCallback(async () => {
     if (!id || !allowed) return
@@ -94,15 +104,16 @@ export default function OrgDashboard() {
 
   // /org-dashboard with no group picked: go straight in if there is only one.
   if (!id) {
-    if (managed.length === 1) return <Navigate to={'/orgs/' + managed[0].id + '/dashboard'} replace />
+    const choices = isAdmin ? allOrgs : managed
+    if (!isAdmin && managed.length === 1) return <Navigate to={'/orgs/' + managed[0].id + '/dashboard'} replace />
     return (
       <div className="cal-page hub-page">
         <Link to="/" className="hub-back">&#8592; Home</Link>
         <h1 className="hub-org-name">Organization dashboard</h1>
-        {managed.length === 0 && (
-          <p className="cal-empty">You don't run a group on VWB yet. You can ask to add yours from the Community page.</p>
+        {choices.length === 0 && (
+          <p className="cal-empty">{isAdmin ? 'No approved groups yet.' : "You don't run a group on VWB yet. You can ask to add yours from the Community page."}</p>
         )}
-        {managed.map((o) => (
+        {choices.map((o) => (
           <Link key={o.id} to={'/orgs/' + o.id + '/dashboard'} className="btn btn-outline btn-full" style={{ marginBottom: '0.5rem', minHeight: '44px' }}>{o.name}</Link>
         ))}
       </div>
