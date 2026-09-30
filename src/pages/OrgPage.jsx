@@ -27,6 +27,11 @@ export default function OrgPage() {
   const [zip, setZip] = useState('')
   const [savingZip, setSavingZip] = useState(false)
   const [zipNote, setZipNote] = useState('')
+  const [savingPrivacy, setSavingPrivacy] = useState(false)
+  const [privacyNote, setPrivacyNote] = useState('')
+  const [contactEmail, setContactEmail] = useState(null)
+  const [savingEmail, setSavingEmail] = useState(false)
+  const [emailNote, setEmailNote] = useState('')
 
   const mine = organizations.find((o) => o.id === id)
   const canManage = isAdmin || (mine && (mine.role === 'admin' || mine.role === 'organizer'))
@@ -34,13 +39,15 @@ export default function OrgPage() {
   async function loadOrg() {
     const { data, error } = await supabase
       .from('organizations')
-      .select('id, name, description, contact_email, website_url, social_links, home_zip, approved')
+      .select('id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email')
       .eq('id', id)
       .eq('approved', true)
       .maybeSingle()
     if (error) console.error('Failed to load organization:', error)
     if (!data) { setMissing(true); return null }
     setOrg(data)
+    const { data: em } = await supabase.rpc('get_org_contact_email', { p_org: id })
+    setContactEmail(typeof em === 'string' && em ? em : null)
     if (data.home_zip) {
       const { data: z } = await supabase.from('zip_codes').select('city, state').eq('zip', data.home_zip).maybeSingle()
       setPlace(z ? z.city + ', ' + z.state : data.home_zip)
@@ -89,6 +96,34 @@ export default function OrgPage() {
     await loadOrg()
   }
 
+  async function togglePrivacy() {
+    const next = !org.hide_from_public
+    setSavingPrivacy(true); setPrivacyNote('')
+    const { error } = await supabase.rpc('set_org_hide_from_public', { p_org: id, p_hide: next })
+    setSavingPrivacy(false)
+    if (error) {
+      console.error('Failed to change group privacy:', error)
+      setPrivacyNote("We couldn't save that. Try again.")
+      return
+    }
+    setPrivacyNote(next ? 'Saved. Your group is now hidden from the public.' : 'Saved. Your group can now be seen by anyone.')
+    await loadOrg()
+  }
+
+  async function toggleContactEmail() {
+    const next = !org.show_contact_email
+    setSavingEmail(true); setEmailNote('')
+    const { error } = await supabase.rpc('set_org_show_contact_email', { p_org: id, p_show: next })
+    setSavingEmail(false)
+    if (error) {
+      console.error('Failed to change contact email setting:', error)
+      setEmailNote("We couldn't save that. Try again.")
+      return
+    }
+    setEmailNote(next ? 'Saved. Your contact email now shows on this page.' : 'Saved. Your contact email is hidden.')
+    await loadOrg()
+  }
+
   if (loading) return <div className="cal-page"><p className="cal-empty">Loading...</p></div>
   if (missing || !org) {
     return (
@@ -110,11 +145,11 @@ export default function OrgPage() {
       {mine && <p className="hub-member-note">You're part of this group</p>}
       {org.description && <p className="hub-org-about">{org.description}</p>}
 
-      {(org.contact_email || website || social) && (
+      {(contactEmail && org.show_contact_email || website || social) && (
         <section className="cal-box" aria-labelledby="org-contact">
           <h2 id="org-contact">Get involved</h2>
           <div className="cal-actions">
-            {org.contact_email && <a className="btn btn-primary btn-full" href={'mailto:' + org.contact_email}>Email {org.name}</a>}
+            {contactEmail && org.show_contact_email && <a className="btn btn-primary btn-full" href={'mailto:' + contactEmail}>Email {org.name}</a>}
             {website && <a className="btn btn-outline btn-full" href={website} target="_blank" rel="noopener noreferrer">Visit their website</a>}
             {social && <a className="btn btn-outline btn-full" href={social} target="_blank" rel="noopener noreferrer">Follow them online</a>}
           </div>
@@ -166,6 +201,36 @@ export default function OrgPage() {
             <button type="button" className="hub-link-btn" onClick={() => { setZip(''); saveZip({ preventDefault() {} }, '') }} disabled={savingZip}>Remove home area</button>
           )}
           {zipNote && <p id="org-zip-note" className="hub-note" role="status">{zipNote}</p>}
+        </section>
+      )}
+
+      {canManage && (
+        <section className="cal-box" aria-labelledby="org-privacy">
+          <h2 id="org-privacy">Who can see your group</h2>
+          <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
+            {org.hide_from_public
+              ? 'Only people with a VWB account can see your group, its resources and its events. Nothing shows to the public or on the website.'
+              : 'Your group, its resources and its public events can be seen by anyone, including on the website.'}
+          </p>
+          <button type="button" className="btn btn-outline btn-full" onClick={togglePrivacy} disabled={savingPrivacy} style={{ minHeight: '44px' }}>
+            {savingPrivacy ? 'Saving...' : org.hide_from_public ? 'Show my group to the public' : 'Only show my group to people with an account'}
+          </button>
+          {privacyNote && <p className="hub-note" role="status">{privacyNote}</p>}
+        </section>
+      )}
+
+      {canManage && contactEmail && (
+        <section className="cal-box" aria-labelledby="org-email">
+          <h2 id="org-email">Your contact email</h2>
+          <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
+            {org.show_contact_email
+              ? 'Your email button shows on this page for anyone who can see your group.'
+              : 'Your email is private. Nobody can see it, not even VWB admins. You can choose to show an Email button.'}
+          </p>
+          <button type="button" className="btn btn-outline btn-full" onClick={toggleContactEmail} disabled={savingEmail} style={{ minHeight: '44px' }}>
+            {savingEmail ? 'Saving...' : org.show_contact_email ? 'Hide my email' : 'Show an Email button'}
+          </button>
+          {emailNote && <p className="hub-note" role="status">{emailNote}</p>}
         </section>
       )}
     </div>

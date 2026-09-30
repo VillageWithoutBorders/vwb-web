@@ -110,7 +110,7 @@ export function BannedAccountsPanel({ refreshKey, onChange }) {
 
   async function undo(b) {
     if (!confirm('Undo the ban on ' + (b.display_name || b.email) + '? They can log in again and their posts will show again. (If they were an admin, that role is not given back.)')) return
-    const { error } = await supabase.rpc('unban_account', { p_email: b.email })
+    const { error } = await supabase.rpc('unban_account_by_id', { p_id: b.id })
     if (error) { console.error('[BannedAccountsPanel] unban', error); alert('Could not undo the ban. Try again.'); return }
     load(); onChange?.()
   }
@@ -141,7 +141,7 @@ export function BannedAccountsPanel({ refreshKey, onChange }) {
           </form>
           {bans.length === 0 && !loadError && <p className="groups-note">No one is banned.</p>}
           {bans.map(b => (
-            <div key={b.email} className="ban-row">
+            <div key={b.id ?? b.email} className="ban-row">
               <div className="ban-row-main">
                 <strong>{b.display_name || 'No account'}</strong>
                 <span className="group-member-sub">{b.email}</span>

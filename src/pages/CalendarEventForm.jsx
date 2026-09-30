@@ -310,7 +310,7 @@ export default function CalendarEventForm() {
           )
         })}
 
-        {form.visibility === 'public' && (
+        {(form.visibility === 'public' || form.visibility === 'account') && (
           <div className="form-field" style={{ marginTop: '0.75rem' }}>
             <label htmlFor="ev-radius">Show it to people within</label>
             <select id="ev-radius" value={form.radius} onChange={(e) => set('radius', Number(e.target.value))}>

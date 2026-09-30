@@ -67,6 +67,7 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
 function badges(ev) {
   const out = []
   if (ev.status === 'cancelled') out.push(['Cancelled', 'cal-badge-off'])
+  if (ev.visibility === 'account') out.push([VISIBILITY.account.label, 'cal-badge-private'])
   if (ev.visibility === 'members') out.push([VISIBILITY.members.label, 'cal-badge-private'])
   if (ev.visibility === 'invite') out.push([VISIBILITY.invite.label, 'cal-badge-private'])
   if (ev.is_signed_up) out.push(["You're signed up", ''])
