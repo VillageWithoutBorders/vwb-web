@@ -31,6 +31,7 @@ async function getServiceWorker(timeoutMs = 5000) {
 
 export async function subscribeToPush(userId) {
   if (!isPushSupported()) return { ok: false, reason: 'unsupported' }
+  if (!VAPID_PUBLIC_KEY) return { ok: false, reason: 'no_key' }
 
   const permission = await Notification.requestPermission()
   if (permission !== 'granted') return { ok: false, reason: 'denied' }
@@ -38,6 +39,18 @@ export async function subscribeToPush(userId) {
   try {
     const registration = await getServiceWorker()
     let subscription = await registration.pushManager.getSubscription()
+
+    // A subscription made with an older key can never receive pushes. Replace it.
+    if (subscription && VAPID_PUBLIC_KEY) {
+      const current = subscription.options?.applicationServerKey
+      const wanted = urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      const same = current && new Uint8Array(current).length === wanted.length &&
+        new Uint8Array(current).every((b, i) => b === wanted[i])
+      if (current && !same) {
+        await subscription.unsubscribe()
+        subscription = null
+      }
+    }
 
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
