@@ -75,7 +75,8 @@ function NearbyNeedTiles() {
 }
 
 export default function Dashboard() {
-  const { profile, isAdmin } = useAuth()
+  const { profile, isAdmin, organizations } = useAuth()
+  const runsAGroup = organizations.some((o) => o.role === 'admin' || o.role === 'organizer')
   const navigate = useNavigate()
   const location = useLocation()
   const displayName = profile?.display_name || 'Neighbor'
@@ -126,6 +127,13 @@ export default function Dashboard() {
           <span className="action-label">Calendar</span>
           <span className="action-desc">Events and volunteer sign-ups near you</span>
         </button>
+        {runsAGroup && (
+          <button className="action-card" onClick={() => navigate('/org-dashboard')}>
+            <span className="action-icon" aria-hidden="true">&#127968;</span>
+            <span className="action-label">Organization Dashboard</span>
+            <span className="action-desc">Events, members, needs and offers for your group</span>
+          </button>
+        )}
         {(profile?.is_hope_ambassador || isAdmin) && (
           <button className="action-card" onClick={() => navigate('/campfire')}>
             <span className="action-icon" aria-hidden="true">&#128293;</span>

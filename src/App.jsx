@@ -19,6 +19,7 @@ import Community from './pages/Community'
 import CommunityResources from './pages/CommunityResources'
 import PublicResources from './pages/PublicResources'
 import OrgPage from './pages/OrgPage'
+import OrgDashboard from './pages/OrgDashboard'
 import Conversation from './pages/Conversation'
 import MessagesPage from './pages/Messages'
 import EmergencyEvents from './pages/EmergencyEvents'
@@ -110,6 +111,8 @@ function AppRoutes() {
         <Route path="community" element={<Community />} />
         <Route path="community/resources" element={<CommunityResources />} />
         <Route path="orgs/:id" element={<OrgPage />} />
+        <Route path="orgs/:id/dashboard" element={<OrgDashboard />} />
+        <Route path="org-dashboard" element={<OrgDashboard />} />
         <Route path="help" element={<Help />} />
         <Route path="ask" element={<AskForHelp />} />
         <Route path="post-offer" element={<PostOffer />} />

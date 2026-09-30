@@ -143,6 +143,7 @@ export default function OrgPage() {
       <h1 className="hub-org-name">{org.name}</h1>
       {place && <p className="cal-sub">Based near {place}</p>}
       {mine && <p className="hub-member-note">You're part of this group</p>}
+      {canManage && <Link to={'/orgs/' + id + '/dashboard'} className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.75rem' }}>Open organization dashboard</Link>}
       {org.description && <p className="hub-org-about">{org.description}</p>}
 
       {(contactEmail && org.show_contact_email || website || social) && (
