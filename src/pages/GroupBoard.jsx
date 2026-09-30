@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
+import QrShare from '../components/QrShare'
 import { useChatScroll } from '../hooks/useChatScroll'
 import { sendGroupPost, decryptMany, getDeviceId } from '../lib/e2ee'
 import { submitUserReport } from '../utils/submitUserReport'
@@ -482,6 +483,7 @@ export default function GroupBoard() {
                   {canChangeLink ? (group.steward_id ? 'Only you, as steward, can turn it off or make a new one.' : 'Any member can turn it off or make a new one.') : 'Only the steward can turn it off or make a new one.'}
                 </p>
                 <p className="group-link">{joinUrl}</p>
+                <QrShare url={joinUrl} title={group.name} hint={group.steward_id ? 'Your friend scans this, taps Join, and then waits for a member to let them in.' : 'Your friend scans this and taps Join. Only show it to people you trust.'} />
                 <div className="groups-actions">
                   <button type="button" className="btn btn-primary" onClick={copyLink}>{copied ? 'Copied' : 'Copy link'}</button>
                   {canChangeLink && <button type="button" className="btn btn-outline" onClick={() => setLink(true)}>New link</button>}

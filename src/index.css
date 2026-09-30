@@ -4588,3 +4588,11 @@ html[data-tour-tab="top"] .app-header .header-btn {
 .org-request-note {
   border-left: 4px solid #4ecca3;
 }
+
+/* QR code share */
+.qr-share { margin: 0.75rem 0; }
+.qr-toggle { min-height: 44px; }
+.qr-panel { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 1rem 0.5rem 0.25rem; }
+.qr-image { width: min(256px, 80vw); height: auto; background: #fff; padding: 8px; border-radius: 8px; }
+.qr-hint { text-align: center; }
+.qr-panel .groups-actions { justify-content: center; }

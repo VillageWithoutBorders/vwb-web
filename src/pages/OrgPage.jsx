@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { fetchCalendarEvents } from '../utils/calendar'
 import { CalendarEventList } from '../components/CalendarParts'
 import { resourceCats } from '../utils/resourceCategories'
+import QrShare from '../components/QrShare'
 
 // One organization: who they are, what's coming up, what they share, and
 // how to reach them. Organizers can set the group's home area here.
@@ -145,6 +146,7 @@ export default function OrgPage() {
       {mine && <p className="hub-member-note">You're part of this group</p>}
       {canManage && <Link to={'/orgs/' + id + '/dashboard'} className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.75rem' }}>Open organization dashboard</Link>}
       {org.description && <p className="hub-org-about">{org.description}</p>}
+      {(mine || canManage) && <QrShare url={window.location.origin + '/orgs/' + id} title={org.name} hint="Your friend scans this to open this group's page, see what's coming up, and get in touch." />}
 
       {(contactEmail && org.show_contact_email || website || social) && (
         <section className="cal-box" aria-labelledby="org-contact">
