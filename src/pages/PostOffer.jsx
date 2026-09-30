@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { getMyLocation } from '../utils/location'
@@ -11,7 +11,13 @@ const fieldStyle = { display: 'block', width: '100%', marginBottom: '0.5rem', pa
 const labelStyle = { display: 'block', marginBottom: '0.25rem', marginTop: '1rem', fontWeight: 600, color: '#ccc' }
 
 export default function PostOffer() {
-  const { user, profile, established } = useAuth()
+  const { user, profile, established, organizations } = useAuth()
+  const [searchParams] = useSearchParams()
+  const managedOrgs = organizations.filter((o) => o.role === 'admin' || o.role === 'organizer')
+  const [postAs, setPostAs] = useState(() => {
+    const want = searchParams.get('org')
+    return managedOrgs.some((o) => o.id === want) ? want : ''
+  })
   const navigate = useNavigate()
 
   const [category, setCategory] = useState('')
@@ -56,6 +62,7 @@ export default function PostOffer() {
       neighborhood: neighborhood.trim() || null,
       latitude: lat,
       longitude: lng,
+      organization_id: postAs || null,
     })
 
     setSubmitting(false)
@@ -110,6 +117,16 @@ export default function PostOffer() {
 
         <label style={labelStyle} htmlFor="offer-hood">Neighborhood</label>
         <input id="offer-hood" style={fieldStyle} type="text" placeholder="e.g. Ringgold, Tunnel Hill, Fort Oglethorpe" value={neighborhood} onChange={e => setNeighborhood(e.target.value)} maxLength={100} />
+
+        {managedOrgs.length > 0 && (
+          <>
+            <label style={labelStyle} htmlFor="offer-postas">Post as</label>
+            <select id="offer-postas" style={fieldStyle} value={postAs} onChange={e => setPostAs(e.target.value)}>
+              <option value="">Myself</option>
+              {managedOrgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          </>
+        )}
 
         <button type="submit" disabled={submitting} style={{ display: 'block', width: '100%', marginTop: '1.5rem', padding: '0.875rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', opacity: submitting ? 0.6 : 1 }}>
           {submitting ? 'Posting...' : 'Post Offer'}
