@@ -336,7 +336,8 @@ export default function Admin() {
       }))
       return { ...org, members: enrichedMembers }
     }))
-    setOrganizations(withMembers)
+    // Waiting requests first, then the rest, newest first within each.
+    setOrganizations([...withMembers].sort((a, b) => (a.approved === b.approved ? 0 : a.approved ? 1 : -1)))
   }
 
   async function createOrganization() {
@@ -358,6 +359,21 @@ export default function Admin() {
   async function toggleOrgApproved(org) {
     const { error } = await supabase.from('organizations').update({ approved: !org.approved }).eq('id', org.id)
     if (reportError('toggleOrgApproved', error, 'Could not update this organization. Try again.')) return
+    await loadOrganizations()
+  }
+
+  // Approve or turn down an organization that is still waiting.
+  // Both send its members an alert. Turning down removes the waiting org.
+  async function reviewOrgRequest(org, approve) {
+    let note = null
+    if (approve) {
+      if (!confirm('Approve ' + org.name + '? It will show to the public, and its members will get an alert.')) return
+    } else {
+      note = prompt('Turn down ' + org.name + '? Its members will get a kind alert, and the request will be removed.\n\nAdd a short note for them (optional):', '')
+      if (note === null) return
+    }
+    const { error } = await supabase.rpc('review_organization_request', { p_org_id: org.id, p_approve: approve, p_note: note })
+    if (reportError('reviewOrgRequest', error, error?.message || 'Could not save that decision. Try again.')) return
     await loadOrganizations()
   }
 
@@ -835,7 +851,7 @@ export default function Admin() {
           sections get added. */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
         <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length + ambApplications.length) > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length + ambApplications.length}</span>}</button>
-        <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length})</button>
+        <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length}){organizations.some(o => !o.approved) ? ' \u00b7 ' + organizations.filter(o => !o.approved).length + ' waiting' : ''}</button>
         <button style={tabStyle(tab === 'villages')} onClick={() => setTab('villages')}>Villages ({villages.length})</button>
         <button style={tabStyle(tab === 'content')} onClick={() => setTab('content')}>SkillShare {duplicateCount > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{duplicateCount}</span>}</button>
       </div>
@@ -1251,7 +1267,14 @@ export default function Admin() {
                   <span style={{ background: org.approved ? '#1a4a3a' : '#3a2a1a', color: org.approved ? '#4ecca3' : '#ffaa44', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{org.approved ? 'APPROVED' : 'PENDING APPROVAL'}</span>
                   <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}>{org.name}</h4>
                 </div>
-                <button onClick={() => toggleOrgApproved(org)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: org.approved ? 'none' : '#4ecca3', color: org.approved ? '#ff4444' : '#1a1a1a', border: org.approved ? '1px solid #ff4444' : 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{org.approved ? 'Unapprove' : 'Approve'}</button>
+                {org.approved ? (
+                  <button onClick={() => toggleOrgApproved(org)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: '#ff4444', border: '1px solid #ff4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Unapprove</button>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
+                    <button onClick={() => reviewOrgRequest(org, true)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: '#4ecca3', color: '#1a1a1a', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>Approve</button>
+                    <button onClick={() => reviewOrgRequest(org, false)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'none', color: '#ffaa44', border: '1px solid #ffaa44', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Turn down</button>
+                  </div>
+                )}
               </div>
               {org.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.3rem 0' }}>{org.description}</p>}
               {(org.contact_email || org.website_url) && (
