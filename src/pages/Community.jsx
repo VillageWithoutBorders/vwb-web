@@ -53,6 +53,15 @@ export default function Community() {
 
   const [search, setSearch] = useState('')
 
+  // "Bring your organization" request form
+  const emptyOrgForm = { name: '', description: '', email: '', website: '', social: '' }
+  const [pendingOrg, setPendingOrg] = useState(null)
+  const [showOrgForm, setShowOrgForm] = useState(false)
+  const [orgForm, setOrgForm] = useState(emptyOrgForm)
+  const [orgSending, setOrgSending] = useState(false)
+  const [orgError, setOrgError] = useState('')
+  const [orgSent, setOrgSent] = useState(false)
+
   const managedOrgs = organizations.filter((o) => o.role === 'admin' || o.role === 'organizer')
   const canPost = isAdmin || managedOrgs.length > 0
 
@@ -63,6 +72,18 @@ export default function Community() {
       if (start) setOrigin(start)
     }
   }, [profile]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Is this member's organization request still waiting for approval?
+  useEffect(() => {
+    if (!profile) return
+    let alive = true
+    supabase.rpc('my_pending_organization').then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to check organization request:', error); return }
+      setPendingOrg(data && data.length ? data[0] : null)
+    })
+    return () => { alive = false }
+  }, [profile?.user_id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let alive = true
@@ -116,6 +137,38 @@ export default function Community() {
     e.preventDefault()
     const q = search.trim()
     navigate('/community/resources' + (q ? '?q=' + encodeURIComponent(q) : ''))
+  }
+
+  function setOrgField(key) {
+    return (e) => setOrgForm((f) => ({ ...f, [key]: e.target.value }))
+  }
+
+  async function sendOrgRequest(e) {
+    e.preventDefault()
+    if (!orgForm.name.trim()) {
+      setOrgError("Please add your organization's name.")
+      return
+    }
+    setOrgSending(true)
+    setOrgError('')
+    const { data, error } = await supabase.rpc('request_organization', {
+      p_name: orgForm.name,
+      p_description: orgForm.description,
+      p_contact_email: orgForm.email,
+      p_website_url: orgForm.website,
+      p_social_link: orgForm.social,
+    })
+    setOrgSending(false)
+    if (error) {
+      console.error('Failed to send organization request:', error)
+      const ours = ['P0001', '22023', '22001', '28000'].includes(error.code)
+      setOrgError(ours ? error.message : "We couldn't send that. Check your connection and try again.")
+      return
+    }
+    setPendingOrg({ id: data, name: orgForm.name.trim() })
+    setOrgSent(true)
+    setShowOrgForm(false)
+    setOrgForm(emptyOrgForm)
   }
 
   const shownOrgs = showAllOrgs ? orgs : orgs.slice(0, ORG_COUNT)
@@ -213,13 +266,45 @@ export default function Community() {
             <span className="cal-card-meta">So neighbors can find your group even before you post.</span>
           </Link>
         ))}
+        {pendingOrg && (
+          <div className="cal-card org-request-note" role="status">
+            <span className="cal-card-title">{orgSent ? 'Thanks! Your request is in.' : 'Your request is waiting'}</span>
+            <span className="cal-card-meta">We'll look over {pendingOrg.name} and send you an alert when there's news.</span>
+          </div>
+        )}
+        {showOrgForm && !pendingOrg && (
+          <form className="org-request-form" onSubmit={sendOrgRequest} noValidate aria-labelledby="org-request-title">
+            <h3 id="org-request-title">Bring your organization to VWB</h3>
+            <p className="org-request-help">Tell us a little about your group. We'll look it over. Once it's approved, you can post events and resources.</p>
+
+            <label htmlFor="org-name">Organization name (required)</label>
+            <input id="org-name" type="text" autoComplete="organization" maxLength={120} required aria-invalid={orgError && !orgForm.name.trim() ? 'true' : undefined} value={orgForm.name} onChange={setOrgField('name')} />
+
+            <label htmlFor="org-desc">What does your group do?</label>
+            <textarea id="org-desc" rows={3} maxLength={1000} value={orgForm.description} onChange={setOrgField('description')} />
+
+            <label htmlFor="org-email">Contact email</label>
+            <input id="org-email" type="email" inputMode="email" autoComplete="email" maxLength={200} value={orgForm.email} onChange={setOrgField('email')} />
+
+            <label htmlFor="org-website">Website</label>
+            <input id="org-website" type="url" inputMode="url" autoComplete="url" placeholder="https://" maxLength={300} value={orgForm.website} onChange={setOrgField('website')} />
+
+            <label htmlFor="org-social">One social media link</label>
+            <input id="org-social" type="url" inputMode="url" placeholder="https://" maxLength={300} value={orgForm.social} onChange={setOrgField('social')} />
+
+            {orgError && <p className="cal-error" role="alert">{orgError}</p>}
+
+            <button type="submit" className="btn btn-primary btn-full" disabled={orgSending}>{orgSending ? 'Sending...' : 'Send request'}</button>
+            <button type="button" className="btn btn-outline btn-full" onClick={() => { setShowOrgForm(false); setOrgError('') }}>Cancel</button>
+          </form>
+        )}
         <div className="cal-actions">
           {canPost && (
             <Link className="btn btn-primary btn-full" to="/calendar/new">Post an event</Link>
           )}
           <Link className="btn btn-outline btn-full" to="/groups">Start a group with neighbors</Link>
-          {managedOrgs.length === 0 && (
-            <a className="btn btn-outline btn-full" href="mailto:info@villagewithoutborders.org?subject=Bring%20my%20group%20to%20VWB">Bring your organization to VWB</a>
+          {managedOrgs.length === 0 && !pendingOrg && !showOrgForm && (
+            <button type="button" className="btn btn-outline btn-full" onClick={() => setShowOrgForm(true)}>Bring your organization to VWB</button>
           )}
         </div>
       </section>
