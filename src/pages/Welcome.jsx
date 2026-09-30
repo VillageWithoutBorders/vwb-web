@@ -93,11 +93,12 @@ const STEPS = [
 ]
 
 const SAFETY_POINTS = [
-  'Every profile is real, tied to a real person, never anonymous.',
-  'Both sides have to agree before anyone connects. No surprise matches.',
-  'After a task is done, both people can leave feedback that builds a track record.',
-  'Your exact address is never shown. You control what appears on your public profile.',
-  "If something feels wrong, you can report it directly to a local admin.",
+  'Every account needs a working email address. We do not check IDs, so use the same good sense you would with anyone new.',
+  'Both people have to say yes before anyone connects. No surprise matches.',
+  'After a task, both people can say how it went. Neighbors can also vouch for people they know.',
+  'Private messages between two people are end-to-end encrypted.',
+  'You can block anyone, or report a problem to VWB admins.',
+  'Locations are rounded, and your exact address is never shown. You choose what appears on your public profile.',
 ]
 
 const FAQS = [
@@ -107,11 +108,11 @@ const FAQS = [
   },
   {
     q: 'How does it work?',
-    a: 'You post what you need, or what you can offer, and the app matches you with people nearby. Everything stays local to your area, so help arrives faster and from someone who is actually close enough to show up.',
+    a: 'You post what you need, or what you can offer. Neighbors nearby can see it and respond, and help stays local to your area so it comes from someone close enough to show up.',
   },
   {
     q: 'Who is this for?',
-    a: 'Anyone. Whether you need help or want to give it, there is no income requirement and no application process to ask for help. If you want to volunteer your skills regularly, you can sign up to become a Hope Ambassador, which just means you have told us what you are good at and when you are usually free to help.',
+    a: 'Anyone 18 or older can make an account. Asking for help takes no application and no income check, and you can offer help right away. If you want to volunteer regularly, you can apply to be a Hope Ambassador. An admin reads each application.',
   },
   {
     q: 'Does it cost anything?',
@@ -119,15 +120,15 @@ const FAQS = [
   },
   {
     q: 'How do you know the people on here are safe?',
-    a: "Every profile is real, tied to a real person, not anonymous. Both sides have to agree before anyone connects, so nobody gets matched with a stranger without saying yes first. After a task is done, both people can leave feedback, which builds a track record over time. If something ever feels wrong, there's a way to report it directly to a local admin.",
+    a: "We can't promise everyone is safe, and we don't check IDs. Every account needs a working email, both people have to say yes before anyone connects, and neighbors can vouch for people they know. After a task, both people can say how it went. Private messages are end-to-end encrypted. You can block anyone, or report a problem to VWB admins.",
   },
   {
     q: 'What if I just want to help, not ask for anything?',
-    a: "That's exactly what a Hope Ambassador is. Sign up, tell us what you're good at, and you'll start seeing requests nearby that match your skills.",
+    a: "You can offer your skills as soon as you sign up. If you want to help regularly, apply to be a Hope Ambassador. An admin reads each application, and approved Ambassadors join the Campfire group chat.",
   },
   {
     q: "What if it's an emergency?",
-    a: 'There is a separate emergency reporting feature for urgent, active situations, like storm damage, flooding, or safety concerns, that alerts nearby helpers right away. Regular help requests, like a leaky faucet, tutoring, or a ride to an appointment, go through the normal request system.',
+    a: 'For anything life-threatening, call 911 first. The emergency feature is for things like storm damage or flooding, and it alerts nearby helpers. Regular requests, like a leaky faucet, tutoring, or a ride to an appointment, use the normal request system.',
   },
   {
     q: 'Do I have to live close by to help or be helped?',
@@ -135,7 +136,11 @@ const FAQS = [
   },
   {
     q: 'Is my information private?',
-    a: 'Your exact address is never shown to anyone. You control how much of your location and personal information appears on your public profile.',
+    a: 'Your exact address is never shown to anyone, and locations are rounded. You control what appears on your public profile. Private messages are end-to-end encrypted. The Campfire group chat is not, so keep sensitive details out of it.',
+  },
+  {
+    q: 'What about teens and kids?',
+    a: 'Accounts are for adults, 18 and over. Everyone, of any age, can look at the resource list and the community calendar without an account.',
   },
 ]
 
@@ -227,11 +232,24 @@ export default function Welcome() {
           <div style={{ ...cardStyle, background: COLORS.cardAlt, borderColor: COLORS.greenDark }}>
             <div style={eyebrow}>Who it's for</div>
             <p style={{ margin: '0 0 1rem', color: COLORS.textDim, lineHeight: 1.6 }}>
-              Anyone. Whether you need help or want to give it, there is no income requirement and no application process to ask for help.
+              Anyone 18 or older. Whether you need help or want to give it, there is no income requirement and no application to ask for help.
             </p>
             <p style={{ margin: 0, color: COLORS.textDim, lineHeight: 1.6 }}>
-              Want to help regularly? Sign up as a <strong style={{ color: COLORS.green }}>Hope Ambassador</strong>. Tell us what you're good at and when you're usually free, and you'll start seeing requests nearby that match your skills.
+              Want to help regularly? Apply to be a <strong style={{ color: COLORS.green }}>Hope Ambassador</strong>. Tell us what you're good at and when you're usually free. An admin reads each application.
             </p>
+          </div>
+        </section>
+
+        {/* No account needed */}
+        <section style={sectionStyle}>
+          <div style={eyebrow}>No account needed</div>
+          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>Look around first</h2>
+          <p style={{ margin: '0 0 1.25rem', color: COLORS.textDim, lineHeight: 1.6 }}>
+            Anyone, of any age, can find local help and see what is happening nearby. No sign-up needed.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Link to="/resources" style={btnSecondary}>Find local resources</Link>
+            <Link to="/calendar/embed" style={btnSecondary}>See the community calendar</Link>
           </div>
         </section>
 
@@ -259,7 +277,7 @@ export default function Welcome() {
               <div>
                 <h2 style={{ margin: '0 0 0.4rem', fontSize: '1.05rem', color: COLORS.orangeText }}>Urgent situation?</h2>
                 <p style={{ margin: 0, color: COLORS.textDim, fontSize: '0.9rem', lineHeight: 1.6 }}>
-                  Storm damage, flooding, or a safety concern that needs help right away goes through a separate emergency reporting feature that alerts nearby helpers fast. Everyday requests, like a leaky faucet or a ride to an appointment, use the regular request system.
+                  For anything life-threatening, call 911 first. Storm damage, flooding, or a safety concern that needs neighbors right away goes through a separate emergency feature that alerts nearby helpers. Everyday requests, like a leaky faucet or a ride to an appointment, use the regular request system.
                 </p>
               </div>
             </div>

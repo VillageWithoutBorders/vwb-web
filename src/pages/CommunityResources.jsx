@@ -108,7 +108,7 @@ export default function CommunityResources() {
   }, [myOrgs, isAdmin])
 
   async function loadOrgs() {
-    const { data, error } = await supabase.from('organizations').select('*').eq('approved', true).order('name')
+    const { data, error } = await supabase.from('organizations').select('id, name, description, website_url').eq('approved', true).order('name')
     if (error) console.error('Failed to load organizations:', error)
     if (data) setAllOrgs(data)
   }
@@ -117,7 +117,7 @@ export default function CommunityResources() {
     setLoadingResources(true)
     const { data, error } = await supabase
       .from('community_resources')
-      .select('*, organizations ( id, name, description, contact_email, website_url, social_links )')
+      .select('*, organizations ( id, name, description, website_url, social_links )')
       .order('category')
       .order('name')
     if (error) console.error('Failed to load community resources:', error)

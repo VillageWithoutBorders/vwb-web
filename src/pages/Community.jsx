@@ -54,7 +54,7 @@ export default function Community() {
   const [search, setSearch] = useState('')
 
   // "Bring your organization" request form
-  const emptyOrgForm = { name: '', description: '', email: '', website: '', social: '' }
+  const emptyOrgForm = { name: '', description: '', email: '', website: '', social: '', hidePublic: false }
   const [pendingOrg, setPendingOrg] = useState(null)
   const [showOrgForm, setShowOrgForm] = useState(false)
   const [orgForm, setOrgForm] = useState(emptyOrgForm)
@@ -157,6 +157,7 @@ export default function Community() {
       p_contact_email: orgForm.email,
       p_website_url: orgForm.website,
       p_social_link: orgForm.social,
+      p_hide_from_public: orgForm.hidePublic,
     })
     setOrgSending(false)
     if (error) {
@@ -291,6 +292,11 @@ export default function Community() {
 
             <label htmlFor="org-social">One social media link</label>
             <input id="org-social" type="url" inputMode="url" placeholder="https://" maxLength={300} value={orgForm.social} onChange={setOrgField('social')} />
+
+            <label htmlFor="org-private" style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontWeight: 400 }}>
+              <input id="org-private" type="checkbox" checked={orgForm.hidePublic} onChange={(e) => setOrgForm((f) => ({ ...f, hidePublic: e.target.checked }))} style={{ width: '24px', minHeight: '24px', flexShrink: 0, marginTop: '2px' }} />
+              <span>Only show our group to people with an account. Our name, resources and events will not appear to the public or on the website. You can change this any time.</span>
+            </label>
 
             {orgError && <p className="cal-error" role="alert">{orgError}</p>}
 

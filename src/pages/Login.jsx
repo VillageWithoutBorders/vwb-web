@@ -44,6 +44,9 @@ export default function Login() {
   // take, so signup treats it as the expected next step rather than an extra
   // people have to actively opt into.
   const [wantAmbassador, setWantAmbassador] = useState(true)
+  // Accounts are for adults (see Terms). We ask for a confirmation, never a
+  // birthdate, so nothing about age is stored.
+  const [isAdult, setIsAdult] = useState(false)
 
   const [selectedSkills, setSelectedSkills] = useState([])
   const [availability, setAvailability] = useState('')
@@ -137,6 +140,7 @@ export default function Login() {
     if (!displayName.trim()) { setError('Please enter your name.'); return }
     if (!email.trim()) { setError('Please enter your email.'); return }
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
+    if (!isAdult) { setError('Please confirm you are 18 or older to make an account.'); return }
     if (wantAmbassador) { setStep(2) } else { handleSignUp() }
   }
 
@@ -264,6 +268,13 @@ export default function Login() {
                 </div>
               )}
             </div>
+            <label className="checkbox-field">
+              <input type="checkbox" checked={isAdult} onChange={(e) => setIsAdult(e.target.checked)} />
+              <span>I am 18 or older. Accounts are for adults.</span>
+            </label>
+            <p style={{ fontSize: '0.875rem', margin: '-0.5rem 0 1rem', color: 'var(--text-secondary)' }}>
+              Under 18? You don't need an account to look around. <a href="/resources">Find local resources</a> or <a href="/calendar/embed">see the community calendar</a>.
+            </p>
             <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
               <input type="checkbox" checked={wantAmbassador} onChange={(e) => setWantAmbassador(e.target.checked)} />
               <span>
