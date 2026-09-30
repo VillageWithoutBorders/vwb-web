@@ -4522,3 +4522,14 @@ html[data-tour-tab="top"] .app-header .header-btn {
 .alerts-popout-item, .alerts-popout-title { color: #f0f0f0; }
 .alerts-popout-time { color: #b8b8b8; opacity: 1; }
 .alerts-popout-empty { color: #d0d0d0; }
+
+/* Bring your organization request form (Sep 29) */
+.org-request-form { display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; margin: 0.75rem 0; border: 1px solid rgba(128, 128, 128, 0.35); border-radius: 12px; background: #222; }
+.org-request-form h3 { margin: 0; font-size: 1.1rem; color: #f0f0f0; }
+.org-request-help { margin: 0 0 0.25rem; color: #c8c8c8; font-size: 0.95rem; line-height: 1.45; }
+.org-request-form label { color: #f0f0f0; font-weight: 600; font-size: 1rem; margin-top: 0.35rem; }
+.org-request-form input, .org-request-form textarea { width: 100%; box-sizing: border-box; min-height: 48px; padding: 0.65rem 0.75rem; font-size: 16px; border-radius: 8px; border: 1px solid #555; background: #111; color: #f0f0f0; font-family: inherit; }
+.org-request-form textarea { min-height: 6rem; resize: vertical; }
+.org-request-form input:focus-visible, .org-request-form textarea:focus-visible { outline: 2px solid #4ecca3; outline-offset: 2px; }
+.org-request-form .btn { min-height: 48px; margin-top: 0.35rem; }
+.org-request-note { border-left: 4px solid #4ecca3; margin: 0.75rem 0; }
