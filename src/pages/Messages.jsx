@@ -726,7 +726,7 @@ export default function Messages() {
           <span style={{ color: '#ddd', fontSize: '0.9rem' }}>Read receipts</span>
           <button role="switch" aria-checked={readReceipts} aria-label="Read receipts" style={toggleDot(readReceipts)} onClick={toggleReadReceipts}><span style={toggleKnob(readReceipts)} /></button>
         </div>
-        <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Let others see when you have read their messages</p>
+        <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Show when you have read a message. If you turn this off, you won't see when others read yours either.</p>
 
         <div style={sectionTitle}>Safety</div>
         <div style={toggleRow}>
