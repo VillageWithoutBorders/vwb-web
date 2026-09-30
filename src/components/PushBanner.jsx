@@ -12,7 +12,7 @@ export default function PushBanner() {
     async function check() {
       if (!user?.id || !isPushSupported()) return
       if (Notification.permission === 'denied') return
-      if (localStorage.getItem('vwb_push_subscribed') === 'true') return
+      if (localStorage.getItem('vwb_push_v2') === 'true') return
       if (Notification.permission === 'granted') {
         try {
           const reg = await Promise.race([
@@ -21,8 +21,12 @@ export default function PushBanner() {
           ])
           const sub = await reg.pushManager.getSubscription()
           if (sub) {
-            localStorage.setItem('vwb_push_subscribed', 'true')
-            return
+            // Re-save quietly so the server always has this device's current keys
+            const synced = await subscribeToPush(user.id)
+            if (synced.ok) {
+              localStorage.setItem('vwb_push_v2', 'true')
+              return
+            }
           }
         } catch {
           // SW not ready, check dismissed
@@ -49,12 +53,12 @@ export default function PushBanner() {
     const result = await subscribeToPush(user.id)
     setLoading(false)
     if (result.ok) {
-      localStorage.setItem('vwb_push_subscribed', 'true')
-      setVisible(false)
+      localStorage.setItem('vwb_push_v2', 'true')
+      setMessage('Notifications are on.')
+      setTimeout(() => setVisible(false), 2500)
     } else {
-      localStorage.setItem('vwb_push_subscribed', 'true')
-      setMessage('Notifications enabled! You will receive alerts once the app is installed.')
-      setTimeout(() => setVisible(false), 3000)
+      setMessage('Could not turn on notifications. Please try again later.')
+      setTimeout(() => setVisible(false), 4000)
     }
   }
 

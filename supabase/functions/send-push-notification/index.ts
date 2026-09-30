@@ -1,126 +1,85 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+// Sends a web push to every device a user has subscribed.
+// Called by the database trigger on new notifications (see vwb-push.sql).
+// Requires the header x-push-secret to match the PUSH_WEBHOOK_SECRET secret.
+import { createClient } from "npm:@supabase/supabase-js@2"
+import webpush from "npm:web-push@3.6.7"
 
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY")!
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT")!
+const PUSH_WEBHOOK_SECRET = Deno.env.get("PUSH_WEBHOOK_SECRET")!
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 
-async function importVapidKey(base64Key: string, isPrivate: boolean) {
-  const padding = "=".repeat((4 - base64Key.length % 4) % 4)
-  const base64 = (base64Key + padding).replace(/-/g, "+").replace(/_/g, "/")
-  const binary = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
-  return crypto.subtle.importKey(
-    isPrivate ? "pkcs8" : "raw",
-    isPrivate ? binary : binary,
-    { name: "ECDSA", namedCurve: "P-256" },
-    false,
-    isPrivate ? ["sign"] : []
-  )
+webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  })
 }
 
-function base64UrlEncode(data: Uint8Array): string {
-  return btoa(String.fromCharCode(...data))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+// Constant-time string compare
+function safeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
 }
 
-async function createVapidAuthHeader(endpoint: string) {
-  const url = new URL(endpoint)
-  const audience = `${url.protocol}//${url.host}`
-  const expiry = Math.floor(Date.now() / 1000) + 12 * 60 * 60
+Deno.serve(async (req) => {
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
 
-  const header = base64UrlEncode(new TextEncoder().encode(JSON.stringify({ typ: "JWT", alg: "ES256" })))
-  const payload = base64UrlEncode(new TextEncoder().encode(JSON.stringify({
-    aud: audience,
-    exp: expiry,
-    sub: VAPID_SUBJECT
-  })))
-
-  const unsignedToken = `${header}.${payload}`
-  const key = await importVapidKey(VAPID_PRIVATE_KEY, true)
-  const signature = await crypto.subtle.sign(
-    { name: "ECDSA", hash: "SHA-256" },
-    key,
-    new TextEncoder().encode(unsignedToken)
-  )
-
-  const sig = base64UrlEncode(new Uint8Array(signature))
-  return {
-    authorization: `vapid t=${header}.${payload}.${sig}, k=${VAPID_PUBLIC_KEY}`,
+  const given = req.headers.get("x-push-secret") ?? ""
+  if (!PUSH_WEBHOOK_SECRET || !safeEqual(given, PUSH_WEBHOOK_SECRET)) {
+    return json({ error: "Unauthorized" }, 401)
   }
-}
 
-async function sendPush(subscription: any, payload: string) {
-  try {
-    const headers = await createVapidAuthHeader(subscription.endpoint)
-    const response = await fetch(subscription.endpoint, {
-      method: "POST",
-      headers: {
-        ...headers,
-        "Content-Type": "application/octet-stream",
-        TTL: "86400",
-      },
-      body: new TextEncoder().encode(payload),
-    })
-    if (response.status === 410 || response.status === 404) {
-      return { expired: true, endpoint: subscription.endpoint }
-    }
-    return { ok: response.ok, status: response.status }
-  } catch (err) {
-    console.error("Push send error:", err)
-    return { ok: false, error: err.message }
-  }
-}
-
-serve(async (req) => {
   try {
     const { record } = await req.json()
-    if (!record?.user_id) {
-      return new Response(JSON.stringify({ error: "No user_id" }), { status: 400 })
-    }
+    if (!record?.user_id) return json({ error: "No user_id" }, 400)
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
-    const { data: subscriptions, error } = await supabase
+    const { data: subs, error } = await supabase
       .from("push_subscriptions")
-      .select("*")
+      .select("endpoint, p256dh, auth")
       .eq("user_id", record.user_id)
 
-    if (error || !subscriptions?.length) {
-      return new Response(JSON.stringify({ message: "No subscriptions found" }), { status: 200 })
-    }
+    if (error || !subs?.length) return json({ message: "No subscriptions" })
 
     const payload = JSON.stringify({
       title: record.title || "Village Without Borders",
       body: record.body || "",
       url: record.link || "/",
-      tag: record.type || "vwb-notification"
+      tag: record.type || "vwb-notification",
     })
 
-    const results = []
-    const expiredEndpoints = []
+    const dead: string[] = []
+    let sent = 0
+    await Promise.all(subs.map(async (s) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          payload,
+          { TTL: 86400, urgency: "normal" },
+        )
+        sent++
+      } catch (err) {
+        const code = (err as { statusCode?: number }).statusCode
+        // 404/410: subscription gone. 401/403: made with an old VAPID key.
+        if (code === 404 || code === 410 || code === 401 || code === 403) dead.push(s.endpoint)
+        else console.error("Push send error:", code, (err as Error).message)
+      }
+    }))
 
-    for (const sub of subscriptions) {
-      const result = await sendPush(
-        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-        payload
-      )
-      results.push(result)
-      if (result.expired) expiredEndpoints.push(sub.endpoint)
+    if (dead.length) {
+      await supabase.from("push_subscriptions").delete()
+        .eq("user_id", record.user_id).in("endpoint", dead)
     }
-
-    if (expiredEndpoints.length > 0) {
-      await supabase
-        .from("push_subscriptions")
-        .delete()
-        .eq("user_id", record.user_id)
-        .in("endpoint", expiredEndpoints)
-    }
-
-    return new Response(JSON.stringify({ sent: results.length, results }), { status: 200 })
+    return json({ sent, removed: dead.length })
   } catch (err) {
     console.error("Edge function error:", err)
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 })
+    return json({ error: "Server error" }, 500)
   }
 })
