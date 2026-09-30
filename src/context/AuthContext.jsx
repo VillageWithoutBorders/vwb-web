@@ -308,8 +308,20 @@ export function AuthProvider({ children }) {
     setOrganizations([])
   }
 
+  // Ends every session for this account, on every device (this one too).
+  // Other devices drop off within about an hour, when their short-lived
+  // pass runs out and can't be renewed.
+  async function signOutEverywhere() {
+    const { error } = await supabase.auth.signOut({ scope: 'global' })
+    if (error) { console.error('[AuthContext] signOutEverywhere', error); return false }
+    setUser(null)
+    setProfile(null)
+    setOrganizations([])
+    return true
+  }
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile, isAdmin: profile?.role === 'admin' || profile?.role === 'founder', isFounder: profile?.role === 'founder', organizations, isOrgMember: organizations.length > 0, established, refreshEstablished: checkEstablished, profileError, retryProfile: () => user && ensureProfile(user) }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, signOutEverywhere, refreshProfile, isAdmin: profile?.role === 'admin' || profile?.role === 'founder', isFounder: profile?.role === 'founder', organizations, isOrgMember: organizations.length > 0, established, refreshEstablished: checkEstablished, profileError, retryProfile: () => user && ensureProfile(user) }}>
       {children}
     </AuthContext.Provider>
   )

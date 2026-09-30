@@ -14,7 +14,7 @@ function reportError(context, error, userMessage) {
 }
 
 export default function Settings() {
-  const { user, profile, isAdmin, isFounder, signOut, refreshProfile } = useAuth()
+  const { user, profile, isAdmin, isFounder, signOut, signOutEverywhere, refreshProfile } = useAuth()
   const navigate = useNavigate()
 
   const [showEmailChange, setShowEmailChange] = useState(false)
@@ -35,6 +35,8 @@ export default function Settings() {
   const [devicesLoaded, setDevicesLoaded] = useState(false)
   const [removingDevice, setRemovingDevice] = useState(null)
   const [deviceNote, setDeviceNote] = useState('')
+  const [signingOutAll, setSigningOutAll] = useState(false)
+  const [signOutAllError, setSignOutAllError] = useState('')
 
   useEffect(() => {
     if (!user) return
@@ -135,6 +137,14 @@ export default function Settings() {
     if (!ok) { setDeviceNote("We couldn't remove that device. Try again."); return }
     setDevices((prev) => prev.filter((x) => x.deviceId !== d.deviceId))
     setDeviceNote('Removed.')
+  }
+
+  async function handleSignOutEverywhere() {
+    if (!confirm('Sign out of every device, including this one? You will need to sign in again on each of them.')) return
+    setSigningOutAll(true); setSignOutAllError('')
+    const ok = await signOutEverywhere()
+    setSigningOutAll(false)
+    if (!ok) setSignOutAllError("We couldn't sign you out everywhere. Check your connection and try again.")
   }
 
   function shortDate(iso) {
@@ -273,6 +283,15 @@ export default function Settings() {
           )
         })}
         {deviceNote && <p className="form-success" role="status" style={{ padding: '0 1rem 0.75rem' }}>{deviceNote}</p>}
+        <div style={{ padding: '0 1rem 1rem' }}>
+          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', color: '#ff6666', borderColor: '#ff6666' }} onClick={handleSignOutEverywhere} disabled={signingOutAll}>
+            {signingOutAll ? 'Signing out...' : 'Sign out of all devices'}
+          </button>
+          <p className="privacy-toggle-desc" style={{ marginTop: '0.5rem' }}>
+            Use this if you lost a device or think someone else got into your account. Other devices are signed out within about an hour. Your private message history stays on each device.
+          </p>
+          {signOutAllError && <p className="form-error" role="alert">{signOutAllError}</p>}
+        </div>
       </div>
 
       {resetMessage && <p className="form-success" role="status" style={{ marginTop: '1rem' }}>{resetMessage}</p>}
