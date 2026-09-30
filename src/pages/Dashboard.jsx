@@ -128,6 +128,11 @@ export default function Dashboard() {
           <span className="action-label">Calendar</span>
           <span className="action-desc">Events and volunteer sign-ups near you</span>
         </button>
+        <button className="action-card" onClick={() => navigate('/groups')}>
+          <span className="action-icon" aria-hidden="true">&#129309;</span>
+          <span className="action-label">My Groups</span>
+          <span className="action-desc">Your private groups, invites, and join links</span>
+        </button>
         {runsAGroup && (
           <button className="action-card" onClick={() => navigate('/org-dashboard')}>
             <span className="action-icon" aria-hidden="true">&#127968;</span>
