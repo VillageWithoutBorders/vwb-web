@@ -17,6 +17,7 @@ import PostOffer from './pages/PostOffer'
 import ActiveTasks from './pages/ActiveTasks'
 import Community from './pages/Community'
 import CommunityResources from './pages/CommunityResources'
+import PublicResources from './pages/PublicResources'
 import OrgPage from './pages/OrgPage'
 import Conversation from './pages/Conversation'
 import MessagesPage from './pages/Messages'
@@ -94,6 +95,8 @@ function AppRoutes() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/join-org" element={<JoinOrg />} />
       <Route path="/terms" element={<Terms />} />
+      {/* Public on purpose: the resource list is read-only and needs no account, so people of any age can use it. */}
+      <Route path="/resources" element={<PublicResources />} />
       {/* Public on purpose: the website calendar and shared event links work without an account. */}
       <Route path="/calendar/embed" element={<CalendarEmbed />} />
       <Route path="/events/:id" element={<EventPage />} />

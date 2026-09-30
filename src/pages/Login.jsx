@@ -213,6 +213,11 @@ export default function Login() {
                 Sign up
               </button>
             </p>
+            <p className="login-toggle">
+              <button type="button" className="link-button" onClick={() => navigate('/welcome')} style={{ minHeight: '44px' }}>
+                New here? See what this app is for
+              </button>
+            </p>
           </form>
         </div>
       </div>
@@ -275,6 +280,11 @@ export default function Login() {
               Already have an account?{' '}
               <button type="button" className="link-button" onClick={() => { setMode('signin'); setStep(1); setError('') }}>
                 Sign in
+              </button>
+            </p>
+            <p className="login-toggle">
+              <button type="button" className="link-button" onClick={() => navigate('/welcome')} style={{ minHeight: '44px' }}>
+                What is this app?
               </button>
             </p>
           </form>
