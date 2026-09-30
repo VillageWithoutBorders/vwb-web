@@ -76,7 +76,8 @@ function NearbyNeedTiles() {
 
 export default function Dashboard() {
   const { profile, isAdmin, organizations } = useAuth()
-  const runsAGroup = organizations.some((o) => o.role === 'admin' || o.role === 'organizer')
+  // Founders and admins can open any group's dashboard, even if they aren't a member.
+  const runsAGroup = isAdmin || organizations.some((o) => o.role === 'admin' || o.role === 'organizer')
   const navigate = useNavigate()
   const location = useLocation()
   const displayName = profile?.display_name || 'Neighbor'
