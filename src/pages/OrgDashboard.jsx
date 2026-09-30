@@ -204,6 +204,9 @@ export default function OrgDashboard() {
             <span className="cal-card-title">{p.kind === 'need' ? 'Need' : 'Offer'}: {p.title}</span>
             {p.description && <span className="hub-org-desc">{p.description}</span>}
             <span className="cal-card-meta">{p.status} &middot; {new Date(p.created_at).toLocaleDateString()}</span>
+            {p.kind === 'need' && !['completed', 'cancelled', 'closed', 'archived'].includes(p.status) && (
+              <Link to={'/ask?edit=' + p.id} className="hub-more">Edit</Link>
+            )}
           </div>
         ))}
       </section>
