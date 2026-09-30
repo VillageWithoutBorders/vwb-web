@@ -308,6 +308,21 @@ export function AuthProvider({ children }) {
     setOrganizations([])
   }
 
+  // Two-step login. null = not checked yet, true = this session still needs
+  // its authenticator code, false = fine. A failed check never locks anyone out.
+  const [mfaRequired, setMfaRequired] = useState(null)
+  async function refreshMfa() {
+    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    if (error) { console.error('[AuthContext] refreshMfa', error); setMfaRequired(false); return }
+    setMfaRequired(data.nextLevel === 'aal2' && data.currentLevel !== 'aal2')
+  }
+  useEffect(() => {
+    setMfaRequired(null)
+    if (!user?.id) return
+    refreshMfa()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
+
   // Ends every session for this account, on every device (this one too).
   // Other devices drop off within about an hour, when their short-lived
   // pass runs out and can't be renewed.
@@ -321,7 +336,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, signOutEverywhere, refreshProfile, isAdmin: profile?.role === 'admin' || profile?.role === 'founder', isFounder: profile?.role === 'founder', organizations, isOrgMember: organizations.length > 0, established, refreshEstablished: checkEstablished, profileError, retryProfile: () => user && ensureProfile(user) }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, signOutEverywhere, mfaRequired, refreshMfa, refreshProfile, isAdmin: profile?.role === 'admin' || profile?.role === 'founder', isFounder: profile?.role === 'founder', organizations, isOrgMember: organizations.length > 0, established, refreshEstablished: checkEstablished, profileError, retryProfile: () => user && ensureProfile(user) }}>
       {children}
     </AuthContext.Provider>
   )
