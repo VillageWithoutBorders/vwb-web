@@ -30,6 +30,8 @@ export default function AskForHelp() {
         return managedOrgs.some((o) => o.id === want) ? want : ''
     })
     const navigate = useNavigate()
+    // /ask?edit=ID opens this same form filled in, to change a request already posted.
+    const editId = searchParams.get('edit')
 
     const [skills, setSkills] = useState([])
     const [skillNeeded, setSkillNeeded] = useState('')
@@ -52,10 +54,30 @@ export default function AskForHelp() {
     }, [])
 
     useEffect(() => {
-        if (profile?.neighborhood) {
+        if (!editId && profile?.neighborhood) {
             setNeighborhood(profile.neighborhood)
         }
-    }, [profile])
+    }, [profile, editId])
+
+    useEffect(() => {
+        if (!editId) return
+        let alive = true
+        supabase.rpc('get_help_request_to_edit', { p_id: editId }).then(({ data, error: loadErr }) => {
+            if (!alive) return
+            const row = Array.isArray(data) ? data[0] : data
+            if (loadErr || !row) {
+                if (loadErr) console.error('Failed to load request to edit:', loadErr)
+                setError("We couldn't find that request, or you can't edit it.")
+                return
+            }
+            setSkillNeeded(row.skill_needed || '')
+            setDescription(row.description || '')
+            setUrgency(row.urgency || 'today')
+            setMaxHelpers(row.max_helpers === undefined ? 1 : row.max_helpers)
+            setNeighborhood(row.neighborhood || '')
+        })
+        return () => { alive = false }
+    }, [editId])
 
     async function handleSubmit(e) {
         e.preventDefault()
@@ -67,6 +89,26 @@ export default function AskForHelp() {
         }
         if (!description.trim()) {
             setError('Please describe what you need.')
+            return
+        }
+
+        if (editId) {
+            setSubmitting(true)
+            const { error: editError } = await supabase.rpc('edit_help_request', {
+                p_id: editId,
+                p_skill: skillNeeded,
+                p_description: description.trim(),
+                p_urgency: urgency,
+                p_max_helpers: maxHelpers,
+                p_neighborhood: neighborhood.trim() || null,
+            })
+            setSubmitting(false)
+            if (editError) {
+                console.error(editError)
+                setError(editError.message && editError.message.length < 140 ? editError.message : 'Something went wrong. Please try again.')
+                return
+            }
+            navigate('/tasks')
             return
         }
 
@@ -109,20 +151,24 @@ export default function AskForHelp() {
         <div className="ask-page">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
-                <h1 style={{ margin: 0 }}>Ask for help</h1>
+                <h1 style={{ margin: 0 }}>{editId ? 'Edit your request' : 'Ask for help'}</h1>
             </div>
             <p className="ask-intro">
                 Tell us what you need. Only Hope Ambassadors in your area will see this.
                 No personal details are shared until you say so.
             </p>
 
-            {myLoc
+            {editId && (
+                <p className="ask-intro">Change anything below. If someone already said they can help, we'll let them know it changed.</p>
+            )}
+
+            {!editId && (myLoc
                 ? <LocationBar loc={myLoc} prefix="Neighbors near" onChanged={() => setLocTick(t => t + 1)} />
                 : <LocationPrompt
                     title="Where do you need help?"
                     intro="Enter your zip code so neighbors nearby can see your request. We never guess where you are, and we never share your address."
                     onDone={() => { setError(''); setLocTick(t => t + 1) }}
-                  />}
+                  />)}
 
             <form onSubmit={handleSubmit} className="ask-form">
 
@@ -211,7 +257,7 @@ export default function AskForHelp() {
                     </span>
                 </div>
 
-                {managedOrgs.length > 0 && (
+                {!editId && managedOrgs.length > 0 && (
                     <div className="form-field">
                         <label htmlFor="postAs">Post as</label>
                         <select id="postAs" value={postAs} onChange={(e) => setPostAs(e.target.value)}>
@@ -238,7 +284,7 @@ export default function AskForHelp() {
                         disabled={submitting}
                         style={{ flex: 1 }}
                     >
-                        {submitting ? 'Posting...' : 'Post request'}
+                        {submitting ? (editId ? 'Saving...' : 'Posting...') : (editId ? 'Save changes' : 'Post request')}
                     </button>
                 </div>
             </form>

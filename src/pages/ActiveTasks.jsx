@@ -631,6 +631,17 @@ export default function ActiveTasks() {
                     </div>
                   )}
 
+                  {/* Change what you wrote, while the request is still open */}
+                  {!req.archived_at && !['completed', 'cancelled', 'closed', 'archived'].includes(req.status) && (
+                    <button
+                      className="btn btn-outline btn-sm"
+                      style={{ marginTop: '0.25rem', marginRight: '0.5rem' }}
+                      onClick={() => navigate('/ask?edit=' + req.id)}
+                    >
+                      Edit request
+                    </button>
+                  )}
+
                   {/* Delete / archive request */}
                   {!req.archived_at && (
                     <button
