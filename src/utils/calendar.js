@@ -26,6 +26,7 @@ export const DISTANCE_OPTIONS = [5, 10, 25, 50, 100]
 
 export const VISIBILITY = {
   public: { label: 'Public', desc: 'Anyone nearby can see it, including on the Village Without Borders website.' },
+  account: { label: 'Signed-in members only', desc: 'Anyone with a Village Without Borders account can see it. Not shown to the public or on the website.' },
   members: { label: 'Members only', desc: 'Only members of your group can see it, inside the app.' },
   invite: { label: 'Invite only', desc: 'Only people you send the private invite link to can see it.' },
 }
@@ -60,7 +61,7 @@ export function filterByDistance(events, origin, maxMiles) {
       return { ...ev, miles }
     })
     .filter((ev) => {
-      if (ev.visibility !== 'public' || ev.can_manage) return true
+      if ((ev.visibility !== 'public' && ev.visibility !== 'account') || ev.can_manage) return true
       if (ev.miles == null) return true
       return ev.miles <= maxMiles && ev.miles <= Number(ev.show_radius_miles || 25)
     })

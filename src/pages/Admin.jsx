@@ -323,9 +323,12 @@ export default function Admin() {
   }
 
   async function loadOrganizations() {
-    const { data, error } = await supabase.from('organizations').select('*').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('organizations').select('id, name, description, website_url, social_links, approved, created_at, home_zip, hide_from_public').order('created_at', { ascending: false })
     reportError('loadOrganizations', error)
     if (!data) { setOrganizations([]); return }
+    const { data: contactRows } = await supabase.rpc('admin_org_contacts')
+    const contactById = {}
+    for (const c of contactRows || []) contactById[c.org_id] = c.contact_email
     const withMembers = await Promise.all(data.map(async (org) => {
       const { data: members, error: memErr } = await supabase.from('organization_members').select('id, user_id, role').eq('organization_id', org.id)
       reportError('loadOrganizations:members', memErr)
@@ -334,7 +337,7 @@ export default function Admin() {
         reportError('loadOrganizations:memberProfile', profErr)
         return { ...m, display_name: prof?.display_name || 'Unnamed' }
       }))
-      return { ...org, members: enrichedMembers }
+      return { ...org, contact_email_shown: contactById[org.id] || null, members: enrichedMembers }
     }))
     // Waiting requests first, then the rest, newest first within each.
     setOrganizations([...withMembers].sort((a, b) => (a.approved === b.approved ? 0 : a.approved ? 1 : -1)))
@@ -359,6 +362,12 @@ export default function Admin() {
   async function toggleOrgApproved(org) {
     const { error } = await supabase.from('organizations').update({ approved: !org.approved }).eq('id', org.id)
     if (reportError('toggleOrgApproved', error, 'Could not update this organization. Try again.')) return
+    await loadOrganizations()
+  }
+
+  async function toggleOrgHidden(org) {
+    const { error } = await supabase.rpc('set_org_hide_from_public', { p_org: org.id, p_hide: !org.hide_from_public })
+    if (reportError('toggleOrgHidden', error, 'Could not update this organization. Try again.')) return
     await loadOrganizations()
   }
 
@@ -401,7 +410,7 @@ export default function Admin() {
   }
 
   async function loadOrgInvitations() {
-    const { data, error } = await supabase.from('organization_invitations').select('*').order('created_at', { ascending: false })
+    const { data, error } = await supabase.rpc('admin_organization_invitations')
     reportError('loadOrgInvitations', error)
     setOrgInvitations(data || [])
   }
@@ -1276,11 +1285,18 @@ export default function Admin() {
                   </div>
                 )}
               </div>
-              {org.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.3rem 0' }}>{org.description}</p>}
-              {(org.contact_email || org.website_url) && (
-                <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0' }}>
-                  {org.contact_email}{org.contact_email && org.website_url ? ' \u00b7 ' : ''}{org.website_url}
+              {org.approved && (
+                <p style={{ margin: '0.3rem 0', fontSize: '0.75rem', color: '#aaa' }}>
+                  {org.hide_from_public ? 'Hidden from the public. Only people with an account can see this group.' : 'Visible to the public.'}{' '}
+                  <button onClick={() => toggleOrgHidden(org)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'underline', padding: '0.5rem 0.25rem', minHeight: '44px' }}>{org.hide_from_public ? 'Show to the public' : 'Hide from the public'}</button>
                 </p>
+              )}
+              {org.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.3rem 0' }}>{org.description}</p>}
+              {org.website_url && (
+                <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0' }}>{org.website_url}</p>
+              )}
+              {org.contact_email_shown && (
+                <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0' }}>Contact: {org.contact_email_shown}</p>
               )}
 
               <p style={{ color: '#4ecca3', fontSize: '0.75rem', fontWeight: 600, margin: '0.6rem 0 0.3rem' }}>Members ({org.members.length})</p>
