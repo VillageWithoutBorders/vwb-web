@@ -359,7 +359,7 @@ export default function CommunityResources() {
 
   return (
     <div className="community-page">
-      <Link to="/community" className="hub-back">&#8592; Community</Link>
+      <Link to={user ? '/community' : '/welcome'} className="hub-back">&#8592; {user ? 'Community' : 'Welcome'}</Link>
       <h1>Find help</h1>
       <p className="feed-subtitle" style={{ marginBottom: '1rem' }}>Food, housing, safety, and more, shared by neighbors and local groups.</p>
 
@@ -403,8 +403,8 @@ export default function CommunityResources() {
 
           {!canSubmit && (
             <p style={{ color: '#888', fontSize: '0.75rem', margin: '0 0 0.75rem' }}>
-              Resources are added by verified partner organizations.{' '}
-              <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline', padding: 0 }}>Want your org involved?</button>
+              Resources are added by verified partner organizations.{user && <>{' '}
+              <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline', padding: 0 }}>Want your org involved?</button></>}
             </p>
           )}
 
@@ -505,7 +505,10 @@ export default function CommunityResources() {
                         {resourceDistance(r) != null && (
                           <p style={{ color: '#4ecca3', fontSize: '0.78rem', fontWeight: 600, margin: '0.2rem 0 0' }}>&#128205; {resourceDistance(r).toFixed(1)} mi away</p>
                         )}
-                        {r.organizations && (
+                        {r.organizations && !user && (
+                          <p style={{ color: '#4ecca3', fontSize: '0.78rem', fontWeight: 600, margin: '0.4rem 0 0' }}>Shared by {r.organizations.name}</p>
+                        )}
+                        {r.organizations && user && (
                           <button onClick={() => navigate('/orgs/' + r.organizations.id)} style={{ display: 'block', background: 'none', border: 'none', padding: '0.3rem 0', marginTop: '0.2rem', color: '#4ecca3', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>Shared by {r.organizations.name}</button>
                         )}
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
@@ -514,12 +517,14 @@ export default function CommunityResources() {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                          <button onClick={() => castVote(r.id, 1)} title="This checked out for me" aria-pressed={myVotes[r.id] === 1} aria-label={'This checked out for me, ' + (voteCounts[r.id]?.upvotes || 0) + ' people agree' + (myVotes[r.id] === 1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === 1 ? 'rgba(78,204,163,0.15)' : 'none', border: '1px solid ' + (myVotes[r.id] === 1 ? '#4ecca3' : '#444'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === 1 ? '#4ecca3' : '#aaa', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+                          {user && (<>
+<button onClick={() => castVote(r.id, 1)} title="This checked out for me" aria-pressed={myVotes[r.id] === 1} aria-label={'This checked out for me, ' + (voteCounts[r.id]?.upvotes || 0) + ' people agree' + (myVotes[r.id] === 1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === 1 ? 'rgba(78,204,163,0.15)' : 'none', border: '1px solid ' + (myVotes[r.id] === 1 ? '#4ecca3' : '#444'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === 1 ? '#4ecca3' : '#aaa', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
                             &#128077; {voteCounts[r.id]?.upvotes || 0}
                           </button>
                           <button onClick={() => castVote(r.id, -1)} title="This didn't work out for me" aria-pressed={myVotes[r.id] === -1} aria-label={"This didn't work out for me, " + (voteCounts[r.id]?.downvotes || 0) + ' people agree' + (myVotes[r.id] === -1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === -1 ? 'rgba(255,90,90,0.12)' : 'none', border: '1px solid ' + (myVotes[r.id] === -1 ? '#ff5a5a' : '#444'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === -1 ? '#ff8888' : '#aaa', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
                             &#128078; {voteCounts[r.id]?.downvotes || 0}
                           </button>
+</>)}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: 'auto' }}>
                             <button onClick={() => toggleHistory(r.id)} aria-expanded={openHistoryFor.includes(r.id)} style={{ background: 'none', border: 'none', color: '#66aaff', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '40px' }}>
                               {(editHistoryByResource[r.id] || []).filter(e => !e.reverted).length > 0 ? (editHistoryByResource[r.id].filter(e => !e.reverted).length) + ' edit' + ((editHistoryByResource[r.id].filter(e => !e.reverted).length === 1) ? '' : 's') : 'Edit history'}
@@ -546,7 +551,8 @@ export default function CommunityResources() {
                             {(reviewsByResource[r.id] || []).length === 0 && (
                               <p style={{ color: '#999', fontSize: '0.78rem', margin: '0 0 0.4rem' }}>No reviews yet.</p>
                             )}
-                            <textarea
+                            {user ? (<>
+<textarea
                               value={reviewDrafts[r.id] || ''}
                               onChange={e => setReviewDrafts(prev => ({ ...prev, [r.id]: e.target.value }))}
                               placeholder="Add an anonymous note about your experience — no name shown, ever"
@@ -557,6 +563,9 @@ export default function CommunityResources() {
                             <button onClick={() => submitReview(r.id)} disabled={!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id} style={{ padding: '0.55rem 0.9rem', minHeight: '40px', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', opacity: (!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id) ? 0.5 : 1 }}>
                               {submittingReviewFor === r.id ? 'Posting...' : 'Post anonymously'}
                             </button>
+</>) : (
+<p style={{ color: '#999', fontSize: '0.78rem', margin: 0 }}>Sign in to add a note about your experience.</p>
+)}
                           </div>
                         )}
 
@@ -630,7 +639,7 @@ export default function CommunityResources() {
               <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem 1.5rem 0.75rem' }}>
                 {query.trim() ? 'Nothing found for "' + query.trim() + '". Try a shorter word, or ask for help and a neighbor can point you the right way.' : (orgFilter !== 'all' || regionFilter !== 'all' || radiusFilter !== 'all') ? 'No resources match your filters -- try widening them.' : 'No resources yet. Be the first to add one.'}
               </p>
-              {query.trim() && (
+              {query.trim() && user && (
                 <div style={{ textAlign: 'center', paddingBottom: '1rem' }}>
                   <Link to="/ask" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', padding: '0 1.25rem' }}>Ask for help instead</Link>
                 </div>
