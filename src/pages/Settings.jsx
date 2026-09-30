@@ -418,7 +418,7 @@ export default function Settings() {
         <div className="privacy-toggle-row">
           <div>
             <span className="privacy-toggle-label">Read receipts</span>
-            <p className="privacy-toggle-desc">Let others see when you have read their messages</p>
+            <p className="privacy-toggle-desc">Show when you have read a message. If you turn this off, you won't see when others read yours either.</p>
           </div>
           <button
             type="button"

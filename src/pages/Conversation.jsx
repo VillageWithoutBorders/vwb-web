@@ -44,6 +44,7 @@ export default function Conversation() {
   const [otherAvatar, setOtherAvatar] = useState(null)
   const [otherUserId, setOtherUserId] = useState(null)
   const [myAvatar, setMyAvatar] = useState(null)
+  const [myReceipts, setMyReceipts] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
   const [request, setRequest] = useState(null)
   const [accepted, setAccepted] = useState(false)
@@ -56,6 +57,7 @@ export default function Conversation() {
   const [reportBusy, setReportBusy] = useState(false)
   const [reportError, setReportError] = useState('')
     const pollRef = useRef(null)
+    const lastMarkedRef = useRef(0)
     const convoRef = useRef(null)
   const [selectedMessage, setSelectedMessage] = useState(null)
 
@@ -97,6 +99,7 @@ export default function Conversation() {
       setConvo(c)
     convoRef.current = c
     const readCol = c.helper_id === user.id ? "last_read_helper" : "last_read_requester"
+    lastMarkedRef.current = Date.now()
     supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", c.id).then(({ error }) => {
       if (error) console.error('Failed to mark conversation read:', error)
       refreshUnread()
@@ -112,9 +115,9 @@ export default function Conversation() {
     if (otherErr) console.error("Failed to load the other participant's profile:", otherErr)
     setOtherUserId(otherId)
     if (otherProfile) { setOtherName(otherProfile.display_name || 'Neighbor'); setOtherAvatar(otherProfile.avatar_url || null) }
-    const { data: myProfile, error: myErr } = await supabase.from('helper_profiles').select('avatar_url').eq('user_id', user.id).maybeSingle()
+    const { data: myProfile, error: myErr } = await supabase.from('helper_profiles').select('avatar_url, read_receipts_enabled').eq('user_id', user.id).maybeSingle()
     if (myErr) console.error('Failed to load your profile:', myErr)
-    if (myProfile) setMyAvatar(myProfile.avatar_url || null)
+    if (myProfile) { setMyAvatar(myProfile.avatar_url || null); setMyReceipts(myProfile.read_receipts_enabled !== false) }
 
     // The banner at the top says what this chat is about. It's built from
     // the request or offer itself, so the app never has to post a
@@ -160,6 +163,11 @@ export default function Conversation() {
   // kept showing them anyway.
   async function loadMessages() {
     await flushOutbox(user.id)
+    // The other person's shared read time (empty if either of you has receipts off).
+    supabase.from('conversations').select('receipt_read_helper, receipt_read_requester').eq('id', id).maybeSingle().then(({ data: r, error: rErr }) => {
+      if (rErr) { console.error('Failed to load read receipts:', rErr); return }
+      if (r) setConvo(prev => prev ? { ...prev, ...r } : prev)
+    })
     const [{ data: rawData, error }, { data: hidden, error: hiddenErr }] = await Promise.all([
       supabase.from('chat_messages').select('*').eq('conversation_id', id).is('deleted_at', null).order('created_at', { ascending: true }),
       supabase.from('message_deletions').select('message_id').eq('user_id', user.id),
@@ -200,6 +208,19 @@ export default function Conversation() {
       displayBody: q.text,
     }))
     setMessages([...withPlaintext, ...queued])
+
+    // While this chat is open and in view, keep "read" current so the other
+    // person sees it right away instead of only when you leave.
+    const newest = withPlaintext.filter(m => m.sender_id !== user.id).reduce((t, m) => Math.max(t, new Date(m.created_at).getTime()), 0)
+    const open = convoRef.current
+    if (open && newest > lastMarkedRef.current && document.visibilityState === 'visible') {
+      lastMarkedRef.current = Date.now()
+      const col = open.helper_id === user.id ? 'last_read_helper' : 'last_read_requester'
+      supabase.from('conversations').update({ [col]: new Date().toISOString() }).eq('id', open.id).then(({ error: markErr }) => {
+        if (markErr) console.error('Failed to keep read time current:', markErr)
+        else refreshUnread()
+      })
+    }
   }
 
   async function cancelWaiting(msg) {
@@ -292,6 +313,12 @@ export default function Conversation() {
     )
   }
 
+  // "Read" shows under your newest message once the other person has read it.
+  // Both of you must have Read receipts on (Settings > Privacy & Safety).
+  const otherReceipt = convo.helper_id === user.id ? convo.receipt_read_requester : convo.receipt_read_helper
+  const lastMine = [...messages].reverse().find(m => m.sender_id === user.id && !m.queued)
+  const readMessageId = (myReceipts && otherReceipt && lastMine && new Date(otherReceipt) >= new Date(lastMine.created_at)) ? lastMine.id : null
+
   const urgencyLabel = request?.urgency === 'now' ? 'Right now'
     : request?.urgency === 'today' ? 'Today'
     : request?.urgency === 'this_week' ? 'This week'
@@ -347,7 +374,7 @@ export default function Conversation() {
         : <div style={{ width: '24px', flexShrink: 0 }} />)}
       <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs') + (msg.queued ? ' queued' : '')} onClick={() => msg.queued ? cancelWaiting(msg) : setSelectedMessage(msg)} role="button" tabIndex={0} aria-label={msg.queued ? 'Waiting to send. Tap to take it back.' : 'Message actions'} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (msg.queued) cancelWaiting(msg); else setSelectedMessage(msg) } }}>
         <p className="chat-body">{msg.displayBody ?? msg.body}</p>
-        <span className="chat-time">{msg.queued ? 'Waiting to send' : formatTime(msg.created_at)}</span>
+        <span className="chat-time">{msg.queued ? 'Waiting to send' : formatTime(msg.created_at)}{msg.id === readMessageId ? ' \u00b7 Read ' + formatTime(otherReceipt) : ''}</span>
       </div>
       {isMe && (isGroupStart
         ? <AvatarDisplay url={myAvatar} userId={user.id} size={24} />
