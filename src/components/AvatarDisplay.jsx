@@ -23,7 +23,8 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
     if (info || !userId) return
     const { data: p, error: pErr } = await supabase.from('helper_profiles_public').select('display_name, is_hope_ambassador, role, created_at').eq('user_id', userId).maybeSingle()
     reportError('loadInfo:profile', pErr)
-    const { count: vouchCount, error: vouchCountErr } = await supabase.from('vouches').select('*', { count: 'exact', head: true }).eq('vouchee_id', userId)
+    const { data: vcRow, error: vouchCountErr } = await supabase.from('vouch_counts').select('vouch_count').eq('user_id', userId).maybeSingle()
+    const vouchCount = Number(vcRow?.vouch_count || 0)
     reportError('loadInfo:vouchCount', vouchCountErr)
     const { data: authData, error: authErr } = await supabase.auth.getUser()
     reportError('loadInfo:auth', authErr)
