@@ -30,6 +30,7 @@ export default function EventDetail() {
   const blockedBy = useBlockedBy()
   const [event, setEvent] = useState(null)
   const [signups, setSignups] = useState([])
+  const [roleCounts, setRoleCounts] = useState([])
   const [mySignup, setMySignup] = useState(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('responders')
@@ -83,6 +84,10 @@ export default function EventDetail() {
       setSignups(withNames)
       setMySignup(withNames.find(s => s.user_id === user.id) || null)
     }
+
+    const { data: rc, error: rcErr } = await supabase.rpc('event_role_counts', { p_event: Number(id) })
+    if (rcErr) console.error('Failed to load role counts:', rcErr)
+    setRoleCounts(Array.isArray(rc) ? rc : [])
 
     setSkillCats(await loadSkillCategories())
 
@@ -436,6 +441,10 @@ export default function EventDetail() {
   const responders = signups.filter(s => s.role === 'responder' || s.role === 'coordinator')
   const affected = signups.filter(s => s.role === 'affected')
   const isCoordinator = mySignup?.role === 'coordinator' || event.created_by === user.id
+  const canSeeRoster = !!mySignup || isAdmin || event.created_by === user.id
+  const countFor = (roles) => roleCounts.filter(c => roles.includes(c.role)).reduce((a, c) => a + Number(c.n), 0)
+  const responderCount = canSeeRoster ? responders.length : countFor(['responder', 'coordinator'])
+  const affectedCount = canSeeRoster ? affected.length : countFor(['affected'])
   const myLatest = latestStatuses[user.id]
   const myStatusConf = myLatest ? STATUS_CONFIG[myLatest.status] : null
   const statusCounts = {}
@@ -467,11 +476,11 @@ export default function EventDetail() {
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <div style={{ flex: 1, textAlign: 'center', padding: '0.6rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333' }}>
-          <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#4ecca3' }}>{responders.length}</div>
+          <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#4ecca3' }}>{responderCount}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Responders</div>
         </div>
         <div style={{ flex: 1, textAlign: 'center', padding: '0.6rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333' }}>
-          <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#ffaa44' }}>{affected.length}</div>
+          <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#ffaa44' }}>{affectedCount}</div>
           <div style={{ fontSize: '0.7rem', color: '#888' }}>Affected</div>
         </div>
         <div style={{ flex: 1, textAlign: 'center', padding: '0.6rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333' }}>
@@ -557,8 +566,8 @@ export default function EventDetail() {
       )}
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', overflowX: 'auto' }}>
-        <button style={tabStyle(tab === 'responders')} onClick={() => setTab('responders')}>Responders ({responders.length})</button>
-        <button style={tabStyle(tab === 'affected')} onClick={() => setTab('affected')}>Affected ({affected.length})</button>
+        <button style={tabStyle(tab === 'responders')} onClick={() => setTab('responders')}>Responders ({responderCount})</button>
+        <button style={tabStyle(tab === 'affected')} onClick={() => setTab('affected')}>Affected ({affectedCount})</button>
         <button style={tabStyle(tab === 'check-ins')} onClick={() => setTab('check-ins')}>Check-ins ({checkIns.length})</button>
         <button style={tabStyle(tab === 'resources')} onClick={() => setTab('resources')}>Resources ({resources.length})</button>
       </div>
@@ -571,7 +580,11 @@ export default function EventDetail() {
         </div>
       )}
 
-      {tab === 'responders' && (
+      {!canSeeRoster && (tab === 'responders' || tab === 'affected' || tab === 'check-ins') && (
+        <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem' }}>Names and check-ins are shared with people who sign up for this event. This keeps neighbors in need safe.</p>
+      )}
+
+      {canSeeRoster && tab === 'responders' && (
         responders.length === 0 ? <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem' }}>No responders yet. Be the first to sign up.</p> :
         responders.map(s => (
           <div key={s.id} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', position: 'relative' }}>
@@ -587,7 +600,7 @@ export default function EventDetail() {
         ))
       )}
 
-      {tab === 'affected' && (
+      {canSeeRoster && tab === 'affected' && (
         affected.length === 0 ? <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem' }}>No affected neighbors signed up yet.</p> :
         affected.map(s => {
           const st = latestStatuses[s.user_id]
