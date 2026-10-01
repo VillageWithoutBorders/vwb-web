@@ -36,6 +36,7 @@ import JoinOrg from './pages/JoinOrg'
 import Terms from './pages/Terms'
 import Calendar from './pages/Calendar'
 import CalendarEventForm from './pages/CalendarEventForm'
+import CalendarImport from './pages/CalendarImport'
 import CalendarEmbed from './pages/CalendarEmbed'
 import EventPage from './pages/EventPage'
 import Groups from './pages/Groups'
@@ -136,6 +137,7 @@ function AppRoutes() {
         <Route path="notifications" element={<Notifications />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="calendar/new" element={<CalendarEventForm />} />
+        <Route path="calendar/import" element={<CalendarImport />} />
         <Route path="calendar/:id/edit" element={<CalendarEventForm />} />
         <Route path="groups" element={<Groups />} />
         <Route path="groups/:id" element={<GroupBoard />} />

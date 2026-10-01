@@ -54,9 +54,14 @@ export default function Calendar() {
           <p className="cal-sub">Gatherings, drives, and volunteer shifts near you</p>
         </div>
         {canPost && (
-          <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} onClick={() => navigate('/calendar/new')}>
-            + New event
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} onClick={() => navigate('/calendar/new')}>
+              + New event
+            </button>
+            <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/calendar/import')}>
+              Bring in events
+            </button>
+          </div>
         )}
       </div>
 
