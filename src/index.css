@@ -4631,3 +4631,13 @@ html[data-tour-tab="top"] .app-header .header-btn {
 .cal-found { margin: 0.5rem 0; padding: 0.625rem 0.875rem; border: 1px solid var(--border); border-radius: 10px; font-size: 0.95rem; line-height: 1.45; }
 .cal-found.is-set { border-color: #4ecca3; background: #12261f; color: #cfeee3; }
 .cal-embed-link { display: inline-block; padding: 0.75rem 0.25rem; min-height: 44px; box-sizing: border-box; }
+
+.imp-help-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #4ecca3; background: transparent; color: #4ecca3; font-size: 1.25rem; font-weight: 800; cursor: pointer; }
+.imp-help-btn:active { transform: scale(0.94); }
+.imp-modal-back { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; justify-content: center; padding: 0; background: rgba(0, 0, 0, 0.65); }
+.imp-modal { box-sizing: border-box; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; padding: 1.25rem 1rem 1rem; border-radius: 16px 16px 0 0; background: var(--white); color: var(--text); border: 1px solid var(--border); }
+.imp-modal h2 { margin: 0 0 0.5rem; font-size: 1.25rem; }
+.imp-modal ol { margin: 0.75rem 0; padding-left: 1.25rem; line-height: 1.55; }
+.imp-modal li { margin-bottom: 0.6rem; }
+@media (min-width: 768px) { .imp-modal-back { align-items: center; padding: 1rem; } .imp-modal { border-radius: 16px; } }
+@media (prefers-reduced-motion: reduce) { .imp-help-btn:active { transform: none; } }
