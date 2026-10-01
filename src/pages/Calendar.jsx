@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { fetchCalendarEvents, filterByDistance, savePlace, startingOrigin, memberArea } from '../utils/calendar'
-import { CalendarLocationBar, CalendarEventList } from '../components/CalendarParts'
+import { CalendarLocationBar, CalendarView } from '../components/CalendarParts'
 
 export default function Calendar() {
   const { isAdmin, organizations, profile } = useAuth()
@@ -63,7 +63,7 @@ export default function Calendar() {
         <p className="cal-error">We couldn't load the calendar right now. Check your connection and try again.</p>
       )}
       {!loading && !loadError && (
-        <CalendarEventList
+        <CalendarView
           events={visible}
           emptyText={canPost ? 'No events nearby yet. Tap "New event" to post the first one.' : 'No events nearby yet. Check back soon, or try a wider distance.'}
         />

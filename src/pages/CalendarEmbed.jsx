@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchCalendarEvents, filterByDistance, loadSavedPlace, savePlace } from '../utils/calendar'
-import { CalendarLocationBar, CalendarEventList, AllAgesFilter } from '../components/CalendarParts'
+import { CalendarLocationBar, CalendarView, AllAgesFilter } from '../components/CalendarParts'
 
 // The public calendar shown on villagewithoutborders.org (inside the
 // "See What's Happening" section). No login, no app header or tabs.
@@ -58,7 +58,7 @@ export default function CalendarEmbed() {
       <AllAgesFilter checked={allAgesOnly} onChange={setAllAgesOnly} />
       {loading
         ? <p className="cal-empty">Loading events...</p>
-        : <CalendarEventList events={visible} newTab emptyText="No public events nearby yet. Try a wider distance, or check back soon." />}
+        : <CalendarView events={visible} newTab emptyText="No public events nearby yet. Try a wider distance, or check back soon." />}
       <p className="cal-embed-foot">
         Want to post events for your group? <a href="/login?mode=signup" target="_blank" rel="noopener noreferrer">Join the app</a>
       </p>
