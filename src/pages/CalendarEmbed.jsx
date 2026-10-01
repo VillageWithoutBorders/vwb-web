@@ -19,7 +19,7 @@ export default function CalendarEmbed() {
   useEffect(() => {
     document.title = 'Community Calendar | Village Without Borders'
     let alive = true
-    fetchCalendarEvents().then(({ events: evs }) => {
+    fetchCalendarEvents({ thisMonth: true }).then(({ events: evs }) => {
       if (!alive) return
       setEvents(evs.filter((e) => e.visibility === 'public' && e.status === 'active'))
       setLoading(false)
@@ -60,7 +60,7 @@ export default function CalendarEmbed() {
         ? <p className="cal-empty">Loading events...</p>
         : <CalendarView events={visible} newTab emptyText="No public events nearby yet. Try a wider distance, or check back soon." />}
       <p className="cal-embed-foot">
-        Want to post events for your group? <a href="/login?mode=signup" target="_blank" rel="noopener noreferrer">Join the app</a>
+        Want to post events for your group? <a className="cal-embed-link" href="/login?mode=signup" target="_blank" rel="noopener noreferrer">Join the app</a>
       </p>
     </main>
   )

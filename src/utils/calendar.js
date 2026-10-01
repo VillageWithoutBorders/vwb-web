@@ -31,8 +31,18 @@ export const VISIBILITY = {
   invite: { label: 'Invite only', desc: 'Only people you send the private invite link to can see it.' },
 }
 
-export async function fetchCalendarEvents() {
-  const { data, error } = await supabase.rpc('list_calendar_events')
+// By default only upcoming events. The month calendar passes
+// { thisMonth: true } to also get events earlier in the current month,
+// which it shows as ended.
+export function hasEnded(ev) {
+  return new Date(ev.ends_at || ev.starts_at) < new Date()
+}
+
+export async function fetchCalendarEvents(opts = {}) {
+  const args = opts.thisMonth
+    ? { p_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString() }
+    : undefined
+  const { data, error } = await supabase.rpc('list_calendar_events', args)
   if (error) {
     console.error('Failed to load calendar events:', error)
     return { events: [], error }
@@ -199,7 +209,8 @@ export function loadSavedPlace() {
 
 export function savePlace(origin) {
   try {
-    if (origin && origin.kind === 'zip') localStorage.setItem(PLACE_KEY, JSON.stringify({ name: origin.name, lat: origin.lat, lng: origin.lng, zip: origin.zip }))
+    if (!origin) localStorage.removeItem(PLACE_KEY)
+    else if (origin.kind === 'zip') localStorage.setItem(PLACE_KEY, JSON.stringify({ name: origin.name, lat: origin.lat, lng: origin.lng, zip: origin.zip }))
   } catch { /* private mode */ }
 }
 
