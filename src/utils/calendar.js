@@ -71,8 +71,12 @@ export function filterByDistance(events, origin, maxMiles) {
       return { ...ev, miles }
     })
     .filter((ev) => {
-      if ((ev.visibility !== 'public' && ev.visibility !== 'account') || ev.can_manage) return true
-      if (ev.miles == null) return true
+      // Online events have no place, so everyone sees them.
+      if (ev.is_online || ev.can_manage) return true
+      if (ev.visibility !== 'public' && ev.visibility !== 'account') return true
+      if (ev.latitude == null || ev.longitude == null) return true
+      // An event in a place only shows to people who told us where they are.
+      if (!origin) return false
       return ev.miles <= maxMiles && ev.miles <= Number(ev.show_radius_miles || 25)
     })
 }
@@ -122,6 +126,7 @@ export function eventUrl(ev, withToken) {
 }
 
 function whereText(ev) {
+  if (ev.is_online) return ev.online_link || 'Online event'
   return [ev.location_name, ev.address, ev.town].filter(Boolean).join(', ')
 }
 
