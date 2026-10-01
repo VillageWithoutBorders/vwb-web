@@ -17,7 +17,9 @@ export const TYPE_ICONS = {
   resource_approved: '\u{1F4DA}',
   ambassador_application: '\u{1F33F}',
   ambassador_approved: '\u2705',
-  safety_report: '\u{1F6A9}'
+  safety_report: '\u{1F6A9}',
+  report_reviewed: '\u2705',
+  group_removal_request: '\u{1F525}'
 }
 
 export const TYPE_COLORS = {
@@ -36,7 +38,9 @@ export const TYPE_COLORS = {
   resource_approved: '#06b6d4',
   ambassador_application: '#f59e0b',
   ambassador_approved: '#10b981',
-  safety_report: '#ef4444'
+  safety_report: '#ef4444',
+  report_reviewed: '#10b981',
+  group_removal_request: '#f59e0b'
 }
 
 export function timeAgo(dateStr) {

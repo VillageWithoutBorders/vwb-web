@@ -449,7 +449,9 @@ export default function Campfire() {
               <div>
               {!isMe && isGroupStart && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.15rem' }}>
-                  <button type="button" onClick={() => navigate('/u/' + msg.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? '#c77dff' : info.role === 'admin' ? '#66aaff' : '#4ecca3', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{info.name}</button>
+                  {info.role
+                    ? <button type="button" onClick={() => navigate('/u/' + msg.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? '#c77dff' : info.role === 'admin' ? '#66aaff' : '#4ecca3', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{info.name}</button>
+                    : <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888' }}>{info.name}</span>}
                   {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
                   {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
                   {info.ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
@@ -596,6 +598,7 @@ export default function Campfire() {
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
           {Object.entries(names)
+            .filter(([, info]) => info.role)
             .filter(([, info]) => (info.name || 'Neighbor').toLowerCase().includes(memberSearch.trim().toLowerCase()))
             .sort(([, a], [, b]) => (a.name || '').localeCompare(b.name || ''))
             .map(([uid, info]) => (

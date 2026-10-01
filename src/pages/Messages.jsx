@@ -754,7 +754,10 @@ export default function Messages() {
         ) : blockedUsers.map(b => (
           <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid #2a2a2a' }}>
             <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{b.name}</span>
-            <button onClick={() => unblockUser(b.id)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem' }}>Unblock</button>
+            <span style={{ display: 'flex', gap: '0.75rem' }}>
+              <button onClick={() => navigate('/u/' + b.blocked_id, { state: { safety: 'report' } })} style={{ background: 'none', border: 'none', color: '#ff6666', cursor: 'pointer', fontSize: '0.85rem', minHeight: '44px' }}>Report</button>
+              <button onClick={() => unblockUser(b.id)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem', minHeight: '44px' }}>Unblock</button>
+            </span>
           </div>
         ))}
       </div>
