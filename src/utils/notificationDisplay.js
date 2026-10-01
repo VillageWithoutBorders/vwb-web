@@ -24,7 +24,8 @@ export const TYPE_ICONS = {
   calendar_signup: '\u{1F4C5}',
   affiliation_request: '\u{1F91D}',
   affiliation_accepted: '\u{1F91D}',
-  affiliation_ended: '\u{1F91D}'
+  affiliation_ended: '\u{1F91D}',
+  message_request: '\u2709\uFE0F'
 }
 
 export const TYPE_COLORS = {
@@ -50,7 +51,8 @@ export const TYPE_COLORS = {
   calendar_signup: '#4ecca3',
   affiliation_request: '#4ecca3',
   affiliation_accepted: '#4ecca3',
-  affiliation_ended: '#8a8a8a'
+  affiliation_ended: '#8a8a8a',
+  message_request: '#4ecca3'
 }
 
 export function timeAgo(dateStr) {

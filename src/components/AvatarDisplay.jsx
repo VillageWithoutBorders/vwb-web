@@ -71,8 +71,9 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
     e.stopPropagation()
     if (!info?.myId || messaging) return
     setMessaging(true)
-    const { id, error } = await startConversation(info.myId, userId)
+    const { id, error, notice } = await startConversation(info.myId, userId)
     setMessaging(false)
+    if (notice) { alert(notice); setShowPopup(false); return }
     if (error) { alert(error); return }
     setShowPopup(false)
     navigate('/conversation/' + id)

@@ -15,6 +15,7 @@ export default function PublicProfile() {
   // vouch) opens that dialog right away.
   const location = useLocation()
   const [messaging, setMessaging] = useState(false)
+  const [msgStatus, setMsgStatus] = useState(null)
   const [blockedThem, setBlockedThem] = useState(false)
   const [profile, setProfile] = useState(null)
   const [tab, setTab] = useState('requests')
@@ -45,6 +46,10 @@ export default function PublicProfile() {
     if (hpErr) console.error('Failed to load profile:', hpErr)
 
     setProfile(hp)
+    if (user && user.id !== userId) {
+      const { data: ms } = await supabase.rpc('message_status', { p_other: userId })
+      setMsgStatus(typeof ms === 'string' ? ms : 'none')
+    }
 
     setLoading(false)
     const { count: doneCount, error: countErr } = await supabase.from("help_requests").select("id", { count: "exact", head: true }).eq("requester_id", userId).eq("status", "completed")
@@ -100,8 +105,9 @@ export default function PublicProfile() {
   async function messageThem() {
     if (!user || messaging) return
     setMessaging(true)
-    const { id, error } = await startConversation(user.id, userId)
+    const { id, error, notice } = await startConversation(user.id, userId)
     setMessaging(false)
+    if (notice) { alert(notice); setMsgStatus('pending_out'); return }
     if (error) { alert(error); return }
     navigate('/conversation/' + id)
   }
@@ -123,6 +129,7 @@ export default function PublicProfile() {
     )
   }
 
+  const canSeeHistory = user?.id === userId || msgStatus === 'open'
   const avatarUrl = profile.avatar_url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId}`
 
   return (
@@ -152,7 +159,7 @@ export default function PublicProfile() {
             <div style={{ color: '#888', fontSize: '0.8rem' }}>{profile.neighborhood}</div>
           )}
           {user && user.id !== userId && !blockedThem && (
-            <button type="button" onClick={messageThem} disabled={messaging} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Opening...' : 'Message'}</button>
+            <button type="button" onClick={msgStatus === 'pending_in' ? () => navigate('/messages') : messageThem} disabled={messaging || msgStatus === 'pending_out'} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Sending...' : msgStatus === 'open' ? 'Message' : msgStatus === 'pending_out' ? 'Request sent' : msgStatus === 'pending_in' ? 'They asked to message you' : 'Ask to message'}</button>
           )}
           <ProfileSafetyActions userId={userId} name={profile.display_name} myId={user?.id} onBlockChange={setBlockedThem} openWith={location.state?.safety} onOpened={() => navigate(location.pathname, { replace: true, state: {} })} />
         </div>
@@ -165,6 +172,11 @@ export default function PublicProfile() {
         <p className="vouch-caution">Vouches show that neighbors trust this person. They aren't a background check. Meet somewhere public the first time, and trust your own judgment.</p>
       </div>
 
+      {!canSeeHistory && (
+        <p style={{ color: '#999', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>Request and event history is shared once you are connected.</p>
+      )}
+
+      {canSeeHistory && (<>
       {/* Tabs */}
       <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
         <button className={'tasks-tab' + (tab === 'requests' ? ' tasks-tab-active' : '')} onClick={() => setTab('requests')}>
@@ -228,6 +240,7 @@ export default function PublicProfile() {
           </div>
         )
       )}
+      </>)}
     </div>
   )
 }
