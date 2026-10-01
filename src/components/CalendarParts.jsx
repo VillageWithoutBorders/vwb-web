@@ -132,3 +132,89 @@ export function CalendarEventList({ events, newTab, emptyText }) {
     </section>
   ))
 }
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function dayKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+}
+
+// A normal month calendar. Tap a day to see its events underneath.
+function CalendarMonth({ events, newTab }) {
+  const today = new Date()
+  const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
+  const [picked, setPicked] = useState(() => dayKey(today))
+
+  const byDay = {}
+  for (const ev of events) {
+    const k = dayKey(new Date(ev.starts_at))
+    ;(byDay[k] = byDay[k] || []).push(ev)
+  }
+
+  const first = new Date(month.getFullYear(), month.getMonth(), 1)
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
+  const cells = []
+  for (let i = 0; i < first.getDay(); i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(month.getFullYear(), month.getMonth(), d))
+
+  function move(delta) {
+    const next = new Date(month.getFullYear(), month.getMonth() + delta, 1)
+    setMonth(next)
+    setPicked(dayKey(next.getMonth() === today.getMonth() && next.getFullYear() === today.getFullYear() ? today : next))
+  }
+
+  function goToday() {
+    setMonth(new Date(today.getFullYear(), today.getMonth(), 1))
+    setPicked(dayKey(today))
+  }
+
+  const dayEvents = byDay[picked] || []
+  const pickedDate = new Date(picked + 'T00:00:00')
+
+  return (
+    <div className="cal-month">
+      <div className="cal-month-head">
+        <button type="button" className="cal-month-nav" onClick={() => move(-1)} aria-label="Previous month">&#8249;</button>
+        <h2 className="cal-month-title" aria-live="polite">{month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
+        <button type="button" className="cal-month-nav" onClick={() => move(1)} aria-label="Next month">&#8250;</button>
+      </div>
+      <div className="cal-month-grid" role="grid" aria-label="Month">
+        {WEEKDAYS.map((w) => <div key={w} className="cal-month-wd" role="columnheader">{w}</div>)}
+        {cells.map((d, i) => {
+          if (!d) return <div key={'b' + i} className="cal-month-blank" />
+          const k = dayKey(d)
+          const list = byDay[k] || []
+          const cls = 'cal-month-day' + (k === picked ? ' is-picked' : '') + (k === dayKey(today) ? ' is-today' : '') + (list.length ? ' has-events' : '')
+          const label = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) + ', ' + (list.length === 0 ? 'no events' : list.length + (list.length === 1 ? ' event' : ' events'))
+          return (
+            <button key={k} type="button" className={cls} onClick={() => setPicked(k)} aria-label={label} aria-pressed={k === picked}>
+              <span className="cal-month-num">{d.getDate()}</span>
+              {list.length > 0 && <span className="cal-month-dots" aria-hidden="true">{list.slice(0, 3).map((e) => <i key={e.id} />)}{list.length > 3 ? '+' : ''}</span>}
+            </button>
+          )
+        })}
+      </div>
+      <p className="cal-month-today"><button type="button" className="link-button" style={{ minHeight: '44px' }} onClick={goToday}>Jump to today</button></p>
+      <h2 className="cal-day">{pickedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
+      {dayEvents.length === 0
+        ? <p className="cal-sub">Nothing on this day.</p>
+        : dayEvents.map((ev) => <CalendarEventCard key={ev.id} ev={ev} newTab={newTab} />)}
+    </div>
+  )
+}
+
+// Month calendar by default, with a switch to the plain list.
+export function CalendarView({ events, newTab, emptyText }) {
+  const [mode, setMode] = useState('month')
+  return (
+    <>
+      <div className="cal-mode" role="group" aria-label="How to show events">
+        <button type="button" className={mode === 'month' ? 'is-on' : ''} aria-pressed={mode === 'month'} onClick={() => setMode('month')}>Month</button>
+        <button type="button" className={mode === 'list' ? 'is-on' : ''} aria-pressed={mode === 'list'} onClick={() => setMode('list')}>List</button>
+      </div>
+      {mode === 'month'
+        ? <CalendarMonth events={events} newTab={newTab} />
+        : <CalendarEventList events={events} newTab={newTab} emptyText={emptyText} />}
+    </>
+  )
+}
