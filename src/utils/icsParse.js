@@ -170,6 +170,14 @@ export function parseIcs(text, nowDate) {
     const description = unescapeText(get('DESCRIPTION')?.value)
     const location = unescapeText(get('LOCATION')?.value)
     const uid = get('UID')?.value || String(bi)
+    // Online? A web link as the location, a conference link (Zoom, Meet,
+    // Teams, Webex) anywhere, or a location that just says "online".
+    const url = unescapeText(get('URL')?.value)
+    const conf = unescapeText(get('X-GOOGLE-CONFERENCE')?.value)
+    const urlIn = (t) => (/https?:\/\/[^\s<>"\\]+/i.exec(t || '') || [])[0] || ''
+    const confIn = (t) => (/https?:\/\/[^\s<>"\\]*(?:zoom\.us|meet\.google\.com|teams\.microsoft\.com|webex\.com|gotomeeting\.com)[^\s<>"\\]*/i.exec(t || '') || [])[0] || ''
+    const link = urlIn(location) || conf || confIn(description) || confIn(url)
+    const online = !!link || /^(online|virtual|webinar|zoom|google meet|microsoft teams)\b/i.test(location)
     const durationMs = end ? Math.max(0, end.date.getTime() - start.date.getTime()) : 0
     const rrule = get('RRULE')?.value
     const exdates = props.filter((p) => p.name === 'EXDATE').flatMap((p) => p.value.split(',').map((v) => parseDate({ value: v, params: p.params })?.date).filter(Boolean))
@@ -194,7 +202,9 @@ export function parseIcs(text, nowDate) {
         key: uid + '|' + s.toISOString(),
         title,
         description,
-        location,
+        location: online ? '' : location,
+        online,
+        link: online ? link : '',
         startsAt: s.toISOString(),
         endsAt: e ? e.toISOString() : null,
         allDay: start.allDay,
