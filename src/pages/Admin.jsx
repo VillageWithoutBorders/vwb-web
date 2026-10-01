@@ -56,6 +56,9 @@ export default function Admin() {
   const [taskIssues, setTaskIssues] = useState([])
   const [users, setUsers] = useState([])
   const [banTarget, setBanTarget] = useState(null)
+  const [banReportId, setBanReportId] = useState(null)
+  const [noteDrafts, setNoteDrafts] = useState({})
+  const [noteSaving, setNoteSaving] = useState(null)
   const [banRefresh, setBanRefresh] = useState(0)
   const [userQuery, setUserQuery] = useState('')
   const [userFilter, setUserFilter] = useState('all')
@@ -460,11 +463,15 @@ export default function Admin() {
       const withNames = await Promise.all(data.map(async (a) => {
         const { data: reporter, error: repErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.reporter_id).maybeSingle()
         reportError('loadAlerts:reporter', repErr)
-        const { data: reported, error: repdErr } = a.reported_user_id ? await supabase.from('helper_profiles').select('display_name').eq('user_id', a.reported_user_id).maybeSingle() : { data: null, error: null }
+        const { data: reported, error: repdErr } = a.reported_user_id ? await supabase.from('helper_profiles').select('display_name, role').eq('user_id', a.reported_user_id).maybeSingle() : { data: null, error: null }
         reportError('loadAlerts:reported', repdErr)
-        return { ...a, reporter_name: reporter?.display_name || 'Unknown', reported_name: a.reported_user_id ? (reported?.display_name || 'Unknown') : 'a removed account' }
+        return { ...a, reporter_name: reporter?.display_name || 'Unknown', reported_name: a.reported_user_id ? (reported?.display_name || 'Unknown') : 'a removed account', reported_role: reported?.role || null }
       }))
-      setAlerts(withNames)
+      const { data: noteRows, error: noteErr } = await supabase.from('user_report_notes').select('report_id, note')
+      reportError('loadAlerts:notes', noteErr)
+      const noteMap = {}
+      ;(noteRows || []).forEach(r => { noteMap[r.report_id] = r.note })
+      setAlerts(withNames.map(a => ({ ...a, admin_note: noteMap[a.id] || '' })))
     }
 
     // Tasks that went wrong, a helper who did not show, or something that felt off.
@@ -514,6 +521,23 @@ export default function Admin() {
     if (reportError('reviewReport', error, 'Could not update this report. Try again.')) return
     if (!data || data.length === 0) { alert('Could not update this report. Try again.'); return }
     await Promise.all([loadAlerts(), loadStats()])
+  }
+
+  async function saveReportNote(id) {
+    const text = (noteDrafts[id] ?? '').trim().slice(0, 1000)
+    setNoteSaving(id)
+    let err
+    if (text) {
+      const res = await supabase.from('user_report_notes').upsert({ report_id: id, note: text, updated_by: user.id, updated_at: new Date().toISOString() })
+      err = res.error
+    } else {
+      const res = await supabase.from('user_report_notes').delete().eq('report_id', id)
+      err = res.error
+    }
+    setNoteSaving(null)
+    if (reportError('saveReportNote', err, 'Could not save the note. Try again.')) return
+    setNoteDrafts(d => { const n = { ...d }; delete n[id]; return n })
+    await loadAlerts()
   }
 
   async function reviewTaskIssue(id, status) {
@@ -1025,12 +1049,21 @@ export default function Admin() {
         </>
       )}
 
+      {banTarget && (
+        <BanDialog
+          target={banTarget}
+          onClose={() => { setBanTarget(null); setBanReportId(null) }}
+          onDone={() => {
+            const reportId = banReportId
+            setBanTarget(null); setBanReportId(null); setBanRefresh(n => n + 1); loadUsers()
+            if (reportId) reviewReport(reportId, 'reviewed')
+          }}
+        />
+      )}
+
       {!loading && tab === 'users' && (
         <>
           <BannedAccountsPanel refreshKey={banRefresh} onChange={loadUsers} />
-          {banTarget && (
-            <BanDialog target={banTarget} onClose={() => setBanTarget(null)} onDone={() => { setBanTarget(null); setBanRefresh(n => n + 1); loadUsers() }} />
-          )}
           <div style={{ marginBottom: '0.75rem' }}>
             <label htmlFor="user-search" style={hiddenLabel}>Search people by name</label>
             <input id="user-search" type="search" value={userQuery} onChange={(e) => { setUserQuery(e.target.value); setUserLimit(USER_PAGE_SIZE) }} placeholder="Search by name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
@@ -1165,8 +1198,16 @@ export default function Admin() {
                 </p>
                 {a.reason && <p style={{ color: '#ddd', fontSize: '0.85rem', fontWeight: 600, margin: '0.2rem 0' }}>{a.reason}</p>}
                 {a.details && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{a.details}</p>}
+                <label htmlFor={'report-note-' + a.id} style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', margin: '0.6rem 0 0.25rem' }}>Private admin note (the person who reported cannot see this)</label>
+                <textarea id={'report-note-' + a.id} rows={2} maxLength={1000} value={noteDrafts[a.id] ?? a.admin_note} onChange={(e) => setNoteDrafts(d => ({ ...d, [a.id]: e.target.value }))} style={{ width: '100%', boxSizing: 'border-box', background: '#1a1a1a', color: '#ddd', border: '1px solid #333', borderRadius: '8px', padding: '0.5rem', fontSize: '1rem', fontFamily: 'inherit' }} />
+                {noteDrafts[a.id] !== undefined && noteDrafts[a.id].trim() !== a.admin_note && (
+                  <button type="button" disabled={noteSaving === a.id} onClick={() => saveReportNote(a.id)} style={{ ...linkBtn, minHeight: '44px' }}>{noteSaving === a.id ? 'Saving...' : 'Save note'}</button>
+                )}
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
                   {a.reported_user_id && <button type="button" onClick={() => navigate('/u/' + a.reported_user_id)} style={linkBtn}>View their profile</button>}
+                  {a.reported_user_id && a.reported_role !== 'founder' && a.reported_user_id !== user.id && (a.reported_role !== 'admin' || isFounder) && (
+                    <button type="button" onClick={() => { setBanReportId(a.id); setBanTarget({ userId: a.reported_user_id, name: a.reported_name, role: a.reported_role }) }} className="ban-row-btn">Ban</button>
+                  )}
                   {open && <button type="button" onClick={() => reviewReport(a.id, 'reviewed')} style={linkBtn}>Mark reviewed</button>}
                   {open && <button type="button" onClick={() => reviewReport(a.id, 'dismissed')} style={{ ...linkBtn, color: '#999' }}>Dismiss</button>}
                 </div>
