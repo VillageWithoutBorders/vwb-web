@@ -22,6 +22,15 @@ import { submitUserReport } from '../utils/submitUserReport'
 const GROUP_WINDOW_MS = 5 * 60 * 1000
 const POST_LIMIT = 300
 
+const REMOVE_REASONS = [
+  'Unsafe or threatening behavior',
+  'Harassing or bullying members',
+  'Scam, spam, or asking for money',
+  'Fake or pretend account',
+  'Not part of what this group is for',
+  'Something else',
+]
+
 const REPORT_REASONS = [
   'Harassing me or making me feel unsafe',
   'Threatening or unsafe behavior',
@@ -56,6 +65,10 @@ export default function GroupBoard() {
   const [results, setResults] = useState([])
   const [copied, setCopied] = useState(false)
   const [reportFor, setReportFor] = useState(null)
+  const [removeFor, setRemoveFor] = useState(null)
+  const [removeReason, setRemoveReason] = useState('')
+  const [removeBusy, setRemoveBusy] = useState(false)
+  const [removeError, setRemoveError] = useState('')
   const [reportReason, setReportReason] = useState('')
   const [reportDetails, setReportDetails] = useState('')
   const [reportState, setReportState] = useState('')
@@ -107,7 +120,7 @@ export default function GroupBoard() {
     const ids = (m || []).map(x => x.user_id)
     const [{ data: people, error: pErr }, { data: r, error: rErr }, { data: inv, error: iErr }] = await Promise.all([
       supabase.from('helper_profiles_public').select('user_id, display_name, avatar_url').in('user_id', ids),
-      supabase.from('community_group_removals').select('target_id, requested_by').eq('group_id', id),
+      supabase.rpc('community_group_removal_requests', { p_group: id }),
       supabase.from('community_group_invites').select('invitee_id').eq('group_id', id),
     ])
     if (pErr) console.error('Failed to load member names:', pErr)
@@ -257,18 +270,37 @@ export default function GroupBoard() {
     try { await navigator.clipboard.writeText(joinUrl); setCopied(true) } catch { setCopied(false); alert('Copy did not work. Press and hold the link to copy it.') }
   }
 
-  async function askRemove(member) {
+  // Opening a removal (or the steward removing alone) needs a reason from the
+  // list. Agreeing to someone else's request doesn't: you see their reason.
+  function askRemove(member) {
     const open = removals.find(r => r.target_id === member.userId)
-    const msg = group?.steward_id === user.id
-      ? 'Remove ' + member.name + ' now? As steward, you can do this without a second member.'
-      : open
-      ? 'Agree to remove ' + member.name + '? They will be removed from the group right away.'
-      : 'Ask to remove ' + member.name + '? A second member has to agree before it happens. ' + member.name + " won't see this request."
-    if (!confirm(msg)) return
-    const { data, error } = await supabase.rpc('request_community_group_removal', { p_group: id, p_target: member.userId })
-    if (error) { console.error('Removal request failed:', error); alert('Could not do that. Try again.'); return }
+    if (open && group?.steward_id !== user.id) {
+      const why = open.reason ? ' Reason given: ' + open.reason + '.' : ''
+      if (!confirm('Agree to remove ' + member.name + '?' + why + ' They will be removed from the group right away.')) return
+      doRemove(member, null)
+      return
+    }
+    setRemoveFor(member)
+    setRemoveReason('')
+    setRemoveError('')
+  }
+
+  async function doRemove(member, reason) {
+    const { data, error } = await supabase.rpc('request_community_group_removal', { p_group: id, p_target: member.userId, p_reason: reason })
+    if (error) { console.error('Removal request failed:', error); return { error } }
     if (data === 'removed') alert(member.name + ' was removed from the group.')
     loadGroup()
+    return {}
+  }
+
+  async function submitRemove() {
+    if (!removeReason) { setRemoveError('Pick a reason.'); return }
+    setRemoveBusy(true)
+    setRemoveError('')
+    const { error } = await doRemove(removeFor, removeReason)
+    setRemoveBusy(false)
+    if (error) { setRemoveError('Could not do that. Try again.'); return }
+    setRemoveFor(null)
   }
 
   async function letIn(person) {
@@ -514,7 +546,7 @@ export default function GroupBoard() {
               return (
                 <div key={m.userId} className="group-member">
                   <AvatarDisplay url={m.avatar} userId={m.userId} size={32} />
-                  <span className="group-member-name">{m.name}{isMe ? ' (you)' : ''}{isSteward ? <span className="group-steward-badge">Steward</span> : null}{group.steward_offer_to === m.userId ? <span className="group-member-sub">Asked to take over as steward</span> : null}{open && !isMe ? <span className="group-member-flag">{mine ? ' · you asked to remove' : ' · a member asked to remove'}</span> : null}</span>
+                  <span className="group-member-name">{m.name}{isMe ? ' (you)' : ''}{isSteward ? <span className="group-steward-badge">Steward</span> : null}{group.steward_offer_to === m.userId ? <span className="group-member-sub">Asked to take over as steward</span> : null}{open && !isMe ? <span className="group-member-flag">{mine ? ' · you asked to remove' : ' · a member asked to remove'}</span> : null}{open && !isMe && open.reason ? <span className="group-member-sub">Reason: {open.reason}</span> : null}</span>
                   {!isMe && (
                     <span className="group-member-actions">
                       {isSteward
@@ -535,6 +567,34 @@ export default function GroupBoard() {
             })}
 
             <button type="button" className="btn btn-outline btn-full group-leave-btn" onClick={leave}>Leave group</button>
+          </div>
+        </>
+      )}
+
+      {removeFor && (
+        <>
+          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setRemoveFor(null)} />
+          <div role="dialog" aria-modal="true" aria-labelledby="group-remove-title" className="app-dialog">
+            <h2 id="group-remove-title">Remove {removeFor.name}?</h2>
+            <p className="groups-note">
+              {group?.steward_id === user.id
+                ? 'As steward, you can do this now. Pick the reason.'
+                : 'A second member has to agree before it happens. They will see the reason you pick. ' + removeFor.name + " won't see this request."}
+            </p>
+            <fieldset className="group-fieldset">
+              <legend>Why?</legend>
+              {REMOVE_REASONS.map(r => (
+                <label key={r} className="group-radio">
+                  <input type="radio" name="group-remove-reason" value={r} checked={removeReason === r} onChange={() => { setRemoveReason(r); setRemoveError('') }} />
+                  {r}
+                </label>
+              ))}
+            </fieldset>
+            {removeError && <p className="groups-error" role="alert">{removeError}</p>}
+            <div className="groups-actions">
+              <button type="button" className="btn btn-outline" onClick={() => setRemoveFor(null)}>Cancel</button>
+              <button type="button" className="btn btn-primary" onClick={submitRemove} disabled={removeBusy}>{removeBusy ? 'Sending...' : (group?.steward_id === user.id ? 'Remove now' : 'Ask to remove')}</button>
+            </div>
           </div>
         </>
       )}
