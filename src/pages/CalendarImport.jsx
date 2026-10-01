@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -34,6 +34,16 @@ export default function CalendarImport() {
   const [zipState, setZipState] = useState('')
   const [visibility, setVisibility] = useState('public')
   const [allAges, setAllAges] = useState(false)
+  // Per-event privacy. Anything not listed here uses the setting above.
+  const [overrides, setOverrides] = useState({})
+  const [helpOpen, setHelpOpen] = useState(false)
+
+  useEffect(() => {
+    if (!helpOpen) return
+    const onKey = (e) => { if (e.key === 'Escape') setHelpOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [helpOpen])
 
   const [fileName, setFileName] = useState('')
   const [parsed, setParsed] = useState(null)
@@ -56,6 +66,7 @@ export default function CalendarImport() {
   async function changeHost(value) {
     setHost(value)
     if (value === VWB_HOST && visibility === 'members') setVisibility('public')
+    if (value === VWB_HOST) setOverrides((o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== 'members')))
     if (parsed) {
       const dup = await findDuplicates(parsed.events, value)
       setDupes(dup)
@@ -126,7 +137,7 @@ export default function CalendarImport() {
       latitude: place.lat,
       longitude: place.lng,
       show_radius_miles: 25,
-      visibility,
+      visibility: overrides[ev.key] || visibility,
       hide_address: false,
       signup_enabled: false,
       signup_limit: null,
@@ -178,8 +189,29 @@ export default function CalendarImport() {
     <div className="cal-page">
       <div className="cal-head">
         <h1>Bring in events</h1>
-        <button type="button" onClick={() => navigate('/calendar')} className="link-button" style={{ minHeight: '44px' }}>Cancel</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button type="button" className="imp-help-btn" onClick={() => setHelpOpen(true)} aria-label="How bringing in events works" aria-haspopup="dialog">?</button>
+          <button type="button" onClick={() => navigate('/calendar')} className="link-button" style={{ minHeight: '44px' }}>Cancel</button>
+        </div>
       </div>
+      {helpOpen && (
+        <div className="imp-modal-back" onClick={() => setHelpOpen(false)}>
+          <div className="imp-modal" role="dialog" aria-modal="true" aria-labelledby="imp-help-title" onClick={(e) => e.stopPropagation()}>
+            <h2 id="imp-help-title">How to bring in events</h2>
+            <p className="cal-sub" style={{ marginTop: 0 }}>You copy events from another calendar, one time. Nothing stays connected.</p>
+            <ol>
+              <li><strong>Export your calendar.</strong> In Google, Apple, or Outlook, export it as an .ics file. Google on a computer: Settings, Import and export, Export. It gives you a zip, so open it and find the .ics file. Facebook: open the event, tap the three dots, then Add to calendar.</li>
+              <li><strong>Choose the file here.</strong> Tap "Choose the .ics file" and pick it. It is read right on your device. Nothing is posted yet.</li>
+              <li><strong>Pick who hosts and where.</strong> Choose the host, then type the zip code where the events happen. Wait for the green check and the town name.</li>
+              <li><strong>Choose who can see them.</strong> That sets all the events. You can change any single event in the list afterward.</li>
+              <li><strong>Tick the events you want.</strong> Past events are left out, and events already on your calendar are greyed out so nothing doubles.</li>
+              <li><strong>Tap "Bring in."</strong> Your events show on the calendar right away. Open one to add volunteer sign-ups, hide an address, or fix a detail.</li>
+            </ol>
+            <p className="cal-sub">Events you bring in are adults 18 and over unless you tick "All ages welcome."</p>
+            <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} onClick={() => setHelpOpen(false)} autoFocus>Got it</button>
+          </div>
+        </div>
+      )}
       <p className="cal-sub">Copy events from another calendar into Village Without Borders. It copies once, in one direction. Changes you make later on either side do not follow.</p>
 
       {error && <p className="cal-error" role="alert">{error}</p>}
@@ -221,7 +253,8 @@ export default function CalendarImport() {
         </p>
       </div>
 
-      <h3 style={{ fontSize: '1rem', margin: '0.75rem 0 0.5rem' }}>Who can see them?</h3>
+      <h3 style={{ fontSize: '1rem', margin: '0.75rem 0 0.25rem' }}>Who can see them?</h3>
+      <p className="cal-sub" style={{ marginTop: 0 }}>This sets every event. You can change one event at a time in step 3.</p>
       {Object.entries(VISIBILITY).map(([key, v]) => {
         const disabled = key === 'members' && host === VWB_HOST
         return (
@@ -260,12 +293,23 @@ export default function CalendarImport() {
                 {parsed.events.map((ev) => {
                   const isDupe = dupes.has(ev.key)
                   return (
-                    <label key={ev.key} className={'cal-choice' + (picked.has(ev.key) ? ' is-on' : '') + (isDupe ? ' is-disabled' : '')}>
-                      <input type="checkbox" checked={picked.has(ev.key)} disabled={isDupe} onChange={() => toggle(ev.key)} />
-                      <span>{ev.title}
-                        <small>{when(ev)}{ev.location ? ' · ' + ev.location : ''}{isDupe ? ' · Already on your calendar' : ''}</small>
-                      </span>
-                    </label>
+                    <div key={ev.key}>
+                      <label className={'cal-choice' + (picked.has(ev.key) ? ' is-on' : '') + (isDupe ? ' is-disabled' : '')} style={picked.has(ev.key) ? { marginBottom: '0.25rem' } : undefined}>
+                        <input type="checkbox" checked={picked.has(ev.key)} disabled={isDupe} onChange={() => toggle(ev.key)} />
+                        <span>{ev.title}
+                          <small>{when(ev)}{ev.location ? ' · ' + ev.location : ''}{isDupe ? ' · Already on your calendar' : ''}</small>
+                        </span>
+                      </label>
+                      {picked.has(ev.key) && (
+                        <div className="form-field" style={{ margin: '0 0 0.75rem 0.5rem' }}>
+                          <label htmlFor={'imp-vis-' + ev.key} style={{ fontSize: '0.85rem' }}>Who can see this one?</label>
+                          <select id={'imp-vis-' + ev.key} value={overrides[ev.key] || ''} onChange={(e) => setOverrides((o) => { const n = { ...o }; if (e.target.value) n[ev.key] = e.target.value; else delete n[ev.key]; return n })}>
+                            <option value="">Same as above ({VISIBILITY[visibility].label})</option>
+                            {Object.entries(VISIBILITY).map(([k, v]) => <option key={k} value={k} disabled={k === 'members' && host === VWB_HOST}>{v.label}</option>)}
+                          </select>
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
               </div>
