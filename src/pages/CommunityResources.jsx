@@ -451,7 +451,7 @@ export default function CommunityResources() {
                       </button>
                     )}
                     <label htmlFor="sub-hood" style={labelStyle}>Neighborhood or area (optional)</label>
-                    <input id="sub-hood" style={fieldStyle} placeholder="e.g. Ringgold, Catoosa County" value={subHood} onChange={e => setSubHood(e.target.value)} />
+                    <input id="sub-hood" style={fieldStyle} placeholder="Town or county" value={subHood} onChange={e => setSubHood(e.target.value)} />
                     <label htmlFor="sub-requirements" style={labelStyle}>What to bring or know before you go (optional)</label>
                     <textarea id="sub-requirements" style={{ ...fieldStyle, minHeight: '50px', resize: 'vertical' }} placeholder="e.g. Photo ID and proof of address, first-come-first-served, no appointment needed" value={subRequirements} onChange={e => setSubRequirements(e.target.value)} maxLength={300} />
                     <button onClick={submitResource} disabled={!subName.trim() || !subCats.length || submitting} style={{ padding: '0.75rem 1.25rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: (!subName.trim() || !subCats.length || submitting) ? 0.5 : 1 }}>

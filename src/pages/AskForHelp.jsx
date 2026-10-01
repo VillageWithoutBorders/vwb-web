@@ -250,7 +250,7 @@ export default function AskForHelp() {
                         type="text"
                         value={neighborhood}
                         onChange={(e) => setNeighborhood(e.target.value)}
-                        placeholder="e.g., Ringgold, Fort Oglethorpe"
+                        placeholder="Your town or neighborhood"
                     />
                     <span className="field-hint">
                         Just your town or neighborhood. We never share your exact address.
