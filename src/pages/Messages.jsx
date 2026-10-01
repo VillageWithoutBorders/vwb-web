@@ -8,6 +8,7 @@ import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import AvatarDisplay from '../components/AvatarDisplay'
+import MessageRequests from '../components/MessageRequests'
 import { decryptFromSender, getDeviceId, flushOutbox, getQueuedMessages } from '../lib/e2ee'
 
 const DISAPPEAR_STEPS = [
@@ -870,6 +871,8 @@ export default function Messages() {
           <button style={tabStyle(activeFolder === 'archived')} onClick={() => setActiveFolder('archived')}>Archived ({archivedCount})</button>
         )}
       </div>
+
+      {activeFolder === 'all' && <MessageRequests />}
 
       {loading && <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>Loading...</p>}
       {!loading && sorted.length === 0 && !showCampfireCard && pendingOffers.length === 0 && myOutgoingOffers.length === 0 && (
