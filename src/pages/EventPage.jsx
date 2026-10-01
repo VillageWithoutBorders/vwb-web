@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useBlockedBy } from '../utils/blockedBy'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -15,6 +16,7 @@ export default function EventPage() {
   const [params] = useSearchParams()
   const token = params.get('invite')
   const navigate = useNavigate()
+  const blockedBy = useBlockedBy()
   const { user, profile, loading: authLoading, refreshProfile } = useAuth()
 
   const [ev, setEv] = useState(null)
@@ -267,7 +269,7 @@ export default function EventPage() {
                   <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.6 }}>
                     {signups.map((s) => (
                       <li key={s.user_id}>
-                        <Link to={'/u/' + s.user_id} style={{ color: '#4ecca3' }}>{s.display_name}</Link>
+                        {blockedBy.has(s.user_id) ? <span>{s.display_name}</span> : <Link to={'/u/' + s.user_id} style={{ color: '#4ecca3' }}>{s.display_name}</Link>}
                         {s.note ? <span style={{ color: 'var(--text-secondary)' }}>: {s.note}</span> : null}
                       </li>
                     ))}
