@@ -21,7 +21,10 @@ export const TYPE_ICONS = {
   report_reviewed: '\u2705',
   group_removal_request: '\u{1F525}',
   campfire: '\u{1F525}',
-  calendar_signup: '\u{1F4C5}'
+  calendar_signup: '\u{1F4C5}',
+  affiliation_request: '\u{1F91D}',
+  affiliation_accepted: '\u{1F91D}',
+  affiliation_ended: '\u{1F91D}'
 }
 
 export const TYPE_COLORS = {
@@ -44,7 +47,10 @@ export const TYPE_COLORS = {
   report_reviewed: '#10b981',
   group_removal_request: '#f59e0b',
   campfire: '#e8833a',
-  calendar_signup: '#4ecca3'
+  calendar_signup: '#4ecca3',
+  affiliation_request: '#4ecca3',
+  affiliation_accepted: '#4ecca3',
+  affiliation_ended: '#8a8a8a'
 }
 
 export function timeAgo(dateStr) {

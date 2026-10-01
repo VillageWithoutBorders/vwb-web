@@ -6,6 +6,7 @@ import { fetchCalendarEvents } from '../utils/calendar'
 import { CalendarEventList } from '../components/CalendarParts'
 import { resourceCats } from '../utils/resourceCategories'
 import QrShare from '../components/QrShare'
+import OrgLinks from '../components/OrgLinks'
 
 // One organization: who they are, what's coming up, what they share, and
 // how to reach them. Organizers can set the group's home area here.
@@ -23,6 +24,7 @@ export default function OrgPage() {
   const [loading, setLoading] = useState(true)
   const [missing, setMissing] = useState(false)
   const [events, setEvents] = useState([])
+  const [allEvents, setAllEvents] = useState([])
   const [resources, setResources] = useState([])
 
   const [zip, setZip] = useState('')
@@ -40,7 +42,7 @@ export default function OrgPage() {
   async function loadOrg() {
     const { data, error } = await supabase
       .from('organizations')
-      .select('id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email')
+      .select('id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label')
       .eq('id', id)
       .eq('approved', true)
       .maybeSingle()
@@ -69,6 +71,7 @@ export default function OrgPage() {
     ]).then(([, ev, res]) => {
       if (!alive) return
       const now = Date.now()
+      setAllEvents(ev.events || [])
       setEvents((ev.events || [])
         .filter((e) => e.organization_id === id && e.status !== 'cancelled' && new Date(e.ends_at || e.starts_at).getTime() >= now)
         .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at)))
@@ -166,6 +169,8 @@ export default function OrgPage() {
         </div>
         <CalendarEventList events={events} emptyText="No upcoming events from this group yet." />
       </section>
+
+      <OrgLinks org={org} canManage={canManage} events={allEvents} onChanged={loadOrg} />
 
       <section className="hub-section" aria-labelledby="org-resources">
         <div className="hub-section-head">
