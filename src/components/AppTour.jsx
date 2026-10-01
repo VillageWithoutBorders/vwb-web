@@ -18,7 +18,7 @@ import { supabase } from '../supabaseClient'
 
 const START_EVENT = 'vwb:start-tour'
 
-const STEPS = [
+const ALL_STEPS = [
   {
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
@@ -28,13 +28,18 @@ const STEPS = [
     tab: 'home',
     icon: '\u{1F64B}',
     title: 'Home',
-    body: 'Need a hand? Tap Ask for Help. Pick what you need and how soon. Neighbors near you will see it, and your address is never shown. The Calendar is here too, with events and volunteer sign-ups near you.',
+    body: 'Need a hand? Tap Ask for Help. Pick what you need and how soon. Neighbors near you will see it, and your address is never shown. You can fix a request later if something changes. The Calendar, My Groups, and the Village Map are here too.',
   },
   {
     tab: 'community',
     icon: '\u{1F4DA}',
     title: 'Community',
-    body: "See what's happening near you and who is organizing. Find local help like food pantries and clinics. You can even start a group with your neighbors.",
+    body: "See what's happening near you and who is organizing. Find local help like food pantries and clinics. You can even start a group with your neighbors. Standing next to a friend? Open your group and tap Show QR code. They scan it with their phone camera to join.",
+  },
+  {
+    icon: '\u{1F5FA}\uFE0F',
+    title: 'The village map',
+    body: 'Find Village Map on Home. It shows every village on a map, and as a web that shows how villages connect. Tap a village to see its name and size. Only places and rough numbers show, never people.',
   },
   {
     tab: 'skillshare',
@@ -46,7 +51,13 @@ const STEPS = [
     tab: 'messages',
     icon: '\u{1F4AC}',
     title: 'Messages',
-    body: "Talk with neighbors and your groups here. Tap ⋯ on a chat to mark it unread or flag it to follow up. Don't want to hear from someone? Block them.",
+    body: "Talk with neighbors and your groups here. Tap ⋯ on a chat to mark it unread or flag it to follow up. Don't want to hear from someone? Block them. Messages stay private, and you can turn read receipts on or off in Settings.",
+  },
+  {
+    only: 'campfire',
+    icon: '\u{1F525}',
+    title: 'The Campfire',
+    body: 'Hope Ambassadors, admins, and the founder meet at the Campfire, pinned at the top of Messages. It has a General board and one board for each village. Tap a message\u2019s \u22EF to reply to it or edit your own. Every message shows when it was sent.',
   },
   {
     tab: 'tasks',
@@ -69,10 +80,16 @@ const STEPS = [
     top: true,
     icon: '☰',
     title: 'Alerts and Menu',
-    body: 'At the top right, Alerts shows what is new for you. Menu has your settings, help, and Log out. Tap the logo any time to go Home.',
+    body: 'At the top right, Alerts shows what is new for you. Menu has your settings, help, and Log out. In Settings you can turn on phone notifications, change your password, add two-step login, and see your devices. Tap the logo any time to go Home.',
     last: 'You can take this tour again any time from Menu, Help, or Settings.',
   },
 ]
+
+// Everyone sees the same walk-through, except steps marked for a smaller group.
+function stepsFor(profile, isAdmin) {
+  const hasCampfire = !!(profile?.is_hope_ambassador || isAdmin)
+  return ALL_STEPS.filter((st) => !st.only || (st.only === 'campfire' && hasCampfire))
+}
 
 // Call from anywhere (Menu, Help, Settings) to replay the tour.
 export function startAppTour() {
@@ -80,7 +97,7 @@ export function startAppTour() {
 }
 
 export default function AppTour() {
-  const { user, profile, refreshProfile } = useAuth()
+  const { user, profile, isAdmin, refreshProfile } = useAuth()
   // Only when the column exists and is empty. If the database step hasn't
   // been run yet, the tour never forces itself on anyone.
   const needsTour = !!profile && Object.prototype.hasOwnProperty.call(profile, 'tour_done_at') && !profile.tour_done_at
@@ -90,7 +107,8 @@ export default function AppTour() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const headingRef = useRef(null)
-  const step = STEPS[index]
+  const STEPS = stepsFor(profile, isAdmin)
+  const step = STEPS[index] || STEPS[0]
   const isLast = index === STEPS.length - 1
 
   // First time for a new member: open it, and it has to be finished.
