@@ -28,6 +28,19 @@ export default function Profile() {
   const [displayName, setDisplayName] = useState('')
   const [zipCode, setZipCode] = useState('')
   const [neighborhood, setNeighborhood] = useState('')
+  // Towns near the typed zip code, for the area dropdown.
+  const [townOptions, setTownOptions] = useState([])
+  const [hoodOther, setHoodOther] = useState(false)
+  useEffect(() => {
+    if (zipCode.length !== 5) { setTownOptions([]); return }
+    let alive = true
+    supabase.rpc('nearby_towns', { p_zip: zipCode, p_miles: 10 }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('nearby_towns', error); setTownOptions([]); return }
+      setTownOptions((data || []).map((t) => t.city + ', ' + t.state))
+    })
+    return () => { alive = false }
+  }, [zipCode])
   const [selectedSkills, setSelectedSkills] = useState([])
   const [radiusMiles, setRadiusMiles] = useState(10)
 
@@ -456,7 +469,7 @@ function captureCoverageLocation() {
             <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: '#66aaff' }}>Set up your coverage area</h2>
             <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Emergency dispute reviews (a false alarm or duplicate flag) route to the nearest admin, so add your area and share your location to catch the ones near you. Reports about a person or message go to every admin right away, wherever they're located.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <input type="text" placeholder="What area do you cover? (e.g. Ringgold, Chickamauga)" value={coverageRegion} onChange={e => setCoverageRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
+              <input type="text" placeholder="What area do you cover? (towns or counties)" value={coverageRegion} onChange={e => setCoverageRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
               <button type="button" className="btn btn-outline" onClick={captureCoverageLocation} disabled={coverageLocating} style={{ borderColor: '#66aaff', color: '#66aaff' }}>
                 {coverageLocating ? 'Getting your location...' : coverageLat != null ? '✓ Location captured' : 'Share my location'}
               </button>
@@ -475,7 +488,7 @@ function captureCoverageLocation() {
               <button className="btn btn-outline btn-full" onClick={() => setShowAdminApp(true)} style={{ borderColor: '#66aaff', color: '#66aaff' }}>Start Application</button>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <input type="text" placeholder="What area would you cover? (e.g. Ringgold, Chickamauga)" value={adminAppRegion} onChange={e => setAdminAppRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
+                <input type="text" placeholder="What area would you cover? (towns or counties)" value={adminAppRegion} onChange={e => setAdminAppRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
                 <textarea placeholder="Why do you want to help coordinate? What experience do you bring?" value={adminAppReason} onChange={e => setAdminAppReason(e.target.value)} rows={3} maxLength={500} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem', resize: 'vertical' }} />
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button className="btn btn-outline" onClick={() => { setShowAdminApp(false); setAdminAppRegion(''); setAdminAppReason('') }} disabled={adminAppSaving}>Cancel</button>
@@ -544,7 +557,37 @@ function captureCoverageLocation() {
         </div>
         <div className="form-field">
           <label htmlFor="editHood">Neighborhood or area</label>
-          <input id="editHood" type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="e.g., Fort Oglethorpe, Ringgold" />
+          {townOptions.length === 0 ? (
+            <>
+              <input id="editHood" type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Your town or neighborhood" />
+              <span className="field-hint">Enter your zip code above and we'll list the towns near you.</span>
+            </>
+          ) : (
+            <>
+              <select
+                id="editHood"
+                value={hoodOther || (neighborhood && !townOptions.includes(neighborhood)) ? '__other' : neighborhood}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v === '__other') { setHoodOther(true); if (townOptions.includes(neighborhood)) setNeighborhood('') }
+                  else { setHoodOther(false); setNeighborhood(v) }
+                }}
+              >
+                <option value="">Choose your area</option>
+                {townOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+                <option value="__other">Somewhere else (type it)</option>
+              </select>
+              {(hoodOther || (neighborhood && !townOptions.includes(neighborhood))) && (
+                <input type="text" aria-label="Type your neighborhood or area" style={{ marginTop: '0.5rem' }} value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Your neighborhood or subdivision" />
+              )}
+              {!hoodOther && neighborhood && !townOptions.includes(neighborhood) && (
+                <span className="field-hint">"{neighborhood}" isn't one of the towns near this zip code. Pick a town from the list, or keep it if it's right.</span>
+              )}
+              {(!neighborhood || townOptions.includes(neighborhood)) && !hoodOther && (
+                <span className="field-hint">Towns near {zipCode}. Only you and VWB admins see your zip. The area shows on posts you make.</span>
+              )}
+            </>
+          )}
         </div>
         <div className="form-field">
           <label>Skills</label>
