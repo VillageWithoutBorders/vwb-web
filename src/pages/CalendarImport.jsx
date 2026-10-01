@@ -121,7 +121,8 @@ export default function CalendarImport() {
 
   async function doImport() {
     setError('')
-    if (!place) { setError('Enter the zip code where these events happen first.'); return }
+    const needsZip = parsed.events.some((ev) => picked.has(ev.key) && !ev.online)
+    if (needsZip && !place) { setError('Enter the zip code where these events happen first.'); return }
     if (picked.size === 0) { setError('Tick at least one event to bring over.'); return }
     setBusy(true)
     const rows = parsed.events.filter((ev) => picked.has(ev.key)).map((ev) => ({
@@ -131,11 +132,11 @@ export default function CalendarImport() {
       description: ev.description ? ev.description.slice(0, 4000) : null,
       starts_at: ev.startsAt,
       ends_at: ev.endsAt,
-      location_name: ev.location ? ev.location.slice(0, 200) : null,
+      location_name: !ev.online && ev.location ? ev.location.slice(0, 200) : null,
       address: null,
-      town: place.name,
-      latitude: place.lat,
-      longitude: place.lng,
+      town: ev.online ? null : place.name,
+      latitude: ev.online ? null : place.lat,
+      longitude: ev.online ? null : place.lng,
       show_radius_miles: 25,
       visibility: overrides[ev.key] || visibility,
       hide_address: false,
@@ -143,6 +144,8 @@ export default function CalendarImport() {
       signup_limit: null,
       all_ages: allAges,
       teens_can_help: false,
+      is_online: !!ev.online,
+      online_link: ev.online && ev.link ? ev.link.slice(0, 500) : null,
     }))
     let added = 0
     for (let i = 0; i < rows.length; i += 25) {
@@ -204,7 +207,7 @@ export default function CalendarImport() {
               <li><strong>Choose the file here.</strong> Tap "Choose the .ics file" and pick it. It is read right on your device. Nothing is posted yet.</li>
               <li><strong>Pick who hosts and where.</strong> Choose the host, then type the zip code where the events happen. Wait for the green check and the town name.</li>
               <li><strong>Choose who can see them.</strong> That sets all the events. You can change any single event in the list afterward.</li>
-              <li><strong>Tick the events you want.</strong> Past events are left out, and events already on your calendar are greyed out so nothing doubles.</li>
+              <li><strong>Tick the events you want.</strong> Past events are left out, and events already on your calendar are greyed out so nothing doubles. Events with a Zoom, Meet, or Teams link are marked Online and show for people everywhere.</li>
               <li><strong>Tap "Bring in."</strong> Your events show on the calendar right away. Open one to add volunteer sign-ups, hide an address, or fix a detail.</li>
             </ol>
             <p className="cal-sub">Events you bring in are adults 18 and over unless you tick "All ages welcome."</p>
@@ -249,7 +252,7 @@ export default function CalendarImport() {
           {zipState === 'looking' && 'Looking it up...'}
           {zipState === 'notfound' && "We couldn't find that zip code. Check it and try again."}
           {!zipState && place && <>&#10003; {place.name}. All the events in this file are placed here. You can change one later by editing it.</>}
-          {!zipState && !place && 'One zip for the whole file. The calendar uses it to show the town and reach people nearby.'}
+          {!zipState && !place && 'One zip for the whole file. The calendar uses it to show the town and reach people nearby. Online events (with a Zoom or Meet link) skip it and show for everyone.'}
         </p>
       </div>
 
@@ -297,7 +300,7 @@ export default function CalendarImport() {
                       <label className={'cal-choice' + (picked.has(ev.key) ? ' is-on' : '') + (isDupe ? ' is-disabled' : '')} style={picked.has(ev.key) ? { marginBottom: '0.25rem' } : undefined}>
                         <input type="checkbox" checked={picked.has(ev.key)} disabled={isDupe} onChange={() => toggle(ev.key)} />
                         <span>{ev.title}
-                          <small>{when(ev)}{ev.location ? ' · ' + ev.location : ''}{isDupe ? ' · Already on your calendar' : ''}</small>
+                          <small>{when(ev)}{ev.online ? ' · Online' : ev.location ? ' · ' + ev.location : ''}{isDupe ? ' · Already on your calendar' : ''}</small>
                         </span>
                       </label>
                       {picked.has(ev.key) && (

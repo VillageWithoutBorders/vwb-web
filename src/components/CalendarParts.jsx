@@ -40,7 +40,7 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
           ? 'Looking up that zip code...'
           : origin
             ? <><span aria-hidden="true">&#10003; </span>Location set: <strong>{origin.name}{origin.zip ? ' (' + origin.zip + ')' : ''}</strong>. Showing events within {miles} miles.</>
-            : "No location set yet, so every event shows. Enter a zip code to see what's close to you."}
+            : "No location set yet, so you only see online events. Enter a zip code to see events near you."}
         {origin && origin.kind === 'zip' && !homeArea && (
           <button type="button" className="link-button" style={{ minHeight: '44px', marginLeft: '0.5rem' }} onClick={() => onOriginChange(null)}>Clear</button>
         )}
@@ -91,6 +91,7 @@ function badges(ev) {
   if (ev.visibility === 'account') out.push([VISIBILITY.account.label, 'cal-badge-private'])
   if (ev.visibility === 'members') out.push([VISIBILITY.members.label, 'cal-badge-private'])
   if (ev.visibility === 'invite') out.push([VISIBILITY.invite.label, 'cal-badge-private'])
+  if (ev.is_online) out.push(['Online', ''])
   if (ev.all_ages) out.push(['All ages', ''])
   else if (ev.status !== 'cancelled' && !hasEnded(ev)) out.push(['Adults 18+', ''])
   if (ev.teens_can_help) out.push(['Teens can help with a parent', ''])
@@ -103,7 +104,7 @@ function badges(ev) {
 }
 
 export function CalendarEventCard({ ev, newTab }) {
-  const where = [ev.town, ev.miles != null ? (ev.miles < 1 ? 'nearby' : Math.round(ev.miles) + ' mi away') : null].filter(Boolean).join(' · ')
+  const where = ev.is_online ? 'Online' : [ev.town, ev.miles != null ? (ev.miles < 1 ? 'nearby' : Math.round(ev.miles) + ' mi away') : null].filter(Boolean).join(' · ')
   const inner = (
     <>
       <span className="cal-card-time">{timeRange(ev)}</span>

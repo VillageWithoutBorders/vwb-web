@@ -48,6 +48,8 @@ export default function CalendarEventForm() {
     signupLimit: '',
     allAges: false,
     teensCanHelp: false,
+    online: false,
+    onlineLink: '',
   })
   // New events start by picking a kind of event (see eventTemplates.js),
   // or "Start from scratch". null = still choosing.
@@ -78,6 +80,8 @@ export default function CalendarEventForm() {
         signupLimit: data.signup_limit ? String(data.signup_limit) : '',
         allAges: !!data.all_ages,
         teensCanHelp: !!data.teens_can_help,
+        online: !!data.is_online,
+        onlineLink: data.online_link || '',
       })
       if (data.town && data.latitude != null && data.longitude != null) {
         setPlace({ name: data.town, lat: Number(data.latitude), lng: Number(data.longitude) })
@@ -152,18 +156,22 @@ export default function CalendarEventForm() {
     const limit = form.signupLimit ? parseInt(form.signupLimit, 10) : null
     if (form.signupEnabled && form.signupLimit && (!limit || limit < 1)) { setError('The number of spots should be 1 or more, or left blank for no limit.'); return }
 
-    if (!place) { setError("Enter the zip code where the event is happening."); return }
+    let link = form.onlineLink.trim()
+    if (form.online) {
+      if (!link) { setError('Add the link people use to join the online event.'); return }
+      if (!/^https?:\/\//i.test(link)) link = 'https://' + link
+    } else if (!place) { setError("Enter the zip code where the event is happening."); return }
     const row = {
       organization_id: form.host === VWB_HOST ? null : form.host,
       title: form.title.trim(),
       description: form.description.trim() || null,
       starts_at: startsAt,
       ends_at: endsAt,
-      location_name: form.locationName.trim() || null,
-      address: form.address.trim() || null,
-      town: place.name,
-      latitude: place.lat,
-      longitude: place.lng,
+      location_name: form.online ? null : form.locationName.trim() || null,
+      address: form.online ? null : form.address.trim() || null,
+      town: form.online ? null : place.name,
+      latitude: form.online ? null : place.lat,
+      longitude: form.online ? null : place.lng,
       show_radius_miles: form.radius,
       visibility: form.visibility,
       hide_address: form.hideAddress,
@@ -171,6 +179,8 @@ export default function CalendarEventForm() {
       signup_limit: form.signupEnabled ? limit : null,
       all_ages: form.allAges,
       teens_can_help: form.allAges && form.teensCanHelp,
+      is_online: form.online,
+      online_link: form.online ? link : null,
     }
 
     setSaving(true)
@@ -282,6 +292,29 @@ export default function CalendarEventForm() {
           </div>
         </div>
 
+        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Where is it?</h2>
+        <label className={'cal-choice' + (form.online ? ' is-on' : '')}>
+          <input type="checkbox" checked={form.online} onChange={(e) => set('online', e.target.checked)} />
+          <span>This is an online event
+            <small>There is no place to travel to. It shows for people everywhere, so anyone in the country can find it.</small>
+          </span>
+        </label>
+        {form.online && (
+          <>
+            <div className="form-field">
+              <label htmlFor="ev-link">Link to join</label>
+              <input id="ev-link" type="url" inputMode="url" autoComplete="url" maxLength={500} value={form.onlineLink} onChange={(e) => set('onlineLink', e.target.value)} placeholder="https://" />
+            </div>
+            <label className={'cal-choice' + (form.hideAddress ? ' is-on' : '')}>
+              <input type="checkbox" checked={form.hideAddress} onChange={(e) => set('hideAddress', e.target.checked)} />
+              <span>Only show the link to people who sign up
+                <small>Everyone else sees that it is online, but not the link.</small>
+              </span>
+            </label>
+          </>
+        )}
+        {!form.online && (
+          <>
         <div className="form-field">
           <label htmlFor="ev-zip">{editing && place ? 'Zip code (to change the town)' : 'Zip code where it\'s happening'}</label>
           <input id="ev-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} value={zip} onChange={(e) => changeZip(e.target.value)} placeholder="12345" aria-describedby="ev-zip-note" required={!place} />
@@ -306,6 +339,8 @@ export default function CalendarEventForm() {
             <small>Everyone else just sees the town. Good for events at someone's home.</small>
           </span>
         </label>
+          </>
+        )}
 
         <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Who can see it?</h2>
         {Object.entries(VISIBILITY).map(([key, v]) => {
@@ -318,7 +353,7 @@ export default function CalendarEventForm() {
           )
         })}
 
-        {(form.visibility === 'public' || form.visibility === 'account') && (
+        {(form.visibility === 'public' || form.visibility === 'account') && !form.online && (
           <div className="form-field" style={{ marginTop: '0.75rem' }}>
             <label htmlFor="ev-radius">Show it to people within</label>
             <select id="ev-radius" value={form.radius} onChange={(e) => set('radius', Number(e.target.value))}>

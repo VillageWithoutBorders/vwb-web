@@ -156,6 +156,17 @@ export default function EventPage() {
         <h1 style={{ margin: '0.25rem 0 0.75rem', fontSize: '1.6rem', lineHeight: 1.25 }}>{ev.title}</h1>
 
         <div className="cal-detail-row"><span aria-hidden="true">&#128197;</span><span>{fullDateTime(ev)}</span></div>
+        {ev.is_online ? (
+          <div className="cal-detail-row">
+            <span aria-hidden="true">&#127760;</span>
+            <span>
+              Online event. Anyone can join from anywhere.
+              {ev.online_link && /^https?:\/\//i.test(ev.online_link)
+                ? <><br /><a href={ev.online_link} target="_blank" rel="noopener noreferrer" style={{ color: '#4ecca3', wordBreak: 'break-all' }}>{ev.online_link}</a></>
+                : ev.hide_address ? <><br /><em style={{ color: 'var(--text-secondary)' }}>The link is shared with people who sign up.</em></> : null}
+            </span>
+          </div>
+        ) : (
         <div className="cal-detail-row">
           <span aria-hidden="true">&#128205;</span>
           <span>
@@ -165,6 +176,7 @@ export default function EventPage() {
             {placeHidden && <><br /><em style={{ color: 'var(--text-secondary)' }}>The exact address is shared with people who sign up.</em></>}
           </span>
         </div>
+        )}
         <div className="cal-detail-row">
           <span aria-hidden="true">&#128106;</span>
           <span>{ev.all_ages ? 'All ages welcome.' : 'This event is for adults 18 and over.'}{ev.all_ages && ev.teens_can_help ? ' Teens can help if they come with a parent or guardian.' : ''}</span>
