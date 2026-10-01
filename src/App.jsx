@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
@@ -41,6 +41,7 @@ import EventPage from './pages/EventPage'
 import Groups from './pages/Groups'
 import GroupBoard from './pages/GroupBoard'
 import JoinGroup from './pages/JoinGroup'
+const VillageMap = lazy(() => import('./pages/VillageMap'))
 import { peekReturnTo } from './utils/returnTo'
 
 function ProfileWait() {
@@ -115,6 +116,7 @@ function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="settings" element={<Settings />} />
         <Route path="community" element={<Community />} />
+        <Route path="villages" element={<Suspense fallback={<div className="cal-page"><p className="cal-empty">Loading...</p></div>}><VillageMap /></Suspense>} />
         <Route path="community/resources" element={<CommunityResources />} />
         <Route path="orgs/:id" element={<OrgPage />} />
         <Route path="orgs/:id/dashboard" element={<OrgDashboard />} />
