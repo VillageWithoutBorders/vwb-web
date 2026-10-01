@@ -91,6 +91,7 @@ function badges(ev) {
   if (ev.visibility === 'account') out.push([VISIBILITY.account.label, 'cal-badge-private'])
   if (ev.visibility === 'members') out.push([VISIBILITY.members.label, 'cal-badge-private'])
   if (ev.visibility === 'invite') out.push([VISIBILITY.invite.label, 'cal-badge-private'])
+  if (ev.visibility === 'affiliates') out.push([VISIBILITY.affiliates.label, 'cal-badge-private'])
   if (ev.is_online) out.push(['Online', ''])
   if (ev.all_ages) out.push(['All ages', ''])
   else if (ev.status !== 'cancelled' && !hasEnded(ev)) out.push(['Adults 18+', ''])
