@@ -116,7 +116,7 @@ export default function PostOffer() {
         <textarea id="offer-desc" style={{ ...fieldStyle, minHeight: '100px', resize: 'vertical' }} placeholder="How much do you have? When is it available? Can you deliver or should people pick up?" value={description} onChange={e => setDescription(e.target.value)} maxLength={1000} />
 
         <label style={labelStyle} htmlFor="offer-hood">Neighborhood</label>
-        <input id="offer-hood" style={fieldStyle} type="text" placeholder="e.g. Ringgold, Tunnel Hill, Fort Oglethorpe" value={neighborhood} onChange={e => setNeighborhood(e.target.value)} maxLength={100} />
+        <input id="offer-hood" style={fieldStyle} type="text" placeholder="Your town or neighborhood" value={neighborhood} onChange={e => setNeighborhood(e.target.value)} maxLength={100} />
 
         {managedOrgs.length > 0 && (
           <>

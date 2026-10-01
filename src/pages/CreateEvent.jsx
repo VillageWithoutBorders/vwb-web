@@ -157,7 +157,7 @@ export default function CreateEvent() {
         <textarea style={{ ...fieldStyle, minHeight: '100px', resize: 'vertical' }} placeholder="Describe the situation, what areas are affected, what kind of help is needed..." value={description} onChange={e => setDescription(e.target.value)} maxLength={2000} />
 
         <label style={labelStyle}>Affected area</label>
-        <input style={fieldStyle} type="text" placeholder="e.g. Ringgold, Catoosa County, Tunnel Hill" value={locationName} onChange={e => setLocationName(e.target.value)} maxLength={100} />
+        <input style={fieldStyle} type="text" placeholder="Town or county" value={locationName} onChange={e => setLocationName(e.target.value)} maxLength={100} />
 
         <label style={labelStyle}>Response radius: {radius} miles</label>
         <input type="range" min={5} max={50} step={5} value={radius} onChange={e => setRadius(parseInt(e.target.value))} style={{ width: '100%', accentColor: '#ff6644', cursor: 'pointer' }} />
