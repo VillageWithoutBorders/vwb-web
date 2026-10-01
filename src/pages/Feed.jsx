@@ -135,6 +135,13 @@ export default function Feed() {
         // Never a guess: no location means we ask for a zip (see LocationPrompt).
         const loc = getMyLocation(profile)
         setMyLoc(loc)
+        // The database decides what is "nearby". Tell it where you are looking
+        // from (it checks the point against your saved area and limits moves).
+        if (loc) {
+            const { data: vp, error: vpErr } = await supabase.rpc('set_view_point', { p_lat: loc.lat, p_lng: loc.lng })
+            if (vpErr) console.error('set_view_point failed:', vpErr)
+            else if (vp === 'limit') console.warn('Area changed too many times today; keeping the last one.')
+        }
         const blockedIds = await getBlockedUserIds(user?.id)
 
         if (view === 'requests') {
