@@ -424,13 +424,12 @@ export default function Messages() {
     return new Date(s.muted_until) > new Date()
   }
 
-  // Newest Campfire message in your own village's room. Campfire.jsx saves
+  // Newest Campfire message on the shared board. Campfire.jsx saves
   // 'vwb_campfire_last_read' while it's open, so anything newer from
   // someone else shows as unread here.
   async function loadCampfire() {
     if (!hasCampfire) { setCampfire(null); return }
-    if (!profile?.village_id) { setCampfire({ last: null, name: null, unread: false, noVillage: true }); return }
-    const { data: last, error } = await supabase.from('campfire_messages').select('id, user_id, body, created_at').eq('village_id', profile.village_id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    const { data: last, error } = await supabase.from('campfire_messages').select('id, user_id, body, created_at').order('created_at', { ascending: false }).limit(1).maybeSingle()
     if (error) { console.error('Failed to load Campfire preview:', error); setCampfire({ last: null, name: null, unread: false }); return }
     if (!last) { setCampfire({ last: null, name: null, unread: false }); return }
     let name = 'You'

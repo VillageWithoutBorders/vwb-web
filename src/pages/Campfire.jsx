@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useChatScroll } from '../hooks/useChatScroll'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -15,6 +15,14 @@ const GROUP_WINDOW_MS = 5 * 60 * 1000
 export default function Campfire() {
   const { user, profile, isAdmin, refreshProfile } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [boards, setBoards] = useState([])
+  const [creatingBoard, setCreatingBoard] = useState(false)
+  const [newBoardName, setNewBoardName] = useState('')
+  const [boardError, setBoardError] = useState('')
+  const [replyTo, setReplyTo] = useState(null)
+  const [editing, setEditing] = useState(null)
+  const [flashId, setFlashId] = useState(null)
   const [messages, setMessages] = useState([])
   const [newMsg, setNewMsg] = useState('')
   const [sending, setSending] = useState(false)
@@ -22,6 +30,8 @@ export default function Campfire() {
   const [names, setNames] = useState({})
   const [myAvatar, setMyAvatar] = useState(null)
   const pollRef = useRef(null)
+  const inputRef = useRef(null)
+  const boardRef = useRef(null)
   const [showSettings, setShowSettings] = useState(false)
   const [muteSaving, setMuteSaving] = useState(false)
   const [openMsgMenu, setOpenMsgMenu] = useState(null)
@@ -31,11 +41,8 @@ export default function Campfire() {
   // that's hovered (desktop) or tapped (mobile, via this state) — cuts the
   // amount of always-on chrome under every single message.
   const [revealedMeta, setRevealedMeta] = useState(null)
-  // Every village has its own Campfire room. Ambassadors only ever see
-  // their own village's room; admins/founders get a switcher so they can
-  // check in on a village that's just getting started elsewhere.
-  const [villages, setVillages] = useState([])
-  const [viewVillageId, setViewVillageId] = useState(null)
+  // One shared board for every Hope Ambassador, admin, and the founder,
+  // whatever village they live in.
   const { menuRef: msgMenuRef, menuStyle: msgMenuStyle, openMenu: positionMsgMenu } = useMenuPosition('right')
   // Active, verified emergencies surface as a dismissible banner instead of
   // a chat bubble, so they read as an alert you can act on rather than one
@@ -54,39 +61,85 @@ export default function Campfire() {
       if (error) { console.error('Failed to load your avatar:', error); return }
       if (data) setMyAvatar(data.avatar_url || null)
     })
-    // Small table, cheap to fetch for everyone: admins get the switcher,
-    // ambassadors just get their own village's name in the header.
-    supabase.from('villages').select('*').eq('active', true).order('name').then(({ data, error }) => {
-      if (error) { console.error('Failed to load villages:', error); return }
-      if (data) setVillages(data)
-    })
   }, [])
 
-  // Default to the viewer's own village as soon as the profile's loaded;
-  // admins can then switch away from it with the picker in the header.
+  // The boards inside the Campfire: General first, then your own village,
+  // then the rest, then any an admin has added.
+  async function loadBoards() {
+    const { data, error } = await supabase.from('campfire_boards').select('id, name, village_id, is_general, sort_order').eq('archived', false)
+    if (error) { console.error('Failed to load Campfire boards:', error); return }
+    setBoards(data || [])
+  }
+  useEffect(() => { if (hasAccess) loadBoards() }, [hasAccess])
+
+  const orderedBoards = [...boards].sort((a, b) => {
+    const rank = (x) => x.is_general ? 0 : x.village_id && x.village_id === profile?.village_id ? 1 : x.village_id ? 3 : 2
+    return rank(a) - rank(b) || (a.sort_order - b.sort_order) || a.name.localeCompare(b.name)
+  })
+  const wantedBoard = searchParams.get('board')
+  const activeBoard = orderedBoards.find(b => b.id === wantedBoard) || orderedBoards[0] || null
+  const activeBoardId = activeBoard?.id || null
+  boardRef.current = activeBoardId
+
+  function chooseBoard(id) {
+    setReplyTo(null); setEditing(null); setNewMsg(''); setMessages([]); setLoading(true); resetScroll()
+    setSearchParams(id === orderedBoards[0]?.id ? {} : { board: id }, { replace: true })
+  }
+
+  async function addBoard(e) {
+    e.preventDefault()
+    const name = newBoardName.trim()
+    if (!name) return
+    setBoardError('')
+    const { data, error } = await supabase.from('campfire_boards').insert({ name, created_by: user.id, sort_order: 50 }).select('id').single()
+    if (error) {
+      console.error('Failed to add board:', error)
+      setBoardError(/duplicate|unique/i.test(error.message || '') ? 'A board with that name already exists.' : 'Could not add the board. Try again.')
+      return
+    }
+    setNewBoardName(''); setCreatingBoard(false)
+    await loadBoards()
+    chooseBoard(data.id)
+  }
+
+  // Everyone who has a seat at the Campfire, so the member list shows the
+  // whole group and not only the people who have posted.
   useEffect(() => {
-    if (viewVillageId !== null) return
-    if (profile?.village_id) setViewVillageId(profile.village_id)
-    else if (isAdmin && villages.length > 0) setViewVillageId(villages[0].id)
-  }, [profile, villages])
+    if (!hasAccess) return
+    supabase.from('helper_profiles_public')
+      .select('user_id, display_name, role, is_hope_ambassador, avatar_url')
+      .or('is_hope_ambassador.eq.true,role.in.(admin,founder)')
+      .then(({ data, error }) => {
+        if (error) { console.error('Failed to load Campfire members:', error); return }
+        setNames(prev => {
+          const next = { ...prev }
+          for (const m of data || []) next[m.user_id] = { name: m.display_name || 'Neighbor', role: m.role, ambassador: m.is_hope_ambassador, avatar: m.avatar_url || null }
+          return next
+        })
+      })
+  }, [hasAccess])
 
   useEffect(() => {
-    if (!hasAccess || !viewVillageId) return
+    if (!hasAccess || !activeBoardId) return
     resetScroll()
     loadMessages()
     pollRef.current = setInterval(loadMessages, 5000)
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
-  }, [hasAccess, viewVillageId])
+  }, [hasAccess, activeBoardId])
 
   // Scoped to the village being viewed, so an emergency in one village never
   // shows up as a banner in another village's room. Re-runs when an admin
   // switches villages.
   useEffect(() => {
-    if (!viewVillageId) return
+    if (!hasAccess) return
+    if (!isAdmin && !profile?.village_id) return
     let cancelled = false
     setActiveEmergencies([])
     function loadActiveEmergencies() {
-      supabase.from('emergency_events').select('id, title, location_name, event_type').eq('status', 'active').eq('verified', true).eq('village_id', viewVillageId).order('created_at', { ascending: false }).then(({ data, error }) => {
+      let q = supabase.from('emergency_events').select('id, title, location_name, event_type').eq('status', 'active').eq('verified', true)
+      // Ambassadors see alerts for their own village; admins and the founder see every village.
+      if (!isAdmin) q = q.eq('village_id', profile.village_id)
+      q.order('created_at', { ascending: false }).then(({ data, error }) => {
         if (cancelled) return
         if (error) { console.error('Failed to load active emergencies:', error); return }
         if (data) setActiveEmergencies(data)
@@ -95,7 +148,7 @@ export default function Campfire() {
     loadActiveEmergencies()
     const timer = setInterval(loadActiveEmergencies, 60000)
     return () => { cancelled = true; clearInterval(timer) }
-  }, [viewVillageId])
+  }, [hasAccess, isAdmin, profile?.village_id])
 
   function dismissEmergency(id) {
     const next = [...dismissedEmergencyIds, id]
@@ -163,8 +216,12 @@ export default function Campfire() {
   }
 
   async function loadMessages() {
-    const { data, error } = await supabase.from('campfire_messages').select('*').eq('village_id', viewVillageId).order('created_at', { ascending: true }).limit(200)
+    // Newest 200, shown oldest to newest
+    const boardAtStart = activeBoardId
+    const { data: newest, error } = await supabase.from('campfire_messages').select('*').eq('board_id', activeBoardId).order('created_at', { ascending: false }).limit(200)
+    if (boardAtStart !== boardRef.current) return // switched boards while loading
     if (error) console.error('Failed to load Campfire messages:', error)
+    const data = newest ? [...newest].reverse() : null
     if (data) {
       setMessages(data)
       // Mark caught up while this page is open (including each poll tick), so
@@ -188,9 +245,27 @@ export default function Campfire() {
 
   async function sendMessage(e) {
     e.preventDefault()
-    if (!newMsg.trim() || sending) return
+    if (!newMsg.trim() || sending || !activeBoardId) return
     setSending(true)
-    const { data, error } = await supabase.from('campfire_messages').insert({ user_id: user.id, body: newMsg.trim(), village_id: viewVillageId }).select('id').single()
+
+    // Editing one of your own messages
+    if (editing) {
+      const { error } = await supabase.from('campfire_messages').update({ body: newMsg.trim() }).eq('id', editing.id)
+      if (error) {
+        console.error('Failed to edit Campfire message:', error)
+        alert('Could not save your edit. Try again.')
+        setSending(false)
+        return
+      }
+      setEditing(null); setNewMsg('')
+      await loadMessages()
+      setSending(false)
+      return
+    }
+
+    const row = { user_id: user.id, body: newMsg.trim(), village_id: profile?.village_id || null, board_id: activeBoardId }
+    if (replyTo) row.reply_to = replyTo.id
+    const { data, error } = await supabase.from('campfire_messages').insert(row).select('id').single()
     if (error) {
       console.error('Failed to send Campfire message:', error)
       alert('Could not send your message. Try again.')
@@ -204,19 +279,50 @@ export default function Campfire() {
     // else has notifications on. See notify_campfire_recipients migration.
     const { error: notifyError } = await supabase.rpc('notify_campfire_recipients', { p_message_id: data.id })
     if (notifyError) console.error('Failed to notify Campfire recipients:', notifyError)
-    setNewMsg('')
+    setNewMsg(''); setReplyTo(null)
     await loadMessages()
     setSending(false)
   }
 
+  function startReply(msg) {
+    setOpenMsgMenu(null); setEditing(null); setReplyTo(msg)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  function startEdit(msg) {
+    setOpenMsgMenu(null); setReplyTo(null); setEditing(msg); setNewMsg(msg.body)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  function cancelComposeMode() {
+    if (editing) setNewMsg('')
+    setEditing(null); setReplyTo(null)
+  }
+
+  function jumpToMessage(id) {
+    const el = document.getElementById('cf-msg-' + id)
+    if (!el) return
+    el.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+    setFlashId(id)
+    setTimeout(() => setFlashId(null), 1500)
+  }
+
+  function snippet(text) {
+    const t = (text || '').replace(/\s+/g, ' ').trim()
+    return t.length > 90 ? t.slice(0, 90) + '...' : t
+  }
+
+  // Always a real time, never just "5m ago": today shows the time, other days
+  // show the date and time. Hover or long-press shows the full date.
   function formatTime(ts) {
     const d = new Date(ts)
     const now = new Date()
-    const diff = now - d
-    if (diff < 60000) return 'Just now'
-    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago'
-    if (diff < 86400000) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    if (d.toDateString() === now.toDateString()) return time
+    const y = new Date(now); y.setDate(now.getDate() - 1)
+    if (d.toDateString() === y.toDateString()) return 'Yesterday ' + time
+    const opts = d.getFullYear() === now.getFullYear() ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' }
+    return d.toLocaleDateString([], opts) + ' ' + time
   }
 
   if (!hasAccess) {
@@ -230,25 +336,11 @@ export default function Campfire() {
     )
   }
 
-  // Villages come from the zip on your profile. No zip yet means no
-  // village yet, so there's no room to show. Admins can always pick one.
-  if (!profile?.village_id && !isAdmin) {
-    return (
-      <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
-        <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>&#128293;</p>
-        <h2 style={{ color: '#ffaa44', marginBottom: '0.5rem' }}>Find your area's Campfire</h2>
-        <p style={{ color: '#ccc', marginBottom: '1.5rem', lineHeight: 1.5 }}>Each area has its own Campfire. Add your zip code to your profile and you'll join the one near you. If there isn't one yet, you'll start it.</p>
-        <button onClick={() => navigate('/profile')} style={{ minHeight: '44px', padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '1rem' }}>Add my zip code</button>
-      </div>
-    )
-  }
-
   const pinnedMessages = messages.filter(m => m.pinned)
   const visibleEmergencies = activeEmergencies.filter(e => !dismissedEmergencyIds.includes(e.id))
   // The old chat-log announcement is now redundant with the banner above,
   // so it's left out of the scrollback instead of showing up twice.
   const visibleMessages = messages.filter(m => !m.body.startsWith('🚨 Emergency Verified:'))
-  const currentVillageName = villages.find(v => v.id === viewVillageId)?.name
 
   return (
     <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1a1a1a' }}>
@@ -258,21 +350,29 @@ export default function Campfire() {
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span>&#128293;</span> The Campfire
           </h1>
-          {isAdmin && villages.length > 1 ? (
-            <select
-              value={viewVillageId || ''}
-              onChange={(e) => setViewVillageId(e.target.value)}
-              aria-label="Village"
-              style={{ marginTop: '2px', fontSize: '0.75rem', background: '#222', color: '#4ecca3', border: '1px solid #333', borderRadius: '6px', padding: '1px 4px' }}
-            >
-              {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-            </select>
-          ) : (
-            <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{currentVillageName ? currentVillageName + ' · ' : ''}Ambassadors and admins</p>
-          )}
+          <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? activeBoard.name + ' board' : 'Ambassadors, admins, and the founder'}</p>
         </div>
-        <button onClick={() => setShowSettings(true)} aria-label="Campfire settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
+        <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
+        <button onClick={() => setShowSettings(true)} aria-label="Campfire settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'>&#9881;</button>
       </div>
+
+      <div role="tablist" aria-label="Campfire boards" className="hide-scrollbar" style={{ display: 'flex', gap: '0.5rem', padding: '0.5rem 1rem', overflowX: 'auto', borderBottom: '1px solid #333', background: '#1a1a1a', alignItems: 'center' }}>
+        {orderedBoards.map(b => (
+          <button key={b.id} type="button" role="tab" aria-selected={b.id === activeBoardId} onClick={() => chooseBoard(b.id)} style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: b.id === activeBoardId ? '1px solid #4ecca3' : '1px solid #444', background: b.id === activeBoardId ? '#1a4a3a' : '#222', color: b.id === activeBoardId ? '#4ecca3' : '#ccc', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{b.name}</button>
+        ))}
+        {isAdmin && !creatingBoard && (
+          <button type="button" onClick={() => { setCreatingBoard(true); setBoardError('') }} aria-label="Add a board" style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: '1px dashed #555', background: 'none', color: '#aaa', fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ New board</button>
+        )}
+        {isAdmin && creatingBoard && (
+          <form onSubmit={addBoard} style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+            <label htmlFor="new-board-name" className="sr-only">Board name</label>
+            <input id="new-board-name" type="text" value={newBoardName} onChange={e => setNewBoardName(e.target.value)} maxLength={40} placeholder="Board name" autoFocus style={{ minHeight: '44px', width: '9rem', boxSizing: 'border-box', padding: '0 0.75rem', borderRadius: '999px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem' }} />
+            <button type="submit" disabled={!newBoardName.trim()} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: newBoardName.trim() ? 1 : 0.5 }}>Add</button>
+            <button type="button" onClick={() => { setCreatingBoard(false); setNewBoardName(''); setBoardError('') }} style={{ minHeight: '44px', padding: '0 0.75rem', borderRadius: '999px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer' }}>Cancel</button>
+          </form>
+        )}
+      </div>
+      {boardError && <p role="alert" style={{ margin: 0, padding: '0.4rem 1rem', color: '#ff8888', fontSize: '0.8rem', background: '#241414' }}>{boardError}</p>}
 
       {visibleEmergencies.length > 0 && (
         <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid #3a3020', background: '#2e2a1a' }}>
@@ -335,7 +435,6 @@ export default function Campfire() {
           const isGroupStart = !prevMsg || prevMsg.user_id !== msg.user_id || (new Date(msg.created_at) - new Date(prevMsg.created_at)) > GROUP_WINDOW_MS
           const isGroupEnd = !nextMsg || nextMsg.user_id !== msg.user_id || (new Date(nextMsg.created_at) - new Date(msg.created_at)) > GROUP_WINDOW_MS
           const fullTime = new Date(msg.created_at).toLocaleString()
-          const metaVisible = revealedMeta === msg.id || openMsgMenu === msg.id
           // Full rounding on the outer corners; flatten the corner(s) that
           // touch a neighboring bubble from the same person so a run of
           // messages reads as one connected shape, not a repeated stack.
@@ -343,7 +442,7 @@ export default function Campfire() {
           const far = isGroupEnd ? '0.25rem' : '1rem'
           const bubbleRadius = isMe ? `1rem ${near} ${far} 1rem` : `${near} 1rem 1rem ${far}`
           return (
-            <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%', display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginTop: isGroupStart ? '0.75rem' : '0.15rem' }}>
+            <div key={msg.id} id={'cf-msg-' + msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%', display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginTop: isGroupStart ? '0.75rem' : '0.15rem', borderRadius: '1rem', outline: flashId === msg.id ? '2px solid #ffaa44' : 'none', outlineOffset: '3px', transition: 'outline-color 0.3s' }}>
               {!isMe && (isGroupStart
                 ? <AvatarDisplay url={info.avatar} userId={msg.user_id} size={28} />
                 : <div style={{ width: '28px', flexShrink: 0 }} />)}
@@ -365,13 +464,21 @@ export default function Campfire() {
                 }}
                 style={{ position: 'relative', padding: '0.5rem 0.75rem', borderRadius: bubbleRadius, background: isMe ? '#4ecca3' : '#2a2a2a', color: isMe ? '#1a1a1a' : '#eee', border: isMe ? 'none' : '1px solid #444' }}
               >
-                <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.4 }}>{msg.body}</p>
+                {msg.reply_to && (() => {
+                  const orig = messages.find(m => m.id === msg.reply_to)
+                  const origName = orig ? (orig.user_id === user.id ? 'You' : (names[orig.user_id]?.name || 'Neighbor')) : ''
+                  return (
+                    <button type="button" onClick={(e) => { e.stopPropagation(); if (orig) jumpToMessage(orig.id) }} aria-label={orig ? 'Replying to ' + origName + ': ' + snippet(orig.body) + '. Jump to it.' : 'Replying to an earlier message'} style={{ display: 'block', width: '100%', textAlign: 'left', margin: '0 0 0.35rem', padding: '0.25rem 0.5rem', borderRadius: '6px', border: 'none', borderLeft: '3px solid ' + (isMe ? '#1a1a1a' : '#4ecca3'), background: isMe ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.06)', color: 'inherit', font: 'inherit', fontSize: '0.75rem', cursor: orig ? 'pointer' : 'default', opacity: 0.9 }}>
+                      {orig ? (<><strong>{origName}</strong><br />{snippet(orig.body)}</>) : <em>Earlier message</em>}
+                    </button>
+                  )
+                })()}
+                <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.4, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{msg.body}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
                   {msg.pinned && <span title="Pinned">&#128204;</span>}
-                  <span className={'campfire-msg-meta' + (metaVisible ? ' campfire-msg-meta-visible' : '')} style={{ fontSize: '0.65rem' }} title={fullTime} aria-label={fullTime}>{formatTime(msg.created_at)}</span>
-                  {(isAdmin || !isMe) && (
+                  <span style={{ fontSize: '0.7rem', opacity: 0.75 }} title={fullTime}>{formatTime(msg.created_at)}{msg.edited_at ? ' \u00b7 edited' : ''}</span>
+                  {(
                     <button
-                      className={'campfire-msg-meta' + (metaVisible ? ' campfire-msg-meta-visible' : '')}
                       onClick={(e) => {
                         e.stopPropagation()
                         const closing = openMsgMenu === msg.id
@@ -379,16 +486,24 @@ export default function Campfire() {
                         if (!closing) positionMsgMenu(e, isMe ? 'right' : 'left')
                       }}
                       aria-label="Message options"
-                      style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.85rem', padding: 0, marginLeft: 'auto', lineHeight: 1 }}
+                      style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1rem', padding: 0, marginLeft: 'auto', lineHeight: 1, minWidth: '44px', minHeight: '32px', margin: '-0.4rem -0.5rem -0.4rem auto' }}
                     >&#8943;</button>
                   )}
                 </div>
-                {openMsgMenu === msg.id && (isAdmin || !isMe) && (
+                {openMsgMenu === msg.id && (
                   <div
                     ref={msgMenuRef}
                     onClick={e => e.stopPropagation()}
                     style={{ background: '#2a2a2a', border: '1px solid #444', borderRadius: '8px', minWidth: '140px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', ...msgMenuStyle }}
                   >
+                    <button onClick={() => startReply(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                      Reply
+                    </button>
+                    {isMe && (
+                      <button onClick={() => startEdit(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                        Edit
+                      </button>
+                    )}
                     {isAdmin && (
                       <button onClick={() => togglePin(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>
                         {msg.pinned ? 'Unpin' : '📌 Pin message'}
@@ -414,14 +529,26 @@ export default function Campfire() {
         )}
       </div>
 
+      {(replyTo || editing) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem', borderTop: '1px solid #333', background: '#222' }}>
+          <div style={{ flex: 1, minWidth: 0, borderLeft: '3px solid #ffaa44', paddingLeft: '0.5rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffaa44' }}>
+              {editing ? 'Editing your message' : 'Replying to ' + (replyTo.user_id === user.id ? 'yourself' : (names[replyTo.user_id]?.name || 'Neighbor'))}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{snippet((editing || replyTo).body)}</div>
+          </div>
+          <button type="button" onClick={cancelComposeMode} aria-label={editing ? 'Cancel editing' : 'Cancel reply'} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.2rem', cursor: 'pointer', minWidth: '44px', minHeight: '44px' }}>&#10005;</button>
+        </div>
+      )}
       <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem 1rem', borderTop: '1px solid #333', background: '#1a1a1a' }}>
         <input
+          ref={inputRef}
           type="text"
           value={newMsg}
           onChange={e => setNewMsg(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) sendMessage(e) }}
-          placeholder="Say something to the group..."
-          aria-label="Message the Campfire"
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) sendMessage(e); if (e.key === 'Escape') cancelComposeMode() }}
+          placeholder={editing ? 'Edit your message...' : 'Say something to ' + (activeBoard ? 'the ' + activeBoard.name + ' board' : 'the group') + '...'}
+          aria-label={editing ? 'Edit your message' : 'Message the Campfire'}
           disabled={sending}
           style={{ flex: 1, padding: '0.625rem 0.875rem', borderRadius: '1.5rem', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.9rem', outline: 'none' }}
         />
@@ -430,7 +557,7 @@ export default function Campfire() {
           disabled={!newMsg.trim() || sending}
           style={{ padding: '0.625rem 1.25rem', borderRadius: '1.5rem', background: '#ff8844', color: '#fff', border: 'none', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', opacity: (!newMsg.trim() || sending) ? 0.5 : 1 }}
         >
-          Send
+          {editing ? 'Save' : 'Send'}
         </button>
       </div>
 
@@ -441,7 +568,7 @@ export default function Campfire() {
           <button onClick={() => setShowSettings(false)} aria-label="Close Campfire settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
-        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>The Campfire is a group chat for Hope Ambassadors and admins. Conversations here are visible to all members with access.</p>
+        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>The Campfire is one shared message board for every Hope Ambassador, admin, and the founder, in every village. Conversations here are visible to all members.</p>
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid #2a2a2a' }}>
@@ -483,7 +610,6 @@ export default function Campfire() {
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: '#888' }}>
                   {info.joined && <span>Joined {new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>}
-                  <span style={{ color: info.score > 0 ? '#4ecca3' : info.score < 0 ? '#ff6666' : '#888' }}>{info.score > 0 ? '+' : ''}{info.score} rep</span>
                 </div>
               </div>
             </button>

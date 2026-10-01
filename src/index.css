@@ -4596,3 +4596,9 @@ html[data-tour-tab="top"] .app-header .header-btn {
 .qr-image { width: min(256px, 80vw); height: auto; background: #fff; padding: 8px; border-radius: 8px; }
 .qr-hint { text-align: center; }
 .qr-panel .groups-actions { justify-content: center; }
+
+/* Village map */
+.village-map { width: 100%; height: min(60vh, 420px); min-height: 280px; border-radius: 12px; overflow: hidden; border: 1px solid #333; margin-bottom: 0.75rem; z-index: 0; }
+.village-map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9); }
+.village-web { display: block; width: 100%; height: auto; background: #181818; border: 1px solid #333; border-radius: 12px; margin-bottom: 0.75rem; }
+.village-web g:focus-visible { outline: 2px solid #ffaa44; }
