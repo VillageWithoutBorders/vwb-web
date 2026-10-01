@@ -165,6 +165,10 @@ export default function EventPage() {
             {placeHidden && <><br /><em style={{ color: 'var(--text-secondary)' }}>The exact address is shared with people who sign up.</em></>}
           </span>
         </div>
+        <div className="cal-detail-row">
+          <span aria-hidden="true">&#128106;</span>
+          <span>{ev.all_ages ? 'All ages welcome.' : 'This event is for adults 18 and over.'}{ev.all_ages && ev.teens_can_help ? ' Teens can help if they come with a parent or guardian.' : ''}</span>
+        </div>
         {ev.visibility !== 'public' && (
           <div className="cal-detail-row"><span aria-hidden="true">&#128274;</span><span>{VISIBILITY[ev.visibility].label}. {VISIBILITY[ev.visibility].desc}</span></div>
         )}
@@ -174,6 +178,9 @@ export default function EventPage() {
         {ev.signup_enabled && !cancelled && (
           <section className="cal-box" aria-label="Sign up">
             <h2>Sign up to help</h2>
+            {ev.all_ages && ev.teens_can_help && (
+              <p className="cal-sub" style={{ marginTop: 0 }}>Teens: you can help here too. A parent or guardian signs up as an adult member and brings you. Accounts are for adults 18 and over.</p>
+            )}
             {ev.signup_limit != null && (
               <p className="cal-sub" style={{ marginTop: 0 }}>{ev.signup_count} of {ev.signup_limit} spots filled</p>
             )}

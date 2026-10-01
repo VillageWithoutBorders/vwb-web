@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchCalendarEvents, filterByDistance, loadSavedPlace, savePlace } from '../utils/calendar'
-import { CalendarLocationBar, CalendarEventList } from '../components/CalendarParts'
+import { CalendarLocationBar, CalendarEventList, AllAgesFilter } from '../components/CalendarParts'
 
 // The public calendar shown on villagewithoutborders.org (inside the
 // "See What's Happening" section). No login, no app header or tabs.
@@ -14,6 +14,7 @@ export default function CalendarEmbed() {
   // nothing (every public event, plus a nudge to choose). Never a guess.
   const [origin, setOrigin] = useState(() => loadSavedPlace())
   const [miles, setMiles] = useState(25)
+  const [allAgesOnly, setAllAgesOnly] = useState(false)
 
   useEffect(() => {
     document.title = 'Community Calendar | Village Without Borders'
@@ -26,7 +27,10 @@ export default function CalendarEmbed() {
     return () => { alive = false }
   }, [])
 
-  const visible = useMemo(() => filterByDistance(events, origin, miles), [events, origin, miles])
+  const visible = useMemo(
+    () => filterByDistance(events, origin, miles).filter((e) => !allAgesOnly || e.all_ages),
+    [events, origin, miles, allAgesOnly]
+  )
 
   function changeOrigin(o) {
     setOrigin(o)
@@ -51,6 +55,7 @@ export default function CalendarEmbed() {
         </header>
       )}
       <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} />
+      <AllAgesFilter checked={allAgesOnly} onChange={setAllAgesOnly} />
       {loading
         ? <p className="cal-empty">Loading events...</p>
         : <CalendarEventList events={visible} newTab emptyText="No public events nearby yet. Try a wider distance, or check back soon." />}

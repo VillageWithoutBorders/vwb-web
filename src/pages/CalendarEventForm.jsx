@@ -46,6 +46,8 @@ export default function CalendarEventForm() {
     hideAddress: false,
     signupEnabled: false,
     signupLimit: '',
+    allAges: false,
+    teensCanHelp: false,
   })
   // New events start by picking a kind of event (see eventTemplates.js),
   // or "Start from scratch". null = still choosing.
@@ -74,6 +76,8 @@ export default function CalendarEventForm() {
         hideAddress: !!data.hide_address,
         signupEnabled: !!data.signup_enabled,
         signupLimit: data.signup_limit ? String(data.signup_limit) : '',
+        allAges: !!data.all_ages,
+        teensCanHelp: !!data.teens_can_help,
       })
       if (data.town && data.latitude != null && data.longitude != null) {
         setPlace({ name: data.town, lat: Number(data.latitude), lng: Number(data.longitude) })
@@ -128,6 +132,8 @@ export default function CalendarEventForm() {
       if (field === 'startTime' && durationMins && !endTouched) next.endTime = addMinutes(value, durationMins)
       // "Members only" needs a group behind it.
       if (field === 'host' && value === VWB_HOST && f.visibility === 'members') next.visibility = 'public'
+      // Teens helping only makes sense when all ages are welcome.
+      if (field === 'allAges' && !value) next.teensCanHelp = false
       return next
     })
   }
@@ -163,6 +169,8 @@ export default function CalendarEventForm() {
       hide_address: form.hideAddress,
       signup_enabled: form.signupEnabled,
       signup_limit: form.signupEnabled ? limit : null,
+      all_ages: form.allAges,
+      teens_can_help: form.allAges && form.teensCanHelp,
     }
 
     setSaving(true)
@@ -317,6 +325,23 @@ export default function CalendarEventForm() {
               {DISTANCE_OPTIONS.map((m) => <option key={m} value={m}>{m} miles of {place?.name || 'the event'}</option>)}
             </select>
           </div>
+        )}
+
+        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Who can come?</h2>
+        <p className="cal-sub" style={{ marginTop: 0 }}>Every event is for adults 18 and over unless you tick this. Accounts are for adults, so teens never sign up on their own.</p>
+        <label className={'cal-choice' + (form.allAges ? ' is-on' : '')}>
+          <input type="checkbox" checked={form.allAges} onChange={(e) => set('allAges', e.target.checked)} />
+          <span>All ages welcome
+            <small>Kids and teens can come and join in. Show it to anyone looking at the calendar, no account needed.</small>
+          </span>
+        </label>
+        {form.allAges && (
+          <label className={'cal-choice' + (form.teensCanHelp ? ' is-on' : '')}>
+            <input type="checkbox" checked={form.teensCanHelp} onChange={(e) => set('teensCanHelp', e.target.checked)} />
+            <span>Teens can help, with a parent or guardian
+              <small>A parent or guardian signs up as an adult and brings them. You are not asked for any details about the teen.</small>
+            </span>
+          </label>
         )}
 
         <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Volunteers</h2>

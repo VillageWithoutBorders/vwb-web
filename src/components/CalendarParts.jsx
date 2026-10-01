@@ -64,12 +64,28 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
   )
 }
 
+// Lets anyone, including teens looking around without an account, hide
+// the adults-only events.
+export function AllAgesFilter({ checked, onChange }) {
+  return (
+    <label className={'cal-choice' + (checked ? ' is-on' : '')}>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span>Show only events open to all ages
+        <small>Accounts are for adults 18 and over. Anyone can look at the calendar.</small>
+      </span>
+    </label>
+  )
+}
+
 function badges(ev) {
   const out = []
   if (ev.status === 'cancelled') out.push(['Cancelled', 'cal-badge-off'])
   if (ev.visibility === 'account') out.push([VISIBILITY.account.label, 'cal-badge-private'])
   if (ev.visibility === 'members') out.push([VISIBILITY.members.label, 'cal-badge-private'])
   if (ev.visibility === 'invite') out.push([VISIBILITY.invite.label, 'cal-badge-private'])
+  if (ev.all_ages) out.push(['All ages', ''])
+  else if (ev.status !== 'cancelled') out.push(['Adults 18+', ''])
+  if (ev.teens_can_help) out.push(['Teens can help with a parent', ''])
   if (ev.is_signed_up) out.push(["You're signed up", ''])
   else if (ev.signup_enabled && ev.status !== 'cancelled') {
     const full = ev.signup_limit != null && ev.signup_count >= ev.signup_limit
