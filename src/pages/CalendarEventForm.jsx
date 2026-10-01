@@ -21,6 +21,13 @@ export default function CalendarEventForm() {
   const { user, isAdmin, organizations } = useAuth()
 
   const hostOrgs = organizations.filter((o) => o.role === 'admin' || o.role === 'organizer')
+  const [umbrellaIds, setUmbrellaIds] = useState([])
+  const hostIdsKey = hostOrgs.map((o) => o.id).join(',')
+  useEffect(() => {
+    if (!hostIdsKey) return
+    supabase.from('organizations').select('id').eq('is_umbrella', true).in('id', hostIdsKey.split(','))
+      .then(({ data }) => setUmbrellaIds((data || []).map((o) => o.id)))
+  }, [hostIdsKey])
   const hostChoices = [
     ...(isAdmin ? [{ id: VWB_HOST, name: 'Village Without Borders' }] : []),
     ...hostOrgs.map((o) => ({ id: o.id, name: o.name })),
@@ -136,6 +143,7 @@ export default function CalendarEventForm() {
       if (field === 'startTime' && durationMins && !endTouched) next.endTime = addMinutes(value, durationMins)
       // "Members only" needs a group behind it.
       if (field === 'host' && value === VWB_HOST && f.visibility === 'members') next.visibility = 'public'
+      if (field === 'host' && f.visibility === 'affiliates' && !umbrellaIds.includes(value)) next.visibility = 'public'
       // Teens helping only makes sense when all ages are welcome.
       if (field === 'allAges' && !value) next.teensCanHelp = false
       return next
@@ -343,7 +351,7 @@ export default function CalendarEventForm() {
         )}
 
         <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Who can see it?</h2>
-        {Object.entries(VISIBILITY).map(([key, v]) => {
+        {Object.entries(VISIBILITY).filter(([key]) => key !== 'affiliates' || umbrellaIds.includes(form.host)).map(([key, v]) => {
           const disabled = key === 'members' && form.host === VWB_HOST
           return (
             <label key={key} className={'cal-choice' + (form.visibility === key ? ' is-on' : '') + (disabled ? ' is-disabled' : '')}>

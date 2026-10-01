@@ -29,6 +29,7 @@ export const VISIBILITY = {
   account: { label: 'Signed-in members only', desc: 'Anyone with a Village Without Borders account can see it. Not shown to the public or on the website.' },
   members: { label: 'Members only', desc: 'Only members of your group can see it, inside the app.' },
   invite: { label: 'Invite only', desc: 'Only people you send the private invite link to can see it.' },
+  affiliates: { label: 'Council-wide', desc: 'Only members of your council and of the groups linked to it can see it, inside the app.' },
 }
 
 // By default only upcoming events. The month calendar passes

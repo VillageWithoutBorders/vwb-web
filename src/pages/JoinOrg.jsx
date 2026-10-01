@@ -16,6 +16,7 @@ export default function JoinOrg() {
   const [checking, setChecking] = useState(true)
   const [invite, setInvite] = useState(null)
   const [notFound, setNotFound] = useState(false)
+  const [councilName, setCouncilName] = useState('')
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -36,6 +37,8 @@ export default function JoinOrg() {
       const row = Array.isArray(data) ? data[0] : data
       if (!row) { setNotFound(true); setChecking(false); return }
       setInvite(row)
+      const { data: cn } = await supabase.rpc('get_invitation_council', { p_token: token })
+      if (typeof cn === 'string') setCouncilName(cn)
       setChecking(false)
     }
     check()
@@ -123,6 +126,9 @@ export default function JoinOrg() {
 
         {!notFound && !done && invite?.status === 'pending' && (
           <form onSubmit={handleSubmit} className="login-form">
+            {councilName && (
+              <p style={{ color: '#4ecca3', fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.75rem' }}>{councilName} invited your group to join. You can link with them after you are approved. You choose, and you can end it any time.</p>
+            )}
             {invite.note && (
               <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem', fontStyle: 'italic' }}>&ldquo;{invite.note}&rdquo;</p>
             )}

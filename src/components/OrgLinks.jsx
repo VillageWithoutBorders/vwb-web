@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { CalendarEventList } from './CalendarParts'
+import QrShare from './QrShare'
 
 // Council links on an organization page.
 // Everyone sees a council's list of locals (names only).
@@ -20,6 +21,9 @@ export default function OrgLinks({ org, canManage, events, onChanged }) {
   const [found, setFound] = useState([])
   const [councils, setCouncils] = useState([])
   const [labelText, setLabelText] = useState(org.affiliate_label || '')
+  const [inviteNote, setInviteNote] = useState('')
+  const [inviteUrl, setInviteUrl] = useState('')
+  const [copied, setCopied] = useState(false)
 
   async function load() {
     if (org.is_umbrella) {
@@ -77,6 +81,29 @@ export default function OrgLinks({ org, canManage, events, onChanged }) {
   const ask = (umbrella, affiliate, okText) => run('ask-' + umbrella + affiliate, () => supabase.rpc('request_affiliation', { p_umbrella: umbrella, p_affiliate: affiliate }), okText)
   const answer = (l, accept) => run('ans-' + l.umbrella_id + l.affiliate_id, () => supabase.rpc('respond_affiliation', { p_umbrella: l.umbrella_id, p_affiliate: l.affiliate_id, p_accept: accept }), accept ? 'Linked.' : 'Request declined.')
   const end = (l, okText) => run('end-' + l.umbrella_id + l.affiliate_id, () => supabase.rpc('end_affiliation', { p_umbrella: l.umbrella_id, p_affiliate: l.affiliate_id }), okText)
+  async function makeInvite(e) {
+    e.preventDefault()
+    setBusy('invite'); setNote(''); setCopied(false)
+    const { data, error } = await supabase.rpc('create_council_invitation', { p_umbrella: org.id, p_note: inviteNote })
+    setBusy('')
+    if (error || typeof data !== 'string') {
+      console.error('Failed to make invite link:', error)
+      setNote(error && error.message && error.code && error.code !== 'PGRST202' ? error.message : "We couldn't make the link. Try again.")
+      return
+    }
+    setInviteUrl(window.location.origin + '/join-org?token=' + data)
+    setInviteNote('')
+  }
+
+  async function copyInvite() {
+    try {
+      await navigator.clipboard.writeText(inviteUrl)
+      setCopied(true)
+    } catch {
+      setNote('Press and hold the link to copy it.')
+    }
+  }
+
   const saveLabel = (e) => { e.preventDefault(); run('label', () => supabase.rpc('set_affiliate_label', { p_org: org.id, p_label: labelText }), 'Saved.') }
 
   const localIds = new Set(locals.map((l) => l.id))
@@ -167,6 +194,24 @@ export default function OrgLinks({ org, canManage, events, onChanged }) {
                 </div>
               ))}
               {q.trim().length >= 2 && found.length === 0 && <p className="hub-empty">No group with that name.</p>}
+
+              <form onSubmit={makeInvite} style={{ marginTop: '1.25rem' }}>
+                <p className="cal-sub" style={{ marginBottom: '0.25rem' }}>Is the group not on VWB yet? Make a link and send it yourself. It works once.</p>
+                <label htmlFor="org-invite-note" className="cal-sub" style={{ display: 'block' }}>Short note for them (optional)</label>
+                <div className="hub-search">
+                  <input id="org-invite-note" type="text" maxLength={500} placeholder="Welcome, we would love to have you" value={inviteNote} onChange={(e) => setInviteNote(e.target.value)} />
+                  <button type="submit" className="btn btn-primary" disabled={!!busy}>{busy === 'invite' ? 'Making...' : 'Make link'}</button>
+                </div>
+              </form>
+              {inviteUrl && (
+                <div className="cal-card" style={{ marginTop: '0.5rem' }}>
+                  <span className="cal-card-meta" style={{ wordBreak: 'break-all' }}>{inviteUrl}</span>
+                  <div className="cal-actions" style={{ marginTop: '0.5rem' }}>
+                    <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} onClick={copyInvite}>{copied ? 'Copied' : 'Copy link'}</button>
+                  </div>
+                  <QrShare url={inviteUrl} title="Invite link" hint="They scan this to open your invite on their phone." />
+                </div>
+              )}
 
               <form onSubmit={saveLabel} style={{ marginTop: '1rem' }}>
                 <label htmlFor="org-link-label" className="cal-sub" style={{ display: 'block' }}>Name for your list (up to 40 letters)</label>
