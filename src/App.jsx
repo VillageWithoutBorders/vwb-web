@@ -9,41 +9,62 @@ import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Feed from './pages/Feed'
-import Profile from './pages/Profile'
-import Settings from './pages/Settings'
-import Help from './pages/Help'
-import AskForHelp from './pages/AskForHelp'
-import PostOffer from './pages/PostOffer'
-import ActiveTasks from './pages/ActiveTasks'
-import Community from './pages/Community'
-import CommunityResources from './pages/CommunityResources'
-import PublicResources from './pages/PublicResources'
-import OrgPage from './pages/OrgPage'
-import OrgDashboard from './pages/OrgDashboard'
-import MfaChallenge from './pages/MfaChallenge'
+const Profile = lazyPage(() => import('./pages/Profile'))
+const Settings = lazyPage(() => import('./pages/Settings'))
+const Help = lazyPage(() => import('./pages/Help'))
+const AskForHelp = lazyPage(() => import('./pages/AskForHelp'))
+const PostOffer = lazyPage(() => import('./pages/PostOffer'))
+const ActiveTasks = lazyPage(() => import('./pages/ActiveTasks'))
+const Community = lazyPage(() => import('./pages/Community'))
+const CommunityResources = lazyPage(() => import('./pages/CommunityResources'))
+const PublicResources = lazyPage(() => import('./pages/PublicResources'))
+const OrgPage = lazyPage(() => import('./pages/OrgPage'))
+const OrgDashboard = lazyPage(() => import('./pages/OrgDashboard'))
+const MfaChallenge = lazyPage(() => import('./pages/MfaChallenge'))
 import Conversation from './pages/Conversation'
-import MessagesPage from './pages/Messages'
-import EmergencyEvents from './pages/EmergencyEvents'
-import CreateEvent from './pages/CreateEvent'
-import EventDetail from './pages/EventDetail'
-import Admin from './pages/Admin'
-import Campfire from './pages/Campfire'
-import Notifications from './pages/Notifications'
-import PublicProfile from './pages/PublicProfile'
-import GrantReport from './pages/GrantReport'
+const MessagesPage = lazyPage(() => import('./pages/Messages'))
+const EmergencyEvents = lazyPage(() => import('./pages/EmergencyEvents'))
+const CreateEvent = lazyPage(() => import('./pages/CreateEvent'))
+const EventDetail = lazyPage(() => import('./pages/EventDetail'))
+const Admin = lazyPage(() => import('./pages/Admin'))
+const Campfire = lazyPage(() => import('./pages/Campfire'))
+const Notifications = lazyPage(() => import('./pages/Notifications'))
+const PublicProfile = lazyPage(() => import('./pages/PublicProfile'))
+const GrantReport = lazyPage(() => import('./pages/GrantReport'))
 import CommunityGuidelines from './pages/CommunityGuidelines'
-import JoinOrg from './pages/JoinOrg'
-import Terms from './pages/Terms'
-import Calendar from './pages/Calendar'
-import CalendarEventForm from './pages/CalendarEventForm'
-import CalendarImport from './pages/CalendarImport'
-import CalendarEmbed from './pages/CalendarEmbed'
-import EventPage from './pages/EventPage'
-import Groups from './pages/Groups'
-import GroupBoard from './pages/GroupBoard'
-import JoinGroup from './pages/JoinGroup'
+const JoinOrg = lazyPage(() => import('./pages/JoinOrg'))
+const Terms = lazyPage(() => import('./pages/Terms'))
+const Calendar = lazyPage(() => import('./pages/Calendar'))
+const CalendarEventForm = lazyPage(() => import('./pages/CalendarEventForm'))
+const CalendarImport = lazyPage(() => import('./pages/CalendarImport'))
+const CalendarEmbed = lazyPage(() => import('./pages/CalendarEmbed'))
+const EventPage = lazyPage(() => import('./pages/EventPage'))
+const Groups = lazyPage(() => import('./pages/Groups'))
+const GroupBoard = lazyPage(() => import('./pages/GroupBoard'))
+const JoinGroup = lazyPage(() => import('./pages/JoinGroup'))
 const VillageMap = lazy(() => import('./pages/VillageMap'))
 import { peekReturnTo } from './utils/returnTo'
+
+// Pages load when first opened, so the first visit downloads less.
+// If a new version went out while a tab was open, the old page file is
+// gone: reload once to pick up the new version.
+function lazyPage(load) {
+  return lazy(() =>
+    load().then(
+      (m) => { try { sessionStorage.removeItem('vwb_chunk_reload') } catch { /* private mode */ } return m },
+      (err) => {
+        let again = false
+        try { again = !sessionStorage.getItem('vwb_chunk_reload'); if (again) sessionStorage.setItem('vwb_chunk_reload', '1') } catch { /* private mode */ }
+        if (again) { window.location.reload(); return new Promise(() => {}) }
+        throw err
+      }
+    )
+  )
+}
+
+function PageLoading() {
+  return <div className="cal-page"><p className="cal-empty" role="status">Loading...</p></div>
+}
 
 function ProfileWait() {
   const { profileError, retryProfile, signOut } = useAuth()
@@ -98,6 +119,7 @@ function PublicRoute({ children }) {
 
 function AppRoutes() {
   return (
+    <Suspense fallback={<PageLoading />}>
     <Routes>
       <Route path="/welcome" element={<PublicRoute><Welcome /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -144,6 +166,7 @@ function AppRoutes() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   )
 }
 

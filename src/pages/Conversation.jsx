@@ -1,4 +1,5 @@
 import MessageOptionsMenu from '../components/popup/MessageOptionsMenu'
+import { useBlockedBy } from '../utils/blockedBy'
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useChatScroll } from '../hooks/useChatScroll'
@@ -33,6 +34,7 @@ export default function Conversation() {
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const blockedBy = useBlockedBy()
   const location = useLocation()
   const { refreshUnread } = useUnreadCount()
   const [convo, setConvo] = useState(null)
@@ -428,19 +430,21 @@ export default function Conversation() {
           <button onClick={() => setShowSettings(false)} aria-label="Close chat settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
 
-        <button type="button" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#222', borderRadius: '10px', marginBottom: '1.25rem', cursor: 'pointer', border: 'none', width: '100%', textAlign: 'left' }} onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }}>
+        <button type="button" disabled={blockedBy.has(otherUserId)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#222', borderRadius: '10px', marginBottom: '1.25rem', cursor: blockedBy.has(otherUserId) ? 'default' : 'pointer', border: 'none', width: '100%', textAlign: 'left' }} onClick={() => { setShowSettings(false); if (!blockedBy.has(otherUserId)) navigate('/u/' + otherUserId) }}>
           <AvatarDisplay url={otherAvatar} userId={otherUserId} size={44} />
           <div>
             <div style={{ fontWeight: 700, color: '#fff' }}>{otherName}</div>
-            <div style={{ color: '#4ecca3', fontSize: '0.8rem' }}>View profile</div>
+            {!blockedBy.has(otherUserId) && <div style={{ color: '#4ecca3', fontSize: '0.8rem' }}>View profile</div>}
           </div>
         </button>
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Actions</div>
 
+        {!blockedBy.has(otherUserId) && (
         <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128100;</span> View Profile
         </button>
+        )}
         <button onClick={async () => {
           if (!confirm('Block ' + otherName + '?')) return
           const { error } = await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: otherUserId })
