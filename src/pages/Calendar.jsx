@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { fetchCalendarEvents, filterByDistance, savePlace, startingOrigin, memberArea } from '../utils/calendar'
-import { CalendarLocationBar, CalendarView } from '../components/CalendarParts'
+import { CalendarLocationBar, CalendarView, AllAgesFilter } from '../components/CalendarParts'
 
 export default function Calendar() {
   const { isAdmin, organizations, profile } = useAuth()
@@ -12,6 +12,7 @@ export default function Calendar() {
   const [loadError, setLoadError] = useState(false)
   const [origin, setOrigin] = useState(() => startingOrigin(profile))
   const [miles, setMiles] = useState(25)
+  const [allAgesOnly, setAllAgesOnly] = useState(false)
 
   const canPost = isAdmin || organizations.some((o) => o.role === 'admin' || o.role === 'organizer')
 
@@ -35,7 +36,10 @@ export default function Calendar() {
     return () => { alive = false }
   }, [])
 
-  const visible = useMemo(() => filterByDistance(events, origin, miles), [events, origin, miles])
+  const visible = useMemo(
+    () => filterByDistance(events, origin, miles).filter((e) => !allAgesOnly || e.all_ages),
+    [events, origin, miles, allAgesOnly]
+  )
 
   function changeOrigin(o) {
     setOrigin(o)
@@ -57,6 +61,7 @@ export default function Calendar() {
       </div>
 
       <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
+      <AllAgesFilter checked={allAgesOnly} onChange={setAllAgesOnly} />
 
       {loading && <p className="cal-empty">Loading events...</p>}
       {!loading && loadError && (
