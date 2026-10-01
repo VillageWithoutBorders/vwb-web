@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useBlockedBy } from '../utils/blockedBy'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
@@ -28,6 +29,7 @@ export default function Messages() {
   const { user, profile, isAdmin } = useAuth()
   const { refreshUnread } = useUnreadCount()
   const navigate = useNavigate()
+  const blockedBy = useBlockedBy()
   const location = useLocation()
   const [convos, setConvos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -792,7 +794,7 @@ export default function Messages() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={offer.avatar_url} userId={offer.helper_id} size={32} /><span onClick={(e) => { e.stopPropagation(); navigate('/u/' + offer.helper_id) }} style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{offer.helper_name}</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={offer.avatar_url} userId={offer.helper_id} size={32} /><span onClick={(e) => { e.stopPropagation(); !blockedBy.has(offer.helper_id) && navigate('/u/' + offer.helper_id) }} style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem', cursor: blockedBy.has(offer.helper_id) ? 'default' : 'pointer', textDecoration: blockedBy.has(offer.helper_id) ? 'none' : 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{offer.helper_name}</span></div>
                 {offer.is_ambassador && (
                   <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
                     Hope Ambassador
@@ -931,7 +933,7 @@ export default function Messages() {
                 {isPinned && <span style={{ marginRight: '4px' }} title="Pinned">&#128204;</span>}
                 {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title="Muted">&#128263;</span>}
                 {followUp && <span style={{ marginRight: '4px' }} title="Follow up">&#128681;</span>}
-                <button type="button" onClick={(e) => { e.stopPropagation(); navigate('/u/' + c.otherId) }} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.otherName}</button>
+                <button disabled={blockedBy.has(c.otherId)} type="button" onClick={(e) => { e.stopPropagation(); !blockedBy.has(c.otherId) && navigate('/u/' + c.otherId) }} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: blockedBy.has(c.otherId) ? 'default' : 'pointer', textDecoration: blockedBy.has(c.otherId) ? 'none' : 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.otherName}</button>
                 {unread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#4ecca3", marginLeft: "6px", flexShrink: 0 }} />}
               </span>
               <span className="message-card-time" style={{ color: unread ? "#4ecca3" : undefined }}>{formatTime(c.lastMessageAt)}</span>

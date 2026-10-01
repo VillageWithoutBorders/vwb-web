@@ -20,7 +20,8 @@ export const TYPE_ICONS = {
   safety_report: '\u{1F6A9}',
   report_reviewed: '\u2705',
   group_removal_request: '\u{1F525}',
-  campfire: '\u{1F525}'
+  campfire: '\u{1F525}',
+  calendar_signup: '\u{1F4C5}'
 }
 
 export const TYPE_COLORS = {
@@ -42,7 +43,8 @@ export const TYPE_COLORS = {
   safety_report: '#ef4444',
   report_reviewed: '#10b981',
   group_removal_request: '#f59e0b',
-  campfire: '#e8833a'
+  campfire: '#e8833a',
+  calendar_signup: '#4ecca3'
 }
 
 export function timeAgo(dateStr) {

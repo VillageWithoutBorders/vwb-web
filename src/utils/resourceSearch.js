@@ -58,6 +58,42 @@ export const WORD_FAMILIES = [
 
   // Medical
   ['medicine', 'prescription', 'pharmacy', 'medication', 'doctor', 'clinic', 'dental', 'dentist'],
+
+  // Health coverage
+  ['insurance', 'health insurance', 'medicaid', 'medicare', 'peachcare', 'coverage', 'marketplace', 'uninsured', 'sliding scale'],
+
+  // Work and money
+  ['job', 'jobs', 'work', 'employment', 'unemployed', 'resume', 'hiring', 'career', 'workforce', 'job training'],
+
+  // School and learning
+  ['school', 'tutor', 'tutoring', 'ged', 'diploma', 'class', 'classes', 'literacy', 'reading', 'education', 'college', 'scholarship', 'school supplies'],
+
+  // Kids and child care
+  ['child care', 'childcare', 'daycare', 'kids', 'children', 'youth', 'teen', 'teens', 'after school', 'camp', 'summer program'],
+
+  // Older adults and disability
+  ['senior', 'seniors', 'elderly', 'older adult', 'elder', 'aging', 'disability', 'disabled', 'wheelchair', 'mobility', 'caregiver', 'respite'],
+
+  // Veterans
+  ['veteran', 'veterans', 'military', 'va', 'service member'],
+
+  // Safety at home
+  ['abuse', 'domestic violence', 'violence', 'unsafe', 'safe place', 'protective order', 'restraining order', 'stalking', 'trafficking', 'assault'],
+
+  // Papers and ID
+  ['id', 'identification', 'birth certificate', 'documents', 'social security', 'license', 'drivers license', 'passport', 'notary'],
+
+  // Taxes and money help
+  ['tax', 'taxes', 'tax help', 'vita', 'budget', 'debt', 'credit', 'financial', 'loan', 'bank', 'mortgage', 'foreclosure'],
+
+  // Household items
+  ['furniture', 'bed', 'mattress', 'appliance', 'household', 'cleaning supplies', 'hygiene', 'toiletries', 'period products', 'pads', 'soap'],
+
+  // Disaster help
+  ['fema', 'disaster', 'relief', 'emergency', 'red cross', 'fire', 'house fire', 'hurricane', 'evacuate', 'recovery from storm'],
+
+  // Language
+  ['translation', 'translator', 'interpreter', 'language', 'esl', 'english class', 'spanish', 'espanol'],
 ]
 
 // Words we ignore in a search because they match almost everything.

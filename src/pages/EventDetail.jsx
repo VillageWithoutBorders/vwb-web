@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useBlockedBy } from '../utils/blockedBy'
 import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -26,6 +27,7 @@ export default function EventDetail() {
   const { id } = useParams()
   const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const blockedBy = useBlockedBy()
   const [event, setEvent] = useState(null)
   const [signups, setSignups] = useState([])
   const [mySignup, setMySignup] = useState(null)
@@ -574,7 +576,7 @@ export default function EventDetail() {
         responders.map(s => (
           <div key={s.id} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={s.avatar_url} userId={s.user_id} size={28} /><span style={{ fontWeight: 700 }}>{s.role === 'coordinator' && <span style={{ color: '#66aaff', marginRight: '4px' }} title="Coordinator">&#9733;</span>}<button type="button" onClick={() => navigate('/u/' + s.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{s.display_name}</button></span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={s.avatar_url} userId={s.user_id} size={28} /><span style={{ fontWeight: 700 }}>{s.role === 'coordinator' && <span style={{ color: '#66aaff', marginRight: '4px' }} title="Coordinator">&#9733;</span>}<button disabled={blockedBy.has(s.user_id)} type="button" onClick={() => !blockedBy.has(s.user_id) && navigate('/u/' + s.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 700, cursor: blockedBy.has(s.user_id) ? 'default' : 'pointer', textDecoration: blockedBy.has(s.user_id) ? 'none' : 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{s.display_name}</button></span></div>
               <span style={{ color: '#8a8a8a', fontSize: '0.75rem', marginRight: '1.5rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
             </div>
             {s.skills && s.skills.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.4rem' }}>{s.skills.map(sk => <span key={sk} style={{ background: '#2a2a2a', color: '#4ecca3', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px' }}>{sk}</span>)}</div>}
@@ -593,7 +595,7 @@ export default function EventDetail() {
           return (
             <div key={s.id} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <button type="button" onClick={() => navigate('/u/' + s.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{s.display_name}</button>
+                <button disabled={blockedBy.has(s.user_id)} type="button" onClick={() => !blockedBy.has(s.user_id) && navigate('/u/' + s.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 700, cursor: blockedBy.has(s.user_id) ? 'default' : 'pointer', textDecoration: blockedBy.has(s.user_id) ? 'none' : 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{s.display_name}</button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1.5rem' }}>
                   {sc && <span style={{ background: sc.bg, color: sc.color, fontSize: '0.7rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>{sc.icon} {sc.label}</span>}
                   <span style={{ color: '#8a8a8a', fontSize: '0.75rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
@@ -616,7 +618,7 @@ export default function EventDetail() {
               <span style={{ background: conf.bg, color: conf.color, fontSize: '1.1rem', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', flexShrink: 0 }}>{conf.icon}</span>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><AvatarDisplay url={c.avatar_url} userId={c.user_id} size={22} /><button type="button" onClick={() => navigate('/u/' + c.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.display_name}</button></div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><AvatarDisplay url={c.avatar_url} userId={c.user_id} size={22} /><button disabled={blockedBy.has(c.user_id)} type="button" onClick={() => !blockedBy.has(c.user_id) && navigate('/u/' + c.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 600, fontSize: '0.9rem', cursor: blockedBy.has(c.user_id) ? 'default' : 'pointer', textDecoration: blockedBy.has(c.user_id) ? 'none' : 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.display_name}</button></div>
                   <span style={{ color: '#8a8a8a', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
                 </div>
                 <span style={{ color: conf.color, fontSize: '0.8rem', fontWeight: 600 }}>{conf.label}</span>

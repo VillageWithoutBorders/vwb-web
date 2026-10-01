@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useBlockedBy } from '../utils/blockedBy'
 import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -59,6 +60,7 @@ const URGENCY_CONFIG = {
 export default function Feed() {
     const { user, profile } = useAuth()
     const navigate = useNavigate()
+    const blockedBy = useBlockedBy()
     const location = useLocation()
     const [successMsg, setSuccessMsg] = useState(location.state?.message || null)
 
@@ -404,7 +406,7 @@ export default function Feed() {
                                     </div>
 
                                     <div className="feed-card-who">
-                                        <span className="feed-card-name" onClick={(e) => { e.stopPropagation(); if (req.requester_id) navigate('/u/' + req.requester_id) }} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{req.requester_name || 'A neighbor'}</span>
+                                        <span className="feed-card-name" onClick={(e) => { e.stopPropagation(); if (req.requester_id) !blockedBy.has(req.requester_id) && navigate('/u/' + req.requester_id) }} style={{ cursor: blockedBy.has(req.requester_id) ? 'default' : 'pointer', textDecoration: blockedBy.has(req.requester_id) ? 'none' : 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{req.requester_name || 'A neighbor'}</span>
                                         {req.neighborhood && <span className="feed-card-hood"> in {req.neighborhood}</span>}
                                         {req.is_ambassador && (
                                             <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>
@@ -484,7 +486,7 @@ export default function Feed() {
                                     </div>
                                     {offer.poster_name && (
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                                            <span className="feed-card-name" onClick={(e) => { e.stopPropagation(); if (offer.user_id) navigate('/u/' + offer.user_id) }} style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{offer.poster_name}</span>
+                                            <span className="feed-card-name" onClick={(e) => { e.stopPropagation(); if (offer.user_id) !blockedBy.has(offer.user_id) && navigate('/u/' + offer.user_id) }} style={{ cursor: blockedBy.has(offer.user_id) ? 'default' : 'pointer', textDecoration: blockedBy.has(offer.user_id) ? 'none' : 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{offer.poster_name}</span>
                                             {offer.is_ambassador && (
                                                 <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
                                                     Hope Ambassador

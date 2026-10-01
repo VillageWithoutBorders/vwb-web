@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useBlockedBy } from '../utils/blockedBy'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay from './AvatarDisplay'
@@ -16,6 +17,7 @@ async function peopleById(ids) {
 // confirm. Nothing shows if there are none.
 export function VouchRequestsForMe({ myId }) {
   const navigate = useNavigate()
+  const blockedBy = useBlockedBy()
   const [requests, setRequests] = useState([])
   const [busy, setBusy] = useState(null)
 
@@ -54,7 +56,7 @@ export function VouchRequestsForMe({ myId }) {
         <div key={r.voucher_id} className="group-member">
           <AvatarDisplay url={r.avatar} userId={r.voucher_id} size={32} />
           <span className="group-member-name">
-            <button type="button" className="link-button" onClick={() => navigate('/u/' + r.voucher_id)}>{r.name}</button>
+            <button disabled={blockedBy.has(r.voucher_id)} type="button" className="link-button" onClick={() => !blockedBy.has(r.voucher_id) && navigate('/u/' + r.voucher_id)}>{r.name}</button>
             <span className="group-member-sub">{HOW_LABELS[r.how] || 'Knows you'}</span>
           </span>
           <span className="group-member-actions">
@@ -71,6 +73,7 @@ export function VouchRequestsForMe({ myId }) {
 // confirmed vouches.
 export function KnowsVouchList({ userId }) {
   const navigate = useNavigate()
+  const blockedBy = useBlockedBy()
   const [rows, setRows] = useState([])
 
   useEffect(() => {
@@ -89,7 +92,7 @@ export function KnowsVouchList({ userId }) {
     <ul className="vouch-knows-list" aria-label="People who know them personally">
       {rows.map(r => (
         <li key={r.voucher_id}>
-          <button type="button" className="link-button" onClick={() => navigate('/u/' + r.voucher_id)}>{r.name}</button>
+          <button disabled={blockedBy.has(r.voucher_id)} type="button" className="link-button" onClick={() => !blockedBy.has(r.voucher_id) && navigate('/u/' + r.voucher_id)}>{r.name}</button>
           <span className="group-member-sub">{HOW_LABELS[r.how] || 'Knows them'}</span>
         </li>
       ))}

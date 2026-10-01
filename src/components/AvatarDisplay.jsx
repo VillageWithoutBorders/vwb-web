@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useBlockedBy } from '../utils/blockedBy'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { canVouch } from '../utils/vouchEligibility'
@@ -12,6 +13,7 @@ function reportError(context, error) {
 
 export default function AvatarDisplay({ url, userId, size = 32 }) {
   const navigate = useNavigate()
+  const blockedBy = useBlockedBy()
   const src = url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId || 'default'}`
   const [showPopup, setShowPopup] = useState(false)
   const [info, setInfo] = useState(null)
@@ -141,7 +143,9 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
             )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Close</button>
-              <button onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>View Profile</button>
+              {!blockedBy.has(userId) && (
+                <button onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>View Profile</button>
+              )}
             </div>
           </div>
         </>
