@@ -133,10 +133,12 @@ export default function Messages() {
         .maybeSingle()
       if (profErr) console.error('Failed to load helper profile:', profErr)
 
-      const { count: vouchCount, error: vouchErr } = await supabase
-        .from('vouches')
-        .select('id', { count: 'exact', head: true })
-        .eq('vouchee_id', match.helper_id)
+      const { data: vcRow, error: vouchErr } = await supabase
+        .from('vouch_counts')
+        .select('vouch_count')
+        .eq('user_id', match.helper_id)
+        .maybeSingle()
+      const vouchCount = Number(vcRow?.vouch_count || 0)
       if (vouchErr) console.error('Failed to load vouch count:', vouchErr)
 
       const request = myRequests.find(r => r.id === match.request_id)
