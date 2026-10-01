@@ -4624,3 +4624,10 @@ html[data-tour-tab="top"] .app-header .header-btn {
 .cal-month-day.is-picked .cal-month-dots i { background: #0d1f18; }
 .cal-month-today { margin: 0; text-align: center; }
 @media (prefers-reduced-motion: reduce) { .cal-month-day:active { transform: none; } }
+.cal-card.is-ended { opacity: 0.65; }
+.cal-month-day.has-ended-only .cal-month-dots i { background: var(--text-secondary); }
+.cal-badge-ended { background: #2b2f2e; color: #c4cbc9; }
+
+.cal-found { margin: 0.5rem 0; padding: 0.625rem 0.875rem; border: 1px solid var(--border); border-radius: 10px; font-size: 0.95rem; line-height: 1.45; }
+.cal-found.is-set { border-color: #4ecca3; background: #12261f; color: #cfeee3; }
+.cal-embed-link { display: inline-block; padding: 0.75rem 0.25rem; min-height: 44px; box-sizing: border-box; }

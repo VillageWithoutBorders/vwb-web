@@ -26,7 +26,7 @@ export default function Calendar() {
 
   useEffect(() => {
     let alive = true
-    fetchCalendarEvents().then(({ events: evs, error }) => {
+    fetchCalendarEvents({ thisMonth: true }).then(({ events: evs, error }) => {
       if (!alive) return
       setEvents(evs)
       setLoadError(!!error)

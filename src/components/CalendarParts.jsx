@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { DISTANCE_OPTIONS, groupByDay, timeRange, VISIBILITY, placeFromZip } from '../utils/calendar'
+import { DISTANCE_OPTIONS, groupByDay, hasEnded, timeRange, VISIBILITY, placeFromZip } from '../utils/calendar'
 import { getCurrentPosition } from '../utils/location'
 
 // Where to look: a zip code (any US zip), "Use my location" (this visit
@@ -35,14 +35,21 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
 
   return (
     <div className="cal-location">
-      <p className="cal-near" role="status">
-        {origin ? <>Showing events near <strong>{origin.name}</strong></> : "Showing every event. Choose your area to see what's close to you."}
-      </p>
+      <div className={'cal-found' + (origin && busy !== 'zip' ? ' is-set' : '')} role="status" aria-live="polite">
+        {busy === 'zip'
+          ? 'Looking up that zip code...'
+          : origin
+            ? <><span aria-hidden="true">&#10003; </span>Location set: <strong>{origin.name}{origin.zip ? ' (' + origin.zip + ')' : ''}</strong>. Showing events within {miles} miles.</>
+            : "No location set yet, so every event shows. Enter a zip code to see what's close to you."}
+        {origin && origin.kind === 'zip' && !homeArea && (
+          <button type="button" className="link-button" style={{ minHeight: '44px', marginLeft: '0.5rem' }} onClick={() => onOriginChange(null)}>Clear</button>
+        )}
+      </div>
       <form className="cal-zip-form" onSubmit={useZip} noValidate>
         <label htmlFor="cal-zip">{origin ? 'Look somewhere else (zip code)' : 'Your zip code'}</label>
         <div className="cal-zip-row">
           <input id="cal-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} value={zip} onChange={(e) => { setZip(e.target.value.replace(/[^0-9]/g, '')); setNote('') }} placeholder="12345" aria-describedby={note ? 'cal-zip-note' : undefined} />
-          <button type="submit" className="btn btn-primary" disabled={busy === 'zip'}>{busy === 'zip' ? '...' : 'Go'}</button>
+          <button type="submit" className="btn btn-primary" disabled={busy === 'zip'}>{busy === 'zip' ? 'Looking...' : 'Go'}</button>
         </div>
       </form>
       {note && <p id="cal-zip-note" className="cal-error" role="alert">{note}</p>}
@@ -80,11 +87,12 @@ export function AllAgesFilter({ checked, onChange }) {
 function badges(ev) {
   const out = []
   if (ev.status === 'cancelled') out.push(['Cancelled', 'cal-badge-off'])
+  else if (hasEnded(ev)) out.push(['Ended', 'cal-badge-ended'])
   if (ev.visibility === 'account') out.push([VISIBILITY.account.label, 'cal-badge-private'])
   if (ev.visibility === 'members') out.push([VISIBILITY.members.label, 'cal-badge-private'])
   if (ev.visibility === 'invite') out.push([VISIBILITY.invite.label, 'cal-badge-private'])
   if (ev.all_ages) out.push(['All ages', ''])
-  else if (ev.status !== 'cancelled') out.push(['Adults 18+', ''])
+  else if (ev.status !== 'cancelled' && !hasEnded(ev)) out.push(['Adults 18+', ''])
   if (ev.teens_can_help) out.push(['Teens can help with a parent', ''])
   if (ev.is_signed_up) out.push(["You're signed up", ''])
   else if (ev.signup_enabled && ev.status !== 'cancelled') {
@@ -111,9 +119,9 @@ export function CalendarEventCard({ ev, newTab }) {
     </>
   )
   if (newTab) {
-    return <a className="cal-card" href={'/events/' + ev.id} target="_blank" rel="noopener noreferrer">{inner}</a>
+    return <a className={'cal-card' + (hasEnded(ev) ? ' is-ended' : '')} href={'/events/' + ev.id} target="_blank" rel="noopener noreferrer">{inner}</a>
   }
-  return <Link className="cal-card" to={'/events/' + ev.id}>{inner}</Link>
+  return <Link className={'cal-card' + (hasEnded(ev) ? ' is-ended' : '')} to={'/events/' + ev.id}>{inner}</Link>
 }
 
 export function CalendarEventList({ events, newTab, emptyText }) {
@@ -184,7 +192,7 @@ function CalendarMonth({ events, newTab }) {
           if (!d) return <div key={'b' + i} className="cal-month-blank" />
           const k = dayKey(d)
           const list = byDay[k] || []
-          const cls = 'cal-month-day' + (k === picked ? ' is-picked' : '') + (k === dayKey(today) ? ' is-today' : '') + (list.length ? ' has-events' : '')
+          const cls = 'cal-month-day' + (k === picked ? ' is-picked' : '') + (k === dayKey(today) ? ' is-today' : '') + (list.length ? ' has-events' : '') + (list.length && list.every(hasEnded) ? ' has-ended-only' : '')
           const label = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) + ', ' + (list.length === 0 ? 'no events' : list.length + (list.length === 1 ? ' event' : ' events'))
           return (
             <button key={k} type="button" className={cls} onClick={() => setPicked(k)} aria-label={label} aria-pressed={k === picked}>
@@ -206,15 +214,17 @@ function CalendarMonth({ events, newTab }) {
 // Month calendar by default, with a switch to the plain list.
 export function CalendarView({ events, newTab, emptyText }) {
   const [mode, setMode] = useState('month')
+  const upcoming = events.filter((e) => !hasEnded(e)).length
   return (
     <>
+      <p className="cal-sub" role="status">{upcoming === 0 ? 'No upcoming events found for this search. Try more miles.' : upcoming + (upcoming === 1 ? ' upcoming event found.' : ' upcoming events found.')}</p>
       <div className="cal-mode" role="group" aria-label="How to show events">
         <button type="button" className={mode === 'month' ? 'is-on' : ''} aria-pressed={mode === 'month'} onClick={() => setMode('month')}>Month</button>
         <button type="button" className={mode === 'list' ? 'is-on' : ''} aria-pressed={mode === 'list'} onClick={() => setMode('list')}>List</button>
       </div>
       {mode === 'month'
         ? <CalendarMonth events={events} newTab={newTab} />
-        : <CalendarEventList events={events} newTab={newTab} emptyText={emptyText} />}
+        : <CalendarEventList events={events.filter((e) => !hasEnded(e))} newTab={newTab} emptyText={emptyText} />}
     </>
   )
 }
