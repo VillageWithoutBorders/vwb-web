@@ -4641,3 +4641,25 @@ html[data-tour-tab="top"] .app-header .header-btn {
 .imp-modal li { margin-bottom: 0.6rem; }
 @media (min-width: 768px) { .imp-modal-back { align-items: center; padding: 1rem; } .imp-modal { border-radius: 16px; } }
 @media (prefers-reduced-motion: reduce) { .imp-help-btn:active { transform: none; } }
+
+/* Month calendar */
+.cal-mode { display: flex; gap: 0.5rem; margin: 0.75rem 0; }
+.cal-mode button { flex: 1; min-height: 44px; border: 1px solid var(--border); border-radius: 10px; background: var(--white); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+.cal-mode button.is-on { background: #4ecca3; border-color: #4ecca3; color: #0d1f18; }
+.cal-month-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; }
+.cal-month-title { margin: 0; font-size: 1.15rem; text-align: center; flex: 1; }
+.cal-month-nav { min-width: 48px; min-height: 48px; border: 1px solid var(--border); border-radius: 10px; background: var(--white); color: var(--text); font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.cal-month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-month-wd { text-align: center; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); padding: 0.25rem 0; }
+.cal-month-blank { min-height: 48px; }
+.cal-month-day { min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; padding: 6px 2px; border: 1px solid var(--border); border-radius: 10px; background: var(--white); color: var(--text); font: inherit; cursor: pointer; }
+.cal-month-day:active { transform: scale(0.96); }
+.cal-month-day.is-today .cal-month-num { font-weight: 800; color: #4ecca3; }
+.cal-month-day.is-picked { background: #4ecca3; border-color: #4ecca3; color: #0d1f18; }
+.cal-month-day.is-picked .cal-month-num { color: #0d1f18; }
+.cal-month-num { font-size: 1rem; }
+.cal-month-dots { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 0.7rem; line-height: 1; }
+.cal-month-dots i { width: 6px; height: 6px; border-radius: 50%; background: #4ecca3; display: inline-block; }
+.cal-month-day.is-picked .cal-month-dots i { background: #0d1f18; }
+.cal-month-today { margin: 0; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .cal-month-day:active { transform: none; } }

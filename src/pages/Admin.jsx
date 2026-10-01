@@ -326,7 +326,7 @@ export default function Admin() {
   }
 
   async function loadOrganizations() {
-    const { data, error } = await supabase.from('organizations').select('id, name, description, website_url, social_links, approved, created_at, home_zip, hide_from_public').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('organizations').select('id, name, description, website_url, social_links, approved, created_at, home_zip, hide_from_public, is_umbrella').order('created_at', { ascending: false })
     reportError('loadOrganizations', error)
     if (!data) { setOrganizations([]); return }
     const { data: contactRows } = await supabase.rpc('admin_org_contacts')
@@ -365,6 +365,12 @@ export default function Admin() {
   async function toggleOrgApproved(org) {
     const { error } = await supabase.from('organizations').update({ approved: !org.approved }).eq('id', org.id)
     if (reportError('toggleOrgApproved', error, 'Could not update this organization. Try again.')) return
+    await loadOrganizations()
+  }
+
+  async function toggleOrgUmbrella(org) {
+    const { error } = await supabase.from('organizations').update({ is_umbrella: !org.is_umbrella }).eq('id', org.id)
+    if (reportError('toggleOrgUmbrella', error, 'Could not change this. Try again.')) return
     await loadOrganizations()
   }
 
@@ -1339,6 +1345,12 @@ export default function Admin() {
                 <p style={{ margin: '0.3rem 0', fontSize: '0.75rem', color: '#aaa' }}>
                   {org.hide_from_public ? 'Hidden from the public. Only people with an account can see this group.' : 'Visible to the public.'}{' '}
                   <button onClick={() => toggleOrgHidden(org)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'underline', padding: '0.5rem 0.25rem', minHeight: '44px' }}>{org.hide_from_public ? 'Show to the public' : 'Hide from the public'}</button>
+                </p>
+              )}
+              {org.approved && (
+                <p style={{ margin: '0.3rem 0', fontSize: '0.75rem', color: '#aaa' }}>
+                  {org.is_umbrella ? 'This is a council. Other groups can link to it.' : 'Not a council.'}{' '}
+                  <button onClick={() => toggleOrgUmbrella(org)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'underline', padding: '0.5rem 0.25rem', minHeight: '44px' }}>{org.is_umbrella ? 'Make it a regular group' : 'Make it a council'}</button>
                 </p>
               )}
               {org.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.3rem 0' }}>{org.description}</p>}
