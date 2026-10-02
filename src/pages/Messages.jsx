@@ -45,6 +45,7 @@ export default function Messages() {
   const [disappearDefault, setDisappearDefault] = useState(0)
   const [readReceipts, setReadReceipts] = useState(true)
   const [safetyCheckins, setSafetyCheckins] = useState(true)
+  const [hidePushDetails, setHidePushDetails] = useState(true)
   const [defaultHelpMsg, setDefaultHelpMsg] = useState('I can help!')
   const [editingHelpMsg, setEditingHelpMsg] = useState(false)
   const [blockedUsers, setBlockedUsers] = useState([])
@@ -324,12 +325,13 @@ export default function Messages() {
   // =============================================
 
   async function loadPrefs() {
-    const { data, error } = await supabase.from('helper_profiles').select('disappear_default_mins, read_receipts_enabled, safety_checkins_enabled, default_help_message').eq('user_id', user.id).maybeSingle()
+    const { data, error } = await supabase.from('helper_profiles').select('disappear_default_mins, read_receipts_enabled, safety_checkins_enabled, default_help_message, hide_push_details').eq('user_id', user.id).maybeSingle()
     if (error) { console.error('Failed to load message preferences:', error); return }
     if (data) {
       setDisappearDefault(data.disappear_default_mins || 0)
       setReadReceipts(data.read_receipts_enabled !== false)
       setSafetyCheckins(data.safety_checkins_enabled !== false)
+      setHidePushDetails(data.hide_push_details !== false)
       setDefaultHelpMsg(data.default_help_message || 'I can help!')
     }
   }
@@ -352,6 +354,13 @@ export default function Messages() {
     setReadReceipts(v)
     const ok = await savePref('read_receipts_enabled', v)
     if (!ok) { setReadReceipts(!v); alert('Could not save this setting. Try again.') }
+  }
+
+  async function toggleHidePushDetails() {
+    const v = !hidePushDetails
+    setHidePushDetails(v)
+    const ok = await savePref('hide_push_details', v)
+    if (!ok) { setHidePushDetails(!v); alert('Could not save this setting. Try again.') }
   }
 
   async function toggleSafetyCheckins() {
@@ -753,6 +762,12 @@ export default function Messages() {
           <button role="switch" aria-checked={safetyCheckins} aria-label="Safety check-ins" style={toggleDot(safetyCheckins)} onClick={toggleSafetyCheckins}><span style={toggleKnob(safetyCheckins)} /></button>
         </div>
         <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Receive periodic check-in prompts during active help sessions</p>
+
+        <div style={toggleRow}>
+          <span style={{ color: '#ddd', fontSize: '0.9rem' }}>Hide details on my lock screen</span>
+          <button role="switch" aria-checked={hidePushDetails} aria-label="Hide details on my lock screen" style={toggleDot(hidePushDetails)} onClick={toggleHidePushDetails}><span style={toggleKnob(hidePushDetails)} /></button>
+        </div>
+        <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>When on, phone alerts only say you have an update. Names and group titles stay inside the app, so nobody glancing at your phone can see them.</p>
 
         <div style={sectionTitle}>Default greeting</div>
         {editingHelpMsg ? (
