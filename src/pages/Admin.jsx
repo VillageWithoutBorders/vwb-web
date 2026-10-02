@@ -54,6 +54,12 @@ export default function Admin() {
   const [alerts, setAlerts] = useState([])
   const [helpMessages, setHelpMessages] = useState([])
   const [showDoneHelp, setShowDoneHelp] = useState(false)
+  const [reportView, setReportView] = useState('open')
+  const [closedReports, setClosedReports] = useState([])
+  const [closedHasMore, setClosedHasMore] = useState(false)
+  const [closedLoading, setClosedLoading] = useState(false)
+  const [closedFilter, setClosedFilter] = useState('all')
+  const [closedSearch, setClosedSearch] = useState('')
   const [checkinAlerts, setCheckinAlerts] = useState([])
   const [taskIssues, setTaskIssues] = useState([])
   const [users, setUsers] = useState([])
@@ -464,26 +470,47 @@ export default function Admin() {
     if (data) setPendingEvents(data)
   }
 
+  // Adds names and private notes to a list of reports.
+  async function enrichReports(data) {
+    const withNames = await Promise.all(data.map(async (a) => {
+      const { data: reporter, error: repErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.reporter_id).maybeSingle()
+      reportError('enrichReports:reporter', repErr)
+      const { data: reported, error: repdErr } = a.reported_user_id ? await supabase.from('helper_profiles').select('display_name, role').eq('user_id', a.reported_user_id).maybeSingle() : { data: null, error: null }
+      reportError('enrichReports:reported', repdErr)
+      return { ...a, reporter_name: reporter?.display_name || 'Unknown', reported_name: a.reported_user_id ? (reported?.display_name || 'Unknown') : 'a removed account', reported_role: reported?.role || null }
+    }))
+    const ids = withNames.map(a => a.id)
+    const { data: noteRows, error: noteErr } = ids.length ? await supabase.from('user_report_notes').select('report_id, note').in('report_id', ids) : { data: [], error: null }
+    reportError('enrichReports:notes', noteErr)
+    const noteMap = {}
+    ;(noteRows || []).forEach(r => { noteMap[r.report_id] = r.note })
+    return withNames.map(a => ({ ...a, admin_note: noteMap[a.id] || '' }))
+  }
+
+  // Closed reports (reviewed or dismissed), 25 at a time, newest first.
+  async function loadClosedReports(reset, filterOverride) {
+    const filter = filterOverride || closedFilter
+    setClosedLoading(true)
+    const from = reset ? 0 : closedReports.length
+    let q = supabase.from('user_reports').select('*').order('created_at', { ascending: false }).range(from, from + 24)
+    q = filter === 'all' ? q.neq('status', 'open') : q.eq('status', filter)
+    const { data, error } = await q
+    reportError('loadClosedReports', error)
+    if (data) {
+      const rows = await enrichReports(data)
+      setClosedReports(prev => reset ? rows : [...prev, ...rows])
+      setClosedHasMore(data.length === 25)
+    }
+    setClosedLoading(false)
+  }
+
   async function loadAlerts() {
     const { data: fb, error: fbErr } = await supabase.from('feedback').select('*').order('created_at', { ascending: false }).limit(50)
     reportError('loadAlerts:feedback', fbErr)
     if (fb) setHelpMessages(fb)
-    const { data, error } = await supabase.from('user_reports').select('*').order('created_at', { ascending: false }).limit(50)
+    const { data, error } = await supabase.from('user_reports').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(200)
     reportError('loadAlerts', error)
-    if (data) {
-      const withNames = await Promise.all(data.map(async (a) => {
-        const { data: reporter, error: repErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.reporter_id).maybeSingle()
-        reportError('loadAlerts:reporter', repErr)
-        const { data: reported, error: repdErr } = a.reported_user_id ? await supabase.from('helper_profiles').select('display_name, role').eq('user_id', a.reported_user_id).maybeSingle() : { data: null, error: null }
-        reportError('loadAlerts:reported', repdErr)
-        return { ...a, reporter_name: reporter?.display_name || 'Unknown', reported_name: a.reported_user_id ? (reported?.display_name || 'Unknown') : 'a removed account', reported_role: reported?.role || null }
-      }))
-      const { data: noteRows, error: noteErr } = await supabase.from('user_report_notes').select('report_id, note')
-      reportError('loadAlerts:notes', noteErr)
-      const noteMap = {}
-      ;(noteRows || []).forEach(r => { noteMap[r.report_id] = r.note })
-      setAlerts(withNames.map(a => ({ ...a, admin_note: noteMap[a.id] || '' })))
-    }
+    if (data) setAlerts(await enrichReports(data))
 
     // Tasks that went wrong, a helper who did not show, or something that felt off.
     const { data: issues, error: issuesErr } = await supabase
@@ -538,7 +565,7 @@ export default function Admin() {
     const { data, error } = await supabase.from('user_reports').update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq('id', id).select('id')
     if (reportError('reviewReport', error, 'Could not update this report. Try again.')) return
     if (!data || data.length === 0) { alert('Could not update this report. Try again.'); return }
-    await Promise.all([loadAlerts(), loadStats()])
+    await Promise.all([loadAlerts(), loadStats(), reportView === 'closed' ? loadClosedReports(true) : Promise.resolve()])
   }
 
   async function saveReportNote(id) {
@@ -1234,9 +1261,8 @@ export default function Admin() {
               </div>
             )
           })()}
-          {alerts.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No reports about people</p>
-          ) : alerts.map(a => {
+          {(() => {
+            const renderReport = (a) => {
             const open = a.status === 'open'
             const sourceLabel = { profile: 'From a profile', conversation: 'From a chat', messages: 'From messages', campfire: 'From the Campfire', event: 'From an event' }[a.source] || a.source
             const linkBtn = { background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', padding: '0.25rem 0', fontWeight: 600 }
@@ -1268,7 +1294,42 @@ export default function Admin() {
                 </div>
               </div>
             )
-          })}
+            }
+            const segBtn = (key, label) => (
+              <button type="button" onClick={() => { setReportView(key); if (key === 'closed') loadClosedReports(true) }} aria-pressed={reportView === key} style={{ flex: 1, minHeight: '44px', padding: '0.4rem', borderRadius: '8px', border: reportView === key ? '2px solid #4ecca3' : '1px solid #444', background: reportView === key ? '#1d3a31' : '#222', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{label}</button>
+            )
+            const q = closedSearch.trim().toLowerCase()
+            const shownClosed = q ? closedReports.filter(a => [a.reporter_name, a.reported_name, a.reason, a.details, a.admin_note].some(v => String(v || '').toLowerCase().includes(q))) : closedReports
+            const chip = (key, label) => (
+              <button type="button" onClick={() => { setClosedFilter(key); loadClosedReports(true, key) }} aria-pressed={closedFilter === key} style={{ minHeight: '44px', padding: '0.3rem 0.8rem', borderRadius: '999px', border: closedFilter === key ? '2px solid #4ecca3' : '1px solid #444', background: '#222', color: '#ddd', fontWeight: 600, cursor: 'pointer' }}>{label}</button>
+            )
+            return (
+              <>
+                <div style={{ display: 'flex', gap: '0.5rem', margin: '0 0 0.75rem' }}>
+                  {segBtn('open', 'Open (' + alerts.length + ')')}
+                  {segBtn('closed', 'Closed')}
+                </div>
+                {reportView === 'open' ? (
+                  alerts.length === 0
+                    ? <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No open reports about people</p>
+                    : alerts.map(renderReport)
+                ) : (
+                  <>
+                    <input type="search" value={closedSearch} onChange={e => setClosedSearch(e.target.value)} placeholder="Search closed reports" aria-label="Search closed reports" style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0.5rem 0.7rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem', marginBottom: '0.5rem' }} />
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                      {chip('all', 'All')}{chip('reviewed', 'Reviewed')}{chip('dismissed', 'Dismissed')}
+                    </div>
+                    {shownClosed.length === 0 && !closedLoading && <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No closed reports{q ? ' match that search' : ''}</p>}
+                    {shownClosed.map(renderReport)}
+                    {closedLoading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
+                    {closedHasMore && !closedLoading && (
+                      <button type="button" onClick={() => loadClosedReports(false)} style={{ display: 'block', width: '100%', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', fontWeight: 700, cursor: 'pointer', marginBottom: '0.75rem' }}>Load 25 more</button>
+                    )}
+                  </>
+                )}
+              </>
+            )
+          })()}
 
           {taskIssues.length > 0 && (
             <>
