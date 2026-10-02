@@ -53,6 +53,7 @@ export default function Admin() {
   const [pendingEvents, setPendingEvents] = useState([])
   const [alerts, setAlerts] = useState([])
   const [helpMessages, setHelpMessages] = useState([])
+  const [showDoneHelp, setShowDoneHelp] = useState(false)
   const [checkinAlerts, setCheckinAlerts] = useState([])
   const [taskIssues, setTaskIssues] = useState([])
   const [users, setUsers] = useState([])
@@ -524,6 +525,13 @@ export default function Admin() {
       }))
       setCheckinAlerts(withReporter)
     }
+  }
+
+  async function updateHelpMessage(id, changes) {
+    const { data, error } = await supabase.from('feedback').update(changes).eq('id', id).select('id')
+    if (reportError('updateHelpMessage', error, 'Could not update this message. Try again.')) return
+    if (!data || data.length === 0) { alert('Could not update this message. Try again.'); return }
+    await loadAlerts()
   }
 
   async function reviewReport(id, status) {
@@ -1189,17 +1197,40 @@ export default function Admin() {
 
       {!loading && tab === 'reports' && (
         <>
-          {helpMessages.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
-              <h3 style={{ color: '#fff', fontSize: '1rem', margin: '0 0 0.5rem' }}>Messages from the Help page ({helpMessages.length})</h3>
-              {helpMessages.map(m => (
-                <div key={m.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (String(m.body).startsWith('[Problem]') ? '#ffaa33' : '#4ecca3') }}>
-                  <div style={{ color: '#888', fontSize: '0.75rem', marginBottom: '0.3rem' }}>{m.created_at ? timeAgo(m.created_at) : ''}</div>
-                  <p style={{ color: '#ddd', fontSize: '0.9rem', margin: 0, whiteSpace: 'pre-wrap' }}>{m.body}</p>
+          {helpMessages.length > 0 && (() => {
+            const openMsgs = helpMessages.filter(m => m.status !== 'done')
+            const doneMsgs = helpMessages.filter(m => m.status === 'done')
+            const small = { minHeight: '44px', padding: '0.4rem 0.9rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }
+            const renderMsg = (m) => {
+              const isDone = m.status === 'done'
+              return (
+                <div key={m.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (m.followup ? '#ff6666' : String(m.body).startsWith('[Problem]') ? '#ffaa33' : '#4ecca3'), opacity: isDone ? 0.65 : 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', color: '#888', fontSize: '0.75rem', marginBottom: '0.3rem' }}>
+                    <span>{m.created_at ? timeAgo(m.created_at) : ''}</span>
+                    {m.followup && <span style={{ color: '#ff6666', fontWeight: 700 }}>NEEDS FOLLOW-UP</span>}
+                  </div>
+                  <p style={{ color: '#ddd', fontSize: '0.9rem', margin: '0 0 0.6rem', whiteSpace: 'pre-wrap' }}>{m.body}</p>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <button type="button" onClick={() => updateHelpMessage(m.id, { followup: !m.followup })} style={{ ...small, background: m.followup ? '#3a1a1a' : '#222', border: '1px solid ' + (m.followup ? '#ff6666' : '#555'), color: m.followup ? '#ff6666' : '#ddd' }}>{m.followup ? 'Clear follow-up' : 'Flag for follow-up'}</button>
+                    <button type="button" onClick={() => updateHelpMessage(m.id, { status: isDone ? 'open' : 'done' })} style={{ ...small, background: isDone ? '#222' : '#4ecca3', border: isDone ? '1px solid #555' : 'none', color: isDone ? '#ddd' : '#1a1a1a' }}>{isDone ? 'Reopen' : 'Done'}</button>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+              )
+            }
+            return (
+              <div style={{ marginBottom: '1rem' }}>
+                <h3 style={{ color: '#fff', fontSize: '1rem', margin: '0 0 0.5rem' }}>Messages from the Help page ({openMsgs.length} open)</h3>
+                {openMsgs.length === 0 && <p style={{ color: '#8a8a8a', margin: '0 0 0.5rem' }}>All caught up.</p>}
+                {openMsgs.map(renderMsg)}
+                {doneMsgs.length > 0 && (
+                  <>
+                    <button type="button" onClick={() => setShowDoneHelp(v => !v)} style={{ ...small, background: 'none', border: '1px solid #444', color: '#aaa', marginBottom: '0.5rem' }}>{showDoneHelp ? 'Hide' : 'Show'} done ({doneMsgs.length})</button>
+                    {showDoneHelp && doneMsgs.map(renderMsg)}
+                  </>
+                )}
+              </div>
+            )
+          })()}
           {alerts.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No reports about people</p>
           ) : alerts.map(a => {
