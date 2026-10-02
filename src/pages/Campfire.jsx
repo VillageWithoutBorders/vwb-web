@@ -185,11 +185,21 @@ export default function Campfire() {
     setOpenMsgMenu(null)
     if (!confirm('Report this message to the admins?')) return
     const info = names[msg.user_id] || { name: 'Unknown' }
+    // Campfire messages are deleted after 30 days, so the report keeps its own
+    // copy of the words: the reported message plus the two before it for context.
+    const idx = messages.findIndex(m => m.id === msg.id)
+    const before = idx > 0 ? messages.slice(Math.max(0, idx - 2), idx) : []
+    const line = (m, who) => '[' + new Date(m.created_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC] ' + who + ': ' + String(m.body || '')
+    const clip = (t, n) => (t.length > n ? t.slice(0, n) + '...' : t)
+    const saved = [
+      ...before.map(m => clip(line(m, (names[m.user_id] || { name: 'Unknown' }).name), 150)),
+      'REPORTED: ' + clip(line(msg, info.name), 600),
+    ].join('\n').slice(0, 1000)
     const { error } = await submitUserReport({
       reporterId: user.id,
       reportedUserId: msg.user_id,
       source: 'campfire',
-      details: 'Campfire message from ' + info.name + ': "' + (msg.body.length > 100 ? msg.body.slice(0, 100) + '...' : msg.body) + '"'
+      details: saved
     })
     if (error) { alert(error); return }
     alert('Report submitted. An admin will review this message.')
