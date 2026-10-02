@@ -75,6 +75,8 @@ export default function GroupBoard() {
   // The decision an alert pointed at, e.g. 'proposal-disappear' or 'removal-<user id>'.
   const [focusKey, setFocusKey] = useState(focusFromLink || null)
   const [focusGone, setFocusGone] = useState(false)
+  // The settings panel has two tabs: the group itself, and my own alerts.
+  const [panelTab, setPanelTab] = useState('group')
   const [proposalsLoaded, setProposalsLoaded] = useState(false)
   const focusDone = useRef(false)
   const [focusReady, setFocusReady] = useState(true)
@@ -305,7 +307,8 @@ export default function GroupBoard() {
     const isRemoval = focusKey.startsWith('removal-') || focusKey.startsWith('waiting-')
     const ready = isRemoval ? members.length > 0 : panelOpen
     if (!ready) return
-    if (!panelOpen) { setPanelOpen(true); return }
+    if (!panelOpen) { setPanelTab('group'); setPanelOpen(true); return }
+    if (panelTab !== 'group') { setPanelTab('group'); return }
     const el = document.getElementById('focus-' + focusKey)
     if (el) {
       focusDone.current = true
@@ -316,7 +319,7 @@ export default function GroupBoard() {
       setFocusGone(true)
       navigate(location.pathname, { replace: true })
     }
-  }, [focusKey, group, loading, focusReady, panelOpen, members, removals, proposals]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [focusKey, group, loading, focusReady, panelOpen, panelTab, members, removals, proposals]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Tapping an alert while this group is already open does not reload the page,
   // so the first-load setup above never runs again. Pick up the new target here:
@@ -330,6 +333,7 @@ export default function GroupBoard() {
     setProposalsLoaded(false)
     setFocusReady(false)
     setFocusKey(f)
+    setPanelTab('group')
     setPanelOpen(true)
     ;(async () => {
       await Promise.all([loadGroup(), loadShared()])
@@ -563,7 +567,7 @@ export default function GroupBoard() {
           <h1>{group.name}</h1>
           <p className="convo-context">{orgName ? 'For ' + orgName + ' · ' : ''}{members.length} {members.length === 1 ? 'member' : 'members'} · private board</p>
         </div>
-        <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">Members{waiting.length > 0 ? ' (' + waiting.length + ' waiting)' : ''}</button>
+        <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">Settings{waiting.length > 0 ? ' (' + waiting.length + ' waiting)' : ''}</button>
       </div>
 
       <div className="convo-messages" ref={containerRef} onScroll={onScroll} role="log" aria-live="polite" aria-label={group.name + ' board'}>
@@ -621,7 +625,14 @@ export default function GroupBoard() {
             </div>
             {group.description && <p className="groups-card-desc">{group.description}</p>}
 
-            <h3 className="groups-section">Your settings for this group</h3>
+            <div role="tablist" aria-label="Group settings" className="group-tabs">
+              <button type="button" role="tab" id="tab-group" aria-selected={panelTab === 'group'} aria-controls="panel-group" tabIndex={panelTab === 'group' ? 0 : -1} className={'group-tab' + (panelTab === 'group' ? ' active' : '')} onClick={() => setPanelTab('group')}>Group</button>
+              <button type="button" role="tab" id="tab-mine" aria-selected={panelTab === 'mine'} aria-controls="panel-mine" tabIndex={panelTab === 'mine' ? 0 : -1} className={'group-tab' + (panelTab === 'mine' ? ' active' : '')} onClick={() => setPanelTab('mine')}>My notifications</button>
+            </div>
+
+            {panelTab === 'mine' && (
+            <div role="tabpanel" id="panel-mine" aria-labelledby="tab-mine">
+            <h3 className="groups-section">Alerts from this group</h3>
             <p className="groups-note">Only you see these. Nobody else in the group is told.</p>
             <label htmlFor="group-alerts" className="groups-note">New post alerts</label>
             <select id="group-alerts" className="group-search" value={mySettings.alerts} onChange={e => saveSetting({ alerts: e.target.value })}>
@@ -649,7 +660,11 @@ export default function GroupBoard() {
               <button type="button" className="btn btn-outline group-small-btn" aria-pressed={mySettings.archived} onClick={() => saveSetting({ archived: !mySettings.archived })}>{mySettings.archived ? 'Archived (tap to bring back)' : 'Archive'}</button>
             </div>
             {settingsNote && <p className="groups-error" role="alert">{settingsNote}</p>}
+            </div>
+            )}
 
+            {panelTab === 'group' && (
+            <div role="tabpanel" id="panel-group" aria-labelledby="tab-group">
             {focusGone && <p className="groups-note" role="status">That request isn't open anymore. It was already answered or taken back.</p>}
             <h3 className="groups-section">Group settings</h3>
             <p className="groups-note">{group.steward_id
@@ -822,6 +837,8 @@ export default function GroupBoard() {
             })}
 
             <button type="button" className="btn btn-outline btn-full group-leave-btn" onClick={leave}>Leave group</button>
+            </div>
+            )}
           </div>
         </>
       )}
