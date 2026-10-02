@@ -24,6 +24,7 @@ export default function Groups() {
   const [description, setDescription] = useState('')
   const [startError, setStartError] = useState('')
   const [busy, setBusy] = useState(null)
+  const [showArchived, setShowArchived] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -48,7 +49,21 @@ export default function Groups() {
       for (const c of counts || []) tally[c.group_id] = (tally[c.group_id] || 0) + 1
       myGroups.forEach(g => { g.memberCount = tally[g.id] || 1 })
     }
-    myGroups.sort((a, b) => a.name.localeCompare(b.name))
+    // My own settings for each group: pinned first, archived tucked away, muted marked.
+    if (myGroups.length > 0) {
+      const { data: setRows, error: setErr } = await supabase
+        .from('community_group_user_settings').select('group_id, pinned, archived, muted_until, alerts')
+        .eq('user_id', user.id).in('group_id', myGroups.map(g => g.id))
+      if (setErr) console.error('Failed to load your group settings:', setErr)
+      const bySetting = Object.fromEntries((setRows || []).map(r => [r.group_id, r]))
+      myGroups.forEach(g => {
+        const r = bySetting[g.id]
+        g.pinned = !!r?.pinned
+        g.archived = !!r?.archived
+        g.quiet = !!r && (r.alerts === 'off' || (!!r.muted_until && new Date(r.muted_until) > new Date()))
+      })
+    }
+    myGroups.sort((a, b) => (b.pinned - a.pinned) || a.name.localeCompare(b.name))
     setGroups(myGroups)
 
     const inviteRows = (inv || []).filter(i => i.community_groups)
@@ -177,12 +192,25 @@ export default function Groups() {
         <section aria-labelledby="mygroups-heading">
           <h2 id="mygroups-heading" className="groups-section">Your groups</h2>
           {groups.length === 0 && <p className="groups-empty">You're not in any groups yet. Start one, or ask a friend to invite you.</p>}
-          {groups.map(g => (
+          {groups.filter(g => !g.archived).map(g => (
             <button key={g.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + g.id)}>
-              <span className="groups-row-name">{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
-              <span className="groups-row-meta">{g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}</span>
+              <span className="groups-row-name">{g.pinned ? '\u{1F4CC} ' : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
+              <span className="groups-row-meta">{g.quiet ? 'Quiet \u00b7 ' : ''}{g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}</span>
             </button>
           ))}
+          {groups.some(g => g.archived) && (
+            <>
+              <button type="button" className="btn btn-outline" aria-expanded={showArchived} onClick={() => setShowArchived(v => !v)}>
+                {showArchived ? 'Hide archived groups' : 'Archived groups (' + groups.filter(g => g.archived).length + ')'}
+              </button>
+              {showArchived && groups.filter(g => g.archived).map(g => (
+                <button key={g.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + g.id)}>
+                  <span className="groups-row-name">{g.name}</span>
+                  <span className="groups-row-meta">Archived</span>
+                </button>
+              ))}
+            </>
+          )}
         </section>
       )}
     </div>
