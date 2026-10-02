@@ -28,7 +28,8 @@ export const TYPE_ICONS = {
   message_request: '\u2709\uFE0F',
   new_request: '\u{1F91D}',
   group_post: '\u{1F465}',
-  group_setting: '\u2699\uFE0F'
+  group_setting: '\u2699\uFE0F',
+  group_waiting: '\u{1F6AA}'
 }
 
 export const TYPE_COLORS = {
@@ -58,7 +59,8 @@ export const TYPE_COLORS = {
   message_request: '#4ecca3',
   new_request: '#e8833a',
   group_post: '#4ecca3',
-  group_setting: '#8a8a8a'
+  group_setting: '#8a8a8a',
+  group_waiting: '#e8833a'
 }
 
 export function timeAgo(dateStr) {
