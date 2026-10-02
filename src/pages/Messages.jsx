@@ -537,8 +537,19 @@ export default function Messages() {
         const otherId = c.helper_id === user.id ? c.requester_id : c.helper_id
         const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
         if (profErr) console.error('Failed to load conversation partner profile:', profErr)
-        const { data: lastMsg, error: msgErr } = await supabase.from('chat_messages').select('id, body, sender_id, created_at').eq('conversation_id', c.id).is('deleted_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        // Newest messages first. A message is gone for this person if it was deleted for everyone
+        // or if they deleted it for themselves. If the chat has messages but none are left for
+        // this person, the whole conversation is hidden from their list. A new message brings it back.
+        const { data: recent, error: msgErr } = await supabase.from('chat_messages').select('id, body, sender_id, created_at, deleted_at').eq('conversation_id', c.id).order('created_at', { ascending: false }).limit(30)
         if (msgErr) console.error('Failed to load last message:', msgErr)
+        let lastMsg = null
+        if (recent && recent.length > 0) {
+          const { data: mine, error: delErr } = await supabase.from('message_deletions').select('message_id').eq('user_id', user.id).in('message_id', recent.map(m => m.id))
+          if (delErr) console.error('Failed to load my deleted messages:', delErr)
+          const goneForMe = new Set((mine || []).map(d => d.message_id))
+          lastMsg = recent.find(m => !m.deleted_at && !goneForMe.has(m.id)) || null
+          if (!lastMsg) return null
+        }
         // An empty body means it's encrypted -- look up this device's copy
         // and decrypt it client-side for the preview snippet. Falls back to
         // a placeholder rather than showing nothing if this device has no
@@ -559,8 +570,9 @@ export default function Messages() {
         if (queued) return { ...c, otherId, otherName: p?.display_name || 'Neighbor', otherAvatar: p?.avatar_url || null, lastMessage: 'Waiting to send: ' + queued.text, lastMessageAt: queued.createdAt, hasUnread }
         return { ...c, otherId, otherName: p?.display_name || 'Neighbor', otherAvatar: p?.avatar_url || null, lastMessage: lastMessageText, lastMessageAt: lastMsg?.created_at || c.created_at, hasUnread }
       }))
-      withNames.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))
-      setConvos(withNames)
+      const shown = withNames.filter(Boolean)
+      shown.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))
+      setConvos(shown)
     }
   }
 
