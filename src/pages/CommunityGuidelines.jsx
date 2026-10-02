@@ -55,7 +55,8 @@ const CARDS = [
     points: [
       'Direct messages are end-to-end encrypted. Only you and the person you\'re messaging can read them, not even us',
       'If someone files a report, they attach their own copy of the messages being reported. We can\'t pull up a conversation ourselves',
-      "Campfire (the group chat) isn't encrypted the same way. Admins can see what's posted there, so keep sensitive details out of it",
+      "Campfire (the group chat) isn't encrypted the same way. Admins can see what's posted there, so keep sensitive details out of it. A locked copy is saved each month for safety and legal reasons, and only the founder holds the key",
+      "Group boards and direct messages are not in that archive. When a message or post is deleted for everyone, its text is erased from our servers",
       "Please don't share someone else's personal information without asking them first",
     ],
     footer: null,
