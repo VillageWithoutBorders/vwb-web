@@ -54,6 +54,7 @@ export default function CalendarEventForm() {
     hideAddress: false,
     signupEnabled: false,
     signupKind: 'help',
+    needsText: '',
     signupLimit: '',
     allAges: false,
     teensCanHelp: false,
@@ -87,6 +88,7 @@ export default function CalendarEventForm() {
         hideAddress: !!data.hide_address,
         signupEnabled: !!data.signup_enabled,
         signupKind: data.signup_kind || 'help',
+        needsText: data.needs_text || '',
         signupLimit: data.signup_limit ? String(data.signup_limit) : '',
         allAges: !!data.all_ages,
         teensCanHelp: !!data.teens_can_help,
@@ -189,6 +191,7 @@ export default function CalendarEventForm() {
       hide_address: form.hideAddress,
       signup_enabled: form.signupEnabled,
       signup_kind: form.signupKind,
+      needs_text: form.needsText.trim() || null,
       signup_limit: form.signupEnabled ? limit : null,
       all_ages: form.allAges,
       teens_can_help: form.allAges && form.teensCanHelp,
@@ -412,6 +415,11 @@ export default function CalendarEventForm() {
             </label>
           </fieldset>
         )}
+        <div className="form-field">
+          <label htmlFor="ev-needs">What do you still need people to bring? (optional)</label>
+          <textarea id="ev-needs" rows={3} maxLength={600} value={form.needsText} onChange={(e) => set('needsText', e.target.value)} placeholder={'One thing per line. For example:\nNapkins\nPlates\nCups'} />
+          <small>Shows in its own box on the event page, above the sign-up button.</small>
+        </div>
         {form.signupEnabled && (
           <div className="form-field">
             <label htmlFor="ev-limit">How many spots? (leave blank for no limit)</label>

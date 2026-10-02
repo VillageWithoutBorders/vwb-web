@@ -21,6 +21,7 @@ export default function EventPage() {
 
   const [ev, setEv] = useState(null)
   const [signupKind, setSignupKind] = useState('help')
+  const [needsText, setNeedsText] = useState('')
   const [loading, setLoading] = useState(true)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
@@ -38,10 +39,11 @@ export default function EventPage() {
     const { event } = await fetchCalendarEvent(id, token)
     setEv(event)
     setLoading(false)
-    if (event?.signup_enabled) {
-      // Older events, or a database without the column yet, count as "help".
-      const { data: kindRow } = await supabase.from('calendar_events').select('signup_kind').eq('id', Number(id)).maybeSingle()
-      setSignupKind(kindRow?.signup_kind === 'attend' ? 'attend' : 'help')
+    if (event) {
+      // Older events, or a database without the columns yet, use the defaults.
+      const { data: extra } = await supabase.from('calendar_events').select('signup_kind, needs_text').eq('id', Number(id)).maybeSingle()
+      setSignupKind(extra?.signup_kind === 'attend' ? 'attend' : 'help')
+      setNeedsText(extra?.needs_text || '')
     }
     if (event) document.title = event.title + ' | Village Without Borders'
     if (event?.can_manage) {
@@ -151,6 +153,7 @@ export default function EventPage() {
 
   const full = ev.signup_limit != null && ev.signup_count >= ev.signup_limit
   const past = new Date(ev.ends_at || ev.starts_at) < new Date()
+  const needsList = needsText.split('\n').map((n) => n.trim()).filter(Boolean).slice(0, 15)
   const cancelled = ev.status === 'cancelled'
   const placeHidden = ev.hide_address && !ev.address && !ev.location_name
 
@@ -195,6 +198,16 @@ export default function EventPage() {
 
         {ev.description && <p className="cal-description">{ev.description}</p>}
 
+        {!cancelled && !past && needsList.length > 0 && (
+          <section className="cal-box" aria-label="What we still need">
+            <h2>Can you bring one of these?</h2>
+            <ul style={{ margin: '0.25rem 0 0.5rem', paddingLeft: '1.25rem' }}>
+              {needsList.map((n, i) => <li key={i}>{n}</li>)}
+            </ul>
+            {ev.signup_enabled && <p className="cal-sub" style={{ marginTop: 0 }}>Tell us in the box below what you can bring.</p>}
+          </section>
+        )}
+
         {ev.signup_enabled && !cancelled && (
           <section className="cal-box" aria-label="Sign up">
             <h2>{signupKind === 'attend' ? 'Let us know you are coming' : 'Sign up to help'}</h2>
@@ -222,7 +235,7 @@ export default function EventPage() {
             ) : (
               <div className="cal-actions">
                 <div className="form-field" style={{ marginBottom: 0 }}>
-                  <label htmlFor="signup-note">{signupKind === 'attend' ? 'How many are coming with you? Anything we should know? (optional)' : 'Anything the organizers should know? (optional)'}</label>
+                  <label htmlFor="signup-note">{signupKind === 'attend' ? (needsList.length > 0 ? 'What can you bring? How many are coming with you? (optional)' : 'How many are coming with you? Anything we should know? (optional)') : 'Anything the organizers should know? (optional)'}</label>
                   <textarea id="signup-note" rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder={signupKind === 'attend' ? 'For example: 3 of us, 2 adults and a child' : 'For example: I can bring a truck, or I need a ride'} />
                 </div>
                 <button type="button" className="btn btn-primary btn-full" onClick={signUp} disabled={busy}>{busy ? (signupKind === 'attend' ? 'Saving...' : 'Signing you up...') : (signupKind === 'attend' ? "I'm coming" : 'Count me in')}</button>
