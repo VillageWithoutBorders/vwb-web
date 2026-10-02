@@ -780,11 +780,11 @@ export default function GroupBoard() {
             {group.join_token ? (
               <>
                 <p className="groups-note">
-                  {group.steward_id ? 'People who use this link wait until a member lets them in. ' : 'Anyone with this link can join. Only share it with people you trust. '}
+                  People who use this link wait until a member lets them in. 
                   {canChangeLink ? (group.steward_id ? 'Only you, as steward, can turn it off or make a new one.' : 'Any member can turn it off or make a new one.') : 'Only the steward can turn it off or make a new one.'}
                 </p>
                 <p className="group-link">{joinUrl}</p>
-                <QrShare url={joinUrl} title={group.name} hint={group.steward_id ? 'Your friend scans this, taps Join, and then waits for a member to let them in.' : 'Your friend scans this and taps Join. Only show it to people you trust.'} />
+                <QrShare url={joinUrl} title={group.name} hint="Your friend scans this, taps Join, and then waits for a member to let them in." />
                 <div className="groups-actions">
                   <button type="button" className="btn btn-primary" onClick={copyLink}>{copied ? 'Copied' : 'Copy link'}</button>
                   {canChangeLink && <button type="button" className="btn btn-outline" onClick={() => setLink(true)}>New link</button>}
