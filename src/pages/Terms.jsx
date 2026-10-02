@@ -204,6 +204,8 @@ export default function Terms() {
         <p>Everything you post in public spaces (Campfire, help requests, offers, the community feed) may be visible to all members.</p>
         <p>Direct messages between two people are end-to-end encrypted. That means only the two people in the conversation can ever read them, not admins, not the founder, not us. If you need to report something from a private conversation, you attach your own copy of the messages you&apos;re reporting, the same way you&apos;d forward a text message.</p>
         <p>Campfire (our group chat) works differently. It is not end-to-end encrypted, and admins can see what&apos;s posted there, so keep sensitive details out of it.</p>
+        <p>Once a month, we save a locked copy of the previous month&apos;s Campfire messages for safety and legal reasons. The copy is scrambled with a key only the founder holds. It is not available to members or other admins, and it is opened only to look into a safety report or if the law requires it. Direct messages and group boards are not part of this archive.</p>
+        <p>Group boards are end-to-end encrypted, so only current members can read them. When a group sets posts to disappear, or when someone deletes a message or post for everyone, the locked text is erased from our servers. Deleting a message for yourself only hides it from you. We can&apos;t take back anything someone already read, copied, or took a screenshot of.</p>
         <p>You are responsible for what you post. Do not post content that is:</p>
         <ul>
           <li>Illegal</li>
