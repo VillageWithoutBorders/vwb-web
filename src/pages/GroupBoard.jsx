@@ -70,7 +70,13 @@ export default function GroupBoard() {
   const [newPost, setNewPost] = useState('')
   const [sending, setSending] = useState(false)
   const [sendNote, setSendNote] = useState('')
-  const [panelOpen, setPanelOpen] = useState(!!location.state?.justStarted)
+  const focusFromLink = new URLSearchParams(location.search).get('focus')
+  const [panelOpen, setPanelOpen] = useState(!!location.state?.justStarted || !!focusFromLink)
+  // The decision an alert pointed at, e.g. 'proposal-disappear' or 'removal-<user id>'.
+  const [focusKey, setFocusKey] = useState(focusFromLink || null)
+  const [focusGone, setFocusGone] = useState(false)
+  const [proposalsLoaded, setProposalsLoaded] = useState(false)
+  const focusDone = useRef(false)
   const [search, setSearch] = useState('')
   const [results, setResults] = useState([])
   const [copied, setCopied] = useState(false)
@@ -290,6 +296,29 @@ export default function GroupBoard() {
   }
   const mutedNow = !!mySettings.muted_until && new Date(mySettings.muted_until) > new Date()
 
+  // An alert can point at one decision. Open the panel, scroll to it, and
+  // light it up. If it was already answered or taken back, say so.
+  useEffect(() => {
+    if (!focusKey || focusDone.current || !group || loading) return
+    const isRemoval = focusKey.startsWith('removal-')
+    const ready = isRemoval ? members.length > 0 : panelOpen
+    if (!ready) return
+    if (!panelOpen) { setPanelOpen(true); return }
+    const el = document.getElementById('focus-' + focusKey)
+    if (el) {
+      focusDone.current = true
+      setTimeout(() => { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus?.({ preventScroll: true }) }, 150)
+      navigate(location.pathname, { replace: true })
+    } else if (isRemoval || proposalsLoaded) {
+      focusDone.current = true
+      setFocusGone(true)
+      navigate(location.pathname, { replace: true })
+    }
+  }, [focusKey, group, loading, panelOpen, members, removals, proposals]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Once the panel is closed, the pointer has done its job.
+  useEffect(() => { if (!panelOpen && focusDone.current) setFocusKey(null) }, [panelOpen])
+
   async function loadShared() {
     const [{ data: pr, error: pErr }, { data: ch, error: cErr }] = await Promise.all([
       supabase.from('community_group_proposals').select('kind, value, proposed_by, created_at').eq('group_id', id),
@@ -298,6 +327,7 @@ export default function GroupBoard() {
     if (pErr) console.error('Failed to load group requests:', pErr)
     if (cErr) console.error('Failed to load group changes:', cErr)
     setProposals(pr || [])
+    setProposalsLoaded(true)
     setChanges(ch || [])
   }
 
@@ -336,6 +366,14 @@ export default function GroupBoard() {
     if (error) { console.error('Taking back group request failed:', error); setSharedNote("We couldn't do that. Try again.") }
     await loadShared()
   }
+
+  // The decision an alert pointed at gets an outline and a label.
+  const focusStyle = (key) => focusKey === key
+    ? { outline: '2px solid #4ecca3', background: 'rgba(78,204,163,0.12)', borderRadius: '8px', padding: '0.5rem', margin: '0.35rem 0' }
+    : undefined
+  const focusLabel = (key) => focusKey === key
+    ? <span style={{ display: 'block', width: '100%', color: '#4ecca3', fontWeight: 700, fontSize: '0.8rem' }}>&#128073; This is the one you were asked about</span>
+    : null
 
   const DISAPPEAR_CHOICES = [[0, 'Off (posts stay)'], [1440, '1 day'], [10080, '7 days'], [43200, '30 days']]
 
@@ -591,6 +629,7 @@ export default function GroupBoard() {
             </div>
             {settingsNote && <p className="groups-error" role="alert">{settingsNote}</p>}
 
+            {focusGone && <p className="groups-note" role="status">That request isn't open anymore. It was already answered or taken back.</p>}
             <h3 className="groups-section">Group settings</h3>
             <p className="groups-note">{group.steward_id
               ? (iAmSteward ? 'You are the steward, so you can change these right away. Everyone is told.' : 'Only the steward can change these. Everyone is told when they do.')
@@ -635,8 +674,9 @@ export default function GroupBoard() {
                 : pr.kind === 'description' ? 'change the description'
                 : (pr.value === '0' ? 'turn off disappearing posts' : 'make posts disappear after ' + (Number(pr.value) / 1440) + ' day' + (pr.value === '1440' ? '' : 's'))
               return (
-                <div key={pr.kind} className="group-member" style={{ flexWrap: 'wrap' }}>
-                  <span className="group-member-name">{mine ? 'You asked to ' : who + ' asked to '}{what}.</span>
+                <div key={pr.kind} id={'focus-proposal-' + pr.kind} tabIndex={-1} className="group-member" style={{ flexWrap: 'wrap', ...focusStyle('proposal-' + pr.kind) }}>
+                  {focusLabel('proposal-' + pr.kind)}
+                  <span className="group-member-name">{mine ? 'You asked to ' : who + ' asked to '}{what}.{!mine ? ' Needs your answer.' : ''}</span>
                   {mine
                     ? <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={() => cancelProposal(pr.kind)}>Take back</button>
                     : <>
@@ -736,7 +776,8 @@ export default function GroupBoard() {
               const open = removals.find(r => r.target_id === m.userId)
               const mine = open && open.requested_by === user.id
               return (
-                <div key={m.userId} className="group-member">
+                <div key={m.userId} id={'focus-removal-' + m.userId} tabIndex={-1} className="group-member" style={focusStyle('removal-' + m.userId)}>
+                  {focusLabel('removal-' + m.userId)}
                   <AvatarDisplay url={m.avatar} userId={m.userId} size={32} />
                   <span className="group-member-name">{m.name}{isMe ? ' (you)' : ''}{isSteward ? <span className="group-steward-badge">Steward</span> : null}{group.steward_offer_to === m.userId ? <span className="group-member-sub">Asked to take over as steward</span> : null}{open && !isMe ? <span className="group-member-flag">{mine ? ' · you asked to remove' : ' · a member asked to remove'}</span> : null}{open && !isMe && open.reason ? <span className="group-member-sub">Reason: {open.reason}</span> : null}</span>
                   {!isMe && (
