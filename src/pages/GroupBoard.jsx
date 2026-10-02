@@ -77,6 +77,8 @@ export default function GroupBoard() {
   const [focusGone, setFocusGone] = useState(false)
   const [proposalsLoaded, setProposalsLoaded] = useState(false)
   const focusDone = useRef(false)
+  const [focusReady, setFocusReady] = useState(true)
+  const firstFocusRun = useRef(true)
   const [search, setSearch] = useState('')
   const [results, setResults] = useState([])
   const [copied, setCopied] = useState(false)
@@ -299,7 +301,7 @@ export default function GroupBoard() {
   // An alert can point at one decision. Open the panel, scroll to it, and
   // light it up. If it was already answered or taken back, say so.
   useEffect(() => {
-    if (!focusKey || focusDone.current || !group || loading) return
+    if (!focusKey || focusDone.current || !group || loading || !focusReady) return
     const isRemoval = focusKey.startsWith('removal-') || focusKey.startsWith('waiting-')
     const ready = isRemoval ? members.length > 0 : panelOpen
     if (!ready) return
@@ -314,7 +316,26 @@ export default function GroupBoard() {
       setFocusGone(true)
       navigate(location.pathname, { replace: true })
     }
-  }, [focusKey, group, loading, panelOpen, members, removals, proposals]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [focusKey, group, loading, focusReady, panelOpen, members, removals, proposals]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Tapping an alert while this group is already open does not reload the page,
+  // so the first-load setup above never runs again. Pick up the new target here:
+  // refresh what the alert is about, then open the panel and point at it.
+  useEffect(() => {
+    if (firstFocusRun.current) { firstFocusRun.current = false; return }
+    const f = new URLSearchParams(location.search).get('focus')
+    if (!f) return
+    focusDone.current = false
+    setFocusGone(false)
+    setProposalsLoaded(false)
+    setFocusReady(false)
+    setFocusKey(f)
+    setPanelOpen(true)
+    ;(async () => {
+      await Promise.all([loadGroup(), loadShared()])
+      setFocusReady(true)
+    })()
+  }, [location.search]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Once the panel is closed, the pointer has done its job.
   useEffect(() => { if (!panelOpen && focusDone.current) setFocusKey(null) }, [panelOpen])
