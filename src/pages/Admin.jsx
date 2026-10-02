@@ -52,6 +52,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [pendingEvents, setPendingEvents] = useState([])
   const [alerts, setAlerts] = useState([])
+  const [helpMessages, setHelpMessages] = useState([])
   const [checkinAlerts, setCheckinAlerts] = useState([])
   const [taskIssues, setTaskIssues] = useState([])
   const [users, setUsers] = useState([])
@@ -463,6 +464,9 @@ export default function Admin() {
   }
 
   async function loadAlerts() {
+    const { data: fb, error: fbErr } = await supabase.from('feedback').select('*').order('created_at', { ascending: false }).limit(50)
+    reportError('loadAlerts:feedback', fbErr)
+    if (fb) setHelpMessages(fb)
     const { data, error } = await supabase.from('user_reports').select('*').order('created_at', { ascending: false }).limit(50)
     reportError('loadAlerts', error)
     if (data) {
@@ -1185,6 +1189,17 @@ export default function Admin() {
 
       {!loading && tab === 'reports' && (
         <>
+          {helpMessages.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ color: '#fff', fontSize: '1rem', margin: '0 0 0.5rem' }}>Messages from the Help page ({helpMessages.length})</h3>
+              {helpMessages.map(m => (
+                <div key={m.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (String(m.body).startsWith('[Problem]') ? '#ffaa33' : '#4ecca3') }}>
+                  <div style={{ color: '#888', fontSize: '0.75rem', marginBottom: '0.3rem' }}>{m.created_at ? timeAgo(m.created_at) : ''}</div>
+                  <p style={{ color: '#ddd', fontSize: '0.9rem', margin: 0, whiteSpace: 'pre-wrap' }}>{m.body}</p>
+                </div>
+              ))}
+            </div>
+          )}
           {alerts.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No reports about people</p>
           ) : alerts.map(a => {
