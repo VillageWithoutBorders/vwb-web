@@ -26,7 +26,8 @@ export const TYPE_ICONS = {
   affiliation_accepted: '\u{1F91D}',
   affiliation_ended: '\u{1F91D}',
   message_request: '\u2709\uFE0F',
-  new_request: '\u{1F91D}'
+  new_request: '\u{1F91D}',
+  group_post: '\u{1F465}'
 }
 
 export const TYPE_COLORS = {
@@ -54,7 +55,8 @@ export const TYPE_COLORS = {
   affiliation_accepted: '#4ecca3',
   affiliation_ended: '#8a8a8a',
   message_request: '#4ecca3',
-  new_request: '#e8833a'
+  new_request: '#e8833a',
+  group_post: '#4ecca3'
 }
 
 export function timeAgo(dateStr) {

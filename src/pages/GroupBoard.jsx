@@ -54,6 +54,9 @@ export default function GroupBoard() {
   const [stewardCandidates, setStewardCandidates] = useState([])
   const [removals, setRemovals] = useState([])
   const [pendingInvites, setPendingInvites] = useState([])
+  // This person's own settings for this group. Only they can see or change them.
+  const [mySettings, setMySettings] = useState({ alerts: 'all', muted_until: null, pinned: false, archived: false })
+  const [settingsNote, setSettingsNote] = useState('')
   const [posts, setPosts] = useState([])
   const [hiddenOlder, setHiddenOlder] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -242,6 +245,43 @@ export default function GroupBoard() {
     }, 300)
     return () => clearTimeout(t)
   }, [search, members, pendingInvites])
+
+  // Load my settings for this group, and clear the "new post" alert for it
+  // since I am here now.
+  useEffect(() => {
+    if (!id || !user?.id) return
+    let cancelled = false
+    ;(async () => {
+      const { data, error } = await supabase
+        .from('community_group_user_settings').select('alerts, muted_until, pinned, archived')
+        .eq('group_id', id).eq('user_id', user.id).maybeSingle()
+      if (error) console.error('Failed to load your group settings:', error)
+      if (!cancelled && data) setMySettings(data)
+      const { error: readErr } = await supabase.from('notifications').update({ read: true })
+        .eq('user_id', user.id).eq('type', 'group_post').eq('link', '/groups/' + id).eq('read', false)
+      if (readErr) console.error('Failed to clear group alert:', readErr)
+    })()
+    return () => { cancelled = true }
+  }, [id, user?.id])
+
+  async function saveSetting(patch) {
+    const next = { ...mySettings, ...patch }
+    setMySettings(next)
+    setSettingsNote('')
+    const { error } = await supabase.from('community_group_user_settings').upsert(
+      { group_id: id, user_id: user.id, alerts: next.alerts, muted_until: next.muted_until, pinned: next.pinned, archived: next.archived, updated_at: new Date().toISOString() },
+      { onConflict: 'group_id,user_id' })
+    if (error) {
+      console.error('Failed to save group setting:', error)
+      setMySettings(mySettings)
+      setSettingsNote("We couldn't save that. Try again.")
+    }
+  }
+
+  function muteFor(ms) {
+    saveSetting({ muted_until: ms === null ? null : ms === Infinity ? '2099-01-01T00:00:00Z' : new Date(Date.now() + ms).toISOString() })
+  }
+  const mutedNow = !!mySettings.muted_until && new Date(mySettings.muted_until) > new Date()
 
   async function invite(person) {
     const { error } = await supabase.rpc('invite_to_community_group', { p_group: id, p_invitee: person.user_id })
@@ -461,6 +501,35 @@ export default function GroupBoard() {
               <button type="button" className="group-panel-close" onClick={() => setPanelOpen(false)} aria-label="Close">&#10005;</button>
             </div>
             {group.description && <p className="groups-card-desc">{group.description}</p>}
+
+            <h3 className="groups-section">Your settings for this group</h3>
+            <p className="groups-note">Only you see these. Nobody else in the group is told.</p>
+            <label htmlFor="group-alerts" className="groups-note">New post alerts</label>
+            <select id="group-alerts" className="group-search" value={mySettings.alerts} onChange={e => saveSetting({ alerts: e.target.value })}>
+              <option value="all">Tell me about new posts</option>
+              <option value="off">No alerts from this group</option>
+            </select>
+            <label htmlFor="group-mute" className="groups-note">Quiet for a while</label>
+            <select id="group-mute" className="group-search" value={mutedNow ? (mySettings.muted_until >= '2099' ? 'forever' : 'timed') : 'off'} onChange={e => {
+              const v = e.target.value
+              if (v === 'off') muteFor(null)
+              else if (v === '1h') muteFor(60 * 60 * 1000)
+              else if (v === '8h') muteFor(8 * 60 * 60 * 1000)
+              else if (v === '1w') muteFor(7 * 24 * 60 * 60 * 1000)
+              else if (v === 'forever') muteFor(Infinity)
+            }}>
+              {mutedNow && mySettings.muted_until < '2099' && <option value="timed">Quiet until {new Date(mySettings.muted_until).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</option>}
+              <option value="off">Not quiet</option>
+              <option value="1h">Quiet for 1 hour</option>
+              <option value="8h">Quiet for 8 hours</option>
+              <option value="1w">Quiet for 1 week</option>
+              <option value="forever">Quiet until I turn it back on</option>
+            </select>
+            <div className="groups-actions">
+              <button type="button" className="btn btn-outline group-small-btn" aria-pressed={mySettings.pinned} onClick={() => saveSetting({ pinned: !mySettings.pinned })}>{mySettings.pinned ? 'Pinned to top' : 'Pin to top'}</button>
+              <button type="button" className="btn btn-outline group-small-btn" aria-pressed={mySettings.archived} onClick={() => saveSetting({ archived: !mySettings.archived })}>{mySettings.archived ? 'Archived (tap to bring back)' : 'Archive'}</button>
+            </div>
+            {settingsNote && <p className="groups-error" role="alert">{settingsNote}</p>}
 
             {waiting.length > 0 && (
               <>
