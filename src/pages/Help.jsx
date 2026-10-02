@@ -8,12 +8,13 @@ export default function Help() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [feedbackText, setFeedbackText] = useState('')
+  const [feedbackKind, setFeedbackKind] = useState('problem')
   const [feedbackSent, setFeedbackSent] = useState(false)
   const [sendingFeedback, setSendingFeedback] = useState(false)
 
   async function submitFeedback() {
     setSendingFeedback(true)
-    const { error } = await supabase.from('feedback').insert({ user_id: user.id, body: feedbackText.trim() })
+    const { error } = await supabase.from('feedback').insert({ user_id: user.id, body: (feedbackKind === 'problem' ? '[Problem] ' : '[Idea] ') + feedbackText.trim() })
     setSendingFeedback(false)
     if (error) { console.error('Failed to submit feedback:', error); alert('Could not submit your feedback. Try again.'); return }
     setFeedbackSent(true)
@@ -78,31 +79,53 @@ export default function Help() {
         </p>
       </div>
 
-      <div className="help-section">
-        <h2>Feedback</h2>
-        <p>Tell us what your community needs. Your input shapes what we build next.</p>
+      <div className="help-section" id="report-a-problem">
+        <h2>Report a problem or share an idea</h2>
+        <p>Something broken, confusing, or unsafe? Tell us. Your idea about what your community needs is welcome too. To report a person, use the Report button on their profile.</p>
         {feedbackSent ? (
-          <p style={{ color: '#4ecca3', fontWeight: 600 }}>Thank you! Your feedback has been submitted.</p>
+          <p style={{ color: '#4ecca3', fontWeight: 600 }}>Thank you! We got it and an admin will read it.</p>
         ) : (
           <>
+            <div role="radiogroup" aria-label="What kind of message is this?" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              {[['problem', 'Report a problem'], ['idea', 'Share an idea']].map(([k, label]) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="radio"
+                  aria-checked={feedbackKind === k}
+                  onClick={() => setFeedbackKind(k)}
+                  style={{ flex: 1, minHeight: '44px', padding: '0.5rem', borderRadius: '8px', border: feedbackKind === k ? '2px solid #4ecca3' : '1px solid #444', background: feedbackKind === k ? '#1d3a31' : '#222', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+                >{label}</button>
+              ))}
+            </div>
             <textarea
               value={feedbackText}
               onChange={e => setFeedbackText(e.target.value)}
-              placeholder="What would help your community? What should we build next?"
-              aria-label="Feedback for Village Without Borders"
-              rows={3}
+              placeholder={feedbackKind === 'problem' ? 'What happened? What were you trying to do?' : 'What would help your community? What should we build next?'}
+              aria-label={feedbackKind === 'problem' ? 'Describe the problem' : 'Describe your idea'}
+              rows={4}
               maxLength={2000}
-              style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.9rem', resize: 'vertical', marginBottom: '0.5rem', boxSizing: 'border-box' }}
+              style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem', resize: 'vertical', marginBottom: '0.5rem', boxSizing: 'border-box' }}
             />
             <button
               disabled={!feedbackText.trim() || sendingFeedback}
               onClick={submitFeedback}
-              style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: (!feedbackText.trim() || sendingFeedback) ? 0.5 : 1 }}
+              style={{ minHeight: '44px', padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: (!feedbackText.trim() || sendingFeedback) ? 0.5 : 1 }}
             >
-              {sendingFeedback ? 'Sending...' : 'Submit Feedback'}
+              {sendingFeedback ? 'Sending...' : 'Send'}
             </button>
           </>
         )}
+      </div>
+
+      <div className="help-section">
+        <h2>Who runs this</h2>
+        <p>
+          Village Without Borders is a volunteer-run mutual aid network in
+          Northwest Georgia. It was started by Jade Michalski in Ringgold, GA.
+          It is not part of any political party or campaign, and no one is paid
+          to help you here.
+        </p>
       </div>
 
       <div className="help-section">
