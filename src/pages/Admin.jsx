@@ -913,6 +913,7 @@ export default function Admin() {
         <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length}){organizations.some(o => !o.approved) ? ' \u00b7 ' + organizations.filter(o => !o.approved).length + ' waiting' : ''}</button>
         <button style={tabStyle(tab === 'villages')} onClick={() => setTab('villages')}>Villages ({villages.length})</button>
         <button style={tabStyle(tab === 'content')} onClick={() => setTab('content')}>SkillShare {duplicateCount > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{duplicateCount}</span>}</button>
+        <button style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports {stats.alerts > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{stats.alerts}</span>}</button>
       </div>
 
       {loading && <p style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>Loading...</p>}
