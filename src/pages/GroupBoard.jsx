@@ -57,6 +57,13 @@ export default function GroupBoard() {
   // This person's own settings for this group. Only they can see or change them.
   const [mySettings, setMySettings] = useState({ alerts: 'all', muted_until: null, pinned: false, archived: false })
   const [settingsNote, setSettingsNote] = useState('')
+  // Shared settings: requests waiting for a second member, and the change log.
+  const [proposals, setProposals] = useState([])
+  const [changes, setChanges] = useState([])
+  const [nameDraft, setNameDraft] = useState(null)
+  const [descDraft, setDescDraft] = useState(null)
+  const [sharedNote, setSharedNote] = useState('')
+  const [sharedBusy, setSharedBusy] = useState(false)
   const [posts, setPosts] = useState([])
   const [hiddenOlder, setHiddenOlder] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -104,7 +111,7 @@ export default function GroupBoard() {
   // Group details, members (with names), open removal requests, invites.
   async function loadGroup() {
     const { data: g, error: gErr } = await supabase
-      .from('community_groups').select('id, name, description, join_token, steward_id, steward_offer_to, organization_id').eq('id', id).maybeSingle()
+      .from('community_groups').select('id, name, description, join_token, steward_id, steward_offer_to, organization_id, announcement_only, disappear_after_mins').eq('id', id).maybeSingle()
     if (gErr) console.error('Failed to load group:', gErr)
     const { data: m, error: mErr } = await supabase
       .from('community_group_members').select('user_id, joined_at, status, added_by').eq('group_id', id)
@@ -282,6 +289,55 @@ export default function GroupBoard() {
     saveSetting({ muted_until: ms === null ? null : ms === Infinity ? '2099-01-01T00:00:00Z' : new Date(Date.now() + ms).toISOString() })
   }
   const mutedNow = !!mySettings.muted_until && new Date(mySettings.muted_until) > new Date()
+
+  async function loadShared() {
+    const [{ data: pr, error: pErr }, { data: ch, error: cErr }] = await Promise.all([
+      supabase.from('community_group_proposals').select('kind, value, proposed_by, created_at').eq('group_id', id),
+      supabase.from('community_group_changes').select('id, summary, created_at').eq('group_id', id).order('created_at', { ascending: false }).limit(6),
+    ])
+    if (pErr) console.error('Failed to load group requests:', pErr)
+    if (cErr) console.error('Failed to load group changes:', cErr)
+    setProposals(pr || [])
+    setChanges(ch || [])
+  }
+
+  useEffect(() => {
+    if (!panelOpen || !id) return
+    loadShared()
+  }, [panelOpen, id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function changeSetting(kind, value) {
+    setSharedBusy(true); setSharedNote('')
+    const { data, error } = await supabase.rpc('change_community_group_setting', { p_group: id, p_kind: kind, p_value: value })
+    setSharedBusy(false)
+    if (error) {
+      console.error('Group setting change failed:', error)
+      setSharedNote(error.message && error.code && error.code !== 'PGRST202' && error.message.length < 140 ? error.message : "We couldn't do that. Try again.")
+      return
+    }
+    setSharedNote(data === 'asked' ? 'Asked. A different member has to agree before it changes.' : 'Done.')
+    await loadShared()
+    await loadGroup()
+  }
+
+  async function answerProposal(kind, accept) {
+    setSharedBusy(true); setSharedNote('')
+    const { error } = await supabase.rpc('answer_community_group_proposal', { p_group: id, p_kind: kind, p_accept: accept })
+    setSharedBusy(false)
+    if (error) { console.error('Answering group request failed:', error); setSharedNote("We couldn't do that. Try again.") }
+    await loadShared()
+    await loadGroup()
+  }
+
+  async function cancelProposal(kind) {
+    setSharedBusy(true); setSharedNote('')
+    const { error } = await supabase.rpc('cancel_community_group_proposal', { p_group: id, p_kind: kind })
+    setSharedBusy(false)
+    if (error) { console.error('Taking back group request failed:', error); setSharedNote("We couldn't do that. Try again.") }
+    await loadShared()
+  }
+
+  const DISAPPEAR_CHOICES = [[0, 'Off (posts stay)'], [1440, '1 day'], [10080, '7 days'], [43200, '30 days']]
 
   async function invite(person) {
     const { error } = await supabase.rpc('invite_to_community_group', { p_group: id, p_invitee: person.user_id })
@@ -486,11 +542,15 @@ export default function GroupBoard() {
       </div>
 
       {sendNote && <p className="convo-send-error" role="status">{sendNote}</p>}
+      {group.disappear_after_mins ? <p className="group-lock-note">&#9201; Posts here disappear after {group.disappear_after_mins / 1440} day{group.disappear_after_mins === 1440 ? '' : 's'}.</p> : null}
+      {group.announcement_only && group.steward_id && !iAmSteward && <p className="group-lock-note">&#128226; Only the steward posts here. You can still read, and message people outside the group.</p>}
+      {!(group.announcement_only && group.steward_id && !iAmSteward) && (
       <form className="convo-input-bar" onSubmit={send}>
         <label htmlFor="group-post" className="sr-only">Write a post</label>
         <input id="group-post" type="text" className="convo-input" value={newPost} onChange={e => setNewPost(e.target.value)} placeholder="Write to the group..." maxLength={2000} disabled={sending} autoComplete="off" />
         <button type="submit" className="convo-send" disabled={!newPost.trim() || sending}>{sending ? '...' : 'Send'}</button>
       </form>
+      )}
 
       {panelOpen && (
         <>
@@ -530,6 +590,69 @@ export default function GroupBoard() {
               <button type="button" className="btn btn-outline group-small-btn" aria-pressed={mySettings.archived} onClick={() => saveSetting({ archived: !mySettings.archived })}>{mySettings.archived ? 'Archived (tap to bring back)' : 'Archive'}</button>
             </div>
             {settingsNote && <p className="groups-error" role="alert">{settingsNote}</p>}
+
+            <h3 className="groups-section">Group settings</h3>
+            <p className="groups-note">{group.steward_id
+              ? (iAmSteward ? 'You are the steward, so you can change these right away. Everyone is told.' : 'Only the steward can change these. Everyone is told when they do.')
+              : 'These change the group for everyone. You ask, and a different member has to agree. Everyone is told.'}</p>
+            {(group.steward_id ? iAmSteward : true) && (
+              <>
+                <label htmlFor="group-name-edit" className="groups-note">Group name</label>
+                <input id="group-name-edit" className="group-search" maxLength={80} value={nameDraft ?? group.name} onChange={e => setNameDraft(e.target.value)} />
+                {nameDraft !== null && nameDraft.trim() && nameDraft.trim() !== group.name && (
+                  <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={async () => { await changeSetting('name', nameDraft.trim()); setNameDraft(null) }}>{group.steward_id ? 'Save name' : 'Ask to change name'}</button>
+                )}
+                <label htmlFor="group-desc-edit" className="groups-note">Description</label>
+                <textarea id="group-desc-edit" className="group-search" rows={2} maxLength={500} value={descDraft ?? (group.description || '')} onChange={e => setDescDraft(e.target.value)} />
+                {descDraft !== null && descDraft.trim() !== (group.description || '') && (
+                  <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={async () => { await changeSetting('description', descDraft.trim()); setDescDraft(null) }}>{group.steward_id ? 'Save description' : 'Ask to change description'}</button>
+                )}
+                <label htmlFor="group-disappear" className="groups-note">Posts disappear after</label>
+                <select id="group-disappear" className="group-search" disabled={sharedBusy} value={group.disappear_after_mins || 0} onChange={e => {
+                  const mins = Number(e.target.value)
+                  if (mins > 0 && !confirm('Posts older than this will be removed for everyone, for good. Turn it on?')) return
+                  changeSetting('disappear', String(mins))
+                }}>
+                  {DISAPPEAR_CHOICES.map(([mins, label]) => <option key={mins} value={mins}>{label}</option>)}
+                </select>
+                {group.steward_id && iAmSteward && (
+                  <button type="button" className="btn btn-outline group-small-btn" aria-pressed={!!group.announcement_only} disabled={sharedBusy} onClick={() => changeSetting('announce', group.announcement_only ? 'off' : 'on')}>
+                    {group.announcement_only ? 'Announcement-only is on (tap to turn off)' : 'Make announcement-only (only you post)'}
+                  </button>
+                )}
+              </>
+            )}
+            {!group.steward_id || iAmSteward ? null : (
+              <p className="groups-note">
+                Name: {group.name}. {group.disappear_after_mins ? 'Posts disappear after ' + (group.disappear_after_mins / 1440) + ' day' + (group.disappear_after_mins === 1440 ? '' : 's') + '.' : 'Posts stay until someone deletes them.'}
+                {group.announcement_only ? ' Only the steward posts here.' : ''}
+              </p>
+            )}
+            {proposals.map(pr => {
+              const who = members.find(m => m.userId === pr.proposed_by)?.name || 'A member'
+              const mine = pr.proposed_by === user.id
+              const what = pr.kind === 'name' ? 'rename the group to "' + pr.value + '"'
+                : pr.kind === 'description' ? 'change the description'
+                : (pr.value === '0' ? 'turn off disappearing posts' : 'make posts disappear after ' + (Number(pr.value) / 1440) + ' day' + (pr.value === '1440' ? '' : 's'))
+              return (
+                <div key={pr.kind} className="group-member" style={{ flexWrap: 'wrap' }}>
+                  <span className="group-member-name">{mine ? 'You asked to ' : who + ' asked to '}{what}.</span>
+                  {mine
+                    ? <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={() => cancelProposal(pr.kind)}>Take back</button>
+                    : <>
+                        <button type="button" className="btn btn-primary group-small-btn" disabled={sharedBusy} onClick={() => answerProposal(pr.kind, true)}>Agree</button>
+                        <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={() => answerProposal(pr.kind, false)}>No thanks</button>
+                      </>}
+                </div>
+              )
+            })}
+            {sharedNote && <p className="groups-note" role="status">{sharedNote}</p>}
+            {changes.length > 0 && (
+              <>
+                <p className="groups-note">Recent changes:</p>
+                {changes.map(ch => <p key={ch.id} className="groups-note">{ch.summary} <span style={{ opacity: 0.7 }}>({new Date(ch.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })})</span></p>)}
+              </>
+            )}
 
             {waiting.length > 0 && (
               <>
