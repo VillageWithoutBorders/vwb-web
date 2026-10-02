@@ -231,6 +231,9 @@ export default function Messages() {
 
     setProcessingOffer(null)
     await loadPendingOffers()
+    // Open the chat right away so the two of you can plan.
+    if (convo) { navigate('/conversation/' + convo.id); return }
+    alert('You accepted this offer, but the chat could not be opened. Find it under Messages in a moment.')
     await loadConversations()
   }
 
@@ -826,6 +829,11 @@ export default function Messages() {
                 )}
               </div>
 
+              {!blockedBy.has(offer.helper_id) && (
+                <button type="button" onClick={() => navigate('/u/' + offer.helper_id)} style={{ display: 'block', width: '100%', minHeight: '44px', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
+                  View {offer.helper_name}&apos;s profile first
+                </button>
+              )}
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button
                   style={offerBtnAccept}
