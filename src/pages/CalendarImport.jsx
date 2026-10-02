@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { VISIBILITY, placeFromZip } from '../utils/calendar'
@@ -20,6 +20,7 @@ function when(ev) {
 // connected: it copies once, and the events are then ordinary VWB events.
 export default function CalendarImport() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user, isAdmin, organizations } = useAuth()
 
   const hostOrgs = organizations.filter((o) => o.role === 'admin' || o.role === 'organizer')
@@ -28,7 +29,8 @@ export default function CalendarImport() {
     ...hostOrgs.map((o) => ({ id: o.id, name: o.name })),
   ]
 
-  const [host, setHost] = useState(hostChoices[0]?.id || '')
+  const orgParam = searchParams.get('org')
+  const [host, setHost] = useState(hostChoices.some((h) => h.id === orgParam) ? orgParam : (hostChoices[0]?.id || ''))
   const [zip, setZip] = useState('')
   const [place, setPlace] = useState(null)
   const [zipState, setZipState] = useState('')

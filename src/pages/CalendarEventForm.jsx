@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { DISTANCE_OPTIONS, VISIBILITY, placeFromZip } from '../utils/calendar'
@@ -39,8 +39,9 @@ export default function CalendarEventForm() {
   const [zip, setZip] = useState('')
   const [place, setPlace] = useState(null)
   const [zipState, setZipState] = useState('') // '' | 'looking' | 'notfound'
+  const orgParam = useSearchParams()[0].get('org')
   const [form, setForm] = useState({
-    host: hostChoices[0]?.id || '',
+    host: hostChoices.some((h) => h.id === orgParam) ? orgParam : (hostChoices[0]?.id || ''),
     title: '',
     description: '',
     date: '',
