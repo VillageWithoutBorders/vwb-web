@@ -20,6 +20,7 @@ export default function EventPage() {
   const { user, profile, loading: authLoading, refreshProfile } = useAuth()
 
   const [ev, setEv] = useState(null)
+  const [signupKind, setSignupKind] = useState('help')
   const [loading, setLoading] = useState(true)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
@@ -37,6 +38,11 @@ export default function EventPage() {
     const { event } = await fetchCalendarEvent(id, token)
     setEv(event)
     setLoading(false)
+    if (event?.signup_enabled) {
+      // Older events, or a database without the column yet, count as "help".
+      const { data: kindRow } = await supabase.from('calendar_events').select('signup_kind').eq('id', Number(id)).maybeSingle()
+      setSignupKind(kindRow?.signup_kind === 'attend' ? 'attend' : 'help')
+    }
     if (event) document.title = event.title + ' | Village Without Borders'
     if (event?.can_manage) {
       const { data, error } = await supabase.rpc('list_calendar_event_signups', { p_id: Number(id) })
@@ -191,8 +197,8 @@ export default function EventPage() {
 
         {ev.signup_enabled && !cancelled && (
           <section className="cal-box" aria-label="Sign up">
-            <h2>Sign up to help</h2>
-            {ev.all_ages && ev.teens_can_help && (
+            <h2>{signupKind === 'attend' ? 'Let us know you are coming' : 'Sign up to help'}</h2>
+            {signupKind === 'help' && ev.all_ages && ev.teens_can_help && (
               <p className="cal-sub" style={{ marginTop: 0 }}>Teens: you can help here too. A parent or guardian signs up as an adult member and brings you. Accounts are for adults 18 and over.</p>
             )}
             {ev.signup_limit != null && (
@@ -216,10 +222,10 @@ export default function EventPage() {
             ) : (
               <div className="cal-actions">
                 <div className="form-field" style={{ marginBottom: 0 }}>
-                  <label htmlFor="signup-note">Anything the organizers should know? (optional)</label>
-                  <textarea id="signup-note" rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="For example: I can bring a truck, or I need a ride" />
+                  <label htmlFor="signup-note">{signupKind === 'attend' ? 'How many are coming with you? Anything we should know? (optional)' : 'Anything the organizers should know? (optional)'}</label>
+                  <textarea id="signup-note" rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder={signupKind === 'attend' ? 'For example: 3 of us, 2 adults and a child' : 'For example: I can bring a truck, or I need a ride'} />
                 </div>
-                <button type="button" className="btn btn-primary btn-full" onClick={signUp} disabled={busy}>{busy ? 'Signing you up...' : "Count me in"}</button>
+                <button type="button" className="btn btn-primary btn-full" onClick={signUp} disabled={busy}>{busy ? (signupKind === 'attend' ? 'Saving...' : 'Signing you up...') : (signupKind === 'attend' ? "I'm coming" : 'Count me in')}</button>
               </div>
             )}
           </section>
