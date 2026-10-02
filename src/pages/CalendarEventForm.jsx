@@ -52,6 +52,7 @@ export default function CalendarEventForm() {
     visibility: 'public',
     hideAddress: false,
     signupEnabled: false,
+    signupKind: 'help',
     signupLimit: '',
     allAges: false,
     teensCanHelp: false,
@@ -84,6 +85,7 @@ export default function CalendarEventForm() {
         visibility: data.visibility,
         hideAddress: !!data.hide_address,
         signupEnabled: !!data.signup_enabled,
+        signupKind: data.signup_kind || 'help',
         signupLimit: data.signup_limit ? String(data.signup_limit) : '',
         allAges: !!data.all_ages,
         teensCanHelp: !!data.teens_can_help,
@@ -110,6 +112,7 @@ export default function CalendarEventForm() {
       // Members-only needs a group behind it; VWB-hosted falls back to invite-only.
       visibility: t.visibility === 'members' && f.host === VWB_HOST ? 'invite' : t.visibility,
       signupEnabled: t.signupEnabled,
+      signupKind: t.signupKind || 'help',
       signupLimit: t.signupLimit ? String(t.signupLimit) : '',
       hideAddress: t.hideAddress,
       radius: t.radius,
@@ -184,6 +187,7 @@ export default function CalendarEventForm() {
       visibility: form.visibility,
       hide_address: form.hideAddress,
       signup_enabled: form.signupEnabled,
+      signup_kind: form.signupKind,
       signup_limit: form.signupEnabled ? limit : null,
       all_ages: form.allAges,
       teens_can_help: form.allAges && form.teensCanHelp,
@@ -387,13 +391,26 @@ export default function CalendarEventForm() {
           </label>
         )}
 
-        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Volunteers</h2>
+        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Sign-ups</h2>
         <label className={'cal-choice' + (form.signupEnabled ? ' is-on' : '')}>
           <input type="checkbox" checked={form.signupEnabled} onChange={(e) => set('signupEnabled', e.target.checked)} />
           <span>Let people sign up
             <small>You'll see who signed up and any notes they leave.</small>
           </span>
         </label>
+        {form.signupEnabled && (
+          <fieldset className="form-field" style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
+            <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>What are people signing up for?</legend>
+            <label className={'cal-choice' + (form.signupKind === 'help' ? ' is-on' : '')}>
+              <input type="radio" name="ev-signup-kind" checked={form.signupKind === 'help'} onChange={() => set('signupKind', 'help')} />
+              <span>To help<small>Volunteers for a work day, drive, or shift.</small></span>
+            </label>
+            <label className={'cal-choice' + (form.signupKind === 'attend' ? ' is-on' : '')}>
+              <input type="radio" name="ev-signup-kind" checked={form.signupKind === 'attend'} onChange={() => set('signupKind', 'attend')} />
+              <span>To come<small>Neighbors letting you know they are coming, so you can plan food and seats.</small></span>
+            </label>
+          </fieldset>
+        )}
         {form.signupEnabled && (
           <div className="form-field">
             <label htmlFor="ev-limit">How many spots? (leave blank for no limit)</label>
