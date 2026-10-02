@@ -408,6 +408,12 @@ export default function CommunityResources() {
             </p>
           )}
 
+          {user && profile && profile.latitude == null && (
+            <p role="note" style={{ color: '#ccc', fontSize: '0.8rem', background: '#1e1e1e', border: '1px solid #333', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem' }}>
+              Showing national resources. Add your zip code in your profile to see ones near you.
+            </p>
+          )}
+
           {showSubmit && (
             <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowSubmit(false)}>
               <div ref={submitModalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="submit-resource-title" style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1.25rem', maxWidth: '400px', width: '90%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
