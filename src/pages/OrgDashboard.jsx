@@ -149,10 +149,15 @@ export default function OrgDashboard() {
       <section className="hub-section" aria-labelledby="od-shortcuts">
         <div className="hub-section-head"><h2 id="od-shortcuts">Shortcuts</h2></div>
         <div className="quick-actions">
-          <button type="button" className="action-card" onClick={() => navigate('/calendar/new')}>
+          <button type="button" className="action-card" onClick={() => navigate('/calendar/new?org=' + id)}>
             <span className="action-icon" aria-hidden="true">&#128197;</span>
             <span className="action-label">Post an event</span>
             <span className="action-desc">With volunteer sign-ups if you want them</span>
+          </button>
+          <button type="button" className="action-card" onClick={() => navigate('/calendar/import?org=' + id)}>
+            <span className="action-icon" aria-hidden="true">&#128229;</span>
+            <span className="action-label">Import events</span>
+            <span className="action-desc">Bring in your calendar from Google, Apple, Outlook, or Facebook</span>
           </button>
           <button type="button" className="action-card" onClick={() => navigate('/ask?org=' + id)}>
             <span className="action-icon" aria-hidden="true">&#127384;</span>
@@ -180,7 +185,7 @@ export default function OrgDashboard() {
       <section className="hub-section" aria-labelledby="od-events">
         <div className="hub-section-head">
           <h2 id="od-events">Events and sign-ups</h2>
-          <Link to="/calendar/new" className="hub-more">+ Post an event</Link>
+          <Link to={'/calendar/new?org=' + id} className="hub-more">+ Post an event</Link>
         </div>
         {!loading && events.length === 0 && <p className="hub-empty">No upcoming events yet.</p>}
         {events.map((e) => (
