@@ -620,7 +620,7 @@ export default function Messages() {
         if (upsertErr) { console.error('Failed to delete conversation for you:', upsertErr); alert('Could not delete this conversation. Try again.'); return }
       }
     } else {
-      const { error: updErr } = await supabase.from('chat_messages').update({ deleted_at: new Date().toISOString() }).eq('conversation_id', convoId)
+      const { error: updErr } = await supabase.rpc('delete_conversation_for_everyone', { p_convo: convoId })
       if (updErr) { console.error('Failed to delete conversation for everyone:', updErr); alert('Could not delete this conversation. Try again.'); return }
     }
     setShowDeleteConfirm(null)
