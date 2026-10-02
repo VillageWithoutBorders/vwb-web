@@ -233,9 +233,9 @@ export default function GroupBoard() {
     const q = search.trim()
     if (q.length < 2) { setResults([]); return }
     const t = setTimeout(async () => {
-      const { data, error } = await supabase
-        .from('helper_profiles_public').select('user_id, display_name, avatar_url')
-        .ilike('display_name', '%' + q.replace(/[%_]/g, '') + '%').limit(8)
+      // Only people you already know: talked with, vouched for or by, or
+      // share a group or organization with. The database decides.
+      const { data, error } = await supabase.rpc('search_people_to_invite', { p_group: id, p_query: q.replace(/[%_]/g, '') })
       if (error) { console.error('Member search failed:', error); return }
       const taken = new Set([...members.map(m => m.userId), ...pendingInvites.map(p => p.userId)])
       setResults((data || []).filter(p => !taken.has(p.user_id)))
@@ -494,7 +494,7 @@ export default function GroupBoard() {
                 <button type="button" className="btn btn-primary group-small-btn" onClick={() => invite(p)}>Invite</button>
               </div>
             ))}
-            {search.trim().length >= 2 && results.length === 0 && <p className="groups-note">No one found by that name.</p>}
+            {search.trim().length >= 2 && results.length === 0 && <p className="groups-note">No one found by that name. You can search people you have messaged, vouched for, or share a group or organization with.</p>}
             {pendingInvites.length > 0 && (
               <>
                 <p className="groups-note">Invited, waiting to say yes:</p>
