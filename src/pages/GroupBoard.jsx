@@ -379,7 +379,7 @@ export default function GroupBoard() {
     setSharedBusy(true); setSharedNote('')
     const { error } = await supabase.rpc('answer_community_group_proposal', { p_group: id, p_kind: kind, p_accept: accept })
     setSharedBusy(false)
-    if (error) { console.error('Answering group request failed:', error); setSharedNote("We couldn't do that. Try again.") }
+    if (error) { console.error('Answering group request failed:', error); setSharedNote(error.code === '42501' && error.message ? error.message : "We couldn't do that. Try again.") }
     await loadShared()
     await loadGroup()
   }
@@ -436,7 +436,7 @@ export default function GroupBoard() {
     if (open && group?.steward_id !== user.id) {
       const why = open.reason ? ' Reason given: ' + open.reason + '.' : ''
       if (!confirm('Agree to remove ' + member.name + '?' + why + ' They will be removed from the group right away.')) return
-      doRemove(member, null)
+      doRemove(member, null).then(r => { if (r && r.error) alert(r.error.code === '42501' && r.error.message ? r.error.message : 'Could not do that. Try again.') })
       return
     }
     setRemoveFor(member)
@@ -458,7 +458,7 @@ export default function GroupBoard() {
     setRemoveError('')
     const { error } = await doRemove(removeFor, removeReason)
     setRemoveBusy(false)
-    if (error) { setRemoveError('Could not do that. Try again.'); return }
+    if (error) { setRemoveError(error.code === '42501' && error.message ? error.message : 'Could not do that. Try again.'); return }
     setRemoveFor(null)
   }
 
