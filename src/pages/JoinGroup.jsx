@@ -66,10 +66,10 @@ export default function JoinGroup() {
           <>
             <h2 className="groups-card-title">{preview.name}</h2>
             {preview.description && <p className="groups-card-desc">{preview.description}</p>}
-            <p className="groups-note">{preview.member_count} {Number(preview.member_count) === 1 ? 'member' : 'members'}. Its board is private to members. Some groups ask a member to let new people in first.</p>
+            <p className="groups-note">{preview.member_count} {Number(preview.member_count) === 1 ? 'member' : 'members'}. Its board is private to members. A member will need to let you in after you tap Join.</p>
             {state === 'error' && <p className="form-error" role="alert">Could not join. The link may have just been turned off. Try again, or ask for a new link.</p>}
             {state === 'newaccount' && <p className="form-error" role="alert">{NEW_ACCOUNT_NOTE} You can also ask someone in the group to invite you by name.</p>}
-            <button type="button" className="btn btn-primary btn-full" onClick={join} disabled={state === 'joining'}>{state === 'joining' ? 'Joining...' : 'Join group'}</button>
+            <button type="button" className="btn btn-primary btn-full" onClick={join} disabled={state === 'joining'}>{state === 'joining' ? 'Joining...' : 'Ask to join'}</button>
             <button type="button" className="btn btn-outline btn-full" style={{ marginTop: '0.5rem' }} onClick={() => navigate('/')}>Not now</button>
           </>
         )}
