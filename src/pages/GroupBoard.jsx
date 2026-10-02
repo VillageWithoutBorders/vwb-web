@@ -48,6 +48,7 @@ export default function GroupBoard() {
   const [members, setMembers] = useState([])
   const [waiting, setWaiting] = useState([])
   const [amWaiting, setAmWaiting] = useState(false)
+  const [inviteUnlock, setInviteUnlock] = useState(null)
   const [orgName, setOrgName] = useState('')
   // Members who could take over as steward (the organization's head or
   // organizers). Only loaded for the steward.
@@ -181,6 +182,8 @@ export default function GroupBoard() {
     }
     setMembers(list)
     setWaiting(waitingList)
+    const { data: unlock } = await supabase.rpc('invite_unlock_date', { p_group: id })
+    setInviteUnlock(unlock ? new Date(unlock) : null)
     membersRef.current = list
     setRemovals(r || [])
     setPendingInvites(inviteNames)
@@ -404,7 +407,7 @@ export default function GroupBoard() {
 
   async function invite(person) {
     const { error } = await supabase.rpc('invite_to_community_group', { p_group: id, p_invitee: person.user_id })
-    if (error) { console.error('Invite failed:', error); alert(error.message?.includes("can't invite") ? "You can't invite this person." : 'Could not send the invite. Try again.'); return }
+    if (error) { console.error('Invite failed:', error); alert(error.code === '42501' && error.message ? error.message : error.message?.includes("can't invite") ? "You can't invite this person." : 'Could not send the invite. Try again.'); return }
     setSearch('')
     setResults([])
     loadGroup()
@@ -755,6 +758,9 @@ export default function GroupBoard() {
 
             <h3 className="groups-section">Invite someone</h3>
             <label htmlFor="invite-search" className="sr-only">Search members by name</label>
+            {inviteUnlock && inviteUnlock > new Date() ? (
+              <p className="groups-note">You can invite people by name starting {inviteUnlock.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}. This keeps groups safe while you are new. You can share the join link now. A member will let people in.</p>
+            ) : (<>
             <input id="invite-search" type="search" className="group-search" placeholder="Type a name" value={search} onChange={e => setSearch(e.target.value)} autoComplete="off" />
             {results.map(p => (
               <div key={p.user_id} className="group-member">
@@ -764,6 +770,7 @@ export default function GroupBoard() {
               </div>
             ))}
             {search.trim().length >= 2 && results.length === 0 && <p className="groups-note">No one found by that name. You can search people you have messaged, vouched for, or share a group or organization with.</p>}
+            </>)}
             {pendingInvites.length > 0 && (
               <>
                 <p className="groups-note">Invited, waiting to say yes:</p>
