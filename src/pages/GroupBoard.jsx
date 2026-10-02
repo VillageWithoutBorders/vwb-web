@@ -300,7 +300,7 @@ export default function GroupBoard() {
   // light it up. If it was already answered or taken back, say so.
   useEffect(() => {
     if (!focusKey || focusDone.current || !group || loading) return
-    const isRemoval = focusKey.startsWith('removal-')
+    const isRemoval = focusKey.startsWith('removal-') || focusKey.startsWith('waiting-')
     const ready = isRemoval ? members.length > 0 : panelOpen
     if (!ready) return
     if (!panelOpen) { setPanelOpen(true); return }
@@ -701,7 +701,8 @@ export default function GroupBoard() {
                 {waiting.map(w => {
                   const blockedByMe = w.addedBy === user.id && !iAmSteward
                   return (
-                    <div key={w.userId} className="group-member">
+                    <div key={w.userId} id={'focus-waiting-' + w.userId} tabIndex={-1} className="group-member" style={{ flexWrap: 'wrap', ...focusStyle('waiting-' + w.userId) }}>
+                      {focusLabel('waiting-' + w.userId)}
                       <AvatarDisplay url={w.avatar} userId={w.userId} size={32} />
                       <span className="group-member-name">{w.name}<span className="group-member-sub">{w.addedByName ? 'Invited by ' + (w.addedBy === user.id ? 'you' : w.addedByName) : 'Joined with the link'}</span></span>
                       <span className="group-member-actions">
