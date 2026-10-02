@@ -531,7 +531,7 @@ export default function Admin() {
     const { data, error } = await supabase.from('feedback').update(changes).eq('id', id).select('id')
     if (reportError('updateHelpMessage', error, 'Could not update this message. Try again.')) return
     if (!data || data.length === 0) { alert('Could not update this message. Try again.'); return }
-    await loadAlerts()
+    await Promise.all([loadAlerts(), loadStats()])
   }
 
   async function reviewReport(id, status) {
@@ -611,7 +611,9 @@ export default function Admin() {
     const { count: checkinCount, error: e7 } = await supabase.from('safety_alerts').select('id', { count: 'exact', head: true })
     const { count: openIssueCount, error: e10 } = await supabase.from('task_feedback').select('id', { count: 'exact', head: true }).eq('status', 'open').in('outcome', TASK_ISSUE_OUTCOMES)
     ;[e1, e2, e3, e4, e5, e6, e7, e8, e9, e10].forEach((e, i) => reportError('loadStats:' + i, e))
-    const alertCount = (openReportCount || 0) + (checkinCount || 0) + (openIssueCount || 0)
+    const { count: openHelpCount, error: e11 } = await supabase.from('feedback').select('id', { count: 'exact', head: true }).neq('status', 'done')
+    reportError('loadStats:feedback', e11)
+    const alertCount = (openHelpCount || 0) + (openReportCount || 0) + (checkinCount || 0) + (openIssueCount || 0)
     setStats({ users: userCount || 0, ambassadors: ambassadorCount || 0, requests: requestCount || 0, offersWaiting: waitingCount || 0, accepted: acceptedCount || 0, completed: completedCount || 0, events: eventCount || 0, alerts: alertCount || 0 })
   }
 
