@@ -29,6 +29,9 @@ export default function ActiveTasks() {
   const [myRequests, setMyRequests] = useState([])
   const [helpingWith, setHelpingWith] = useState([])
   const [loading, setLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const [deleteNote, setDeleteNote] = useState('')
   // "How did it go?" after a task is finished
   const [myFeedback, setMyFeedback] = useState({})
   const [feedbackReady, setFeedbackReady] = useState(false)
@@ -329,6 +332,21 @@ export default function ActiveTasks() {
       .update({ archived_at: new Date().toISOString() })
       .eq('id', requestId)
     if (error) { console.error('Failed to archive request:', error); alert('Could not archive this request. Try again.'); return }
+    await loadTasks()
+  }
+
+  // Delete for good. Only the person who posted it. The database refuses if a
+  // helper already finished the task, and says to archive it instead.
+  async function deleteRequestForGood(requestId) {
+    setDeleteBusy(true); setDeleteNote('')
+    const { error } = await supabase.rpc('delete_my_help_request', { p_request_id: requestId })
+    setDeleteBusy(false)
+    if (error) {
+      console.error('Failed to delete request:', error)
+      setDeleteNote(error.message && error.message.length < 160 ? error.message : 'Could not delete this request. Try again.')
+      return
+    }
+    setDeletingId(null)
     await loadTasks()
   }
 
@@ -650,6 +668,26 @@ export default function ActiveTasks() {
                       onClick={() => deleteRequest(req.id)}
                     >
                       Archive request
+                    </button>
+                  )}
+
+                  {/* Delete for good */}
+                  {deletingId === req.id ? (
+                    <div role="alert" style={{ marginTop: '0.5rem', padding: '0.75rem', border: '1px solid #ff6666', borderRadius: '8px' }}>
+                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>Delete this request for good? It can't be undone. Neighbors who said yes will be told it was removed.</p>
+                      {deleteNote && <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#ffaa44' }}>{deleteNote}</p>}
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn btn-sm" disabled={deleteBusy} style={{ flex: 1, minHeight: '44px', background: '#c0392b', color: '#fff', border: 'none' }} onClick={() => deleteRequestForGood(req.id)}>{deleteBusy ? 'Deleting...' : 'Yes, delete'}</button>
+                        <button className="btn btn-outline btn-sm" style={{ flex: 1, minHeight: '44px' }} onClick={() => { setDeletingId(null); setDeleteNote('') }}>Keep it</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      className="btn btn-outline btn-sm"
+                      style={{ color: '#ff6666', borderColor: '#ff6666', marginTop: '0.25rem', marginLeft: '0.5rem' }}
+                      onClick={() => { setDeleteNote(''); setDeletingId(req.id) }}
+                    >
+                      Delete request
                     </button>
                   )}
                 </div>
