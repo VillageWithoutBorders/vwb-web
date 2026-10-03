@@ -180,6 +180,26 @@ export default function EventPage() {
     return <div>{topbar}<p className="cal-empty">Loading event...</p></div>
   }
 
+  if (!ev && !user && token) {
+    // A private link. Nothing about the event is shown until they have an account.
+    return (
+      <div>
+        {topbar}
+        <div className="cal-page">
+          <div className="cal-empty">
+            <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }} aria-hidden="true">&#128274;</p>
+            <p style={{ fontWeight: 700, color: 'var(--text)' }}>This is a private event</p>
+            <p>Someone invited you. To see it, create a free Village Without Borders account or log in.</p>
+            <div className="cal-actions" style={{ marginTop: '1rem' }}>
+              <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} onClick={goSignIn}>Create a free account</button>
+              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '48px' }} onClick={() => { setReturnTo(window.location.pathname + window.location.search); navigate('/login') }}>I already have an account</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!ev) {
     return (
       <div>
