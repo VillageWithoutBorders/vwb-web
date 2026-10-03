@@ -805,6 +805,11 @@ export default function Messages() {
         </button>
       </div>
 
+      <button type="button" className="groups-row groups-entry" onClick={() => navigate('/connections')}>
+        <span className="groups-row-name"><span aria-hidden="true">&#129309;</span> Connections</span>
+        <span className="groups-row-meta">Everyone you have connected with &#8250;</span>
+      </button>
+
       <button type="button" className="groups-row groups-entry" onClick={() => navigate('/groups')}>
         <span className="groups-row-name"><span aria-hidden="true">&#128101;</span> Groups</span>
         <span className="groups-row-meta">Private boards &#8250;</span>
