@@ -3,6 +3,7 @@ import BottomTabs from '../components/BottomTabs'
 import AppMenu from '../components/AppMenu'
 import AlertsMenu from '../components/AlertsMenu'
 import AppTour from '../components/AppTour'
+import KeyRestorePrompt from '../components/KeyRestorePrompt'
 
 export default function Layout() {
   const { pathname } = useLocation()
@@ -30,6 +31,7 @@ export default function Layout() {
       </main>
       <BottomTabs />
       <AppTour />
+      <KeyRestorePrompt />
     </div>
   )
 }

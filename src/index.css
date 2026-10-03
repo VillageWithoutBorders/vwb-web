@@ -4700,3 +4700,13 @@ html[data-tour-tab="top"] .app-header .header-btn {
 .edit-history h3 { margin: 0 0 0.75rem; }
 .edit-history-row { padding: 0.5rem 0; border-top: 1px solid #333; }
 .edit-history-row p { margin: 0.25rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Recovery key */
+.key-dialog { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(calc(100vw - 32px), 440px); max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box; padding: 1.25rem; background: #1a1a1a; border: 1px solid #333; border-radius: 14px; z-index: 1201; color: #eee; }
+.key-dialog h3 { margin: 0 0 0.5rem; }
+.key-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1.15rem; letter-spacing: 0.06em; line-height: 1.7; word-break: break-all; padding: 0.75rem; margin: 0.75rem 0; background: #0f0f0f; border: 1px solid #4ecca3; border-radius: 8px; color: #fff; user-select: all; }
+.key-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+.key-check { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; margin: 0.5rem 0; }
+.key-check input { width: 22px; height: 22px; }
+.recovery-nudge { margin: 0.75rem 0; padding: 0.9rem 1rem; background: rgba(78, 204, 163, 0.1); border: 1px solid rgba(78, 204, 163, 0.4); border-radius: 12px; }
+.recovery-nudge p { margin: 0 0 0.5rem; }

@@ -6,6 +6,7 @@ import { getMyLocation } from '../utils/location'
 import { peekReturnTo } from '../utils/returnTo'
 import PushBanner from '../components/PushBanner'
 import InstallBanner from '../components/InstallBanner'
+import RecoveryNudge from '../components/RecoveryNudge'
 import AmbassadorBanner from '../components/AmbassadorBanner'
 
 // A few tiles for Hope Ambassadors and admins: how much open need there is
@@ -110,6 +111,7 @@ export default function Dashboard() {
       {(profile?.is_hope_ambassador || isAdmin) && <NearbyNeedTiles />}
       <PushBanner />
       <InstallBanner />
+      <RecoveryNudge />
       <div className="welcome-section">
         <h1>Welcome back, {displayName}</h1>
         <p className="welcome-sub">What do you need today?</p>
