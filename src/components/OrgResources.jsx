@@ -36,7 +36,7 @@ export default function OrgResources({ orgId }) {
 
   function open(r) {
     setNote('')
-    setDraft({ name: r.name || '', description: r.description || '', phone: r.phone || '', url: r.url || '', address: r.address || '', requirements: r.requirements || '', categories: r.categories || [] })
+    setDraft({ name: r.name || '', description: r.description || '', phone: r.phone || '', url: r.url || '', address: r.address || '', requirements: r.requirements || '', categories: r.categories || [], links: Array.isArray(r.links) ? r.links.map((l) => ({ label: l.label || '', url: l.url || '' })) : [] })
     setAdding(false)
     setRemoving(null)
     setEditing(r.id)
@@ -46,8 +46,12 @@ export default function OrgResources({ orgId }) {
     setNote('')
     setEditing(null)
     setRemoving(null)
-    setDraft({ name: '', description: '', phone: '', url: '', address: '', requirements: '', categories: [] })
+    setDraft({ name: '', description: '', phone: '', url: '', address: '', requirements: '', categories: [], links: [] })
     setAdding(true)
+  }
+
+  function setLink(i, key, value) {
+    setDraft({ ...draft, links: draft.links.map((l, j) => (j === i ? { ...l, [key]: value } : l)) })
   }
 
   function toggleCat(c) {
@@ -59,11 +63,13 @@ export default function OrgResources({ orgId }) {
     e.preventDefault()
     if (!draft.name.trim()) { setNote('Add a name.'); return }
     if (!draft.categories.length) { setNote('Pick at least one category.'); return }
+    if (draft.links.some((l) => l.url.trim() && !/^https?:\/\/\S+$/i.test(l.url.trim()))) { setNote('Each link needs to start with http:// or https://'); return }
     setBusy(true); setNote('')
     const fields = {
       p_name: draft.name, p_description: draft.description, p_phone: draft.phone,
       p_url: draft.url, p_address: draft.address, p_requirements: draft.requirements,
       p_categories: draft.categories,
+      p_links: draft.links.filter((l) => l.url.trim()).map((l) => ({ label: l.label.trim(), url: l.url.trim() })),
     }
     const { error } = adding
       ? await supabase.rpc('add_org_resource', { p_org: orgId, ...fields })
@@ -73,7 +79,7 @@ export default function OrgResources({ orgId }) {
     const wasAdding = adding
     setEditing(null)
     setAdding(false)
-    setNote(wasAdding ? 'Added. It will show to everyone once an ambassador or admin reviews it.' : 'Saved.')
+    setNote(wasAdding ? 'Added. It is live in the Resource Library now.' : 'Saved.')
     load()
   }
 
@@ -98,6 +104,19 @@ export default function OrgResources({ orgId }) {
               : <input id={idPrefix + '-' + key} type={kind} inputMode={kind === 'tel' ? 'tel' : kind === 'url' ? 'url' : undefined} autoComplete="off" value={draft[key]} onChange={(e) => setDraft({ ...draft, [key]: e.target.value })} style={inputStyle} />}
           </div>
         ))}
+        <span id={idPrefix + '-links'} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Other links (Facebook page, sign-up form, map)</span>
+        {draft.links.map((l, i) => (
+          <div key={i} role="group" aria-label={'Link ' + (i + 1)} style={{ marginBottom: '0.6rem', padding: '0.5rem', border: '1px solid #333', borderRadius: '8px' }}>
+            <label htmlFor={idPrefix + '-ll-' + i} style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.2rem' }}>What to call it</label>
+            <input id={idPrefix + '-ll-' + i} type="text" maxLength={40} autoComplete="off" value={l.label} onChange={(e) => setLink(i, 'label', e.target.value)} placeholder="Facebook page" style={inputStyle} />
+            <label htmlFor={idPrefix + '-lu-' + i} style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Link</label>
+            <input id={idPrefix + '-lu-' + i} type="url" inputMode="url" autoComplete="off" value={l.url} onChange={(e) => setLink(i, 'url', e.target.value)} placeholder="https://" style={inputStyle} />
+            <button type="button" onClick={() => setDraft({ ...draft, links: draft.links.filter((_, j) => j !== i) })} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #c0392b', background: 'none', color: '#ff7b6b', fontSize: '0.95rem', cursor: 'pointer' }}>Remove this link</button>
+          </div>
+        ))}
+        {draft.links.length < 8 && (
+          <button type="button" onClick={() => setDraft({ ...draft, links: [...draft.links, { label: '', url: '' }] })} style={{ minHeight: '44px', padding: '0 1rem', marginBottom: '0.75rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer' }}>+ Add a link</button>
+        )}
         <span id={idPrefix + '-cats'} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Categories (pick one or more)</span>
         <div role="group" aria-labelledby={idPrefix + '-cats'} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
           {CATEGORIES.map((c) => (
@@ -132,6 +151,7 @@ export default function OrgResources({ orgId }) {
                   <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{r.name}</div>
                   {!r.verified && <div style={{ fontSize: '0.85rem', color: '#e0b84c', marginTop: '0.2rem' }}>Waiting for review. Only organizers see it.</div>}
                   {r.description && <p style={{ margin: '0.3rem 0 0', fontSize: '0.9rem', color: '#ccc', overflowWrap: 'anywhere' }}>{r.description}</p>}
+                  {Array.isArray(r.links) && r.links.length > 0 && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#aaa' }}>{r.links.length} extra {r.links.length === 1 ? 'link' : 'links'}</p>}
                   {(r.phone || r.address) && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#aaa', overflowWrap: 'anywhere' }}>{[r.phone, r.address].filter(Boolean).join(' · ')}</p>}
                   <button type="button" onClick={() => open(r)} style={{ marginTop: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Edit</button>
                   {removing === r.id ? (
