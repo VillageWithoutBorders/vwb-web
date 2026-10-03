@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import CommunityGuidelines from './CommunityGuidelines'
-import { fetchCalendarEvent, fullDateTime, googleCalendarLink, androidCalendarLink, isAndroid, downloadIcs, eventUrl, VISIBILITY } from '../utils/calendar'
+import { fetchCalendarEvent, fullDateTime, googleCalendarLink, isAndroid, downloadIcs, eventUrl, VISIBILITY } from '../utils/calendar'
 import { setReturnTo, clearReturnTo } from '../utils/returnTo'
 import { startConversation } from '../utils/startConversation'
 import { UserName } from '../components/AvatarDisplay'
@@ -419,8 +419,7 @@ export default function EventPage() {
             <div className="cal-actions">
               {isAndroid() ? (
                 <>
-                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Add to my calendar (calendar file)</button>
-                  <a className="btn btn-outline btn-full" href={androidCalendarLink(ev)}>Open my phone's calendar app</a>
+                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Add to my calendar</button>
                 </>
               ) : (
                 <>
