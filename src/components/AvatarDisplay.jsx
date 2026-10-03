@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useBlockedBy } from '../utils/blockedBy'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
@@ -18,6 +19,27 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
   const [showPopup, setShowPopup] = useState(false)
   const [info, setInfo] = useState(null)
   const [messaging, setMessaging] = useState(false)
+  // Where the avatar was tapped, and where the card ends up after it has been
+  // measured, so it opens next to the avatar and never runs off the screen.
+  const [anchor, setAnchor] = useState(null)
+  const [pos, setPos] = useState(null)
+  const cardRef = useRef(null)
+
+  useLayoutEffect(() => {
+    if (!showPopup || !anchor || !cardRef.current) return
+    const margin = 8
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const width = Math.min(280, vw - margin * 2)
+    const height = Math.min(cardRef.current.offsetHeight, vh - margin * 2)
+    let left = Math.min(Math.max(anchor.left, margin), vw - width - margin)
+    let top = anchor.bottom + margin
+    if (top + height > vh - margin) {
+      const above = anchor.top - margin - height
+      top = above >= margin ? above : Math.max(margin, vh - height - margin)
+    }
+    setPos({ top, left, width, maxHeight: vh - margin * 2 })
+  }, [showPopup, anchor, info])
 
   async function loadInfo() {
     if (info || !userId) return
@@ -83,6 +105,9 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
   function handleClick(e) {
     e.stopPropagation()
     if (!userId) return
+    const r = e.currentTarget.getBoundingClientRect()
+    setAnchor({ left: r.left, top: r.top, bottom: r.bottom })
+    setPos(null)
     loadInfo()
     setShowPopup(true)
   }
@@ -104,10 +129,10 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
           cursor: userId ? 'pointer' : 'default',
         }}
       />
-      {showPopup && (
+      {showPopup && createPortal(
         <>
           <div onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1100 }} />
-          <div onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#1e1e1e', border: '1px solid #333', borderRadius: '16px', padding: '1.25rem', zIndex: 1101, width: '280px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+          <div ref={cardRef} onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: pos ? pos.top + 'px' : 0, left: pos ? pos.left + 'px' : 0, visibility: pos ? 'visible' : 'hidden', background: '#1e1e1e', border: '1px solid #333', borderRadius: '16px', padding: '1.25rem', zIndex: 1101, width: pos ? pos.width + 'px' : 'min(280px, calc(100vw - 16px))', maxHeight: pos ? pos.maxHeight + 'px' : undefined, overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
               <img src={src} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#222', border: '2px solid #333' }} />
               <div>
@@ -150,7 +175,8 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </>
   )
