@@ -1,30 +1,24 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 
 // Admin review list for "claim this resource" requests.
-export default function AdminResourceClaims() {
-  const [rows, setRows] = useState(null)
+export default function AdminResourceClaims({ claims, onChanged }) {
+  const rows = claims || []
   const [busy, setBusy] = useState(null)
   const [notes, setNotes] = useState({})
   const [msg, setMsg] = useState('')
-
-  const load = useCallback(async () => {
-    const { data, error } = await supabase.rpc('admin_list_resource_claims')
-    if (error) { console.error('admin_list_resource_claims', error); setRows([]); return }
-    setRows(data || [])
-  }, [])
-  useEffect(() => { load() }, [load])
+  const [err, setErr] = useState('')
 
   async function decide(c, approve) {
-    setBusy(c.id); setMsg('')
+    setBusy(c.id); setMsg(''); setErr('')
     const { error } = await supabase.rpc('admin_decide_resource_claim', { p_claim: c.id, p_approve: approve, p_note: notes[c.id] || '' })
     setBusy(null)
-    if (error) { console.error('admin_decide_resource_claim', error); setMsg("Couldn't save that. " + (error.message || '')); return }
+    if (error) { console.error('admin_decide_resource_claim', error); setErr("Couldn't save that. " + (error.message || '')); return }
     setMsg(approve ? 'Approved. "' + c.resource_name + '" now belongs to ' + c.claiming_org + '.' : 'Turned down.')
-    load()
+    if (onChanged) onChanged()
   }
 
-  if (!rows || rows.length === 0) return msg ? <p role="status" style={{ color: '#4ecca3', fontSize: '0.85rem' }}>{msg}</p> : null
+  if (rows.length === 0) return msg ? <p role="status" style={{ color: '#4ecca3', fontSize: '0.85rem' }}>{msg}</p> : null
 
   return (
     <div style={{ marginBottom: '1rem' }}>
@@ -42,6 +36,7 @@ export default function AdminResourceClaims() {
           </div>
         </div>
       ))}
+      {err && <p role="alert" style={{ color: '#ff7b6b', fontSize: '0.85rem' }}>{err}</p>}
       {msg && <p role="status" style={{ color: '#4ecca3', fontSize: '0.85rem' }}>{msg}</p>}
     </div>
   )

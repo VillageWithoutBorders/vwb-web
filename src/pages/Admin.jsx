@@ -49,7 +49,8 @@ const CONTENT_FILTERS = [
 export default function Admin() {
   const { user, profile, isAdmin, isFounder } = useAuth()
   const navigate = useNavigate()
-  const [tab, setTab] = useState('emergencies')
+  const [tab, setTab] = useState(() => { try { return new URLSearchParams(window.location.search).get('tab') || 'emergencies' } catch { return 'emergencies' } })
+  const [resourceClaims, setResourceClaims] = useState([])
   const [loading, setLoading] = useState(true)
   const [pendingEvents, setPendingEvents] = useState([])
   const [alerts, setAlerts] = useState([])
@@ -116,9 +117,9 @@ export default function Admin() {
     setLoading(true)
     // allSettled + finally: if one loader throws, the rest still show and the
     // panel never gets stuck on Loading... The failing one gets reported.
-    const loaders = ['pending', 'alerts', 'users', 'stats', 'approvals', 'adminApps', 'ambApps', 'orgs', 'orgInvites', 'villages', 'content']
+    const loaders = ['pending', 'alerts', 'users', 'stats', 'approvals', 'adminApps', 'ambApps', 'orgs', 'orgInvites', 'villages', 'content', 'resourceClaims']
     try {
-      const results = await Promise.allSettled([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadAmbassadorApplications(), loadOrganizations(), loadOrgInvitations(), loadVillages(), loadContent()])
+      const results = await Promise.allSettled([loadPending(), loadAlerts(), loadUsers(), loadStats(), loadApprovals(), loadAdminApplications(), loadAmbassadorApplications(), loadOrganizations(), loadOrgInvitations(), loadVillages(), loadContent(), loadResourceClaims()])
       results.forEach((r, i) => { if (r.status === 'rejected') reportError('loadAll:' + loaders[i], r.reason) })
     } finally {
       setLoading(false)
@@ -293,6 +294,12 @@ export default function Admin() {
     const { error } = await supabase.from('helper_profiles').update({ village_id: villageId || null }).eq('user_id', userId)
     if (reportError('reassignUserVillage', error, 'Could not move this person to that village. Try again.')) return
     await Promise.all([loadUsers(), loadVillages()])
+  }
+
+  async function loadResourceClaims() {
+    const { data, error } = await supabase.rpc('admin_list_resource_claims')
+    reportError('loadResourceClaims', error)
+    setResourceClaims(data || [])
   }
 
   async function loadAdminApplications() {
@@ -937,7 +944,7 @@ export default function Admin() {
           Wraps instead of scrolling so nothing is ever hidden off-screen as more
           sections get added. */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length + ambApplications.length) > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length + ambApplications.length}</span>}</button>
+        <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length + ambApplications.length + resourceClaims.length) > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length + ambApplications.length + resourceClaims.length}</span>}</button>
         <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length}){organizations.some(o => !o.approved) ? ' \u00b7 ' + organizations.filter(o => !o.approved).length + ' waiting' : ''}</button>
         <button style={tabStyle(tab === 'villages')} onClick={() => setTab('villages')}>Villages ({villages.length})</button>
         <button style={tabStyle(tab === 'content')} onClick={() => setTab('content')}>SkillShare {duplicateCount > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{duplicateCount}</span>}</button>
@@ -948,7 +955,8 @@ export default function Admin() {
 
       {!loading && tab === 'approvals' && (
         <>
-          {approvals.length === 0 && adminApplications.length === 0 && ambApplications.length === 0 ? (
+          <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
+          {approvals.length === 0 && adminApplications.length === 0 && ambApplications.length === 0 && resourceClaims.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No pending approvals</p>
           ) : (
             <>
@@ -1391,7 +1399,7 @@ export default function Admin() {
 
       {!loading && tab === 'organizations' && (
         <>
-          <AdminResourceClaims />
+          <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
           <button onClick={() => setShowNewOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewOrgForm ? 'Cancel' : '+ New Organization'}</button>
 
           {showNewOrgForm && (
