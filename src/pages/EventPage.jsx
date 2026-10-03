@@ -174,14 +174,22 @@ export default function EventPage() {
   }
 
   async function setStatus(status) {
-    if (status === 'cancelled' && !window.confirm('Cancel this event? People will see that it was cancelled.')) return
+    if (status === 'cancelled') {
+      const n = new Set([...signups.map((x) => x.user_id), ...invited.map((x) => x.user_id)]).size
+      const who = n === 0 ? 'People will see that it was cancelled.' : (n === 1 ? '1 person who signed up or was invited will get an alert.' : n + ' people who signed up or were invited will get an alert.')
+      if (!window.confirm('Cancel this event? ' + who)) return
+    }
     const { error } = await supabase.from('calendar_events').update({ status }).eq('id', ev.id)
     if (error) { alert('Could not update the event. Try again.'); return }
     load()
   }
 
   async function deleteEvent() {
-    if (!window.confirm('Delete this event for good? This also removes everyone who signed up. This cannot be undone.')) return
+    const n = new Set([...signups.map((x) => x.user_id), ...invited.map((x) => x.user_id)]).size
+    const warn = n === 0
+      ? 'Delete this event for good? This cannot be undone.'
+      : 'Delete this event for good? It also removes ' + (n === 1 ? '1 person' : n + ' people') + ' who signed up or were invited, and nobody is told. To let them know, cancel the event instead. This cannot be undone.'
+    if (!window.confirm(warn)) return
     const { error } = await supabase.from('calendar_events').delete().eq('id', ev.id)
     if (error) { alert('Could not delete the event. Try again.'); return }
     navigate('/calendar')
