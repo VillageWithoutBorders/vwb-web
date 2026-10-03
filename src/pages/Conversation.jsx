@@ -9,7 +9,7 @@ import { createNotification } from '../utils/notificationHelpers'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import AvatarDisplay from '../components/AvatarDisplay'
 import { submitUserReport } from '../utils/submitUserReport'
-import { sendPrivateMessage, flushOutbox, getQueuedMessages, cancelQueuedMessage, decryptFromSender, getDeviceId } from '../lib/e2ee'
+import { sendPrivateMessage, flushOutbox, getQueuedMessages, cancelQueuedMessage, decryptFromSender, getDeviceId, editPrivateMessage, fetchEditHistory } from '../lib/e2ee'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar shown once, tighter spacing) instead of repeating the
@@ -62,6 +62,8 @@ export default function Conversation() {
     const lastMarkedRef = useRef(0)
     const convoRef = useRef(null)
   const [selectedMessage, setSelectedMessage] = useState(null)
+  const [editing, setEditing] = useState(null)
+  const [history, setHistory] = useState(null)
 
     useEffect(() => {
         loadConversation()
@@ -186,12 +188,13 @@ export default function Conversation() {
     if (deviceId && encryptedIds.length > 0) {
       const { data: copies, error: copiesErr } = await supabase
         .from('encrypted_message_copies')
-        .select('message_id, ciphertext, nonce')
+        .select('message_id, ciphertext, nonce, version')
         .in('message_id', encryptedIds)
         .eq('user_id', user.id)
         .eq('device_id', deviceId)
       if (copiesErr) console.error('Failed to load encrypted message copies:', copiesErr)
-      if (copies) copies.forEach(c => { copiesByMessage[c.message_id] = c })
+      // Edited messages have several versions. Show the newest.
+      if (copies) copies.forEach(c => { const have = copiesByMessage[c.message_id]; if (!have || (c.version || 1) > (have.version || 1)) copiesByMessage[c.message_id] = c })
     }
 
     const withPlaintext = await Promise.all(data.map(async (msg) => {
@@ -235,6 +238,30 @@ export default function Conversation() {
   // (see e2ee.js). There is no plain-text fallback. If the other person
   // has never opened VWB, the message waits on this device instead and
   // they get a nudge to open the app.
+  // Your newest sent message, if it was sent in the last 15 minutes.
+  // The database makes the final call.
+  const lastMineId = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i]
+      if (m.sender_id === user.id && !m.queued) return m.id
+    }
+    return null
+  })()
+  function canEdit(msg) {
+    return !!msg && msg.id === lastMineId && !msg.body && Date.now() - new Date(msg.created_at).getTime() < 15 * 60 * 1000
+  }
+  function startEdit(msg) {
+    setSelectedMessage(null)
+    setEditing(msg)
+    setNewMsg(msg.displayBody ?? '')
+    setSendNote('')
+  }
+  function cancelEdit() { setEditing(null); setNewMsg('') }
+  async function showHistory(msg) {
+    const versions = await fetchEditHistory({ kind: 'message', itemId: msg.id, userId: user.id, senderId: msg.sender_id })
+    setHistory({ msg, versions })
+  }
+
   async function sendMessage(e) {
     e.preventDefault()
     if (!newMsg.trim() || sending) return
@@ -242,6 +269,15 @@ export default function Conversation() {
     setSendNote('')
     const text = newMsg.trim()
     const recipientId = convo.helper_id === user.id ? convo.requester_id : convo.helper_id
+    if (editing) {
+      if (text === (editing.displayBody ?? '')) { cancelEdit(); setSending(false); return }
+      const result = await editPrivateMessage({ messageId: editing.id, senderId: user.id, recipientId, text })
+      if (result === 'edited') { setEditing(null); setNewMsg(''); await loadMessages() }
+      else if (result === 'not-allowed') { setSendNote('You can only edit your last message, within 15 minutes of sending it.'); setEditing(null); setNewMsg('') }
+      else setSendNote('Could not save your edit. Check your connection and try again.')
+      setSending(false)
+      return
+    }
     const result = await sendPrivateMessage({ conversationId: id, senderId: user.id, recipientId, text })
     if (result === 'failed') {
       setSendNote('Could not send your message. Check your connection and try again.')
@@ -376,7 +412,7 @@ export default function Conversation() {
         : <div style={{ width: '24px', flexShrink: 0 }} />)}
       <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs') + (msg.queued ? ' queued' : '')} onClick={() => msg.queued ? cancelWaiting(msg) : setSelectedMessage(msg)} role="button" tabIndex={0} aria-label={msg.queued ? 'Waiting to send. Tap to take it back.' : 'Message actions'} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (msg.queued) cancelWaiting(msg); else setSelectedMessage(msg) } }}>
         <p className="chat-body">{msg.displayBody ?? msg.body}</p>
-        <span className="chat-time">{msg.queued ? 'Waiting to send' : formatTime(msg.created_at)}{msg.id === readMessageId ? ' \u00b7 Read ' + formatTime(otherReceipt) : ''}</span>
+        <span className="chat-time">{msg.queued ? 'Waiting to send' : formatTime(msg.created_at)}{msg.edit_count > 0 ? <> {'\u00b7'} <button type="button" className="chat-edited" onClick={(ev) => { ev.stopPropagation(); showHistory(msg) }}>Edited</button></> : null}{msg.id === readMessageId ? ' \u00b7 Read ' + formatTime(otherReceipt) : ''}</span>
       </div>
       {isMe && (isGroupStart
         ? <AvatarDisplay url={myAvatar} userId={user.id} size={24} />
@@ -395,6 +431,12 @@ export default function Conversation() {
       </div>
 
       {sendNote && <p className="convo-send-error" role="alert">{sendNote}</p>}
+      {editing && (
+        <p className="convo-editing" role="status">
+          Editing your message. Everyone in this chat can see what it said before.
+          {' '}<button type="button" className="chat-edited" onClick={cancelEdit}>Cancel</button>
+        </p>
+      )}
       <div className="convo-input-bar">
         <input
           type="text"
@@ -411,7 +453,7 @@ export default function Conversation() {
           disabled={!newMsg.trim() || sending}
           aria-label="Send"
         >
-          Send
+          {editing ? 'Save' : 'Send'}
         </button>
       </div>
       {selectedMessage && (
@@ -419,8 +461,27 @@ export default function Conversation() {
           message={selectedMessage}
           currentUserId={user.id}
           conversationId={id}
+          canEdit={canEdit(selectedMessage)}
+          onEdit={() => startEdit(selectedMessage)}
           onClose={() => { setSelectedMessage(null); loadMessages() }}
         />
+      )}
+
+      {history && (
+        <>
+          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setHistory(null)} />
+          <div role="dialog" aria-modal="true" aria-labelledby="edit-history-title" className="edit-history">
+            <h3 id="edit-history-title">Edit history</h3>
+            {history.versions.length === 0 && <p>The earlier versions can't be opened on this device.</p>}
+            {history.versions.map((v, i) => (
+              <div key={v.version} className="edit-history-row">
+                <strong>{i === history.versions.length - 1 ? 'Now' : (i === 0 ? 'Original' : 'Edit ' + i)}</strong>
+                <p>{v.text}</p>
+              </div>
+            ))}
+            <button type="button" className="btn btn-outline btn-full" onClick={() => setHistory(null)}>Close</button>
+          </div>
+        </>
       )}
 
       {showSettings && <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />}

@@ -611,3 +611,81 @@ export async function decryptMany(copies) {
   }
   return out
 }
+
+// ---------------------------------------------------------------------
+// Editing your last message or post, and reading the edit history.
+// Each edit is a NEW set of locked copies (one per device, like a new send),
+// saved by a database function that checks the rules (your last message,
+// within 15 minutes) and marks the message edited. Older versions stay
+// readable to the people in the chat until the message is deleted.
+// ---------------------------------------------------------------------
+async function buildEditRows({ senderId, userIds, text }) {
+  let sodium
+  try {
+    sodium = (await import('libsodium-wrappers')).default
+    await sodium.ready
+  } catch (e) {
+    console.error('[e2ee] encryption library failed to load', e?.message || e)
+    return { status: 'not-ready' }
+  }
+  const identity = await ensureDeviceKeypair(senderId)
+  if (!identity) return { status: 'not-ready' }
+  const ids = Array.from(new Set([...(userIds || []), senderId]))
+  const { data: devices, error } = await supabase
+    .from('user_devices').select('user_id, device_id, public_key').in('user_id', ids)
+  if (error) { console.error('[e2ee] failed to fetch keys for edit', error); return { status: 'error' } }
+  const targets = (devices || []).map(d => ({ userId: d.user_id, deviceId: d.device_id, publicKey: d.public_key }))
+  if (!targets.some(t => t.userId === senderId && t.deviceId === identity.deviceId)) {
+    targets.push({ userId: senderId, deviceId: identity.deviceId, publicKey: identity.publicKey })
+  }
+  try {
+    return { status: 'ok', rows: encryptCopies(sodium, identity, text, targets) }
+  } catch (e) {
+    console.error('[e2ee] failed to encrypt edit', e)
+    return { status: 'error' }
+  }
+}
+
+// Returns 'edited', 'not-allowed' (past 15 minutes, or no longer your last
+// message), 'not-ready', or 'error'.
+export async function editPrivateMessage({ messageId, senderId, recipientId, text }) {
+  const built = await buildEditRows({ senderId, userIds: [recipientId], text })
+  if (built.status !== 'ok') return built.status
+  const { error } = await supabase.rpc('edit_message', { p_message: Number(messageId), p_rows: built.rows })
+  if (error) {
+    console.error('[e2ee] edit failed', error)
+    return error.code === '42501' ? 'not-allowed' : 'error'
+  }
+  return 'edited'
+}
+
+export async function editGroupPost({ postId, senderId, memberIds, text }) {
+  const built = await buildEditRows({ senderId, userIds: memberIds, text })
+  if (built.status !== 'ok') return built.status
+  const { error } = await supabase.rpc('edit_group_post', { p_post: Number(postId), p_rows: built.rows })
+  if (error) {
+    console.error('[e2ee] post edit failed', error)
+    return error.code === '42501' ? 'not-allowed' : 'error'
+  }
+  return 'edited'
+}
+
+// Every version of one message or post, oldest first, as readable text.
+// kind is 'message' or 'post'. Returns [{ version, text }].
+export async function fetchEditHistory({ kind, itemId, userId, senderId }) {
+  const deviceId = await getDeviceId()
+  if (!deviceId) return []
+  const table = kind === 'post' ? 'community_group_post_copies' : 'encrypted_message_copies'
+  const col = kind === 'post' ? 'post_id' : 'message_id'
+  const { data, error } = await supabase
+    .from(table).select('version, ciphertext, nonce')
+    .eq(col, itemId).eq('user_id', userId).eq('device_id', deviceId)
+    .order('version', { ascending: true })
+  if (error) { console.error('[e2ee] failed to load edit history', error); return [] }
+  const out = []
+  for (const c of data || []) {
+    const text = await decryptFromSender(c.ciphertext, c.nonce, senderId)
+    out.push({ version: c.version, text: text ?? "[This version can't be opened on this device]" })
+  }
+  return out
+}

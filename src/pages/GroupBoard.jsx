@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient'
 import AvatarDisplay from '../components/AvatarDisplay'
 import QrShare from '../components/QrShare'
 import { useChatScroll } from '../hooks/useChatScroll'
-import { sendGroupPost, decryptMany, getDeviceId } from '../lib/e2ee'
+import { sendGroupPost, decryptMany, getDeviceId, editGroupPost, fetchEditHistory } from '../lib/e2ee'
 import { submitUserReport } from '../utils/submitUserReport'
 
 // One group's board: its own private Campfire. Posts are end-to-end
@@ -49,6 +49,8 @@ export default function GroupBoard() {
   const [waiting, setWaiting] = useState([])
   const [amWaiting, setAmWaiting] = useState(false)
   const [inviteUnlock, setInviteUnlock] = useState(null)
+  const [editingPost, setEditingPost] = useState(null)
+  const [postHistory, setPostHistory] = useState(null)
   const [orgName, setOrgName] = useState('')
   // Members who could take over as steward (the organization's head or
   // organizers). Only loaded for the steward.
@@ -194,7 +196,7 @@ export default function GroupBoard() {
   // joined were never locked for you, so they're left out with a note.
   async function loadPosts() {
     const { data, error } = await supabase
-      .from('community_group_posts').select('id, sender_id, created_at')
+      .from('community_group_posts').select('id, sender_id, created_at, edit_count')
       .eq('group_id', id).is('deleted_at', null)
       .order('created_at', { ascending: false }).limit(POST_LIMIT)
     if (error) { console.error('Failed to load the board:', error); return }
@@ -203,10 +205,13 @@ export default function GroupBoard() {
     let copies = []
     if (deviceId && rows.length > 0) {
       const { data: c, error: cErr } = await supabase
-        .from('community_group_post_copies').select('post_id, ciphertext, nonce')
+        .from('community_group_post_copies').select('post_id, ciphertext, nonce, version')
         .in('post_id', rows.map(p => p.id)).eq('user_id', user.id).eq('device_id', deviceId)
       if (cErr) console.error('Failed to load locked copies:', cErr)
-      copies = c || []
+      // Edited posts have several versions. Show the newest.
+      const newest = new Map()
+      for (const row of c || []) { const have = newest.get(row.post_id); if (!have || (row.version || 1) > (have.version || 1)) newest.set(row.post_id, row) }
+      copies = Array.from(newest.values())
     }
     const senderOf = Object.fromEntries(rows.map(p => [p.id, p.sender_id]))
     const opened = await decryptMany(copies.map(c => ({ key: c.post_id, ciphertext: c.ciphertext, nonce: c.nonce, senderId: senderOf[c.post_id] })))
@@ -230,6 +235,15 @@ export default function GroupBoard() {
     if (!text || sending) return
     setSending(true)
     setSendNote('')
+    if (editingPost) {
+      if (text === editingPost.text) { setEditingPost(null); setNewPost(''); setSending(false); return }
+      const result = await editGroupPost({ postId: editingPost.id, senderId: user.id, memberIds: members.map(m => m.userId), text })
+      setSending(false)
+      if (result === 'edited') { setEditingPost(null); setNewPost(''); await loadPosts() }
+      else if (result === 'not-allowed') { setSendNote('You can only edit your last post, within 15 minutes of sending it.'); setEditingPost(null); setNewPost('') }
+      else setSendNote('Could not save your edit. Check your connection and try again.')
+      return
+    }
     const { status, missed } = await sendGroupPost({ groupId: id, senderId: user.id, memberIds: members.map(m => m.userId), text })
     setSending(false)
     if (status === 'sent') {
@@ -241,6 +255,19 @@ export default function GroupBoard() {
     } else {
       setSendNote('Could not post. Check your connection and try again.')
     }
+  }
+
+  // Your newest post, if sent in the last 15 minutes. The database decides.
+  const lastMinePostId = (() => {
+    for (let i = posts.length - 1; i >= 0; i--) if (posts[i].sender_id === user.id) return posts[i].id
+    return null
+  })()
+  function canEditPost(p) {
+    return p.id === lastMinePostId && Date.now() - new Date(p.created_at).getTime() < 15 * 60 * 1000 && !String(p.text).startsWith("[This post can't")
+  }
+  async function showPostHistory(p) {
+    const versions = await fetchEditHistory({ kind: 'post', itemId: p.id, userId: user.id, senderId: p.sender_id })
+    setPostHistory({ post: p, versions })
   }
 
   async function deletePost(post) {
@@ -598,6 +625,8 @@ export default function GroupBoard() {
                 <p className="chat-body">{p.text}</p>
                 <span className="chat-time">
                   {new Date(p.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  {p.edit_count > 0 && <> · <button type="button" className="group-post-delete" onClick={() => showPostHistory(p)}>Edited</button></>}
+                  {isMe && canEditPost(p) && <> · <button type="button" className="group-post-delete" onClick={() => { setEditingPost(p); setNewPost(p.text); setSendNote('') }}>Edit</button></>}
                   {isMe && <> · <button type="button" className="group-post-delete" onClick={() => deletePost(p)}>Delete</button></>}
                 </span>
               </div>
@@ -611,11 +640,36 @@ export default function GroupBoard() {
       {group.disappear_after_mins ? <p className="group-lock-note">&#9201; Posts here disappear after {group.disappear_after_mins / 1440} day{group.disappear_after_mins === 1440 ? '' : 's'}.</p> : null}
       {group.announcement_only && group.steward_id && !iAmSteward && <p className="group-lock-note">&#128226; Only the steward posts here. You can still read, and message people outside the group.</p>}
       {!(group.announcement_only && group.steward_id && !iAmSteward) && (
+      <>
+      {editingPost && (
+        <p className="convo-editing" role="status">
+          Editing your post. Everyone in this group can see what it said before.
+          {' '}<button type="button" className="group-post-delete" onClick={() => { setEditingPost(null); setNewPost('') }}>Cancel</button>
+        </p>
+      )}
       <form className="convo-input-bar" onSubmit={send}>
         <label htmlFor="group-post" className="sr-only">Write a post</label>
         <input id="group-post" type="text" className="convo-input" value={newPost} onChange={e => setNewPost(e.target.value)} placeholder="Write to the group..." maxLength={2000} disabled={sending} autoComplete="off" />
-        <button type="submit" className="convo-send" disabled={!newPost.trim() || sending}>{sending ? '...' : 'Send'}</button>
+        <button type="submit" className="convo-send" disabled={!newPost.trim() || sending}>{sending ? '...' : (editingPost ? 'Save' : 'Send')}</button>
       </form>
+      </>
+      )}
+
+      {postHistory && (
+        <>
+          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setPostHistory(null)} />
+          <div role="dialog" aria-modal="true" aria-labelledby="post-history-title" className="edit-history">
+            <h3 id="post-history-title">Edit history</h3>
+            {postHistory.versions.length === 0 && <p>The earlier versions can't be opened on this device.</p>}
+            {postHistory.versions.map((v, i) => (
+              <div key={v.version} className="edit-history-row">
+                <strong>{i === postHistory.versions.length - 1 ? 'Now' : (i === 0 ? 'Original' : 'Edit ' + i)}</strong>
+                <p>{v.text}</p>
+              </div>
+            ))}
+            <button type="button" className="btn btn-outline btn-full" onClick={() => setPostHistory(null)}>Close</button>
+          </div>
+        </>
       )}
 
       {panelOpen && (

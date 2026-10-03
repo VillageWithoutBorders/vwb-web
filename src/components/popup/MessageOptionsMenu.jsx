@@ -1,6 +1,6 @@
 import { supabase } from '../../supabaseClient'
 
-export default function MessageOptionsMenu({ message, onClose, currentUserId, conversationId }) {
+export default function MessageOptionsMenu({ message, onClose, currentUserId, conversationId, canEdit, onEdit }) {
   if (!message) return null
 
   const isMe = message.sender_id === currentUserId
@@ -34,6 +34,7 @@ export default function MessageOptionsMenu({ message, onClose, currentUserId, co
     <>
       <div style={overlay} onClick={onClose} />
       <div style={menu}>
+        {isMe && canEdit && <button style={btn} onClick={onEdit}>Edit message</button>}
         <button style={btn} onClick={deleteForMe}>Delete for me</button>
         {isMe && <button style={{ ...btn, color: '#ff6666' }} onClick={deleteForEveryone}>Delete for everyone</button>}
         <button style={{ ...btn, borderBottom: 'none', color: '#aaa' }} onClick={onClose}>Cancel</button>
