@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { resetAccountToBase } from '../utils/resetAccount'
 import { startAppTour } from '../components/AppTour'
 import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
+import RecoveryKeySection from '../components/RecoveryKeySection'
 
 // A plain read on how strong a new password is. Length matters most.
 function passwordStrength(pw) {
@@ -472,6 +473,8 @@ export default function Settings() {
           ))
         )}
       </div>
+
+      <RecoveryKeySection />
 
       <div className="profile-details" style={{ marginTop: '0.75rem' }}>
         <div className="detail-section-header">Your Devices</div>
