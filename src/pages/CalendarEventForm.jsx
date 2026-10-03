@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { DISTANCE_OPTIONS, VISIBILITY, placeFromZip } from '../utils/calendar'
 import { EVENT_TEMPLATES, addMinutes } from '../utils/eventTemplates'
 import { parsePastedEvent } from '../utils/pasteEvent'
+import ShiftsEditor from '../components/ShiftsEditor'
 
 const VWB_HOST = 'vwb'
 
@@ -70,6 +71,7 @@ export default function CalendarEventForm() {
   const [loaded, setLoaded] = useState(!editing)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [shifts, setShifts] = useState([])
   const [pasteText, setPasteText] = useState('')
   const [pasteNote, setPasteNote] = useState('')
   const [pasteEmpty, setPasteEmpty] = useState(false)
@@ -107,6 +109,18 @@ export default function CalendarEventForm() {
       setLoaded(true)
     })
   }, [editing, id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When editing, bring in the shifts already on the event.
+  useEffect(() => {
+    if (!editing) return
+    let alive = true
+    supabase.rpc('list_event_shifts', { p_event: Number(id), p_token: null }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('list_event_shifts', error); return }
+      setShifts((data || []).map((x) => ({ id: x.id, label: x.label, start: x.starts_at ? toTimeInput(x.starts_at) : '', end: x.ends_at ? toTimeInput(x.ends_at) : '', capacity: String(x.capacity) })))
+    })
+    return () => { alive = false }
+  }, [editing, id])
 
   function applyTemplate(t) {
     if (!t) {
@@ -233,6 +247,18 @@ export default function CalendarEventForm() {
     const limit = form.signupLimit ? parseInt(form.signupLimit, 10) : null
     if (form.signupEnabled && form.signupLimit && (!limit || limit < 1)) { fail('ev-limit', 'The number of spots should be 1 or more, or left blank for no limit.'); return }
 
+    const shiftRows = []
+    for (const sh of shifts) {
+      const cap = parseInt(sh.capacity, 10)
+      if (!sh.label.trim()) { fail('ev-submit', 'Every shift needs a name. Fill it in or remove the shift.'); return }
+      if (!cap || cap < 1 || cap > 100) { fail('ev-submit', 'Each shift needs a number of people from 1 to 100.'); return }
+      let st = sh.start ? combine(form.date, sh.start) : null
+      let en = sh.end ? combine(form.date, sh.end) : null
+      if (st && en && new Date(en) < new Date(st)) { const d = new Date(en); d.setDate(d.getDate() + 1); en = d.toISOString() }
+      shiftRows.push({ id: sh.id || null, label: sh.label.trim(), starts_at: st, ends_at: en, capacity: cap })
+    }
+    const hasShifts = shiftRows.length > 0
+
     let link = form.onlineLink.trim()
     if (form.online) {
       if (!link) { fail('ev-link', 'Add the link people use to join the online event.'); return }
@@ -252,10 +278,10 @@ export default function CalendarEventForm() {
       show_radius_miles: form.radius,
       visibility: form.visibility,
       hide_address: form.hideAddress,
-      signup_enabled: form.signupEnabled,
-      signup_kind: form.signupKind,
+      signup_enabled: form.signupEnabled || hasShifts,
+      signup_kind: hasShifts ? 'help' : form.signupKind,
       needs_text: form.needsText.trim() || null,
-      signup_limit: form.signupEnabled ? limit : null,
+      signup_limit: form.signupEnabled && !hasShifts ? limit : null,
       all_ages: form.allAges,
       teens_can_help: form.allAges && form.teensCanHelp,
       is_online: form.online,
@@ -272,6 +298,14 @@ export default function CalendarEventForm() {
       console.error('save calendar event', err)
       fail('ev-submit', "We couldn't save this event. Check the details and try again.")
       return
+    }
+    if (hasShifts || editing) {
+      const { error: shiftErr } = await supabase.rpc('set_event_shifts', { p_event: data.id, p_shifts: shiftRows })
+      if (shiftErr) {
+        console.error('set_event_shifts', shiftErr)
+        // The event is saved. If we stay here, a second save would post it twice.
+        if (shiftErr.message && shiftErr.message.length < 160) window.alert('The event saved, but the shifts did not: ' + shiftErr.message + ' Open the event and choose Edit to fix the shifts.')
+      }
     }
     navigate('/events/' + data.id)
   }
@@ -503,6 +537,8 @@ export default function CalendarEventForm() {
             {fieldNote('ev-limit')}
           </div>
         )}
+
+        <ShiftsEditor shifts={shifts} onChange={setShifts} />
 
         {fieldNote('ev-submit')}
         <button id="ev-submit" type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginTop: '1rem' }} disabled={saving}>

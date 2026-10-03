@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import EventShifts from '../components/EventShifts'
 import { useBlockedBy } from '../utils/blockedBy'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -29,6 +30,7 @@ export default function EventPage() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [signups, setSignups] = useState([])
+  const [hasShifts, setHasShifts] = useState(false)
   const [copied, setCopied] = useState('')
   const [invited, setInvited] = useState([])
   const [inviteSearch, setInviteSearch] = useState('')
@@ -358,7 +360,9 @@ export default function EventPage() {
           </section>
         )}
 
-        {ev.signup_enabled && !cancelled && (
+        <EventShifts eventId={id} token={token} user={user} canManage={ev.can_manage} past={past} cancelled={cancelled} onSignIn={goSignIn} onChanged={load} onLoaded={(n) => setHasShifts(n > 0)} />
+
+        {ev.signup_enabled && !cancelled && !hasShifts && (
           <section className="cal-box" aria-label="Sign up">
             <h2>{signupKind === 'attend' ? 'Let us know you are coming' : 'Sign up to help'}</h2>
             {signupKind === 'help' && ev.all_ages && ev.teens_can_help && (
