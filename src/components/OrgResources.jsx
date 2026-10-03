@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { CATEGORIES } from '../utils/resourceCategories'
+import OrgClaimResource from './OrgClaimResource'
 
 // Resources that belong to one organization, for its organizers. See them all
 // (even ones still waiting for review) and fix them directly. The database
@@ -25,6 +26,7 @@ export default function OrgResources({ orgId }) {
   const [note, setNote] = useState('')
   const [adding, setAdding] = useState(false)
   const [removing, setRemoving] = useState(null)
+  const [releasing, setReleasing] = useState(null)
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('list_org_resources', { p_org: orgId })
@@ -90,6 +92,16 @@ export default function OrgResources({ orgId }) {
     setRemoving(null)
     if (error) { console.error('delete_org_resource', error); setNote("Couldn't remove it. Try again."); return }
     setNote('Removed.')
+    load()
+  }
+
+  async function release(r) {
+    setBusy(true); setNote('')
+    const { error } = await supabase.rpc('release_org_resource', { p_resource: r.id })
+    setBusy(false)
+    setReleasing(null)
+    if (error) { console.error('release_org_resource', error); setNote("Couldn't release it. Try again."); return }
+    setNote('Released. It stays in the Resource Library, no longer tied to your group.')
     load()
   }
 
@@ -165,6 +177,17 @@ export default function OrgResources({ orgId }) {
                   ) : (
                     <button type="button" onClick={() => { setNote(''); setEditing(null); setAdding(false); setRemoving(r.id) }} style={{ marginTop: '0.5rem', marginLeft: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #c0392b', background: 'none', color: '#ff7b6b', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Remove</button>
                   )}
+                  {releasing === r.id ? (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>Let go of this? It stays in the Library, but your group can no longer edit it.</p>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button type="button" disabled={busy} onClick={() => release(r)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>Yes, release</button>
+                        <button type="button" onClick={() => setReleasing(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#ccc', fontSize: '1rem', cursor: 'pointer' }}>Keep it</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => { setNote(''); setEditing(null); setAdding(false); setRemoving(null); setReleasing(r.id) }} style={{ marginTop: '0.5rem', marginLeft: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #666', background: 'none', color: '#ccc', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Release</button>
+                  )}
                 </>
               )}
             </li>
@@ -172,6 +195,7 @@ export default function OrgResources({ orgId }) {
         </ul>
       )}
       {note && <p role="status" style={{ margin: '0.5rem 0 0', fontSize: '0.9rem' }}>{note}</p>}
+      <OrgClaimResource orgId={orgId} />
     </section>
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import AdminResourceClaims from '../components/AdminResourceClaims'
 import { BanDialog, BannedAccountsPanel } from '../components/AdminBans'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -1390,6 +1391,7 @@ export default function Admin() {
 
       {!loading && tab === 'organizations' && (
         <>
+          <AdminResourceClaims />
           <button onClick={() => setShowNewOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewOrgForm ? 'Cancel' : '+ New Organization'}</button>
 
           {showNewOrgForm && (
@@ -1658,4 +1660,4 @@ export default function Admin() {
       )}
     </div>
   )
-}
+}
