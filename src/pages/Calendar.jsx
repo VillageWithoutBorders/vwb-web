@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { fetchCalendarEvents, filterByDistance, savePlace, startingOrigin, memberArea } from '../utils/calendar'
-import { CalendarLocationBar, CalendarView, AllAgesFilter } from '../components/CalendarParts'
+import { CalendarLocationBar, CalendarView, CalendarEventList, AllAgesFilter } from '../components/CalendarParts'
 
 export default function Calendar() {
   const { isAdmin, organizations, profile } = useAuth()
@@ -41,6 +41,15 @@ export default function Calendar() {
     [events, origin, miles, allAgesOnly]
   )
 
+  // Events you organize that the distance setting left out, so you never
+  // lose track of them.
+  const yourFarEvents = useMemo(() => {
+    const shown = new Set(visible.map((e) => e.id))
+    return events.filter((e) => e.can_manage && !shown.has(e.id) && (!allAgesOnly || e.all_ages))
+      .filter((e) => filterByDistance([e], origin, miles).length === 0)
+      .map((e) => filterByDistance([e], origin, Infinity)[0])
+  }, [events, visible, origin, miles, allAgesOnly])
+
   function changeOrigin(o) {
     setOrigin(o)
     savePlace(o)
@@ -67,6 +76,13 @@ export default function Calendar() {
 
       <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
       <AllAgesFilter checked={allAgesOnly} onChange={setAllAgesOnly} />
+
+      {!loading && !loadError && yourFarEvents.length > 0 && (
+        <section aria-labelledby="cal-your-far" style={{ margin: '1rem 0' }}>
+          <h2 id="cal-your-far" style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Your events farther away</h2>
+          <CalendarEventList events={yourFarEvents} />
+        </section>
+      )}
 
       {loading && <p className="cal-empty">Loading events...</p>}
       {!loading && loadError && (
