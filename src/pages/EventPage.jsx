@@ -6,6 +6,7 @@ import { supabase } from '../supabaseClient'
 import CommunityGuidelines from './CommunityGuidelines'
 import { fetchCalendarEvent, fullDateTime, googleCalendarLink, androidCalendarLink, isAndroid, downloadIcs, eventUrl, VISIBILITY } from '../utils/calendar'
 import { setReturnTo, clearReturnTo } from '../utils/returnTo'
+import { startConversation } from '../utils/startConversation'
 
 // One event. Public route on purpose: this is the page people land on from
 // the website calendar, a shared Facebook post, or a private invite link,
@@ -32,6 +33,12 @@ export default function EventPage() {
   const [inviteSearch, setInviteSearch] = useState('')
   const [inviteResults, setInviteResults] = useState([])
   const [inviteMsg, setInviteMsg] = useState('')
+  const [updates, setUpdates] = useState([])
+  const [updateBody, setUpdateBody] = useState('')
+  const [updateAudience, setUpdateAudience] = useState('all')
+  const [updateMsg, setUpdateMsg] = useState('')
+  const [updateBusy, setUpdateBusy] = useState(false)
+  const [attendeeMsg, setAttendeeMsg] = useState('')
 
   const load = useCallback(async () => {
     if (user && token) {
@@ -50,6 +57,15 @@ export default function EventPage() {
       setNeedsText(extra?.needs_text || '')
     }
     if (event) document.title = event.title + ' | Village Without Borders'
+    if (event && user) {
+      // Updates from the organizers. The database only returns them to the
+      // organizers and the people each one was meant for.
+      const { data: ups, error: upErr } = await supabase.rpc('list_calendar_event_updates', { p_event: Number(id) })
+      if (upErr) console.error('list_calendar_event_updates', upErr)
+      setUpdates(ups || [])
+    } else {
+      setUpdates([])
+    }
     if (event?.can_manage) {
       const { data, error } = await supabase.rpc('list_calendar_event_signups', { p_id: Number(id) })
       if (error) console.error('list_calendar_event_signups', error)
@@ -113,6 +129,29 @@ export default function EventPage() {
     if (error) { setMessage('Could not cancel. Try again.'); return }
     setMessage('Your sign-up was cancelled.')
     load()
+  }
+
+  async function sendUpdate() {
+    if (updateBusy) return
+    const text = updateBody.trim()
+    if (!text) { setUpdateMsg('Write your update first.'); return }
+    setUpdateBusy(true)
+    setUpdateMsg('')
+    const { data, error } = await supabase.rpc('send_calendar_event_update', { p_event: Number(id), p_body: text, p_audience: updateAudience })
+    setUpdateBusy(false)
+    if (error) { setUpdateMsg(error.message || 'Could not send that. Try again.'); return }
+    setUpdateMsg(data === 1 ? 'Sent to 1 person.' : 'Sent to ' + (data || 0) + ' people.')
+    setUpdateBody('')
+    load()
+  }
+
+  async function messagePerson(person) {
+    if (!user) return
+    setAttendeeMsg('')
+    const { id: convoId, error, notice } = await startConversation(user.id, person.user_id)
+    if (error) { setAttendeeMsg(error); return }
+    if (notice) { setAttendeeMsg(notice); return }
+    navigate('/conversation/' + convoId)
   }
 
   async function inviteByName(person) {
@@ -309,6 +348,20 @@ export default function EventPage() {
           </section>
         )}
 
+        {updates.length > 0 && (
+          <section className="cal-box" aria-label="Updates from the organizers">
+            <h2>Updates from the organizers</h2>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {updates.map((u) => (
+                <li key={u.id}>
+                  <div style={{ overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}>{u.body}</div>
+                  <div className="cal-sub" style={{ margin: '0.15rem 0 0' }}>{new Date(u.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {!cancelled && (
           <section className="cal-box" aria-label="Save or share">
             <h2>Save or share</h2>
@@ -346,6 +399,39 @@ export default function EventPage() {
                 : <button type="button" className="btn btn-outline btn-full" onClick={() => setStatus('cancelled')}>Cancel event</button>}
               <button type="button" className="link-button" style={{ color: '#ff9f9f', minHeight: '44px' }} onClick={deleteEvent}>Delete event</button>
             </div>
+            <h2 style={{ marginTop: '1rem' }}>Message everyone coming</h2>
+            {(() => {
+              const everyone = new Set([...signups.map((x) => x.user_id), ...invited.map((x) => x.user_id)]).size
+              const hasInvited = ev.visibility === 'invite' && invited.length > 0
+              const reach = updateAudience === 'signed_up' || !hasInvited ? signups.length : everyone
+              return (
+                <>
+                  {reach === 0 && <p className="cal-sub" style={{ marginTop: 0 }}>Nobody to send to yet. An update goes to people who sign up{ev.visibility === 'invite' ? ' or are invited' : ''}.</p>}
+                  <div className="form-field" style={{ marginBottom: '0.5rem' }}>
+                    <label htmlFor="update-body">Your update (each person gets an alert)</label>
+                    <textarea id="update-body" rows={3} maxLength={500} value={updateBody} onChange={(e) => setUpdateBody(e.target.value)} placeholder="For example: We moved to the pavilion. Bring a coat." />
+                    <small>{updateBody.length} of 500</small>
+                  </div>
+                  {hasInvited && (
+                    <fieldset className="form-field" style={{ border: 'none', padding: 0, margin: '0 0 0.5rem' }}>
+                      <legend style={{ fontWeight: 600, marginBottom: '0.3rem' }}>Send it to</legend>
+                      <label className={'cal-choice' + (updateAudience === 'all' ? ' is-on' : '')}>
+                        <input type="radio" name="update-audience" checked={updateAudience === 'all'} onChange={() => setUpdateAudience('all')} />
+                        <span>Everyone invited or signed up ({everyone})</span>
+                      </label>
+                      <label className={'cal-choice' + (updateAudience === 'signed_up' ? ' is-on' : '')}>
+                        <input type="radio" name="update-audience" checked={updateAudience === 'signed_up'} onChange={() => setUpdateAudience('signed_up')} />
+                        <span>Only people who signed up ({signups.length})</span>
+                      </label>
+                    </fieldset>
+                  )}
+                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={updateBusy || reach === 0} onClick={sendUpdate}>
+                    {updateBusy ? 'Sending...' : 'Send update to ' + reach + (reach === 1 ? ' person' : ' people')}
+                  </button>
+                  {updateMsg && <p className="cal-sub" role="status" style={{ marginBottom: 0 }}>{updateMsg}</p>}
+                </>
+              )
+            })()}
             {ev.visibility === 'invite' && (
               <>
                 <h2 style={{ marginTop: '1rem' }}>Invite people by name ({invited.length} invited)</h2>
@@ -375,7 +461,10 @@ export default function EventPage() {
                           {p.display_name}
                           {p.signed_up ? <span style={{ color: '#7fe0bf' }}> (signed up)</span> : <span style={{ color: 'var(--text-secondary)' }}> (invited)</span>}
                         </span>
-                        <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 'none' }} onClick={() => takeBackInvite(p)}>Take back</button>
+                        <span style={{ display: 'flex', gap: '0.5rem', flex: 'none' }}>
+                          {!blockedBy.has(p.user_id) && <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => messagePerson(p)}>Message</button>}
+                          <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => takeBackInvite(p)}>Take back</button>
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -385,12 +474,14 @@ export default function EventPage() {
             {ev.signup_enabled && (
               <>
                 <h2 style={{ marginTop: '1rem' }}>Who's signed up ({signups.length})</h2>
+                {attendeeMsg && <p className="cal-sub" role="status" style={{ marginTop: 0 }}>{attendeeMsg}</p>}
                 {signups.length === 0 ? <p className="cal-sub">Nobody yet.</p> : (
                   <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.6 }}>
                     {signups.map((s) => (
                       <li key={s.user_id}>
                         {blockedBy.has(s.user_id) ? <span>{s.display_name}</span> : <Link to={'/u/' + s.user_id} style={{ color: '#4ecca3' }}>{s.display_name}</Link>}
                         {s.note ? <span style={{ color: 'var(--text-secondary)' }}>: {s.note}</span> : null}
+                        {!blockedBy.has(s.user_id) && <> <button type="button" className="link-button" style={{ minHeight: '44px', color: '#4ecca3' }} onClick={() => messagePerson(s)}>Message</button></>}
                       </li>
                     ))}
                   </ul>
