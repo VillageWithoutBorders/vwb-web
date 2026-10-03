@@ -73,7 +73,13 @@ export function filterByDistance(events, origin, maxMiles) {
     })
     .filter((ev) => {
       // Online events have no place, so everyone sees them.
-      if (ev.is_online || ev.can_manage) return true
+      if (ev.is_online) return true
+      // Events you organize follow the distance setting too. The ones left
+      // out show in "Your events farther away" on the calendar page.
+      if (ev.can_manage) {
+        if (ev.latitude == null || ev.longitude == null || !origin) return true
+        return ev.miles <= maxMiles
+      }
       if (ev.visibility !== 'public' && ev.visibility !== 'account') return true
       if (ev.latitude == null || ev.longitude == null) return true
       // An event in a place only shows to people who told us where they are.
@@ -215,7 +221,7 @@ export function loadSavedPlace() {
 
 export function savePlace(origin) {
   try {
-    if (!origin) localStorage.removeItem(PLACE_KEY)
+    if (!origin || origin.kind !== 'zip') localStorage.removeItem(PLACE_KEY)
     else if (origin.kind === 'zip') localStorage.setItem(PLACE_KEY, JSON.stringify({ name: origin.name, lat: origin.lat, lng: origin.lng, zip: origin.zip }))
   } catch { /* private mode */ }
 }
