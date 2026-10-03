@@ -9,6 +9,7 @@ import { getBlockedUserIds } from '../utils/blockedUsers'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import AvatarDisplay from '../components/AvatarDisplay'
 import MessageRequests from '../components/MessageRequests'
+import NewMessage from '../components/NewMessage'
 import { decryptFromSender, getDeviceId, flushOutbox, getQueuedMessages } from '../lib/e2ee'
 
 const DISAPPEAR_STEPS = [
@@ -894,6 +895,8 @@ export default function Messages() {
           ))}
         </div>
       )}
+
+      <NewMessage />
 
       <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
         <button style={tabStyle(activeFolder === 'unread')} onClick={() => setActiveFolder('unread')}>Unread</button>
