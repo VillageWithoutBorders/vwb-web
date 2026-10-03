@@ -48,7 +48,7 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
       <form className="cal-zip-form" onSubmit={useZip} noValidate>
         <label htmlFor="cal-zip">{origin ? 'Look somewhere else (zip code)' : 'Your zip code'}</label>
         <div className="cal-zip-row">
-          <input id="cal-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} value={zip} onChange={(e) => { setZip(e.target.value.replace(/[^0-9]/g, '')); setNote('') }} placeholder="12345" aria-describedby={note ? 'cal-zip-note' : undefined} />
+          <input id="cal-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} value={zip} onChange={(e) => { setZip(e.target.value.replace(/[^0-9]/g, '')); setNote('') }} placeholder="Example: 30736" aria-describedby={note ? 'cal-zip-note' : undefined} />
           <button type="submit" className="btn btn-primary" disabled={busy === 'zip'}>{busy === 'zip' ? 'Looking...' : 'Go'}</button>
         </div>
       </form>
@@ -215,14 +215,14 @@ function CalendarMonth({ events, newTab }) {
 
 // Month calendar by default, with a switch to the plain list.
 export function CalendarView({ events, newTab, emptyText }) {
-  const [mode, setMode] = useState('month')
+  const [mode, setMode] = useState('list')
   const upcoming = events.filter((e) => !hasEnded(e)).length
   return (
     <>
       <p className="cal-sub" role="status">{upcoming === 0 ? 'No upcoming events found for this search. Try more miles.' : upcoming + (upcoming === 1 ? ' upcoming event found.' : ' upcoming events found.')}</p>
       <div className="cal-mode" role="group" aria-label="How to show events">
-        <button type="button" className={mode === 'month' ? 'is-on' : ''} aria-pressed={mode === 'month'} onClick={() => setMode('month')}>Month</button>
         <button type="button" className={mode === 'list' ? 'is-on' : ''} aria-pressed={mode === 'list'} onClick={() => setMode('list')}>List</button>
+        <button type="button" className={mode === 'month' ? 'is-on' : ''} aria-pressed={mode === 'month'} onClick={() => setMode('month')}>Month</button>
       </div>
       {mode === 'month'
         ? <CalendarMonth events={events} newTab={newTab} />

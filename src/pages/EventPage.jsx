@@ -40,6 +40,8 @@ export default function EventPage() {
   const [updateMsg, setUpdateMsg] = useState('')
   const [updateBusy, setUpdateBusy] = useState(false)
   const [attendeeMsg, setAttendeeMsg] = useState('')
+  const [organizers, setOrganizers] = useState([])
+  const [organizerMsg, setOrganizerMsg] = useState('')
 
   const load = useCallback(async () => {
     if (user && token) {
@@ -144,6 +146,26 @@ export default function EventPage() {
     setUpdateMsg(data === 1 ? 'Sent to 1 person.' : 'Sent to ' + (data || 0) + ' people.')
     setUpdateBody('')
     load()
+  }
+
+  useEffect(() => {
+    if (!user || !ev) { setOrganizers([]); return }
+    let alive = true
+    supabase.rpc('list_event_organizers', { p_event: Number(id), p_token: token || null }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('list_event_organizers', error); return }
+      setOrganizers(data || [])
+    })
+    return () => { alive = false }
+  }, [user, ev?.id, id, token]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function messageOrganizer(person) {
+    if (!user) return
+    setOrganizerMsg('')
+    const { id: convoId, error, notice } = await startConversation(user.id, person.user_id)
+    if (error) { setOrganizerMsg(error); return }
+    if (notice) { setOrganizerMsg(notice); return }
+    navigate('/conversation/' + convoId)
   }
 
   async function messagePerson(person) {
@@ -310,6 +332,21 @@ export default function EventPage() {
         )}
 
         {ev.description && <p className="cal-description">{ev.description}</p>}
+
+        {organizers.length > 0 && (
+          <section className="cal-box" aria-label="Contact the organizers">
+            <h2>Questions? Message the organizers</h2>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {organizers.map((o) => (
+                <li key={o.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', minHeight: '44px' }}>
+                  <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}><UserName userId={o.user_id} name={o.display_name} /></span>
+                  <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 'none' }} onClick={() => messageOrganizer(o)}>Message</button>
+                </li>
+              ))}
+            </ul>
+            {organizerMsg && <p className="cal-sub" role="status" style={{ marginBottom: 0 }}>{organizerMsg}</p>}
+          </section>
+        )}
 
         {!cancelled && !past && needsList.length > 0 && (
           <section className="cal-box" aria-label="What we still need">
