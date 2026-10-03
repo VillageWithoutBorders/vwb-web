@@ -419,8 +419,8 @@ export default function EventPage() {
             <div className="cal-actions">
               {isAndroid() ? (
                 <>
-                  <a className="btn btn-outline btn-full" href={androidCalendarLink(ev)}>Add to my calendar</a>
-                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Download a calendar file</button>
+                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Add to my calendar (calendar file)</button>
+                  <a className="btn btn-outline btn-full" href={androidCalendarLink(ev)}>Open my phone's calendar app</a>
                 </>
               ) : (
                 <>
