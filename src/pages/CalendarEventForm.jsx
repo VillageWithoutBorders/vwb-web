@@ -69,6 +69,8 @@ export default function CalendarEventForm() {
   const [loaded, setLoaded] = useState(!editing)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  // A problem with one part of the form: which field, and what to tell the host.
+  const [fieldError, setFieldError] = useState(null)
 
   useEffect(() => {
     if (!editing) return
@@ -134,14 +136,23 @@ export default function CalendarEventForm() {
   async function changeZip(value) {
     const clean = value.replace(/[^0-9]/g, '').slice(0, 5)
     setZip(clean)
+    setFieldError((fe) => (fe && fe.id === 'ev-zip' ? null : fe))
     if (clean.length < 5) { setZipState(''); if (!editing) setPlace(null); return }
     setZipState('looking')
     const found = await placeFromZip(clean)
     if (found) { setPlace({ name: found.name, lat: found.lat, lng: found.lng }); setZipState('') } else { setPlace(null); setZipState('notfound') }
   }
 
+  const ERROR_FIELD = { title: 'ev-title', date: 'ev-date', startTime: 'ev-start', onlineLink: 'ev-link', signupLimit: 'ev-limit' }
+
   function set(field, value) {
     if (field === 'endTime') setEndTouched(true)
+    setFieldError((fe) => {
+      if (!fe) return fe
+      if (fe.id === 'ev-submit' || fe.id === ERROR_FIELD[field]) return null
+      if (field === 'online' && (fe.id === 'ev-zip' || fe.id === 'ev-link')) return null
+      return fe
+    })
     setForm((f) => {
       const next = { ...f, [field]: value }
       // Fill in the end time from the event type's usual length, until the
@@ -156,11 +167,32 @@ export default function CalendarEventForm() {
     })
   }
 
+  // Show the message right under the field that needs fixing, scroll it into
+  // the middle of the screen, and put the cursor in it.
+  function fail(id, msg) {
+    setFieldError({ id, msg })
+    setTimeout(() => {
+      const el = document.getElementById(id)
+      if (!el) return
+      const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      el.scrollIntoView({ block: 'center', behavior: calm ? 'auto' : 'smooth' })
+      if (el.focus) el.focus({ preventScroll: true })
+    }, 0)
+  }
+
+  function fieldNote(id) {
+    return fieldError && fieldError.id === id
+      ? <p id={id + '-error'} className="cal-field-error" role="alert">{fieldError.msg}</p>
+      : null
+  }
+
   async function save(e) {
     e.preventDefault()
     setError('')
-    if (!form.title.trim()) { setError('Give your event a name.'); return }
-    if (!form.date || !form.startTime) { setError('Pick a date and a start time.'); return }
+    setFieldError(null)
+    if (!form.title.trim()) { fail('ev-title', 'Give your event a name.'); return }
+    if (!form.date) { fail('ev-date', 'Pick the date of the event.'); return }
+    if (!form.startTime) { fail('ev-start', 'Pick a start time.'); return }
     const startsAt = combine(form.date, form.startTime)
     let endsAt = form.endTime ? combine(form.date, form.endTime) : null
     if (endsAt && new Date(endsAt) < new Date(startsAt)) {
@@ -168,13 +200,13 @@ export default function CalendarEventForm() {
       const d = new Date(endsAt); d.setDate(d.getDate() + 1); endsAt = d.toISOString()
     }
     const limit = form.signupLimit ? parseInt(form.signupLimit, 10) : null
-    if (form.signupEnabled && form.signupLimit && (!limit || limit < 1)) { setError('The number of spots should be 1 or more, or left blank for no limit.'); return }
+    if (form.signupEnabled && form.signupLimit && (!limit || limit < 1)) { fail('ev-limit', 'The number of spots should be 1 or more, or left blank for no limit.'); return }
 
     let link = form.onlineLink.trim()
     if (form.online) {
-      if (!link) { setError('Add the link people use to join the online event.'); return }
+      if (!link) { fail('ev-link', 'Add the link people use to join the online event.'); return }
       if (!/^https?:\/\//i.test(link)) link = 'https://' + link
-    } else if (!place) { setError("Enter the zip code where the event is happening."); return }
+    } else if (!place) { fail('ev-zip', zip.length === 5 ? "We couldn't find that zip code. Check it and try again." : 'Enter the 5 digit zip code where the event is happening.'); return }
     const row = {
       organization_id: form.host === VWB_HOST ? null : form.host,
       title: form.title.trim(),
@@ -207,7 +239,7 @@ export default function CalendarEventForm() {
     setSaving(false)
     if (err || !data) {
       console.error('save calendar event', err)
-      setError("We couldn't save this event. Check the details and try again.")
+      fail('ev-submit', "We couldn't save this event. Check the details and try again.")
       return
     }
     navigate('/events/' + data.id)
@@ -285,7 +317,8 @@ export default function CalendarEventForm() {
 
         <div className="form-field">
           <label htmlFor="ev-title">Event name</label>
-          <input id="ev-title" type="text" maxLength={140} value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="For example: Fall food drive" required />
+          <input id="ev-title" type="text" maxLength={140} value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="For example: Fall food drive" required aria-invalid={fieldError?.id === 'ev-title' || undefined} aria-describedby={fieldError?.id === 'ev-title' ? 'ev-title-error' : undefined} />
+          {fieldNote('ev-title')}
         </div>
 
         <div className="form-field">
@@ -295,12 +328,14 @@ export default function CalendarEventForm() {
 
         <div className="form-field">
           <label htmlFor="ev-date">Date</label>
-          <input id="ev-date" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} required />
+          <input id="ev-date" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} required aria-invalid={fieldError?.id === 'ev-date' || undefined} aria-describedby={fieldError?.id === 'ev-date' ? 'ev-date-error' : undefined} />
+          {fieldNote('ev-date')}
         </div>
         <div className="cal-row2">
           <div className="form-field">
             <label htmlFor="ev-start">Starts</label>
-            <input id="ev-start" type="time" value={form.startTime} onChange={(e) => set('startTime', e.target.value)} required />
+            <input id="ev-start" type="time" value={form.startTime} onChange={(e) => set('startTime', e.target.value)} required aria-invalid={fieldError?.id === 'ev-start' || undefined} aria-describedby={fieldError?.id === 'ev-start' ? 'ev-start-error' : undefined} />
+            {fieldNote('ev-start')}
           </div>
           <div className="form-field">
             <label htmlFor="ev-end">Ends (optional)</label>
@@ -319,7 +354,8 @@ export default function CalendarEventForm() {
           <>
             <div className="form-field">
               <label htmlFor="ev-link">Link to join</label>
-              <input id="ev-link" type="url" inputMode="url" autoComplete="url" maxLength={500} value={form.onlineLink} onChange={(e) => set('onlineLink', e.target.value)} placeholder="https://" />
+              <input id="ev-link" type="url" inputMode="url" autoComplete="url" maxLength={500} value={form.onlineLink} onChange={(e) => set('onlineLink', e.target.value)} placeholder="https://" aria-invalid={fieldError?.id === 'ev-link' || undefined} aria-describedby={fieldError?.id === 'ev-link' ? 'ev-link-error' : undefined} />
+              {fieldNote('ev-link')}
             </div>
             <label className={'cal-choice' + (form.hideAddress ? ' is-on' : '')}>
               <input type="checkbox" checked={form.hideAddress} onChange={(e) => set('hideAddress', e.target.checked)} />
@@ -333,13 +369,14 @@ export default function CalendarEventForm() {
           <>
         <div className="form-field">
           <label htmlFor="ev-zip">{editing && place ? 'Zip code (to change the town)' : 'Zip code where it\'s happening'}</label>
-          <input id="ev-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} value={zip} onChange={(e) => changeZip(e.target.value)} placeholder="12345" aria-describedby="ev-zip-note" required={!place} />
+          <input id="ev-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} value={zip} onChange={(e) => changeZip(e.target.value)} placeholder="12345" aria-invalid={fieldError?.id === 'ev-zip' || undefined} aria-describedby={'ev-zip-note' + (fieldError?.id === 'ev-zip' ? ' ev-zip-error' : '')} required={!place} />
           <p id="ev-zip-note" className={'evt-zip-note' + (zipState === 'notfound' ? ' is-error' : '')} role="status">
             {zipState === 'looking' && 'Looking it up...'}
             {zipState === 'notfound' && "We couldn't find that zip code. Check it and try again."}
             {!zipState && place && <>&#10003; {place.name}. The calendar shows this town, and measures distance from the middle of the zip code.</>}
             {!zipState && !place && 'We use it to show the town and to reach people nearby.'}
           </p>
+          {fieldNote('ev-zip')}
         </div>
         <div className="form-field">
           <label htmlFor="ev-place">Place name (optional)</label>
@@ -423,11 +460,13 @@ export default function CalendarEventForm() {
         {form.signupEnabled && (
           <div className="form-field">
             <label htmlFor="ev-limit">How many spots? (leave blank for no limit)</label>
-            <input id="ev-limit" type="number" inputMode="numeric" min={1} value={form.signupLimit} onChange={(e) => set('signupLimit', e.target.value)} />
+            <input id="ev-limit" type="number" inputMode="numeric" min={1} value={form.signupLimit} onChange={(e) => set('signupLimit', e.target.value)} aria-invalid={fieldError?.id === 'ev-limit' || undefined} aria-describedby={fieldError?.id === 'ev-limit' ? 'ev-limit-error' : undefined} />
+            {fieldNote('ev-limit')}
           </div>
         )}
 
-        <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginTop: '1rem' }} disabled={saving}>
+        {fieldNote('ev-submit')}
+        <button id="ev-submit" type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginTop: '1rem' }} disabled={saving}>
           {saving ? 'Saving...' : editing ? 'Save changes' : 'Post event'}
         </button>
       </form>
