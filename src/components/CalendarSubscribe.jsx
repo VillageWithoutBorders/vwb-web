@@ -7,6 +7,7 @@ export default function CalendarSubscribe({ orgId, orgName = 'Village Without Bo
   if (!base) return null
   const url = base + '/functions/v1/calendar-feed' + (orgId ? '?org=' + encodeURIComponent(orgId) : '')
   const webcal = url.replace(/^https?:/, 'webcal:')
+  const google = 'https://calendar.google.com/calendar/r?cid=' + encodeURIComponent(webcal)
 
   async function copy() {
     try {
@@ -23,15 +24,16 @@ export default function CalendarSubscribe({ orgId, orgName = 'Village Without Bo
       <h2 id="org-subscribe">Put {orgName} in your calendar</h2>
       <p className="hub-org-desc">New events show up on your phone by themselves. Nothing to re-add.</p>
       <div className="cal-actions">
-        <a className="btn btn-primary btn-full" href={webcal}>Add to my calendar</a>
+        <a className="btn btn-primary btn-full" href={google} target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>
+        <a className="btn btn-outline btn-full" href={webcal}>Add to iPhone or Apple Calendar</a>
         <button type="button" className="btn btn-outline btn-full" onClick={copy}>
           {copied ? 'Link copied' : 'Copy calendar link'}
         </button>
       </div>
       <details className="hub-org-desc">
-        <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center' }}>Does the button not work?</summary>
-        <p><strong>Google Calendar:</strong> open calendar.google.com on a computer. Next to "Other calendars" choose + then "From URL". Paste the link.</p>
+        <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center' }}>Other calendars, or a button did nothing</summary>
         <p><strong>iPhone:</strong> Settings, Calendar, Accounts, Add Account, Other, Add Subscribed Calendar. Paste the link.</p>
+        <p><strong>Outlook or others:</strong> look for "Subscribe from web" or "Add by URL". Paste the link.</p>
       </details>
     </section>
   )
