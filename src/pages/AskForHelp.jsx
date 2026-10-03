@@ -39,6 +39,11 @@ export default function AskForHelp() {
 
     const [skills, setSkills] = useState([])
     const [skillNeeded, setSkillNeeded] = useState('')
+    // Who sees it first. 'everyone' is the normal request. 'group' and 'network' keep it
+    // inside the person's group (or its network) until the time is up.
+    const [audience, setAudience] = useState('everyone')
+    const [audienceOrg, setAudienceOrg] = useState('')
+    const [openHours, setOpenHours] = useState('24')
     const [description, setDescription] = useState('')
     const [urgency, setUrgency] = useState('today')
     const [maxHelpers, setMaxHelpers] = useState(1)
@@ -82,6 +87,10 @@ export default function AskForHelp() {
         })
         return () => { alive = false }
     }, [editId])
+
+    // The group the request is for: the one picked, else the one posting as, else the first.
+    const groupId = audienceOrg || postAs || organizations[0]?.id || ''
+    const groupName = (organizations.find((o) => o.id === groupId) || {}).name || 'your group'
 
     async function handleSubmit(e) {
         e.preventDefault()
@@ -139,16 +148,19 @@ export default function AskForHelp() {
                 latitude: lat || null,
                 longitude: lng || null,
                 organization_id: postAs || null,
+                audience,
+                audience_org_id: audience === 'everyone' ? null : groupId,
+                opens_to_all_at: audience === 'everyone' ? null : new Date(Date.now() + Number(openHours) * 3600 * 1000).toISOString(),
             })
 
         if (insertError) {
-            setError('Something went wrong. Please try again.')
+            setError(insertError.message && insertError.message.length < 140 && /group/i.test(insertError.message) ? insertError.message : 'Something went wrong. Please try again.')
             console.error(insertError)
             setSubmitting(false)
             return
         }
 
-        navigate('/skillshare', { state: { message: 'Your request has been posted.' } })
+        navigate('/skillshare', { state: { message: audience === 'everyone' ? 'Your request has been posted.' : 'Your request is posted. Your group can see it now. Everyone nearby sees it after your chosen time, or when you open it from Tasks.' } })
     }
 
     if (!checkedResources) {
@@ -274,6 +286,44 @@ export default function AskForHelp() {
                         </select>
                         <span className="field-hint">Posting as your group lists it on your organization dashboard.</span>
                     </div>
+                )}
+
+                {!editId && organizations.length > 0 && (
+                    <fieldset className="form-field" style={{ border: 'none', padding: 0, margin: '0 0 1rem' }}>
+                        <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>Who sees this first?</legend>
+                        <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', minHeight: '44px', marginBottom: '0.4rem' }}>
+                            <input type="radio" name="audience" checked={audience === 'everyone'} onChange={() => setAudience('everyone')} style={{ marginTop: '0.3rem' }} />
+                            <span>Everyone nearby</span>
+                        </label>
+                        <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', minHeight: '44px', marginBottom: '0.4rem' }}>
+                            <input type="radio" name="audience" checked={audience === 'group'} onChange={() => setAudience('group')} style={{ marginTop: '0.3rem' }} />
+                            <span>Only {groupName} first<small style={{ display: 'block', color: '#aaa' }}>Members of your group can see it right away. Neighbors and Hope Ambassadors do not, until it opens.</small></span>
+                        </label>
+                        <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', minHeight: '44px', marginBottom: '0.4rem' }}>
+                            <input type="radio" name="audience" checked={audience === 'network'} onChange={() => setAudience('network')} style={{ marginTop: '0.3rem' }} />
+                            <span>{groupName} and its network first<small style={{ display: 'block', color: '#aaa' }}>If your group is linked to a council, the council and its other groups can see it too.</small></span>
+                        </label>
+                        {audience !== 'everyone' && (
+                            <>
+                                {organizations.length > 1 && !postAs && (
+                                    <>
+                                        <label htmlFor="audienceOrg">Which group?</label>
+                                        <select id="audienceOrg" value={groupId} onChange={(e) => setAudienceOrg(e.target.value)}>
+                                            {organizations.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                                        </select>
+                                    </>
+                                )}
+                                <label htmlFor="openHours">Then open it to everyone nearby after</label>
+                                <select id="openHours" value={openHours} onChange={(e) => setOpenHours(e.target.value)}>
+                                    <option value="6">6 hours</option>
+                                    <option value="24">1 day</option>
+                                    <option value="72">3 days</option>
+                                    <option value="168">7 days</option>
+                                </select>
+                                <span className="field-hint">You can open it sooner from Tasks. If nobody in your group can help, it still reaches your neighbors.</span>
+                            </>
+                        )}
+                    </fieldset>
                 )}
 
                 {error && <p className="form-error" role="alert">{error}</p>}

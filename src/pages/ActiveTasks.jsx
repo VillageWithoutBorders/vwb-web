@@ -70,7 +70,7 @@ export default function ActiveTasks() {
   async function loadMyRequests() {
     const { data: requests, error: reqErr } = await supabase
       .from('help_requests')
-      .select('id, skill_needed, description, urgency, neighborhood, status, max_helpers, archived_at, created_at')
+      .select('id, skill_needed, description, urgency, neighborhood, status, max_helpers, archived_at, created_at, audience, opens_to_all_at')
       .eq('requester_id', user.id)
       .order('created_at', { ascending: false })
     if (reqErr) console.error('Failed to load your requests:', reqErr)
@@ -336,6 +336,13 @@ export default function ActiveTasks() {
     await loadTasks()
   }
 
+  // Open a group-only request to everyone nearby right now.
+  async function openToEveryone(requestId) {
+    const { error } = await supabase.rpc('open_request_to_everyone', { p_request: requestId })
+    if (error) { console.error('Failed to open request:', error); alert('Could not open this request. Try again.'); return }
+    await loadTasks()
+  }
+
   // Delete for good. Only the person who posted it. The database refuses if a
   // helper already finished the task, and says to archive it instead.
   async function deleteRequestForGood(requestId) {
@@ -588,6 +595,16 @@ export default function ActiveTasks() {
                   <div className="task-card-skill">{req.skill_needed}</div>
                   {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
                   <p className="task-card-desc">{req.description}</p>
+                  {req.audience && req.audience !== 'everyone' && !req.archived_at && (!req.opens_to_all_at || new Date(req.opens_to_all_at) > new Date()) && (
+                    <div style={{ margin: '0.25rem 0 0.5rem', padding: '0.6rem 0.75rem', border: '1px solid #3a4a7a', borderRadius: '8px' }}>
+                      <p style={{ margin: '0 0 0.4rem', fontSize: '0.9rem' }}>
+                        Only {req.audience === 'network' ? 'your group and its network' : 'your group'} can see this
+                        {req.opens_to_all_at ? ' until ' + new Date(req.opens_to_all_at).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : ''}.
+                        Then it opens to everyone nearby.
+                      </p>
+                      <button className="btn btn-outline btn-sm" style={{ minHeight: '44px' }} onClick={() => openToEveryone(req.id)}>Open to everyone nearby now</button>
+                    </div>
+                  )}
 
                   {/* Helper count */}
                   <div style={{ fontSize: '0.8rem', color: '#aaa', margin: '0.5rem 0' }}>

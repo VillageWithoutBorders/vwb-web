@@ -145,6 +145,8 @@ export default function Feed() {
         const blockedIds = await getBlockedUserIds(user?.id)
 
         if (view === 'requests') {
+            // Group-only requests whose time is up open to everyone (this also alerts ambassadors).
+            supabase.rpc('release_due_solidarity_requests').then(() => {}, () => {})
             const helperSkills = filterSkill === 'all' ? [] : [filterSkill]
             const radius = profile?.radius_miles || 10
             const { data, error } = loc
@@ -166,15 +168,16 @@ export default function Feed() {
             if (reqIds.length > 0) {
                 const { data: hrData, error: hrErr } = await supabase
                     .from('help_requests')
-                    .select('id, max_helpers, status')
+                    .select('id, max_helpers, status, audience, opens_to_all_at')
                     .in('id', reqIds)
                 if (hrErr) console.error('Failed to load helper limits:', hrErr)
                 const maxMap = {}
                 const statusMap = {}
+                const audMap = {}
                 if (hrData) {
-                    for (const hr of hrData) { maxMap[hr.id] = hr.max_helpers; statusMap[hr.id] = hr.status }
+                    for (const hr of hrData) { maxMap[hr.id] = hr.max_helpers; statusMap[hr.id] = hr.status; audMap[hr.id] = { audience: hr.audience, opens_to_all_at: hr.opens_to_all_at } }
                 }
-                reqs = reqs.map(r => ({ ...r, max_helpers: maxMap[r.id] ?? 1, status: statusMap[r.id] ?? r.status }))
+                reqs = reqs.map(r => ({ ...r, max_helpers: maxMap[r.id] ?? 1, status: statusMap[r.id] ?? r.status, audience: audMap[r.id]?.audience, opens_to_all_at: audMap[r.id]?.opens_to_all_at }))
             }
 
             // Once a request has its helpers it is no longer public. The requester
@@ -400,6 +403,9 @@ export default function Feed() {
                                         <span className={'urgency-badge ' + urg.className}>{urg.label}</span>
                                         {req.requester_id === user.id && (
                                             <span className="urgency-badge" style={{ background: '#2d6a4f', color: '#fff' }}>Your request</span>
+                                        )}
+                                        {req.audience && req.audience !== 'everyone' && (!req.opens_to_all_at || new Date(req.opens_to_all_at) > new Date()) && (
+                                            <span className="urgency-badge" style={{ background: '#3a4a7a', color: '#fff' }}>{req.audience === 'network' ? 'From your network' : 'From your group'}</span>
                                         )}
                                         {isPending && (
                                             <span className="urgency-badge" style={{ background: '#b8860b', color: '#fff' }}>Pending</span>
