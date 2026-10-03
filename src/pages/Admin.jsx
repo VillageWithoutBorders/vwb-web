@@ -1183,38 +1183,38 @@ export default function Admin() {
                 <span style={{ color: '#888', fontSize: '0.7rem' }}>{u.vouch_count} vouches</span>
               </div>
               <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>Joined {new Date(u.created_at).toLocaleDateString()}</p>
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem' }}>Message</button>
                 {!u.is_hope_ambassador && (
-                  <button onClick={() => promoteUser(u.user_id, 'ambassador')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#2d5a45', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Make Ambassador</button>
+                  <button onClick={() => promoteUser(u.user_id, 'ambassador')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: '#2d5a45', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Make Ambassador</button>
                 )}
                 {isFounder && u.role !== 'admin' && u.role !== 'founder' && u.is_hope_ambassador && u.user_id !== user.id && (
                   u.admin_app_status === 'invited' ? (
-                    <span style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: '#1a3a5a', color: '#66aaff', fontSize: '0.75rem', fontWeight: 600 }}>Invite Sent</span>
+                    <span style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', background: '#1a3a5a', color: '#66aaff', fontSize: '0.75rem', fontWeight: 600 }}>Invite Sent</span>
                   ) : u.admin_app_status === 'pending' ? (
-                    <button onClick={() => setTab('approvals')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review in Approvals</button>
+                    <button onClick={() => setTab('approvals')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review in Approvals</button>
                   ) : (
-                    <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: 'none', background: '#1a3a5a', color: '#66aaff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>{u.admin_app_status === 'declined' ? 'Invite Admin Again' : 'Invite Admin'}</button>
+                    <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: '#1a3a5a', color: '#66aaff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>{u.admin_app_status === 'declined' ? 'Invite Admin Again' : 'Invite Admin'}</button>
                   )
                 )}
                 {(u.role === 'admin' || u.role === 'founder') && u.user_id !== user.id && (
-                  <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem' }}>Remove Admin</button>
+                  <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem' }}>Remove Admin</button>
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.is_hope_ambassador || u.role === 'admin') && (
-                  <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer', fontSize: '0.75rem' }}>Reset to Neighbor</button>
+                  <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer', fontSize: '0.75rem' }}>Reset to Neighbor</button>
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.role !== 'admin' || isFounder) && (
                   <button type="button" onClick={() => setBanTarget({ userId: u.user_id, name: u.display_name || 'this person', role: u.role })} className="ban-row-btn">Ban</button>
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.role !== 'admin' || isFounder) && (
-                  <button onClick={() => resetTwoStep(u)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer', fontSize: '0.75rem' }}>Reset two-step</button>
+                  <button onClick={() => resetTwoStep(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer', fontSize: '0.75rem' }}>Reset two-step</button>
                 )}
-                <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.75rem' }}>Message</button>
                 {villages.length > 1 && (
                   <select
                     value={u.village_id || ''}
                     onChange={(e) => reassignUserVillage(u.user_id, e.target.value)}
                     aria-label={'Village for ' + (u.display_name || 'this person')}
-                    style={{ padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#aaa', fontSize: '0.75rem' }}
+                    style={{ padding: '0.35rem 0.5rem', minHeight: '44px', flex: '1 1 100%', maxWidth: '100%', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#aaa', fontSize: '0.75rem' }}
                   >
                     <option value="">No village</option>
                     {villages.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
