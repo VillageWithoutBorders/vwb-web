@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { fetchCalendarEvents, filterByDistance, savePlace, startingOrigin, memberArea } from '../utils/calendar'
+import CalendarSubscribe from '../components/CalendarSubscribe'
 import { CalendarLocationBar, CalendarView, CalendarEventList, AllAgesFilter } from '../components/CalendarParts'
 
 export default function Calendar() {
@@ -93,6 +94,8 @@ export default function Calendar() {
           emptyText={canPost ? 'No events nearby yet. Tap "New event" to post the first one.' : 'No events nearby yet. Check back soon, or try a wider distance.'}
         />
       )}
+
+      <CalendarSubscribe />
     </div>
   )
 }

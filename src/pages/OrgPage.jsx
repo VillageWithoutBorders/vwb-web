@@ -7,6 +7,7 @@ import { CalendarEventList } from '../components/CalendarParts'
 import { resourceCats } from '../utils/resourceCategories'
 import QrShare from '../components/QrShare'
 import OrgLinks from '../components/OrgLinks'
+import CalendarSubscribe from '../components/CalendarSubscribe'
 
 // One organization: who they are, what's coming up, what they share, and
 // how to reach them. Organizers can set the group's home area here.
@@ -169,6 +170,8 @@ export default function OrgPage() {
         </div>
         <CalendarEventList events={events} emptyText="No upcoming events from this group yet." />
       </section>
+
+      {!org.hide_from_public && <CalendarSubscribe orgId={id} orgName={org.name} />}
 
       <OrgLinks org={org} canManage={canManage} events={allEvents} onChanged={loadOrg} />
 
