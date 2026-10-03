@@ -2865,6 +2865,19 @@ a:focus:not(:focus-visible) {
   }
 }
 
+.cal-field-error {
+  margin: 0.4rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  background: #5c1a1a;
+  color: #ffb3b3;
+  font-size: 0.95rem;
+}
+
+input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='true'] {
+  border-color: #ff8a8a;
+}
+
 .cal-error {
   padding: 0.75rem;
   margin-bottom: 1rem;
