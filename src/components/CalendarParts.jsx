@@ -214,7 +214,7 @@ function CalendarMonth({ events, newTab }) {
 }
 
 // Month calendar by default, with a switch to the plain list.
-export function CalendarView({ events, newTab, emptyText }) {
+export function CalendarView({ events, newTab, emptyText, belowTabs = null }) {
   const [mode, setMode] = useState('list')
   const upcoming = events.filter((e) => !hasEnded(e)).length
   return (
@@ -224,6 +224,7 @@ export function CalendarView({ events, newTab, emptyText }) {
         <button type="button" className={mode === 'list' ? 'is-on' : ''} aria-pressed={mode === 'list'} onClick={() => setMode('list')}>List</button>
         <button type="button" className={mode === 'month' ? 'is-on' : ''} aria-pressed={mode === 'month'} onClick={() => setMode('month')}>Month</button>
       </div>
+      {belowTabs}
       {mode === 'month'
         ? <CalendarMonth events={events} newTab={newTab} />
         : <CalendarEventList events={events.filter((e) => !hasEnded(e))} newTab={newTab} emptyText={emptyText} />}

@@ -77,13 +77,6 @@ export default function Calendar() {
       <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
       <AllAgesFilter checked={allAgesOnly} onChange={setAllAgesOnly} />
 
-      {!loading && !loadError && yourFarEvents.length > 0 && (
-        <section aria-labelledby="cal-your-far" style={{ margin: '1rem 0' }}>
-          <h2 id="cal-your-far" style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Your events farther away</h2>
-          <CalendarEventList events={yourFarEvents} />
-        </section>
-      )}
-
       {loading && <p className="cal-empty">Loading events...</p>}
       {!loading && loadError && (
         <p className="cal-error">We couldn't load the calendar right now. Check your connection and try again.</p>
@@ -91,6 +84,12 @@ export default function Calendar() {
       {!loading && !loadError && (
         <CalendarView
           events={visible}
+          belowTabs={yourFarEvents.length > 0 ? (
+            <section aria-labelledby="cal-your-far" style={{ margin: '1rem 0' }}>
+              <h2 id="cal-your-far" style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Your events farther away</h2>
+              <CalendarEventList events={yourFarEvents} />
+            </section>
+          ) : null}
           emptyText={canPost ? 'No events nearby yet. Tap "New event" to post the first one.' : 'No events nearby yet. Check back soon, or try a wider distance.'}
         />
       )}
