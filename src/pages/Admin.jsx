@@ -971,7 +971,8 @@ export default function Admin() {
                         {skillList && <p style={{ color: '#aaa', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>Skills:</strong> {skillList}</p>}
                         {when && <p style={{ color: '#aaa', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>Available:</strong> {when}</p>}
                         {typeof a.applicant.interests === 'string' && a.applicant.interests && <p style={{ color: '#aaa', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>About:</strong> {a.applicant.interests}</p>}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                        {a.user_id !== user.id && <button type="button" onClick={() => messageUser(a.user_id)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, minHeight: '44px', padding: 0 }}>Message applicant</button>}
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
                           <button onClick={() => reviewAmbassadorApplication(a.id, true)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Approve</button>
                           <button onClick={() => reviewAmbassadorApplication(a.id, false)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem' }}>Decline</button>
                         </div>
@@ -1003,7 +1004,8 @@ export default function Admin() {
                           {a.reason && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.2rem 0' }}>{a.reason}</p>}
                         </>
                       )}
-                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      {a.user_id !== user.id && <button type="button" onClick={() => messageUser(a.user_id)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, minHeight: '44px', padding: 0 }}>Message applicant</button>}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
                         <button onClick={() => approveAdminApplication(a)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Grant Admin Access</button>
                         <button onClick={() => declineAdminApplication(a)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem' }}>Decline</button>
                       </div>
@@ -1241,6 +1243,7 @@ export default function Admin() {
                   </div>
                   <p style={{ color: '#ddd', fontSize: '0.9rem', margin: '0 0 0.6rem', whiteSpace: 'pre-wrap' }}>{m.body}</p>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {m.user_id && m.user_id !== user.id && <button type="button" onClick={() => messageUser(m.user_id)} style={{ ...small, background: 'none', border: '1px solid #4ecca3', color: '#4ecca3' }}>Message them</button>}
                     <button type="button" onClick={() => updateHelpMessage(m.id, { followup: !m.followup })} style={{ ...small, background: m.followup ? '#3a1a1a' : '#222', border: '1px solid ' + (m.followup ? '#ff6666' : '#555'), color: m.followup ? '#ff6666' : '#ddd' }}>{m.followup ? 'Clear follow-up' : 'Flag for follow-up'}</button>
                     <button type="button" onClick={() => updateHelpMessage(m.id, { status: isDone ? 'open' : 'done' })} style={{ ...small, background: isDone ? '#222' : '#4ecca3', border: isDone ? '1px solid #555' : 'none', color: isDone ? '#ddd' : '#1a1a1a' }}>{isDone ? 'Reopen' : 'Done'}</button>
                   </div>
@@ -1286,6 +1289,8 @@ export default function Admin() {
                 )}
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
                   {a.reported_user_id && <button type="button" onClick={() => navigate('/u/' + a.reported_user_id)} style={linkBtn}>View their profile</button>}
+                  {a.reporter_id && a.reporter_id !== user.id && <button type="button" onClick={() => messageUser(a.reporter_id)} style={{ ...linkBtn, minHeight: '44px' }}>Message reporter</button>}
+                  {a.reported_user_id && a.reported_user_id !== user.id && <button type="button" onClick={() => messageUser(a.reported_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>Message them</button>}
                   {a.reported_user_id && a.reported_role !== 'founder' && a.reported_user_id !== user.id && (a.reported_role !== 'admin' || isFounder) && (
                     <button type="button" onClick={() => { setBanReportId(a.id); setBanTarget({ userId: a.reported_user_id, name: a.reported_name, role: a.reported_role }) }} className="ban-row-btn">Ban</button>
                   )}
@@ -1352,6 +1357,8 @@ export default function Admin() {
                     {t.note && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{t.note}</p>}
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
                       {t.about_user_id && <button type="button" onClick={() => navigate('/u/' + t.about_user_id)} style={linkBtn}>View their profile</button>}
+                      {t.from_user_id && t.from_user_id !== user.id && <button type="button" onClick={() => messageUser(t.from_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>Message {t.from_name}</button>}
+                      {t.about_user_id && t.about_user_id !== user.id && <button type="button" onClick={() => messageUser(t.about_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>Message {t.about_name}</button>}
                       {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'reviewed')} style={linkBtn}>Mark reviewed</button>}
                       {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'dismissed')} style={{ ...linkBtn, color: '#999' }}>Dismiss</button>}
                     </div>
@@ -1476,7 +1483,10 @@ export default function Admin() {
               {org.members.map(m => (
                 <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.3rem 0' }}>
                   <span style={{ fontSize: '0.8rem', color: '#ccc' }}>{m.display_name}</span>
-                  <button onClick={() => removeOrgMember(m.id, org.id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.7rem' }}>Remove</button>
+                  <span style={{ display: 'flex', gap: '0.4rem' }}>
+                    {m.user_id !== user.id && <button onClick={() => messageUser(m.user_id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.7rem', minHeight: '32px' }}>Message</button>}
+                    <button onClick={() => removeOrgMember(m.id, org.id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.7rem', minHeight: '32px' }}>Remove</button>
+                  </span>
                 </div>
               ))}
 
