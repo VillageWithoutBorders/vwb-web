@@ -23,6 +23,7 @@ const OrgDashboard = lazyPage(() => import('./pages/OrgDashboard'))
 const MfaChallenge = lazyPage(() => import('./pages/MfaChallenge'))
 import Conversation from './pages/Conversation'
 const MessagesPage = lazyPage(() => import('./pages/Messages'))
+const Connections = lazyPage(() => import('./pages/Connections'))
 const EmergencyEvents = lazyPage(() => import('./pages/EmergencyEvents'))
 const CreateEvent = lazyPage(() => import('./pages/CreateEvent'))
 const EventDetail = lazyPage(() => import('./pages/EventDetail'))
@@ -156,6 +157,7 @@ function AppRoutes() {
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="u/:userId" element={<PublicProfile />} />
         <Route path="messages" element={<MessagesPage />} />
+        <Route path="connections" element={<Connections />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="calendar/new" element={<CalendarEventForm />} />
