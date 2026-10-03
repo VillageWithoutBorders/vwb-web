@@ -3,7 +3,7 @@ import { BanDialog, BannedAccountsPanel } from '../components/AdminBans'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import AvatarDisplay from '../components/AvatarDisplay'
+import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { availabilityDisplayString } from '../components/AvailabilityPicker'
 import { resetAccountToBase } from '../utils/resetAccount'
 
@@ -963,7 +963,7 @@ export default function Admin() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <AvatarDisplay url={a.applicant.avatar_url} userId={a.user_id} size={32} />
                           <div>
-                            <strong style={{ color: '#eee', fontSize: '0.9rem' }}>{a.applicant.display_name || 'Unnamed'}</strong>
+                            <strong style={{ color: '#eee', fontSize: '0.9rem' }}><UserName userId={a.user_id} name={a.applicant.display_name || 'Unnamed'} /></strong>
                             <div style={{ color: '#888', fontSize: '0.7rem' }}>Applied {timeAgo(a.created_at)}{villageName ? ' \u00b7 ' + villageName : ''}</div>
                           </div>
                         </div>
@@ -991,7 +991,7 @@ export default function Admin() {
                           <AvatarDisplay url={a.applicant_avatar} userId={a.user_id} size={32} />
                           <div>
                             <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>ADMIN REQUEST</span>
-                            <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}>{a.applicant_name}</h4>
+                            <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}><UserName userId={a.user_id} name={a.applicant_name} /></h4>
                           </div>
                         </div>
                         <span style={{ color: '#888', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(a.created_at)}</span>
@@ -1146,7 +1146,7 @@ export default function Admin() {
           {visibleUsers.slice(0, userLimit).map(u => u.no_profile ? (
             <div key={u.user_id} style={{ ...cardStyle, borderLeft: '3px solid #666' }}>
               <div>
-                <span style={{ fontWeight: 700 }}>{u.display_name || 'No name given'}</span>
+                <span style={{ fontWeight: 700 }}><UserName userId={u.user_id} name={u.display_name || 'No name given'} /></span>
                 <span style={{ marginLeft: '0.4rem', background: '#2a2a2a', color: '#bbb', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>No profile yet</span>
               </div>
               <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>{u.email_hint || 'No email'} &middot; Signed up {new Date(u.created_at).toLocaleDateString()}</p>
@@ -1165,7 +1165,7 @@ export default function Admin() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <AvatarDisplay url={u.avatar_url} userId={u.user_id} size={32} />
                   <div>
-                    <button type="button" onClick={() => navigate('/u/' + u.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{u.display_name || 'Unnamed'}</button>
+                    <UserName userId={u.user_id} name={u.display_name || 'Unnamed'} style={{ fontWeight: 700 }} />
                     {u.role === 'founder' && <span style={{ marginLeft: '0.4rem', background: '#3a1a4a', color: '#c77dff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Founder</span>}
                     {u.role === 'admin' && <span style={{ marginLeft: '0.4rem', background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
                     {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Ambassador</span>}
@@ -1276,9 +1276,9 @@ export default function Admin() {
                   <span style={{ color: '#888', fontSize: '0.75rem' }}>{sourceLabel} &middot; {timeAgo(a.created_at)}</span>
                 </div>
                 <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
-                  <span style={{ color: '#aaa' }}>Reported by:</span> {a.reporter_name}
+                  <span style={{ color: '#aaa' }}>Reported by:</span> <UserName userId={a.reporter_id} name={a.reporter_name} />
                   <span style={{ color: '#aaa' }}> about </span>
-                  {a.reported_name}
+                  <UserName userId={a.reported_user_id} name={a.reported_name} />
                 </p>
                 {a.reason && <p style={{ color: '#ddd', fontSize: '0.85rem', fontWeight: 600, margin: '0.2rem 0' }}>{a.reason}</p>}
                 {a.details && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{a.details}</p>}
@@ -1350,8 +1350,8 @@ export default function Admin() {
                     </div>
                     <p style={{ color: '#ddd', fontSize: '0.85rem', fontWeight: 600, margin: '0.4rem 0 0.2rem' }}>{TASK_ISSUE_LABELS[t.outcome] || t.outcome}</p>
                     <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0.2rem 0' }}>
-                      <span style={{ color: '#aaa' }}>From:</span> {t.from_name}
-                      <span style={{ color: '#aaa' }}> about </span>{t.about_name}
+                      <span style={{ color: '#aaa' }}>From:</span> <UserName userId={t.from_user_id} name={t.from_name} />
+                      <span style={{ color: '#aaa' }}> about </span><UserName userId={t.about_user_id} name={t.about_name} />
                       <span style={{ color: '#aaa' }}> &middot; task: </span>{t.skill}
                     </p>
                     {t.note && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{t.note}</p>}
@@ -1378,7 +1378,7 @@ export default function Admin() {
                     <span style={{ color: '#888', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
                   </div>
                   <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
-                    <span style={{ color: '#aaa' }}>Task check-in from:</span> {c.reporter_name}
+                    <span style={{ color: '#aaa' }}>Task check-in from:</span> <UserName userId={c.reporter_id} name={c.reporter_name} />
                   </p>
                   {c.notes && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{c.notes}</p>}
                 </div>
@@ -1482,7 +1482,7 @@ export default function Admin() {
               {org.members.length === 0 && <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0 0 0.4rem' }}>No members yet</p>}
               {org.members.map(m => (
                 <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.3rem 0' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#ccc' }}>{m.display_name}</span>
+                  <span style={{ fontSize: '0.8rem', color: '#ccc' }}><UserName userId={m.user_id} name={m.display_name} /></span>
                   <span style={{ display: 'flex', gap: '0.4rem' }}>
                     {m.user_id !== user.id && <button onClick={() => messageUser(m.user_id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.7rem', minHeight: '32px' }}>Message</button>}
                     <button onClick={() => removeOrgMember(m.id, org.id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.7rem', minHeight: '32px' }}>Remove</button>
@@ -1635,7 +1635,7 @@ export default function Admin() {
                 </div>
                 <h4 style={{ margin: '0.4rem 0 0.15rem', fontSize: '0.95rem', color: '#eee' }}>{c.title || 'Untitled'}</h4>
                 <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.15rem 0' }}>
-                  <button type="button" onClick={() => navigate('/u/' + c.poster_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: '#4ecca3', cursor: 'pointer', textDecoration: 'underline' }}>{c.poster_name}</button>
+                  <UserName userId={c.poster_id} name={c.poster_name} style={{ color: '#4ecca3' }} />
                   {c.neighborhood ? ' · ' + c.neighborhood : ''}{c.tag ? ' · ' + String(c.tag).replace(/_/g, ' ') : ''}
                 </p>
                 {c.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.2rem 0' }}>{c.description}</p>}

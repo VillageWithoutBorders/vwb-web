@@ -7,6 +7,7 @@ import CommunityGuidelines from './CommunityGuidelines'
 import { fetchCalendarEvent, fullDateTime, googleCalendarLink, androidCalendarLink, isAndroid, downloadIcs, eventUrl, VISIBILITY } from '../utils/calendar'
 import { setReturnTo, clearReturnTo } from '../utils/returnTo'
 import { startConversation } from '../utils/startConversation'
+import { UserName } from '../components/AvatarDisplay'
 
 // One event. Public route on purpose: this is the page people land on from
 // the website calendar, a shared Facebook post, or a private invite link,
@@ -455,7 +456,7 @@ export default function EventPage() {
                   <ul style={{ listStyle: 'none', margin: '0 0 0.75rem', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {inviteResults.map((p) => (
                       <li key={p.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', minHeight: '44px' }}>
-                        <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{p.display_name}</span>
+                        <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}><UserName userId={p.user_id} name={p.display_name} /></span>
                         <button type="button" className="btn btn-primary" style={{ minHeight: '44px', flex: 'none' }} onClick={() => inviteByName(p)}>Invite</button>
                       </li>
                     ))}
@@ -466,7 +467,7 @@ export default function EventPage() {
                     {invited.map((p) => (
                       <li key={p.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', minHeight: '44px' }}>
                         <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
-                          {p.display_name}
+                          <UserName userId={p.user_id} name={p.display_name} />
                           {p.signed_up ? <span style={{ color: '#7fe0bf' }}> (signed up)</span> : <span style={{ color: 'var(--text-secondary)' }}> (invited)</span>}
                         </span>
                         <span style={{ display: 'flex', gap: '0.5rem', flex: 'none' }}>
@@ -487,7 +488,7 @@ export default function EventPage() {
                   <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.6 }}>
                     {signups.map((s) => (
                       <li key={s.user_id}>
-                        {blockedBy.has(s.user_id) ? <span>{s.display_name}</span> : <Link to={'/u/' + s.user_id} style={{ color: '#4ecca3' }}>{s.display_name}</Link>}
+                        <UserName userId={s.user_id} name={s.display_name} style={{ color: '#4ecca3' }} />
                         {s.note ? <span style={{ color: 'var(--text-secondary)' }}>: {s.note}</span> : null}
                         {!blockedBy.has(s.user_id) && <> <button type="button" className="link-button" style={{ minHeight: '44px', color: '#4ecca3' }} onClick={() => messagePerson(s)}>Message</button></>}
                       </li>

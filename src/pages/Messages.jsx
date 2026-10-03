@@ -7,7 +7,7 @@ import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
 import { useMenuPosition } from '../utils/useMenuPosition'
-import AvatarDisplay from '../components/AvatarDisplay'
+import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import MessageRequests from '../components/MessageRequests'
 import NewMessage from '../components/NewMessage'
 import { decryptFromSender, getDeviceId, flushOutbox, getQueuedMessages } from '../lib/e2ee'
@@ -828,7 +828,7 @@ export default function Messages() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={offer.avatar_url} userId={offer.helper_id} size={32} /><span onClick={(e) => { e.stopPropagation(); !blockedBy.has(offer.helper_id) && navigate('/u/' + offer.helper_id) }} style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem', cursor: blockedBy.has(offer.helper_id) ? 'default' : 'pointer', textDecoration: blockedBy.has(offer.helper_id) ? 'none' : 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{offer.helper_name}</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={offer.avatar_url} userId={offer.helper_id} size={32} /><UserName userId={offer.helper_id} name={offer.helper_name} style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem' }} /></div>
                 {offer.is_ambassador && (
                   <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
                     Hope Ambassador
@@ -976,7 +976,7 @@ export default function Messages() {
                 {isPinned && <span style={{ marginRight: '4px' }} title="Pinned">&#128204;</span>}
                 {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title="Muted">&#128263;</span>}
                 {followUp && <span style={{ marginRight: '4px' }} title="Follow up">&#128681;</span>}
-                <button disabled={blockedBy.has(c.otherId)} type="button" onClick={(e) => { e.stopPropagation(); !blockedBy.has(c.otherId) && navigate('/u/' + c.otherId) }} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: blockedBy.has(c.otherId) ? 'default' : 'pointer', textDecoration: blockedBy.has(c.otherId) ? 'none' : 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{c.otherName}</button>
+                <UserName userId={c.otherId} name={c.otherName} />
                 {unread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#4ecca3", marginLeft: "6px", flexShrink: 0 }} />}
               </span>
               <span className="message-card-time" style={{ color: unread ? "#4ecca3" : undefined }}>{formatTime(c.lastMessageAt)}</span>
