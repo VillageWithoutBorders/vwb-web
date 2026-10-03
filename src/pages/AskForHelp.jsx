@@ -6,6 +6,7 @@ import GroupedSkillChips from '../components/GroupedSkillChips'
 import { loadSkillCategories } from '../utils/skillGroups'
 import { getMyLocation } from '../utils/location'
 import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
+import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
 
 const URGENCY_OPTIONS = [
     { value: 'now', label: 'Right now', desc: 'Emergency or same-day need' },
@@ -32,6 +33,9 @@ export default function AskForHelp() {
     const navigate = useNavigate()
     // /ask?edit=ID opens this same form filled in, to change a request already posted.
     const editId = searchParams.get('edit')
+    // First screen: look at nearby resources before asking a neighbor. Skipped
+    // when editing, when posting as a group, or with ?skip=1.
+    const [checkedResources, setCheckedResources] = useState(() => Boolean(editId) || Boolean(searchParams.get('org')) || searchParams.get('skip') === '1')
 
     const [skills, setSkills] = useState([])
     const [skillNeeded, setSkillNeeded] = useState('')
@@ -145,6 +149,10 @@ export default function AskForHelp() {
         }
 
         navigate('/skillshare', { state: { message: 'Your request has been posted.' } })
+    }
+
+    if (!checkedResources) {
+        return <NearbyResourcesFirst profile={profile} onContinue={() => setCheckedResources(true)} />
     }
 
     return (
