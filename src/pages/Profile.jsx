@@ -527,6 +527,10 @@ function captureCoverageLocation() {
           </div>
         </a>
 
+        <button onClick={() => navigate('/connections')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid #4ecca3', borderRadius: '10px', padding: '0.6rem', minHeight: '44px', marginTop: '0.75rem', color: '#4ecca3', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
+          My Connections
+        </button>
+
         <button onClick={() => navigate('/help')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid #444', borderRadius: '10px', padding: '0.6rem', marginTop: '0.75rem', color: '#aaa', fontSize: '0.85rem', cursor: 'pointer' }}>
           Help &amp; Feedback
         </button>
