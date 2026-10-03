@@ -36,10 +36,12 @@
 // own; @vite-ignore was only ever the right call while the package
 // genuinely wasn't in node_modules.
 //
-// Private keys are generated on-device and never sent anywhere. Only the
-// public key is written to Supabase. There is no backup: losing the
-// device or clearing site data loses that device's key for good, which
-// is the deliberate tradeoff behind "only stored locally."
+// Private keys are generated on-device and never sent anywhere in a form
+// VWB could read. Only the public key is written to Supabase. A person
+// can OPT IN to a recovery key (Oct 3): the app locks a backup of the
+// device key with a long random code that only the person holds, and saves
+// just the locked backup. Without a recovery key, losing the device or
+// clearing site data loses that device's key for good.
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 
@@ -183,6 +185,9 @@ export function ensureDeviceKeypair(userId) {
   return keypairSetups.get(userId)
 }
 
+// People who chose "start fresh" instead of restoring, this session.
+const restoreSkipped = new Set()
+
 async function setUpDeviceKeypair(userId) {
   try {
     const sodium = (await import('libsodium-wrappers')).default
@@ -201,6 +206,14 @@ async function setUpDeviceKeypair(userId) {
       if (error) console.error('[e2ee] failed to re-publish device key', error)
       await recordDeviceInfo(userId, existing.deviceId)
       return existing
+    }
+
+    // No key on this device. If this person has a recovery backup, don't
+    // quietly make a new key: let them choose to restore first, so the
+    // messages from before can still be opened.
+    if (!restoreSkipped.has(userId)) {
+      const { data: backup } = await supabase.from('user_key_backups').select('user_id').eq('user_id', userId).maybeSingle()
+      if (backup) return null
     }
 
     const keypair = sodium.crypto_box_keypair()
@@ -688,4 +701,143 @@ export async function fetchEditHistory({ kind, itemId, userId, senderId }) {
     out.push({ version: c.version, text: text ?? "[This version can't be opened on this device]" })
   }
   return out
+}
+
+// ---------------------------------------------------------------------
+// Recovery key. The code is 128 random bits shown to the person once. A
+// 256-bit key is made from it (BLAKE2b, salted) and used to lock a copy of
+// this device's keypair (XSalsa20-Poly1305). Only the locked copy is saved.
+// ---------------------------------------------------------------------
+const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
+
+function toBase32(bytes) {
+  let bits = 0, value = 0, out = ''
+  for (const b of bytes) {
+    value = (value << 8) | b
+    bits += 8
+    while (bits >= 5) { out += B32[(value >>> (bits - 5)) & 31]; bits -= 5 }
+  }
+  if (bits > 0) out += B32[(value << (5 - bits)) & 31]
+  return out
+}
+
+function fromBase32(text) {
+  let bits = 0, value = 0
+  const out = []
+  for (const ch of text) {
+    const i = B32.indexOf(ch)
+    if (i < 0) return null
+    value = (value << 5) | i
+    bits += 5
+    if (bits >= 8) { out.push((value >>> (bits - 8)) & 255); bits -= 8 }
+  }
+  return new Uint8Array(out)
+}
+
+function cleanCode(code) {
+  return String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/0/g, 'O').replace(/1/g, 'I').replace(/8/g, 'B')
+}
+
+export function formatRecoveryCode(raw) {
+  return (raw.match(/.{1,4}/g) || []).join('-')
+}
+
+function recoveryKeyFrom(sodium, codeBytes, salt) {
+  return sodium.crypto_generichash(32, codeBytes, salt)
+}
+
+// Makes (or replaces) the recovery backup. Returns { code } to show once,
+// or { error }.
+export async function createRecoveryBackup(userId) {
+  try {
+    const sodium = (await import('libsodium-wrappers')).default
+    await sodium.ready
+    const identity = await ensureDeviceKeypair(userId)
+    if (!identity) return { error: "This device doesn't have a message key yet. Close VWB, open it again, and try once more." }
+    const codeBytes = sodium.randombytes_buf(16)
+    const salt = sodium.randombytes_buf(32)
+    const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)
+    const key = recoveryKeyFrom(sodium, codeBytes, salt)
+    const payload = sodium.from_string(JSON.stringify({ deviceId: identity.deviceId, publicKey: identity.publicKey, privateKey: identity.privateKey }))
+    const locked = sodium.crypto_secretbox_easy(payload, nonce, key)
+    const { error } = await supabase.from('user_key_backups').upsert({
+      user_id: userId,
+      salt: sodium.to_base64(salt),
+      nonce: sodium.to_base64(nonce),
+      ciphertext: sodium.to_base64(locked),
+      device_id: identity.deviceId,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' })
+    if (error) { console.error('[e2ee] could not save recovery backup', error); return { error: 'Could not save your recovery key. Try again.' } }
+    return { code: formatRecoveryCode(toBase32(codeBytes)) }
+  } catch (e) {
+    console.error('[e2ee] recovery key failed', e)
+    return { error: 'Could not make a recovery key. Try again.' }
+  }
+}
+
+// { exists, updatedAt } for the Settings screen.
+export async function getRecoveryStatus(userId) {
+  const { data, error } = await supabase.from('user_key_backups').select('updated_at').eq('user_id', userId).maybeSingle()
+  if (error) { console.error('[e2ee] could not check recovery key', error); return { exists: false, updatedAt: null, failed: true } }
+  return { exists: !!data, updatedAt: data?.updated_at || null }
+}
+
+// True when this device has no key but the person has a recovery backup.
+export async function needsKeyRestore(userId) {
+  if (restoreSkipped.has(userId)) return false
+  try {
+    if (await idbGet(IDENTITY_KEY)) return false
+  } catch (e) { return false }
+  const { data } = await supabase.from('user_key_backups').select('user_id').eq('user_id', userId).maybeSingle()
+  return !!data
+}
+
+// Opens the backup with the code and makes it this device's key.
+// Returns 'restored', 'wrong-code', 'no-backup', or 'error'.
+export async function restoreFromRecoveryCode(userId, code) {
+  try {
+    const sodium = (await import('libsodium-wrappers')).default
+    await sodium.ready
+    const codeBytes = fromBase32(cleanCode(code))
+    if (!codeBytes || codeBytes.length !== 16) return 'wrong-code'
+    const { data: backup, error } = await supabase.from('user_key_backups')
+      .select('salt, nonce, ciphertext').eq('user_id', userId).maybeSingle()
+    if (error) { console.error('[e2ee] could not read recovery backup', error); return 'error' }
+    if (!backup) return 'no-backup'
+    const key = recoveryKeyFrom(sodium, codeBytes, sodium.from_base64(backup.salt))
+    let opened
+    try {
+      opened = sodium.crypto_secretbox_open_easy(sodium.from_base64(backup.ciphertext), sodium.from_base64(backup.nonce), key)
+    } catch (e) {
+      return 'wrong-code'
+    }
+    const identity = JSON.parse(sodium.to_string(opened))
+    if (!identity.deviceId || !identity.publicKey || !identity.privateKey) return 'error'
+    const previous = await idbGet(IDENTITY_KEY)
+    await idbSet(IDENTITY_KEY, identity)
+    restoreSkipped.add(userId)
+    keypairSetups.delete(userId)
+    // Make sure the restored key is listed, and drop the temporary one made
+    // while this device was waiting.
+    const { error: pubErr } = await supabase.from('user_devices').upsert(
+      { user_id: userId, device_id: identity.deviceId, public_key: identity.publicKey },
+      { onConflict: 'user_id,device_id' }
+    )
+    if (pubErr) console.error('[e2ee] could not list the restored key', pubErr)
+    await recordDeviceInfo(userId, identity.deviceId)
+    if (previous?.deviceId && previous.deviceId !== identity.deviceId) await removeMyDevice(userId, previous.deviceId)
+    return 'restored'
+  } catch (e) {
+    console.error('[e2ee] restore failed', e)
+    return 'error'
+  }
+}
+
+// "Start fresh": make a new key now, without restoring. Old messages stay
+// locked on this device. The backup stays, so restoring later still works.
+export async function startFreshKey(userId) {
+  restoreSkipped.add(userId)
+  keypairSetups.delete(userId)
+  return ensureDeviceKeypair(userId)
 }
