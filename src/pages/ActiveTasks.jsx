@@ -677,7 +677,10 @@ export default function ActiveTasks() {
                   {/* Delete for good */}
                   {deletingId === req.id ? (
                     <div role="alert" style={{ marginTop: '0.5rem', padding: '0.75rem', border: '1px solid #ff6666', borderRadius: '8px' }}>
-                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>Delete this request for good? It can't be undone. Neighbors who said yes will be told it was removed.</p>
+                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>Delete this request for good? It can't be undone.{' '}
+                        {req.matches.some(m => m.helper_completed && m.requester_completed)
+                          ? 'This task is finished. Deleting it also removes the record that you helped each other, so you cannot vouch for that person on that basis later. Vouches already given stay.'
+                          : 'Neighbors who said yes will be told it was removed.'}</p>
                       {deleteNote && <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#ffaa44' }}>{deleteNote}</p>}
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button className="btn btn-sm" disabled={deleteBusy} style={{ flex: 1, minHeight: '44px', background: '#c0392b', color: '#fff', border: 'none' }} onClick={() => deleteRequestForGood(req.id)}>{deleteBusy ? 'Deleting...' : 'Yes, delete'}</button>
