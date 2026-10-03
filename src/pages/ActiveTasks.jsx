@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import MyOffers from '../components/MyOffers'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import VouchButton from '../components/VouchButton'
@@ -554,6 +555,8 @@ export default function ActiveTasks() {
           )}
         </button>
       </div>
+
+      {showActive && <MyOffers />}
 
       {loading ? (
         <div className="feed-loading"><div className="feed-loading-spinner" /><p>Loading tasks...</p></div>
