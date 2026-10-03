@@ -17,10 +17,10 @@ export default function MessageOptionsMenu({ message, onClose, currentUserId, co
 
   async function deleteForEveryone() {
     if (!confirm('Delete this message for everyone? This cannot be undone.')) return
-    const { error } = await supabase.from('chat_messages').update({ deleted_at: new Date().toISOString() }).eq('id', message.id)
-    if (error) {
-      console.error('[MessageOptionsMenu] deleteForEveryone', error)
-      alert('Could not delete this message. Please try again.')
+    const { data: done, error } = await supabase.rpc('delete_message_for_everyone', { p_message: message.id })
+    if (error || done === false) {
+      console.error('[MessageOptionsMenu] deleteForEveryone', error || 'nothing was changed')
+      alert('Could not delete this message for everyone. Please try again.')
       return
     }
     onClose()
