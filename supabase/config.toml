@@ -16,3 +16,8 @@ enabled = true
 # own secret header (ARCHIVE_CRON_SECRET) instead.
 verify_jwt = false
 entrypoint = "./functions/archive-group-messages/index.ts"
+
+[functions.calendar-feed]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/calendar-feed/index.ts"
