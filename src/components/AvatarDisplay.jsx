@@ -12,7 +12,7 @@ function reportError(context, error) {
   return true
 }
 
-export default function AvatarDisplay({ url, userId, size = 32 }) {
+export default function AvatarDisplay({ url, userId, size = 32, label = null, className = '', style: labelStyle = null }) {
   const navigate = useNavigate()
   const blockedBy = useBlockedBy()
   const src = url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId || 'default'}`
@@ -43,7 +43,7 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
 
   async function loadInfo() {
     if (info || !userId) return
-    const { data: p, error: pErr } = await supabase.from('helper_profiles_public').select('display_name, is_hope_ambassador, role, created_at').eq('user_id', userId).maybeSingle()
+    const { data: p, error: pErr } = await supabase.from('helper_profiles_public').select('display_name, avatar_url, is_hope_ambassador, role, created_at').eq('user_id', userId).maybeSingle()
     reportError('loadInfo:profile', pErr)
     const { data: vcRow, error: vouchCountErr } = await supabase.from('vouch_counts').select('vouch_count').eq('user_id', userId).maybeSingle()
     const vouchCount = Number(vcRow?.vouch_count || 0)
@@ -61,6 +61,7 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
     }
     setInfo({
       name: p?.display_name || 'Neighbor',
+      avatar: p?.avatar_url || null,
       ambassador: p?.is_hope_ambassador || false,
       role: p?.role || null,
       joined: p?.created_at || null,
@@ -112,8 +113,17 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
     setShowPopup(true)
   }
 
+  const popupSrc = url || info?.avatar || src
+
   return (
     <>
+      {label !== null && label !== undefined ? (
+        userId ? (
+          <button type="button" onClick={handleClick} className={('user-name-btn ' + className).trim()} aria-haspopup="dialog" style={labelStyle || undefined}>{label}</button>
+        ) : (
+          <span className={className || undefined} style={labelStyle || undefined}>{label}</span>
+        )
+      ) : (
       <img
         src={src}
         alt=""
@@ -129,12 +139,13 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
           cursor: userId ? 'pointer' : 'default',
         }}
       />
+      )}
       {showPopup && createPortal(
         <>
           <div onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1100 }} />
           <div ref={cardRef} onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: pos ? pos.top + 'px' : 0, left: pos ? pos.left + 'px' : 0, visibility: pos ? 'visible' : 'hidden', background: '#1e1e1e', border: '1px solid #333', borderRadius: '16px', padding: '1.25rem', zIndex: 1101, width: pos ? pos.width + 'px' : 'min(280px, calc(100vw - 16px))', maxHeight: pos ? pos.maxHeight + 'px' : undefined, overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <img src={src} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#222', border: '2px solid #333' }} />
+              <img src={popupSrc} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#222', border: '2px solid #333' }} />
               <div>
                 <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#fff' }}>{info?.name || 'Loading...'}</div>
                 <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
@@ -180,4 +191,9 @@ export default function AvatarDisplay({ url, userId, size = 32 }) {
       )}
     </>
   )
+}
+// A person's name that opens the same card as their picture.
+// Use it anywhere a name is shown: <UserName userId={id} name={name} />
+export function UserName({ userId, name, className = '', style = null }) {
+  return <AvatarDisplay userId={userId} label={name || 'Neighbor'} className={className} style={style} />
 }

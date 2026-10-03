@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import VouchButton from '../components/VouchButton'
-import AvatarDisplay from '../components/AvatarDisplay'
+import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 
 // Reasons for ending a helper's part before the task is finished.
 const END_REASONS = {
@@ -588,7 +588,7 @@ export default function ActiveTasks() {
                           <div key={match.id} style={{ background: bothDone ? '#1a2e26' : '#222', border: '1px solid ' + (bothDone ? '#2d6a4f' : '#333'), borderRadius: '8px', padding: '0.6rem 0.75rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.35rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={match.helper_avatar} userId={match.helper_id} size={28} /><span style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>{match.helper_name}</span></div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={match.helper_avatar} userId={match.helper_id} size={28} /><UserName userId={match.helper_id} name={match.helper_name} style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }} /></div>
                                 {match.is_ambassador && (
                                   <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>HA</span>
                                 )}
@@ -676,7 +676,7 @@ export default function ActiveTasks() {
                     <div className="task-card-skill">{req.skill_needed}</div>
                     {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
                     <div style={{ fontSize: '0.8rem', color: '#999', marginBottom: '0.25rem' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><AvatarDisplay url={null} userId={match.request?.requester_id} size={20} /> Requested by {match.requester_name}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><AvatarDisplay url={null} userId={match.request?.requester_id} size={20} /> Requested by <UserName userId={match.request?.requester_id} name={match.requester_name} /></span>
                     </div>
                     <p className="task-card-desc">{req.description}</p>
 

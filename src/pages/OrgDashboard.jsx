@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { fetchCalendarEvents } from '../utils/calendar'
+import OrgResources from '../components/OrgResources'
 
 // The organizer's home base for one group: shortcuts, members, upcoming
 // events with sign-up counts, and the needs and offers posted under the
@@ -215,6 +216,8 @@ export default function OrgDashboard() {
           </div>
         ))}
       </section>
+
+      <OrgResources orgId={id} />
 
       <section className="hub-section" aria-labelledby="od-members">
         <div className="hub-section-head"><h2 id="od-members">Members</h2></div>
