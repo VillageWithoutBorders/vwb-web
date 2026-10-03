@@ -106,6 +106,17 @@ export default function EventPage() {
     return () => clearTimeout(t)
   }, [inviteSearch, canInviteByName, invited, id])
 
+  useEffect(() => {
+    if (!user || !ev) { setOrganizers([]); return }
+    let alive = true
+    supabase.rpc('list_event_organizers', { p_event: Number(id), p_token: token || null }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('list_event_organizers', error); return }
+      setOrganizers(data || [])
+    })
+    return () => { alive = false }
+  }, [user, ev?.id, id, token]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (user && profile && !profile.guidelines_accepted_at) {
     return <CommunityGuidelines onAgree={refreshProfile} />
   }
@@ -150,16 +161,6 @@ export default function EventPage() {
     load()
   }
 
-  useEffect(() => {
-    if (!user || !ev) { setOrganizers([]); return }
-    let alive = true
-    supabase.rpc('list_event_organizers', { p_event: Number(id), p_token: token || null }).then(({ data, error }) => {
-      if (!alive) return
-      if (error) { console.error('list_event_organizers', error); return }
-      setOrganizers(data || [])
-    })
-    return () => { alive = false }
-  }, [user, ev?.id, id, token]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function messageOrganizer(person) {
     if (!user) return
