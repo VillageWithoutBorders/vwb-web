@@ -28,6 +28,10 @@ export default function EventPage() {
   const [message, setMessage] = useState('')
   const [signups, setSignups] = useState([])
   const [copied, setCopied] = useState('')
+  const [invited, setInvited] = useState([])
+  const [inviteSearch, setInviteSearch] = useState('')
+  const [inviteResults, setInviteResults] = useState([])
+  const [inviteMsg, setInviteMsg] = useState('')
 
   const load = useCallback(async () => {
     if (user && token) {
@@ -50,6 +54,13 @@ export default function EventPage() {
       const { data, error } = await supabase.rpc('list_calendar_event_signups', { p_id: Number(id) })
       if (error) console.error('list_calendar_event_signups', error)
       setSignups(data || [])
+      if (event.visibility === 'invite') {
+        const { data: inv, error: invErr } = await supabase.rpc('list_calendar_event_invites', { p_event: Number(id) })
+        if (invErr) console.error('list_calendar_event_invites', invErr)
+        setInvited(inv || [])
+      } else {
+        setInvited([])
+      }
     }
   }, [id, token, user])
 
@@ -58,6 +69,21 @@ export default function EventPage() {
     if (user) clearReturnTo()
     load()
   }, [authLoading, user, load])
+
+  const canInviteByName = !!(ev && ev.can_manage && ev.visibility === 'invite')
+  useEffect(() => {
+    const q = inviteSearch.trim()
+    if (!canInviteByName || q.length < 2) { setInviteResults([]); return }
+    const t = setTimeout(async () => {
+      // Only people you already know on VWB, or members of this event's
+      // organization. The database decides.
+      const { data, error } = await supabase.rpc('search_people_for_event', { p_event: Number(id), p_query: q.replace(/[%_]/g, '') })
+      if (error) { console.error('search_people_for_event', error); return }
+      const taken = new Set(invited.map((p) => p.user_id))
+      setInviteResults((data || []).filter((p) => !taken.has(p.user_id)))
+    }, 300)
+    return () => clearTimeout(t)
+  }, [inviteSearch, canInviteByName, invited, id])
 
   if (user && profile && !profile.guidelines_accepted_at) {
     return <CommunityGuidelines onAgree={refreshProfile} />
@@ -86,6 +112,25 @@ export default function EventPage() {
     setBusy(false)
     if (error) { setMessage('Could not cancel. Try again.'); return }
     setMessage('Your sign-up was cancelled.')
+    load()
+  }
+
+  async function inviteByName(person) {
+    setInviteMsg('')
+    const { error } = await supabase.rpc('invite_to_calendar_event', { p_event: Number(id), p_user: person.user_id })
+    if (error) { setInviteMsg(error.message || 'Could not send that invite. Try again.'); return }
+    setInviteMsg(person.display_name + ' was invited. They will get an alert.')
+    setInviteSearch('')
+    setInviteResults([])
+    load()
+  }
+
+  async function takeBackInvite(person) {
+    if (!window.confirm('Take back the invite for ' + person.display_name + '? If they signed up, that is cancelled too.')) return
+    setInviteMsg('')
+    const { error } = await supabase.rpc('uninvite_from_calendar_event', { p_event: Number(id), p_user: person.user_id })
+    if (error) { setInviteMsg('Could not take that back. Try again.'); return }
+    setInviteMsg('The invite for ' + person.display_name + ' was taken back.')
     load()
   }
 
@@ -281,6 +326,42 @@ export default function EventPage() {
                 : <button type="button" className="btn btn-outline btn-full" onClick={() => setStatus('cancelled')}>Cancel event</button>}
               <button type="button" className="link-button" style={{ color: '#ff9f9f', minHeight: '44px' }} onClick={deleteEvent}>Delete event</button>
             </div>
+            {ev.visibility === 'invite' && (
+              <>
+                <h2 style={{ marginTop: '1rem' }}>Invite people by name ({invited.length} invited)</h2>
+                <div className="form-field" style={{ marginBottom: '0.5rem' }}>
+                  <label htmlFor="invite-search">Search for someone you know on Village Without Borders</label>
+                  <input id="invite-search" type="search" autoComplete="off" value={inviteSearch} onChange={(e) => setInviteSearch(e.target.value)} placeholder="Start typing a name" />
+                </div>
+                {inviteMsg && <p className="cal-sub" role="status" style={{ marginTop: 0 }}>{inviteMsg}</p>}
+                {inviteSearch.trim().length >= 2 && inviteResults.length === 0 && (
+                  <p className="cal-sub" style={{ marginTop: 0 }}>No match. You can only invite people you already know here, such as someone you have messaged, vouched for, or share a group with.</p>
+                )}
+                {inviteResults.length > 0 && (
+                  <ul style={{ listStyle: 'none', margin: '0 0 0.75rem', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {inviteResults.map((p) => (
+                      <li key={p.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', minHeight: '44px' }}>
+                        <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{p.display_name}</span>
+                        <button type="button" className="btn btn-primary" style={{ minHeight: '44px', flex: 'none' }} onClick={() => inviteByName(p)}>Invite</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {invited.length > 0 && (
+                  <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {invited.map((p) => (
+                      <li key={p.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', minHeight: '44px' }}>
+                        <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+                          {p.display_name}
+                          {p.signed_up ? <span style={{ color: '#7fe0bf' }}> (signed up)</span> : <span style={{ color: 'var(--text-secondary)' }}> (invited)</span>}
+                        </span>
+                        <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 'none' }} onClick={() => takeBackInvite(p)}>Take back</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
             {ev.signup_enabled && (
               <>
                 <h2 style={{ marginTop: '1rem' }}>Who's signed up ({signups.length})</h2>
