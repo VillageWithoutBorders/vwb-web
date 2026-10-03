@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { CATEGORIES } from '../utils/resourceCategories'
 
 // Resources that belong to one organization, for its organizers. See them all
 // (even ones still waiting for review) and fix them directly. The database
@@ -23,6 +23,8 @@ export default function OrgResources({ orgId }) {
   const [draft, setDraft] = useState({})
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [removing, setRemoving] = useState(null)
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('list_org_resources', { p_org: orgId })
@@ -34,53 +36,97 @@ export default function OrgResources({ orgId }) {
 
   function open(r) {
     setNote('')
-    setDraft({ name: r.name || '', description: r.description || '', phone: r.phone || '', url: r.url || '', address: r.address || '', requirements: r.requirements || '' })
+    setDraft({ name: r.name || '', description: r.description || '', phone: r.phone || '', url: r.url || '', address: r.address || '', requirements: r.requirements || '', categories: r.categories || [] })
+    setAdding(false)
+    setRemoving(null)
     setEditing(r.id)
+  }
+
+  function openAdd() {
+    setNote('')
+    setEditing(null)
+    setRemoving(null)
+    setDraft({ name: '', description: '', phone: '', url: '', address: '', requirements: '', categories: [] })
+    setAdding(true)
+  }
+
+  function toggleCat(c) {
+    const has = draft.categories.includes(c)
+    setDraft({ ...draft, categories: has ? draft.categories.filter((x) => x !== c) : [...draft.categories, c] })
   }
 
   async function save(e) {
     e.preventDefault()
     if (!draft.name.trim()) { setNote('Add a name.'); return }
+    if (!draft.categories.length) { setNote('Pick at least one category.'); return }
     setBusy(true); setNote('')
-    const { error } = await supabase.rpc('update_org_resource', {
-      p_resource: editing,
+    const fields = {
       p_name: draft.name, p_description: draft.description, p_phone: draft.phone,
       p_url: draft.url, p_address: draft.address, p_requirements: draft.requirements,
-    })
+      p_categories: draft.categories,
+    }
+    const { error } = adding
+      ? await supabase.rpc('add_org_resource', { p_org: orgId, ...fields })
+      : await supabase.rpc('update_org_resource', { p_resource: editing, ...fields })
     setBusy(false)
-    if (error) { console.error('update_org_resource', error); setNote("Couldn't save. Try again."); return }
+    if (error) { console.error('save org resource', error); setNote("Couldn't save. Try again."); return }
+    const wasAdding = adding
     setEditing(null)
-    setNote('Saved.')
+    setAdding(false)
+    setNote(wasAdding ? 'Added. It will show to everyone once an ambassador or admin reviews it.' : 'Saved.')
     load()
+  }
+
+  async function remove(r) {
+    setBusy(true); setNote('')
+    const { error } = await supabase.rpc('delete_org_resource', { p_resource: r.id })
+    setBusy(false)
+    setRemoving(null)
+    if (error) { console.error('delete_org_resource', error); setNote("Couldn't remove it. Try again."); return }
+    setNote('Removed.')
+    load()
+  }
+
+  function renderForm(idPrefix) {
+    return (
+      <form onSubmit={save}>
+        {FIELDS.map(([key, label, kind]) => (
+          <div key={key}>
+            <label htmlFor={idPrefix + '-' + key} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>{label}</label>
+            {kind === 'area'
+              ? <textarea id={idPrefix + '-' + key} rows={3} value={draft[key]} onChange={(e) => setDraft({ ...draft, [key]: e.target.value })} style={inputStyle} />
+              : <input id={idPrefix + '-' + key} type={kind} inputMode={kind === 'tel' ? 'tel' : kind === 'url' ? 'url' : undefined} autoComplete="off" value={draft[key]} onChange={(e) => setDraft({ ...draft, [key]: e.target.value })} style={inputStyle} />}
+          </div>
+        ))}
+        <span id={idPrefix + '-cats'} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Categories (pick one or more)</span>
+        <div role="group" aria-labelledby={idPrefix + '-cats'} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
+          {CATEGORIES.map((c) => (
+            <button key={c} type="button" aria-pressed={draft.categories.includes(c)} onClick={() => toggleCat(c)} style={{ minHeight: '44px', padding: '0 0.85rem', borderRadius: '22px', border: '1px solid ' + (draft.categories.includes(c) ? '#4ecca3' : '#444'), background: draft.categories.includes(c) ? '#4ecca3' : 'none', color: draft.categories.includes(c) ? '#1a1a1a' : '#ddd', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>{c}</button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button type="submit" disabled={busy} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>{busy ? 'Saving...' : adding ? 'Add resource' : 'Save'}</button>
+          <button type="button" onClick={() => { setEditing(null); setAdding(false) }} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#ccc', fontSize: '1rem', cursor: 'pointer' }}>Cancel</button>
+        </div>
+      </form>
+    )
   }
 
   return (
     <section className="hub-section" aria-labelledby="od-resources">
       <div className="hub-section-head">
         <h2 id="od-resources">Resources</h2>
-        <Link to="/community/resources" style={{ color: '#4ecca3', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>+ Add resource</Link>
+        {!adding && <button type="button" onClick={openAdd} style={{ background: 'none', border: 'none', color: '#4ecca3', minHeight: '44px', padding: '0 0.25rem', fontSize: '1rem', cursor: 'pointer' }}>+ Add resource</button>}
       </div>
+      {adding && <div style={{ padding: '0.75rem', background: '#1e1e1e', border: '1px solid #4ecca3', borderRadius: '10px', marginBottom: '0.5rem' }}>{renderForm('or-new')}</div>}
       {rows === null && <p>Loading...</p>}
-      {rows && rows.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No resources are listed under this group yet. Tap Add resource and choose this group.</p>}
+      {rows && rows.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No resources are listed under this group yet. Tap Add resource to list one.</p>}
       {rows && rows.length > 0 && (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {rows.map((r) => (
             <li key={r.id} style={{ padding: '0.75rem', background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px' }}>
               {editing === r.id ? (
-                <form onSubmit={save}>
-                  {FIELDS.map(([key, label, kind]) => (
-                    <div key={key}>
-                      <label htmlFor={'or-' + r.id + '-' + key} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>{label}</label>
-                      {kind === 'area'
-                        ? <textarea id={'or-' + r.id + '-' + key} rows={3} value={draft[key]} onChange={(e) => setDraft({ ...draft, [key]: e.target.value })} style={inputStyle} />
-                        : <input id={'or-' + r.id + '-' + key} type={kind} inputMode={kind === 'tel' ? 'tel' : kind === 'url' ? 'url' : undefined} autoComplete="off" value={draft[key]} onChange={(e) => setDraft({ ...draft, [key]: e.target.value })} style={inputStyle} />}
-                    </div>
-                  ))}
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button type="submit" disabled={busy} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>{busy ? 'Saving...' : 'Save'}</button>
-                    <button type="button" onClick={() => setEditing(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#ccc', fontSize: '1rem', cursor: 'pointer' }}>Cancel</button>
-                  </div>
-                </form>
+                renderForm('or-' + r.id)
               ) : (
                 <>
                   <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{r.name}</div>
@@ -88,6 +134,17 @@ export default function OrgResources({ orgId }) {
                   {r.description && <p style={{ margin: '0.3rem 0 0', fontSize: '0.9rem', color: '#ccc', overflowWrap: 'anywhere' }}>{r.description}</p>}
                   {(r.phone || r.address) && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#aaa', overflowWrap: 'anywhere' }}>{[r.phone, r.address].filter(Boolean).join(' · ')}</p>}
                   <button type="button" onClick={() => open(r)} style={{ marginTop: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Edit</button>
+                  {removing === r.id ? (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>Remove this for everyone? This can't be undone.</p>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button type="button" disabled={busy} onClick={() => remove(r)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: '#c0392b', color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>Yes, remove</button>
+                        <button type="button" onClick={() => setRemoving(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#ccc', fontSize: '1rem', cursor: 'pointer' }}>Keep it</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => { setNote(''); setEditing(null); setAdding(false); setRemoving(r.id) }} style={{ marginTop: '0.5rem', marginLeft: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #c0392b', background: 'none', color: '#ff7b6b', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Remove</button>
+                  )}
                 </>
               )}
             </li>
