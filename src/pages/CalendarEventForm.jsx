@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { DISTANCE_OPTIONS, VISIBILITY, placeFromZip } from '../utils/calendar'
 import { EVENT_TEMPLATES, addMinutes } from '../utils/eventTemplates'
+import { parsePastedEvent } from '../utils/pasteEvent'
 
 const VWB_HOST = 'vwb'
 
@@ -69,6 +70,9 @@ export default function CalendarEventForm() {
   const [loaded, setLoaded] = useState(!editing)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [pasteText, setPasteText] = useState('')
+  const [pasteNote, setPasteNote] = useState('')
+  const [pasteEmpty, setPasteEmpty] = useState(false)
   // A problem with one part of the form: which field, and what to tell the host.
   const [fieldError, setFieldError] = useState(null)
 
@@ -125,6 +129,33 @@ export default function CalendarEventForm() {
     }))
     setDurationMins(t.durationMins)
     setTemplateKey(t.key)
+  }
+
+  // Fill the form from text copied out of a Facebook event or post.
+  // It only guesses, so the host still checks every field.
+  function fillFromPaste() {
+    if (!pasteText.trim()) { setPasteEmpty(true); return }
+    setPasteEmpty(false)
+    const p = parsePastedEvent(pasteText)
+    setForm((f) => ({
+      ...f,
+      title: p.title || f.title,
+      description: p.description || f.description,
+      date: p.date || f.date,
+      startTime: p.startTime || f.startTime,
+      endTime: p.endTime || f.endTime,
+      locationName: p.locationName || f.locationName,
+      address: p.address || f.address,
+      online: p.online || f.online,
+      onlineLink: p.onlineLink || f.onlineLink,
+    }))
+    if (p.endTime) setEndTouched(true)
+    setPasteNote(p.missing.length
+      ? 'Filled in from your paste. Please add ' + p.missing.join(', ') + ', and check the rest.'
+      : 'Filled in from your paste. Please check each part before you post.')
+    setPasteText('')
+    setTemplateKey('blank')
+    setDurationMins(0)
   }
 
   function changeTemplate() {
@@ -267,6 +298,13 @@ export default function CalendarEventForm() {
         </div>
         <h2 className="evt-pick-title">What kind of event?</h2>
         <p className="cal-sub">Pick one to get a head start. You can change anything after.</p>
+        <div className="form-field" style={{ marginBottom: '1.25rem' }}>
+          <label htmlFor="ev-paste"><strong>Already posted on Facebook?</strong> Paste it here.</label>
+          <p className="cal-sub" style={{ margin: '0.25rem 0 0.5rem' }}>Copy the event or post text and paste it. We fill in the name, date, time, and place. You check it before posting.</p>
+          <textarea id="ev-paste" rows={5} value={pasteText} onChange={(e) => { setPasteText(e.target.value); setPasteEmpty(false) }} style={{ width: '100%', boxSizing: 'border-box', minHeight: '120px', fontSize: '1rem', fontFamily: 'inherit' }} />
+          {pasteEmpty && <p className="cal-field-error" role="alert">Paste some text first.</p>}
+          <button type="button" className="btn btn-outline" onClick={fillFromPaste} style={{ minHeight: '48px', marginTop: '0.5rem' }}>Fill in the form</button>
+        </div>
         <div className="evt-pick-grid">
           {EVENT_TEMPLATES.map((t) => (
             <button key={t.key} type="button" className="evt-pick" onClick={() => applyTemplate(t)}>
@@ -301,6 +339,7 @@ export default function CalendarEventForm() {
           <button type="button" className="link-button" onClick={changeTemplate}>Change</button>
         </p>
       )}
+      {pasteNote && <p className="cal-sub" role="status" style={{ fontWeight: 600 }}>{pasteNote}</p>}
       {chosen && <p className="cal-sub">We filled in a starting outline. Replace the parts after each colon with your details, and delete any lines you don't need.</p>}
 
       {error && <p className="cal-error" role="alert">{error}</p>}
