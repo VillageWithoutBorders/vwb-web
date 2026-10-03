@@ -520,6 +520,9 @@ export default function CommunityResources() {
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
                           {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#4ecca3', textDecoration: 'none', fontWeight: 600 }}>Visit &#8599;</a>}
                           {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')} style={{ fontSize: '0.8rem', color: '#66aaff', textDecoration: 'none', fontWeight: 600 }}>Call {r.phone}</a>}
+                          {Array.isArray(r.links) && r.links.filter((l) => l && /^https?:\/\//i.test(l.url || '')).map((l, i) => (
+                            <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#4ecca3', textDecoration: 'none', fontWeight: 600 }}>{l.label || 'Link'} &#8599;</a>
+                          ))}
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
