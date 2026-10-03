@@ -569,7 +569,7 @@ export default function Messages() {
         let lastMessageText = lastMsg?.body || null
         if (lastMsg && !lastMsg.body) {
           if (deviceId) {
-            const { data: copy, error: copyErr } = await supabase.from('encrypted_message_copies').select('ciphertext, nonce').eq('message_id', lastMsg.id).eq('user_id', user.id).eq('device_id', deviceId).maybeSingle()
+            const { data: copy, error: copyErr } = await supabase.from('encrypted_message_copies').select('ciphertext, nonce').eq('message_id', lastMsg.id).eq('user_id', user.id).eq('device_id', deviceId).order('version', { ascending: false }).limit(1).maybeSingle()
             if (copyErr) console.error('Failed to load encrypted preview:', copyErr)
             if (copy) lastMessageText = await decryptFromSender(copy.ciphertext, copy.nonce, lastMsg.sender_id)
           }
