@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import { useUnreadCount } from '../context/UnreadCountContext'
-import AvatarDisplay from '../components/AvatarDisplay'
+import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { submitUserReport } from '../utils/submitUserReport'
 import { sendPrivateMessage, flushOutbox, getQueuedMessages, cancelQueuedMessage, decryptFromSender, getDeviceId, editPrivateMessage, fetchEditHistory } from '../lib/e2ee'
 
@@ -370,7 +370,7 @@ export default function Conversation() {
         </button>
         <AvatarDisplay url={otherAvatar} userId={otherUserId} size={36} />
         <div className="convo-header-info">
-          <h1>{otherName}</h1>
+          <h1><UserName userId={otherUserId} name={otherName} /></h1>
           {request && <p className="convo-context">{request.skill_needed}</p>}
         </div>
         <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>

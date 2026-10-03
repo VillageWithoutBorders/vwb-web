@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import AvatarDisplay from '../components/AvatarDisplay'
+import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import QrShare from '../components/QrShare'
 import { useChatScroll } from '../hooks/useChatScroll'
 import { sendGroupPost, decryptMany, getDeviceId, editGroupPost, fetchEditHistory } from '../lib/e2ee'
@@ -797,7 +797,7 @@ export default function GroupBoard() {
                     <div key={w.userId} id={'focus-waiting-' + w.userId} tabIndex={-1} className="group-member" style={{ flexWrap: 'wrap', ...focusStyle('waiting-' + w.userId) }}>
                       {focusLabel('waiting-' + w.userId)}
                       <AvatarDisplay url={w.avatar} userId={w.userId} size={32} />
-                      <span className="group-member-name">{w.name}<span className="group-member-sub">{w.addedByName ? 'Invited by ' + (w.addedBy === user.id ? 'you' : w.addedByName) : 'Joined with the link'}</span></span>
+                      <span className="group-member-name"><UserName userId={w.userId} name={w.name} /><span className="group-member-sub">{w.addedByName ? 'Invited by ' + (w.addedBy === user.id ? 'you' : w.addedByName) : 'Joined with the link'}</span></span>
                       <span className="group-member-actions">
                         {blockedByMe
                           ? <span className="groups-note group-inline-note">Another member will let them in</span>
@@ -819,7 +819,7 @@ export default function GroupBoard() {
             {results.map(p => (
               <div key={p.user_id} className="group-member">
                 <AvatarDisplay url={p.avatar_url} userId={p.user_id} size={32} />
-                <span className="group-member-name">{p.display_name || 'Neighbor'}</span>
+                <span className="group-member-name"><UserName userId={p.user_id} name={p.display_name || 'Neighbor'} /></span>
                 <button type="button" className="btn btn-primary group-small-btn" onClick={() => invite(p)}>Invite</button>
               </div>
             ))}
@@ -877,7 +877,7 @@ export default function GroupBoard() {
                 <div key={m.userId} id={'focus-removal-' + m.userId} tabIndex={-1} className="group-member" style={focusStyle('removal-' + m.userId)}>
                   {focusLabel('removal-' + m.userId)}
                   <AvatarDisplay url={m.avatar} userId={m.userId} size={32} />
-                  <span className="group-member-name">{m.name}{isMe ? ' (you)' : ''}{isSteward ? <span className="group-steward-badge">Steward</span> : null}{group.steward_offer_to === m.userId ? <span className="group-member-sub">Asked to take over as steward</span> : null}{open && !isMe ? <span className="group-member-flag">{mine ? ' · you asked to remove' : ' · a member asked to remove'}</span> : null}{open && !isMe && open.reason ? <span className="group-member-sub">Reason: {open.reason}</span> : null}</span>
+                  <span className="group-member-name"><UserName userId={m.userId} name={m.name} />{isMe ? ' (you)' : ''}{isSteward ? <span className="group-steward-badge">Steward</span> : null}{group.steward_offer_to === m.userId ? <span className="group-member-sub">Asked to take over as steward</span> : null}{open && !isMe ? <span className="group-member-flag">{mine ? ' · you asked to remove' : ' · a member asked to remove'}</span> : null}{open && !isMe && open.reason ? <span className="group-member-sub">Reason: {open.reason}</span> : null}</span>
                   {!isMe && (
                     <span className="group-member-actions">
                       {isSteward

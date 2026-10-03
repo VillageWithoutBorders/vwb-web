@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useBlockedBy } from '../utils/blockedBy'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import AvatarDisplay from './AvatarDisplay'
+import AvatarDisplay, { UserName } from './AvatarDisplay'
 import { HOW_LABELS } from '../utils/vouchEligibility'
 
 // Names and avatars for a list of user ids, in one lookup.
@@ -56,7 +56,7 @@ export function VouchRequestsForMe({ myId }) {
         <div key={r.voucher_id} className="group-member">
           <AvatarDisplay url={r.avatar} userId={r.voucher_id} size={32} />
           <span className="group-member-name">
-            <button disabled={blockedBy.has(r.voucher_id)} type="button" className="link-button" onClick={() => !blockedBy.has(r.voucher_id) && navigate('/u/' + r.voucher_id)}>{r.name}</button>
+            <UserName userId={r.voucher_id} name={r.name} />
             <span className="group-member-sub">{HOW_LABELS[r.how] || 'Knows you'}</span>
           </span>
           <span className="group-member-actions">
@@ -92,7 +92,7 @@ export function KnowsVouchList({ userId }) {
     <ul className="vouch-knows-list" aria-label="People who know them personally">
       {rows.map(r => (
         <li key={r.voucher_id}>
-          <button disabled={blockedBy.has(r.voucher_id)} type="button" className="link-button" onClick={() => !blockedBy.has(r.voucher_id) && navigate('/u/' + r.voucher_id)}>{r.name}</button>
+          <UserName userId={r.voucher_id} name={r.name} />
           <span className="group-member-sub">{HOW_LABELS[r.how] || 'Knows them'}</span>
         </li>
       ))}

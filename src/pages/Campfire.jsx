@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useChatScroll } from '../hooks/useChatScroll'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import AvatarDisplay from '../components/AvatarDisplay'
+import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import { submitUserReport } from '../utils/submitUserReport'
 
@@ -460,8 +460,8 @@ export default function Campfire() {
               {!isMe && isGroupStart && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.15rem' }}>
                   {info.role
-                    ? <button type="button" onClick={() => navigate('/u/' + msg.user_id)} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? '#c77dff' : info.role === 'admin' ? '#66aaff' : '#4ecca3', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#444', textUnderlineOffset: '2px' }}>{info.name}</button>
-                    : <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888' }}>{info.name}</span>}
+                    ? <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? '#c77dff' : info.role === 'admin' ? '#66aaff' : '#4ecca3' }} />
+                    : <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888' }} />}
                   {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
                   {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
                   {info.ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
