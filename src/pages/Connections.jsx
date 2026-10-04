@@ -57,7 +57,7 @@ export default function Connections() {
   }, [rows, filter, q])
 
   return (
-    <div className="cal-page">
+    <div className="cal-page" style={{ maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
         <button type="button" onClick={() => navigate(-1)} aria-label="Back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Connections</h1>
@@ -85,13 +85,20 @@ export default function Connections() {
       {rows !== null && rows.length > 0 && shown.length === 0 && <p className="cal-empty">No one matches.</p>}
 
       {shown.map((r) => (
-        <div key={r.user_id} className="cal-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.6rem' }}>
+        <div key={r.user_id} className="cal-card" style={{ boxSizing: 'border-box', maxWidth: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.6rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <AvatarDisplay url={r.avatar_url} userId={r.user_id} size={40} />
             <div style={{ minWidth: 0, flex: 1 }}>
-              <UserName userId={r.user_id} name={r.display_name} style={{ fontWeight: 700 }} />
-              {r.is_ambassador && <span style={{ marginLeft: '0.4rem', background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: 4 }}>Ambassador</span>}
-              <div style={{ color: '#aaa', fontSize: '0.8rem' }}>{(r.reasons || []).map((k) => WHY[k] || k).join(' · ')}{r.last_at ? ' · ' + sinceText(r.last_at) : ''}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.4rem' }}>
+                <UserName userId={r.user_id} name={r.display_name} style={{ fontWeight: 700 }} />
+                {r.is_ambassador && <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.7rem', fontWeight: 600, padding: '1px 6px', borderRadius: 4 }}>Ambassador</span>}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.3rem' }}>
+                {(r.reasons || []).map((k) => (
+                  <span key={k} style={{ background: '#2a2a2a', color: '#ddd', fontSize: '0.75rem', padding: '2px 8px', borderRadius: 10 }}>{WHY[k] || k}</span>
+                ))}
+              </div>
+              {r.last_at && <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '0.3rem' }}>{sinceText(r.last_at)}</div>}
             </div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
