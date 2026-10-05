@@ -95,7 +95,10 @@ export default function OrgDashboard() {
     const name = (chatName || (chats.length === 0 ? orgName + ' general chat' : '')).trim()
     if (!name) { setChatNote('Give the chat a name.'); return }
     setChatBusy(true); setChatNote('')
-    const { data: newId, error } = await supabase.rpc('create_community_group', { p_name: name.slice(0, 80), p_description: null, p_organization: id })
+    const first = chats.length === 0
+    const { data: newId, error } = first
+      ? await supabase.rpc('start_org_general_chat', { p_org: id, p_name: name.slice(0, 80) })
+      : await supabase.rpc('create_community_group', { p_name: name.slice(0, 80), p_description: null, p_organization: id })
     setChatBusy(false)
     if (error || !newId) {
       console.error('Failed to start group chat:', error)
@@ -225,7 +228,7 @@ export default function OrgDashboard() {
 
       <section className="hub-section" aria-labelledby="od-chats">
         <div className="hub-section-head"><h2 id="od-chats">Group chats</h2></div>
-        <p className="hub-org-desc">Private chats for {orgName || 'your organization'}. You are the steward of any chat you start here. Invite people from inside the chat.</p>
+        <p className="hub-org-desc">Private chats for {orgName || 'your organization'}. The general chat adds everyone in your organization automatically. You are the steward of any chat you start here.</p>
         {chatsReady && chats.length === 0 && <p className="hub-empty">No chats yet. Start your general chat below.</p>}
         {chats.map((c) => (
           <button key={c.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + c.id)}>
