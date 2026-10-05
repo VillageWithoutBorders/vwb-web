@@ -4736,3 +4736,20 @@ html[data-tour-tab="top"] .app-header .header-btn {
 .user-name-btn:focus-visible { outline: 2px solid #4ecca3; outline-offset: 2px; border-radius: 3px; }
 .user-name-btn:active { opacity: 0.7; }
 @media (pointer: coarse) { .user-name-btn { padding: 12px 0; margin: -12px 0; } }
+
+/* Wrap long text on narrow phones (Connections, Groups, group page). */
+.groups-row-name { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+.groups-row-meta { flex: 0 1 auto; max-width: 45%; }
+.cal-card, .cal-card-title, .cal-card-meta, .cal-sub,
+.groups-card-desc, .groups-note, .groups-error, .groups-empty,
+.group-member, .group-member-name, .group-member-sub, .group-member-flag,
+.group-post-name, .group-link, .group-lock-note, .group-offer, .group-panel,
+.convo-context, .convo-header-info, .chat-body {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.chat-body { white-space: pre-wrap; }
+.group-member, .group-member-actions { flex-wrap: wrap; }
+.group-page, .groups-page { overflow-x: hidden; }
