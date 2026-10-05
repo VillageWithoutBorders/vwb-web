@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { useCampfireIds } from '../hooks/useCampfireIds'
+import { useSidechatParents } from '../hooks/useSidechatParents'
 
 // Groups: private circles anyone can start. No roles, no one in charge.
 // Every group has its own board (its own Campfire), end-to-end encrypted.
@@ -15,6 +16,7 @@ export default function Groups() {
   const orgsIHead = (organizations || []).filter(o => o.role === 'admin' || o.role === 'organizer')
   const navigate = useNavigate()
   const campfires = useCampfireIds()
+  const sidechatParents = useSidechatParents()
   const [groups, setGroups] = useState([])
   const [waitingGroups, setWaitingGroups] = useState([])
   const [forOrg, setForOrg] = useState('')
@@ -113,6 +115,18 @@ export default function Groups() {
     setInvites(list => list.filter(i => i.id !== groupId))
   }
 
+  // Sidechats sit directly under the chat they belong to.
+  const activeGroups = groups.filter(g => !g.archived)
+  const activeIds = new Set(activeGroups.map(g => g.id))
+  const kidsOf = {}
+  const rootGroups = []
+  for (const g of activeGroups) {
+    const parent = sidechatParents.get(g.id)
+    if (parent && activeIds.has(parent)) (kidsOf[parent] = kidsOf[parent] || []).push(g)
+    else rootGroups.push(g)
+  }
+  const orderedGroups = rootGroups.flatMap(g => [{ g, nested: false }, ...(kidsOf[g.id] || []).map(k => ({ g: k, nested: true }))])
+
   return (
     <div className="groups-page">
       <div className="groups-head">
@@ -194,9 +208,9 @@ export default function Groups() {
         <section aria-labelledby="mygroups-heading">
           <h2 id="mygroups-heading" className="groups-section">Your groups</h2>
           {groups.length === 0 && <p className="groups-empty">You're not in any groups yet. Start one, or ask a friend to invite you.</p>}
-          {groups.filter(g => !g.archived).map(g => (
-            <button key={g.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + g.id)}>
-              <span className="groups-row-name">{g.pinned ? '\u{1F4CC} ' : ''}{campfires.has(g.id) ? '\u{1F525} ' : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
+          {orderedGroups.map(({ g, nested }) => (
+            <button key={g.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + g.id)}>
+              <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? '\u{1F4CC} ' : ''}{campfires.has(g.id) ? '\u{1F525} ' : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
               <span className="groups-row-meta">{g.quiet ? 'Quiet \u00b7 ' : ''}{g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}</span>
             </button>
           ))}

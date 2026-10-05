@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { fetchCalendarEvents } from '../utils/calendar'
 import OrgResources from '../components/OrgResources'
-import OrgLinks from '../components/OrgLinks'
 import OrgConnections from '../components/OrgConnections'
 import { useCampfireIds } from '../hooks/useCampfireIds'
+import { useSidechatParents } from '../hooks/useSidechatParents'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import { UserName } from '../components/AvatarDisplay'
 
@@ -31,6 +31,9 @@ export default function OrgDashboard() {
   const isHead = isAdmin || mine?.role === 'admin'
 
   const campfires = useCampfireIds()
+  const sidechatParents = useSidechatParents()
+  const [sidePicked, setSidePicked] = useState([])
+  const [sideFilter, setSideFilter] = useState('')
   const [orgName, setOrgName] = useState(mine?.name || '')
   const [members, setMembers] = useState([])
   const [events, setEvents] = useState([])
@@ -46,7 +49,6 @@ export default function OrgDashboard() {
   // Group chats started for this organization (the ones you are in)
   const [chats, setChats] = useState([])
   const [chatsReady, setChatsReady] = useState(false)
-  const hasGeneral = chats.some((c) => c.is_general)
   const [chatName, setChatName] = useState('')
   const [chatBusy, setChatBusy] = useState(false)
   const [chatNote, setChatNote] = useState('')
@@ -102,17 +104,17 @@ export default function OrgDashboard() {
 
   async function startChat(e) {
     e.preventDefault()
-    const name = (chatName || (!hasGeneral ? orgName + ' general chat' : '')).trim()
-    if (!name) { setChatNote('Give the chat a name.'); return }
+    const general = chats.find((c) => c.is_general)
+    const name = (chatName || (!general ? orgName + ' general chat' : '')).trim()
+    if (!name) { setChatNote('Give the sidechat a name.'); return }
     setChatBusy(true); setChatNote('')
-    const first = !hasGeneral
-    const { data: newId, error } = first
+    const { data: newId, error } = !general
       ? await supabase.rpc('start_org_general_chat', { p_org: id, p_name: name.slice(0, 80) })
-      : await supabase.rpc('create_community_group', { p_name: name.slice(0, 80), p_description: null, p_organization: id })
+      : await supabase.rpc('start_sidechat', { p_parent: general.id, p_name: name.slice(0, 80), p_members: sidePicked })
     setChatBusy(false)
     if (error || !newId) {
-      console.error('Failed to start group chat:', error)
-      setChatNote(/New accounts can/i.test(error?.message || '') ? NEW_ACCOUNT_NOTE : 'Could not start the chat. Try again.')
+      console.error('Failed to start chat:', error)
+      setChatNote(/New accounts can/i.test(error?.message || '') ? NEW_ACCOUNT_NOTE : (error?.message && error.message.length < 140 && error.code && error.code !== 'PGRST202' ? error.message : 'Could not start the chat. Try again.'))
       return
     }
     navigate('/groups/' + newId, { state: { justStarted: true } })
@@ -195,6 +197,18 @@ export default function OrgDashboard() {
     )
   }
 
+  const general = chats.find((c) => c.is_general)
+  const sidechats = general ? chats.filter((c) => sidechatParents.get(c.id) === general.id) : []
+  const sideIds = new Set(sidechats.map((c) => c.id))
+  const otherChats = chats.filter((c) => c !== general && !sideIds.has(c.id))
+  const people = members.filter((u) => u.user_id !== user.id)
+  const shownPeople = people.filter((u) => !sideFilter.trim() || (u.display_name || '').toLowerCase().includes(sideFilter.trim().toLowerCase()))
+  const chatRow = (c, nested) => (
+    <button key={c.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + c.id)}>
+      <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{campfires.has(c.id) ? '\u{1F525} ' : ''}{c.name}</span>
+      <span className="groups-row-meta">Open chat &#8250;</span>
+    </button>
+  )
   const openPosts = posts.filter((p) => p.status !== 'closed' && p.status !== 'completed' && p.status !== 'cancelled')
   const tile = { padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #333', background: '#1e1e1e' }
 
@@ -250,25 +264,40 @@ export default function OrgDashboard() {
 
       <section className="hub-section" aria-labelledby="od-chats">
         <div className="hub-section-head"><h2 id="od-chats">Group chats</h2></div>
-        <p className="hub-org-desc">Private chats for {orgName || 'your organization'}. The general chat adds everyone in your organization automatically. You are the steward of any chat you start here.</p>
+        <p className="hub-org-desc">{general ? 'The general chat has everyone in ' + (orgName || 'your organization') + '. Start a sidechat under it for one task or topic, and pick who joins. Only the people you pick see it.' : 'Private chats for ' + (orgName || 'your organization') + '. The general chat adds everyone in your organization automatically.'}</p>
         {chatsReady && chats.length === 0 && <p className="hub-empty">No chats yet. Start your general chat below.</p>}
-        {chats.map((c) => (
-          <button key={c.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + c.id)}>
-            <span className="groups-row-name">{campfires.has(c.id) ? '\u{1F525} ' : ''}{c.name}</span>
-            <span className="groups-row-meta">Open chat &#8250;</span>
-          </button>
-        ))}
+        {general && chatRow(general, false)}
+        {sidechats.map((c) => chatRow(c, true))}
+        {otherChats.map((c) => chatRow(c, false))}
         <form onSubmit={startChat} noValidate style={{ marginTop: '0.75rem' }}>
-          <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{!hasGeneral ? 'Name for your general chat' : 'Start another chat (for example, Volunteers)'}</label>
-          <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={!hasGeneral ? (orgName || 'Organization') + ' general chat' : 'Chat name'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
+          <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{!general ? 'Name for your general chat' : 'Start a sidechat under ' + general.name}</label>
+          <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={!general ? (orgName || 'Organization') + ' general chat' : 'For example, Volunteers or Food drive'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
+          {general && (
+            <fieldset style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
+              <legend className="cal-sub">Who is in it (you are added automatically)</legend>
+              {people.length > 8 && (
+                <input type="search" aria-label="Search the group by name" placeholder="Type a name" value={sideFilter} onChange={(e) => setSideFilter(e.target.value)} autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: 44, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
+              )}
+              <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+                {shownPeople.map((u) => (
+                  <label key={u.user_id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minHeight: 44 }}>
+                    <input type="checkbox" checked={sidePicked.includes(u.user_id)} onChange={() => setSidePicked((s) => (s.includes(u.user_id) ? s.filter((x) => x !== u.user_id) : [...s, u.user_id]))} style={{ width: 22, height: 22 }} />
+                    <span>{u.display_name}</span>
+                  </label>
+                ))}
+                {people.length === 0 && <p className="hub-empty">No one else is in the group yet.</p>}
+              </div>
+              {people.length > 1 && (
+                <button type="button" className="btn btn-outline group-small-btn" style={{ marginTop: '0.4rem' }} onClick={() => setSidePicked(sidePicked.length === people.length ? [] : people.map((u) => u.user_id))}>{sidePicked.length === people.length ? 'Clear everyone' : 'Pick everyone'}</button>
+              )}
+            </fieldset>
+          )}
           {chatNote && <p role="alert" className="groups-error">{chatNote}</p>}
-          <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : !hasGeneral ? 'Start the general chat' : 'Start chat'}</button>
+          <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : !general ? 'Start the general chat' : 'Start sidechat'}</button>
         </form>
       </section>
 
       {mine && <OrgConnections orgId={id} orgName={orgName} />}
-
-      {orgInfo && <OrgLinks org={orgInfo} canManage={allowed} part="manage" onChanged={load} />}
 
       <section className="hub-section" aria-labelledby="od-events">
         <div className="hub-section-head">
