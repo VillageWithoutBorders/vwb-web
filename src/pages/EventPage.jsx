@@ -5,10 +5,11 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import CommunityGuidelines from './CommunityGuidelines'
-import { fetchCalendarEvent, fullDateTime, googleCalendarLink, isAndroid, downloadIcs, eventUrl, VISIBILITY } from '../utils/calendar'
+import { fetchCalendarEvent, fullDateTime, googleCalendarLink, isAndroid, downloadIcs, eventUrl, mapLink, VISIBILITY } from '../utils/calendar'
 import { setReturnTo, clearReturnTo } from '../utils/returnTo'
 import { startConversation } from '../utils/startConversation'
 import { UserName } from '../components/AvatarDisplay'
+import Linkify from '../components/Linkify'
 
 // One event. Public route on purpose: this is the page people land on from
 // the website calendar, a shared Facebook post, or a private invite link,
@@ -304,7 +305,18 @@ export default function EventPage() {
         <p className="cal-sub" style={{ margin: 0 }}>{ev.organization_name || 'Village Without Borders'}</p>
         <h1 style={{ margin: '0.25rem 0 0.75rem', fontSize: '1.6rem', lineHeight: 1.25 }}>{ev.title}</h1>
 
-        <div className="cal-detail-row"><span aria-hidden="true">&#128197;</span><span>{fullDateTime(ev)}</span></div>
+        <div className="cal-detail-row">
+          <span aria-hidden="true">&#128197;</span>
+          {cancelled ? <span>{fullDateTime(ev)}</span> : (
+            <span>
+              <button type="button" onClick={() => downloadIcs(ev)}
+                style={{ background: 'none', border: 'none', padding: 0, minHeight: 44, display: 'inline-flex', alignItems: 'center', textAlign: 'left', font: 'inherit', color: '#4ecca3', textDecoration: 'underline', cursor: 'pointer' }}>
+                {fullDateTime(ev)}
+              </button>
+              <br /><em style={{ color: 'var(--text-secondary)' }}>Tap the date to add it to your calendar.</em>
+            </span>
+          )}
+        </div>
         {ev.is_online ? (
           <div className="cal-detail-row">
             <span aria-hidden="true">&#127760;</span>
@@ -319,9 +331,18 @@ export default function EventPage() {
         <div className="cal-detail-row">
           <span aria-hidden="true">&#128205;</span>
           <span>
-            {[ev.location_name, ev.address].filter(Boolean).join(', ') || null}
-            {(ev.location_name || ev.address) && ev.town ? <br /> : null}
-            {ev.town}
+            {mapLink(ev) && (ev.location_name || ev.address) ? (
+              <a href={mapLink(ev)} {...(mapLink(ev).startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})} style={{ color: '#4ecca3' }}>
+                {[ev.location_name, ev.address].filter(Boolean).join(', ')}
+                {ev.town ? <><br />{ev.town}</> : null}
+              </a>
+            ) : (
+              <>
+                {[ev.location_name, ev.address].filter(Boolean).join(', ') || null}
+                {(ev.location_name || ev.address) && ev.town ? <br /> : null}
+                {ev.town}
+              </>
+            )}
             {placeHidden && <><br /><em style={{ color: 'var(--text-secondary)' }}>The exact address is shared with people who sign up.</em></>}
           </span>
         </div>
@@ -334,7 +355,7 @@ export default function EventPage() {
           <div className="cal-detail-row"><span aria-hidden="true">&#128274;</span><span>{VISIBILITY[ev.visibility].label}. {VISIBILITY[ev.visibility].desc}</span></div>
         )}
 
-        {ev.description && <p className="cal-description">{ev.description}</p>}
+        {ev.description && <p className="cal-description"><Linkify text={ev.description} /></p>}
 
         {organizers.length > 0 && (
           <section className="cal-box" aria-label="Contact the organizers">

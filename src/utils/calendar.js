@@ -156,6 +156,19 @@ export function googleCalendarLink(ev) {
   return 'https://calendar.google.com/calendar/render?' + params.toString()
 }
 
+// A link that opens the phone's own map app for the event's place.
+// iPhone and iPad: Apple Maps. Android: geo link, so it opens whatever map
+// app is the default. Computers: Google Maps in a new tab.
+export function mapLink(ev) {
+  const q = [ev.location_name, ev.address, ev.town].filter(Boolean).join(', ')
+  if (!q) return null
+  const ua = typeof navigator !== 'undefined' ? (navigator.userAgent || '') : ''
+  const iOS = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1)
+  if (iOS) return 'https://maps.apple.com/?q=' + encodeURIComponent(q)
+  if (/android/i.test(ua)) return 'geo:0,0?q=' + encodeURIComponent(q)
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q)
+}
+
 export function isAndroid() {
   return typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent || '')
 }
