@@ -20,7 +20,7 @@ export const TYPE_ICONS = {
   safety_report: '\u{1F6A9}',
   report_reviewed: '\u2705',
   group_removal_request: '\u{1F525}',
-  campfire: '\u{1F525}',
+  campfire: '\u{1F4E3}',
   calendar_signup: '\u{1F4C5}',
   calendar_invite: '\u{1F4C5}',
   calendar_update: '\u{1F4E3}',

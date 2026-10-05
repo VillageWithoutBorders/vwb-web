@@ -338,7 +338,7 @@ export default function Campfire() {
   if (!hasAccess) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
-        <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>&#128293;</p>
+        <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>&#128227;</p>
         <h2 style={{ color: '#ffaa44', marginBottom: '0.5rem' }}>Come sit by the fire</h2>
         <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>The Village Square is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Apply to become a Hope Ambassador. An admin looks over each application so this stays a place people can trust, and once you're in, you'll have a seat.</p>
         <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>Apply to be a Hope Ambassador</button>
@@ -358,7 +358,7 @@ export default function Campfire() {
         <button onClick={() => navigate('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span>&#128293;</span> The Village Square
+            <span>&#128227;</span> The Village Square
           </h1>
           <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? activeBoard.name + ' board' : 'Ambassadors, admins, and the founder'}</p>
         </div>
@@ -432,7 +432,7 @@ export default function Campfire() {
 
         {!loading && visibleMessages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '2rem', color: '#8a8a8a' }}>
-            <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128293;</p>
+            <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128227;</p>
             <p>The fire is lit. Be the first to speak.</p>
           </div>
         )}
