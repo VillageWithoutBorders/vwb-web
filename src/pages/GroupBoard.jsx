@@ -619,7 +619,7 @@ export default function GroupBoard() {
           const start = !prev || prev.sender_id !== p.sender_id || (new Date(p.created_at) - new Date(prev.created_at)) > GROUP_WINDOW_MS
           return (
             <div key={p.id} className={'group-post' + (isMe ? ' mine' : '')} style={{ marginTop: start ? '0.6rem' : '0.15rem' }}>
-              {!isMe && (start ? <AvatarDisplay url={avatarOf(p.sender_id)} userId={p.sender_id} size={24} /> : <div style={{ width: 24, flexShrink: 0 }} />)}
+              {!isMe && <AvatarDisplay url={avatarOf(p.sender_id)} userId={p.sender_id} size={28} />}
               <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs')}>
                 {!isMe && start && <p className="group-post-name">{nameOf(p.sender_id)}</p>}
                 <p className="chat-body">{p.text}</p>
@@ -630,6 +630,7 @@ export default function GroupBoard() {
                   {isMe && <> · <button type="button" className="group-post-delete" onClick={() => deletePost(p)}>Delete</button></>}
                 </span>
               </div>
+              {isMe && <AvatarDisplay url={avatarOf(user.id)} userId={user.id} size={28} />}
             </div>
           )
         })}
