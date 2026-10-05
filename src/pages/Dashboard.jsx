@@ -75,6 +75,36 @@ function NearbyNeedTiles() {
   )
 }
 
+function VillageAsk() {
+  const { profile, refreshProfile } = useAuth()
+  const navigate = useNavigate()
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  // Only ask people who have not answered yet.
+  if (!profile || profile.village_opt_in !== null && profile.village_opt_in !== undefined) return null
+
+  async function answer(yes) {
+    setSaving(true); setError('')
+    const { error: err } = await supabase.from('helper_profiles').update({ village_opt_in: yes }).eq('user_id', profile.user_id)
+    if (err) { console.error('[VillageAsk]', err); setError('Could not save that. Try again.'); setSaving(false); return }
+    await refreshProfile()
+    setSaving(false)
+    if (yes && !profile.zip_code) navigate('/profile')
+  }
+
+  return (
+    <div className="village-ask" role="region" aria-label="Local village chat">
+      <p className="village-ask-title"><span aria-hidden="true">&#127969;</span> Join your local village chat?</p>
+      <p className="village-ask-text">It is the chat for your area. We use your zip code to find it. You can leave any time from your Profile.</p>
+      {error && <p className="form-error" role="alert">{error}</p>}
+      <div className="village-ask-buttons">
+        <button type="button" className="btn btn-primary" disabled={saving} onClick={() => answer(true)}>Yes, join</button>
+        <button type="button" className="btn btn-outline" disabled={saving} onClick={() => answer(false)}>No thanks</button>
+      </div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const { profile, isAdmin, organizations } = useAuth()
   // Founders and admins can open any group's dashboard, even if they aren't a member.
@@ -109,6 +139,7 @@ export default function Dashboard() {
       )}
       <AmbassadorBanner />
       {(profile?.is_hope_ambassador || isAdmin) && <NearbyNeedTiles />}
+      <VillageAsk />
       <PushBanner />
       <InstallBanner />
       <RecoveryNudge />
