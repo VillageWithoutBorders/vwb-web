@@ -151,6 +151,15 @@ export default function Profile() {
     setEditing(false); setError('')
   }
 
+  const [villageSaving, setVillageSaving] = useState(false)
+  async function toggleVillage(on) {
+    setVillageSaving(true)
+    const { error: vErr } = await supabase.from('helper_profiles').update({ village_opt_in: on }).eq('user_id', user.id)
+    reportError('toggleVillage', vErr)
+    if (!vErr) await refreshProfile()
+    setVillageSaving(false)
+  }
+
   async function handleSave() {
     if (!displayName.trim()) { setError('Name is required.'); return }
     setSaving(true); setError(''); setMessage('')
@@ -330,6 +339,14 @@ function captureCoverageLocation() {
         </div>
 
         <VouchRequestsForMe myId={user?.id} />
+
+        <label className="checkbox-field" style={{ alignItems: 'flex-start', margin: '0.75rem 0' }}>
+          <input type="checkbox" checked={profile?.village_opt_in === true} disabled={villageSaving} onChange={(e) => toggleVillage(e.target.checked)} />
+          <span>
+            <strong style={{ display: 'block' }}>Join my local village chat</strong>
+            We find it from your zip code. Turn this off any time to leave.
+          </span>
+        </label>
 
         <div className="profile-details">
           <div className="detail-row">
