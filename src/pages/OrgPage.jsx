@@ -6,7 +6,6 @@ import { fetchCalendarEvents } from '../utils/calendar'
 import { CalendarEventList } from '../components/CalendarParts'
 import { resourceCats } from '../utils/resourceCategories'
 import QrShare from '../components/QrShare'
-import OrgLinks from '../components/OrgLinks'
 import CalendarSubscribe from '../components/CalendarSubscribe'
 
 // One organization: who they are, what's coming up, what they share, and
@@ -173,7 +172,6 @@ export default function OrgPage() {
 
       {!org.hide_from_public && <CalendarSubscribe orgId={id} orgName={org.name} />}
 
-      <OrgLinks org={org} canManage={canManage} events={allEvents} onChanged={loadOrg} part="public" />
 
       <section className="hub-section" aria-labelledby="org-resources">
         <div className="hub-section-head">
