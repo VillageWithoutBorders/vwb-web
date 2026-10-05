@@ -297,6 +297,11 @@ export default function EventDetail() {
 
     if (closeReason === 'false_alarm') {
       if (isAdmin) {
+        // Clear what hangs off the event first, so the delete is not blocked.
+        for (const table of ['event_signups', 'event_check_ins', 'event_resources', 'event_close_votes']) {
+          const { error: relErr } = await supabase.from(table).delete().eq('event_id', Number(id))
+          if (relErr) console.error('Failed to clear ' + table + ' before removing event:', relErr)
+        }
         const { error } = await supabase.from('emergency_events').delete().eq('id', id)
         setClosingEvent(false)
         if (error) { console.error('Failed to remove event:', error); alert('Could not remove this event. Try again.'); return }
