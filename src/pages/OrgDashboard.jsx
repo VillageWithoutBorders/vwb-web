@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { fetchCalendarEvents } from '../utils/calendar'
 import OrgResources from '../components/OrgResources'
 import OrgLinks from '../components/OrgLinks'
+import OrgConnections from '../components/OrgConnections'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import { UserName } from '../components/AvatarDisplay'
 
@@ -43,6 +44,7 @@ export default function OrgDashboard() {
   // Group chats started for this organization (the ones you are in)
   const [chats, setChats] = useState([])
   const [chatsReady, setChatsReady] = useState(false)
+  const hasGeneral = chats.some((c) => c.is_general)
   const [chatName, setChatName] = useState('')
   const [chatBusy, setChatBusy] = useState(false)
   const [chatNote, setChatNote] = useState('')
@@ -80,11 +82,17 @@ export default function OrgDashboard() {
     if (!id || !user?.id) return
     const { data, error } = await supabase
       .from('community_group_members')
-      .select('group_id, status, community_groups!inner (id, name, organization_id)')
+      .select('group_id, status, community_groups!inner (id, name, organization_id, is_general)')
       .eq('user_id', user.id)
       .eq('community_groups.organization_id', id)
     if (error) console.error('Failed to load group chats:', error)
-    setChats((data || []).filter((r) => r.status !== 'waiting' && r.community_groups).map((r) => r.community_groups).sort((a, b) => a.name.localeCompare(b.name)))
+    const own = (data || []).filter((r) => r.status !== 'waiting' && r.community_groups).map((r) => r.community_groups)
+    // Organizing chats other groups started with this one
+    const { data: shared, error: sharedErr } = await supabase.rpc('my_org_chats', { p_org: id })
+    if (sharedErr) console.error('Failed to load organizing chats:', sharedErr)
+    const byId = new Map(own.map((c) => [c.id, c]))
+    for (const c of shared || []) if (!byId.has(c.id)) byId.set(c.id, c)
+    setChats([...byId.values()].sort((a, b) => a.name.localeCompare(b.name)))
     setChatsReady(true)
   }, [id, user?.id])
 
@@ -92,10 +100,10 @@ export default function OrgDashboard() {
 
   async function startChat(e) {
     e.preventDefault()
-    const name = (chatName || (chats.length === 0 ? orgName + ' general chat' : '')).trim()
+    const name = (chatName || (!hasGeneral ? orgName + ' general chat' : '')).trim()
     if (!name) { setChatNote('Give the chat a name.'); return }
     setChatBusy(true); setChatNote('')
-    const first = chats.length === 0
+    const first = !hasGeneral
     const { data: newId, error } = first
       ? await supabase.rpc('start_org_general_chat', { p_org: id, p_name: name.slice(0, 80) })
       : await supabase.rpc('create_community_group', { p_name: name.slice(0, 80), p_description: null, p_organization: id })
@@ -140,6 +148,18 @@ export default function OrgDashboard() {
     () => supabase.rpc('set_org_member_role', { p_org: id, p_user: u.user_id, p_role: role }),
     u.display_name + (role === 'organizer' ? ' is now an organizer.' : ' is now a member.'),
   )
+
+  const makeHead = (u) => {
+    if (!confirm('Make ' + u.display_name + ' a Head of ' + orgName + '? Heads can change anyone\'s role and remove members.')) return
+    run(() => supabase.rpc('make_org_head', { p_org: id, p_user: u.user_id }), u.display_name + ' is now a Head.')
+  }
+
+  const stepDown = () => {
+    if (!confirm('Step down as Head of ' + orgName + '? You will stay on as an organizer.')) return
+    run(() => supabase.rpc('step_down_org_head', { p_org: id }), 'You are now an organizer.')
+  }
+
+  const headCount = members.filter((x) => x.role === 'admin').length
 
   const removeMember = (u) => {
     if (!confirm('Remove ' + u.display_name + ' from ' + orgName + '?')) return
@@ -237,12 +257,14 @@ export default function OrgDashboard() {
           </button>
         ))}
         <form onSubmit={startChat} noValidate style={{ marginTop: '0.75rem' }}>
-          <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{chats.length === 0 ? 'Name for your general chat' : 'Start another chat (for example, Volunteers)'}</label>
-          <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={chats.length === 0 ? (orgName || 'Organization') + ' general chat' : 'Chat name'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
+          <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{!hasGeneral ? 'Name for your general chat' : 'Start another chat (for example, Volunteers)'}</label>
+          <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={!hasGeneral ? (orgName || 'Organization') + ' general chat' : 'Chat name'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
           {chatNote && <p role="alert" className="groups-error">{chatNote}</p>}
-          <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : chats.length === 0 ? 'Start the general chat' : 'Start chat'}</button>
+          <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : !hasGeneral ? 'Start the general chat' : 'Start chat'}</button>
         </form>
       </section>
+
+      {mine && <OrgConnections orgId={id} orgName={orgName} />}
 
       {orgInfo && <OrgLinks org={orgInfo} canManage={allowed} part="manage" onChanged={load} />}
 
@@ -290,8 +312,14 @@ export default function OrgDashboard() {
               <strong><UserName userId={u.user_id} name={u.display_name} /></strong>
               <span className="group-member-sub">{ROLE_LABEL[u.role] || u.role}</span>
             </div>
+            {u.role === 'admin' && u.user_id === user.id && headCount > 1 && (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={stepDown}>Step down as Head</button>
+              </div>
+            )}
             {u.role !== 'admin' && (
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => makeHead(u)}>Make Head</button>}
                 {isHead && u.role === 'member' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'organizer')}>Make organizer</button>}
                 {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'member')}>Make member</button>}
                 {(isHead || u.role === 'member') && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => removeMember(u)}>Remove</button>}
