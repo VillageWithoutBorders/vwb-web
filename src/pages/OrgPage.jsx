@@ -173,7 +173,7 @@ export default function OrgPage() {
 
       {!org.hide_from_public && <CalendarSubscribe orgId={id} orgName={org.name} />}
 
-      <OrgLinks org={org} canManage={canManage} events={allEvents} onChanged={loadOrg} />
+      <OrgLinks org={org} canManage={canManage} events={allEvents} onChanged={loadOrg} part="public" />
 
       <section className="hub-section" aria-labelledby="org-resources">
         <div className="hub-section-head">

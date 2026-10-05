@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { fetchCalendarEvents } from '../utils/calendar'
 import OrgResources from '../components/OrgResources'
+import OrgLinks from '../components/OrgLinks'
+import { UserName } from '../components/AvatarDisplay'
 
 // The organizer's home base for one group: shortcuts, members, upcoming
 // events with sign-up counts, and the needs and offers posted under the
@@ -36,6 +38,7 @@ export default function OrgDashboard() {
   const [searched, setSearched] = useState(false)
   const [busy, setBusy] = useState(false)
   const [allOrgs, setAllOrgs] = useState([])
+  const [orgInfo, setOrgInfo] = useState(null)
 
   // Founders and admins can open any approved group, member or not.
   useEffect(() => {
@@ -52,7 +55,7 @@ export default function OrgDashboard() {
       supabase.rpc('list_org_members', { p_org: id }),
       supabase.rpc('org_needs_and_offers', { p_org: id }),
       fetchCalendarEvents(),
-      supabase.from('organizations').select('name').eq('id', id).maybeSingle(),
+      supabase.from('organizations').select('id, name, is_umbrella, affiliate_label').eq('id', id).maybeSingle(),
     ])
     if (m.error) console.error('Failed to load members:', m.error)
     if (p.error) console.error('Failed to load needs and offers:', p.error)
@@ -60,6 +63,7 @@ export default function OrgDashboard() {
     setPosts(p.data || [])
     setEvents((ev.events || []).filter((e) => e.organization_id === id && e.can_manage))
     if (o.data?.name) setOrgName(o.data.name)
+    if (o.data) setOrgInfo(o.data)
     setLoading(false)
   }, [id, allowed])
 
@@ -183,6 +187,8 @@ export default function OrgDashboard() {
         </div>
       </section>
 
+      {orgInfo && <OrgLinks org={orgInfo} canManage={allowed} part="manage" onChanged={load} />}
+
       <section className="hub-section" aria-labelledby="od-events">
         <div className="hub-section-head">
           <h2 id="od-events">Events and sign-ups</h2>
@@ -224,7 +230,7 @@ export default function OrgDashboard() {
         {members.map((u) => (
           <div key={u.user_id} className="ban-row">
             <div className="ban-row-main">
-              <strong>{u.display_name}</strong>
+              <strong><UserName userId={u.user_id} name={u.display_name} /></strong>
               <span className="group-member-sub">{ROLE_LABEL[u.role] || u.role}</span>
             </div>
             {u.role !== 'admin' && (
@@ -245,7 +251,7 @@ export default function OrgDashboard() {
         {searched && found.length === 0 && <p className="hub-empty">No one found. They need a VWB account first.</p>}
         {found.map((u) => (
           <div key={u.user_id} className="ban-row">
-            <div className="ban-row-main"><strong>{u.display_name}</strong></div>
+            <div className="ban-row-main"><strong><UserName userId={u.user_id} name={u.display_name} /></strong></div>
             <button type="button" className="btn btn-primary group-small-btn" disabled={busy} onClick={() => addMember(u)}>Add</button>
           </div>
         ))}
