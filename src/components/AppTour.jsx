@@ -15,6 +15,10 @@ import { supabase } from '../supabaseClient'
 // It sits just above the bottom tab bar and lights up the tab it's talking
 // about, so people learn where things live instead of reading about them.
 // Plain words on purpose: short sentences, one idea per card.
+//
+// Practice round (optional): after SkillShare, a sample request, offer, and
+// event let people try the buttons. Nothing is saved, nobody is notified, and
+// "Skip practice" jumps past it at any time, even on the first-time tour.
 
 const START_EVENT = 'vwb:start-tour'
 
@@ -28,7 +32,7 @@ const ALL_STEPS = [
     tab: 'home',
     icon: '\u{1F64B}',
     title: 'Home',
-    body: 'Need a hand? Tap Ask for Help. Pick what you need and how soon. Neighbors near you will see it, and your address is never shown. You can fix a request later if something changes. The Calendar, My Groups, and the Village Map are here too.',
+    body: 'Need a hand? Tap Ask for Help. Pick what you need and how soon. Neighbors near you will see it, and your address is never shown. You can fix a request later if something changes. The Calendar, your Cottage Chats and Campfires, and the Village Map are here too.',
   },
   {
     tab: 'community',
@@ -46,6 +50,30 @@ const ALL_STEPS = [
     icon: '\u{1F91D}',
     title: 'SkillShare',
     body: 'See what neighbors near you need, and what they are giving away for free. If you can help with something, tap I can help.',
+  },
+  {
+    practice: 'intro',
+    icon: '\u270B',
+    title: 'Want to practice?',
+    body: 'Try a sample request, offer, and event. Nothing is real, nobody is told, and nothing is saved. It takes about a minute. Or skip it. You can always take the tour again later.',
+  },
+  {
+    practice: 'request',
+    icon: '\u{1F64B}',
+    title: 'Practice: a request',
+    body: 'This is how a request looks to your neighbors. Tap the button to see what happens.',
+  },
+  {
+    practice: 'offer',
+    icon: '\u{1F381}',
+    title: 'Practice: an offer',
+    body: 'Neighbors share skills, time, and things they can spare. Tap the button to try it.',
+  },
+  {
+    practice: 'event',
+    icon: '\u{1F4C5}',
+    title: 'Practice: an event',
+    body: 'Events are gatherings and drives in your area. Tap the button to try it.',
   },
   {
     tab: 'messages',
@@ -85,6 +113,49 @@ const ALL_STEPS = [
   },
 ]
 
+// Sample cards for the practice round. Static on purpose: no database, no alerts.
+const SAMPLES = {
+  request: {
+    label: 'Request',
+    title: 'SAMPLE: Help carrying groceries',
+    text: 'This is an example request. Nothing here is real.',
+    action: 'I can help',
+    after: 'Nice. In the real app, the person gets an alert, and the two of you can message to set a time and place. Your address stays private.',
+  },
+  offer: {
+    label: 'Offer',
+    title: 'SAMPLE: Free ride to the clinic',
+    text: 'This is an example offer. Nothing here is real.',
+    action: 'Ask about this',
+    after: 'Nice. In the real app, you can send a message to ask about it. Once a neighbor vouches for you, you can post offers too.',
+  },
+  event: {
+    label: 'Event',
+    title: 'SAMPLE: Community Cleanup Day',
+    text: 'This is an example event. Nothing here is real.',
+    action: 'Sign up',
+    after: 'Nice. In the real app, you would be on the list, and the organizers would see you are coming. You can take your name off any time.',
+  },
+}
+
+function SampleCard({ kind }) {
+  const [tried, setTried] = useState(false)
+  const s = SAMPLES[kind]
+  if (!s) return null
+  return (
+    <div className="tour-sample" role="group" aria-label={'Sample ' + s.label.toLowerCase()}>
+      <span className="tour-sample-tag">Sample {s.label.toLowerCase()}</span>
+      <p className="tour-sample-title">{s.title}</p>
+      <p className="tour-sample-text">{s.text}</p>
+      {tried ? (
+        <p className="tour-sample-after" role="status">{s.after}</p>
+      ) : (
+        <button type="button" className="btn btn-outline tour-sample-btn" onClick={() => setTried(true)}>{s.action}</button>
+      )}
+    </div>
+  )
+}
+
 // Everyone sees the same walk-through, except steps marked for a smaller group.
 function stepsFor(profile, isAdmin) {
   const hasCampfire = !!(profile?.is_hope_ambassador || isAdmin)
@@ -110,6 +181,11 @@ export default function AppTour() {
   const STEPS = stepsFor(profile, isAdmin)
   const step = STEPS[index] || STEPS[0]
   const isLast = index === STEPS.length - 1
+  const inPractice = !!step.practice
+  function skipPractice() {
+    const next = STEPS.findIndex((st, i) => i > index && !st.practice)
+    setIndex(next === -1 ? STEPS.length - 1 : next)
+  }
 
   // First time for a new member: open it, and it has to be finished.
   useEffect(() => {
@@ -176,9 +252,14 @@ export default function AppTour() {
       <div className="tour-sheet" role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourBody">
         <div className="tour-top">
           <span className="tour-count">Step {index + 1} of {STEPS.length}</span>
-          {!required && (
-            <button type="button" className="tour-skip" onClick={() => setOpen(false)}>Close</button>
-          )}
+          <span className="tour-top-actions">
+            {inPractice && (
+              <button type="button" className="tour-skip" onClick={skipPractice}>Skip practice</button>
+            )}
+            {!required && (
+              <button type="button" className="tour-skip" onClick={() => setOpen(false)}>Close</button>
+            )}
+          </span>
         </div>
 
         <div className="tour-dots" aria-hidden="true">
@@ -191,6 +272,7 @@ export default function AppTour() {
           <div className="tour-icon" aria-hidden="true">{step.icon}</div>
           <h2 id="tourTitle" className="tour-title" tabIndex={-1} ref={headingRef}>{step.title}</h2>
           <p id="tourBody" className="tour-body">{step.body}</p>
+          {step.practice && step.practice !== 'intro' && <SampleCard kind={step.practice} />}
           {step.tab && <p className="tour-hint">Look for the lit-up button at the bottom of your screen.</p>}
           {step.top && <p className="tour-hint">Look for the lit-up buttons at the top of your screen.</p>}
           {step.last && <p className="tour-hint">{step.last}</p>}
@@ -210,7 +292,7 @@ export default function AppTour() {
             </button>
           ) : (
             <button type="button" className="btn btn-primary tour-btn tour-btn-main" onClick={() => setIndex(i => i + 1)}>
-              {index === 0 ? 'Show me around' : 'Next'}
+              {index === 0 ? 'Show me around' : step.practice === 'intro' ? 'Try it' : 'Next'}
             </button>
           )}
         </div>
