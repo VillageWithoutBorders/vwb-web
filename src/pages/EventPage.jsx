@@ -316,11 +316,20 @@ export default function EventPage() {
                 {fullDateTime(ev)}
               </button>
               <br /><em style={{ color: 'var(--text-secondary)' }}>Tap the date to add it to your calendar.</em>
+              {(isAndroid() || isIOS()) && (
+                <>
+                  <br />
+                  <button type="button" onClick={() => downloadIcs(ev)}
+                    style={{ background: 'none', border: 'none', padding: 0, minHeight: 44, textAlign: 'left', font: 'inherit', fontSize: '0.9rem', color: 'var(--text-secondary)', textDecoration: 'underline', cursor: 'pointer' }}>
+                    Using Proton or another calendar? Download the file instead.
+                  </button>
+                </>
+              )}
               {calMenu && !isAndroid() && !isIOS() && (
                 <div className="cal-actions" style={{ marginTop: '0.5rem' }}>
                   <a className="btn btn-outline btn-full" href={googleCalendarLink(ev)} target="_blank" rel="noopener noreferrer">Google Calendar</a>
                   <a className="btn btn-outline btn-full" href={outlookCalendarLink(ev)} target="_blank" rel="noopener noreferrer">Outlook calendar</a>
-                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Apple or other calendar (file)</button>
+                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Proton, Apple or other calendar (file)</button>
                 </div>
               )}
             </span>
