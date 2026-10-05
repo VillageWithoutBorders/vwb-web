@@ -118,50 +118,52 @@ export default function Dashboard() {
       </div>
       {/* Community, SkillShare, and Messages already live in the bottom tab
           bar, so they're deliberately left out here rather than repeated.
-          What's left are the things that don't have a tab of their own. */}
-      <div className="quick-actions">
-        <button className="action-card" onClick={() => navigate('/ask')}>
-          <span className="action-icon" aria-hidden="true">&#127384;</span>
-          <span className="action-label">Ask for Help</span>
-          <span className="action-desc">Post a request for your community</span>
+          Home keeps two big buttons and a short More row. Ambassador and admin
+          tools sit in a closed fold. The Emergency button stays at the bottom. */}
+      <div className="home-primary">
+        <button type="button" className="btn btn-primary home-btn" onClick={() => navigate('/ask')}>
+          <span aria-hidden="true">&#127384;</span> Ask for help
         </button>
-        <button className="action-card" onClick={() => navigate('/calendar')}>
-          <span className="action-icon" aria-hidden="true">&#128197;</span>
-          <span className="action-label">Calendar</span>
-          <span className="action-desc">Events and volunteer sign-ups near you</span>
+        <button type="button" className="btn btn-outline home-btn" onClick={() => navigate('/skillshare')}>
+          <span aria-hidden="true">&#128154;</span> I can help
         </button>
-        <button className="action-card" onClick={() => navigate('/groups')}>
-          <span className="action-icon" aria-hidden="true">&#129309;</span>
-          <span className="action-label">Cottage Chats &amp; Campfires</span>
-          <span className="action-desc">Your private chats, invites, and join links</span>
+      </div>
+      <p className="home-more-label">More</p>
+      <div className="home-tiles">
+        <button type="button" className="home-tile" aria-label="Calendar: events and volunteer sign-ups near you" onClick={() => navigate('/calendar')}>
+          <span className="home-tile-icon" aria-hidden="true">&#128197;</span>Calendar
         </button>
-        <button className="action-card" onClick={() => navigate('/villages')}>
-          <span className="action-icon" aria-hidden="true">&#128506;</span>
-          <span className="action-label">Village Map</span>
-          <span className="action-desc">See every village and how they connect</span>
+        <button type="button" className="home-tile" aria-label="Cottage Chats and Campfires: your private chats, invites, and join links" onClick={() => navigate('/groups')}>
+          <span className="home-tile-icon" aria-hidden="true">&#129309;</span>Chats
+        </button>
+        <button type="button" className="home-tile" aria-label="Village Map: see every village and how they connect" onClick={() => navigate('/villages')}>
+          <span className="home-tile-icon" aria-hidden="true">&#128506;</span>Map
         </button>
         {runsAGroup && (
-          <button className="action-card" onClick={() => navigate('/org-dashboard')}>
-            <span className="action-icon" aria-hidden="true">&#127968;</span>
-            <span className="action-label">Organization Dashboard</span>
-            <span className="action-desc">Events, members, needs and offers for your group</span>
-          </button>
-        )}
-        {(profile?.is_hope_ambassador || isAdmin) && (
-          <button className="action-card" onClick={() => navigate('/campfire')}>
-            <span className="action-icon" aria-hidden="true">&#128227;</span>
-            <span className="action-label">Village Square</span>
-            <span className="action-desc">Chat with fellow ambassadors and admins</span>
-          </button>
-        )}
-        {isAdmin && (
-          <button className="action-card" onClick={() => navigate('/admin')}>
-            <span className="action-icon" aria-hidden="true">&#9881;</span>
-            <span className="action-label">Admin Panel</span>
-            <span className="action-desc">Reports, users, villages, and approvals</span>
+          <button type="button" className="home-tile" aria-label="Organization Dashboard: events, members, needs and offers for your group" onClick={() => navigate('/org-dashboard')}>
+            <span className="home-tile-icon" aria-hidden="true">&#127968;</span>My group
           </button>
         )}
       </div>
+      {(profile?.is_hope_ambassador || isAdmin) && (
+        <details className="home-fold">
+          <summary>Ambassador and admin tools</summary>
+          <div className="quick-actions">
+            <button className="action-card" onClick={() => navigate('/campfire')}>
+              <span className="action-icon" aria-hidden="true">&#128227;</span>
+              <span className="action-label">Village Square</span>
+              <span className="action-desc">Chat with fellow ambassadors and admins</span>
+            </button>
+            {isAdmin && (
+              <button className="action-card" onClick={() => navigate('/admin')}>
+                <span className="action-icon" aria-hidden="true">&#9881;</span>
+                <span className="action-label">Admin Panel</span>
+                <span className="action-desc">Reports, users, villages, and approvals</span>
+              </button>
+            )}
+          </div>
+        </details>
+      )}
       <button onClick={() => navigate('/emergency')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "1.25rem", padding: "1rem 1.25rem", borderRadius: "12px", border: "2px solid #ffaa44", background: "linear-gradient(135deg, #2e2a1a, #3a3020)", cursor: "pointer", textAlign: "left" }}>
         <span style={{ fontSize: "2rem", lineHeight: 1, color: "#ffaa44" }}>&#9888;</span>
         <div>
