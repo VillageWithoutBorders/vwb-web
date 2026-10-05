@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 
-// Peer connections between organizations, and organizing chats built on them.
+// Peer connections between organizations, and Campfires (organizing chats) built on them.
 // Shown on the organization dashboard to Heads and organizers.
 // Connecting is a handshake: one side asks, the other says yes. Either side
 // can end it. Organizing chats hold the Heads and organizers of every group in
@@ -79,7 +79,7 @@ export default function OrgConnections({ orgId, orgName }) {
     const { data, error } = await supabase.rpc('start_coalition_chat', { p_org: orgId, p_name: name.slice(0, 80), p_others: picked })
     setBusy('')
     if (error || !data) {
-      console.error('Failed to start organizing chat:', error)
+      console.error('Failed to start Campfire:', error)
       setChatNote(friendly(error, 'Could not start the chat. Try again.'))
       return
     }
@@ -94,7 +94,7 @@ export default function OrgConnections({ orgId, orgName }) {
       <section className="cal-box" aria-labelledby="oc-connections">
         <h2 id="oc-connections">Connect with other groups</h2>
         <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
-          Find another group on VWB and ask to connect. Both groups say yes, and either can end it any time. Connected groups can start organizing chats together. They never see your members or your private events.
+          Find another group on VWB and ask to connect. Both groups say yes, and either can end it any time. Connected groups can start a Campfire together. They never see your members or your private events.
         </p>
 
         {links.map((l) => {
@@ -153,12 +153,12 @@ export default function OrgConnections({ orgId, orgName }) {
 
       {active.length > 0 && (
         <section className="cal-box" aria-labelledby="oc-chat">
-          <h2 id="oc-chat">Start an organizing chat</h2>
+          <h2 id="oc-chat">Start a Campfire</h2>
           <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
-            A private chat for the Heads and organizers of {orgName || 'your group'} and the groups you pick. When someone becomes an organizer they are added, and when they stop, they are removed.
+            A Campfire is a private, encrypted chat for the Heads and organizers of {orgName || 'your group'} and the groups you pick. When someone becomes an organizer they are added, and when they stop, they are removed.
           </p>
           <form onSubmit={startChat} noValidate>
-            <label htmlFor="oc-chat-name" className="cal-sub" style={{ display: 'block' }}>Name for the chat</label>
+            <label htmlFor="oc-chat-name" className="cal-sub" style={{ display: 'block' }}>Name for the Campfire</label>
             <input id="oc-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder="For example, Fall food drive" onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.75rem' }} />
             <fieldset style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
               <legend className="cal-sub">Groups to include</legend>
@@ -170,7 +170,7 @@ export default function OrgConnections({ orgId, orgName }) {
               ))}
             </fieldset>
             {chatNote && <p role="alert" className="groups-error">{chatNote}</p>}
-            <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={busy === 'chat'}>{busy === 'chat' ? 'Starting...' : 'Start organizing chat'}</button>
+            <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={busy === 'chat'}>{busy === 'chat' ? 'Starting...' : 'Start a Campfire'}</button>
           </form>
         </section>
       )}
