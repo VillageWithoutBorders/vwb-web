@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { fetchCalendarEvents } from '../utils/calendar'
 import OrgResources from '../components/OrgResources'
 import OrgLinks from '../components/OrgLinks'
+import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import { UserName } from '../components/AvatarDisplay'
 
 // The organizer's home base for one group: shortcuts, members, upcoming
@@ -21,7 +22,7 @@ function when(iso) {
 export default function OrgDashboard() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { organizations, isAdmin } = useAuth()
+  const { user, organizations, isAdmin } = useAuth()
   const managed = organizations.filter((o) => o.role === 'admin' || o.role === 'organizer')
   const mine = managed.find((o) => o.id === id)
   const allowed = !!mine || isAdmin
@@ -39,6 +40,12 @@ export default function OrgDashboard() {
   const [busy, setBusy] = useState(false)
   const [allOrgs, setAllOrgs] = useState([])
   const [orgInfo, setOrgInfo] = useState(null)
+  // Group chats started for this organization (the ones you are in)
+  const [chats, setChats] = useState([])
+  const [chatsReady, setChatsReady] = useState(false)
+  const [chatName, setChatName] = useState('')
+  const [chatBusy, setChatBusy] = useState(false)
+  const [chatNote, setChatNote] = useState('')
 
   // Founders and admins can open any approved group, member or not.
   useEffect(() => {
@@ -68,6 +75,35 @@ export default function OrgDashboard() {
   }, [id, allowed])
 
   useEffect(() => { load() }, [load])
+
+  const loadChats = useCallback(async () => {
+    if (!id || !user?.id) return
+    const { data, error } = await supabase
+      .from('community_group_members')
+      .select('group_id, status, community_groups!inner (id, name, organization_id)')
+      .eq('user_id', user.id)
+      .eq('community_groups.organization_id', id)
+    if (error) console.error('Failed to load group chats:', error)
+    setChats((data || []).filter((r) => r.status !== 'waiting' && r.community_groups).map((r) => r.community_groups).sort((a, b) => a.name.localeCompare(b.name)))
+    setChatsReady(true)
+  }, [id, user?.id])
+
+  useEffect(() => { loadChats() }, [loadChats])
+
+  async function startChat(e) {
+    e.preventDefault()
+    const name = (chatName || (chats.length === 0 ? orgName + ' general chat' : '')).trim()
+    if (!name) { setChatNote('Give the chat a name.'); return }
+    setChatBusy(true); setChatNote('')
+    const { data: newId, error } = await supabase.rpc('create_community_group', { p_name: name.slice(0, 80), p_description: null, p_organization: id })
+    setChatBusy(false)
+    if (error || !newId) {
+      console.error('Failed to start group chat:', error)
+      setChatNote(/New accounts can/i.test(error?.message || '') ? NEW_ACCOUNT_NOTE : 'Could not start the chat. Try again.')
+      return
+    }
+    navigate('/groups/' + newId, { state: { justStarted: true } })
+  }
 
   async function search(e) {
     e.preventDefault()
@@ -185,6 +221,24 @@ export default function OrgDashboard() {
             <span className="action-desc">Browse or add to the resource list</span>
           </button>
         </div>
+      </section>
+
+      <section className="hub-section" aria-labelledby="od-chats">
+        <div className="hub-section-head"><h2 id="od-chats">Group chats</h2></div>
+        <p className="hub-org-desc">Private chats for {orgName || 'your organization'}. You are the steward of any chat you start here. Invite people from inside the chat.</p>
+        {chatsReady && chats.length === 0 && <p className="hub-empty">No chats yet. Start your general chat below.</p>}
+        {chats.map((c) => (
+          <button key={c.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + c.id)}>
+            <span className="groups-row-name">{c.name}</span>
+            <span className="groups-row-meta">Open chat &#8250;</span>
+          </button>
+        ))}
+        <form onSubmit={startChat} noValidate style={{ marginTop: '0.75rem' }}>
+          <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{chats.length === 0 ? 'Name for your general chat' : 'Start another chat (for example, Volunteers)'}</label>
+          <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={chats.length === 0 ? (orgName || 'Organization') + ' general chat' : 'Chat name'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
+          {chatNote && <p role="alert" className="groups-error">{chatNote}</p>}
+          <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : chats.length === 0 ? 'Start the general chat' : 'Start chat'}</button>
+        </form>
       </section>
 
       {orgInfo && <OrgLinks org={orgInfo} canManage={allowed} part="manage" onChanged={load} />}
