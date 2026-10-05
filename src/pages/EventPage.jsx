@@ -5,11 +5,12 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import CommunityGuidelines from './CommunityGuidelines'
-import { fetchCalendarEvent, fullDateTime, googleCalendarLink, outlookCalendarLink, isAndroid, isIOS, downloadIcs, addToPhoneCalendar, eventUrl, mapLink, VISIBILITY } from '../utils/calendar'
+import { fetchCalendarEvent, fullDateTime, eventUrl, mapLink, VISIBILITY } from '../utils/calendar'
 import { setReturnTo, clearReturnTo } from '../utils/returnTo'
 import { startConversation } from '../utils/startConversation'
 import { UserName } from '../components/AvatarDisplay'
 import Linkify from '../components/Linkify'
+import AddToCalendar from '../components/AddToCalendar'
 
 // One event. Public route on purpose: this is the page people land on from
 // the website calendar, a shared Facebook post, or a private invite link,
@@ -28,7 +29,6 @@ export default function EventPage() {
   const [needsText, setNeedsText] = useState('')
   const [loading, setLoading] = useState(true)
   const [note, setNote] = useState('')
-  const [calMenu, setCalMenu] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [signups, setSignups] = useState([])
@@ -309,30 +309,7 @@ export default function EventPage() {
         <div className="cal-detail-row">
           <span aria-hidden="true">&#128197;</span>
           {cancelled ? <span>{fullDateTime(ev)}</span> : (
-            <span>
-              <button type="button" aria-expanded={isAndroid() || isIOS() ? undefined : calMenu}
-                onClick={() => (isAndroid() || isIOS() ? addToPhoneCalendar(ev) : setCalMenu((v) => !v))}
-                style={{ background: 'none', border: 'none', padding: 0, minHeight: 44, display: 'inline-flex', alignItems: 'center', textAlign: 'left', font: 'inherit', color: '#4ecca3', textDecoration: 'underline', cursor: 'pointer' }}>
-                {fullDateTime(ev)}
-              </button>
-              <br /><em style={{ color: 'var(--text-secondary)' }}>Tap the date to add it to your calendar.</em>
-              {(isAndroid() || isIOS()) && (
-                <>
-                  <br />
-                  <button type="button" onClick={() => downloadIcs(ev)}
-                    style={{ background: 'none', border: 'none', padding: 0, minHeight: 44, textAlign: 'left', font: 'inherit', fontSize: '0.9rem', color: 'var(--text-secondary)', textDecoration: 'underline', cursor: 'pointer' }}>
-                    Using Proton or another calendar? Download the file instead.
-                  </button>
-                </>
-              )}
-              {calMenu && !isAndroid() && !isIOS() && (
-                <div className="cal-actions" style={{ marginTop: '0.5rem' }}>
-                  <a className="btn btn-outline btn-full" href={googleCalendarLink(ev)} target="_blank" rel="noopener noreferrer">Google Calendar</a>
-                  <a className="btn btn-outline btn-full" href={outlookCalendarLink(ev)} target="_blank" rel="noopener noreferrer">Outlook calendar</a>
-                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Proton, Apple or other calendar (file)</button>
-                </div>
-              )}
-            </span>
+            <span><AddToCalendar ev={ev}>{fullDateTime(ev)}</AddToCalendar></span>
           )}
         </div>
         {ev.is_online ? (
@@ -456,16 +433,7 @@ export default function EventPage() {
           <section className="cal-box" aria-label="Save or share">
             <h2>Save or share</h2>
             <div className="cal-actions">
-              {isAndroid() ? (
-                <>
-                  <button type="button" className="btn btn-outline btn-full" onClick={() => addToPhoneCalendar(ev)}>Add to my calendar</button>
-                </>
-              ) : (
-                <>
-                  <a className="btn btn-outline btn-full" href={googleCalendarLink(ev)} target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>
-                  <button type="button" className="btn btn-outline btn-full" onClick={() => addToPhoneCalendar(ev)}>Add to Apple or Outlook calendar</button>
-                </>
-              )}
+              <AddToCalendar ev={ev} asButton>Add to my calendar</AddToCalendar>
               {ev.visibility === 'public' && (
                 <button type="button" className="btn btn-outline btn-full" onClick={share}>{copied === 'share' ? 'Link copied!' : 'Share this event'}</button>
               )}
