@@ -248,13 +248,30 @@ export function downloadIcs(ev) {
 //   iPhone/iPad: Safari's "Add to Calendar" sheet.
 //   Computers: downloads a calendar file their calendar app opens.
 export function addToPhoneCalendar(ev) {
+  const phone = isAndroid() || isIOS()
+  if (!phone) {
+    downloadIcs(ev)
+    return
+  }
+  let left = false
+  const markLeft = () => { left = true }
+  document.addEventListener('visibilitychange', markLeft)
+  window.addEventListener('pagehide', markLeft)
+  window.addEventListener('blur', markLeft)
   if (isAndroid()) {
     window.location.href = androidCalendarLink(ev)
-  } else if (isIOS()) {
-    window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(buildIcs(ev))
   } else {
-    downloadIcs(ev)
+    window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(buildIcs(ev))
   }
+  // If no calendar app took the link (for example Proton set as the default
+  // calendar, which cannot receive it), the page never loses focus. Then
+  // fall back to the calendar file so the tap always does something.
+  setTimeout(() => {
+    document.removeEventListener('visibilitychange', markLeft)
+    window.removeEventListener('pagehide', markLeft)
+    window.removeEventListener('blur', markLeft)
+    if (!left && !document.hidden) downloadIcs(ev)
+  }, 1500)
 }
 
 // Remembered place for the calendar: a per-browser convenience only,
