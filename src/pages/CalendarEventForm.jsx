@@ -30,9 +30,11 @@ export default function CalendarEventForm() {
     supabase.from('organizations').select('id').eq('is_umbrella', true).in('id', hostIdsKey.split(','))
       .then(({ data }) => setUmbrellaIds((data || []).map((o) => o.id)))
   }, [hostIdsKey])
+  // Your groups come first, so an event lands under a group (and shows on its
+  // dashboard) unless you pick the app-wide choice on purpose.
   const hostChoices = [
-    ...(isAdmin ? [{ id: VWB_HOST, name: 'Village Without Borders' }] : []),
     ...hostOrgs.map((o) => ({ id: o.id, name: o.name })),
+    ...(isAdmin ? [{ id: VWB_HOST, name: 'App-wide (the VWB app itself, not a group)' }] : []),
   ]
 
   // Where the event is: the host types the zip code, and we look up the
@@ -379,7 +381,7 @@ export default function CalendarEventForm() {
       {error && <p className="cal-error" role="alert">{error}</p>}
 
       <form onSubmit={save} noValidate>
-        {!editing && hostChoices.length > 1 && (
+        {hostChoices.length > 1 && (
           <div className="form-field">
             <label htmlFor="ev-host">Who's hosting?</label>
             <select id="ev-host" value={form.host} onChange={(e) => set('host', e.target.value)}>
