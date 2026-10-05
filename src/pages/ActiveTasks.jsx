@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import MyOffers from '../components/MyOffers'
@@ -36,7 +36,9 @@ export default function ActiveTasks() {
   // "How did it go?" after a task is finished
   const [myFeedback, setMyFeedback] = useState({})
   const [feedbackReady, setFeedbackReady] = useState(false)
-  const [answeredNow, setAnsweredNow] = useState({})
+  const [notice, setNotice] = useState('')
+  const refreshing = useRef(false)
+  const prevBoth = useRef(null)
   // Which finished tasks both people have answered (only yes or no, never what was said)
   const [bothRated, setBothRated] = useState({})
   const [ratedReady, setRatedReady] = useState(false)
@@ -53,15 +55,43 @@ export default function ActiveTasks() {
     if (user?.id) loadTasks()
   }, [user?.id])
 
-  async function loadTasks() {
-    setLoading(true)
-    const [reqs, helping] = await Promise.all([loadMyRequests(), loadHelpingWith(), loadMyFeedback()])
-    const doneIds = [
-      ...(reqs || []).flatMap(r => r.matches).filter(m => m.helper_completed && m.requester_completed).map(m => m.id),
-      ...(helping || []).filter(h => h.isDone).map(h => h.id),
-    ]
-    await refreshRated([...new Set(doneIds)])
-    setLoading(false)
+  // If the other person answers while this page is open, move the task on
+  // its own. Checks again when you come back to the tab, and every 20 seconds
+  // while you are looking at it.
+  useEffect(() => {
+    if (!user?.id) return undefined
+    const check = () => { if (document.visibilityState === 'visible') loadTasks(true) }
+    const timer = setInterval(check, 20000)
+    document.addEventListener('visibilitychange', check)
+    window.addEventListener('focus', check)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', check)
+      window.removeEventListener('focus', check)
+    }
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadTasks(quiet = false) {
+    if (quiet && refreshing.current) return
+    refreshing.current = true
+    if (!quiet) setLoading(true)
+    try {
+      const [reqs, helping] = await Promise.all([loadMyRequests(), loadHelpingWith(), loadMyFeedback()])
+      const doneIds = [
+        ...(reqs || []).flatMap(r => r.matches).filter(m => m.helper_completed && m.requester_completed).map(m => m.id),
+        ...(helping || []).filter(h => h.isDone).map(h => h.id),
+      ]
+      const both = await refreshRated([...new Set(doneIds)])
+      // Tell the person when a task has just moved because both have answered.
+      if (both && prevBoth.current) {
+        const moved = [...both].some(id => !prevBoth.current.has(id))
+        if (moved) setNotice('A task moved to Archived because you both answered. You can still vouch for them there.')
+      }
+      if (both) prevBoth.current = new Set([...(prevBoth.current || []), ...both])
+    } finally {
+      if (!quiet) setLoading(false)
+      refreshing.current = false
+    }
   }
 
   // =============================================
@@ -194,12 +224,12 @@ export default function ActiveTasks() {
 
   // Ask which of these finished tasks both people have answered.
   async function refreshRated(ids) {
-    if (!ids.length) return
+    if (!ids.length) return new Set()
     const { data, error } = await supabase.rpc('both_rated_matches', { p_match_ids: ids })
     if (error) {
       console.error('Failed to check who has answered:', error)
       setRatedReady(false)
-      return
+      return null
     }
     setRatedReady(true)
     setBothRated(prev => {
@@ -208,6 +238,7 @@ export default function ActiveTasks() {
       for (const row of data || []) next[row.match_id] = true
       return next
     })
+    return new Set((data || []).map(row => row.match_id))
   }
 
   async function submitFeedback(matchId, outcome) {
@@ -225,10 +256,13 @@ export default function ActiveTasks() {
       return
     }
     setMyFeedback(prev => ({ ...prev, [matchId]: outcome }))
-    setAnsweredNow(prev => ({ ...prev, [matchId]: true }))
     setFeedbackFor(null)
     setFeedbackNote('')
-    await refreshRated([matchId])
+    const both = await refreshRated([matchId])
+    if (both && both.has(matchId)) {
+      if (prevBoth.current) prevBoth.current.add(matchId)
+      setNotice('Thank you. You both answered, so this task moved to Archived. You can still vouch for them there.')
+    }
   }
 
   // =============================================
@@ -414,10 +448,10 @@ export default function ActiveTasks() {
   // =============================================
   // A finished task stays under Active until BOTH people have said how it went.
   // (If the database check is not available, it moves once you have answered.)
-  // After you answer, it stays on screen for the rest of the visit so you can vouch.
+  // The moment both have answered, it moves to Archived for both of you, in
+  // either order. The vouch button stays on the task in the Archived tab.
   const holdOpen = (matchId) => {
     if (!feedbackReady) return false
-    if (answeredNow[matchId]) return true
     return ratedReady ? !bothRated[matchId] : !myFeedback[matchId]
   }
   const stillNeedsAnswer = (r) => r.matches.some(m => m.helper_completed && m.requester_completed && holdOpen(m.id))
@@ -563,6 +597,12 @@ export default function ActiveTasks() {
         </button>
       </div>
 
+      {notice && (
+        <p role="status" style={{ margin: '0 0 1rem', padding: '0.75rem', background: '#1a2e26', border: '1px solid #2d6a4f', borderRadius: '8px', color: '#7fe0bf' }}>
+          {notice} <button type="button" onClick={() => setNotice('')} style={{ background: 'none', border: 'none', color: '#aaa', textDecoration: 'underline', minHeight: 44, cursor: 'pointer', font: 'inherit' }}>Dismiss</button>
+        </p>
+      )}
+
       {showActive && <MyOffers />}
 
       {loading ? (
@@ -680,14 +720,25 @@ export default function ActiveTasks() {
                     </button>
                   )}
 
-                  {/* Delete / archive request */}
-                  {!req.archived_at && (
+                  {/* Archive: only while the task is still in Active */}
+                  {showActive && !req.archived_at && (
                     <button
                       className="btn btn-outline btn-sm"
                       style={{ color: '#ff6666', borderColor: '#ff6666', marginTop: '0.25rem' }}
                       onClick={() => deleteRequest(req.id)}
                     >
                       Archive request
+                    </button>
+                  )}
+
+                  {/* Archived: start over as a brand new request (not the same helper) */}
+                  {!showActive && (
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ marginTop: '0.25rem', marginRight: '0.5rem', minHeight: '44px' }}
+                      onClick={() => navigate('/ask', { state: { repost: { skill_needed: req.skill_needed, description: req.description, urgency: req.urgency, neighborhood: req.neighborhood, max_helpers: req.max_helpers } } })}
+                    >
+                      Ask again
                     </button>
                   )}
 
