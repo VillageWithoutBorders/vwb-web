@@ -24,7 +24,7 @@ const END_REASONS = {
 const ADMIN_SEES = ['no_show', 'felt_off']
 
 export default function ActiveTasks() {
-  const { user, profile } = useAuth()
+  const { user, profile, organizations } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab] = useState('active')
   const [myRequests, setMyRequests] = useState([])
@@ -37,6 +37,13 @@ export default function ActiveTasks() {
   const [myFeedback, setMyFeedback] = useState({})
   const [feedbackReady, setFeedbackReady] = useState(false)
   const [notice, setNotice] = useState('')
+  // Taking an open request back to the group
+  const [narrowing, setNarrowing] = useState(null)
+  const [narrowOrg, setNarrowOrg] = useState('')
+  const [narrowNetwork, setNarrowNetwork] = useState(false)
+  const [narrowHours, setNarrowHours] = useState('24')
+  const [narrowBusy, setNarrowBusy] = useState(false)
+  const [narrowNote, setNarrowNote] = useState('')
   const refreshing = useRef(false)
   const prevBoth = useRef(null)
   // Which finished tasks both people have answered (only yes or no, never what was said)
@@ -377,6 +384,24 @@ export default function ActiveTasks() {
     await loadTasks()
   }
 
+  // The reverse: pull an open request back to the group for a while.
+  async function narrowToGroup(requestId) {
+    if (!narrowOrg || narrowBusy) return
+    setNarrowBusy(true); setNarrowNote('')
+    const { error } = await supabase.rpc('narrow_request_to_group', {
+      p_request: requestId, p_org: narrowOrg, p_network: narrowNetwork, p_hours: Number(narrowHours),
+    })
+    setNarrowBusy(false)
+    if (error) {
+      console.error('Failed to take request back to the group:', error)
+      setNarrowNote(error.message && error.message.length < 140 ? error.message : 'Could not do that. Try again.')
+      return
+    }
+    setNarrowing(null)
+    setNotice('Done. Only your group can see this request for now. Neighbors who already said yes keep their spot.')
+    await loadTasks(true)
+  }
+
   // Delete for good. Only the person who posted it. The database refuses if a
   // helper already finished the task, and says to archive it instead.
   async function deleteRequestForGood(requestId) {
@@ -644,6 +669,44 @@ export default function ActiveTasks() {
                       </p>
                       <button className="btn btn-outline btn-sm" style={{ minHeight: '44px' }} onClick={() => openToEveryone(req.id)}>Open to everyone nearby now</button>
                     </div>
+                  )}
+
+                  {/* Reverse: take an open request back to the group */}
+                  {showActive && organizations.length > 0 && req.audience === 'everyone' && !req.archived_at && req.status === 'open' && (
+                    narrowing === req.id ? (
+                      <div style={{ margin: '0.25rem 0 0.5rem', padding: '0.6rem 0.75rem', border: '1px solid #3a4a7a', borderRadius: '8px' }}>
+                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>Keep this with your group for a while. Neighbors who already said yes keep their spot. It opens to everyone again on its own.</p>
+                        {organizations.length > 1 && (
+                          <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Which group?
+                            <select value={narrowOrg} onChange={e => setNarrowOrg(e.target.value)} style={{ display: 'block', width: '100%', minHeight: 44, fontSize: 16, marginTop: 4 }}>
+                              {organizations.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                            </select>
+                          </label>
+                        )}
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minHeight: 44, fontSize: '0.9rem' }}>
+                          <input type="checkbox" checked={narrowNetwork} onChange={e => setNarrowNetwork(e.target.checked)} style={{ width: 20, height: 20 }} />
+                          Include my group's network
+                        </label>
+                        <label style={{ display: 'block', fontSize: '0.9rem', margin: '0.25rem 0 0.5rem' }}>Open to everyone again after
+                          <select value={narrowHours} onChange={e => setNarrowHours(e.target.value)} style={{ display: 'block', width: '100%', minHeight: 44, fontSize: 16, marginTop: 4 }}>
+                            <option value="6">6 hours</option>
+                            <option value="24">1 day</option>
+                            <option value="72">3 days</option>
+                            <option value="168">7 days</option>
+                          </select>
+                        </label>
+                        {narrowNote && <p role="alert" style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#ffaa44' }}>{narrowNote}</p>}
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button className="btn btn-primary btn-sm" disabled={narrowBusy} style={{ flex: 1, minHeight: '44px' }} onClick={() => narrowToGroup(req.id)}>{narrowBusy ? 'Saving...' : 'Keep it with my group'}</button>
+                          <button className="btn btn-outline btn-sm" style={{ flex: 1, minHeight: '44px' }} onClick={() => { setNarrowing(null); setNarrowNote('') }}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button className="btn btn-outline btn-sm" style={{ minHeight: '44px', margin: '0.25rem 0 0.5rem' }}
+                        onClick={() => { setNarrowOrg(organizations[0].id); setNarrowNetwork(false); setNarrowHours('24'); setNarrowNote(''); setNarrowing(req.id) }}>
+                        Keep it with my group only
+                      </button>
+                    )
                   )}
 
                   {/* Helper count */}
