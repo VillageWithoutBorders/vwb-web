@@ -1,8 +1,14 @@
 import { useState } from 'react'
 
 // Subscribe to a group's public events in a phone or computer calendar.
-export default function CalendarSubscribe({ orgId, orgName = 'Village Without Borders' }) {
+// Pass `choices` ([{ id, name }], id '' = Village Without Borders) to let the
+// person pick which calendar to add. Pass `anchorId` so a button can jump here.
+export default function CalendarSubscribe({ orgId: orgIdProp, orgName: orgNameProp = 'Village Without Borders', choices, anchorId }) {
   const [copied, setCopied] = useState(false)
+  const [pick, setPick] = useState('')
+  const chosen = choices ? (choices.find((c) => c.id === pick) || choices[0]) : null
+  const orgId = chosen ? chosen.id : orgIdProp
+  const orgName = chosen ? chosen.name : orgNameProp
   const base = import.meta.env.VITE_SUPABASE_URL
   if (!base) return null
   const url = base + '/functions/v1/calendar-feed' + (orgId ? '?org=' + encodeURIComponent(orgId) : '')
@@ -20,8 +26,17 @@ export default function CalendarSubscribe({ orgId, orgName = 'Village Without Bo
   }
 
   return (
-    <section className="cal-box" aria-labelledby="org-subscribe">
+    <section className="cal-box" id={anchorId} tabIndex={anchorId ? -1 : undefined} aria-labelledby="org-subscribe">
       <h2 id="org-subscribe">Put {orgName} in your calendar</h2>
+      {choices && choices.length > 1 && (
+        <label className="hub-org-desc" style={{ display: 'block', marginBottom: '0.75rem' }}>
+          Which calendar?
+          <select value={chosen.id} onChange={(e) => { setPick(e.target.value); setCopied(false) }}
+            style={{ display: 'block', width: '100%', minHeight: 44, fontSize: 16, marginTop: 4 }}>
+            {choices.map((c) => <option key={c.id || 'vwb'} value={c.id}>{c.name}</option>)}
+          </select>
+        </label>
+      )}
       <p className="hub-org-desc">New events show up on your phone by themselves. Nothing to re-add.</p>
       <div className="cal-actions">
         <a className="btn btn-primary btn-full" href={google} target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>

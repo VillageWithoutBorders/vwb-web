@@ -15,6 +15,21 @@ export default function Calendar() {
   const [miles, setMiles] = useState(25)
   const [allAgesOnly, setAllAgesOnly] = useState(false)
 
+  // Calendars you can subscribe to: the network's own, plus your groups
+  // (skipping groups hidden from the public).
+  const subscribeChoices = useMemo(() => [
+    { id: '', name: 'Village Without Borders' },
+    ...organizations.filter((o) => !o.hide_from_public).map((o) => ({ id: o.id, name: o.name })),
+  ], [organizations])
+
+  function jumpToSubscribe() {
+    const el = document.getElementById('cal-subscribe')
+    if (el) {
+      el.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+      el.focus({ preventScroll: true })
+    }
+  }
+
   const canPost = isAdmin || organizations.some((o) => o.role === 'admin' || o.role === 'organizer')
 
   // The profile can arrive after the page first draws. If we had nothing
@@ -75,6 +90,10 @@ export default function Calendar() {
         )}
       </div>
 
+      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', margin: '0 0 0.75rem' }} onClick={jumpToSubscribe}>
+        Add to my phone calendar
+      </button>
+
       <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
       <AllAgesFilter checked={allAgesOnly} onChange={setAllAgesOnly} />
 
@@ -86,16 +105,18 @@ export default function Calendar() {
         <CalendarView
           events={visible}
           belowTabs={yourFarEvents.length > 0 ? (
-            <section aria-labelledby="cal-your-far" style={{ margin: '1rem 0' }}>
-              <h2 id="cal-your-far" style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Your events farther away</h2>
+            <details style={{ margin: '1rem 0' }}>
+              <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center', fontWeight: 600, cursor: 'pointer' }}>
+                Your events farther away ({yourFarEvents.length})
+              </summary>
               <CalendarEventList events={yourFarEvents} />
-            </section>
+            </details>
           ) : null}
           emptyText={canPost ? 'No events nearby yet. Tap "New event" to post the first one.' : 'No events nearby yet. Check back soon, or try a wider distance.'}
         />
       )}
 
-      <CalendarSubscribe />
+      <CalendarSubscribe choices={subscribeChoices} anchorId="cal-subscribe" />
     </div>
   )
 }

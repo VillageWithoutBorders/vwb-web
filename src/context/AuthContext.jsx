@@ -92,7 +92,7 @@ export function AuthProvider({ children }) {
   async function loadOrganizations(userId) {
     const { data, error } = await supabase
       .from('organization_members')
-      .select('organization_id, role, organizations ( id, name, approved )')
+      .select('organization_id, role, organizations ( id, name, approved, hide_from_public )')
       .eq('user_id', userId)
 
     if (error) {
@@ -103,7 +103,7 @@ export function AuthProvider({ children }) {
 
     const approved = (data || [])
       .filter((row) => row.organizations && row.organizations.approved)
-      .map((row) => ({ id: row.organizations.id, name: row.organizations.name, role: row.role }))
+      .map((row) => ({ id: row.organizations.id, name: row.organizations.name, role: row.role, hide_from_public: !!row.organizations.hide_from_public }))
 
     setOrganizations(approved)
   }
