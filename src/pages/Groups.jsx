@@ -86,14 +86,14 @@ export default function Groups() {
   async function startGroup(e) {
     e.preventDefault()
     const trimmed = name.trim()
-    if (!trimmed) { setStartError('Give your group a name.'); return }
+    if (!trimmed) { setStartError('Give your chat a name.'); return }
     setBusy('start')
     setStartError('')
     const { data: newId, error } = await supabase.rpc('create_community_group', { p_name: trimmed, p_description: description.trim() || null, p_organization: forOrg || null })
     setBusy(null)
     if (error || !newId) {
       console.error('Failed to start group:', error)
-      setStartError(/New accounts can/i.test(error?.message || '') ? NEW_ACCOUNT_NOTE : 'Could not start your group. Try again.')
+      setStartError(/New accounts can/i.test(error?.message || '') ? NEW_ACCOUNT_NOTE : 'Could not start your chat. Try again.')
       return
     }
     navigate('/groups/' + newId, { state: { justStarted: true } })
@@ -131,8 +131,8 @@ export default function Groups() {
     <div className="groups-page">
       <div className="groups-head">
         <div>
-          <h1>Groups</h1>
-          <p className="groups-sub">Private circles with their own board. Everyone in a group is equal.</p>
+          <h1>Cottage Chats &amp; Campfires</h1>
+          <p className="groups-sub">&#127969; Cottage Chat: take a seat, let it out. You're safe here. &#128293; Campfire: gather round and let your voices be heard.</p>
         </div>
       </div>
 
@@ -140,13 +140,13 @@ export default function Groups() {
         established === false ? (
           <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE} A member can still invite you to their group.</p>
         ) : <button type="button" className="btn btn-primary btn-full groups-start-btn" onClick={() => setShowStart(true)}>
-          + Start a group
+          + Start a Cottage Chat
         </button>
       ) : (
         <form className="groups-card" onSubmit={startGroup} noValidate>
-          <h2 className="groups-card-title">Start a group</h2>
+          <h2 className="groups-card-title">{forOrg ? "Start a Campfire" : "Start a Cottage Chat"}</h2>
           <div className="form-field">
-            <label htmlFor="group-name">Group name</label>
+            <label htmlFor="group-name">Chat name</label>
             <input id="group-name" type="text" value={name} onChange={e => { setName(e.target.value); setStartError('') }} maxLength={80} autoComplete="off" required aria-invalid={!!startError} aria-describedby={startError ? 'group-start-error' : undefined} />
           </div>
           <div className="form-field">
@@ -155,19 +155,19 @@ export default function Groups() {
           </div>
           {orgsIHead.length > 0 && (
             <div className="form-field">
-              <label htmlFor="group-org">Is this group for an organization you lead or organize for?</label>
+              <label htmlFor="group-org">Is this a Campfire for an organization you lead or organize for?</label>
               <select id="group-org" value={forOrg} onChange={e => setForOrg(e.target.value)}>
-                <option value="">No, it's an everyday group</option>
-                {orgsIHead.map(o => <option key={o.id} value={o.id}>Yes, for {o.name}</option>)}
+                <option value="">No, it's a Cottage Chat with people I choose</option>
+                {orgsIHead.map(o => <option key={o.id} value={o.id}>Yes, a Campfire for {o.name}</option>)}
               </select>
               {forOrg && <p className="groups-note">You'll be the group's steward. You can remove someone on your own for safety, you control the join link, and members can't remove you. New people wait until a member other than the one who invited them lets them in.</p>}
             </div>
           )}
-          <p className="groups-note">Only people you invite can see the group or its board. You can invite people once it's started.</p>
+          <p className="groups-note">Only people you invite can see this chat or its board. You can invite people once it's started.</p>
           {startError && <p id="group-start-error" className="groups-error" role="alert">{startError}</p>}
           <div className="groups-actions">
             <button type="button" className="btn btn-outline" onClick={() => { setShowStart(false); setStartError('') }}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={busy === 'start'}>{busy === 'start' ? 'Starting...' : 'Start group'}</button>
+            <button type="submit" className="btn btn-primary" disabled={busy === 'start'}>{busy === 'start' ? 'Starting...' : (forOrg ? 'Start Campfire' : 'Start Cottage Chat')}</button>
           </div>
         </form>
       )}
@@ -206,8 +206,8 @@ export default function Groups() {
 
       {!loading && (
         <section aria-labelledby="mygroups-heading">
-          <h2 id="mygroups-heading" className="groups-section">Your groups</h2>
-          {groups.length === 0 && <p className="groups-empty">You're not in any groups yet. Start one, or ask a friend to invite you.</p>}
+          <h2 id="mygroups-heading" className="groups-section">Your chats</h2>
+          {groups.length === 0 && <p className="groups-empty">You're not in any chats yet. Start a Cottage Chat, or ask a friend to invite you.</p>}
           {orderedGroups.map(({ g, nested }) => (
             <button key={g.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + g.id)}>
               <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? '\u{1F4CC} ' : ''}{campfires.has(g.id) ? '\u{1F525} ' : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
@@ -217,7 +217,7 @@ export default function Groups() {
           {groups.some(g => g.archived) && (
             <>
               <button type="button" className="btn btn-outline" aria-expanded={showArchived} onClick={() => setShowArchived(v => !v)}>
-                {showArchived ? 'Hide archived groups' : 'Archived groups (' + groups.filter(g => g.archived).length + ')'}
+                {showArchived ? 'Hide archived chats' : 'Archived chats (' + groups.filter(g => g.archived).length + ')'}
               </button>
               {showArchived && groups.filter(g => g.archived).map(g => (
                 <button key={g.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + g.id)}>

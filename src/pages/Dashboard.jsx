@@ -132,8 +132,8 @@ export default function Dashboard() {
         </button>
         <button className="action-card" onClick={() => navigate('/groups')}>
           <span className="action-icon" aria-hidden="true">&#129309;</span>
-          <span className="action-label">My Groups</span>
-          <span className="action-desc">Your private groups, invites, and join links</span>
+          <span className="action-label">Cottage Chats &amp; Campfires</span>
+          <span className="action-desc">Your private chats, invites, and join links</span>
         </button>
         <button className="action-card" onClick={() => navigate('/villages')}>
           <span className="action-icon" aria-hidden="true">&#128506;</span>

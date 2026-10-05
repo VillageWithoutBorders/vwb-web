@@ -34,6 +34,7 @@ export default function EventShifts({ eventId, token, user, canManage, past, can
     setBusy(null)
     if (error) { setMessage(error.message || 'Something went wrong. Try again.'); return }
     if (data === 'full') setMessage('Sorry, that shift just filled up.')
+    else if (data === 'already') setMessage('You are already on "' + s.label + '".')
     else setMessage('You took "' + s.label + '". Thank you!')
     await load()
     if (onChanged) onChanged()

@@ -811,8 +811,8 @@ export default function Messages() {
       </button>
 
       <button type="button" className="groups-row groups-entry" onClick={() => navigate('/groups')}>
-        <span className="groups-row-name"><span aria-hidden="true">&#128101;</span> Groups</span>
-        <span className="groups-row-meta">Private boards &#8250;</span>
+        <span className="groups-row-name"><span aria-hidden="true">&#128101;</span> Cottage Chats &amp; Campfires</span>
+        <span className="groups-row-meta">Members-only boards &#8250;</span>
       </button>
 
       {/* ========== Help Offers for Requesters (Accept/Decline) ========== */}

@@ -34,7 +34,7 @@ const ALL_STEPS = [
     tab: 'community',
     icon: '\u{1F4DA}',
     title: 'Community',
-    body: "See what's happening near you and who is organizing. Find local help like food pantries and clinics. You can even start a group with your neighbors. Standing next to a friend? Open your group and tap Show QR code. They scan it with their phone camera to join.",
+    body: "See what's happening near you and who is organizing. Find local help like food pantries and clinics. You can even start a Cottage Chat with your neighbors. Standing next to a friend? Open your chat and tap Show QR code. They scan it with their phone camera to join.",
   },
   {
     icon: '\u{1F5FA}\uFE0F',
@@ -51,7 +51,7 @@ const ALL_STEPS = [
     tab: 'messages',
     icon: '\u{1F4AC}',
     title: 'Messages',
-    body: "Talk with neighbors and your groups here. Tap ⋯ on a chat to mark it unread or flag it to follow up. Don't want to hear from someone? Block them. Messages stay private, and you can turn read receipts on or off in Settings.",
+    body: "Talk with neighbors, Cottage Chats, and Campfires here. Tap ⋯ on a chat to mark it unread or flag it to follow up. Don't want to hear from someone? Block them. Messages stay private, and you can turn read receipts on or off in Settings.",
   },
   {
     only: 'campfire',

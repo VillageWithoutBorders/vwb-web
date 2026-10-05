@@ -593,7 +593,7 @@ export default function GroupBoard() {
         <div className="groups-page">
           <h1>{campfires.has(group.id) ? '\u{1F525} ' : ''}{group.name}</h1>
           <p className="groups-note">You're waiting to be let in. A member of the group will approve you soon. You'll see the board once they do.</p>
-          <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Back to groups</button>
+          <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Back to chats</button>
         </div>
       </div>
     )
@@ -603,7 +603,7 @@ export default function GroupBoard() {
     return (
       <div className="conversation-page group-page">
         <p className="groups-empty">This group isn't available. You may have left it, or it was removed.</p>
-        <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Back to groups</button>
+        <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Back to chats</button>
       </div>
     )
   }
@@ -616,10 +616,10 @@ export default function GroupBoard() {
   return (
     <div className="conversation-page group-page">
       <div className="convo-header">
-        <button className="convo-back" onClick={() => navigate('/groups')} aria-label="Back to groups">&#8592;</button>
+        <button className="convo-back" onClick={() => navigate('/groups')} aria-label="Back to chats">&#8592;</button>
         <div className="convo-header-info">
           <h1>{campfires.has(group.id) ? '\u{1F525} ' : ''}{group.name}</h1>
-          <p className="convo-context">{isSidechat ? 'Sidechat' + (parentName ? ' of ' + parentName : '') + ' · ' : (orgName ? 'For ' + orgName + ' · ' : '')}{members.length} {members.length === 1 ? 'member' : 'members'} · private board</p>
+          <p className="convo-context">{isSidechat ? 'Sidechat' + (parentName ? ' of ' + parentName : '') + ' · ' : (orgName ? 'For ' + orgName + ' · ' : '')}{members.length} {members.length === 1 ? 'member' : 'members'} · {campfires.has(group.id) ? 'Campfire' : 'Cottage Chat'}</p>
         </div>
         <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">Settings{waiting.length > 0 ? ' (' + waiting.length + ' waiting)' : ''}</button>
       </div>
