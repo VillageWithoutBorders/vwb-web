@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import GroupedSkillChips from '../components/GroupedSkillChips'
@@ -25,6 +25,8 @@ const HELPER_COUNT_OPTIONS = [
 export default function AskForHelp() {
     const { user, profile, organizations } = useAuth()
     const [searchParams] = useSearchParams()
+    // "Ask again" from an old task: the details come along, but it posts as a brand new request.
+    const repost = useLocation().state?.repost || null
     const managedOrgs = organizations.filter((o) => o.role === 'admin' || o.role === 'organizer')
     const [postAs, setPostAs] = useState(() => {
         const want = searchParams.get('org')
@@ -35,19 +37,19 @@ export default function AskForHelp() {
     const editId = searchParams.get('edit')
     // First screen: look at nearby resources before asking a neighbor. Skipped
     // when editing, when posting as a group, or with ?skip=1.
-    const [checkedResources, setCheckedResources] = useState(() => Boolean(editId) || Boolean(searchParams.get('org')) || searchParams.get('skip') === '1')
+    const [checkedResources, setCheckedResources] = useState(() => Boolean(editId) || Boolean(searchParams.get('org')) || searchParams.get('skip') === '1' || Boolean(repost))
 
     const [skills, setSkills] = useState([])
-    const [skillNeeded, setSkillNeeded] = useState('')
+    const [skillNeeded, setSkillNeeded] = useState(repost?.skill_needed || '')
     // Who sees it first. 'everyone' is the normal request. 'group' and 'network' keep it
     // inside the person's group (or its network) until the time is up.
     const [audience, setAudience] = useState('everyone')
     const [audienceOrg, setAudienceOrg] = useState('')
     const [openHours, setOpenHours] = useState('24')
-    const [description, setDescription] = useState('')
-    const [urgency, setUrgency] = useState('today')
-    const [maxHelpers, setMaxHelpers] = useState(1)
-    const [neighborhood, setNeighborhood] = useState('')
+    const [description, setDescription] = useState(repost?.description || '')
+    const [urgency, setUrgency] = useState(repost?.urgency || 'today')
+    const [maxHelpers, setMaxHelpers] = useState(repost && repost.max_helpers !== undefined ? repost.max_helpers : 1)
+    const [neighborhood, setNeighborhood] = useState(repost?.neighborhood || '')
 
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')
@@ -63,10 +65,10 @@ export default function AskForHelp() {
     }, [])
 
     useEffect(() => {
-        if (!editId && profile?.neighborhood) {
+        if (!editId && !repost && profile?.neighborhood) {
             setNeighborhood(profile.neighborhood)
         }
-    }, [profile, editId])
+    }, [profile, editId]) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (!editId) return
@@ -177,6 +179,10 @@ export default function AskForHelp() {
                 Tell us what you need. Only Hope Ambassadors in your area will see this.
                 No personal details are shared until you say so.
             </p>
+
+            {repost && !editId && (
+                <p className="ask-intro">Filled in from your earlier request. Change anything you like, then post. This is a new request, so neighbors see it fresh.</p>
+            )}
 
             {editId && (
                 <p className="ask-intro">Change anything below. If someone already said they can help, we'll let them know it changed.</p>
