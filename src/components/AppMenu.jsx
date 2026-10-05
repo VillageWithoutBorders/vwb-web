@@ -105,7 +105,7 @@ export default function AppMenu() {
               <span aria-hidden="true">{'\u{1F464}'}</span> Edit my profile
             </button>
             <button type="button" className="app-menu-item" onClick={() => go('/groups')}>
-              <span aria-hidden="true">{'\u{1F465}'}</span> My groups
+              <span aria-hidden="true">{'\u{1F465}'}</span> Cottage Chats &amp; Campfires
             </button>
             <button type="button" className="app-menu-item" onClick={() => go('/settings')}>
               <span aria-hidden="true">{'⚙️'}</span> Settings and privacy

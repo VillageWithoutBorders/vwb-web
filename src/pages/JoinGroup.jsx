@@ -43,22 +43,22 @@ export default function JoinGroup() {
       <div className="login-card">
         <div className="login-header">
           <h1>Village Without Borders</h1>
-          <p className="login-subtitle">Join a group</p>
+          <p className="login-subtitle">Join a chat</p>
         </div>
 
         {state === 'checking' && <p className="groups-note">Checking the link...</p>}
 
         {!user && state === 'ready' && (
           <>
-            <p className="groups-note">Someone shared a private group with you. Log in or make a free account to see it.</p>
+            <p className="groups-note">Someone shared a private chat with you. Log in or make a free account to see it.</p>
             <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/login')}>Log in or sign up</button>
           </>
         )}
 
         {user && state === 'notfound' && (
           <>
-            <p className="form-error" role="alert">This link isn't working anymore. Ask someone in the group for a new one.</p>
-            <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Go to my groups</button>
+            <p className="form-error" role="alert">This link isn't working anymore. Ask someone in the chat for a new one.</p>
+            <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Go to my chats</button>
           </>
         )}
 
