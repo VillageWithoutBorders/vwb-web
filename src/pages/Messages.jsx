@@ -448,12 +448,12 @@ export default function Messages() {
   async function loadCampfire() {
     if (!hasCampfire) { setCampfire(null); return }
     const { data: last, error } = await supabase.from('campfire_messages').select('id, user_id, body, created_at').order('created_at', { ascending: false }).limit(1).maybeSingle()
-    if (error) { console.error('Failed to load Campfire preview:', error); setCampfire({ last: null, name: null, unread: false }); return }
+    if (error) { console.error('Failed to load Village Square preview:', error); setCampfire({ last: null, name: null, unread: false }); return }
     if (!last) { setCampfire({ last: null, name: null, unread: false }); return }
     let name = 'You'
     if (last.user_id !== user.id) {
       const { data: p, error: pErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', last.user_id).maybeSingle()
-      if (pErr) console.error('Failed to load Campfire sender name:', pErr)
+      if (pErr) console.error('Failed to load Village Square sender name:', pErr)
       name = p?.display_name || 'Neighbor'
     }
     let lastRead = null
@@ -946,19 +946,19 @@ export default function Messages() {
 
       {!loading && showCampfireCard && (
         <div className="message-card" style={{ position: 'relative', borderLeft: '3px solid #e8833a' }}>
-          <div onClick={() => navigate('/campfire')} role="button" tabIndex={0} aria-label={'Open Campfire' + (campfire.unread ? ', new messages' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/campfire') } }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div onClick={() => navigate('/campfire')} role="button" tabIndex={0} aria-label={'Open Village Square' + (campfire.unread ? ', new messages' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/campfire') } }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <span aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#3a2a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>&#128293;</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="message-card-header">
                 <span className="message-card-name" style={{ fontWeight: campfire.unread ? 800 : 600 }}>
-                  Campfire
+                  Village Square
                   {campfire.unread && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#4ecca3', marginLeft: '6px' }} />}
                 </span>
                 {campfire.last && <span className="message-card-time" style={{ color: campfire.unread ? '#4ecca3' : undefined }}>{formatTime(campfire.last.created_at)}</span>}
               </div>
               <p className="message-card-skill">Ambassadors and admins</p>
               <p className="message-card-preview" style={{ color: campfire.unread ? '#ddd' : undefined, fontWeight: campfire.unread ? 600 : 400 }}>
-                {campfire.noVillage ? 'Add your zip code to join your area\u2019s Campfire.' : campfire.last ? campfire.name + ': ' + ((campfire.last.body || '').length > 70 ? campfire.last.body.slice(0, 70) + '...' : (campfire.last.body || '')) : 'Say hello to your fellow ambassadors.'}
+                {campfire.noVillage ? 'Add your zip code to join your area\u2019s Village Square.' : campfire.last ? campfire.name + ': ' + ((campfire.last.body || '').length > 70 ? campfire.last.body.slice(0, 70) + '...' : (campfire.last.body || '')) : 'Say hello to your fellow ambassadors.'}
               </p>
             </div>
           </div>
