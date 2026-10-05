@@ -124,7 +124,7 @@ const FAQS = [
   },
   {
     q: 'What if I just want to help, not ask for anything?',
-    a: "You can offer your skills as soon as you sign up. If you want to help regularly, apply to be a Hope Ambassador. An admin reads each application, and approved Ambassadors join the Campfire group chat.",
+    a: "You can offer your skills as soon as you sign up. If you want to help regularly, apply to be a Hope Ambassador. An admin reads each application, and approved Ambassadors join the Village Square group chat.",
   },
   {
     q: "What if it's an emergency?",
@@ -136,7 +136,7 @@ const FAQS = [
   },
   {
     q: 'Is my information private?',
-    a: 'Your exact address is never shown to anyone, and locations are rounded. You control what appears on your public profile. Private messages are end-to-end encrypted. The Campfire group chat is not, so keep sensitive details out of it.',
+    a: 'Your exact address is never shown to anyone, and locations are rounded. You control what appears on your public profile. Private messages are end-to-end encrypted. The Village Square group chat is not, so keep sensitive details out of it.',
   },
   {
     q: 'What about teens and kids?',

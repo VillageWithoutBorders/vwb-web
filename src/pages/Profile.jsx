@@ -408,7 +408,7 @@ function captureCoverageLocation() {
           <button onClick={() => setShowAmbassadorSignup(true)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "0.75rem", padding: "0.75rem", background: "linear-gradient(135deg, #3a2a10, #4a3520)", border: "2px solid #ff8844", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
             <span style={{ fontSize: "1.5rem" }}>&#128293;</span>
             <div>
-              <span style={{ display: "block", color: "#ffaa44", fontWeight: 700, fontSize: "0.95rem" }}>The Campfire</span>
+              <span style={{ display: "block", color: "#ffaa44", fontWeight: 700, fontSize: "0.95rem" }}>The Village Square</span>
               <span style={{ color: "#cc9966", fontSize: "0.75rem" }}>Want in? Apply to be a Hope Ambassador above &#8594;</span>
             </div>
           </button>
@@ -447,8 +447,8 @@ function captureCoverageLocation() {
             <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
               <input type="checkbox" checked={ambSignupCampfireNotify} onChange={(e) => setAmbSignupCampfireNotify(e.target.checked)} />
               <span>
-                <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Notify me about Campfire messages</strong>
-                The Campfire is the group chat for Ambassadors and admins. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Campfire's settings.
+                <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Notify me about Village Square messages</strong>
+                The Village Square is the group chat for Ambassadors and admins. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Village Square's settings.
               </span>
             </label>
             {ambSignupError && <p className="form-error" role="alert">{ambSignupError}</p>}

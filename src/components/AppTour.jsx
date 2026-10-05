@@ -56,8 +56,8 @@ const ALL_STEPS = [
   {
     only: 'campfire',
     icon: '\u{1F525}',
-    title: 'The Campfire',
-    body: 'Hope Ambassadors, admins, and the founder meet at the Campfire, pinned at the top of Messages. It has a General board and one board for each village. Tap a message\u2019s \u22EF to reply to it or edit your own. Every message shows when it was sent.',
+    title: 'The Village Square',
+    body: 'Hope Ambassadors, admins, and the founder meet at the Village Square, pinned at the top of Messages. It has a General board and one board for each village. Tap a message\u2019s \u22EF to reply to it or edit your own. Every message shows when it was sent.',
   },
   {
     tab: 'tasks',

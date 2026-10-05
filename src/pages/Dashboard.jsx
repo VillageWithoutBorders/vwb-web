@@ -150,7 +150,7 @@ export default function Dashboard() {
         {(profile?.is_hope_ambassador || isAdmin) && (
           <button className="action-card" onClick={() => navigate('/campfire')}>
             <span className="action-icon" aria-hidden="true">&#128293;</span>
-            <span className="action-label">Campfire</span>
+            <span className="action-label">Village Square</span>
             <span className="action-desc">Chat with fellow ambassadors and admins</span>
           </button>
         )}

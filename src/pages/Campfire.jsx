@@ -67,7 +67,7 @@ export default function Campfire() {
   // then the rest, then any an admin has added.
   async function loadBoards() {
     const { data, error } = await supabase.from('campfire_boards').select('id, name, village_id, is_general, sort_order').eq('archived', false)
-    if (error) { console.error('Failed to load Campfire boards:', error); return }
+    if (error) { console.error('Failed to load Village Square boards:', error); return }
     setBoards(data || [])
   }
   useEffect(() => { if (hasAccess) loadBoards() }, [hasAccess])
@@ -110,7 +110,7 @@ export default function Campfire() {
       .select('user_id, display_name, role, is_hope_ambassador, avatar_url')
       .or('is_hope_ambassador.eq.true,role.in.(admin,founder)')
       .then(({ data, error }) => {
-        if (error) { console.error('Failed to load Campfire members:', error); return }
+        if (error) { console.error('Failed to load Village Square members:', error); return }
         setNames(prev => {
           const next = { ...prev }
           for (const m of data || []) next[m.user_id] = { name: m.display_name || 'Neighbor', role: m.role, ambassador: m.is_hope_ambassador, avatar: m.avatar_url || null }
@@ -167,7 +167,7 @@ export default function Campfire() {
     setMuteSaving(true)
     const { error } = await supabase.from('helper_profiles').update({ campfire_notifications_enabled: campfireMuted }).eq('user_id', user.id)
     if (error) {
-      console.error('Failed to update Campfire notification setting:', error)
+      console.error('Failed to update Village Square notification setting:', error)
       alert('Could not save that. Try again.')
       setMuteSaving(false)
       return
@@ -177,7 +177,7 @@ export default function Campfire() {
   }
 
   async function leaveCampfire() {
-    if (!confirm('Leave the Campfire? You can rejoin anytime from the Community page.')) return
+    if (!confirm('Leave the Village Square? You can rejoin anytime from the Community page.')) return
     navigate('/')
   }
 
@@ -230,7 +230,7 @@ export default function Campfire() {
     const boardAtStart = activeBoardId
     const { data: newest, error } = await supabase.from('campfire_messages').select('*').eq('board_id', activeBoardId).order('created_at', { ascending: false }).limit(200)
     if (boardAtStart !== boardRef.current) return // switched boards while loading
-    if (error) console.error('Failed to load Campfire messages:', error)
+    if (error) console.error('Failed to load Village Square messages:', error)
     const data = newest ? [...newest].reverse() : null
     if (data) {
       setMessages(data)
@@ -262,7 +262,7 @@ export default function Campfire() {
     if (editing) {
       const { error } = await supabase.from('campfire_messages').update({ body: newMsg.trim() }).eq('id', editing.id)
       if (error) {
-        console.error('Failed to edit Campfire message:', error)
+        console.error('Failed to edit Village Square message:', error)
         alert('Could not save your edit. Try again.')
         setSending(false)
         return
@@ -277,7 +277,7 @@ export default function Campfire() {
     if (replyTo) row.reply_to = replyTo.id
     const { data, error } = await supabase.from('campfire_messages').insert(row).select('id').single()
     if (error) {
-      console.error('Failed to send Campfire message:', error)
+      console.error('Failed to send Village Square message:', error)
       alert('Could not send your message. Try again.')
       setSending(false)
       return
@@ -288,7 +288,7 @@ export default function Campfire() {
     // row or admin/founder, so a regular member's browser can't see who
     // else has notifications on. See notify_campfire_recipients migration.
     const { error: notifyError } = await supabase.rpc('notify_campfire_recipients', { p_message_id: data.id })
-    if (notifyError) console.error('Failed to notify Campfire recipients:', notifyError)
+    if (notifyError) console.error('Failed to notify Village Square recipients:', notifyError)
     setNewMsg(''); setReplyTo(null)
     await loadMessages()
     setSending(false)
@@ -340,7 +340,7 @@ export default function Campfire() {
       <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
         <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>&#128293;</p>
         <h2 style={{ color: '#ffaa44', marginBottom: '0.5rem' }}>Come sit by the fire</h2>
-        <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>The Campfire is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Apply to become a Hope Ambassador. An admin looks over each application so this stays a place people can trust, and once you're in, you'll have a seat.</p>
+        <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>The Village Square is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Apply to become a Hope Ambassador. An admin looks over each application so this stays a place people can trust, and once you're in, you'll have a seat.</p>
         <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>Apply to be a Hope Ambassador</button>
       </div>
     )
@@ -358,15 +358,15 @@ export default function Campfire() {
         <button onClick={() => navigate('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span>&#128293;</span> The Campfire
+            <span>&#128293;</span> The Village Square
           </h1>
           <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? activeBoard.name + ' board' : 'Ambassadors, admins, and the founder'}</p>
         </div>
         <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
-        <button onClick={() => setShowSettings(true)} aria-label="Campfire settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'>&#9881;</button>
+        <button onClick={() => setShowSettings(true)} aria-label="Village Square settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'>&#9881;</button>
       </div>
 
-      <div role="tablist" aria-label="Campfire boards" className="hide-scrollbar" style={{ display: 'flex', gap: '0.5rem', padding: '0.5rem 1rem', overflowX: 'auto', borderBottom: '1px solid #333', background: '#1a1a1a', alignItems: 'center' }}>
+      <div role="tablist" aria-label="Village Square boards" className="hide-scrollbar" style={{ display: 'flex', gap: '0.5rem', padding: '0.5rem 1rem', overflowX: 'auto', borderBottom: '1px solid #333', background: '#1a1a1a', alignItems: 'center' }}>
         {orderedBoards.map(b => (
           <button key={b.id} type="button" role="tab" aria-selected={b.id === activeBoardId} onClick={() => chooseBoard(b.id)} style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: b.id === activeBoardId ? '1px solid #4ecca3' : '1px solid #444', background: b.id === activeBoardId ? '#1a4a3a' : '#222', color: b.id === activeBoardId ? '#4ecca3' : '#ccc', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{b.name}</button>
         ))}
@@ -427,7 +427,7 @@ export default function Campfire() {
         </div>
       )}
 
-      <div ref={containerRef} onScroll={onScroll} className="hide-scrollbar" role="log" aria-live="polite" aria-relevant="additions" aria-label="Campfire messages" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+      <div ref={containerRef} onScroll={onScroll} className="hide-scrollbar" role="log" aria-live="polite" aria-relevant="additions" aria-label="Village Square messages" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
 
         {!loading && visibleMessages.length === 0 && (
@@ -560,7 +560,7 @@ export default function Campfire() {
           onChange={e => setNewMsg(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) sendMessage(e); if (e.key === 'Escape') cancelComposeMode() }}
           placeholder={editing ? 'Edit your message...' : 'Say something to ' + (activeBoard ? 'the ' + activeBoard.name + ' board' : 'the group') + '...'}
-          aria-label={editing ? 'Edit your message' : 'Message the Campfire'}
+          aria-label={editing ? 'Edit your message' : 'Message the Village Square'}
           disabled={sending}
           style={{ flex: 1, padding: '0.625rem 0.875rem', borderRadius: '1.5rem', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.9rem', outline: 'none' }}
         />
@@ -576,23 +576,23 @@ export default function Campfire() {
       {showSettings && <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />}
       <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: '#1a1a1a', borderLeft: '1px solid #333', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Campfire Settings</h2>
-          <button onClick={() => setShowSettings(false)} aria-label="Close Campfire settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Village Square Settings</h2>
+          <button onClick={() => setShowSettings(false)} aria-label="Close Village Square settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
-        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>The Campfire is one shared message board for every Hope Ambassador, admin, and the founder, in every village. Conversations here are visible to all members.</p>
+        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>The Village Square is one shared message board for every Hope Ambassador, admin, and the founder, in every village. Conversations here are visible to all members.</p>
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid #2a2a2a' }}>
           <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{campfireMuted ? 'Muted' : 'Notifications on'}</span>
-          <button onClick={toggleMute} disabled={muteSaving} role="switch" aria-checked={!campfireMuted} aria-label="Campfire notifications" style={{ width: '40px', height: '22px', borderRadius: '11px', background: campfireMuted ? '#444' : '#4ecca3', position: 'relative', cursor: 'pointer', border: 'none', padding: 0, opacity: muteSaving ? 0.6 : 1 }}>
+          <button onClick={toggleMute} disabled={muteSaving} role="switch" aria-checked={!campfireMuted} aria-label="Village Square notifications" style={{ width: '40px', height: '22px', borderRadius: '11px', background: campfireMuted ? '#444' : '#4ecca3', position: 'relative', cursor: 'pointer', border: 'none', padding: 0, opacity: muteSaving ? 0.6 : 1 }}>
             <span style={{ position: 'absolute', top: '2px', left: campfireMuted ? '2px' : '20px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
           </button>
         </div>
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Actions</div>
         <button onClick={leaveCampfire} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-          &#128682; Leave Campfire
+          &#128682; Leave Village Square
         </button>
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Members ({Object.keys(names).length})</div>
@@ -612,11 +612,11 @@ export default function Campfire() {
             .filter(([, info]) => (info.name || 'Neighbor').toLowerCase().includes(memberSearch.trim().toLowerCase()))
             .sort(([, a], [, b]) => (a.name || '').localeCompare(b.name || ''))
             .map(([uid, info]) => (
-            <button type="button" key={uid} onClick={() => { setShowSettings(false); navigate('/u/' + uid) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: '#222', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}>
+            <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: '#222', width: '100%', boxSizing: 'border-box', textAlign: 'left' }}>
               <AvatarDisplay url={info.avatar} userId={uid} size={32} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
-                  <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>{info.name}</span>
+                  <UserName userId={uid} name={info.name} style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }} />
                   {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
                   {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
                   {info.ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
@@ -625,7 +625,7 @@ export default function Campfire() {
                   {info.joined && <span>Joined {new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>}
                 </div>
               </div>
-            </button>
+            </div>
           ))}
           {memberSearch.trim() && Object.entries(names).filter(([, info]) => (info.name || 'Neighbor').toLowerCase().includes(memberSearch.trim().toLowerCase())).length === 0 && (
             <p style={{ color: '#8a8a8a', fontSize: '0.8rem', textAlign: 'center', padding: '0.75rem 0' }}>No members match "{memberSearch.trim()}".</p>
