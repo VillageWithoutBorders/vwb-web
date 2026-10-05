@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { getMyLocation, distanceMiles } from '../utils/location'
 import { resourceCats } from '../utils/resourceCategories'
 import { searchResources } from '../utils/resourceSearch'
+import AddressLink from './AddressLink'
 
 // First screen of Ask for help: look at resources near you before asking a
 // neighbor. The database already limits Find Help to your area plus national
@@ -76,7 +77,7 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
               <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{r.name}</div>
               {d != null && <div style={{ fontSize: '0.85rem', color: '#aaa' }}>{d < 1 ? 'Under a mile away' : Math.round(d) + ' miles away'}</div>}
               {r.description && <p style={{ margin: '0.3rem 0 0', fontSize: '0.9rem', color: '#ccc', overflowWrap: 'anywhere' }}>{r.description}</p>}
-              {r.address && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#aaa', overflowWrap: 'anywhere' }}>{r.address}</p>}
+              {r.address && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#aaa', overflowWrap: 'anywhere' }}><AddressLink address={r.address} /></p>}
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
                 {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')} style={{ ...link, color: '#66aaff' }}>Call {r.phone}</a>}
                 {r.url && /^https?:\/\//i.test(r.url) && <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ ...link, color: '#4ecca3' }}>Visit &#8599;</a>}
