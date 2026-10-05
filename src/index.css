@@ -3079,6 +3079,8 @@ html[data-tour-tab="profile"] .tab-item[data-tour="profile"] {
 }
 
 .tour-top-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
   display: inline-flex;
   gap: 0.75rem;
   align-items: center;
