@@ -163,10 +163,29 @@ export function mapLink(ev) {
   const q = [ev.location_name, ev.address, ev.town].filter(Boolean).join(', ')
   if (!q) return null
   const ua = typeof navigator !== 'undefined' ? (navigator.userAgent || '') : ''
-  const iOS = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1)
-  if (iOS) return 'https://maps.apple.com/?q=' + encodeURIComponent(q)
+  if (isIOS()) return 'https://maps.apple.com/?q=' + encodeURIComponent(q)
   if (/android/i.test(ua)) return 'geo:0,0?q=' + encodeURIComponent(q)
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q)
+}
+
+// Outlook.com / Microsoft 365 on the web: opens a new event already filled in.
+export function outlookCalendarLink(ev) {
+  const params = new URLSearchParams({
+    path: '/calendar/action/compose',
+    rru: 'addevent',
+    subject: ev.title,
+    startdt: new Date(ev.starts_at).toISOString(),
+    enddt: new Date(endOrDefault(ev)).toISOString(),
+    body: (ev.description ? ev.description + '\n\n' : '') + eventUrl(ev, false),
+    location: whereText(ev),
+  })
+  return 'https://outlook.live.com/calendar/0/deeplink/compose?' + params.toString()
+}
+
+export function isIOS() {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  return /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1)
 }
 
 export function isAndroid() {
@@ -193,7 +212,7 @@ function icsEscape(s) {
   return String(s || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;')
 }
 
-export function downloadIcs(ev) {
+function buildIcs(ev) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -210,13 +229,32 @@ export function downloadIcs(ev) {
     'END:VEVENT',
     'END:VCALENDAR',
   ]
-  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' })
+  return lines.join('\r\n')
+}
+
+export function downloadIcs(ev) {
+  const blob = new Blob([buildIcs(ev)], { type: 'text/calendar' })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
   a.download = (ev.title || 'event').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.ics'
   document.body.appendChild(a)
   a.click()
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove() }, 1000)
+}
+
+// Opens the person's own calendar with this event already filled in, so
+// all they do is confirm.
+//   Android: the phone's calendar "new event" screen (any calendar app).
+//   iPhone/iPad: Safari's "Add to Calendar" sheet.
+//   Computers: downloads a calendar file their calendar app opens.
+export function addToPhoneCalendar(ev) {
+  if (isAndroid()) {
+    window.location.href = androidCalendarLink(ev)
+  } else if (isIOS()) {
+    window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(buildIcs(ev))
+  } else {
+    downloadIcs(ev)
+  }
 }
 
 // Remembered place for the calendar: a per-browser convenience only,
