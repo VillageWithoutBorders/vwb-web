@@ -947,7 +947,7 @@ export default function Messages() {
       {!loading && showCampfireCard && (
         <div className="message-card" style={{ position: 'relative', borderLeft: '3px solid #e8833a' }}>
           <div onClick={() => navigate('/campfire')} role="button" tabIndex={0} aria-label={'Open Village Square' + (campfire.unread ? ', new messages' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/campfire') } }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#3a2a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>&#128293;</span>
+            <span aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#3a2a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>&#128227;</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="message-card-header">
                 <span className="message-card-name" style={{ fontWeight: campfire.unread ? 800 : 600 }}>
