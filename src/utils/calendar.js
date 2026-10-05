@@ -160,7 +160,12 @@ export function googleCalendarLink(ev) {
 // iPhone and iPad: Apple Maps. Android: geo link, so it opens whatever map
 // app is the default. Computers: Google Maps in a new tab.
 export function mapLink(ev) {
-  const q = [ev.location_name, ev.address, ev.town].filter(Boolean).join(', ')
+  return mapLinkFor([ev.location_name, ev.address, ev.town].filter(Boolean).join(', '))
+}
+
+// Same, for any address text.
+export function mapLinkFor(q) {
+  q = (q || '').trim()
   if (!q) return null
   const ua = typeof navigator !== 'undefined' ? (navigator.userAgent || '') : ''
   if (isIOS()) return 'https://maps.apple.com/?q=' + encodeURIComponent(q)

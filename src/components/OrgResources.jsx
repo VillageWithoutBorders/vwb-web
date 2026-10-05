@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { CATEGORIES } from '../utils/resourceCategories'
 import OrgClaimResource from './OrgClaimResource'
+import AddressLink from './AddressLink'
 
 // Resources that belong to one organization, for its organizers. See them all
 // (even ones still waiting for review) and fix them directly. The database
@@ -164,7 +165,7 @@ export default function OrgResources({ orgId }) {
                   {!r.verified && <div style={{ fontSize: '0.85rem', color: '#e0b84c', marginTop: '0.2rem' }}>Waiting for review. Only organizers see it.</div>}
                   {r.description && <p style={{ margin: '0.3rem 0 0', fontSize: '0.9rem', color: '#ccc', overflowWrap: 'anywhere' }}>{r.description}</p>}
                   {Array.isArray(r.links) && r.links.length > 0 && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#aaa' }}>{r.links.length} extra {r.links.length === 1 ? 'link' : 'links'}</p>}
-                  {(r.phone || r.address) && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#aaa', overflowWrap: 'anywhere' }}>{[r.phone, r.address].filter(Boolean).join(' · ')}</p>}
+                  {(r.phone || r.address) && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#aaa', overflowWrap: 'anywhere' }}>{r.phone}{r.phone && r.address ? ' · ' : ''}{r.address && <AddressLink address={r.address} inline />}</p>}
                   <button type="button" onClick={() => open(r)} style={{ marginTop: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Edit</button>
                   {removing === r.id ? (
                     <div style={{ marginTop: '0.5rem' }}>

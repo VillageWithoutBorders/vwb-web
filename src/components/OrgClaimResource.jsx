@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
+import AddressLink from './AddressLink'
 
 // An organizer finds a resource in the Library and asks to claim it. An admin
 // reviews every claim, so a fake claim can't take over a real listing.
@@ -66,7 +67,7 @@ export default function OrgClaimResource({ orgId, onDone }) {
             <li key={r.id}>
               <button type="button" disabled={r.claim_waiting} onClick={() => setPicked(r)} style={{ width: '100%', textAlign: 'left', minHeight: '48px', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem', cursor: r.claim_waiting ? 'default' : 'pointer', overflowWrap: 'anywhere' }}>
                 <strong>{r.name}</strong>
-                {r.address && <span style={{ display: 'block', fontSize: '0.85rem', color: '#aaa' }}>{r.address}</span>}
+                {r.address && <span style={{ display: 'block', fontSize: '0.85rem', color: '#aaa' }}><AddressLink address={r.address} /></span>}
                 {r.held_by && <span style={{ display: 'block', fontSize: '0.85rem', color: '#e0b84c' }}>Now listed under {r.held_by}. An admin will decide.</span>}
                 {r.claim_waiting && <span style={{ display: 'block', fontSize: '0.85rem', color: '#e0b84c' }}>You already asked. Waiting for an admin.</span>}
               </button>
