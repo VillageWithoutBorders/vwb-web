@@ -4,7 +4,7 @@
 export const TYPE_ICONS = {
   event_signup: '\u{1F4C5}',
   event_signup_cancel: '\u{1F4C5}',
-  village: '\u{1F525}',
+  village: '\u{1F3D8}',
   security_alert: '\u{1F512}',
   message: '\u{1F4AC}',
   match_request: '\u{1F91D}',
@@ -19,7 +19,7 @@ export const TYPE_ICONS = {
   ambassador_approved: '\u2705',
   safety_report: '\u{1F6A9}',
   report_reviewed: '\u2705',
-  group_removal_request: '\u{1F525}',
+  group_removal_request: '\u{1F6E1}',
   campfire: '\u{1F4E3}',
   calendar_signup: '\u{1F4C5}',
   calendar_invite: '\u{1F4C5}',

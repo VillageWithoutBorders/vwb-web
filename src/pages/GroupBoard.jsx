@@ -7,6 +7,7 @@ import QrShare from '../components/QrShare'
 import { useChatScroll } from '../hooks/useChatScroll'
 import { sendGroupPost, decryptMany, getDeviceId, editGroupPost, fetchEditHistory } from '../lib/e2ee'
 import { submitUserReport } from '../utils/submitUserReport'
+import { useCampfireIds } from '../hooks/useCampfireIds'
 
 // One group's board: its own private Campfire. Posts are end-to-end
 // encrypted (see e2ee.js sendGroupPost), so only members can read them and
@@ -44,6 +45,7 @@ export default function GroupBoard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const campfires = useCampfireIds()
   const [group, setGroup] = useState(null)
   const [members, setMembers] = useState([])
   const [waiting, setWaiting] = useState([])
@@ -567,7 +569,7 @@ export default function GroupBoard() {
     return (
       <div className="conversation-page group-page">
         <div className="groups-page">
-          <h1>{group.name}</h1>
+          <h1>{campfires.has(group.id) ? '\u{1F525} ' : ''}{group.name}</h1>
           <p className="groups-note">You're waiting to be let in. A member of the group will approve you soon. You'll see the board once they do.</p>
           <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Back to groups</button>
         </div>
@@ -594,7 +596,7 @@ export default function GroupBoard() {
       <div className="convo-header">
         <button className="convo-back" onClick={() => navigate('/groups')} aria-label="Back to groups">&#8592;</button>
         <div className="convo-header-info">
-          <h1>{group.name}</h1>
+          <h1>{campfires.has(group.id) ? '\u{1F525} ' : ''}{group.name}</h1>
           <p className="convo-context">{orgName ? 'For ' + orgName + ' · ' : ''}{members.length} {members.length === 1 ? 'member' : 'members'} · private board</p>
         </div>
         <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">Settings{waiting.length > 0 ? ' (' + waiting.length + ' waiting)' : ''}</button>
