@@ -6,6 +6,7 @@ import { fetchCalendarEvents } from '../utils/calendar'
 import OrgResources from '../components/OrgResources'
 import OrgLinks from '../components/OrgLinks'
 import OrgConnections from '../components/OrgConnections'
+import { useCampfireIds } from '../hooks/useCampfireIds'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import { UserName } from '../components/AvatarDisplay'
 
@@ -29,6 +30,7 @@ export default function OrgDashboard() {
   const allowed = !!mine || isAdmin
   const isHead = isAdmin || mine?.role === 'admin'
 
+  const campfires = useCampfireIds()
   const [orgName, setOrgName] = useState(mine?.name || '')
   const [members, setMembers] = useState([])
   const [events, setEvents] = useState([])
@@ -252,7 +254,7 @@ export default function OrgDashboard() {
         {chatsReady && chats.length === 0 && <p className="hub-empty">No chats yet. Start your general chat below.</p>}
         {chats.map((c) => (
           <button key={c.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + c.id)}>
-            <span className="groups-row-name">{c.name}</span>
+            <span className="groups-row-name">{campfires.has(c.id) ? '\u{1F525} ' : ''}{c.name}</span>
             <span className="groups-row-meta">Open chat &#8250;</span>
           </button>
         ))}
