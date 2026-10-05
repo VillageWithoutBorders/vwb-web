@@ -8,6 +8,8 @@ import { useChatScroll } from '../hooks/useChatScroll'
 import { sendGroupPost, decryptMany, getDeviceId, editGroupPost, fetchEditHistory } from '../lib/e2ee'
 import { submitUserReport } from '../utils/submitUserReport'
 import { useCampfireIds } from '../hooks/useCampfireIds'
+import { useSidechatParents } from '../hooks/useSidechatParents'
+import SidechatAdd from '../components/SidechatAdd'
 
 // One group's board: its own private Campfire. Posts are end-to-end
 // encrypted (see e2ee.js sendGroupPost), so only members can read them and
@@ -46,6 +48,26 @@ export default function GroupBoard() {
   const navigate = useNavigate()
   const location = useLocation()
   const campfires = useCampfireIds()
+  const sidechatParents = useSidechatParents()
+  const parentId = sidechatParents.get(id) || null
+  const isSidechat = !!parentId
+  const [parentName, setParentName] = useState('')
+  const [sidechats, setSidechats] = useState([])
+  useEffect(() => {
+    if (!parentId) return
+    let alive = true
+    supabase.from('community_groups').select('name').eq('id', parentId).maybeSingle().then(({ data }) => { if (alive && data?.name) setParentName(data.name) })
+    return () => { alive = false }
+  }, [parentId])
+  // Sidechats under this chat that you are in (empty if the database is not updated yet)
+  useEffect(() => {
+    let alive = true
+    supabase.from('community_groups').select('id, name').eq('parent_group_id', id).order('name').then(({ data, error }) => {
+      if (!alive || error) return
+      setSidechats(data || [])
+    })
+    return () => { alive = false }
+  }, [id])
   const [group, setGroup] = useState(null)
   const [members, setMembers] = useState([])
   const [waiting, setWaiting] = useState([])
@@ -597,11 +619,24 @@ export default function GroupBoard() {
         <button className="convo-back" onClick={() => navigate('/groups')} aria-label="Back to groups">&#8592;</button>
         <div className="convo-header-info">
           <h1>{campfires.has(group.id) ? '\u{1F525} ' : ''}{group.name}</h1>
-          <p className="convo-context">{orgName ? 'For ' + orgName + ' · ' : ''}{members.length} {members.length === 1 ? 'member' : 'members'} · private board</p>
+          <p className="convo-context">{isSidechat ? 'Sidechat' + (parentName ? ' of ' + parentName : '') + ' · ' : (orgName ? 'For ' + orgName + ' · ' : '')}{members.length} {members.length === 1 ? 'member' : 'members'} · private board</p>
         </div>
         <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">Settings{waiting.length > 0 ? ' (' + waiting.length + ' waiting)' : ''}</button>
       </div>
 
+      {sidechats.length > 0 && (
+        <nav aria-label="Sidechats" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid #333' }}>
+          <span className="cal-sub" style={{ alignSelf: 'center' }}>Sidechats:</span>
+          {sidechats.map((s) => (
+            <button key={s.id} type="button" className="btn btn-outline group-small-btn" onClick={() => navigate('/groups/' + s.id)}>{'\u21B3 '}{s.name}</button>
+          ))}
+        </nav>
+      )}
+      {isSidechat && parentId && (
+        <nav aria-label="Back to the general chat" style={{ padding: '0.4rem 1rem', borderBottom: '1px solid #333' }}>
+          <button type="button" className="group-post-delete" onClick={() => navigate('/groups/' + parentId)}>{'\u2190 '}Back to {parentName || 'the general chat'}</button>
+        </nav>
+      )}
       <div className="convo-messages" ref={containerRef} onScroll={onScroll} role="log" aria-live="polite" aria-label={group.name + ' board'}>
         <p className="group-lock-note">&#128274; Only members can read this board. Not even VWB can.</p>
         {group.steward_offer_to === user.id && (
@@ -813,6 +848,10 @@ export default function GroupBoard() {
               </>
             )}
 
+            {isSidechat && (
+              <SidechatAdd groupId={id} orgId={group.organization_id} memberIds={new Set(members.map(m => m.userId))} isSteward={iAmSteward} onAdded={loadGroup} />
+            )}
+            {!isSidechat && (<>
             <h3 className="groups-section">Invite someone</h3>
             <label htmlFor="invite-search" className="sr-only">Search members by name</label>
             {inviteUnlock && inviteUnlock > new Date() ? (
@@ -863,6 +902,8 @@ export default function GroupBoard() {
             ) : (
               <p className="groups-note">The join link is off. In this group, only the steward can turn it on. You can still invite people by name.</p>
             )}
+
+            </>)}
 
             <h3 className="groups-section">Members ({members.length})</h3>
             <p className="groups-note">
