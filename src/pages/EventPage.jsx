@@ -5,7 +5,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import CommunityGuidelines from './CommunityGuidelines'
-import { fetchCalendarEvent, fullDateTime, googleCalendarLink, isAndroid, downloadIcs, eventUrl, mapLink, VISIBILITY } from '../utils/calendar'
+import { fetchCalendarEvent, fullDateTime, googleCalendarLink, outlookCalendarLink, isAndroid, isIOS, downloadIcs, addToPhoneCalendar, eventUrl, mapLink, VISIBILITY } from '../utils/calendar'
 import { setReturnTo, clearReturnTo } from '../utils/returnTo'
 import { startConversation } from '../utils/startConversation'
 import { UserName } from '../components/AvatarDisplay'
@@ -28,6 +28,7 @@ export default function EventPage() {
   const [needsText, setNeedsText] = useState('')
   const [loading, setLoading] = useState(true)
   const [note, setNote] = useState('')
+  const [calMenu, setCalMenu] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [signups, setSignups] = useState([])
@@ -309,11 +310,19 @@ export default function EventPage() {
           <span aria-hidden="true">&#128197;</span>
           {cancelled ? <span>{fullDateTime(ev)}</span> : (
             <span>
-              <button type="button" onClick={() => downloadIcs(ev)}
+              <button type="button" aria-expanded={isAndroid() || isIOS() ? undefined : calMenu}
+                onClick={() => (isAndroid() || isIOS() ? addToPhoneCalendar(ev) : setCalMenu((v) => !v))}
                 style={{ background: 'none', border: 'none', padding: 0, minHeight: 44, display: 'inline-flex', alignItems: 'center', textAlign: 'left', font: 'inherit', color: '#4ecca3', textDecoration: 'underline', cursor: 'pointer' }}>
                 {fullDateTime(ev)}
               </button>
               <br /><em style={{ color: 'var(--text-secondary)' }}>Tap the date to add it to your calendar.</em>
+              {calMenu && !isAndroid() && !isIOS() && (
+                <div className="cal-actions" style={{ marginTop: '0.5rem' }}>
+                  <a className="btn btn-outline btn-full" href={googleCalendarLink(ev)} target="_blank" rel="noopener noreferrer">Google Calendar</a>
+                  <a className="btn btn-outline btn-full" href={outlookCalendarLink(ev)} target="_blank" rel="noopener noreferrer">Outlook calendar</a>
+                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Apple or other calendar (file)</button>
+                </div>
+              )}
             </span>
           )}
         </div>
@@ -440,12 +449,12 @@ export default function EventPage() {
             <div className="cal-actions">
               {isAndroid() ? (
                 <>
-                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Add to my calendar</button>
+                  <button type="button" className="btn btn-outline btn-full" onClick={() => addToPhoneCalendar(ev)}>Add to my calendar</button>
                 </>
               ) : (
                 <>
                   <a className="btn btn-outline btn-full" href={googleCalendarLink(ev)} target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>
-                  <button type="button" className="btn btn-outline btn-full" onClick={() => downloadIcs(ev)}>Add to Apple or Outlook calendar</button>
+                  <button type="button" className="btn btn-outline btn-full" onClick={() => addToPhoneCalendar(ev)}>Add to Apple or Outlook calendar</button>
                 </>
               )}
               {ev.visibility === 'public' && (
