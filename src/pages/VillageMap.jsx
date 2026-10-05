@@ -194,7 +194,7 @@ export default function VillageMap() {
               {selected.region_label && <p className="cal-sub">{selected.region_label}</p>}
               <p className="cal-sub">{countText(selected)}{selected.radius_miles ? ' · serves about ' + Math.round(selected.radius_miles) + ' miles around its center' : ''}</p>
               {hasCampfire && boardFor(selected) && (
-                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village's Campfire board</button>
+                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village's Village Square board</button>
               )}
               {!selected.is_mine && !hasCampfire && <p className="cal-sub">Not your village? You can change the zip code on your profile.</p>}
             </section>

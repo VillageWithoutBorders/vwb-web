@@ -1276,7 +1276,7 @@ export default function Admin() {
           {(() => {
             const renderReport = (a) => {
             const open = a.status === 'open'
-            const sourceLabel = { profile: 'From a profile', conversation: 'From a chat', messages: 'From messages', campfire: 'From the Campfire', event: 'From an event' }[a.source] || a.source
+            const sourceLabel = { profile: 'From a profile', conversation: 'From a chat', messages: 'From messages', campfire: 'From the Village Square', event: 'From an event' }[a.source] || a.source
             const linkBtn = { background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', padding: '0.25rem 0', fontWeight: 600 }
             return (
               <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (open ? '#ff4444' : '#555'), opacity: open ? 1 : 0.7 }}>
@@ -1525,7 +1525,7 @@ export default function Admin() {
       {!loading && tab === 'villages' && (
         <>
           <p style={{ color: '#888', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
-            Each village has its own Campfire. People join the nearest village they live inside, based on the zip on their profile. When a Hope Ambassador lives outside every village, a new one starts for their area and you get an alert. You can still move someone from the Users tab.
+            Each village has its own Village Square. People join the nearest village they live inside, based on the zip on their profile. When a Hope Ambassador lives outside every village, a new one starts for their area and you get an alert. You can still move someone from the Users tab.
           </p>
           <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? 'Cancel' : '+ New Village'}</button>
 
