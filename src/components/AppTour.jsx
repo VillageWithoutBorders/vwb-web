@@ -4,10 +4,11 @@ import { supabase } from '../supabaseClient'
 
 // A short walk-through of the app.
 //
-// New members: shown once, right after the Community Guidelines. It can't be
-// skipped or tapped away, and ends with "I agree". Finishing is saved on
-// their account (helper_profiles.tour_done_at), so it never pops up again,
-// on any phone or computer.
+// New members: shown once, right after the Community Guidelines. It is
+// optional: "Skip tour" is always on screen. Finishing or skipping is saved
+// on their account (helper_profiles.tour_done_at), so it never pops up again,
+// on any phone or computer. (The agreement to the guidelines is separate and
+// happens on the Guidelines screen.)
 //
 // Everyone: can take it again any time from Menu, Help, or Settings. A
 // replay can be closed whenever they like.
@@ -236,7 +237,7 @@ export default function AppTour() {
     setSaving(false)
     if (saveErr) {
       console.error('Failed to save tour agreement:', saveErr)
-      setError("That didn't save. Check your connection and tap I agree again.")
+      setError("That didn't save. Check your connection and tap Done or Skip tour again.")
       return
     }
     setRequired(false)
@@ -256,7 +257,9 @@ export default function AppTour() {
             {inPractice && (
               <button type="button" className="tour-skip" onClick={skipPractice}>Skip practice</button>
             )}
-            {!required && (
+            {required ? (
+              <button type="button" className="tour-skip" onClick={agree} disabled={saving}>{saving ? 'Saving...' : 'Skip tour'}</button>
+            ) : (
               <button type="button" className="tour-skip" onClick={() => setOpen(false)}>Close</button>
             )}
           </span>
@@ -276,9 +279,6 @@ export default function AppTour() {
           {step.tab && <p className="tour-hint">Look for the lit-up button at the bottom of your screen.</p>}
           {step.top && <p className="tour-hint">Look for the lit-up buttons at the top of your screen.</p>}
           {step.last && <p className="tour-hint">{step.last}</p>}
-          {isLast && required && (
-            <p className="tour-hint">Tap I agree to show you've read how the village works.</p>
-          )}
           {error && <p className="form-error" role="alert">{error}</p>}
         </div>
 
@@ -288,7 +288,7 @@ export default function AppTour() {
           )}
           {isLast ? (
             <button type="button" className="btn btn-primary tour-btn tour-btn-main" onClick={agree} disabled={saving}>
-              {required ? (saving ? 'Saving...' : 'I agree') : 'Done'}
+              {saving ? 'Saving...' : 'Done'}
             </button>
           ) : (
             <button type="button" className="btn btn-primary tour-btn tour-btn-main" onClick={() => setIndex(i => i + 1)}>
