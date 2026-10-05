@@ -6,6 +6,7 @@ import { getCurrentPosition, distanceMiles } from '../utils/location'
 import { startingOrigin } from '../utils/calendar'
 import { CATEGORIES, CAT_ICONS, resourceCats, resourceMatches } from '../utils/resourceCategories'
 import { searchScore } from '../utils/resourceSearch'
+import AddressLink from '../components/AddressLink'
 
 // Keeps Tab/Shift+Tab cycling inside an open dialog instead of leaking focus
 // out to the page behind it.
@@ -505,7 +506,7 @@ export default function CommunityResources() {
                       <div key={r.id} style={{ padding: '0.75rem', borderBottom: '1px solid #2a2a2a' }}>
                         <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#eee' }}>{r.name}</span>
                         {r.description && <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.2rem 0 0.4rem', lineHeight: 1.4 }}>{r.description}</p>}
-                        {r.address && <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.1rem 0' }}>{r.address}</p>}
+                        {r.address && <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.1rem 0' }}><AddressLink address={r.address} /></p>}
                         {r.neighborhood && <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.1rem 0' }}>Area: {r.neighborhood}</p>}
                         {r.requirements && <p style={{ color: '#ddaa44', fontSize: '0.78rem', margin: '0.2rem 0', lineHeight: 1.4 }}>&#128203; What to bring: {r.requirements}</p>}
                         {resourceDistance(r) != null && (
