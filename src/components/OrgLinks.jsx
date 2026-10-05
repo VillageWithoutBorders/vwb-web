@@ -10,7 +10,10 @@ import QrShare from './QrShare'
 
 const DEFAULT_LABEL = 'Community Connection'
 
-export default function OrgLinks({ org, canManage, events, onChanged }) {
+// part: 'public' = the list and council events anyone can see (org page),
+//       'manage' = the organizer's link controls (organization dashboard),
+//       'all' = both.
+export default function OrgLinks({ org, canManage, events, onChanged, part = 'all' }) {
   const label = org.affiliate_label || DEFAULT_LABEL
   const [locals, setLocals] = useState([])
   const [links, setLinks] = useState([])
@@ -112,14 +115,14 @@ export default function OrgLinks({ org, canManage, events, onChanged }) {
     .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at))
 
   const linkedIds = new Set(links.map((l) => (org.is_umbrella ? l.affiliate_id : l.umbrella_id)))
-  const showSheet = canManage && (org.is_umbrella || councils.length > 0 || links.length > 0)
+  const showSheet = part !== 'public' && canManage && (org.is_umbrella || councils.length > 0 || links.length > 0)
 
   return (
     <>
-      {org.is_umbrella && (
+      {part !== 'manage' && org.is_umbrella && (
         <section className="hub-section" aria-labelledby="org-locals">
           <div className="hub-section-head"><h2 id="org-locals">{label}</h2></div>
-          {locals.length === 0 && <p className="hub-empty">No groups are linked yet.</p>}
+          {locals.length === 0 && <p className="hub-empty">No organizations are linked yet.</p>}
           {locals.map((l) => (
             <Link key={l.id} to={'/orgs/' + l.id} className="cal-card hub-resource">
               <span className="cal-card-title">{l.name}</span>
@@ -128,10 +131,10 @@ export default function OrgLinks({ org, canManage, events, onChanged }) {
         </section>
       )}
 
-      {org.is_umbrella && locals.length > 0 && (
+      {part !== 'manage' && org.is_umbrella && locals.length > 0 && (
         <section className="hub-section" aria-labelledby="org-council-events">
           <div className="hub-section-head"><h2 id="org-council-events">Coming up across the council</h2></div>
-          <CalendarEventList events={councilEvents} emptyText="No upcoming events yet from linked groups." />
+          <CalendarEventList events={councilEvents} emptyText="No upcoming events yet from linked organizations." />
         </section>
       )}
 
@@ -140,8 +143,8 @@ export default function OrgLinks({ org, canManage, events, onChanged }) {
           <h2 id="org-links">{org.is_umbrella ? 'Your ' + label + ' list' : 'Link with a council'}</h2>
           <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
             {org.is_umbrella
-              ? 'A link goes both ways. Both groups say yes, and either can end it any time. A council cannot see your members or your private events.'
-              : 'A link is a handshake, not a chain of command. Both groups say yes, and either can end it any time. A council cannot see your members or your private events.'}
+              ? 'A link goes both ways. Both organizations say yes, and either can end it any time. A council cannot see your members or your private events.'
+              : 'A link is a handshake, not a chain of command. Both organizations say yes, and either can end it any time. A council cannot see your members or your private events.'}
           </p>
 
           {links.map((l) => {
@@ -181,9 +184,9 @@ export default function OrgLinks({ org, canManage, events, onChanged }) {
 
           {org.is_umbrella && (
             <>
-              <label htmlFor="org-link-search" className="cal-sub" style={{ display: 'block', marginTop: '0.75rem' }}>Invite a local group by name</label>
+              <label htmlFor="org-link-search" className="cal-sub" style={{ display: 'block', marginTop: '0.75rem' }}>Invite a local organization by name</label>
               <div className="hub-search">
-                <input id="org-link-search" type="text" autoComplete="off" placeholder="Start typing a group name" value={q} onChange={(e) => { setQ(e.target.value); setNote('') }} />
+                <input id="org-link-search" type="text" autoComplete="off" placeholder="Start typing an organization name" value={q} onChange={(e) => { setQ(e.target.value); setNote('') }} />
               </div>
               {found.filter((f) => !linkedIds.has(f.id)).map((f) => (
                 <div key={f.id} className="cal-card" style={{ marginTop: '0.5rem' }}>
@@ -193,10 +196,10 @@ export default function OrgLinks({ org, canManage, events, onChanged }) {
                   </div>
                 </div>
               ))}
-              {q.trim().length >= 2 && found.length === 0 && <p className="hub-empty">No group with that name.</p>}
+              {q.trim().length >= 2 && found.length === 0 && <p className="hub-empty">No organization with that name.</p>}
 
               <form onSubmit={makeInvite} style={{ marginTop: '1.25rem' }}>
-                <p className="cal-sub" style={{ marginBottom: '0.25rem' }}>Is the group not on VWB yet? Make a link and send it yourself. It works once.</p>
+                <p className="cal-sub" style={{ marginBottom: '0.25rem' }}>Is the organization not on VWB yet? Make a link and send it yourself. It works once.</p>
                 <label htmlFor="org-invite-note" className="cal-sub" style={{ display: 'block' }}>Short note for them (optional)</label>
                 <div className="hub-search">
                   <input id="org-invite-note" type="text" maxLength={500} placeholder="Welcome, we would love to have you" value={inviteNote} onChange={(e) => setInviteNote(e.target.value)} />
