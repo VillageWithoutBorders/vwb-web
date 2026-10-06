@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import 'leaflet/dist/leaflet.css'
 
@@ -57,7 +56,6 @@ function layout(list, w, h, pad) {
 }
 
 export default function VillageMap() {
-  const { profile, isAdmin } = useAuth()
   const navigate = useNavigate()
   const [villages, setVillages] = useState([])
   const [boards, setBoards] = useState([])
@@ -68,8 +66,6 @@ export default function VillageMap() {
   const mapEl = useRef(null)
   const mapRef = useRef(null)
   const markersRef = useRef({})
-
-  const hasCampfire = !!(profile?.is_hope_ambassador || isAdmin)
 
   useEffect(() => {
     let alive = true
@@ -85,12 +81,12 @@ export default function VillageMap() {
   }, [])
 
   useEffect(() => {
-    if (!hasCampfire) return
+    // The database only returns the boards this person is allowed to open.
     supabase.from('campfire_boards').select('id, village_id').not('village_id', 'is', null).then(({ data, error: err }) => {
       if (err) { console.error('Failed to load village boards:', err); return }
       setBoards(data || [])
     })
-  }, [hasCampfire])
+  }, [])
 
   const placed = useMemo(() => villages.filter((v) => v.latitude != null && v.longitude != null), [villages])
   const unplaced = useMemo(() => villages.filter((v) => v.latitude == null || v.longitude == null), [villages])
@@ -148,6 +144,7 @@ export default function VillageMap() {
       <Link to="/" className="hub-back">&#8592; Home</Link>
       <h1 className="hub-org-name">Village map</h1>
       <p className="cal-sub">Every Village Without Borders village. Only names, places, and rough sizes are shown, never people.</p>
+      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', margin: '0.5rem 0' }} onClick={() => navigate('/find-village')}>Find or start a village chat</button>
 
       {error && <p className="form-error" role="alert">{error}</p>}
 
@@ -193,10 +190,9 @@ export default function VillageMap() {
               <h2 id="village-sel">{selected.name}{selected.is_mine ? ' (your village)' : ''}</h2>
               {selected.region_label && <p className="cal-sub">{selected.region_label}</p>}
               <p className="cal-sub">{countText(selected)}{selected.radius_miles ? ' · serves about ' + Math.round(selected.radius_miles) + ' miles around its center' : ''}</p>
-              {hasCampfire && boardFor(selected) && (
+              {boardFor(selected) && (
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village's Village Square board</button>
               )}
-              {!selected.is_mine && !hasCampfire && <p className="cal-sub">Not your village? You can change the zip code on your profile.</p>}
             </section>
           )}
 

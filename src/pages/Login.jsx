@@ -353,12 +353,12 @@ export default function Login() {
             <label htmlFor="howKnown">How do you know this community, or who can vouch for you?</label>
             <textarea id="howKnown" value={howKnown} onChange={(e) => setHowKnown(e.target.value)} placeholder="A neighbor, a group, an event, or a name an admin can reach out to" rows={2} />
           </div>
-          <p style={{ fontSize: '0.8rem', color: '#888', margin: '0 0 0.75rem' }}>An admin reads every application before anyone joins the Village Square. Until then you can still ask for help, offer help, and look around.</p>
+          <p style={{ fontSize: '0.8rem', color: '#888', margin: '0 0 0.75rem' }}>An admin reads every application before anyone becomes an Ambassador. Until then you can still ask for help, offer help, and look around.</p>
           <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
             <input type="checkbox" checked={campfireNotify} onChange={(e) => setCampfireNotify(e.target.checked)} />
             <span>
               <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Notify me about Village Square messages</strong>
-              The Village Square is the group chat for Ambassadors and admins. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Village Square's settings.
+              The Village Square holds Announcements, the Ambassadors board, and your village chat. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Village Square's settings.
             </span>
           </label>
           {error && <p className="form-error" role="alert">{error}</p>}

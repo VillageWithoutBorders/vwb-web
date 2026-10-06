@@ -53,7 +53,10 @@ export default function Campfire() {
     try { return JSON.parse(localStorage.getItem('vwb_dismissed_emergency_ids') || '[]') } catch { return [] }
   })
 
-  const hasAccess = profile?.is_hope_ambassador || isAdmin
+  // Ambassadors, admins, and the founder post in Announcements and have their own Ambassadors board.
+  // Everyone signed in can open the Square. The database decides which boards each person can read.
+  const isStaff = !!(profile?.is_hope_ambassador || isAdmin)
+  const hasAccess = !!user
   const { containerRef, onScroll, showNew, jumpToNewest, resetScroll } = useChatScroll(messages, user?.id, hasAccess && !loading)
 
   useEffect(() => {
@@ -105,7 +108,7 @@ export default function Campfire() {
   // Everyone who has a seat at the Campfire, so the member list shows the
   // whole group and not only the people who have posted.
   useEffect(() => {
-    if (!hasAccess) return
+    if (!isStaff) return
     supabase.from('helper_profiles_public')
       .select('user_id, display_name, role, is_hope_ambassador, avatar_url')
       .or('is_hope_ambassador.eq.true,role.in.(admin,founder)')
@@ -117,7 +120,7 @@ export default function Campfire() {
           return next
         })
       })
-  }, [hasAccess])
+  }, [isStaff])
 
   useEffect(() => {
     if (!hasAccess || !activeBoardId) return
@@ -176,8 +179,12 @@ export default function Campfire() {
     setMuteSaving(false)
   }
 
+  // Leaving means saying no to the village chat. It is the same switch as the checkbox on Profile.
   async function leaveCampfire() {
-    if (!confirm('Leave the Village Square? You can rejoin anytime from the Community page.')) return
+    if (!confirm('Leave your village chat? You can join again any time from "Find your village chat".')) return
+    const { error } = await supabase.from('helper_profiles').update({ village_opt_in: false }).eq('user_id', user.id)
+    if (error) { console.error('Failed to leave the village chat:', error); alert('Could not leave. Try again.'); return }
+    await refreshProfile()
     navigate('/')
   }
 
@@ -351,6 +358,12 @@ export default function Campfire() {
   // The old chat-log announcement is now redundant with the banner above,
   // so it's left out of the scrollback instead of showing up twice.
   const visibleMessages = messages.filter(m => !m.body.startsWith('🚨 Emergency Verified:'))
+  // Who can post on the board being viewed. The database enforces the same rule.
+  const canPost = !!activeBoard && (
+    activeBoard.is_general ? isStaff
+      : activeBoard.village_id ? (isAdmin || (profile?.village_opt_in === true && profile?.village_id === activeBoard.village_id))
+      : isStaff
+  )
 
   return (
     <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1a1a1a' }}>
@@ -360,7 +373,7 @@ export default function Campfire() {
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span>&#128227;</span> The Village Square
           </h1>
-          <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? activeBoard.name + ' board' : 'Ambassadors, admins, and the founder'}</p>
+          <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? activeBoard.name + ' board' : 'Announcements and village chats'}</p>
         </div>
         <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
         <button onClick={() => setShowSettings(true)} aria-label="Village Square settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'>&#9881;</button>
@@ -370,6 +383,11 @@ export default function Campfire() {
         {orderedBoards.map(b => (
           <button key={b.id} type="button" role="tab" aria-selected={b.id === activeBoardId} onClick={() => chooseBoard(b.id)} style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: b.id === activeBoardId ? '1px solid #4ecca3' : '1px solid #444', background: b.id === activeBoardId ? '#1a4a3a' : '#222', color: b.id === activeBoardId ? '#4ecca3' : '#ccc', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{b.name}</button>
         ))}
+        {!profile?.village_id && (
+          <button type="button" onClick={() => navigate('/find-village')} style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem' }}>
+            Find your village chat
+          </button>
+        )}
         {isAdmin && !creatingBoard && (
           <button type="button" onClick={() => { setCreatingBoard(true); setBoardError('') }} aria-label="Add a board" style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: '1px dashed #555', background: 'none', color: '#aaa', fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ New board</button>
         )}
@@ -508,9 +526,11 @@ export default function Campfire() {
                     onClick={e => e.stopPropagation()}
                     style={{ background: '#2a2a2a', border: '1px solid #444', borderRadius: '8px', minWidth: '140px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', ...msgMenuStyle }}
                   >
+                    {canPost && (
                     <button onClick={() => startReply(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
                       Reply
                     </button>
+                    )}
                     {isMe && (
                       <button onClick={() => startEdit(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
                         Edit
@@ -552,6 +572,7 @@ export default function Campfire() {
           <button type="button" onClick={cancelComposeMode} aria-label={editing ? 'Cancel editing' : 'Cancel reply'} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.2rem', cursor: 'pointer', minWidth: '44px', minHeight: '44px' }}>&#10005;</button>
         </div>
       )}
+      {canPost ? (
       <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem 1rem', borderTop: '1px solid #333', background: '#1a1a1a' }}>
         <input
           ref={inputRef}
@@ -572,6 +593,11 @@ export default function Campfire() {
           {editing ? 'Save' : 'Send'}
         </button>
       </div>
+      ) : (
+        <p style={{ margin: 0, padding: '0.85rem 1rem', borderTop: '1px solid #333', background: '#1a1a1a', color: '#aaa', fontSize: '0.85rem', textAlign: 'center' }}>
+          {activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : 'You can read this board. You cannot post here.'}
+        </p>
+      )}
 
       {showSettings && <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />}
       <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: '#1a1a1a', borderLeft: '1px solid #333', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
@@ -580,8 +606,9 @@ export default function Campfire() {
           <button onClick={() => setShowSettings(false)} aria-label="Close Village Square settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
-        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>The Village Square is one shared message board for every Hope Ambassador, admin, and the founder, in every village. Conversations here are visible to all members.</p>
+        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>Announcements are open for every member to read, and only Ambassadors and admins can post there. Your village chat is for the neighbors in your village who chose to join. Neither one is end-to-end encrypted, so keep sensitive details out. Admins can read both.</p>
 
+        {isStaff && (<>
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid #2a2a2a' }}>
           <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{campfireMuted ? 'Muted' : 'Notifications on'}</span>
@@ -589,13 +616,17 @@ export default function Campfire() {
             <span style={{ position: 'absolute', top: '2px', left: campfireMuted ? '2px' : '20px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
           </button>
         </div>
+        </>)}
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Actions</div>
+        {profile?.village_id && (
         <button onClick={leaveCampfire} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           &#128682; Leave Village Square
         </button>
+        )}
 
-        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Members ({Object.keys(names).length})</div>
+        {isStaff && (<>
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>People here ({Object.keys(names).length})</div>
         {Object.keys(names).length > 8 && (
           <input
             type="text"
@@ -631,6 +662,7 @@ export default function Campfire() {
             <p style={{ color: '#8a8a8a', fontSize: '0.8rem', textAlign: 'center', padding: '0.75rem 0' }}>No members match "{memberSearch.trim()}".</p>
           )}
         </div>
+        </>)}
       </div>
     </div>
   )

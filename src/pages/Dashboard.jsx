@@ -89,12 +89,17 @@ function VillageAsk() {
     if (err) { console.error('[VillageAsk]', err); setError('Could not save that. Try again.'); setSaving(false); return }
     await refreshProfile()
     setSaving(false)
-    if (yes && !profile.zip_code) navigate('/profile')
+    if (yes && !profile.zip_code) { navigate('/profile'); return }
+    if (yes) {
+      // Said yes with a zip but no village was found nearby: help them find or start one.
+      const { data: me } = await supabase.from('helper_profiles').select('village_id').eq('user_id', profile.user_id).maybeSingle()
+      if (!me?.village_id) navigate('/find-village')
+    }
   }
 
   return (
     <div className="village-ask" role="region" aria-label="Local village chat">
-      <p className="village-ask-title"><span aria-hidden="true">&#127969;</span> Join your local village chat?</p>
+      <p className="village-ask-title"><span aria-hidden="true">&#127969;</span> Join your village chat?</p>
       <p className="village-ask-text">It is the chat for your area. We use your zip code to find it. You can leave any time from your Profile.</p>
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="village-ask-buttons">
@@ -166,6 +171,9 @@ export default function Dashboard() {
         </button>
         <button type="button" className="home-tile" aria-label="Cottage Chats and Campfires: your private chats, invites, and join links" onClick={() => navigate('/groups')}>
           <span className="home-tile-icon" aria-hidden="true">&#129309;</span>Chats
+        </button>
+        <button type="button" className="home-tile" aria-label="Village Square: announcements and your village chat" onClick={() => navigate('/campfire')}>
+          <span className="home-tile-icon" aria-hidden="true">&#128227;</span>Square
         </button>
         <button type="button" className="home-tile" aria-label="Village Map: see every village and how they connect" onClick={() => navigate('/villages')}>
           <span className="home-tile-icon" aria-hidden="true">&#128506;</span>Map

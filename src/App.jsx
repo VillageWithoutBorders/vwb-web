@@ -29,6 +29,7 @@ const CreateEvent = lazyPage(() => import('./pages/CreateEvent'))
 const EventDetail = lazyPage(() => import('./pages/EventDetail'))
 const Admin = lazyPage(() => import('./pages/Admin'))
 const Campfire = lazyPage(() => import('./pages/Campfire'))
+const FindVillage = lazyPage(() => import('./pages/FindVillage'))
 const Notifications = lazyPage(() => import('./pages/Notifications'))
 const PublicProfile = lazyPage(() => import('./pages/PublicProfile'))
 const GrantReport = lazyPage(() => import('./pages/GrantReport'))
@@ -154,6 +155,7 @@ function AppRoutes() {
         <Route path="admin" element={<Admin />} />
         <Route path="admin/report" element={<GrantReport />} />
         <Route path="campfire" element={<Campfire />} />
+        <Route path="find-village" element={<FindVillage />} />
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="u/:userId" element={<PublicProfile />} />
         <Route path="messages" element={<MessagesPage />} />
