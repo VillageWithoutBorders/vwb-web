@@ -6,6 +6,7 @@ import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import { submitUserReport } from '../utils/submitUserReport'
+import { MUTE_OPTIONS } from '../utils/muteOptions'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
@@ -33,7 +34,9 @@ export default function Campfire() {
   const inputRef = useRef(null)
   const boardRef = useRef(null)
   const [showSettings, setShowSettings] = useState(false)
-  const [muteSaving, setMuteSaving] = useState(false)
+  const [alertMap, setAlertMap] = useState({})
+  const [alertSaving, setAlertSaving] = useState(false)
+  const [muteOpenFor, setMuteOpenFor] = useState(null)
   const [openMsgMenu, setOpenMsgMenu] = useState(null)
   const [showPinned, setShowPinned] = useState(true)
   const [memberSearch, setMemberSearch] = useState('')
@@ -160,23 +163,30 @@ export default function Campfire() {
   }
 
 
-  // Backed by helper_profiles.campfire_notifications_enabled (not
-  // localStorage) so it's the same on/off switch set at Hope Ambassador
-  // signup, holds across devices, and is what the push trigger checks
-  // before pinging you for a new Campfire message.
-  const campfireMuted = !profile?.campfire_notifications_enabled
+  // Alerts are chosen board by board, the same way mute works for private messages.
+  // With no saved choice, Ambassadors and admins follow their old Village Square switch,
+  // and neighbors start with alerts off.
+  async function loadAlertSettings() {
+    const { data, error } = await supabase.from('campfire_board_user_settings').select('board_id, alerts, muted_until').eq('user_id', user.id)
+    if (error) { console.error('Failed to load alert settings:', error); return }
+    const map = {}
+    for (const s of data || []) map[s.board_id] = s
+    setAlertMap(map)
+  }
+  useEffect(() => { loadAlertSettings() }, [])
 
-  async function toggleMute() {
-    setMuteSaving(true)
-    const { error } = await supabase.from('helper_profiles').update({ campfire_notifications_enabled: campfireMuted }).eq('user_id', user.id)
-    if (error) {
-      console.error('Failed to update Village Square notification setting:', error)
-      alert('Could not save that. Try again.')
-      setMuteSaving(false)
-      return
-    }
-    await refreshProfile()
-    setMuteSaving(false)
+  const alertsOn = (b) => alertMap[b.id] ? alertMap[b.id].alerts === 'all' : (isStaff && !!profile?.campfire_notifications_enabled)
+  const alertsMuted = (b) => { const s = alertMap[b.id]; return !!(s && s.muted_until && new Date(s.muted_until) > new Date()) }
+
+  async function saveAlert(boardId, updates) {
+    setAlertSaving(true)
+    const { error } = await supabase.from('campfire_board_user_settings').upsert(
+      { user_id: user.id, board_id: boardId, ...updates, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,board_id' }
+    )
+    if (error) { console.error('Failed to save alert setting:', error); alert('Could not save that. Try again.') }
+    else await loadAlertSettings()
+    setAlertSaving(false)
   }
 
   // Leaving means saying no to the village chat. It is the same switch as the checkbox on Profile.
@@ -608,15 +618,40 @@ export default function Campfire() {
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
         <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>Announcements are open for every member to read, and only Ambassadors and admins can post there. Your village chat is for the neighbors in your village who chose to join. Neither one is end-to-end encrypted, so keep sensitive details out. Admins can read both.</p>
 
-        {isStaff && (<>
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid #2a2a2a' }}>
-          <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{campfireMuted ? 'Muted' : 'Notifications on'}</span>
-          <button onClick={toggleMute} disabled={muteSaving} role="switch" aria-checked={!campfireMuted} aria-label="Village Square notifications" style={{ width: '40px', height: '22px', borderRadius: '11px', background: campfireMuted ? '#444' : '#4ecca3', position: 'relative', cursor: 'pointer', border: 'none', padding: 0, opacity: muteSaving ? 0.6 : 1 }}>
-            <span style={{ position: 'absolute', top: '2px', left: campfireMuted ? '2px' : '20px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
-          </button>
-        </div>
-        </>)}
+        <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>You get one notification after a chat goes quiet, not one for every message. Choose for each chat.</p>
+        {orderedBoards.map(b => {
+          const on = alertsOn(b)
+          const muted = on && alertsMuted(b)
+          return (
+            <div key={b.id} style={{ padding: '0.6rem 0', borderBottom: '1px solid #2a2a2a' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{b.name}</span>
+                <button type="button" role="switch" aria-checked={on} aria-label={'Notifications for ' + b.name} disabled={alertSaving} onClick={() => saveAlert(b.id, on ? { alerts: 'off' } : { alerts: 'all', muted_until: null })} style={{ width: '40px', height: '22px', borderRadius: '11px', background: on ? '#4ecca3' : '#444', border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0, padding: 0 }}>
+                  <span style={{ position: 'absolute', top: '2px', left: on ? '20px' : '2px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                </button>
+              </div>
+              {muted && (
+                <p style={{ margin: '0.35rem 0 0', color: '#aaa', fontSize: '0.8rem' }}>
+                  Muted{new Date(alertMap[b.id].muted_until).getFullYear() > 2090 ? ' until you turn it back on' : ' until ' + new Date(alertMap[b.id].muted_until).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.{' '}
+                  <button type="button" disabled={alertSaving} onClick={() => saveAlert(b.id, { alerts: 'all', muted_until: null })} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', padding: '0 0.25rem', minHeight: '44px', fontSize: '0.8rem' }}>Unmute</button>
+                </p>
+              )}
+              {on && !muted && (
+                <>
+                  <button type="button" aria-expanded={muteOpenFor === b.id} onClick={() => setMuteOpenFor(muteOpenFor === b.id ? null : b.id)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', padding: '0 0.25rem 0 0', minHeight: '44px', fontSize: '0.8rem' }}>&#128263; Mute &#9656;</button>
+                  {muteOpenFor === b.id && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                      {MUTE_OPTIONS.map((opt, k) => (
+                        <button key={k} type="button" disabled={alertSaving} onClick={async () => { await saveAlert(b.id, { alerts: 'all', muted_until: opt.ms === null ? '2099-01-01T00:00:00Z' : new Date(Date.now() + opt.ms).toISOString() }); setMuteOpenFor(null) }} style={{ minHeight: '44px', padding: '0 0.85rem', borderRadius: '999px', border: '1px solid #444', background: '#222', color: '#ddd', cursor: 'pointer', fontSize: '0.8rem' }}>{opt.label}</button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )
+        })}
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Actions</div>
         {profile?.village_id && (

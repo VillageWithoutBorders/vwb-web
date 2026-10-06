@@ -158,6 +158,11 @@ export default function Profile() {
     reportError('toggleVillage', vErr)
     if (!vErr) await refreshProfile()
     setVillageSaving(false)
+    if (!vErr && on) {
+      // Joined from here: if a village was found, ask about notifications. If not, help them find or start one.
+      const { data: me } = await supabase.from('helper_profiles').select('village_id').eq('user_id', user.id).maybeSingle()
+      navigate(me?.village_id ? '/find-village?welcome=1' : '/find-village')
+    }
   }
 
   async function handleSave() {
