@@ -263,7 +263,7 @@ export default function OrgDashboard() {
       </section>
 
       <section className="hub-section" aria-labelledby="od-chats">
-        <div className="hub-section-head"><h2 id="od-chats">Group chats</h2></div>
+        <div className="hub-section-head"><h2 id="od-chats">Campfires</h2></div>
         <p className="hub-org-desc">{general ? 'The general chat has everyone in ' + (orgName || 'your organization') + '. Start a sidechat under it for one task or topic, and pick who joins. Only the people you pick see it.' : 'Private chats for ' + (orgName || 'your organization') + '. The general chat adds everyone in your organization automatically.'}</p>
         {chatsReady && chats.length === 0 && <p className="hub-empty">No chats yet. Start your general chat below.</p>}
         {general && chatRow(general, false)}

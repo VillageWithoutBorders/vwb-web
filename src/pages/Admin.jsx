@@ -1525,7 +1525,7 @@ export default function Admin() {
       {!loading && tab === 'villages' && (
         <>
           <p style={{ color: '#888', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
-            Each village has its own Village Square. People join the nearest village they live inside, based on the zip on their profile. When a Hope Ambassador lives outside every village, a new one starts for their area and you get an alert. You can still move someone from the Users tab.
+            Each village has its own village chat. People join one only after they say yes, using the zip on their profile. Anyone with a zip can start a village when none is within 45 miles, and you get an alert. You can still move someone from the Users tab.
           </p>
           <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? 'Cancel' : '+ New Village'}</button>
 
