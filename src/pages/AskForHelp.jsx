@@ -297,15 +297,15 @@ export default function AskForHelp() {
                 {!editId && organizations.length > 0 && (
                     <fieldset className="form-field" style={{ border: 'none', padding: 0, margin: '0 0 1rem' }}>
                         <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>Who sees this first?</legend>
-                        <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', minHeight: '44px', marginBottom: '0.4rem' }}>
+                        <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'everyone'} onChange={() => setAudience('everyone')} style={{ marginTop: '0.3rem' }} />
                             <span>Everyone nearby</span>
                         </label>
-                        <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', minHeight: '44px', marginBottom: '0.4rem' }}>
+                        <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'group'} onChange={() => setAudience('group')} style={{ marginTop: '0.3rem' }} />
                             <span>Only {groupName} first<small style={{ display: 'block', color: '#aaa' }}>Members of your group can see it right away. Neighbors and Hope Ambassadors do not, until it opens.</small></span>
                         </label>
-                        <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', minHeight: '44px', marginBottom: '0.4rem' }}>
+                        <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'network'} onChange={() => setAudience('network')} style={{ marginTop: '0.3rem' }} />
                             <span>{groupName} and its network first<small style={{ display: 'block', color: '#aaa' }}>If your group is linked to a council, the council and its other groups can see it too.</small></span>
                         </label>
