@@ -243,6 +243,24 @@ body {
   transition: border-color 0.15s;
 }
 
+/* Radios and checkboxes inside form fields stay small so labels sit beside them */
+.form-field input[type="radio"],
+.form-field input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  padding: 0;
+  flex: 0 0 22px;
+  margin: 0;
+  accent-color: var(--green);
+}
+
+.form-field label > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .form-field input:focus,
 .form-field textarea:focus {
   outline: none;
