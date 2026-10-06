@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import 'leaflet/dist/leaflet.css'
 
@@ -56,7 +57,12 @@ function layout(list, w, h, pad) {
 }
 
 export default function VillageMap() {
+  const { profile } = useAuth()
   const navigate = useNavigate()
+  const [zipText, setZipText] = useState('')
+  const [searchPoint, setSearchPoint] = useState(null)
+  const [zipError, setZipError] = useState('')
+  const [zipBusy, setZipBusy] = useState(false)
   const [villages, setVillages] = useState([])
   const [boards, setBoards] = useState([])
   const [loading, setLoading] = useState(true)
@@ -91,6 +97,30 @@ export default function VillageMap() {
   const placed = useMemo(() => villages.filter((v) => v.latitude != null && v.longitude != null), [villages])
   const unplaced = useMemo(() => villages.filter((v) => v.latitude == null || v.longitude == null), [villages])
   const selected = villages.find((v) => v.id === selectedId) || null
+
+  // Villages within reach of a searched zip code, closest first.
+  const nearSearch = useMemo(() => {
+    if (!searchPoint) return []
+    return placed
+      .map((v) => ({ v, miles: Math.round(distanceMiles(searchPoint, { latitude: Number(v.latitude), longitude: Number(v.longitude) })) }))
+      .filter((x) => x.miles <= Math.max(Number(x.v.radius_miles) || 0, 45))
+      .sort((a, b) => a.miles - b.miles)
+  }, [searchPoint, placed])
+
+  async function searchZip(e) {
+    e.preventDefault()
+    const z = zipText.trim()
+    if (!/^\d{5}$/.test(z)) { setZipError('Enter a 5 digit zip code.'); return }
+    setZipBusy(true); setZipError('')
+    const { data, error: err } = await supabase.from('zip_codes').select('zip, city, state, latitude, longitude').eq('zip', z).maybeSingle()
+    setZipBusy(false)
+    if (err) { console.error('Zip lookup failed:', err); setZipError('We could not look that up. Try again.'); return }
+    if (!data) { setSearchPoint(null); setZipError('We could not find that zip code.'); return }
+    setSearchPoint({ zip: data.zip, city: data.city, state: data.state, latitude: Number(data.latitude), longitude: Number(data.longitude) })
+    setView('map')
+  }
+
+  function clearSearch() { setSearchPoint(null); setZipText(''); setZipError('') }
   const boardFor = (v) => boards.find((b) => b.village_id === v.id)
 
   // The real map. Leaflet loads only when this page opens.
@@ -120,14 +150,26 @@ export default function VillageMap() {
         m.on('click', () => setSelectedId(v.id))
         markersRef.current[v.id] = m
       })
-      if (bounds.length === 1) map.setView(bounds[0], 9)
+      // Dashed lines join each village to its closest neighbors.
+      networkEdges(placed).forEach((e) => {
+        const a = placed[e.i], b = placed[e.j]
+        L.polyline([[Number(a.latitude), Number(a.longitude)], [Number(b.latitude), Number(b.longitude)]], { color: '#4ecca3', weight: 2, opacity: 0.6, dashArray: '6 6' })
+          .bindTooltip(Math.round(e.d) + ' miles apart', { sticky: true }).addTo(map)
+      })
+      if (searchPoint) {
+        const ll = [searchPoint.latitude, searchPoint.longitude]
+        L.circleMarker(ll, { radius: 7, color: '#fff', weight: 2, fillColor: '#ff8844', fillOpacity: 1 }).addTo(map).bindTooltip('Your search: ' + searchPoint.zip, { direction: 'top' })
+        const near = nearSearch.map((x) => [Number(x.v.latitude), Number(x.v.longitude)])
+        if (near.length) map.fitBounds([ll, ...near], { padding: [40, 40], maxZoom: 10 })
+        else map.setView(ll, 9)
+      } else if (bounds.length === 1) map.setView(bounds[0], 9)
       else map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10 })
     }).catch((err) => console.error('Map failed to load:', err))
     return () => {
       cancelled = true
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
     }
-  }, [view, placed])
+  }, [view, placed, searchPoint, nearSearch])
 
   // The web: villages placed by where they really are, joined to their closest neighbors.
   const web = useMemo(() => {
@@ -146,6 +188,33 @@ export default function VillageMap() {
       <p className="cal-sub">Every Village Without Borders village. Only names, places, and rough sizes are shown, never people.</p>
       <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', margin: '0.5rem 0' }} onClick={() => navigate('/find-village')}>Find or start a village chat</button>
 
+      <form onSubmit={searchZip} style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0' }}>
+        <label htmlFor="map-zip" className="sr-only">Search the map by zip code</label>
+        <input id="map-zip" type="text" inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" value={zipText} onChange={(e) => setZipText(e.target.value.replace(/\D/g, ''))} placeholder="Search by zip code" style={{ flex: 1, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
+        <button type="submit" className="btn btn-outline" style={{ minHeight: '44px' }} disabled={zipBusy}>Search</button>
+      </form>
+      {zipError && <p className="form-error" role="alert">{zipError}</p>}
+
+      {searchPoint && (
+        <section className="cal-box" aria-live="polite" aria-labelledby="zip-result">
+          <h2 id="zip-result">Near {searchPoint.zip}{searchPoint.city ? ' (' + searchPoint.city + ', ' + searchPoint.state + ')' : ''}</h2>
+          {nearSearch.length > 0 ? nearSearch.map(({ v, miles }) => (
+            <button key={v.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} onClick={() => setSelectedId(v.id)}>
+              <span className="cal-card-title">{v.name}{v.is_mine ? ' · yours' : ''}</span>
+              <span className="cal-card-meta">{countText(v)} · about {miles} miles away</span>
+            </button>
+          )) : (
+            <>
+              <p className="cal-sub">No village chat is near this zip code yet.</p>
+              {profile?.zip_code === searchPoint.zip && (
+                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>Start a village for my area</button>
+              )}
+            </>
+          )}
+          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginTop: '0.5rem' }} onClick={clearSearch}>Clear search</button>
+        </section>
+      )}
+
       {error && <p className="form-error" role="alert">{error}</p>}
 
       {!error && villages.length === 0 && <p className="cal-empty">No villages yet.</p>}
@@ -160,7 +229,10 @@ export default function VillageMap() {
           {placed.length === 0 && <p className="cal-empty">These villages don't have a location yet, so there's nothing to draw. They're listed below.</p>}
 
           {view === 'map' && placed.length > 0 && (
-            <div ref={mapEl} className="village-map" role="application" aria-label="Map of villages. The same villages are listed below." />
+            <>
+              <div ref={mapEl} className="village-map" role="application" aria-label="Map of villages. The same villages are listed below." />
+              <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Dashed lines join each village to its closest neighbors.</p>
+            </>
           )}
 
           {view === 'web' && web && (
