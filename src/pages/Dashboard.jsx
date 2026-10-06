@@ -93,7 +93,7 @@ function VillageAsk() {
     if (yes) {
       // Said yes with a zip but no village was found nearby: help them find or start one.
       const { data: me } = await supabase.from('helper_profiles').select('village_id').eq('user_id', profile.user_id).maybeSingle()
-      if (!me?.village_id) navigate('/find-village')
+      navigate(me?.village_id ? '/find-village?welcome=1' : '/find-village')
     }
   }
 
