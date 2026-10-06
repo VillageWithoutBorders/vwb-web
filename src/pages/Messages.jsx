@@ -28,7 +28,7 @@ const MUTE_OPTIONS = [
 ]
 
 export default function Messages() {
-  const { user, profile, isAdmin } = useAuth()
+  const { user } = useAuth()
   const { refreshUnread } = useUnreadCount()
   const navigate = useNavigate()
   const blockedBy = useBlockedBy()
@@ -60,7 +60,8 @@ export default function Messages() {
   // Campfire shows as a pinned card at the top of the list for Hope
   // Ambassadors and admins, so it lives with the rest of their messages
   // instead of only on the Home screen.
-  const hasCampfire = !!(profile?.is_hope_ambassador || isAdmin)
+  // Everyone gets the Village Square card. The database decides which boards they can read.
+  const hasCampfire = !!user
   const [campfire, setCampfire] = useState(null)
 
   // Phase 3: Help offers state
@@ -956,9 +957,9 @@ export default function Messages() {
                 </span>
                 {campfire.last && <span className="message-card-time" style={{ color: campfire.unread ? '#4ecca3' : undefined }}>{formatTime(campfire.last.created_at)}</span>}
               </div>
-              <p className="message-card-skill">Ambassadors and admins</p>
+              <p className="message-card-skill">Announcements and your village chat</p>
               <p className="message-card-preview" style={{ color: campfire.unread ? '#ddd' : undefined, fontWeight: campfire.unread ? 600 : 400 }}>
-                {campfire.noVillage ? 'Add your zip code to join your area\u2019s Village Square.' : campfire.last ? campfire.name + ': ' + ((campfire.last.body || '').length > 70 ? campfire.last.body.slice(0, 70) + '...' : (campfire.last.body || '')) : 'Say hello to your fellow ambassadors.'}
+                {campfire.noVillage ? 'Add your zip code to join your area\u2019s Village Square.' : campfire.last ? campfire.name + ': ' + ((campfire.last.body || '').length > 70 ? campfire.last.body.slice(0, 70) + '...' : (campfire.last.body || '')) : 'Nothing posted yet.'}
               </p>
             </div>
           </div>

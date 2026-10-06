@@ -86,7 +86,7 @@ export default function Terms() {
         <p>Our community has a trust system with four levels:</p>
         <ul>
           <li><strong>Neighbor.</strong> Any verified member. Can post help requests, browse offers, and send messages.</li>
-          <li><strong>Hope Ambassador.</strong> A neighbor who has applied to actively help others. An admin reviews and approves each application before Village Square access is granted.</li>
+          <li><strong>Hope Ambassador.</strong> A neighbor who has applied to actively help others. An admin reviews and approves each application before the Ambassador can post in Announcements.</li>
           <li><strong>Admin.</strong> A trusted member who helps manage the platform. Earned through an application process reviewed by existing leadership.</li>
           <li><strong>Founder.</strong> The creator and steward of VWB.</li>
         </ul>
@@ -107,7 +107,7 @@ export default function Terms() {
           <li>Skills you choose to list</li>
           <li>Your neighborhood (general area only)</li>
           <li>Your role (Neighbor, Hope Ambassador, Admin)</li>
-          <li>Posts you make in public spaces (Village Square chat, help requests, offers)</li>
+          <li>Posts you make in public spaces (Announcements, village chats, help requests, offers)</li>
         </ul>
         <p><strong>What is never visible to other members:</strong></p>
         <ul>
@@ -115,7 +115,7 @@ export default function Terms() {
           <li>Your precise location (even if you enable location features, coordinates are rounded for privacy)</li>
         </ul>
         <p><strong>Your responsibility:</strong></p>
-        <p>Do not share personal information in public areas of the app. This includes Village Square (our group chat), help request descriptions, offer listings, community feed posts, and any other space visible to all members.</p>
+        <p>Do not share personal information in public areas of the app. This includes Announcements, village chats, help request descriptions, offer listings, community feed posts, and any other space visible to all members.</p>
         <p>Information you should keep out of public posts:</p>
         <ul>
           <li>Your home address or precise location</li>
@@ -201,10 +201,10 @@ export default function Terms() {
           <span className="terms-summary-hint">What stays private and what everyone can see</span>
         </summary>
         <div className="terms-body">
-        <p>Everything you post in public spaces (Village Square, help requests, offers, the community feed) may be visible to all members.</p>
+        <p>Everything you post in public spaces (Announcements, village chats, help requests, offers, the community feed) may be visible to all members.</p>
         <p>Direct messages between two people are end-to-end encrypted. That means only the two people in the conversation can ever read them, not admins, not the founder, not us. If you need to report something from a private conversation, you attach your own copy of the messages you&apos;re reporting, the same way you&apos;d forward a text message.</p>
-        <p>Village Square (our group chat) works differently. It is not end-to-end encrypted, and admins can see what&apos;s posted there, so keep sensitive details out of it.</p>
-        <p>If you choose to make a recovery key, we store a locked backup of your message key that only your recovery key can open. We never see the recovery key, so we cannot open the backup or your messages. If you lose the key, we cannot get it back for you. We do not keep a separate archive of messages. Village Square messages are deleted automatically after 30 days. Direct messages and group boards are never readable by us, and we do not save copies of them.</p>
+        <p>Announcements and village chats work differently. Announcements are open for every member to read, and only Hope Ambassadors and admins can post there. A village chat is for the neighbors in a village who chose to join. Neither one is end-to-end encrypted. Admins can read them, and so can everyone in the chat, so keep sensitive details out. You can leave your village chat any time from your Profile.</p>
+        <p>If you choose to make a recovery key, we store a locked backup of your message key that only your recovery key can open. We never see the recovery key, so we cannot open the backup or your messages. If you lose the key, we cannot get it back for you. We do not keep a separate archive of messages. Announcements and village chat messages are deleted automatically after 30 days. Direct messages and group boards are never readable by us, and we do not save copies of them.</p>
         <p>Group boards are end-to-end encrypted, so only current members can read them. When a group sets posts to disappear, or when someone deletes a message or post for everyone, the locked text is erased from our servers. Deleting a message for yourself only hides it from you. We can&apos;t take back anything someone already read, copied, or took a screenshot of.</p>
         <p>You are responsible for what you post. Do not post content that is:</p>
         <ul>

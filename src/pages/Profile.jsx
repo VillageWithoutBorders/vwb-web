@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { VouchRequestsForMe } from '../components/PersonalVouches'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import GroupedSkillChips from '../components/GroupedSkillChips'
@@ -347,6 +347,7 @@ function captureCoverageLocation() {
             We find it from your zip code. Turn this off any time to leave.
           </span>
         </label>
+        <p style={{ margin: '0 0 0.75rem' }}><Link to="/find-village">Find or start a village chat</Link></p>
 
         <div className="profile-details">
           <div className="detail-row">
@@ -425,8 +426,8 @@ function captureCoverageLocation() {
           <button onClick={() => setShowAmbassadorSignup(true)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "0.75rem", padding: "0.75rem", background: "linear-gradient(135deg, #3a2a10, #4a3520)", border: "2px solid #ff8844", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
             <span style={{ fontSize: "1.5rem" }}>&#128227;</span>
             <div>
-              <span style={{ display: "block", color: "#ffaa44", fontWeight: 700, fontSize: "0.95rem" }}>The Village Square</span>
-              <span style={{ color: "#cc9966", fontSize: "0.75rem" }}>Want in? Apply to be a Hope Ambassador above &#8594;</span>
+              <span style={{ display: "block", color: "#ffaa44", fontWeight: 700, fontSize: "0.95rem" }}>Become a Hope Ambassador</span>
+              <span style={{ color: "#cc9966", fontSize: "0.75rem" }}>Post in Announcements and join the Ambassadors board. Apply above &#8594;</span>
             </div>
           </button>
         )}
@@ -465,7 +466,7 @@ function captureCoverageLocation() {
               <input type="checkbox" checked={ambSignupCampfireNotify} onChange={(e) => setAmbSignupCampfireNotify(e.target.checked)} />
               <span>
                 <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Notify me about Village Square messages</strong>
-                The Village Square is the group chat for Ambassadors and admins. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Village Square's settings.
+                The Village Square holds Announcements, the Ambassadors board, and your village chat. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Village Square's settings.
               </span>
             </label>
             {ambSignupError && <p className="form-error" role="alert">{ambSignupError}</p>}

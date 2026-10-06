@@ -55,9 +55,21 @@ const CARDS = [
     points: [
       'Direct messages are end-to-end encrypted. Only you and the person you\'re messaging can read them, not even us',
       'If someone files a report, they attach their own copy of the messages being reported. We can\'t pull up a conversation ourselves',
-      "Village Square (the group chat) isn't encrypted the same way. Admins can see what's posted there, so keep sensitive details out of it",
-      "We don't keep a separate archive of messages. Village Square posts are deleted automatically after 30 days. When a message or post is deleted for everyone, its text is erased from our servers",
+      "Announcements and village chats aren't encrypted the same way. Admins can see what's posted there, so keep sensitive details out of them",
+      "We don't keep a separate archive of messages. Announcements and village chat posts are deleted automatically after 30 days. When a message or post is deleted for everyone, its text is erased from our servers",
       "Please don't share someone else's personal information without asking them first",
+    ],
+    footer: null,
+  },
+  {
+    icon: '💬',
+    title: 'Which chat is right for this?',
+    body: 'The bigger the circle, the less you share.',
+    points: [
+      'Cottage Chat: for people you know well. Only the people in it can read it',
+      'Campfire: for a group, church, or nonprofit working together. Only its members can read it',
+      'Village chat: for neighbors in your area who chose to join. Admins can read it, so keep sensitive details out',
+      'Announcements: everyone can read. Only Ambassadors and admins can post',
     ],
     footer: null,
   },
