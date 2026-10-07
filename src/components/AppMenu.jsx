@@ -86,6 +86,7 @@ export default function AppMenu() {
         ref={buttonRef}
         type="button"
         className="header-btn"
+        data-tour="menu"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls="appMenuList"
