@@ -257,18 +257,28 @@ export default function FindVillage() {
               ))}
             </div>
             {reachBusy && <p className="cal-empty">Loading...</p>}
-            <div style={{ maxHeight: '45vh', overflowY: 'auto' }}>
-              {suggested.map(r => {
-                const mine = r.zip === profile.zip_code
-                return (
-                  <label key={r.zip} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minHeight: '44px', cursor: mine ? 'default' : 'pointer' }}>
-                    <input type="checkbox" checked={mine || !!ticked[r.zip]} disabled={mine} onChange={e => setTicked(t => ({ ...t, [r.zip]: e.target.checked }))} style={{ width: '24px', height: '24px', flexShrink: 0 }} />
-                    <span>{r.zip} {r.city}{r.state ? ', ' + r.state : ''} <span className="cal-card-meta">{r.miles > 0 ? Math.round(r.miles) + ' mi' : 'yours'}</span></span>
-                  </label>
-                )
-              })}
-            </div>
-            <p className="cal-sub">{tickedCount} of up to 40 zip codes ticked.</p>
+            {/* A dropdown: closed by default, so 40 zip codes do not fill the screen. */}
+            <details style={{ border: '1px solid #444', borderRadius: '8px', margin: '0 0 0.5rem' }}>
+              <summary style={{ minHeight: '44px', display: 'flex', alignItems: 'center', padding: '0 0.75rem', cursor: 'pointer', fontSize: '1rem' }}>
+                Zip codes: {tickedCount} of {suggested.length} ticked (tap to change)
+              </summary>
+              <div style={{ display: 'flex', gap: '0.5rem', padding: '0.5rem 0.75rem' }}>
+                <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 1 }} onClick={() => { const t = {}; suggested.forEach(r => { t[r.zip] = true }); setTicked(t) }}>Tick all</button>
+                <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 1 }} onClick={() => setTicked({})}>Untick all</button>
+              </div>
+              <div style={{ maxHeight: '45vh', overflowY: 'auto', padding: '0 0.75rem 0.5rem' }}>
+                {suggested.map(r => {
+                  const mine = r.zip === profile.zip_code
+                  return (
+                    <label key={r.zip} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minHeight: '44px', cursor: mine ? 'default' : 'pointer' }}>
+                      <input type="checkbox" checked={mine || !!ticked[r.zip]} disabled={mine} onChange={e => setTicked(t => ({ ...t, [r.zip]: e.target.checked }))} style={{ width: '24px', height: '24px', flexShrink: 0 }} />
+                      <span>{r.zip} {r.city}{r.state ? ', ' + r.state : ''} <span className="cal-card-meta">{r.miles > 0 ? Math.round(r.miles) + ' mi' : 'yours'}</span></span>
+                    </label>
+                  )
+                })}
+              </div>
+            </details>
+            <p className="cal-sub">A village can have up to 40 zip codes.</p>
             <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} disabled={busy || reachBusy || tickedCount === 0 || tickedCount > 40} onClick={startOne}>Continue</button>
             <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => setStarting(false)}>Cancel</button>
           </section>
