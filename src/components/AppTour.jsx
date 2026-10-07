@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 
@@ -13,9 +14,13 @@ import { supabase } from '../supabaseClient'
 // Everyone: can take it again any time from Menu, Help, or Settings. A
 // replay can be closed whenever they like.
 //
-// It sits just above the bottom tab bar and lights up the tab it's talking
-// about, so people learn where things live instead of reading about them.
-// Plain words on purpose: short sentences, one idea per card.
+// Each step opens the real screen, dims everything else, and rings the
+// button or tab it is talking about, so people learn where things live
+// instead of reading about them. The card moves to the top or bottom of the
+// screen, whichever keeps the ringed spot in view. If a spot cannot be found
+// (a screen is slow, or a button is hidden for this person), the card still
+// shows and the tour keeps going. Plain words on purpose: short sentences,
+// one idea per card.
 //
 // Practice round (optional): after SkillShare, a sample request, offer, and
 // event let people try the buttons. Nothing is saved, nobody is notified, and
@@ -23,34 +28,92 @@ import { supabase } from '../supabaseClient'
 
 const START_EVENT = 'vwb:start-tour'
 
+// route: the screen to open for this step. target: what to ring (a CSS selector).
+// Steps with no target show a plain card over the dimmed screen.
+const TAB = (name) => '.tab-item[data-tour="' + name + '"]'
+
 const ALL_STEPS = [
   {
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
-    body: "Here's a quick look around. It takes about a minute.",
+    body: 'Here is a quick walk through the app. Each step opens a real screen and rings the button or tab to look at. Tap Next to keep going. You can skip any time.',
   },
   {
-    tab: 'home',
+    route: '/',
+    target: '.home-primary .btn-primary',
     icon: '\u{1F64B}',
-    title: 'Home',
-    body: 'Need a hand? Tap Ask for Help. Pick what you need and how soon. Neighbors near you will see it, and your address is never shown. You can fix a request later if something changes. The Calendar, your Cottage Chats and Campfires, and the Village Map are here too.',
+    title: 'Ask for help',
+    body: 'Need a hand? Tap this button. Pick what you need and how soon. Neighbors near you will see it. Your address is never shown.',
   },
   {
-    tab: 'community',
+    route: '/',
+    target: '.home-primary .btn-outline',
+    icon: '\u{1F49A}',
+    title: 'I can help',
+    body: 'Want to lend a hand? Tap this to see what neighbors near you need.',
+  },
+  {
+    route: '/',
+    target: '.home-tile[aria-label^="Calendar"]',
+    icon: '\u{1F4C5}',
+    title: 'Calendar',
+    body: 'Events, drives, and volunteer sign-ups near you. You can add one to your phone calendar.',
+  },
+  {
+    route: '/',
+    target: '.home-tile[aria-label^="Cottage Chats"]',
+    icon: '\u{1F91D}',
+    title: 'Cottage Chats and Campfires',
+    body: 'A Cottage Chat is a private chat you start with people you choose. A Campfire is a chat that a group you belong to starts.',
+  },
+  {
+    route: '/',
+    target: '.home-tile[aria-label^="Village Square"]',
+    icon: '\u{1F4E3}',
+    title: 'Village Square',
+    body: 'Everyone can read the Announcements here. You can also join the chat for your village and talk with neighbors who chose to join.',
+  },
+  {
+    route: '/',
+    target: '.home-tile[aria-label^="Village Map"]',
+    icon: '\u{1F5FA}\uFE0F',
+    title: 'Village Map',
+    body: 'See every village and how they connect. Only places and rough numbers show, never people.',
+  },
+  {
+    route: '/',
+    target: '[data-tour="emergency"]',
+    icon: '\u26A0\uFE0F',
+    title: 'Emergency Response',
+    body: 'When a flood, fire, or storm hits, tap here to see active emergencies or report one.',
+  },
+  {
+    route: '/community',
+    target: TAB('community'),
     icon: '\u{1F4DA}',
     title: 'Community',
-    body: "See what's happening near you and who is organizing. Find local help like food pantries and clinics. You can even start a Cottage Chat with your neighbors. Standing next to a friend? Open your chat and tap Show QR code. They scan it with their phone camera to join.",
+    body: "This is the Community tab. See what's happening near you and who is organizing. Standing next to a friend? Open a chat and tap Show QR code. They scan it with their phone camera to join.",
   },
   {
-    icon: '\u{1F5FA}\uFE0F',
-    title: 'The village map',
-    body: 'Find Village Map on Home. It shows every village on a map, and as a web that shows how villages connect. Tap a village to see its name and size. Only places and rough numbers show, never people.',
+    route: '/community',
+    target: '.hub-search',
+    icon: '\u{1F50D}',
+    title: 'Find local help',
+    body: 'Search for food pantries, clinics, and other help near you. Or tap a tile below to browse by kind of help.',
   },
   {
-    tab: 'skillshare',
+    route: '/skillshare',
+    target: TAB('skillshare'),
     icon: '\u{1F91D}',
     title: 'SkillShare',
-    body: 'See what neighbors near you need, and what they are giving away for free. If you can help with something, tap I can help.',
+    body: 'This is the SkillShare tab. See what neighbors near you need, and what they are giving away for free.',
+  },
+  {
+    route: '/skillshare',
+    target: '.tasks-tabs',
+    icon: '\u{1F4CB}',
+    title: 'Requests and Offers',
+    body: 'Requests are neighbors asking for help. Offers are things neighbors share. If you can help with a request, tap I can help on it.',
   },
   {
     practice: 'intro',
@@ -77,39 +140,70 @@ const ALL_STEPS = [
     body: 'Events are gatherings and drives in your area. Tap the button to try it.',
   },
   {
-    tab: 'messages',
+    route: '/messages',
+    target: TAB('messages'),
     icon: '\u{1F4AC}',
     title: 'Messages',
-    body: "Talk with neighbors, Cottage Chats, and Campfires here. Tap ⋯ on a chat to mark it unread or flag it to follow up. Don't want to hear from someone? Block them. Messages stay private, and you can turn read receipts on or off in Settings.",
+    body: "This is the Messages tab. Talk with neighbors one to one. Tap \u22EF on a chat to mark it unread or flag it to follow up. Don't want to hear from someone? Block them. Messages stay private.",
   },
   {
-    only: 'campfire',
+    route: '/messages',
+    target: '[aria-label^="Open Village Square"]',
     icon: '\u{1F4E3}',
-    title: 'The Village Square',
-    body: 'Hope Ambassadors, admins, and the founder meet at the Village Square, pinned at the top of Messages. It has a General board and one board for each village. Tap a message\u2019s \u22EF to reply to it or edit your own. Every message shows when it was sent.',
+    title: 'Your Village Square',
+    body: 'Your Village Square is pinned at the top of Messages. Tap it to read the Announcements and chat with your village.',
   },
   {
-    tab: 'tasks',
-    icon: '✅',
+    route: '/find-village',
+    target: '#fv-search',
+    icon: '\u{1F3D8}\uFE0F',
+    title: 'Find your village chat',
+    body: 'Search by town or zip code, then tap Join. You can join more than one village. Do not see yours? Any neighbor can start one.',
+  },
+  {
+    route: '/tasks',
+    target: TAB('tasks'),
+    icon: '\u2705',
     title: 'Tasks',
-    body: "Keep track of help you asked for and help you're giving. When it's done, mark it done and thank each other.",
+    body: "This is the Tasks tab. Keep track of help you asked for and help you're giving. When it's done, mark it done and thank each other.",
   },
   {
-    tab: 'profile',
-    icon: '\u{1F6E1}️',
-    title: 'Your profile and safety',
-    body: "Add your zip code here so we can show you what's near you. Only your area is shared, never your address. Block or report anyone, any time.",
+    route: '/tasks',
+    target: '.tasks-tabs',
+    icon: '\u{1F4C2}',
+    title: 'Active and Archived',
+    body: 'Active tasks are still going. When both of you have said how it went, the task moves to Archived.',
+  },
+  {
+    route: '/profile',
+    target: TAB('profile'),
+    icon: '\u{1F6E1}\uFE0F',
+    title: 'Profile',
+    body: 'This is the Profile tab. Your name, photo, skills, and settings live here. You can block or report anyone, any time.',
+  },
+  {
+    route: '/profile',
+    target: '.profile-details .detail-row',
+    icon: '\u{1F4CD}',
+    title: 'Your zip code',
+    body: "Add your zip code so we can show you what's near you. Only your area is shared, never your address.",
+  },
+  {
+    target: '[data-tour="alerts"]',
+    icon: '\u{1F514}',
+    title: 'Alerts',
+    body: 'New messages, requests, and updates show up here. Tap the bell to see your newest.',
+  },
+  {
+    target: '[data-tour="menu"]',
+    icon: '\u2630',
+    title: 'Menu',
+    body: 'Settings, Help, and Log out are here. In Settings you can turn on phone notifications and add two-step login. Tap the logo any time to go Home.',
   },
   {
     icon: '\u{1F331}',
     title: 'How trust grows',
     body: 'New here? You can ask for help and offer to help right away. Once a neighbor vouches for you, or you finish a task together, you can message people first and post offers too.',
-  },
-  {
-    top: true,
-    icon: '☰',
-    title: 'Alerts and Menu',
-    body: 'At the top right, Alerts shows what is new for you. Menu has your settings, help, and Log out. In Settings you can turn on phone notifications, change your password, add two-step login, and see your devices. Tap the logo any time to go Home.',
     last: 'You can take this tour again any time from Menu, Help, or Settings.',
   },
 ]
@@ -157,10 +251,9 @@ function SampleCard({ kind }) {
   )
 }
 
-// Everyone sees the same walk-through, except steps marked for a smaller group.
-function stepsFor(profile, isAdmin) {
-  const hasCampfire = !!(profile?.is_hope_ambassador || isAdmin)
-  return ALL_STEPS.filter((st) => !st.only || (st.only === 'campfire' && hasCampfire))
+// Everyone sees the same walk-through.
+function stepsFor() {
+  return ALL_STEPS
 }
 
 // Call from anywhere (Menu, Help, Settings) to replay the tour.
@@ -170,6 +263,8 @@ export function startAppTour() {
 
 export default function AppTour() {
   const { user, profile, isAdmin, refreshProfile } = useAuth()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
   // Only when the column exists and is empty. If the database step hasn't
   // been run yet, the tour never forces itself on anyone.
   const needsTour = !!profile && Object.prototype.hasOwnProperty.call(profile, 'tour_done_at') && !profile.tour_done_at
@@ -178,7 +273,13 @@ export default function AppTour() {
   const [index, setIndex] = useState(0)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [rect, setRect] = useState(null)
+  const [cardAtTop, setCardAtTop] = useState(false)
   const headingRef = useRef(null)
+  const sheetRef = useRef(null)
+  const startPath = useRef('/')
+  const pathRef = useRef(pathname)
+  pathRef.current = pathname
   const STEPS = stepsFor(profile, isAdmin)
   const step = STEPS[index] || STEPS[0]
   const isLast = index === STEPS.length - 1
@@ -190,44 +291,79 @@ export default function AppTour() {
 
   // First time for a new member: open it, and it has to be finished.
   useEffect(() => {
-    if (needsTour) { setIndex(0); setRequired(true); setOpen(true) }
+    if (needsTour) { startPath.current = pathRef.current; setIndex(0); setRequired(true); setOpen(true) }
   }, [needsTour])
 
   // Replays from Menu, Help, or Settings.
   useEffect(() => {
-    function start() { setIndex(0); setError(''); setRequired(needsTour); setOpen(true) }
+    function start() { startPath.current = pathRef.current; setIndex(0); setError(''); setRequired(needsTour); setOpen(true) }
     window.addEventListener(START_EVENT, start)
     return () => window.removeEventListener(START_EVENT, start)
   }, [needsTour])
 
-  // Light up the matching bottom tab, and lift the tab bar above the dimmed page.
+  // Open the real screen for each step.
   useEffect(() => {
-    const root = document.documentElement
-    function clear() { root.removeAttribute('data-tour-tab'); root.classList.remove('tour-open', 'tour-required') }
-    if (!open) { clear(); return }
-    root.classList.add('tour-open')
-    root.classList.toggle('tour-required', required)
-    if (step.tab) root.setAttribute('data-tour-tab', step.tab)
-    else if (step.top) root.setAttribute('data-tour-tab', 'top')
-    else root.removeAttribute('data-tour-tab')
-    return clear
-  }, [open, step, required])
+    if (!open) return
+    if (step.route && pathRef.current !== step.route) navigate(step.route)
+  }, [open, index])
+
+  // Find the thing to ring. The screen may still be loading, so keep looking
+  // for a few seconds, and keep the ring in place if the page moves.
+  useEffect(() => {
+    setRect(null)
+    if (!open || !step.target) return
+    let cancelled = false
+    let scrolled = false
+    function look() {
+      if (cancelled) return
+      const el = document.querySelector(step.target)
+      if (!el) return
+      if (!scrolled) { scrolled = true; el.scrollIntoView({ block: 'center', inline: 'nearest' }) }
+      const r = el.getBoundingClientRect()
+      if (r.width === 0 && r.height === 0) return
+      setRect((prev) => (prev && Math.abs(prev.top - r.top) < 1 && Math.abs(prev.left - r.left) < 1 && Math.abs(prev.width - r.width) < 1 && Math.abs(prev.height - r.height) < 1)
+        ? prev
+        : { top: r.top, left: r.left, width: r.width, height: r.height })
+    }
+    look()
+    const id = setInterval(look, 200)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [open, index, step.target])
+
+  // Put the card where it does not cover the ringed spot.
+  useLayoutEffect(() => {
+    if (!open || !rect) { setCardAtTop(false); return }
+    const cardH = sheetRef.current ? sheetRef.current.offsetHeight : 300
+    const vh = window.innerHeight
+    const tabH = 60 + 12
+    const headH = 52 + 8
+    const spaceBelow = vh - tabH - (rect.top + rect.height)
+    const spaceAbove = rect.top - headH
+    // Prefer the bottom. Use the top only when the bottom would cover the spot and the top would not.
+    setCardAtTop(spaceBelow < cardH + 12 && spaceAbove >= cardH + 12)
+  }, [open, rect, index])
 
   // Move focus to each new card so screen readers read it.
   useEffect(() => {
-    if (open) headingRef.current?.focus()
+    if (open) headingRef.current?.focus({ preventScroll: true })
   }, [open, index])
 
   // Escape closes a replay. The first-time tour has to be finished.
   useEffect(() => {
     if (!open || required) return
-    function onKey(e) { if (e.key === 'Escape') setOpen(false) }
+    function onKey(e) { if (e.key === 'Escape') close() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open, required])
 
+  // Leave the way you came: back on the screen where the tour began.
+  function close() {
+    setOpen(false)
+    if (pathRef.current !== startPath.current) navigate(startPath.current)
+  }
+
   async function agree() {
-    if (!required) { setOpen(false); return }
+    if (!required) { close(); return }
     setSaving(true)
     setError('')
     const { error: saveErr } = await supabase
@@ -241,16 +377,25 @@ export default function AppTour() {
       return
     }
     setRequired(false)
-    setOpen(false)
+    close()
     refreshProfile?.()
   }
 
   if (!open) return null
 
+  const pct = Math.round(((index + 1) / STEPS.length) * 100)
+
   return (
     <>
-      <div className="tour-backdrop" aria-hidden="true" onClick={required ? undefined : () => setOpen(false)} />
-      <div className="tour-sheet" role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourBody">
+      <div className={'tour-backdrop' + (rect ? ' tour-backdrop-clear' : '')} aria-hidden="true" onClick={required ? undefined : close} />
+      {rect && (
+        <div
+          className="tour-spot"
+          aria-hidden="true"
+          style={{ top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12 }}
+        />
+      )}
+      <div ref={sheetRef} className={'tour-sheet' + (cardAtTop ? ' tour-sheet-top' : '')} role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourBody">
         <div className="tour-top">
           <span className="tour-count">Step {index + 1} of {STEPS.length}</span>
           <span className="tour-top-actions">
@@ -260,24 +405,19 @@ export default function AppTour() {
             {required ? (
               <button type="button" className="tour-skip" onClick={agree} disabled={saving}>{saving ? 'Saving...' : 'Skip tour'}</button>
             ) : (
-              <button type="button" className="tour-skip" onClick={() => setOpen(false)}>Close</button>
+              <button type="button" className="tour-skip" onClick={close}>Close</button>
             )}
           </span>
         </div>
 
-        <div className="tour-dots" aria-hidden="true">
-          {STEPS.map((s, i) => (
-            <span key={s.title} className={'tour-dot' + (i === index ? ' active' : i < index ? ' done' : '')} />
-          ))}
-        </div>
+        <div className="tour-progress" aria-hidden="true"><span style={{ width: pct + '%' }} /></div>
 
         <div className="tour-card" key={step.title}>
           <div className="tour-icon" aria-hidden="true">{step.icon}</div>
           <h2 id="tourTitle" className="tour-title" tabIndex={-1} ref={headingRef}>{step.title}</h2>
           <p id="tourBody" className="tour-body">{step.body}</p>
           {step.practice && step.practice !== 'intro' && <SampleCard kind={step.practice} />}
-          {step.tab && <p className="tour-hint">Look for the lit-up button at the bottom of your screen.</p>}
-          {step.top && <p className="tour-hint">Look for the lit-up buttons at the top of your screen.</p>}
+          {step.target && rect && <p className="tour-hint">Look for the ringed spot on your screen.</p>}
           {step.last && <p className="tour-hint">{step.last}</p>}
           {error && <p className="form-error" role="alert">{error}</p>}
         </div>
