@@ -50,7 +50,9 @@ function layout(list, w, h, pad) {
   const minY = Math.min(...pts.map((p) => p.y)), maxY = Math.max(...pts.map((p) => p.y))
   const spanX = maxX - minX || 1, spanY = maxY - minY || 1
   const scale = Math.min((w - pad * 2) / spanX, (h - pad * 2) / spanY)
-  const offX = (w - spanX * scale) / 2, offY = (h - spanY * scale) / 2
+  // Center the real spread of the villages. With one village (or villages in a
+  // straight line) the spread is zero on that side, so it sits in the middle.
+  const offX = (w - (maxX - minX) * scale) / 2, offY = (h - (maxY - minY) * scale) / 2
   return pts.map((p) => ({ x: offX + (p.x - minX) * scale, y: offY + (p.y - minY) * scale }))
 }
 
