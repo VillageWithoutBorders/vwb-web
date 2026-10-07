@@ -7,8 +7,6 @@ import 'leaflet/dist/leaflet.css'
 // The villages of Village Without Borders, as a map and as a network web.
 // Shows village names, places, and rough sizes only. Never people.
 
-const MILES_TO_METERS = 1609.34
-
 function countText(v) {
   if (v.just_starting || v.member_count == null) return 'Just getting started'
   return v.member_count + ' neighbors'
@@ -65,6 +63,7 @@ export default function VillageMap() {
   const [zipBusy, setZipBusy] = useState(false)
   const [villages, setVillages] = useState([])
   const [boards, setBoards] = useState([])
+  const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [view, setView] = useState('map')
@@ -87,6 +86,14 @@ export default function VillageMap() {
   }, [])
 
   useEffect(() => {
+    // The zip codes each village covers (public places, never people).
+    supabase.rpc('village_zip_points').then(({ data, error: err }) => {
+      if (err) { console.error('Failed to load village zips:', err); return }
+      setPoints(data || [])
+    })
+  }, [])
+
+  useEffect(() => {
     // The database only returns the boards this person is allowed to open.
     supabase.from('campfire_boards').select('id, village_id').not('village_id', 'is', null).then(({ data, error: err }) => {
       if (err) { console.error('Failed to load village boards:', err); return }
@@ -97,15 +104,22 @@ export default function VillageMap() {
   const placed = useMemo(() => villages.filter((v) => v.latitude != null && v.longitude != null), [villages])
   const unplaced = useMemo(() => villages.filter((v) => v.latitude == null || v.longitude == null), [villages])
   const selected = villages.find((v) => v.id === selectedId) || null
+  const pointsByVillage = useMemo(() => {
+    const m = {}
+    points.forEach((p) => { (m[p.village_id] = m[p.village_id] || []).push(p) })
+    return m
+  }, [points])
+  const myZip = profile?.zip_code || ''
+  const covers = (v, zip) => !!zip && (pointsByVillage[v.id] || []).some((p) => p.zip === zip)
 
-  // Villages within reach of a searched zip code, closest first.
+  // Villages whose zip list includes the searched zip code, closest first.
   const nearSearch = useMemo(() => {
     if (!searchPoint) return []
     return placed
       .map((v) => ({ v, miles: Math.round(distanceMiles(searchPoint, { latitude: Number(v.latitude), longitude: Number(v.longitude) })) }))
-      .filter((x) => x.miles <= Math.max(Number(x.v.radius_miles) || 0, 45))
+      .filter((x) => covers(x.v, searchPoint.zip))
       .sort((a, b) => a.miles - b.miles)
-  }, [searchPoint, placed])
+  }, [searchPoint, placed, pointsByVillage])
 
   async function searchZip(e) {
     e.preventDefault()
@@ -141,9 +155,10 @@ export default function VillageMap() {
       placed.forEach((v) => {
         const ll = [Number(v.latitude), Number(v.longitude)]
         bounds.push(ll)
-        if (v.radius_miles) {
-          L.circle(ll, { radius: Number(v.radius_miles) * MILES_TO_METERS, color: '#4ecca3', weight: 1, fillColor: '#4ecca3', fillOpacity: 0.12, interactive: false }).addTo(map)
-        }
+        // Each zip code the village covers shows as a small dot.
+        ;(pointsByVillage[v.id] || []).forEach((p) => {
+          L.circleMarker([Number(p.latitude), Number(p.longitude)], { radius: 5, color: '#4ecca3', weight: 1, fillColor: '#4ecca3', fillOpacity: 0.35, interactive: false }).addTo(map)
+        })
         const size = v.member_count ? Math.min(22, 9 + Math.sqrt(v.member_count)) : 9
         const m = L.circleMarker(ll, { radius: size, color: v.is_mine ? '#ffaa44' : '#1a4a3a', weight: 3, fillColor: v.is_mine ? '#ffcc66' : '#4ecca3', fillOpacity: 0.95 }).addTo(map)
         m.bindTooltip(v.name, { direction: 'top' })
@@ -169,7 +184,7 @@ export default function VillageMap() {
       cancelled = true
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
     }
-  }, [view, placed, searchPoint, nearSearch])
+  }, [view, placed, searchPoint, nearSearch, pointsByVillage])
 
   // The web: villages placed by where they really are, joined to their closest neighbors.
   const web = useMemo(() => {
@@ -205,7 +220,7 @@ export default function VillageMap() {
             </button>
           )) : (
             <>
-              <p className="cal-sub">No village chat is near this zip code yet.</p>
+              <p className="cal-sub">No village chat covers this zip code yet.</p>
               {profile?.zip_code === searchPoint.zip && (
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>Start a village for my area</button>
               )}
@@ -261,12 +276,16 @@ export default function VillageMap() {
             <section className="cal-box" aria-live="polite" aria-labelledby="village-sel">
               <h2 id="village-sel">{selected.name}{selected.is_mine ? ' (you joined)' : ''}</h2>
               {selected.region_label && <p className="cal-sub">{selected.region_label}</p>}
-              <p className="cal-sub">{countText(selected)}{selected.radius_miles ? ' · serves about ' + Math.round(selected.radius_miles) + ' miles around its center' : ''}</p>
+              <p className="cal-sub">{countText(selected)}{selected.zip_count ? ' · covers ' + selected.zip_count + ' zip codes' : ''}</p>
+              {selected.towns && <p className="cal-sub">Towns: {selected.towns}</p>}
               {selected.is_mine && boardFor(selected) && (
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village chat</button>
               )}
-              {!selected.is_mine && (
+              {!selected.is_mine && covers(selected, myZip) && (
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village?join=' + selected.id)}>Join this village chat</button>
+              )}
+              {!selected.is_mine && !covers(selected, myZip) && (
+                <p className="cal-sub">{myZip ? 'Your zip code is not on this village\u2019s list.' : 'Add your zip code on your Profile to join.'}</p>
               )}
               {!selected.is_mine && <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Anyone with an account near this village can join. You will read a short warning first.</p>}
             </section>
