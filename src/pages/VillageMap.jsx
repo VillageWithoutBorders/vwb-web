@@ -21,23 +21,33 @@ function distanceMiles(a, b) {
   return 2 * R * Math.asin(Math.sqrt(h))
 }
 
-// Connects every village to its closest neighbors with the fewest lines
-// (a minimum spanning tree), so the web shows how the villages link up.
-function networkEdges(list) {
-  if (list.length < 2) return []
-  const inTree = new Set([0])
+// Villages are linked when they share zip codes, and the line says how many.
+// Villages that share nothing with any other village would float alone, so the
+// closest of them are joined with a plain distance line (shared is 0) to keep
+// the web in one piece.
+function networkLinks(list, pointsByVillage) {
+  const zipSets = list.map((v) => new Set((pointsByVillage[v.id] || []).map((p) => p.zip)))
   const edges = []
-  while (inTree.size < list.length) {
-    let best = null
-    for (const i of inTree) {
-      for (let j = 0; j < list.length; j++) {
-        if (inTree.has(j)) continue
-        const d = distanceMiles(list[i], list[j])
-        if (!best || d < best.d) best = { i, j, d }
+  const parent = list.map((_, i) => i)
+  const find = (x) => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x] } return x }
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) {
+      let shared = 0
+      for (const z of zipSets[i]) if (zipSets[j].has(z)) shared++
+      if (shared > 0) {
+        edges.push({ i, j, shared, d: distanceMiles(list[i], list[j]) })
+        parent[find(i)] = find(j)
       }
     }
-    edges.push(best)
-    inTree.add(best.j)
+  }
+  // Join any separate groups, shortest gaps first.
+  const gaps = []
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) gaps.push({ i, j, shared: 0, d: distanceMiles(list[i], list[j]) })
+  }
+  gaps.sort((a, b) => a.d - b.d)
+  for (const g of gaps) {
+    if (find(g.i) !== find(g.j)) { edges.push(g); parent[find(g.i)] = find(g.j) }
   }
   return edges
 }
@@ -167,11 +177,11 @@ export default function VillageMap() {
         m.on('click', () => setSelectedId(v.id))
         markersRef.current[v.id] = m
       })
-      // Dashed lines join each village to its closest neighbors.
-      networkEdges(placed).forEach((e) => {
+      // Solid lines join villages that share zip codes. Dashed lines join separate groups.
+      networkLinks(placed, pointsByVillage).forEach((e) => {
         const a = placed[e.i], b = placed[e.j]
-        L.polyline([[Number(a.latitude), Number(a.longitude)], [Number(b.latitude), Number(b.longitude)]], { color: '#4ecca3', weight: 2, opacity: 0.6, dashArray: '6 6' })
-          .bindTooltip(Math.round(e.d) + ' miles apart', { sticky: true }).addTo(map)
+        L.polyline([[Number(a.latitude), Number(a.longitude)], [Number(b.latitude), Number(b.longitude)]], { color: '#4ecca3', weight: e.shared ? 3 : 2, opacity: e.shared ? 0.8 : 0.5, dashArray: e.shared ? null : '6 6' })
+          .bindTooltip(e.shared ? 'Shares ' + e.shared + ' zip code' + (e.shared === 1 ? '' : 's') : Math.round(e.d) + ' miles apart', { sticky: true }).addTo(map)
       })
       if (searchPoint) {
         const ll = [searchPoint.latitude, searchPoint.longitude]
@@ -193,8 +203,8 @@ export default function VillageMap() {
     if (!placed.length) return null
     const W = 340, H = 300
     const pts = layout(placed, W, H, 46)
-    return { W, H, pts, edges: networkEdges(placed).map((e) => ({ ...e, miles: Math.round(e.d) })) }
-  }, [placed])
+    return { W, H, pts, edges: networkLinks(placed, pointsByVillage).map((e) => ({ ...e, miles: Math.round(e.d) })) }
+  }, [placed, pointsByVillage])
 
   if (loading) return <div className="cal-page"><p className="cal-empty">Loading...</p></div>
 
@@ -248,7 +258,7 @@ export default function VillageMap() {
           {view === 'map' && placed.length > 0 && (
             <>
               <div ref={mapEl} className="village-map" role="application" aria-label="Map of villages. The same villages are listed below." />
-              <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Dashed lines join each village to its closest neighbors.</p>
+              <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Solid lines join villages that share zip codes. Dashed lines join villages that share none, by distance.</p>
               <p className="cal-sub">Dots show zip code areas and village centers, never people.</p>
             </>
           )}
@@ -257,8 +267,8 @@ export default function VillageMap() {
             <svg className="village-web" viewBox={'0 0 ' + web.W + ' ' + web.H} role="group" aria-label="Network web of villages. The same villages are listed below.">
               {web.edges.map((e, i) => (
                 <g key={i}>
-                  <line x1={web.pts[e.i].x} y1={web.pts[e.i].y} x2={web.pts[e.j].x} y2={web.pts[e.j].y} stroke="#4ecca3" strokeWidth="2" strokeOpacity="0.6" />
-                  <text x={(web.pts[e.i].x + web.pts[e.j].x) / 2} y={(web.pts[e.i].y + web.pts[e.j].y) / 2 - 4} fill="#9ab" fontSize="9" textAnchor="middle">{e.miles} mi</text>
+                  <line x1={web.pts[e.i].x} y1={web.pts[e.i].y} x2={web.pts[e.j].x} y2={web.pts[e.j].y} stroke="#4ecca3" strokeWidth={e.shared ? 3 : 2} strokeOpacity={e.shared ? 0.85 : 0.5} strokeDasharray={e.shared ? undefined : '6 6'} />
+                  <text x={(web.pts[e.i].x + web.pts[e.j].x) / 2} y={(web.pts[e.i].y + web.pts[e.j].y) / 2 - 4} fill="#9ab" fontSize="9" textAnchor="middle">{e.shared ? 'shares ' + e.shared + ' zip' + (e.shared === 1 ? '' : 's') : e.miles + ' mi'}</text>
                 </g>
               ))}
               {placed.map((v, i) => {
