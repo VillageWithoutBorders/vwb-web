@@ -433,7 +433,7 @@ export default function Campfire() {
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span>&#128227;</span> The Village Square
           </h1>
-          <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? activeBoard.name + ' board' : 'Announcements and village chats'}</p>
+          <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
         </div>
         <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
         {isVillageBoard && (inVillage || isAdmin) && (
@@ -681,9 +681,14 @@ export default function Campfire() {
       </div>
       </>
       ) : (
-        <p style={{ margin: 0, padding: '0.85rem 1rem', borderTop: '1px solid #333', background: '#1a1a1a', color: '#aaa', fontSize: '0.85rem', textAlign: 'center' }}>
+        <div style={{ borderTop: '1px solid #333', background: '#1a1a1a', padding: '0.75rem 1rem', textAlign: 'center' }}>
+        {activeBoard && activeBoard.village_id && memberVillages !== null && !memberSet.has(activeBoard.village_id) && (
+          <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginBottom: '0.6rem' }} onClick={() => navigate('/find-village?join=' + activeBoard.village_id)}>Join this village chat</button>
+        )}
+        <p style={{ margin: 0, color: '#aaa', fontSize: '0.85rem' }}>
           {activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : activeBoard && activeBoard.village_id ? 'You are not in this village chat. Join it from the map to read and post.' : 'You can read this board. You cannot post here.'}
         </p>
+        </div>
       )}
 
       {showSettings && <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />}
