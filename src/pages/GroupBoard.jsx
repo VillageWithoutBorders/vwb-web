@@ -5,6 +5,8 @@ import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import QrShare from '../components/QrShare'
 import { useChatScroll } from '../hooks/useChatScroll'
+import { useSparks } from '../hooks/useSparks'
+import SparkButton from '../components/SparkButton'
 import { sendGroupPost, decryptMany, getDeviceId, editGroupPost, fetchEditHistory } from '../lib/e2ee'
 import { submitUserReport } from '../utils/submitUserReport'
 import { useCampfireIds } from '../hooks/useCampfireIds'
@@ -92,6 +94,7 @@ export default function GroupBoard() {
   const [sharedNote, setSharedNote] = useState('')
   const [sharedBusy, setSharedBusy] = useState(false)
   const [posts, setPosts] = useState([])
+  const { sparks, toggle: toggleSpark } = useSparks({ fn: 'group_spark_counts', table: 'group_post_sparks', ids: posts.map(p => p.id), userId: user?.id })
   const [hiddenOlder, setHiddenOlder] = useState(false)
   const [loading, setLoading] = useState(true)
   const [newPost, setNewPost] = useState('')
@@ -666,6 +669,7 @@ export default function GroupBoard() {
                   {isMe && canEditPost(p) && <> · <button type="button" className="group-post-delete" onClick={() => { setEditingPost(p); setNewPost(p.text); setSendNote('') }}>Edit</button></>}
                   {isMe && <> · <button type="button" className="group-post-delete" onClick={() => deletePost(p)}>Delete</button></>}
                 </span>
+                <SparkButton count={sparks[String(p.id)]?.n || 0} mine={!!sparks[String(p.id)]?.mine} onToggle={() => toggleSpark(p.id)} />
               </div>
               {isMe && <AvatarDisplay url={avatarOf(user.id)} userId={user.id} size={28} />}
             </div>
