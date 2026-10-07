@@ -4,20 +4,23 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import VillageRiskDialog from '../components/VillageRiskDialog'
 
-// Find village chats, join as many as are near you, or start one if none is near.
-// Shows village names, rough sizes, and distance only. Never people.
-// Joining always goes through the risk warning first.
+// Find village chats, join as many as cover your zip code, or start your own.
+// A village is a list of zip codes. You can join when your zip is on the list.
+// Shows village names, towns, and rough sizes only. Never people.
+// Joining or starting always goes through the risk warning first.
 
-const NEAR_MILES = 45
+const REACH_CHOICES = [5, 10, 15, 25]
 
 const WORDS = {
   signin: 'Please sign in first.',
   missing: 'We could not find that village. It may have closed.',
   noprofile: 'We could not find your profile. Try again in a moment.',
   needzip: 'Add your zip code on your Profile first, so we can find villages near you.',
-  toofar: 'That village is too far from your zip code to join.',
-  exists: 'A village is already near you. Search again and you will find it.',
-  already: 'You already started a village. Ask an admin if it needs changes.',
+  toofar: 'Your zip code is not on that village\u2019s list, so you cannot join it.',
+  exists: 'A village already centers on your zip code. Search for it and join that one.',
+  already: 'You already started 3 villages. Ask an admin if one needs changes.',
+  badzip: 'One of those zip codes was not found. Try again.',
+  toomany: 'A village can have up to 40 zip codes. Untick a few and try again.',
   needagree: 'Please read and agree to the warning first.',
   removed: 'Members of this village chat asked for you to be removed. If you think this is a mistake, contact VWB.',
 }
@@ -41,6 +44,13 @@ export default function FindVillage() {
   // The warning: { type: 'join', village } or { type: 'start' }
   const [risk, setRisk] = useState(null)
   const [riskError, setRiskError] = useState('')
+  // Starting a village: name, how far to suggest zips, and which zips are ticked.
+  const [starting, setStarting] = useState(false)
+  const [startName, setStartName] = useState('')
+  const [reach, setReach] = useState(10)
+  const [suggested, setSuggested] = useState([])
+  const [ticked, setTicked] = useState({})
+  const [reachBusy, setReachBusy] = useState(false)
 
   const hasZip = !!profile?.zip_code
 
@@ -67,6 +77,25 @@ export default function FindVillage() {
     if (v && v.can_join && !v.is_mine) setRisk({ type: 'join', village: v })
     else if (v && v.is_mine && v.board_id) navigate('/campfire?board=' + v.board_id, { replace: true })
   }, [joinParam, loading, villages])
+
+  // Zips near mine. All ticked to begin with; the starter unticks what does not fit.
+  async function loadReach(miles) {
+    if (!profile?.zip_code) return
+    setReachBusy(true)
+    const { data, error: err } = await supabase.rpc('village_reach', { p_zip: profile.zip_code, p_miles: miles })
+    setReachBusy(false)
+    if (err) { console.error('Failed to load nearby zips:', err); setError('We could not load nearby zip codes. Try again.'); return }
+    const rows = (data || []).slice(0, 40)
+    setSuggested(rows)
+    const t = {}
+    rows.forEach(r => { t[r.zip] = true })
+    setTicked(t)
+  }
+
+  function openStart() {
+    setError(''); setStarting(true)
+    loadReach(reach)
+  }
 
   function search(e) {
     e.preventDefault()
@@ -111,26 +140,29 @@ export default function FindVillage() {
   async function agreeAndGo() {
     if (busy || !risk) return
     setBusy(true); setRiskError('')
-    const starting = risk.type === 'start'
-    const { data, error: err } = starting
-      ? await supabase.rpc('start_my_village', { p_agreed: true })
+    const isStart = risk.type === 'start'
+    const zips = suggested.filter(r => ticked[r.zip]).map(r => r.zip)
+    const { data, error: err } = isStart
+      ? await supabase.rpc('start_my_village', { p_agreed: true, p_name: startName.trim() || null, p_zips: zips })
       : await supabase.rpc('join_village', { p_village: risk.village.id, p_agreed: true })
     if (err) { console.error('Failed to join village:', err); setRiskError('Could not join. Try again.'); setBusy(false); return }
     if (data !== 'ok') {
       setBusy(false)
       setRisk(null)
       setError(WORDS[data] || 'Could not join. Try again.')
-      if (data === 'exists') load('')
+      if (data === 'exists') { setStarting(false); load('') }
       return
     }
-    const villageId = starting ? null : risk.village.id
+    const villageId = isStart ? null : risk.village.id
     setRisk(null)
+    setStarting(false)
     await finishJoin(villageId)
     setBusy(false)
   }
 
   function join(v) { setRiskError(''); setRisk({ type: 'join', village: v }) }
   function startOne() { setRiskError(''); setRisk({ type: 'start' }) }
+  const tickedCount = suggested.filter(r => ticked[r.zip]).length
 
   const searching = searched !== ''
   // With no search, show only villages you can join or already belong to.
@@ -156,7 +188,7 @@ export default function FindVillage() {
     <div className="cal-page hub-page">
       <Link to="/campfire" className="hub-back">&#8592; Village Square</Link>
       <h1 className="hub-org-name">Find village chats</h1>
-      <p className="cal-sub">A village chat is for neighbors in your area. Anyone with an account can join. You can join more than one, especially where villages overlap. We use your zip code to find villages near you.</p>
+      <p className="cal-sub">A village chat is for neighbors in the zip codes it covers. Anyone with an account can join a village that has their zip code. You can join more than one, especially where villages overlap. Any neighbor can start one.</p>
       <p style={{ margin: '0 0 0.75rem' }}><Link to="/villages">See the village map</Link></p>
 
       {!hasZip && (
@@ -186,8 +218,9 @@ export default function FindVillage() {
               <div key={v.id} className="cal-card" style={{ display: 'block' }}>
                 <span className="cal-card-title">{v.name}{v.is_mine ? ' · joined' : ''}</span>
                 <span className="cal-card-meta" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                  {v.region_label ? v.region_label + ' · ' : ''}{countText(v)}{v.miles_away != null ? ' · about ' + v.miles_away + ' miles away' : ''}
+                  {countText(v)}{v.zip_count ? ' · ' + v.zip_count + ' zip codes' : ''}{v.miles_away != null ? ' · about ' + v.miles_away + ' miles away' : ''}
                 </span>
+                {v.towns && <span className="cal-card-meta" style={{ display: 'block', marginBottom: '0.5rem' }}>Covers {v.towns}</span>}
                 {v.is_mine && (
                   <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => openChat(v)}>Open this village chat</button>
                 )}
@@ -195,18 +228,49 @@ export default function FindVillage() {
                   <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => join(v)}>Join this village chat</button>
                 )}
                 {!v.is_mine && !v.can_join && (
-                  <p className="cal-sub" style={{ margin: 0 }}>{hasZip ? 'This village is too far from your zip code to join.' : 'Add your zip code to join.'}</p>
+                  <p className="cal-sub" style={{ margin: 0 }}>{hasZip ? 'Your zip code is not on this village\u2019s list.' : 'Add your zip code to join.'}</p>
                 )}
               </div>
             ))}
           </section>
         )}
 
-        {nothingNear && (
+        {nothingNear && <p className="cal-sub">No village covers your zip code yet. You can start one below.</p>}
+
+        {hasZip && !loading && !starting && (
           <section className="cal-box" aria-labelledby="fv-start">
-            <h2 id="fv-start">No village chat near you yet</h2>
-            <p className="cal-sub">You can start one for your area. We name it after your town and tell the admins. Neighbors within {NEAR_MILES} miles can join it.</p>
-            <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={startOne}>Start a village for my area</button>
+            <h2 id="fv-start">{shown.length === 0 ? 'Start a village for your area' : 'Do not see your town?'}</h2>
+            <p className="cal-sub">Any neighbor can start a village. You choose the name and the zip codes it covers. The admins are told when a new one starts.</p>
+            <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={openStart}>Start a village</button>
+          </section>
+        )}
+
+        {hasZip && starting && (
+          <section className="cal-box" aria-labelledby="fv-startform">
+            <h2 id="fv-startform">Start a village</h2>
+            <label htmlFor="fv-name" style={{ display: 'block', margin: '0.5rem 0 0.25rem' }}>Village name</label>
+            <input id="fv-name" type="text" value={startName} onChange={e => setStartName(e.target.value)} maxLength={40} placeholder="Leave blank to use your town" autoComplete="off" style={{ width: '100%', minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
+            <p className="cal-sub" style={{ margin: '0.75rem 0 0.25rem' }}>Zip codes near {profile.zip_code}. Tick the ones this village covers. Your own zip code stays on the list.</p>
+            <div role="group" aria-label="Show zip codes within" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', margin: '0 0 0.5rem' }}>
+              {REACH_CHOICES.map(m => (
+                <button key={m} type="button" className={'btn ' + (reach === m ? 'btn-primary' : 'btn-outline')} style={{ minHeight: '44px' }} disabled={reachBusy} aria-pressed={reach === m} onClick={() => { setReach(m); loadReach(m) }}>{m} miles</button>
+              ))}
+            </div>
+            {reachBusy && <p className="cal-empty">Loading...</p>}
+            <div style={{ maxHeight: '45vh', overflowY: 'auto' }}>
+              {suggested.map(r => {
+                const mine = r.zip === profile.zip_code
+                return (
+                  <label key={r.zip} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minHeight: '44px', cursor: mine ? 'default' : 'pointer' }}>
+                    <input type="checkbox" checked={mine || !!ticked[r.zip]} disabled={mine} onChange={e => setTicked(t => ({ ...t, [r.zip]: e.target.checked }))} style={{ width: '24px', height: '24px', flexShrink: 0 }} />
+                    <span>{r.zip} {r.city}{r.state ? ', ' + r.state : ''} <span className="cal-card-meta">{r.miles > 0 ? Math.round(r.miles) + ' mi' : 'yours'}</span></span>
+                  </label>
+                )
+              })}
+            </div>
+            <p className="cal-sub">{tickedCount} of up to 40 zip codes ticked.</p>
+            <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} disabled={busy || reachBusy || tickedCount === 0 || tickedCount > 40} onClick={startOne}>Continue</button>
+            <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => setStarting(false)}>Cancel</button>
           </section>
         )}
       </div>
