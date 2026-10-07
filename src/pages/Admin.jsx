@@ -132,7 +132,7 @@ export default function Admin() {
     if (!data) { setVillages([]); return }
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     const withCounts = await Promise.all(data.map(async (c) => {
-      const { count, error: countErr } = await supabase.from('helper_profiles').select('id', { count: 'exact', head: true }).eq('village_id', c.id)
+      const { count, error: countErr } = await supabase.from('village_members').select('user_id', { count: 'exact', head: true }).eq('village_id', c.id)
       reportError('loadVillages:count', countErr)
       // Activity, not growth: a quick read on whether a village's Campfire
       // is actually being used, not a metric meant to chase engagement.
@@ -1525,7 +1525,7 @@ export default function Admin() {
       {!loading && tab === 'villages' && (
         <>
           <p style={{ color: '#888', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
-            Each village has its own village chat. People join one only after they say yes, using the zip on their profile. Anyone with a zip can start a village when none is within 45 miles, and you get an alert. You can still move someone from the Users tab.
+            Each village has its own village chat. Anyone with a zip within reach can join, after agreeing to a risk warning. People can join more than one, and there is no cap. New members only see messages from after they joined. Two members can remove someone, and admins can too. Anyone with a zip can start a village when none is within 45 miles, and you get an alert. The Users tab village menu sets a person's main village. It does not add them to a chat.
           </p>
           <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? 'Cancel' : '+ New Village'}</button>
 
