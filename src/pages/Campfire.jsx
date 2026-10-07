@@ -14,6 +14,10 @@ import VillagePeople, { VillageNewMembers } from '../components/VillagePeople'
 // so a fast back-and-forth doesn't read as a long wall of near-identical rows.
 const GROUP_WINDOW_MS = 5 * 60 * 1000
 
+// One gentle way to answer a message: "I saw this." Change the name here if you want a different word.
+const SPARK_NAME = 'Spark'
+const SPARK_HINT = 'I saw this'
+
 export default function Campfire() {
   const { user, profile, isAdmin, refreshProfile } = useAuth()
   const navigate = useNavigate()
@@ -21,6 +25,9 @@ export default function Campfire() {
   const [boards, setBoards] = useState([])
   const [creatingBoard, setCreatingBoard] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [unread, setUnread] = useState({})
+  const [sparks, setSparks] = useState({})
+  const markedRef = useRef('')
   const [pickerSearch, setPickerSearch] = useState('')
   const [newBoardName, setNewBoardName] = useState('')
   const [boardError, setBoardError] = useState('')
@@ -120,7 +127,7 @@ export default function Campfire() {
   }, [activeBoard?.village_id, inVillage])
 
   function chooseBoard(id) {
-    setReplyTo(null); setEditing(null); setNewMsg(''); setMessages([]); setLoading(true); resetScroll()
+    setReplyTo(null); setEditing(null); setNewMsg(''); setMessages([]); setSparks({}); setLoading(true); resetScroll()
     setSearchParams(id === orderedBoards[0]?.id ? {} : { board: id }, { replace: true })
   }
 
@@ -156,6 +163,33 @@ export default function Campfire() {
         })
       })
   }, [isStaff])
+
+  async function loadUnread() {
+    const { data, error } = await supabase.rpc('campfire_unread')
+    if (error) { console.error('Failed to load unread chats:', error); return }
+    const map = {}
+    for (const r of data || []) map[r.board_id] = Number(r.unread)
+    setUnread(map)
+  }
+  useEffect(() => {
+    if (!hasAccess) return
+    loadUnread()
+    const t = setInterval(loadUnread, 15000)
+    return () => clearInterval(t)
+  }, [hasAccess])
+
+  async function toggleSpark(msg) {
+    const cur = sparks[msg.id] || { n: 0, mine: false }
+    const next = cur.mine ? { n: Math.max(0, cur.n - 1), mine: false } : { n: cur.n + 1, mine: true }
+    setSparks(prev => ({ ...prev, [msg.id]: next }))
+    const { error } = cur.mine
+      ? await supabase.from('campfire_message_sparks').delete().eq('message_id', msg.id).eq('user_id', user.id)
+      : await supabase.from('campfire_message_sparks').insert({ message_id: msg.id, user_id: user.id })
+    if (error && !/duplicate/i.test(error.message || '')) {
+      console.error('Failed to save spark:', error)
+      setSparks(prev => ({ ...prev, [msg.id]: cur }))
+    }
+  }
 
   useEffect(() => {
     if (!hasAccess || !activeBoardId) return
@@ -303,6 +337,24 @@ export default function Campfire() {
     const data = newest ? [...newest].reverse() : null
     if (data) {
       setMessages(data)
+      const newestId = data.length ? data[data.length - 1].id : 'none'
+      const markKey = boardAtStart + '|' + newestId
+      if (markedRef.current !== markKey) {
+        markedRef.current = markKey
+        supabase.rpc('campfire_mark_read', { p_board: boardAtStart }).then(({ error: readErr }) => {
+          if (readErr) console.error('Failed to mark chat read:', readErr)
+          else setUnread(prev => ({ ...prev, [boardAtStart]: 0 }))
+        })
+      }
+      if (data.length > 0) {
+        supabase.rpc('campfire_spark_counts', { p_ids: data.map(m => m.id) }).then(({ data: sc, error: sparkErr }) => {
+          if (sparkErr) { console.error('Failed to load sparks:', sparkErr); return }
+          if (boardAtStart !== boardRef.current) return
+          const map = {}
+          for (const r of sc || []) map[r.message_id] = { n: Number(r.sparks), mine: !!r.mine }
+          setSparks(map)
+        })
+      }
       // Mark caught up while this page is open (including each poll tick), so
       // the pinned Campfire card in Messages clears its unread dot and picks
       // a fresh starting point for whatever comes in after you leave.
@@ -419,6 +471,9 @@ export default function Campfire() {
   const visibleEmergencies = activeEmergencies.filter(e => !dismissedEmergencyIds.includes(e.id))
   // The old chat-log announcement is now redundant with the banner above,
   // so it's left out of the scrollback instead of showing up twice.
+  // Dots only for chats I am part of, so staff who can read every village are not flooded.
+  const unreadFor = (b) => (b.id === activeBoardId || (b.village_id && !memberSet.has(b.village_id))) ? 0 : (unread[b.id] || 0)
+  const otherUnread = orderedBoards.reduce((n, b) => n + unreadFor(b), 0)
   const visibleMessages = messages.filter(m => !m.body.startsWith('🚨 Emergency Verified:'))
   // Who can post on the board being viewed. The database enforces the same rule.
   const canPost = !!activeBoard && (
@@ -450,6 +505,7 @@ export default function Campfire() {
       <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #333', background: '#1a1a1a' }}>
         <button type="button" onClick={() => { setPickerOpen(true); setPickerSearch('') }} aria-haspopup="dialog" aria-expanded={pickerOpen} aria-label={'Change chat. Now in ' + (activeBoard?.name || 'no chat')} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid #4ecca3', background: '#1a4a3a', color: '#4ecca3', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeBoard?.name || 'Pick a chat'}</span>
+          {otherUnread > 0 && <span role="status" aria-label={otherUnread + ' new in other chats'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: '#ffaa44', color: '#1a1a1a', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{otherUnread > 99 ? '99+' : otherUnread}</span>}
           {orderedBoards.length > 1 && <span style={{ fontWeight: 500, fontSize: '0.8rem', color: '#9fe0c8' }}>{orderedBoards.length} chats</span>}
           <span aria-hidden="true">&#9662;</span>
         </button>
@@ -465,6 +521,7 @@ export default function Campfire() {
         const row = (b) => (
           <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid #4ecca3' : '1px solid #333', background: b.id === activeBoardId ? '#1a4a3a' : '#222', color: b.id === activeBoardId ? '#4ecca3' : '#eee', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
             <span style={{ flex: 1 }}>{b.name}</span>
+            {unreadFor(b) > 0 && <span aria-label={unreadFor(b) + ' new'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: '#ffaa44', color: '#1a1a1a', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{unreadFor(b) > 99 ? '99+' : unreadFor(b)}</span>}
             {b.id === activeBoardId && <span aria-hidden="true">&#10003;</span>}
           </button>
         )
@@ -625,6 +682,14 @@ export default function Campfire() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
                   {msg.pinned && <span title="Pinned">&#128204;</span>}
                   <span style={{ fontSize: '0.7rem', opacity: 0.75 }} title={fullTime}>{formatTime(msg.created_at)}{msg.edited_at ? ' \u00b7 edited' : ''}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); toggleSpark(msg) }}
+                    aria-pressed={!!sparks[msg.id]?.mine}
+                    aria-label={SPARK_NAME + ': ' + SPARK_HINT + (sparks[msg.id]?.n ? '. ' + sparks[msg.id].n + ' so far' : '')}
+                    title={SPARK_NAME + ': ' + SPARK_HINT}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', minWidth: '44px', minHeight: '32px', margin: '-0.4rem 0', padding: '0 0.3rem', justifyContent: 'center', borderRadius: '999px', border: 'none', background: sparks[msg.id]?.mine ? 'rgba(255,200,60,0.28)' : 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.8rem', opacity: sparks[msg.id]?.mine || sparks[msg.id]?.n ? 1 : 0.55 }}
+                  ><span aria-hidden="true" style={{ filter: sparks[msg.id]?.mine ? 'none' : 'grayscale(1)' }}>&#10024;</span>{sparks[msg.id]?.n > 0 && <span>{sparks[msg.id].n}</span>}</button>
                   {(
                     <button
                       onClick={(e) => {
