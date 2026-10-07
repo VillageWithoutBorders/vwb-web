@@ -70,6 +70,7 @@ export default function AlertsMenu() {
         ref={buttonRef}
         type="button"
         className="header-btn"
+        data-tour="alerts"
         onClick={toggle}
         aria-expanded={open}
         aria-controls="alertsMenuList"

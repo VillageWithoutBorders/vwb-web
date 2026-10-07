@@ -3098,40 +3098,29 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
   inset: 0;
   z-index: 300;
   background: rgba(0, 0, 0, 0.6);
+  touch-action: none;
 }
 
-/* Lift the tab bar above the dimmed page so the lit tab can be seen. */
-.tour-open .bottom-tabs {
+/* When a spot is ringed, the ring dims everything else, so the backdrop only
+   needs to block taps. */
+.tour-backdrop-clear {
+  background: transparent;
+}
+
+/* The ring around the button or tab the step is talking about. */
+.tour-spot {
+  position: fixed;
   z-index: 301;
-}
-
-/* First-time tour for a new member: the tabs light up but can't be tapped
-   until they reach the end and tap I agree. */
-.tour-required .bottom-tabs {
+  border-radius: 14px;
   pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 3px #fff, 0 0 0 6px var(--green);
+  transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+  animation: tour-spot-pulse 1.6s ease-in-out infinite;
 }
 
-.tour-open .tab-item[data-tour] {
-  opacity: 0.45;
-}
-
-html[data-tour-tab="home"] .tab-item[data-tour="home"],
-html[data-tour-tab="community"] .tab-item[data-tour="community"],
-html[data-tour-tab="skillshare"] .tab-item[data-tour="skillshare"],
-html[data-tour-tab="messages"] .tab-item[data-tour="messages"],
-html[data-tour-tab="tasks"] .tab-item[data-tour="tasks"],
-html[data-tour-tab="profile"] .tab-item[data-tour="profile"] {
-  opacity: 1;
-  color: var(--white);
-  background: var(--green);
-  border-radius: 12px;
-  box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.45);
-  animation: tour-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes tour-pulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.45); }
-  50% { box-shadow: 0 0 0 7px rgba(29, 158, 117, 0.15); }
+@keyframes tour-spot-pulse {
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 3px #fff, 0 0 0 6px var(--green); }
+  50% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 0 3px #fff, 0 0 0 11px rgba(29, 158, 117, 0.5); }
 }
 
 .tour-sheet {
@@ -3142,13 +3131,19 @@ html[data-tour-tab="profile"] .tab-item[data-tour="profile"] {
   bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px) + 12px);
   width: calc(100% - 24px);
   max-width: 480px;
-  max-height: calc(100dvh - var(--tab-height) - 40px);
+  max-height: min(60dvh, calc(100dvh - var(--tab-height) - 40px));
   overflow-y: auto;
   background: var(--white);
   border: 1px solid var(--green-dark);
   border-radius: 16px;
   padding: 1rem 1.25rem 1.25rem;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Used when the ringed spot sits low on the screen. */
+.tour-sheet-top {
+  bottom: auto;
+  top: calc(var(--header-height) + 8px);
 }
 
 .tour-top {
@@ -3174,22 +3169,20 @@ html[data-tour-tab="profile"] .tab-item[data-tour="profile"] {
   cursor: pointer;
 }
 
-.tour-dots {
-  display: flex;
-  gap: 0.35rem;
-  margin: 0.25rem 0 0.75rem;
-}
-
-.tour-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
+.tour-progress {
+  height: 6px;
+  border-radius: 3px;
   background: #3a3a3a;
-  transition: width 0.2s ease, background 0.2s ease;
+  overflow: hidden;
+  margin: 0.4rem 0 0.75rem;
 }
 
-.tour-dot.done { background: var(--green-dark); }
-.tour-dot.active { width: 20px; background: var(--green); }
+.tour-progress span {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  transition: width 0.25s ease;
+}
 
 .tour-icon {
   font-size: 2.25rem;
@@ -3288,7 +3281,8 @@ html[data-tour-tab="profile"] .tab-item[data-tour="profile"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-tour-tab] .tab-item[data-tour] { animation: none; }
+  .tour-spot { animation: none; transition: none; }
+  .tour-progress span { transition: none; }
 }
 
 /* ---------- Top bar: logo home link, Alerts, Menu (Layout.jsx, AppMenu.jsx) ---------- */
@@ -3506,22 +3500,6 @@ html[data-tour-tab="profile"] .tab-item[data-tour="profile"] {
   background: #ff9b8f;
   color: #1a1a1a;
   font-weight: 700;
-}
-
-/* Tour step about the top bar: lift it and light up Alerts and Menu. */
-.tour-open .app-header {
-  z-index: 301;
-}
-
-.tour-open .app-header .header-btn,
-.tour-open .app-header .header-logo {
-  opacity: 0.45;
-}
-
-html[data-tour-tab="top"] .app-header .header-btn {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6);
 }
 
 /* Buttons at the top of a page say what they do, not just an icon. */
