@@ -20,6 +20,8 @@ export default function Campfire() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [boards, setBoards] = useState([])
   const [creatingBoard, setCreatingBoard] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerSearch, setPickerSearch] = useState('')
   const [newBoardName, setNewBoardName] = useState('')
   const [boardError, setBoardError] = useState('')
   const [replyTo, setReplyTo] = useState(null)
@@ -133,7 +135,7 @@ export default function Campfire() {
       setBoardError(/duplicate|unique/i.test(error.message || '') ? 'A board with that name already exists.' : 'Could not add the board. Try again.')
       return
     }
-    setNewBoardName(''); setCreatingBoard(false)
+    setNewBoardName(''); setCreatingBoard(false); setPickerOpen(false)
     await loadBoards()
     chooseBoard(data.id)
   }
@@ -445,27 +447,68 @@ export default function Campfire() {
         <button onClick={() => setShowSettings(true)} aria-label="Village Square settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'>&#9881;</button>
       </div>
 
-      <div role="tablist" aria-label="Village Square boards" className="hide-scrollbar" style={{ display: 'flex', gap: '0.5rem', padding: '0.5rem 1rem', overflowX: 'auto', borderBottom: '1px solid #333', background: '#1a1a1a', alignItems: 'center' }}>
-        {orderedBoards.map(b => (
-          <button key={b.id} type="button" role="tab" aria-selected={b.id === activeBoardId} onClick={() => chooseBoard(b.id)} style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: b.id === activeBoardId ? '1px solid #4ecca3' : '1px solid #444', background: b.id === activeBoardId ? '#1a4a3a' : '#222', color: b.id === activeBoardId ? '#4ecca3' : '#ccc', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{b.name}</button>
-        ))}
-        {memberVillages !== null && (
-          <button type="button" onClick={() => navigate('/find-village')} style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
-            {memberSet.size > 0 ? '+ Join another village chat' : 'Find your village chat'}
-          </button>
-        )}
-        {isAdmin && !creatingBoard && (
-          <button type="button" onClick={() => { setCreatingBoard(true); setBoardError('') }} aria-label="Add a board" style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: '1px dashed #555', background: 'none', color: '#aaa', fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ New board</button>
-        )}
-        {isAdmin && creatingBoard && (
-          <form onSubmit={addBoard} style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-            <label htmlFor="new-board-name" className="sr-only">Board name</label>
-            <input id="new-board-name" type="text" value={newBoardName} onChange={e => setNewBoardName(e.target.value)} maxLength={40} placeholder="Board name" autoFocus style={{ minHeight: '44px', width: '9rem', boxSizing: 'border-box', padding: '0 0.75rem', borderRadius: '999px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem' }} />
-            <button type="submit" disabled={!newBoardName.trim()} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: newBoardName.trim() ? 1 : 0.5 }}>Add</button>
-            <button type="button" onClick={() => { setCreatingBoard(false); setNewBoardName(''); setBoardError('') }} style={{ minHeight: '44px', padding: '0 0.75rem', borderRadius: '999px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer' }}>Cancel</button>
-          </form>
-        )}
+      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #333', background: '#1a1a1a' }}>
+        <button type="button" onClick={() => { setPickerOpen(true); setPickerSearch('') }} aria-haspopup="dialog" aria-expanded={pickerOpen} aria-label={'Change chat. Now in ' + (activeBoard?.name || 'no chat')} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid #4ecca3', background: '#1a4a3a', color: '#4ecca3', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>
+          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeBoard?.name || 'Pick a chat'}</span>
+          {orderedBoards.length > 1 && <span style={{ fontWeight: 500, fontSize: '0.8rem', color: '#9fe0c8' }}>{orderedBoards.length} chats</span>}
+          <span aria-hidden="true">&#9662;</span>
+        </button>
       </div>
+      {pickerOpen && (() => {
+        const q = pickerSearch.trim().toLowerCase()
+        const match = (x) => !q || x.name.toLowerCase().includes(q)
+        const groups = [
+          ['Announcements and staff', orderedBoards.filter(x => !x.village_id && match(x))],
+          ['My villages', orderedBoards.filter(x => x.village_id && memberSet.has(x.village_id) && match(x))],
+          ['Other villages (staff only)', orderedBoards.filter(x => x.village_id && !memberSet.has(x.village_id) && match(x))],
+        ]
+        const row = (b) => (
+          <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid #4ecca3' : '1px solid #333', background: b.id === activeBoardId ? '#1a4a3a' : '#222', color: b.id === activeBoardId ? '#4ecca3' : '#eee', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
+            <span style={{ flex: 1 }}>{b.name}</span>
+            {b.id === activeBoardId && <span aria-hidden="true">&#10003;</span>}
+          </button>
+        )
+        return (
+          <div role="dialog" aria-modal="true" aria-label="Choose a chat" onClick={() => setPickerOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <div onClick={e => e.stopPropagation()} role="listbox" style={{ width: '100%', maxWidth: '32rem', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box', background: '#1a1a1a', borderTop: '1px solid #444', borderRadius: '16px 16px 0 0', padding: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', flex: 1 }}>Your chats</h2>
+                <button type="button" onClick={() => setPickerOpen(false)} aria-label="Close" style={{ minWidth: '44px', minHeight: '44px', background: 'none', border: 'none', color: '#aaa', fontSize: '1.4rem', cursor: 'pointer' }}>&#10005;</button>
+              </div>
+              {orderedBoards.length > 6 && (
+                <>
+                  <label htmlFor="chat-search" className="sr-only">Search your chats</label>
+                  <input id="chat-search" type="search" value={pickerSearch} onChange={e => setPickerSearch(e.target.value)} placeholder="Search your chats" style={{ width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0 0.9rem', marginBottom: '0.75rem', borderRadius: '10px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem' }} />
+                </>
+              )}
+              {groups.map(([label, list]) => list.length > 0 && (
+                <div key={label} style={{ marginBottom: '0.5rem' }}>
+                  <p style={{ margin: '0.4rem 0', color: '#888', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
+                  {list.map(row)}
+                </div>
+              ))}
+              {q && groups.every(([, l]) => l.length === 0) && <p style={{ color: '#aaa' }}>No chat matches that.</p>}
+              {memberVillages !== null && (
+                <button type="button" onClick={() => { setPickerOpen(false); navigate('/find-village') }} style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontSize: '1rem', cursor: 'pointer' }}>
+                  {memberSet.size > 0 ? '+ Join another village chat' : 'Find your village chat'}
+                </button>
+              )}
+              {isAdmin && !creatingBoard && (
+                <button type="button" onClick={() => { setCreatingBoard(true); setBoardError('') }} aria-label="Add a board" style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px dashed #555', background: 'none', color: '#aaa', fontSize: '1rem', cursor: 'pointer' }}>+ New board</button>
+              )}
+              {isAdmin && creatingBoard && (
+                <form onSubmit={addBoard} style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                  <label htmlFor="new-board-name" className="sr-only">Board name</label>
+                  <input id="new-board-name" type="text" value={newBoardName} onChange={e => setNewBoardName(e.target.value)} maxLength={40} placeholder="Board name" autoFocus style={{ flex: 1, minWidth: '8rem', minHeight: '48px', boxSizing: 'border-box', padding: '0 0.75rem', borderRadius: '10px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem' }} />
+                  <button type="submit" disabled={!newBoardName.trim()} style={{ minHeight: '48px', padding: '0 1rem', borderRadius: '10px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: newBoardName.trim() ? 1 : 0.5 }}>Add</button>
+                  <button type="button" onClick={() => { setCreatingBoard(false); setNewBoardName(''); setBoardError('') }} style={{ minHeight: '48px', padding: '0 0.75rem', borderRadius: '10px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer' }}>Cancel</button>
+                </form>
+              )}
+              {boardError && <p role="alert" style={{ color: '#ff8888', fontSize: '0.85rem' }}>{boardError}</p>}
+            </div>
+          </div>
+        )
+      })()}
       {boardError && <p role="alert" style={{ margin: 0, padding: '0.4rem 1rem', color: '#ff8888', fontSize: '0.8rem', background: '#241414' }}>{boardError}</p>}
 
       {isVillageBoard && (inVillage || isAdmin) && <VillageNewMembers villageId={activeBoard.village_id} myId={user.id} />}
