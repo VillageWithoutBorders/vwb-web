@@ -247,6 +247,7 @@ export default function VillageMap() {
             <>
               <div ref={mapEl} className="village-map" role="application" aria-label="Map of villages. The same villages are listed below." />
               <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Dashed lines join each village to its closest neighbors.</p>
+              <p className="cal-sub">Dots show zip code areas and village centers, never people.</p>
             </>
           )}
 
