@@ -358,7 +358,7 @@ export default function Login() {
             <input type="checkbox" checked={campfireNotify} onChange={(e) => setCampfireNotify(e.target.checked)} />
             <span>
               <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Notify me about Village Square messages</strong>
-              The Village Square holds Announcements, the Ambassadors board, and your village chat. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Village Square's settings.
+              The Village Square holds Announcements, the Ambassadors board, and the village chats you join. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Village Square's settings.
             </span>
           </label>
           {error && <p className="form-error" role="alert">{error}</p>}

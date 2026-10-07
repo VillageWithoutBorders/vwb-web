@@ -186,7 +186,7 @@ export default function VillageMap() {
       <Link to="/" className="hub-back">&#8592; Home</Link>
       <h1 className="hub-org-name">Village map</h1>
       <p className="cal-sub">Every Village Without Borders village. Only names, places, and rough sizes are shown, never people.</p>
-      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', margin: '0.5rem 0' }} onClick={() => navigate('/find-village')}>Find or start a village chat</button>
+      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', margin: '0.5rem 0' }} onClick={() => navigate('/find-village')}>Find, join, or start a village chat</button>
 
       <form onSubmit={searchZip} style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0' }}>
         <label htmlFor="map-zip" className="sr-only">Search the map by zip code</label>
@@ -200,7 +200,7 @@ export default function VillageMap() {
           <h2 id="zip-result">Near {searchPoint.zip}{searchPoint.city ? ' (' + searchPoint.city + ', ' + searchPoint.state + ')' : ''}</h2>
           {nearSearch.length > 0 ? nearSearch.map(({ v, miles }) => (
             <button key={v.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} onClick={() => setSelectedId(v.id)}>
-              <span className="cal-card-title">{v.name}{v.is_mine ? ' · yours' : ''}</span>
+              <span className="cal-card-title">{v.name}{v.is_mine ? ' · joined' : ''}</span>
               <span className="cal-card-meta">{countText(v)} · about {miles} miles away</span>
             </button>
           )) : (
@@ -259,12 +259,16 @@ export default function VillageMap() {
 
           {selected && (
             <section className="cal-box" aria-live="polite" aria-labelledby="village-sel">
-              <h2 id="village-sel">{selected.name}{selected.is_mine ? ' (your village)' : ''}</h2>
+              <h2 id="village-sel">{selected.name}{selected.is_mine ? ' (you joined)' : ''}</h2>
               {selected.region_label && <p className="cal-sub">{selected.region_label}</p>}
               <p className="cal-sub">{countText(selected)}{selected.radius_miles ? ' · serves about ' + Math.round(selected.radius_miles) + ' miles around its center' : ''}</p>
-              {boardFor(selected) && (
-                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village's Village Square board</button>
+              {selected.is_mine && boardFor(selected) && (
+                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village chat</button>
               )}
+              {!selected.is_mine && (
+                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village?join=' + selected.id)}>Join this village chat</button>
+              )}
+              {!selected.is_mine && <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Anyone with an account near this village can join. You will read a short warning first.</p>}
             </section>
           )}
 
@@ -272,7 +276,7 @@ export default function VillageMap() {
             <div className="hub-section-head"><h2 id="village-list">All villages ({villages.length})</h2></div>
             {[...placed, ...unplaced].map((v) => (
               <button key={v.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} aria-pressed={v.id === selectedId} onClick={() => setSelectedId(v.id)}>
-                <span className="cal-card-title">{v.name}{v.is_mine ? ' · yours' : ''}</span>
+                <span className="cal-card-title">{v.name}{v.is_mine ? ' · joined' : ''}</span>
                 <span className="cal-card-meta">{v.region_label ? v.region_label + ' · ' : ''}{countText(v)}</span>
               </button>
             ))}

@@ -68,7 +68,7 @@ const CARDS = [
     points: [
       'Cottage Chat: for people you know well. Only the people in it can read it',
       'Campfire: for a group, church, or nonprofit working together. Only its members can read it',
-      'Village chat: for neighbors in your area who chose to join. Admins can read it, so keep sensitive details out',
+      'Village chat: for neighbors in your area. Anyone nearby can join, and you can join more than one. Admins can read it, so keep sensitive details out. Vouch for neighbors you trust. Two members can ask to remove someone who is not safe',
       'Announcements: everyone can read. Only Ambassadors and admins can post',
     ],
     footer: null,

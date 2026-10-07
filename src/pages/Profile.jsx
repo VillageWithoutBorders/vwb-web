@@ -154,15 +154,14 @@ export default function Profile() {
   const [villageSaving, setVillageSaving] = useState(false)
   async function toggleVillage(on) {
     setVillageSaving(true)
-    const { error: vErr } = await supabase.from('helper_profiles').update({ village_opt_in: on }).eq('user_id', user.id)
+    // Turning it on goes to the list of villages, where you read the warning and join.
+    // Turning it off leaves every village chat.
+    if (on) { setVillageSaving(false); navigate('/find-village'); return }
+    if (!confirm('Leave all your village chats? You can join again any time.')) { setVillageSaving(false); return }
+    const { error: vErr } = await supabase.rpc('leave_all_villages')
     reportError('toggleVillage', vErr)
     if (!vErr) await refreshProfile()
     setVillageSaving(false)
-    if (!vErr && on) {
-      // Joined from here: if a village was found, ask about notifications. If not, help them find or start one.
-      const { data: me } = await supabase.from('helper_profiles').select('village_id').eq('user_id', user.id).maybeSingle()
-      navigate(me?.village_id ? '/find-village?welcome=1' : '/find-village')
-    }
   }
 
   async function handleSave() {
@@ -348,8 +347,8 @@ function captureCoverageLocation() {
         <label className="checkbox-field" style={{ alignItems: 'flex-start', margin: '0.75rem 0' }}>
           <input type="checkbox" checked={profile?.village_opt_in === true} disabled={villageSaving} onChange={(e) => toggleVillage(e.target.checked)} />
           <span>
-            <strong style={{ display: 'block' }}>Join my local village chat</strong>
-            We find it from your zip code. Turn this off any time to leave.
+            <strong style={{ display: 'block' }}>I am in a village chat</strong>
+            Turn this on to find village chats near your zip code. Turn it off to leave all of them.
           </span>
         </label>
         <p style={{ margin: '0 0 0.75rem' }}><Link to="/find-village">Find or start a village chat</Link></p>

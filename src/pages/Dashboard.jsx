@@ -90,17 +90,14 @@ function VillageAsk() {
     await refreshProfile()
     setSaving(false)
     if (yes && !profile.zip_code) { navigate('/profile'); return }
-    if (yes) {
-      // Said yes with a zip but no village was found nearby: help them find or start one.
-      const { data: me } = await supabase.from('helper_profiles').select('village_id').eq('user_id', profile.user_id).maybeSingle()
-      navigate(me?.village_id ? '/find-village?welcome=1' : '/find-village')
-    }
+    // Yes opens the list of village chats near them. They read the warning and join from there.
+    if (yes) navigate('/find-village')
   }
 
   return (
     <div className="village-ask" role="region" aria-label="Local village chat">
-      <p className="village-ask-title"><span aria-hidden="true">&#127969;</span> Join your village chat?</p>
-      <p className="village-ask-text">It is the chat for your area. We use your zip code to find it. You can leave any time from your Profile.</p>
+      <p className="village-ask-title"><span aria-hidden="true">&#127969;</span> Join a village chat?</p>
+      <p className="village-ask-text">Village chats are for neighbors in your area. We use your zip code to find them. You can join more than one, and you can leave any time from your Profile.</p>
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="village-ask-buttons">
         <button type="button" className="btn btn-primary" disabled={saving} onClick={() => answer(true)}>Yes, join</button>

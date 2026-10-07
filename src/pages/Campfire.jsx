@@ -7,6 +7,7 @@ import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import { submitUserReport } from '../utils/submitUserReport'
 import { MUTE_OPTIONS } from '../utils/muteOptions'
+import VillagePeople, { VillageNewMembers } from '../components/VillagePeople'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
@@ -40,6 +41,12 @@ export default function Campfire() {
   const [openMsgMenu, setOpenMsgMenu] = useState(null)
   const [showPinned, setShowPinned] = useState(true)
   const [memberSearch, setMemberSearch] = useState('')
+  // Which village chats I belong to (null until loaded), the people list, and open removal requests.
+  const [memberVillages, setMemberVillages] = useState(null)
+  const [showPeople, setShowPeople] = useState(false)
+  const [removalRequests, setRemovalRequests] = useState([])
+  const [introHint, setIntroHint] = useState(false)
+  const introDone = useRef(false)
   // Timestamp/menu row is hidden by default and only shown for the bubble
   // that's hovered (desktop) or tapped (mobile, via this state) — cuts the
   // amount of always-on chrome under every single message.
@@ -78,14 +85,37 @@ export default function Campfire() {
   }
   useEffect(() => { if (hasAccess) loadBoards() }, [hasAccess])
 
+  async function loadMemberships() {
+    const { data, error } = await supabase.from('village_members').select('village_id, joined_at').eq('user_id', user.id)
+    if (error) { console.error('Failed to load your village chats:', error); setMemberVillages([]); return }
+    setMemberVillages(data || [])
+  }
+  useEffect(() => { if (hasAccess) loadMemberships() }, [hasAccess])
+  const memberSet = new Set((memberVillages || []).map(m => m.village_id))
+
   const orderedBoards = [...boards].sort((a, b) => {
-    const rank = (x) => x.is_general ? 0 : x.village_id && x.village_id === profile?.village_id ? 1 : x.village_id ? 3 : 2
+    const rank = (x) => x.is_general ? 0 : x.village_id && memberSet.has(x.village_id) ? 1 : x.village_id ? 3 : 2
     return rank(a) - rank(b) || (a.sort_order - b.sort_order) || a.name.localeCompare(b.name)
   })
   const wantedBoard = searchParams.get('board')
   const activeBoard = orderedBoards.find(b => b.id === wantedBoard) || orderedBoards[0] || null
   const activeBoardId = activeBoard?.id || null
   boardRef.current = activeBoardId
+  const isVillageBoard = !!activeBoard?.village_id
+  const inVillage = isVillageBoard && memberSet.has(activeBoard.village_id)
+
+  // Open removal requests for this village chat, so members can be the second to agree.
+  async function loadRemovalRequests() {
+    if (!isVillageBoard || !(inVillage || isAdmin)) { setRemovalRequests([]); return }
+    const { data, error } = await supabase.rpc('village_removal_requests', { p_village: activeBoard.village_id })
+    if (error) { console.error('Failed to load removal requests:', error); return }
+    setRemovalRequests(data || [])
+  }
+  useEffect(() => {
+    loadRemovalRequests()
+    const t = setInterval(loadRemovalRequests, 30000)
+    return () => clearInterval(t)
+  }, [activeBoard?.village_id, inVillage])
 
   function chooseBoard(id) {
     setReplyTo(null); setEditing(null); setNewMsg(''); setMessages([]); setLoading(true); resetScroll()
@@ -189,14 +219,34 @@ export default function Campfire() {
     setAlertSaving(false)
   }
 
-  // Leaving means saying no to the village chat. It is the same switch as the checkbox on Profile.
-  async function leaveCampfire() {
-    if (!confirm('Leave your village chat? You can join again any time from "Find your village chat".')) return
-    const { error } = await supabase.from('helper_profiles').update({ village_opt_in: false }).eq('user_id', user.id)
+  // Leave the village chat being viewed. You can join again later, but you will not see what was said while you were away.
+  async function leaveVillageChat() {
+    if (!activeBoard?.village_id) return
+    if (!confirm('Leave ' + activeBoard.name + '? You can join again later. You will not see what was said while you were away.')) return
+    const { error } = await supabase.rpc('leave_village', { p_village: activeBoard.village_id })
     if (error) { console.error('Failed to leave the village chat:', error); alert('Could not leave. Try again.'); return }
-    await refreshProfile()
-    navigate('/')
+    setShowPeople(false); setShowSettings(false)
+    setMessages([]); setLoading(true); resetScroll()
+    setSearchParams({}, { replace: true })
+    await Promise.all([refreshProfile(), loadMemberships()])
   }
+
+  // First visit after joining (?intro=1): fill the box with a short hello that has their name,
+  // and leave room after it for them to say more. Only if they have not posted here yet.
+  useEffect(() => {
+    if (introDone.current || searchParams.get('intro') !== '1') return
+    if (loading || memberVillages === null || !activeBoard?.village_id) return
+    if (!memberSet.has(activeBoard.village_id)) return
+    introDone.current = true
+    if (!messages.some(m => m.user_id === user.id)) {
+      const name = (profile?.display_name || '').trim() || 'a neighbor'
+      setNewMsg("Hi neighbors, I'm " + name + ". I'm glad to be here.\n\nA bit about me: ")
+      setIntroHint(true)
+      setTimeout(() => { const el = inputRef.current; if (el) { el.focus(); try { el.setSelectionRange(el.value.length, el.value.length) } catch {} } }, 80)
+    }
+    const next = new URLSearchParams(searchParams); next.delete('intro')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, loading, memberVillages, activeBoardId, messages.length])
 
   async function reportMessage(msg) {
     setOpenMsgMenu(null)
@@ -290,7 +340,7 @@ export default function Campfire() {
       return
     }
 
-    const row = { user_id: user.id, body: newMsg.trim(), village_id: profile?.village_id || null, board_id: activeBoardId }
+    const row = { user_id: user.id, body: newMsg.trim(), village_id: activeBoard?.village_id || null, board_id: activeBoardId }
     if (replyTo) row.reply_to = replyTo.id
     const { data, error } = await supabase.from('campfire_messages').insert(row).select('id').single()
     if (error) {
@@ -306,7 +356,7 @@ export default function Campfire() {
     // else has notifications on. See notify_campfire_recipients migration.
     const { error: notifyError } = await supabase.rpc('notify_campfire_recipients', { p_message_id: data.id })
     if (notifyError) console.error('Failed to notify Village Square recipients:', notifyError)
-    setNewMsg(''); setReplyTo(null)
+    setNewMsg(''); setReplyTo(null); setIntroHint(false)
     await loadMessages()
     setSending(false)
   }
@@ -371,7 +421,7 @@ export default function Campfire() {
   // Who can post on the board being viewed. The database enforces the same rule.
   const canPost = !!activeBoard && (
     activeBoard.is_general ? isStaff
-      : activeBoard.village_id ? (isAdmin || (profile?.village_opt_in === true && profile?.village_id === activeBoard.village_id))
+      : activeBoard.village_id ? (isAdmin || memberSet.has(activeBoard.village_id))
       : isStaff
   )
 
@@ -386,6 +436,12 @@ export default function Campfire() {
           <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? activeBoard.name + ' board' : 'Announcements and village chats'}</p>
         </div>
         <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
+        {isVillageBoard && (inVillage || isAdmin) && (
+          <button onClick={() => setShowPeople(true)} aria-label={'People in ' + activeBoard.name + (removalRequests.some(r => r.requested_by !== user.id) ? ', a removal request needs a second member' : '')} title="People" style={{ position: 'relative', background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }}>
+            &#128101;
+            {removalRequests.some(r => r.requested_by !== user.id) && <span aria-hidden="true" style={{ position: 'absolute', top: '6px', right: '6px', width: '10px', height: '10px', borderRadius: '50%', background: '#ff8844' }} />}
+          </button>
+        )}
         <button onClick={() => setShowSettings(true)} aria-label="Village Square settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'>&#9881;</button>
       </div>
 
@@ -393,9 +449,9 @@ export default function Campfire() {
         {orderedBoards.map(b => (
           <button key={b.id} type="button" role="tab" aria-selected={b.id === activeBoardId} onClick={() => chooseBoard(b.id)} style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: b.id === activeBoardId ? '1px solid #4ecca3' : '1px solid #444', background: b.id === activeBoardId ? '#1a4a3a' : '#222', color: b.id === activeBoardId ? '#4ecca3' : '#ccc', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{b.name}</button>
         ))}
-        {!profile?.village_id && (
-          <button type="button" onClick={() => navigate('/find-village')} style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem' }}>
-            Find your village chat
+        {memberVillages !== null && (
+          <button type="button" onClick={() => navigate('/find-village')} style={{ flexShrink: 0, minHeight: '44px', padding: '0 1rem', borderRadius: '999px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+            {memberSet.size > 0 ? '+ Join another village chat' : 'Find your village chat'}
           </button>
         )}
         {isAdmin && !creatingBoard && (
@@ -411,6 +467,13 @@ export default function Campfire() {
         )}
       </div>
       {boardError && <p role="alert" style={{ margin: 0, padding: '0.4rem 1rem', color: '#ff8888', fontSize: '0.8rem', background: '#241414' }}>{boardError}</p>}
+
+      {isVillageBoard && (inVillage || isAdmin) && <VillageNewMembers villageId={activeBoard.village_id} myId={user.id} />}
+      {isVillageBoard && (inVillage || isAdmin) && removalRequests.some(r => r.requested_by !== user.id) && (
+        <button type="button" onClick={() => setShowPeople(true)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem 1rem', minHeight: '44px', background: '#2e2a1a', border: 'none', borderBottom: '1px solid #3a3020', color: '#ffcc66', fontSize: '0.9rem', cursor: 'pointer' }}>
+          &#9888; A member asked to remove someone. A second member is needed. Tap to look.
+        </button>
+      )}
 
       {visibleEmergencies.length > 0 && (
         <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid #3a3020', background: '#2e2a1a' }}>
@@ -461,7 +524,9 @@ export default function Campfire() {
         {!loading && visibleMessages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '2rem', color: '#8a8a8a' }}>
             <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128227;</p>
-            <p>The fire is lit. Be the first to speak.</p>
+            {isVillageBoard
+              ? <><p>Nothing here yet. Say hello to your neighbors.</p><p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>You see what is said after you joined. People who join later will not see your older messages.</p></>
+              : <p>The fire is lit. Be the first to speak.</p>}
           </div>
         )}
 
@@ -583,29 +648,41 @@ export default function Campfire() {
         </div>
       )}
       {canPost ? (
-      <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem 1rem', borderTop: '1px solid #333', background: '#1a1a1a' }}>
-        <input
+      <>
+      {introHint && !editing && (
+        <p style={{ margin: 0, padding: '0.5rem 1rem 0', borderTop: '1px solid #333', background: '#1a1a1a', color: '#bfe8d9', fontSize: '0.9rem', lineHeight: 1.4 }}>
+          Say hello. Add what you like doing and how you would like to be involved in your community.
+        </p>
+      )}
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', padding: '0.75rem 1rem', borderTop: introHint && !editing ? 'none' : '1px solid #333', background: '#1a1a1a' }}>
+        <textarea
           ref={inputRef}
-          type="text"
+          rows={Math.min(6, Math.max(1, newMsg.split('\n').length))}
           value={newMsg}
           onChange={e => setNewMsg(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) sendMessage(e); if (e.key === 'Escape') cancelComposeMode() }}
-          placeholder={editing ? 'Edit your message...' : 'Say something to ' + (activeBoard ? 'the ' + activeBoard.name + ' board' : 'the group') + '...'}
+          onKeyDown={e => {
+            // On a phone, Enter makes a new line and the Send button sends. On a computer, Enter sends and Shift+Enter makes a new line.
+            const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches
+            if (e.key === 'Enter' && !e.shiftKey && !touch) sendMessage(e)
+            if (e.key === 'Escape') cancelComposeMode()
+          }}
+          placeholder={editing ? 'Edit your message...' : 'Say something to ' + (activeBoard ? (activeBoard.village_id ? activeBoard.name : 'the ' + activeBoard.name + ' board') : 'the group') + '...'}
           aria-label={editing ? 'Edit your message' : 'Message the Village Square'}
           disabled={sending}
-          style={{ flex: 1, padding: '0.625rem 0.875rem', borderRadius: '1.5rem', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.9rem', outline: 'none' }}
+          style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', minHeight: '44px', maxHeight: '40vh', padding: '0.6rem 0.875rem', borderRadius: '1.25rem', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem', lineHeight: 1.35, outline: 'none', resize: 'none', fontFamily: 'inherit' }}
         />
         <button
           onClick={sendMessage}
           disabled={!newMsg.trim() || sending}
-          style={{ padding: '0.625rem 1.25rem', borderRadius: '1.5rem', background: '#ff8844', color: '#fff', border: 'none', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', opacity: (!newMsg.trim() || sending) ? 0.5 : 1 }}
+          style={{ minHeight: '44px', padding: '0 1.25rem', borderRadius: '1.5rem', background: '#ff8844', color: '#fff', border: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', opacity: (!newMsg.trim() || sending) ? 0.5 : 1 }}
         >
           {editing ? 'Save' : 'Send'}
         </button>
       </div>
+      </>
       ) : (
         <p style={{ margin: 0, padding: '0.85rem 1rem', borderTop: '1px solid #333', background: '#1a1a1a', color: '#aaa', fontSize: '0.85rem', textAlign: 'center' }}>
-          {activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : 'You can read this board. You cannot post here.'}
+          {activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : activeBoard && activeBoard.village_id ? 'You are not in this village chat. Join it from the map to read and post.' : 'You can read this board. You cannot post here.'}
         </p>
       )}
 
@@ -616,7 +693,7 @@ export default function Campfire() {
           <button onClick={() => setShowSettings(false)} aria-label="Close Village Square settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
-        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>Announcements are open for every member to read, and only Ambassadors and admins can post there. Your village chat is for the neighbors in your village who chose to join. Neither one is end-to-end encrypted, so keep sensitive details out. Admins can read both.</p>
+        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>Announcements are open for every member to read, and only Ambassadors and admins can post there. Village chats are for neighbors near you. Anyone with an account can join, and there is no limit on size. You can join more than one. New members only see what is said after they join. Neither one is end-to-end encrypted, so keep sensitive details out. Admins can read both.</p>
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
         <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>You get one notification after a chat goes quiet, not one for every message. Choose for each chat.</p>
@@ -654,13 +731,16 @@ export default function Campfire() {
         })}
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Actions</div>
-        {profile?.village_id && (
-        <button onClick={leaveCampfire} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-          &#128682; Leave Village Square
+        <button onClick={() => navigate('/find-village')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#4ecca3', padding: '0.6rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
+          &#127969; Find or join a village chat
+        </button>
+        {isVillageBoard && inVillage && (
+        <button onClick={leaveVillageChat} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
+          &#128682; Leave {activeBoard.name}
         </button>
         )}
 
-        {isStaff && (<>
+        {isStaff && !isVillageBoard && (<>
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>People here ({Object.keys(names).length})</div>
         {Object.keys(names).length > 8 && (
           <input
@@ -699,6 +779,18 @@ export default function Campfire() {
         </div>
         </>)}
       </div>
+      {showPeople && isVillageBoard && (
+        <VillagePeople
+          villageId={activeBoard.village_id}
+          villageName={activeBoard.name}
+          myId={user.id}
+          isAdmin={isAdmin}
+          requests={removalRequests}
+          onRequestsChange={loadRemovalRequests}
+          onClose={() => setShowPeople(false)}
+          onLeave={inVillage ? leaveVillageChat : null}
+        />
+      )}
     </div>
   )
 }

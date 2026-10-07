@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import VillageRiskDialog from '../components/VillageRiskDialog'
 
-// Find your village chat, join one, or start one if none is near you.
+// Find village chats, join as many as are near you, or start one if none is near.
 // Shows village names, rough sizes, and distance only. Never people.
+// Joining always goes through the risk warning first.
 
 const NEAR_MILES = 45
 
@@ -16,6 +18,8 @@ const WORDS = {
   toofar: 'That village is too far from your zip code to join.',
   exists: 'A village is already near you. Search again and you will find it.',
   already: 'You already started a village. Ask an admin if it needs changes.',
+  needagree: 'Please read and agree to the warning first.',
+  removed: 'Members of this village chat asked for you to be removed. If you think this is a mistake, contact VWB.',
 }
 
 function countText(v) {
@@ -34,6 +38,9 @@ export default function FindVillage() {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  // The warning: { type: 'join', village } or { type: 'start' }
+  const [risk, setRisk] = useState(null)
+  const [riskError, setRiskError] = useState('')
 
   const hasZip = !!profile?.zip_code
 
@@ -52,36 +59,40 @@ export default function FindVillage() {
 
   useEffect(() => { load('') }, [])
 
-  // Coming from the Home card with a village already found: ask about notifications.
-  useEffect(() => { if (searchParams.get('welcome') === '1') finishJoin() }, [])
+  // Coming from the map with ?join=<village id>: open the warning for that village.
+  const joinParam = searchParams.get('join')
+  useEffect(() => {
+    if (!joinParam || loading || risk) return
+    const v = villages.find(x => x.id === joinParam)
+    if (v && v.can_join && !v.is_mine) setRisk({ type: 'join', village: v })
+    else if (v && v.is_mine && v.board_id) navigate('/campfire?board=' + v.board_id, { replace: true })
+  }, [joinParam, loading, villages])
 
   function search(e) {
     e.preventDefault()
     load(text.trim())
   }
 
-  // After joining or starting, open the village's chat.
-  async function openMyVillage() {
-    await refreshProfile()
-    const { data: me } = await supabase.from('helper_profiles').select('village_id').eq('user_id', user.id).maybeSingle()
-    let boardId = null
-    if (me?.village_id) {
-      const { data: b } = await supabase.from('campfire_boards').select('id').eq('village_id', me.village_id).maybeSingle()
-      boardId = b?.id || null
-    }
-    navigate(boardId ? '/campfire?board=' + boardId : '/campfire')
+  // Open a village chat you already joined.
+  function openChat(v) {
+    navigate(v.board_id ? '/campfire?board=' + v.board_id : '/campfire')
   }
 
-  // After joining or starting a village, ask once whether they want notifications.
-  // If they already chose for this chat, go straight in.
-  async function finishJoin() {
+  // After joining, ask once whether they want notifications for that chat, then
+  // open it with the intro box filled in. A village you joined (or started) is
+  // the newest row in your own membership list.
+  async function finishJoin(villageId) {
     await refreshProfile()
-    const { data: me } = await supabase.from('helper_profiles').select('village_id').eq('user_id', user.id).maybeSingle()
-    if (!me?.village_id) { navigate('/campfire'); return }
-    const { data: b } = await supabase.from('campfire_boards').select('id, name').eq('village_id', me.village_id).maybeSingle()
+    let vid = villageId
+    if (!vid) {
+      const { data: mine } = await supabase.from('village_members').select('village_id').eq('user_id', user.id).order('joined_at', { ascending: false }).limit(1)
+      vid = mine?.[0]?.village_id
+    }
+    if (!vid) { navigate('/campfire'); return }
+    const { data: b } = await supabase.from('campfire_boards').select('id, name').eq('village_id', vid).maybeSingle()
     if (!b) { navigate('/campfire'); return }
     const { data: saved } = await supabase.from('campfire_board_user_settings').select('alerts').eq('user_id', user.id).eq('board_id', b.id).maybeSingle()
-    if (saved) { navigate('/campfire?board=' + b.id); return }
+    if (saved) { navigate('/campfire?board=' + b.id + '&intro=1'); return }
     setWelcome(b)
   }
 
@@ -93,34 +104,33 @@ export default function FindVillage() {
       { onConflict: 'user_id,board_id' }
     )
     if (err) { console.error('Failed to save alert choice:', err); setError('Could not save that. Try again.'); setBusy(false); return }
-    navigate('/campfire?board=' + welcome.id)
+    navigate('/campfire?board=' + welcome.id + '&intro=1')
   }
 
-  async function join(v) {
-    if (busy) return
-    setBusy(true); setError('')
-    const { data, error: err } = await supabase.rpc('join_village', { p_village: v.id })
-    if (err) { console.error('Failed to join village:', err); setError('Could not join. Try again.'); setBusy(false); return }
-    if (data !== 'ok') { setError(WORDS[data] || 'Could not join. Try again.'); setBusy(false); return }
-    await finishJoin()
-    setBusy(false)
-  }
-
-  async function startOne() {
-    if (busy) return
-    if (!confirm('Start a village chat for your area? We name it after your town and tell the admins. Neighbors within ' + NEAR_MILES + ' miles can join it.')) return
-    setBusy(true); setError('')
-    const { data, error: err } = await supabase.rpc('start_my_village')
-    if (err) { console.error('Failed to start village:', err); setError('Could not start a village. Try again.'); setBusy(false); return }
+  // The warning's "I agree" button. The agreement is sent to the database, which checks it.
+  async function agreeAndGo() {
+    if (busy || !risk) return
+    setBusy(true); setRiskError('')
+    const starting = risk.type === 'start'
+    const { data, error: err } = starting
+      ? await supabase.rpc('start_my_village', { p_agreed: true })
+      : await supabase.rpc('join_village', { p_village: risk.village.id, p_agreed: true })
+    if (err) { console.error('Failed to join village:', err); setRiskError('Could not join. Try again.'); setBusy(false); return }
     if (data !== 'ok') {
-      setError(WORDS[data] || 'Could not start a village. Try again.')
       setBusy(false)
+      setRisk(null)
+      setError(WORDS[data] || 'Could not join. Try again.')
       if (data === 'exists') load('')
       return
     }
-    await finishJoin()
+    const villageId = starting ? null : risk.village.id
+    setRisk(null)
+    await finishJoin(villageId)
     setBusy(false)
   }
+
+  function join(v) { setRiskError(''); setRisk({ type: 'join', village: v }) }
+  function startOne() { setRiskError(''); setRisk({ type: 'start' }) }
 
   const searching = searched !== ''
   // With no search, show only villages you can join or already belong to.
@@ -145,8 +155,9 @@ export default function FindVillage() {
   return (
     <div className="cal-page hub-page">
       <Link to="/campfire" className="hub-back">&#8592; Village Square</Link>
-      <h1 className="hub-org-name">Find your village chat</h1>
-      <p className="cal-sub">A village chat is for neighbors in your area who chose to join. We use your zip code to find villages near you.</p>
+      <h1 className="hub-org-name">Find village chats</h1>
+      <p className="cal-sub">A village chat is for neighbors in your area. Anyone with an account can join. You can join more than one, especially where villages overlap. We use your zip code to find villages near you.</p>
+      <p style={{ margin: '0 0 0.75rem' }}><Link to="/villages">See the village map</Link></p>
 
       {!hasZip && (
         <section className="cal-box" aria-labelledby="fv-zip">
@@ -173,14 +184,14 @@ export default function FindVillage() {
             <div className="hub-section-head"><h2 id="fv-list">{searching ? 'Villages that match' : 'Villages near you'}</h2></div>
             {shown.map(v => (
               <div key={v.id} className="cal-card" style={{ display: 'block' }}>
-                <span className="cal-card-title">{v.name}{v.is_mine ? ' · yours' : ''}</span>
+                <span className="cal-card-title">{v.name}{v.is_mine ? ' · joined' : ''}</span>
                 <span className="cal-card-meta" style={{ display: 'block', marginBottom: '0.5rem' }}>
                   {v.region_label ? v.region_label + ' · ' : ''}{countText(v)}{v.miles_away != null ? ' · about ' + v.miles_away + ' miles away' : ''}
                 </span>
-                {v.is_mine && profile?.village_opt_in === true && (
-                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={openMyVillage}>Open my village chat</button>
+                {v.is_mine && (
+                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => openChat(v)}>Open this village chat</button>
                 )}
-                {!(v.is_mine && profile?.village_opt_in === true) && v.can_join && (
+                {!v.is_mine && v.can_join && (
                   <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => join(v)}>Join this village chat</button>
                 )}
                 {!v.is_mine && !v.can_join && (
@@ -199,6 +210,16 @@ export default function FindVillage() {
           </section>
         )}
       </div>
+
+      {risk && (
+        <VillageRiskDialog
+          villageName={risk.type === 'join' ? risk.village.name : 'your new village chat'}
+          busy={busy}
+          error={riskError}
+          onAgree={agreeAndGo}
+          onCancel={() => { setRisk(null); setRiskError('') }}
+        />
+      )}
     </div>
   )
 }
