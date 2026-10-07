@@ -98,6 +98,7 @@ const SAFETY_POINTS = [
   'After a task, both people can say how it went. Neighbors can also vouch for people they know.',
   'Private messages between two people are end-to-end encrypted.',
   'You can block anyone, or report a problem to VWB admins.',
+  'Village chats are for neighbors in that village. They are not end-to-end encrypted, and VWB admins can read them to keep people safe.',
   'Locations are rounded, and your exact address is never shown. You choose what appears on your public profile.',
 ]
 
@@ -109,6 +110,10 @@ const FAQS = [
   {
     q: 'How does it work?',
     a: 'You post what you need, or what you can offer. Neighbors nearby can see it and respond, and help stays local to your area so it comes from someone close enough to show up.',
+  },
+  {
+    q: 'What is a village chat?',
+    a: 'A village is a group of nearby zip codes with its own chat in the Village Square. You can join any village that covers your zip code, and you can be in more than one. If there is no village for your area yet, any neighbor can start one. Everyone also sees the Announcements board. Village chats are not end-to-end encrypted, and VWB admins can read them to keep people safe, so keep sensitive details out of them.',
   },
   {
     q: 'Who is this for?',
@@ -132,7 +137,7 @@ const FAQS = [
   },
   {
     q: 'Do I have to live close by to help or be helped?',
-    a: 'Yes, on purpose. The app only shows you people and requests in your area, so help is realistic to actually deliver and receive quickly, not a stranger three hours away.',
+    a: 'Yes, on purpose. The app only shows you people and requests in your area, and villages are built from zip codes, so help is realistic to actually deliver and receive quickly, not a stranger three hours away.',
   },
   {
     q: 'Is my information private?',
@@ -225,6 +230,18 @@ export default function Welcome() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Villages */}
+        <section style={sectionStyle}>
+          <div style={eyebrow}>Village chats</div>
+          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>Find your village</h2>
+          <p style={{ margin: '0 0 0.75rem', color: COLORS.textDim, lineHeight: 1.6 }}>
+            A village is a group of neighbors in nearby zip codes, with its own chat. Join the one that covers your zip code, or start one for your area if there is not one yet.
+          </p>
+          <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.9rem', lineHeight: 1.6 }}>
+            Village chats are open to neighbors in that village, and admins can read them to keep people safe. Private messages are the place for anything sensitive.
+          </p>
         </section>
 
         {/* Who it's for / Hope Ambassador */}
