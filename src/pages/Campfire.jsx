@@ -7,16 +7,13 @@ import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import { submitUserReport } from '../utils/submitUserReport'
 import { MUTE_OPTIONS } from '../utils/muteOptions'
+import { SPARK_NAME, SPARK_HINT } from '../utils/spark'
 import VillagePeople, { VillageNewMembers } from '../components/VillagePeople'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
 // so a fast back-and-forth doesn't read as a long wall of near-identical rows.
 const GROUP_WINDOW_MS = 5 * 60 * 1000
-
-// One gentle way to answer a message: "I saw this." Change the name here if you want a different word.
-const SPARK_NAME = 'Spark'
-const SPARK_HINT = 'I saw this'
 
 export default function Campfire() {
   const { user, profile, isAdmin, refreshProfile } = useAuth()

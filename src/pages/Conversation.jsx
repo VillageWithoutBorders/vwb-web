@@ -3,6 +3,8 @@ import { useBlockedBy } from '../utils/blockedBy'
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useChatScroll } from '../hooks/useChatScroll'
+import { useSparks } from '../hooks/useSparks'
+import SparkButton from '../components/SparkButton'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
@@ -39,6 +41,7 @@ export default function Conversation() {
   const { refreshUnread } = useUnreadCount()
   const [convo, setConvo] = useState(null)
   const [messages, setMessages] = useState([])
+  const { sparks, toggle: toggleSpark } = useSparks({ fn: 'chat_spark_counts', table: 'chat_message_sparks', ids: messages.filter(m => !m.queued && m.id).map(m => m.id), userId: user?.id })
   const [newMsg, setNewMsg] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -413,6 +416,7 @@ export default function Conversation() {
       <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs') + (msg.queued ? ' queued' : '')} onClick={() => msg.queued ? cancelWaiting(msg) : setSelectedMessage(msg)} role="button" tabIndex={0} aria-label={msg.queued ? 'Waiting to send. Tap to take it back.' : 'Message actions'} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (msg.queued) cancelWaiting(msg); else setSelectedMessage(msg) } }}>
         <p className="chat-body">{msg.displayBody ?? msg.body}</p>
         <span className="chat-time">{msg.queued ? 'Waiting to send' : formatTime(msg.created_at)}{msg.edit_count > 0 ? <> {'\u00b7'} <button type="button" className="chat-edited" onClick={(ev) => { ev.stopPropagation(); showHistory(msg) }}>Edited</button></> : null}{msg.id === readMessageId ? ' \u00b7 Read ' + formatTime(otherReceipt) : ''}</span>
+        {!msg.queued && msg.id && <SparkButton count={sparks[String(msg.id)]?.n || 0} mine={!!sparks[String(msg.id)]?.mine} onToggle={() => toggleSpark(msg.id)} />}
       </div>
       {isMe && (isGroupStart
         ? <AvatarDisplay url={myAvatar} userId={user.id} size={24} />
