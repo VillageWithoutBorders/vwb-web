@@ -7,6 +7,7 @@ import { loadSkillCategories } from '../utils/skillGroups'
 import { getMyLocation } from '../utils/location'
 import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
+import { useGoBack } from '../components/BackLink'
 
 const URGENCY_OPTIONS = [
     { value: 'now', label: 'Right now', desc: 'Emergency or same-day need' },
@@ -33,6 +34,7 @@ export default function AskForHelp() {
         return managedOrgs.some((o) => o.id === want) ? want : ''
     })
     const navigate = useNavigate()
+    const goBack = useGoBack()
     // /ask?edit=ID opens this same form filled in, to change a request already posted.
     const editId = searchParams.get('edit')
     // First screen: look at nearby resources before asking a neighbor. Skipped
@@ -172,7 +174,7 @@ export default function AskForHelp() {
     return (
         <div className="ask-page">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+                <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
                 <h1 style={{ margin: 0 }}>{editId ? 'Edit your request' : 'Ask for help'}</h1>
             </div>
             <p className="ask-intro">

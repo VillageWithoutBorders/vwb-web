@@ -6,10 +6,12 @@ import { KnowsVouchList } from '../components/PersonalVouches'
 import { useAuth } from '../context/AuthContext'
 import { startConversation } from '../utils/startConversation'
 import ProfileSafetyActions from '../components/ProfileSafetyActions'
+import { useGoBack } from '../components/BackLink'
 
 export default function PublicProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const { user } = useAuth()
   // Arriving with { safety: 'block' | 'report' } (after taking back a
   // vouch) opens that dialog right away.
@@ -123,7 +125,7 @@ export default function PublicProfile() {
   if (!profile) {
     return (
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
-        <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
         <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>This profile isn't available.</div>
       </div>
     )
@@ -134,7 +136,7 @@ export default function PublicProfile() {
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
-      <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', marginBottom: '0.5rem' }}>&#8592;</button>
+      <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', marginBottom: '0.5rem' }}>&#8592;</button>
 
       {/* Profile header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>

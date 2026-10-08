@@ -6,6 +6,7 @@ import { resetAccountToBase } from '../utils/resetAccount'
 import { startAppTour } from '../components/AppTour'
 import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
 import RecoveryKeySection from '../components/RecoveryKeySection'
+import { useGoBack } from '../components/BackLink'
 
 // A plain read on how strong a new password is. Length matters most.
 function passwordStrength(pw) {
@@ -31,6 +32,7 @@ function reportError(context, error, userMessage) {
 export default function Settings() {
   const { user, profile, isAdmin, isFounder, signOut, signOutEverywhere, refreshProfile, refreshMfa } = useAuth()
   const navigate = useNavigate()
+  const goBack = useGoBack()
 
   const [showEmailChange, setShowEmailChange] = useState(false)
   const [newEmail, setNewEmail] = useState('')
@@ -302,7 +304,7 @@ export default function Settings() {
   return (
     <div className="profile-page">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button onClick={() => navigate('/profile')} aria-label="Back to Profile" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => goBack('/profile')} aria-label="Back to Profile" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#4ecca3' }}>Settings &amp; Privacy</h1>
       </div>
 

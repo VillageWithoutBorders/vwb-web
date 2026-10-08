@@ -16,3 +16,14 @@ export default function BackLink({ fallback = '/', fallbackLabel = 'Home', class
     </Link>
   )
 }
+
+// For back arrows: go to the previous page in the app, or to the fallback
+// when the page was opened directly.
+export function useGoBack() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  return (fallback = '/') => {
+    if (location.key !== 'default') navigate(-1)
+    else navigate(fallback)
+  }
+}

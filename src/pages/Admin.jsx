@@ -7,6 +7,7 @@ import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { availabilityDisplayString } from '../components/AvailabilityPicker'
 import { resetAccountToBase } from '../utils/resetAccount'
+import { useGoBack } from '../components/BackLink'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also alert the person and let the caller bail out; omit it for
@@ -49,6 +50,7 @@ const CONTENT_FILTERS = [
 export default function Admin() {
   const { user, profile, isAdmin, isFounder } = useAuth()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const [tab, setTab] = useState(() => { try { return new URLSearchParams(window.location.search).get('tab') || 'emergencies' } catch { return 'emergencies' } })
   const [resourceClaims, setResourceClaims] = useState([])
   const [loading, setLoading] = useState(true)
@@ -933,7 +935,7 @@ export default function Admin() {
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => navigate('/profile')} aria-label="Back to Profile" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => goBack('/profile')} aria-label="Back to Profile" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#4ecca3', flex: 1 }}>Admin Panel</h1>
         <button onClick={() => navigate('/admin/report')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem', display: isFounder ? 'inline-block' : 'none' }}>Grant Report</button>
       </div>

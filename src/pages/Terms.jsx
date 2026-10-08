@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useGoBack } from '../components/BackLink'
 
 // Public page, reachable at /terms whether or not someone is logged in --
 // linked from the last card of CommunityGuidelines.jsx. Reuses the existing
@@ -7,6 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 // new styles.
 export default function Terms() {
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const location = useLocation()
   const listRef = useRef(null)
 
@@ -28,7 +30,7 @@ export default function Terms() {
   return (
     <div className="help-page" style={{ maxWidth: '720px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Terms of Use</h1>
       </div>
       <p style={{ color: '#8a8a8a', fontSize: '0.85rem', margin: '0.25rem 0 1.5rem' }}>Last updated: September 2026</p>
