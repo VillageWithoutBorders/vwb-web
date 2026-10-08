@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
+import { useGoBack } from '../components/BackLink'
 
 const VERIFY_THRESHOLD = 2
 
 export default function EmergencyEvents() {
   const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const [events, setEvents] = useState([])
   const [resolvedEvents, setResolvedEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -131,7 +133,7 @@ export default function EmergencyEvents() {
           <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#ffcc00' }}>Emergency Response</h1>
           <p style={{ color: '#888', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>Events in your area</p>
         </div>
-        <button onClick={() => navigate('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
       </div>
 
       <button onClick={() => navigate('/emergency/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '1rem', borderRadius: '10px', border: '2px solid #ffaa44', background: 'linear-gradient(135deg, #2e2a1a, #3a3020)', cursor: 'pointer', textAlign: 'left', marginBottom: '1.25rem' }}>

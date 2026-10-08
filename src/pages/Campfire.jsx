@@ -9,6 +9,7 @@ import { submitUserReport } from '../utils/submitUserReport'
 import { MUTE_OPTIONS } from '../utils/muteOptions'
 import { SPARK_NAME, SPARK_HINT } from '../utils/spark'
 import VillagePeople, { VillageNewMembers } from '../components/VillagePeople'
+import { useGoBack } from '../components/BackLink'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
@@ -18,6 +19,7 @@ const GROUP_WINDOW_MS = 5 * 60 * 1000
 export default function Campfire() {
   const { user, profile, isAdmin, refreshProfile } = useAuth()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const [searchParams, setSearchParams] = useSearchParams()
   const [boards, setBoards] = useState([])
   const [creatingBoard, setCreatingBoard] = useState(false)
@@ -482,7 +484,7 @@ export default function Campfire() {
   return (
     <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1a1a1a' }}>
       <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid #333', background: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => navigate('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span>&#128227;</span> The Village Square

@@ -12,6 +12,7 @@ import { submitUserReport } from '../utils/submitUserReport'
 import { useCampfireIds } from '../hooks/useCampfireIds'
 import { useSidechatParents } from '../hooks/useSidechatParents'
 import SidechatAdd from '../components/SidechatAdd'
+import { useGoBack } from '../components/BackLink'
 
 // One group's board: its own private Campfire. Posts are end-to-end
 // encrypted (see e2ee.js sendGroupPost), so only members can read them and
@@ -48,6 +49,7 @@ export default function GroupBoard() {
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const location = useLocation()
   const campfires = useCampfireIds()
   const sidechatParents = useSidechatParents()
@@ -619,7 +621,7 @@ export default function GroupBoard() {
   return (
     <div className="conversation-page group-page">
       <div className="convo-header">
-        <button className="convo-back" onClick={() => navigate('/groups')} aria-label="Back to chats">&#8592;</button>
+        <button className="convo-back" onClick={() => goBack('/groups')} aria-label="Back to chats">&#8592;</button>
         <div className="convo-header-info">
           <h1>{campfires.has(group.id) ? '\u{1F525} ' : ''}{group.name}</h1>
           <p className="convo-context">{isSidechat ? 'Sidechat' + (parentName ? ' of ' + parentName : '') + ' · ' : (orgName ? 'For ' + orgName + ' · ' : '')}{members.length} {members.length === 1 ? 'member' : 'members'} · {campfires.has(group.id) ? 'Campfire' : 'Cottage Chat'}</p>
