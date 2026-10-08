@@ -7,6 +7,7 @@ import { startingOrigin } from '../utils/calendar'
 import { CATEGORIES, CAT_ICONS, resourceCats, resourceMatches } from '../utils/resourceCategories'
 import { searchScore } from '../utils/resourceSearch'
 import AddressLink from '../components/AddressLink'
+import BackLink from '../components/BackLink'
 
 // Keeps Tab/Shift+Tab cycling inside an open dialog instead of leaking focus
 // out to the page behind it.
@@ -360,7 +361,7 @@ export default function CommunityResources() {
 
   return (
     <div className="community-page">
-      <Link to={user ? '/community' : '/welcome'} className="hub-back">&#8592; {user ? 'Community' : 'Welcome'}</Link>
+      <BackLink fallback={user ? '/community' : '/welcome'} fallbackLabel={user ? 'Community' : 'Welcome'} />
       <h1>Find help</h1>
       <p className="feed-subtitle" style={{ marginBottom: '1rem' }}>Food, housing, safety, and more, shared by neighbors and local groups.</p>
 

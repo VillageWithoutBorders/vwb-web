@@ -9,6 +9,7 @@ import { useCampfireIds } from '../hooks/useCampfireIds'
 import { useSidechatParents } from '../hooks/useSidechatParents'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import { UserName } from '../components/AvatarDisplay'
+import BackLink from '../components/BackLink'
 
 // The organizer's home base for one group: shortcuts, members, upcoming
 // events with sign-up counts, and the needs and offers posted under the
@@ -176,7 +177,7 @@ export default function OrgDashboard() {
     if (!isAdmin && managed.length === 1) return <Navigate to={'/orgs/' + managed[0].id + '/dashboard'} replace />
     return (
       <div className="cal-page hub-page">
-        <Link to="/" className="hub-back">&#8592; Home</Link>
+        <BackLink fallback="/" fallbackLabel="Home" />
         <h1 className="hub-org-name">Organization dashboard</h1>
         {choices.length === 0 && (
           <p className="cal-empty">{isAdmin ? 'No approved groups yet.' : "You don't run a group on VWB yet. You can ask to add yours from the Community page."}</p>
@@ -191,7 +192,7 @@ export default function OrgDashboard() {
   if (!allowed) {
     return (
       <div className="cal-page hub-page">
-        <Link to="/" className="hub-back">&#8592; Home</Link>
+        <BackLink fallback="/" fallbackLabel="Home" />
         <p className="cal-empty">This dashboard is only for this group's organizers.</p>
       </div>
     )
@@ -214,7 +215,7 @@ export default function OrgDashboard() {
 
   return (
     <div className="cal-page hub-page">
-      <Link to="/" className="hub-back">&#8592; Home</Link>
+      <BackLink fallback="/" fallbackLabel="Home" />
       <h1 className="hub-org-name">{orgName || 'Your group'}</h1>
       <p className="cal-sub">Organization dashboard</p>
 

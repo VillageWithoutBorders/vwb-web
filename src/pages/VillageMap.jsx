@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import 'leaflet/dist/leaflet.css'
+import BackLink from '../components/BackLink'
 
 // The villages of Village Without Borders, as a map and as a network web.
 // Shows village names, places, and rough sizes only. Never people.
@@ -210,7 +211,7 @@ export default function VillageMap() {
 
   return (
     <div className="cal-page hub-page">
-      <Link to="/" className="hub-back">&#8592; Home</Link>
+      <BackLink fallback="/" fallbackLabel="Home" />
       <h1 className="hub-org-name">Village map</h1>
       <p className="cal-sub">Every Village Without Borders village. Only names, places, and rough sizes are shown, never people.</p>
       <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', margin: '0.5rem 0' }} onClick={() => navigate('/find-village')}>Find, join, or start a village chat</button>
