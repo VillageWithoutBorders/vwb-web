@@ -110,7 +110,7 @@ function VillageAsk() {
 export default function Dashboard() {
   const { profile, isAdmin, organizations } = useAuth()
   // Founders and admins can open any group's dashboard, even if they aren't a member.
-  const runsAGroup = isAdmin || organizations.some((o) => o.role === 'admin' || o.role === 'organizer')
+  const runsAGroup = organizations.some((o) => o.role === 'admin' || o.role === 'organizer')
   const navigate = useNavigate()
   const location = useLocation()
   const displayName = profile?.display_name || 'Neighbor'
@@ -176,8 +176,8 @@ export default function Dashboard() {
           <span className="home-tile-icon" aria-hidden="true">&#128506;</span>Map
         </button>
         {runsAGroup && (
-          <button type="button" className="home-tile" aria-label="Organization Dashboard: events, members, needs and offers for your group" onClick={() => navigate('/org-dashboard')}>
-            <span className="home-tile-icon" aria-hidden="true">&#127968;</span>My group
+          <button type="button" className="home-tile" aria-label="Organization Dashboard: events, members, needs and offers for your organization" onClick={() => navigate('/org-dashboard')}>
+            <span className="home-tile-icon" aria-hidden="true">&#127968;</span>My organization
           </button>
         )}
       </div>
