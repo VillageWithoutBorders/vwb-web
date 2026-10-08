@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import OrgMemberNames from '../components/OrgMemberNames'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -228,6 +229,8 @@ export default function OrgPage() {
           {privacyNote && <p className="hub-note" role="status">{privacyNote}</p>}
         </section>
       )}
+
+      {mine && !canManage && <OrgMemberNames orgId={id} />}
 
       {canManage && contactEmail && (
         <section className="cal-box" aria-labelledby="org-email">

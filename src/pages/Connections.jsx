@@ -33,7 +33,7 @@ const chip = (on) => ({
   border: '1px solid ' + (on ? '#4ecca3' : '#444'), background: on ? '#4ecca3' : 'none', color: on ? '#1a1a1a' : '#ccc',
 })
 
-export default function Connections() {
+export default function Connections({ embedded = false }) {
   const navigate = useNavigate()
   const goBack = useGoBack()
   const [rows, setRows] = useState(null)
@@ -60,10 +60,12 @@ export default function Connections() {
 
   return (
     <div className="cal-page" style={{ maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}>
+      {!embedded && (
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
         <button type="button" onClick={() => goBack('/')} aria-label="Back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Connections</h1>
       </div>
+      )}
       <p className="cal-sub">Neighbors you have messaged, helped, vouched for, or shared a group with.</p>
 
       <label htmlFor="conn-search" style={{ display: 'block', fontWeight: 600, margin: '0.75rem 0 0.25rem' }}>Find someone</label>

@@ -59,6 +59,7 @@ export default function CalendarEventForm() {
     signupEnabled: false,
     signupKind: 'help',
     needsText: '',
+    extraText: '',
     signupLimit: '',
     allAges: false,
     teensCanHelp: false,
@@ -99,6 +100,7 @@ export default function CalendarEventForm() {
         signupEnabled: !!data.signup_enabled,
         signupKind: data.signup_kind || 'help',
         needsText: data.needs_text || '',
+        extraText: data.extra_text || '',
         signupLimit: data.signup_limit ? String(data.signup_limit) : '',
         allAges: !!data.all_ages,
         teensCanHelp: !!data.teens_can_help,
@@ -283,6 +285,7 @@ export default function CalendarEventForm() {
       signup_enabled: form.signupEnabled || hasShifts,
       signup_kind: hasShifts ? 'help' : form.signupKind,
       needs_text: form.needsText.trim() || null,
+      extra_text: form.extraText.trim() || null,
       signup_limit: form.signupEnabled && !hasShifts ? limit : null,
       all_ages: form.allAges,
       teens_can_help: form.allAges && form.teensCanHelp,
@@ -531,6 +534,11 @@ export default function CalendarEventForm() {
           <label htmlFor="ev-needs">What do you still need people to bring? (optional)</label>
           <textarea id="ev-needs" rows={3} maxLength={600} value={form.needsText} onChange={(e) => set('needsText', e.target.value)} placeholder={'One thing per line. For example:\nNapkins\nPlates\nCups'} />
           <small>Shows in its own box on the event page, above the sign-up button.</small>
+        </div>
+        <div className="form-field">
+          <label htmlFor="ev-extra">Anything else to add? (optional)</label>
+          <textarea id="ev-extra" rows={4} maxLength={1000} value={form.extraText} onChange={(e) => set('extraText', e.target.value)} placeholder="Links, notes, or anything else. For example, a sign-up link." />
+          <small>Shows in its own box on the event page with no title above it. Whatever you type is all people see.</small>
         </div>
         {form.signupEnabled && (
           <div className="form-field">

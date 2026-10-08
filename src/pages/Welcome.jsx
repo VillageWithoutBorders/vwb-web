@@ -96,9 +96,9 @@ const SAFETY_POINTS = [
   'Every account needs a working email address. We do not check IDs, so use the same good sense you would with anyone new.',
   'Both people have to say yes before anyone connects. No surprise matches.',
   'After a task, both people can say how it went. Neighbors can also vouch for people they know.',
-  'Private messages between two people are end-to-end encrypted.',
+  'Private messages, Cottage Chats, and organization chats are end-to-end encrypted.',
   'You can block anyone, or report a problem to VWB admins.',
-  'Village chats are for neighbors in that village. They are not end-to-end encrypted, and VWB admins can read them to keep people safe.',
+  'Village chats are for neighbors in that village. Only people who joined a village chat can open it. VWB admins cannot open it, but village chats are not encrypted the way private messages are.',
   'Locations are rounded, and your exact address is never shown. You choose what appears on your public profile.',
 ]
 
@@ -113,7 +113,7 @@ const FAQS = [
   },
   {
     q: 'What is a village chat?',
-    a: 'A village is a group of nearby zip codes with its own chat in the Village Square. You can join any village that covers your zip code, and you can be in more than one. If there is no village for your area yet, any neighbor can start one. Everyone also sees the Announcements board. Village chats are not end-to-end encrypted, and VWB admins can read them to keep people safe, so keep sensitive details out of them.',
+    a: 'A village is a group of nearby zip codes with its own chat in the Village Square. You can join any village that covers your zip code, and you can be in more than one. If there is no village for your area yet, any neighbor can start one. Everyone also sees the Announcements board. Only people who joined a village chat can read it, and VWB admins cannot open it. Everyone in the chat can read it, so keep sensitive details out.',
   },
   {
     q: 'Who is this for?',
@@ -141,7 +141,7 @@ const FAQS = [
   },
   {
     q: 'Is my information private?',
-    a: 'Your exact address is never shown to anyone, and locations are rounded. You control what appears on your public profile. Private messages are end-to-end encrypted. Announcements and village chats are not, so keep sensitive details out of them.',
+    a: 'Your exact address is never shown to anyone, and locations are rounded. You control what appears on your public profile. Private messages, Cottage Chats, and organization chats are end-to-end encrypted. Announcements are open to every member. Village chats can be opened only by the neighbors who joined them, but they are not encrypted the same way, so keep sensitive details out of both.',
   },
   {
     q: 'What about teens and kids?',
@@ -240,7 +240,7 @@ export default function Welcome() {
             A village is a group of neighbors in nearby zip codes, with its own chat. Join the one that covers your zip code, or start one for your area if there is not one yet.
           </p>
           <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.9rem', lineHeight: 1.6 }}>
-            Village chats are open to neighbors in that village, and admins can read them to keep people safe. Private messages are the place for anything sensitive.
+            Village chats can be read only by the neighbors who joined them. Private messages are the place for anything sensitive.
           </p>
         </section>
 

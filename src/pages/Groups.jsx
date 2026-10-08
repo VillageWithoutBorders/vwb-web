@@ -9,7 +9,7 @@ import { useSidechatParents } from '../hooks/useSidechatParents'
 // Groups: private circles anyone can start. No roles, no one in charge.
 // Every group has its own board (its own Campfire), end-to-end encrypted.
 // See vwb-groups.sql for the rules the database enforces.
-export default function Groups() {
+export default function Groups({ embedded = false }) {
   const { user, organizations, established } = useAuth()
   // Organizations this person heads or is an organizer (trusted liaison)
   // for. They can start a group for one of them and be its steward.
@@ -131,7 +131,7 @@ export default function Groups() {
     <div className="groups-page">
       <div className="groups-head">
         <div>
-          <h1>Cottage Chats &amp; Campfires</h1>
+          {!embedded && <h1>Cottage Chats &amp; Campfires</h1>}
           <p className="groups-sub">&#127969; Cottage Chat: take a seat, let it out. You're safe here. &#128293; Campfire: gather round and let your voices be heard.</p>
         </div>
       </div>
