@@ -12,6 +12,7 @@ import { useUnreadCount } from '../context/UnreadCountContext'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { submitUserReport } from '../utils/submitUserReport'
 import { sendPrivateMessage, flushOutbox, getQueuedMessages, cancelQueuedMessage, decryptFromSender, getDeviceId, editPrivateMessage, fetchEditHistory } from '../lib/e2ee'
+import { useGoBack } from '../components/BackLink'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar shown once, tighter spacing) instead of repeating the
@@ -36,6 +37,7 @@ export default function Conversation() {
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const blockedBy = useBlockedBy()
   const location = useLocation()
   const { refreshUnread } = useUnreadCount()
@@ -368,7 +370,7 @@ export default function Conversation() {
   return (
     <div className="conversation-page">
       <div className="convo-header">
-        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; const { error } = await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id); if (error) console.error('Failed to mark conversation read:', error); refreshUnread() } navigate(-1) }} aria-label="Back">
+        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; const { error } = await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id); if (error) console.error('Failed to mark conversation read:', error); refreshUnread() } goBack('/') }} aria-label="Back">
           &#8592;
         </button>
         <AvatarDisplay url={otherAvatar} userId={otherUserId} size={36} />

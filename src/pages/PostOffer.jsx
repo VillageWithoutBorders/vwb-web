@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { getMyLocation } from '../utils/location'
 import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES, OFFER_ITEMS_GROUP } from '../utils/skillGroups'
+import { useGoBack } from '../components/BackLink'
 
 
 const fieldStyle = { display: 'block', width: '100%', marginBottom: '0.5rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid #444', background: '#1a1a1a', color: '#fff', fontSize: '1rem' }
@@ -19,6 +20,7 @@ export default function PostOffer() {
     return managedOrgs.some((o) => o.id === want) ? want : ''
   })
   const navigate = useNavigate()
+  const goBack = useGoBack()
 
   const [category, setCategory] = useState('')
   const [skillRows, setSkillRows] = useState([])
@@ -80,7 +82,7 @@ export default function PostOffer() {
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-        <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
         <h1 style={{ color: '#4ecca3', margin: 0, fontSize: '1.5rem' }}>Share an Offer</h1>
       </div>
 

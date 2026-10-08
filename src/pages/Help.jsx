@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { startAppTour } from '../components/AppTour'
+import { useGoBack } from '../components/BackLink'
 
 export default function Help() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const [feedbackText, setFeedbackText] = useState('')
   const [feedbackKind, setFeedbackKind] = useState('problem')
   const [feedbackSent, setFeedbackSent] = useState(false)
@@ -24,7 +26,7 @@ export default function Help() {
   return (
     <div className="help-page">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Help &amp; Feedback</h1>
       </div>
 

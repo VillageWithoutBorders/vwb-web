@@ -5,6 +5,7 @@ import { getMyLocation, distanceMiles } from '../utils/location'
 import { resourceCats } from '../utils/resourceCategories'
 import { searchResources } from '../utils/resourceSearch'
 import AddressLink from './AddressLink'
+import { useGoBack } from './BackLink'
 
 // First screen of Ask for help: look at resources near you before asking a
 // neighbor. The database already limits Find Help to your area plus national
@@ -14,6 +15,7 @@ const SHOW = 5
 
 export default function NearbyResourcesFirst({ profile, onContinue }) {
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const [rows, setRows] = useState(null)
   const [cat, setCat] = useState('')
   const [query, setQuery] = useState('')
@@ -52,7 +54,7 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
   return (
     <div className="ask-page">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => navigate(-1)} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Ask for help</h1>
       </div>
       <p className="ask-intro">Start here. Many needs can be met today by a pantry, a hotline, or a local group. Pick what you need and see what is near you.</p>

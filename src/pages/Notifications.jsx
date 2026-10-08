@@ -10,11 +10,13 @@ import {
   clearAllNotifications
 } from '../utils/notificationHelpers'
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
+import { useGoBack } from '../components/BackLink'
 
 export default function Notifications() {
   const { user } = useAuth()
   const { notifications, unreadCount, loading, refresh, markSeen } = useNotifications()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const [filter, setFilter] = useState('all')
   const [confirmClear, setConfirmClear] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -114,7 +116,7 @@ export default function Notifications() {
     <div className="notifications-page">
       <div className="notifications-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button onClick={() => navigate(-1)} aria-label="Go back" className="notifications-back">&#8592;</button>
+          <button onClick={() => goBack('/')} aria-label="Go back" className="notifications-back">&#8592;</button>
           <h1>Alerts</h1>
         </div>
         <div className="notifications-actions">

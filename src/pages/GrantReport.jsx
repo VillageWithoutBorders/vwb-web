@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { useGoBack } from '../components/BackLink'
 
 export default function GrantReport() {
   const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const goBack = useGoBack()
   // isAdmin comes from useAuth context
 
   const today = new Date().toISOString().split('T')[0]
@@ -284,7 +286,7 @@ export default function GrantReport() {
       `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => navigate('/admin')} aria-label="Back to Admin Panel" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => goBack('/admin')} aria-label="Back to Admin Panel" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <h1 style={{ margin: 0, fontSize: '1.3rem' }}>Grant Report</h1>
       </div>
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
+import { useGoBack } from '../components/BackLink'
 
 const WHY = {
   messaged: 'Messaged',
@@ -34,6 +35,7 @@ const chip = (on) => ({
 
 export default function Connections() {
   const navigate = useNavigate()
+  const goBack = useGoBack()
   const [rows, setRows] = useState(null)
   const [failed, setFailed] = useState(false)
   const [filter, setFilter] = useState('all')
@@ -59,7 +61,7 @@ export default function Connections() {
   return (
     <div className="cal-page" style={{ maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-        <button type="button" onClick={() => navigate(-1)} aria-label="Back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
+        <button type="button" onClick={() => goBack('/')} aria-label="Back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Connections</h1>
       </div>
       <p className="cal-sub">Neighbors you have messaged, helped, vouched for, or shared a group with.</p>
