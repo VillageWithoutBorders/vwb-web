@@ -7,6 +7,7 @@ import { CalendarEventList } from '../components/CalendarParts'
 import { resourceCats } from '../utils/resourceCategories'
 import QrShare from '../components/QrShare'
 import CalendarSubscribe from '../components/CalendarSubscribe'
+import BackLink from '../components/BackLink'
 
 // One organization: who they are, what's coming up, what they share, and
 // how to reach them. Organizers can set the group's home area here.
@@ -132,7 +133,7 @@ export default function OrgPage() {
   if (missing || !org) {
     return (
       <div className="cal-page">
-        <Link to="/community" className="hub-back">&#8592; Community</Link>
+        <BackLink fallback="/community" fallbackLabel="Community" />
         <p className="cal-empty">We couldn't find this group. It may not be on VWB anymore.</p>
       </div>
     )
@@ -143,7 +144,7 @@ export default function OrgPage() {
 
   return (
     <div className="cal-page hub-page">
-      <Link to="/community" className="hub-back">&#8592; Community</Link>
+      <BackLink fallback="/community" fallbackLabel="Community" />
       <h1 className="hub-org-name">{org.name}</h1>
       {place && <p className="cal-sub">Based near {place}</p>}
       {mine && <p className="hub-member-note">You're part of this group</p>}
