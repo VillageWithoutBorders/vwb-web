@@ -470,14 +470,14 @@ export default function Campfire() {
   const visibleEmergencies = activeEmergencies.filter(e => !dismissedEmergencyIds.includes(e.id))
   // The old chat-log announcement is now redundant with the banner above,
   // so it's left out of the scrollback instead of showing up twice.
-  // Dots only for chats I am part of, so staff who can read every village are not flooded.
+  // Dots only for chats I am part of.
   const unreadFor = (b) => (b.id === activeBoardId || (b.village_id && !memberSet.has(b.village_id))) ? 0 : (unread[b.id] || 0)
   const otherUnread = orderedBoards.reduce((n, b) => n + unreadFor(b), 0)
   const visibleMessages = messages.filter(m => !m.body.startsWith('🚨 Emergency Verified:'))
   // Who can post on the board being viewed. The database enforces the same rule.
   const canPost = !!activeBoard && (
     activeBoard.is_general ? isStaff
-      : activeBoard.village_id ? (isAdmin || memberSet.has(activeBoard.village_id))
+      : activeBoard.village_id ? memberSet.has(activeBoard.village_id)
       : isStaff
   )
 
@@ -513,9 +513,9 @@ export default function Campfire() {
         const q = pickerSearch.trim().toLowerCase()
         const match = (x) => !q || x.name.toLowerCase().includes(q)
         const groups = [
-          ['Announcements and staff', orderedBoards.filter(x => !x.village_id && match(x))],
+          ['Announcements and Ambassadors', orderedBoards.filter(x => !x.village_id && match(x))],
           ['My villages', orderedBoards.filter(x => x.village_id && memberSet.has(x.village_id) && match(x))],
-          ['Other villages (staff only)', orderedBoards.filter(x => x.village_id && !memberSet.has(x.village_id) && match(x))],
+          ['Other villages', orderedBoards.filter(x => x.village_id && !memberSet.has(x.village_id) && match(x))],
         ]
         const row = (b) => (
           <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid #4ecca3' : '1px solid #333', background: b.id === activeBoardId ? '#1a4a3a' : '#222', color: b.id === activeBoardId ? '#4ecca3' : '#eee', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
@@ -805,7 +805,7 @@ export default function Campfire() {
           <button onClick={() => setShowSettings(false)} aria-label="Close Village Square settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
-        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>Announcements are open for every member to read, and only Ambassadors and admins can post there. Village chats are for neighbors near you. Anyone with an account can join, and there is no limit on size. You can join more than one. New members only see what is said after they join. Neither one is end-to-end encrypted, so keep sensitive details out. Admins can read both.</p>
+        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>Announcements are open for every member to read, and only Ambassadors and admins can post there. Village chats are for neighbors near you. Anyone with an account can join, and there is no limit on size. You can join more than one. New members only see what is said after they join. Only people who joined a village chat can read it, and VWB admins cannot open village chats. Everyone in a chat can read it, so keep sensitive details out.</p>
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
         <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>You get one notification after a chat goes quiet, not one for every message. Choose for each chat.</p>

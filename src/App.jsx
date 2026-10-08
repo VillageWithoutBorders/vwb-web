@@ -22,7 +22,7 @@ const OrgPage = lazyPage(() => import('./pages/OrgPage'))
 const OrgDashboard = lazyPage(() => import('./pages/OrgDashboard'))
 const MfaChallenge = lazyPage(() => import('./pages/MfaChallenge'))
 import Conversation from './pages/Conversation'
-const MessagesPage = lazyPage(() => import('./pages/Messages'))
+const MessagesPage = lazyPage(() => import('./pages/ConnectHub'))
 const Connections = lazyPage(() => import('./pages/Connections'))
 const EmergencyEvents = lazyPage(() => import('./pages/EmergencyEvents'))
 const CreateEvent = lazyPage(() => import('./pages/CreateEvent'))
