@@ -59,7 +59,8 @@ export function VillageNewMembers({ villageId, myId }) {
 }
 
 // The list of people in a village chat, with vouching and the two-member removal.
-export default function VillagePeople({ villageId, villageName, myId, isAdmin, requests, onRequestsChange, onClose, onLeave }) {
+export default function VillagePeople({ villageId, villageName, myId, isAdmin, requests, onRequestsChange, onClose, onLeave, onKeeperChange }) {
+  const [keepers, setKeepers] = useState({ starter_id: null, i_am_starter: false, helper_ids: [] })
   const [search, setSearch] = useState('')
   const [people, setPeople] = useState([])
   const [total, setTotal] = useState(0)
@@ -76,6 +77,33 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
     setPeople(data || [])
     setTotal(data?.[0] ? Number(data[0].total) : 0)
     setLoading(false)
+  }
+
+  async function loadKeepers() {
+    const { data, error } = await supabase.rpc('village_keepers_info', { p_village: villageId })
+    if (error) { console.error('Failed to load village keepers:', error); return }
+    const row = Array.isArray(data) ? data[0] : data
+    if (row) setKeepers({ starter_id: row.starter_id, i_am_starter: !!row.i_am_starter, helper_ids: row.helper_ids || [] })
+  }
+  useEffect(() => { loadKeepers() }, [villageId])
+
+  async function setHelper(targetId, on) {
+    setBusy(true); setNote('')
+    const { error } = await supabase.rpc('set_village_helper', { p_village: villageId, p_user: targetId, p_on: on })
+    setBusy(false)
+    if (error) { console.error('Helper change failed:', error); setNote(error.message || 'Could not do that. Try again.'); return }
+    setNote(on ? 'They can now pin announcements.' : 'They are no longer a helper.')
+    loadKeepers(); onKeeperChange?.()
+  }
+
+  async function handOff(targetId, name) {
+    if (!confirm('Hand this village to ' + (name || 'this person') + '? They will keep it from now on. You stay a member.')) return
+    setBusy(true); setNote('')
+    const { error } = await supabase.rpc('hand_off_village', { p_village: villageId, p_user: targetId })
+    setBusy(false)
+    if (error) { console.error('Hand off failed:', error); setNote(error.message || 'Could not do that. Try again.'); return }
+    setNote('Done. ' + (name || 'They') + ' now keeps this village.')
+    loadKeepers(); onKeeperChange?.()
   }
 
   useEffect(() => {
@@ -127,6 +155,10 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
         </div>
         <p style={{ margin: '0 0 0.75rem', color: '#aaa', fontSize: '0.85rem', lineHeight: 1.4 }}>Tap a name to open their profile. Tap the arrow to vouch for them or ask to remove them. A vouch means you trust them. It does not guarantee they are safe.</p>
 
+        {keepers.i_am_starter && (
+          <p style={{ margin: '0 0 0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #665', borderRadius: '10px', background: '#241f14', color: '#ffcc66', fontSize: '0.85rem', lineHeight: 1.4 }}>You keep this village. You can pin announcements, name up to 2 helpers, or hand it to someone else. Open a name to do that.</p>
+        )}
+
         {requests.length > 0 && (
           <div style={{ margin: '0 0 1rem', padding: '0.75rem', border: '1px solid #665', borderRadius: '10px', background: '#241f14' }}>
             <div style={{ fontWeight: 700, color: '#ffcc66', fontSize: '0.9rem', marginBottom: '0.4rem' }}>A second member is needed</div>
@@ -165,6 +197,8 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                       {p.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
                       {p.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
                       {p.is_hope_ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
+                      {p.user_id === keepers.starter_id && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: '#ffcc66', padding: '0 4px', borderRadius: '3px' }}>Keeper</span>}
+                      {keepers.helper_ids.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: '#ffcc66', padding: '0 4px', borderRadius: '3px' }}>Helper</span>}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#999' }}>Joined {new Date(p.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                   </div>
@@ -175,6 +209,14 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                 {open && !me && (
                   <div style={{ padding: '0.25rem 0.25rem 0.5rem' }}>
                     <VouchButton userId={p.user_id} name={p.display_name} size="sm" allowPersonal />
+                    {keepers.i_am_starter && (
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                        {keepers.helper_ids.includes(p.user_id)
+                          ? <button type="button" style={btn} disabled={busy} onClick={() => setHelper(p.user_id, false)}>Remove as helper</button>
+                          : <button type="button" style={btn} disabled={busy} onClick={() => setHelper(p.user_id, true)}>Make an announcement helper</button>}
+                        <button type="button" style={btn} disabled={busy} onClick={() => handOff(p.user_id, p.display_name)}>Hand the village to them</button>
+                      </div>
+                    )}
                     {!protectedRole && !pending && reasonFor !== p.user_id && (
                       <button type="button" onClick={() => { setReasonFor(p.user_id); setReason(''); setNote('') }} style={{ ...btn, marginTop: '0.5rem', borderColor: '#663', color: '#ffb088' }}>{isAdmin ? 'Remove from this chat' : 'Ask to remove'}</button>
                     )}
