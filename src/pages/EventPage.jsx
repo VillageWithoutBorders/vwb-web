@@ -27,6 +27,7 @@ export default function EventPage() {
   const [ev, setEv] = useState(null)
   const [signupKind, setSignupKind] = useState('help')
   const [needsText, setNeedsText] = useState('')
+  const [extraText, setExtraText] = useState('')
   const [loading, setLoading] = useState(true)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
@@ -62,6 +63,9 @@ export default function EventPage() {
       const { data: extra } = await supabase.from('calendar_events').select('signup_kind, needs_text').eq('id', Number(id)).maybeSingle()
       setSignupKind(extra?.signup_kind === 'attend' ? 'attend' : 'help')
       setNeedsText(extra?.needs_text || '')
+      // Its own query so the page still loads before the extra_text column exists.
+      const { data: more } = await supabase.from('calendar_events').select('extra_text').eq('id', Number(id)).maybeSingle()
+      setExtraText(more?.extra_text || '')
     }
     if (event) document.title = event.title + ' | Village Without Borders'
     if (event && user) {
@@ -364,6 +368,12 @@ export default function EventPage() {
               ))}
             </ul>
             {organizerMsg && <p className="cal-sub" role="status" style={{ marginBottom: 0 }}>{organizerMsg}</p>}
+          </section>
+        )}
+
+        {extraText.trim() && (
+          <section className="cal-box" aria-label="More from the organizers">
+            <p style={{ margin: 0, overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }}><Linkify text={extraText} /></p>
           </section>
         )}
 

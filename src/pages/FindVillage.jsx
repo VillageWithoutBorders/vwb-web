@@ -76,7 +76,8 @@ export default function FindVillage() {
     if (!joinParam || loading || risk) return
     const v = villages.find(x => x.id === joinParam)
     if (v && v.can_join && !v.is_mine) setRisk({ type: 'join', village: v })
-    else if (v && v.is_mine && v.board_id) navigate('/campfire?board=' + v.board_id, { replace: true })
+    else if (v && v.is_mine) navigate(v.board_id ? '/campfire?board=' + v.board_id : '/campfire', { replace: true })
+    else if (!v) { setError('We could not open that village. Search for it below.'); navigate('/find-village', { replace: true }) }
   }, [joinParam, loading, villages])
 
   // Zips near mine. All ticked to begin with; the starter unticks what does not fit.
@@ -292,7 +293,7 @@ export default function FindVillage() {
           busy={busy}
           error={riskError}
           onAgree={agreeAndGo}
-          onCancel={() => { setRisk(null); setRiskError('') }}
+          onCancel={() => { setRisk(null); setRiskError(''); if (joinParam) navigate('/villages', { replace: true }) }}
         />
       )}
     </div>

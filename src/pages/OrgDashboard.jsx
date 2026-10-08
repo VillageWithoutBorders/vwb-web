@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { fetchCalendarEvents } from '../utils/calendar'
 import OrgResources from '../components/OrgResources'
 import OrgConnections from '../components/OrgConnections'
+import OrgRules from '../components/OrgRules'
 import { useCampfireIds } from '../hooks/useCampfireIds'
 import { useSidechatParents } from '../hooks/useSidechatParents'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
@@ -299,6 +300,8 @@ export default function OrgDashboard() {
       </section>
 
       {mine && <OrgConnections orgId={id} orgName={orgName} />}
+
+      {mine && <OrgRules orgId={id} isHead={mine.role === 'admin'} />}
 
       <section className="hub-section" aria-labelledby="od-events">
         <div className="hub-section-head">

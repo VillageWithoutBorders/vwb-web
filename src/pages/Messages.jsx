@@ -21,7 +21,9 @@ const DISAPPEAR_STEPS = [
   { label: '30 days', mins: 43200 },
 ]
 
-export default function Messages() {
+// embedded: shown inside the Messages hub (ConnectHub), which supplies the page
+// title and the links to Villages, Cottage Chats, and Connections.
+export default function Messages({ embedded = false }) {
   const { user } = useAuth()
   const { refreshUnread } = useUnreadCount()
   const navigate = useNavigate()
@@ -664,7 +666,7 @@ export default function Messages() {
   const sorted = [...pinned, ...unpinned]
   const archivedCount = convos.filter(c => convoSettings[c.id]?.archived).length
   const followUpCount = convos.filter(c => convoSettings[c.id]?.follow_up && !convoSettings[c.id]?.archived).length
-  const showCampfireCard = hasCampfire && campfire && (activeFolder === 'all' || (activeFolder === 'unread' && campfire.unread))
+  const showCampfireCard = !embedded && hasCampfire && campfire && (activeFolder === 'all' || (activeFolder === 'unread' && campfire.unread))
 
   function formatTime(ts) {
     const d = new Date(ts)
@@ -793,13 +795,14 @@ export default function Messages() {
         ))}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <h1 style={{ margin: 0 }}>Messages</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: embedded ? 'flex-end' : 'space-between', marginBottom: '0.75rem' }}>
+        {!embedded && <h1 style={{ margin: 0 }}>Messages</h1>}
         <button type="button" onClick={() => setShowSidebar(true)} className="page-top-btn" aria-label="Message settings">
           <span aria-hidden="true">&#9881;&#65039;</span> Settings
         </button>
       </div>
 
+      {!embedded && (<>
       <button type="button" className="groups-row groups-entry" onClick={() => navigate('/connections')}>
         <span className="groups-row-name"><span aria-hidden="true">&#129309;</span> Connections</span>
         <span className="groups-row-meta">Everyone you have connected with &#8250;</span>
@@ -809,6 +812,7 @@ export default function Messages() {
         <span className="groups-row-name"><span aria-hidden="true">&#128101;</span> Cottage Chats &amp; Campfires</span>
         <span className="groups-row-meta">Members-only boards &#8250;</span>
       </button>
+      </>)}
 
       {/* ========== Help Offers for Requesters (Accept/Decline) ========== */}
       {pendingOffers.length > 0 && (

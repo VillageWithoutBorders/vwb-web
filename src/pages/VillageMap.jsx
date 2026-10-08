@@ -81,6 +81,8 @@ export default function VillageMap() {
   const [error, setError] = useState('')
   const [view, setView] = useState('map')
   const [selectedId, setSelectedId] = useState(null)
+  // A short note under a village in the list, for a village the person cannot join.
+  const [listNote, setListNote] = useState(null)
   const mapEl = useRef(null)
   const mapRef = useRef(null)
   const markersRef = useRef({})
@@ -149,6 +151,20 @@ export default function VillageMap() {
 
   function clearSearch() { setSearchPoint(null); setZipText(''); setZipError('') }
   const boardFor = (v) => boards.find((b) => b.village_id === v.id)
+
+  // Tapping a village in the list at the bottom: open the chat if you are in it,
+  // ask to join if you are not (the join page shows the short warning first).
+  function openVillage(v) {
+    setSelectedId(v.id)
+    setListNote(null)
+    if (v.is_mine) {
+      const b = boardFor(v)
+      navigate(b ? '/campfire?board=' + b.id : '/find-village?join=' + v.id)
+      return
+    }
+    if (covers(v, myZip)) { navigate('/find-village?join=' + v.id); return }
+    setListNote({ id: v.id, text: myZip ? 'Your zip code is not on this village\u2019s list, so you cannot join it.' : 'Add your zip code on your Profile to join.' })
+  }
 
   // The real map. Leaflet loads only when this page opens.
   useEffect(() => {
@@ -308,10 +324,14 @@ export default function VillageMap() {
           <section className="hub-section" aria-labelledby="village-list">
             <div className="hub-section-head"><h2 id="village-list">All villages ({villages.length})</h2></div>
             {[...placed, ...unplaced].map((v) => (
-              <button key={v.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} aria-pressed={v.id === selectedId} onClick={() => setSelectedId(v.id)}>
-                <span className="cal-card-title">{v.name}{v.is_mine ? ' · joined' : ''}</span>
-                <span className="cal-card-meta">{v.region_label ? v.region_label + ' · ' : ''}{countText(v)}</span>
-              </button>
+              <div key={v.id}>
+                <button type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} aria-pressed={v.id === selectedId} onClick={() => openVillage(v)}>
+                  <span className="cal-card-title">{v.name}{v.is_mine ? ' · joined' : ''}</span>
+                  <span className="cal-card-meta">{v.region_label ? v.region_label + ' · ' : ''}{countText(v)}</span>
+                  {(v.is_mine || covers(v, myZip)) && <span className="cal-card-meta" style={{ color: '#7fe0bf', fontWeight: 600 }}>{v.is_mine ? 'Tap to open the chat' : 'Tap to join'}</span>}
+                </button>
+                {listNote && listNote.id === v.id && <p className="cal-sub" role="status" style={{ margin: '0.25rem 0 0.5rem' }}>{listNote.text}</p>}
+              </div>
             ))}
           </section>
         </>

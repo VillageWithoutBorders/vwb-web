@@ -33,7 +33,7 @@ export default function VillageRiskDialog({ villageName, busy = false, error = '
           <li>Not everyone is who they say they are. VWB cannot promise that everyone in a chat is safe.</li>
           <li>Keep your address, your schedule, money details, and anything private out of the chat.</li>
           <li>You can leave, mute, block, or report at any time.</li>
-          <li>VWB admins can read village chats to keep people safe. These chats are not end-to-end encrypted.</li>
+          <li>Only people who joined this village chat can open it. VWB admins cannot open it. It is not encrypted like private messages, so keep sensitive details out.</li>
         </ul>
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', margin: '0 0 0.9rem', color: '#fff', fontSize: '1rem', lineHeight: 1.4, minHeight: '44px', cursor: 'pointer' }}>
           <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} style={{ width: '24px', height: '24px', flexShrink: 0, marginTop: '0.1rem' }} />
