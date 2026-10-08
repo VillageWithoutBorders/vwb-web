@@ -112,9 +112,23 @@ export default function Campfire() {
   const isVillageBoard = !!activeBoard?.village_id
   const inVillage = isVillageBoard && memberSet.has(activeBoard.village_id)
 
+  // Am I a keeper (starter or helper) of this village? Keepers can pin announcements.
+  const [keeper, setKeeper] = useState(false)
+  useEffect(() => {
+    if (!isVillageBoard || !inVillage) { setKeeper(false); return }
+    let alive = true
+    supabase.rpc('village_keepers_info', { p_village: activeBoard.village_id }).then(({ data, error }) => {
+      if (error) { console.error('Failed to load village keepers:', error); return }
+      const row = Array.isArray(data) ? data[0] : data
+      if (alive) setKeeper(!!row?.i_am_keeper)
+    })
+    return () => { alive = false }
+  }, [isVillageBoard, inVillage, activeBoard?.village_id])
+  const canPin = isVillageBoard ? keeper : isAdmin
+
   // Open removal requests for this village chat, so members can be the second to agree.
   async function loadRemovalRequests() {
-    if (!isVillageBoard || !(inVillage || isAdmin)) { setRemovalRequests([]); return }
+    if (!isVillageBoard || !inVillage) { setRemovalRequests([]); return }
     const { data, error } = await supabase.rpc('village_removal_requests', { p_village: activeBoard.village_id })
     if (error) { console.error('Failed to load removal requests:', error); return }
     setRemovalRequests(data || [])
@@ -313,12 +327,14 @@ export default function Campfire() {
   async function togglePin(msg) {
     setOpenMsgMenu(null)
     const next = !msg.pinned
-    const { error } = await supabase
-      .from('campfire_messages')
-      .update(next
-        ? { pinned: true, pinned_by: user.id, pinned_at: new Date().toISOString() }
-        : { pinned: false, pinned_by: null, pinned_at: null })
-      .eq('id', msg.id)
+    const { error } = isVillageBoard
+      ? await supabase.rpc('set_village_pin', { p_message: msg.id, p_pin: next })
+      : await supabase
+        .from('campfire_messages')
+        .update(next
+          ? { pinned: true, pinned_by: user.id, pinned_at: new Date().toISOString() }
+          : { pinned: false, pinned_by: null, pinned_at: null })
+        .eq('id', msg.id)
     if (error) {
       console.error('Failed to update pin:', error)
       alert('Could not update the pin on this message. Try again.')
@@ -492,7 +508,7 @@ export default function Campfire() {
           <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
         </div>
         <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
-        {isVillageBoard && (inVillage || isAdmin) && (
+        {isVillageBoard && inVillage && (
           <button onClick={() => setShowPeople(true)} aria-label={'People in ' + activeBoard.name + (removalRequests.some(r => r.requested_by !== user.id) ? ', a removal request needs a second member' : '')} title="People" style={{ position: 'relative', background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }}>
             &#128101;
             {removalRequests.some(r => r.requested_by !== user.id) && <span aria-hidden="true" style={{ position: 'absolute', top: '6px', right: '6px', width: '10px', height: '10px', borderRadius: '50%', background: '#ff8844' }} />}
@@ -567,8 +583,8 @@ export default function Campfire() {
       })()}
       {boardError && <p role="alert" style={{ margin: 0, padding: '0.4rem 1rem', color: '#ff8888', fontSize: '0.8rem', background: '#241414' }}>{boardError}</p>}
 
-      {isVillageBoard && (inVillage || isAdmin) && <VillageNewMembers villageId={activeBoard.village_id} myId={user.id} />}
-      {isVillageBoard && (inVillage || isAdmin) && removalRequests.some(r => r.requested_by !== user.id) && (
+      {isVillageBoard && inVillage && <VillageNewMembers villageId={activeBoard.village_id} myId={user.id} />}
+      {isVillageBoard && inVillage && removalRequests.some(r => r.requested_by !== user.id) && (
         <button type="button" onClick={() => setShowPeople(true)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem 1rem', minHeight: '44px', background: '#2e2a1a', border: 'none', borderBottom: '1px solid #3a3020', color: '#ffcc66', fontSize: '0.9rem', cursor: 'pointer' }}>
           &#9888; A member asked to remove someone. A second member is needed. Tap to look.
         </button>
@@ -598,7 +614,7 @@ export default function Campfire() {
             onClick={() => setShowPinned(p => !p)}
             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'none', border: 'none', color: '#ffaa44', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}
           >
-            &#128204; {pinnedMessages.length} pinned message{pinnedMessages.length !== 1 ? 's' : ''}
+            &#128204; {pinnedMessages.length} {isVillageBoard ? 'announcement' : 'pinned message'}{pinnedMessages.length !== 1 ? 's' : ''}
             <span style={{ marginLeft: 'auto' }}>{showPinned ? '▲' : '▼'}</span>
           </button>
           {showPinned && (
@@ -607,7 +623,7 @@ export default function Campfire() {
                 <div key={m.id} style={{ background: '#1a1a1a', border: '1px solid #444', borderRadius: '8px', padding: '0.5rem 0.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffaa44' }}>{names[m.user_id]?.name || 'Neighbor'}</span>
-                    {isAdmin && <button onClick={() => togglePin(m)} style={{ background: 'none', border: 'none', color: '#888', fontSize: '0.7rem', cursor: 'pointer', padding: 0 }}>Unpin</button>}
+                    {canPin && <button onClick={() => togglePin(m)} style={{ background: 'none', border: 'none', color: '#888', fontSize: '0.7rem', cursor: 'pointer', padding: 0, minHeight: '32px' }}>Unpin</button>}
                   </div>
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#ddd', lineHeight: 1.4 }}>{m.body}</p>
                 </div>
@@ -718,9 +734,9 @@ export default function Campfire() {
                         Edit
                       </button>
                     )}
-                    {isAdmin && (
+                    {canPin && (
                       <button onClick={() => togglePin(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>
-                        {msg.pinned ? 'Unpin' : '📌 Pin message'}
+                        {msg.pinned ? 'Unpin' : isVillageBoard ? '📌 Make an announcement' : '📌 Pin message'}
                       </button>
                     )}
                     {!isMe && (
@@ -897,6 +913,7 @@ export default function Campfire() {
           villageName={activeBoard.name}
           myId={user.id}
           isAdmin={isAdmin}
+          onKeeperChange={() => { setKeeper(false); supabase.rpc('village_keepers_info', { p_village: activeBoard.village_id }).then(({ data }) => { const row = Array.isArray(data) ? data[0] : data; setKeeper(!!row?.i_am_keeper) }) }}
           requests={removalRequests}
           onRequestsChange={loadRemovalRequests}
           onClose={() => setShowPeople(false)}
