@@ -841,3 +841,107 @@ export async function startFreshKey(userId) {
   keypairSetups.delete(userId)
   return ensureDeviceKeypair(userId)
 }
+
+// ---------------------------------------------------------------------
+// Village chats (Phase 4 test build). In a village board with the
+// `scrambled` flag, a post is locked for every device of every current
+// member before it leaves the phone; the database keeps only the locked
+// copies and an empty message row. Timings of real use are kept on this
+// phone only (key vwb_scramble_timings), so they can be read on the
+// admin speed-test page.
+// ---------------------------------------------------------------------
+const TIMINGS_KEY = 'vwb_scramble_timings'
+function recordScrambleTiming(entry) {
+  try {
+    const list = JSON.parse(localStorage.getItem(TIMINGS_KEY) || '[]')
+    list.push({ at: new Date().toISOString(), ...entry })
+    localStorage.setItem(TIMINGS_KEY, JSON.stringify(list.slice(-40)))
+  } catch { /* storage may be blocked; timing is optional */ }
+}
+const r1 = (n) => Math.round(n * 10) / 10
+
+// Returns { status: 'sent' | 'not-ready' | 'error', id, missed }.
+// `missed` is how many members have no key yet and will not be able to read it.
+export async function sendVillagePost({ boardId, senderId, text, replyTo }) {
+  const t0 = performance.now()
+  let sodium
+  try {
+    sodium = (await import('libsodium-wrappers')).default
+    await sodium.ready
+  } catch (e) {
+    console.error('[e2ee] encryption library failed to load', e?.message || e)
+    return { status: 'not-ready', id: null, missed: 0 }
+  }
+  const identity = await ensureDeviceKeypair(senderId)
+  if (!identity) return { status: 'not-ready', id: null, missed: 0 }
+  const t1 = performance.now()
+
+  const { data: members, error: lookupErr } = await supabase.rpc('village_scramble_targets', { p_board: boardId })
+  if (lookupErr || !members || members.length === 0) {
+    console.error('[e2ee] failed to look up village members', lookupErr)
+    return { status: 'error', id: null, missed: 0 }
+  }
+  const t2 = performance.now()
+
+  const targets = members.filter(m => m.device_id).map(m => ({ userId: m.member_id, deviceId: m.device_id, publicKey: m.public_key }))
+  const keyless = new Set(members.filter(m => !m.device_id).map(m => m.member_id))
+  const withKeys = new Set(targets.map(t => t.userId))
+  const missed = [...keyless].filter(id => !withKeys.has(id)).length
+  if (!targets.some(t => t.userId === senderId && t.deviceId === identity.deviceId)) {
+    targets.push({ userId: senderId, deviceId: identity.deviceId, publicKey: identity.publicKey })
+  }
+
+  let rows
+  try {
+    rows = encryptCopies(sodium, identity, text, targets)
+  } catch (e) {
+    console.error('[e2ee] failed to encrypt village post', e)
+    return { status: 'error', id: null, missed }
+  }
+  const t3 = performance.now()
+
+  const { data: id, error } = await supabase.rpc('send_village_scrambled', { p_board: boardId, p_reply_to: replyTo || null, p_rows: rows })
+  if (error || id == null) {
+    console.error('[e2ee] failed to save village post', error)
+    return { status: 'error', id: null, missed }
+  }
+  const t4 = performance.now()
+
+  recordScrambleTiming({
+    kind: 'send',
+    devices: rows.length,
+    keyless: missed,
+    uploadKB: r1(new Blob([JSON.stringify(rows)]).size / 1024),
+    keyMs: r1(t1 - t0), lookupMs: r1(t2 - t1), lockMs: r1(t3 - t2), saveMs: r1(t4 - t3), totalMs: r1(t4 - t0),
+  })
+  return { status: 'sent', id, missed }
+}
+
+// Opens the village posts whose body is empty. `items` is [{ id, sender }].
+// Returns a Map of id -> text; posts this device cannot open are left out.
+export async function fetchVillageBodies(items) {
+  const out = new Map()
+  if (!items || items.length === 0) return out
+  const t0 = performance.now()
+  const deviceId = await getDeviceId()
+  if (!deviceId) return out
+  const senderOf = {}
+  for (const it of items) senderOf[it.id] = it.sender
+  const { data, error } = await supabase
+    .from('campfire_message_copies')
+    .select('message_id, ciphertext, nonce')
+    .eq('device_id', deviceId)
+    .in('message_id', items.map(i => i.id))
+  if (error) { console.error('[e2ee] failed to fetch village copies', error); return out }
+  const t1 = performance.now()
+  const opened = await decryptMany((data || []).map(c => ({ key: c.message_id, ciphertext: c.ciphertext, nonce: c.nonce, senderId: senderOf[c.message_id] })))
+  const t2 = performance.now()
+  for (const [k, v] of opened) out.set(k, v)
+  recordScrambleTiming({
+    kind: 'open',
+    messages: items.length, opened: out.size,
+    downloadKB: r1(new Blob([JSON.stringify(data || [])]).size / 1024),
+    fetchMs: r1(t1 - t0), unlockMs: r1(t2 - t1), totalMs: r1(t2 - t0),
+  })
+  return out
+}
