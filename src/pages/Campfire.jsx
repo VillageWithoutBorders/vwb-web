@@ -10,11 +10,13 @@ import { MUTE_OPTIONS } from '../utils/muteOptions'
 import { SPARK_NAME, SPARK_HINT } from '../utils/spark'
 import VillagePeople, { VillageNewMembers } from '../components/VillagePeople'
 import { useGoBack } from '../components/BackLink'
+import { sendVillagePost, fetchVillageBodies } from '../lib/e2ee'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
 // so a fast back-and-forth doesn't read as a long wall of near-identical rows.
 const GROUP_WINDOW_MS = 5 * 60 * 1000
+const LOCKED_NOTE = '\uD83D\uDD12 This message is locked and this phone cannot open it.'
 
 export default function Campfire() {
   const { user, profile, isAdmin, refreshProfile } = useAuth()
@@ -27,6 +29,9 @@ export default function Campfire() {
   const [unread, setUnread] = useState({})
   const [sparks, setSparks] = useState({})
   const markedRef = useRef('')
+  // Scrambled village posts: id -> opened text (or null if this phone cannot open it).
+  const openedRef = useRef(new Map())
+  const [sendNote, setSendNote] = useState('')
   const [pickerSearch, setPickerSearch] = useState('')
   const [newBoardName, setNewBoardName] = useState('')
   const [boardError, setBoardError] = useState('')
@@ -87,7 +92,7 @@ export default function Campfire() {
   // The boards inside the Campfire: General first, then your own village,
   // then the rest, then any an admin has added.
   async function loadBoards() {
-    const { data, error } = await supabase.from('campfire_boards').select('id, name, village_id, is_general, sort_order').eq('archived', false)
+    const { data, error } = await supabase.from('campfire_boards').select('id, name, village_id, is_general, sort_order, scrambled').eq('archived', false)
     if (error) { console.error('Failed to load Village Square boards:', error); return }
     setBoards(data || [])
   }
@@ -349,7 +354,17 @@ export default function Campfire() {
     const { data: newest, error } = await supabase.from('campfire_messages').select('*').eq('board_id', activeBoardId).order('created_at', { ascending: false }).limit(200)
     if (boardAtStart !== boardRef.current) return // switched boards while loading
     if (error) console.error('Failed to load Village Square messages:', error)
-    const data = newest ? [...newest].reverse() : null
+    let data = newest ? [...newest].reverse() : null
+    if (data) {
+      // Scrambled village posts arrive with an empty body; open the ones we have not tried yet.
+      const toOpen = data.filter(m => m.body === '' && !openedRef.current.has(m.id))
+      if (toOpen.length > 0) {
+        const opened = await fetchVillageBodies(toOpen.map(m => ({ id: m.id, sender: m.user_id })))
+        for (const m of toOpen) openedRef.current.set(m.id, opened.has(m.id) ? opened.get(m.id) : null)
+        if (boardAtStart !== boardRef.current) return // switched boards while opening
+      }
+      data = data.map(m => m.body === '' ? { ...m, body: openedRef.current.get(m.id) ?? LOCKED_NOTE, locked: true } : m)
+    }
     if (data) {
       setMessages(data)
       const newestId = data.length ? data[data.length - 1].id : 'none'
@@ -409,6 +424,21 @@ export default function Campfire() {
       return
     }
 
+    if (activeBoard?.scrambled) {
+      const text = newMsg.trim()
+      const res = await sendVillagePost({ boardId: activeBoardId, senderId: user.id, text, replyTo: replyTo?.id })
+      if (res.status !== 'sent') {
+        alert(res.status === 'not-ready' ? 'Your phone is still getting its lock ready. Try again in a moment.' : 'Could not send your message. Try again.')
+        setSending(false)
+        return
+      }
+      openedRef.current.set(res.id, text)
+      setSendNote(res.missed > 0 ? (res.missed === 1 ? '1 neighbor has not opened VWB since joining, so they cannot read this yet.' : res.missed + ' neighbors have not opened VWB since joining, so they cannot read this yet.') : '')
+      setNewMsg(''); setReplyTo(null); setIntroHint(false)
+      await loadMessages()
+      setSending(false)
+      return
+    }
     const row = { user_id: user.id, body: newMsg.trim(), village_id: activeBoard?.village_id || null, board_id: activeBoardId }
     if (replyTo) row.reply_to = replyTo.id
     const { data, error } = await supabase.from('campfire_messages').insert(row).select('id').single()
@@ -729,7 +759,7 @@ export default function Campfire() {
                       Reply
                     </button>
                     )}
-                    {isMe && (
+                    {isMe && !msg.locked && !activeBoard?.scrambled && (
                       <button onClick={() => startEdit(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
                         Edit
                       </button>
@@ -772,6 +802,11 @@ export default function Campfire() {
       )}
       {canPost ? (
       <>
+      {activeBoard?.scrambled && (
+        <p style={{ margin: 0, padding: '0.4rem 1rem 0', borderTop: '1px solid #333', background: '#1a1a1a', color: '#9ad6c0', fontSize: '0.8rem', lineHeight: 1.4 }}>
+          {'\uD83D\uDD12'} Scrambled test: only people in this village chat can read these messages. VWB cannot.{sendNote ? ' ' + sendNote : ''}
+        </p>
+      )}
       {introHint && !editing && (
         <p style={{ margin: 0, padding: '0.5rem 1rem 0', borderTop: '1px solid #333', background: '#1a1a1a', color: '#bfe8d9', fontSize: '0.9rem', lineHeight: 1.4 }}>
           Say hello. Add what you like doing and how you would like to be involved in your community.
@@ -922,4 +957,4 @@ export default function Campfire() {
       )}
     </div>
   )
-}
+}

@@ -17,6 +17,20 @@ export default function ScrambleTest() {
   const { isAdmin } = useAuth()
   const [running, setRunning] = useState(false)
   const [report, setReport] = useState('')
+  const [real, setReal] = useState('')
+
+  function showReal() {
+    let list = []
+    try { list = JSON.parse(localStorage.getItem('vwb_scramble_timings') || '[]') } catch { /* none */ }
+    if (list.length === 0) { setReal('No real scrambled sends or opens recorded on this phone yet.'); return }
+    const out = ['REAL USE on this phone (newest last)']
+    for (const t of list) {
+      out.push(t.kind === 'send'
+        ? t.at.slice(11, 19) + ' SEND ' + t.devices + ' copies (' + t.keyless + ' members without a key), key ' + t.keyMs + ' ms, member lookup ' + t.lookupMs + ' ms, lock ' + t.lockMs + ' ms, save ' + t.saveMs + ' ms, total ' + t.totalMs + ' ms, upload ' + t.uploadKB + ' KB'
+        : t.at.slice(11, 19) + ' OPEN ' + t.opened + ' of ' + t.messages + ' messages, fetch ' + t.fetchMs + ' ms, unlock ' + t.unlockMs + ' ms, total ' + t.totalMs + ' ms, download ' + t.downloadKB + ' KB')
+    }
+    setReal(out.join('\n'))
+  }
 
   if (!isAdmin) return <div style={{ padding: '1rem' }}><p>Admins only.</p></div>
 
@@ -105,6 +119,13 @@ export default function ScrambleTest() {
       <button type="button" onClick={run} disabled={running} style={{ minHeight: 48, padding: '0.6rem 1.2rem', fontSize: '1rem' }}>
         {running ? 'Running...' : 'Run test'}
       </button>
+      <button type="button" onClick={showReal} style={{ minHeight: 48, padding: '0.6rem 1.2rem', fontSize: '1rem', marginLeft: '0.5rem' }}>Show real timings</button>
+      {real && (
+        <>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem', marginTop: '1rem' }}>{real}</pre>
+          <button type="button" onClick={() => navigator.clipboard?.writeText(real)} style={{ minHeight: 48, padding: '0.6rem 1.2rem', fontSize: '1rem' }}>Copy real timings</button>
+        </>
+      )}
       {report && (
         <>
           <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem', marginTop: '1rem' }}>{report}</pre>

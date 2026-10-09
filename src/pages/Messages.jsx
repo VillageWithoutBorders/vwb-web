@@ -447,6 +447,7 @@ export default function Messages({ embedded = false }) {
     const { data: last, error } = await supabase.from('campfire_messages').select('id, user_id, body, created_at').order('created_at', { ascending: false }).limit(1).maybeSingle()
     if (error) { console.error('Failed to load Village Square preview:', error); setCampfire({ last: null, name: null, unread: false }); return }
     if (!last) { setCampfire({ last: null, name: null, unread: false }); return }
+    if (last.body === '') last.body = '\uD83D\uDD12 New scrambled message'
     let name = 'You'
     if (last.user_id !== user.id) {
       const { data: p, error: pErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', last.user_id).maybeSingle()
@@ -1064,4 +1065,4 @@ export default function Messages({ embedded = false }) {
       )})}
     </div>
   )
-}
+}
