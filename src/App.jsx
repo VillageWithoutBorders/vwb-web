@@ -33,6 +33,7 @@ const FindVillage = lazyPage(() => import('./pages/FindVillage'))
 const Notifications = lazyPage(() => import('./pages/Notifications'))
 const PublicProfile = lazyPage(() => import('./pages/PublicProfile'))
 const GrantReport = lazyPage(() => import('./pages/GrantReport'))
+const ScrambleTest = lazyPage(() => import('./pages/ScrambleTest'))
 import CommunityGuidelines from './pages/CommunityGuidelines'
 const JoinOrg = lazyPage(() => import('./pages/JoinOrg'))
 const Terms = lazyPage(() => import('./pages/Terms'))
@@ -154,6 +155,7 @@ function AppRoutes() {
         <Route path="emergency/:id" element={<EventDetail />} />
         <Route path="admin" element={<Admin />} />
         <Route path="admin/report" element={<GrantReport />} />
+        <Route path="scramble-test" element={<ScrambleTest />} />
         <Route path="campfire" element={<Campfire />} />
         <Route path="find-village" element={<FindVillage />} />
         <Route path="conversation/:id" element={<Conversation />} />
