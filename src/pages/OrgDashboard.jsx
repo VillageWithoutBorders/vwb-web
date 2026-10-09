@@ -26,11 +26,11 @@ function when(iso) {
 export default function OrgDashboard() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user, organizations, isAdmin } = useAuth()
+  const { user, organizations } = useAuth()
   const managed = organizations.filter((o) => o.role === 'admin' || o.role === 'organizer')
   const mine = managed.find((o) => o.id === id)
-  const allowed = !!mine || isAdmin
-  const isHead = isAdmin || mine?.role === 'admin'
+  const allowed = !!mine
+  const isHead = mine?.role === 'admin'
 
   const campfires = useCampfireIds()
   const sidechatParents = useSidechatParents()
@@ -46,7 +46,6 @@ export default function OrgDashboard() {
   const [found, setFound] = useState([])
   const [searched, setSearched] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [allOrgs, setAllOrgs] = useState([])
   const [orgInfo, setOrgInfo] = useState(null)
   // Group chats started for this organization (the ones you are in)
   const [chats, setChats] = useState([])
@@ -54,15 +53,6 @@ export default function OrgDashboard() {
   const [chatName, setChatName] = useState('')
   const [chatBusy, setChatBusy] = useState(false)
   const [chatNote, setChatNote] = useState('')
-
-  // Founders and admins can open any approved group, member or not.
-  useEffect(() => {
-    if (!isAdmin || id) return
-    supabase.from('organizations').select('id, name').eq('approved', true).order('name').then(({ data, error }) => {
-      if (error) console.error('Failed to load groups:', error)
-      setAllOrgs(data || [])
-    })
-  }, [isAdmin, id])
 
   const load = useCallback(async () => {
     if (!id || !allowed) return
@@ -174,14 +164,14 @@ export default function OrgDashboard() {
 
   // /org-dashboard with no group picked: go straight in if there is only one.
   if (!id) {
-    const choices = isAdmin ? allOrgs : managed
-    if (!isAdmin && managed.length === 1) return <Navigate to={'/orgs/' + managed[0].id + '/dashboard'} replace />
+    const choices = managed
+    if (managed.length === 1) return <Navigate to={'/orgs/' + managed[0].id + '/dashboard'} replace />
     return (
       <div className="cal-page hub-page">
         <BackLink fallback="/" fallbackLabel="Home" />
         <h1 className="hub-org-name">Organization dashboard</h1>
         {choices.length === 0 && (
-          <p className="cal-empty">{isAdmin ? 'No approved groups yet.' : "You don't run a group on VWB yet. You can ask to add yours from the Community page."}</p>
+          <p className="cal-empty">You don't run a group on VWB yet. You can ask to add yours from the Community page.</p>
         )}
         {choices.map((o) => (
           <Link key={o.id} to={'/orgs/' + o.id + '/dashboard'} className="btn btn-outline btn-full" style={{ marginBottom: '0.5rem', minHeight: '44px' }}>{o.name}</Link>
