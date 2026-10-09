@@ -20,7 +20,7 @@ function safeLink(url) {
 
 export default function OrgPage() {
   const { id } = useParams()
-  const { isAdmin, organizations } = useAuth()
+  const { organizations } = useAuth()
   const [org, setOrg] = useState(null)
   const [place, setPlace] = useState('')
   const [loading, setLoading] = useState(true)
@@ -39,7 +39,7 @@ export default function OrgPage() {
   const [emailNote, setEmailNote] = useState('')
 
   const mine = organizations.find((o) => o.id === id)
-  const canManage = isAdmin || (mine && (mine.role === 'admin' || mine.role === 'organizer'))
+  const canManage = !!mine && (mine.role === 'admin' || mine.role === 'organizer')
 
   async function loadOrg() {
     const { data, error } = await supabase

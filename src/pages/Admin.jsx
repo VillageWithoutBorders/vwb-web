@@ -384,16 +384,11 @@ export default function Admin() {
     const { data: contactRows } = await supabase.rpc('admin_org_contacts')
     const contactById = {}
     for (const c of contactRows || []) contactById[c.org_id] = c.contact_email
-    const withMembers = await Promise.all(data.map(async (org) => {
-      const { data: members, error: memErr } = await supabase.from('organization_members').select('id, user_id, role').eq('organization_id', org.id)
-      reportError('loadOrganizations:members', memErr)
-      const enrichedMembers = await Promise.all((members || []).map(async (m) => {
-        const { data: prof, error: profErr } = await supabase.from('helper_profiles').select('display_name, avatar_url').eq('user_id', m.user_id).maybeSingle()
-        reportError('loadOrganizations:memberProfile', profErr)
-        return { ...m, display_name: prof?.display_name || 'Unnamed' }
-      }))
-      return { ...org, contact_email_shown: contactById[org.id] || null, members: enrichedMembers }
-    }))
+    const { data: countRows, error: countErr } = await supabase.rpc('admin_org_member_counts')
+    reportError('loadOrganizations:counts', countErr)
+    const countById = {}
+    for (const c of countRows || []) countById[c.org_id] = Number(c.member_count)
+    const withMembers = data.map((org) => ({ ...org, contact_email_shown: contactById[org.id] || null, member_count: countById[org.id] || 0 }))
     // Waiting requests first, then the rest, newest first within each.
     setOrganizations([...withMembers].sort((a, b) => (a.approved === b.approved ? 0 : a.approved ? 1 : -1)))
   }
@@ -426,12 +421,6 @@ export default function Admin() {
     await loadOrganizations()
   }
 
-  async function toggleOrgHidden(org) {
-    const { error } = await supabase.rpc('set_org_hide_from_public', { p_org: org.id, p_hide: !org.hide_from_public })
-    if (reportError('toggleOrgHidden', error, 'Could not update this organization. Try again.')) return
-    await loadOrganizations()
-  }
-
   // Approve or turn down an organization that is still waiting.
   // Both send its members an alert. Turning down removes the waiting org.
   async function reviewOrgRequest(org, approve) {
@@ -444,29 +433,6 @@ export default function Admin() {
     }
     const { error } = await supabase.rpc('review_organization_request', { p_org_id: org.id, p_approve: approve, p_note: note })
     if (reportError('reviewOrgRequest', error, error?.message || 'Could not save that decision. Try again.')) return
-    await loadOrganizations()
-  }
-
-  async function searchMembersToAdd(orgId) {
-    const query = (memberSearchQuery[orgId] || '').trim()
-    if (!query) { setMemberSearchResults(prev => ({ ...prev, [orgId]: [] })); return }
-    const { data, error } = await supabase.from('helper_profiles').select('user_id, display_name').ilike('display_name', '%' + query + '%').limit(5)
-    reportError('searchMembersToAdd', error)
-    setMemberSearchResults(prev => ({ ...prev, [orgId]: data || [] }))
-  }
-
-  async function addOrgMember(orgId, userId) {
-    const { error } = await supabase.from('organization_members').insert({ organization_id: orgId, user_id: userId })
-    if (reportError('addOrgMember', error, 'Could not add this member. They may already be in this organization.')) return
-    setMemberSearchResults(prev => ({ ...prev, [orgId]: [] }))
-    setMemberSearchQuery(prev => ({ ...prev, [orgId]: '' }))
-    await loadOrganizations()
-  }
-
-  async function removeOrgMember(memberRowId, orgId) {
-    if (!confirm('Remove this member from the organization?')) return
-    const { error } = await supabase.from('organization_members').delete().eq('id', memberRowId)
-    if (reportError('removeOrgMember', error, 'Could not remove this member. Try again.')) return
     await loadOrganizations()
   }
 
@@ -1506,8 +1472,7 @@ export default function Admin() {
               </div>
               {org.approved && (
                 <p style={{ margin: '0.3rem 0', fontSize: '0.75rem', color: '#aaa' }}>
-                  {org.hide_from_public ? 'Hidden from the public. Only people with an account can see this group.' : 'Visible to the public.'}{' '}
-                  <button onClick={() => toggleOrgHidden(org)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'underline', padding: '0.5rem 0.25rem', minHeight: '44px' }}>{org.hide_from_public ? 'Show to the public' : 'Hide from the public'}</button>
+                  {org.hide_from_public ? 'Hidden from the public. Only people with an account can see this group.' : 'Visible to the public.'} The group sets this itself.
                 </p>
               )}
               {org.approved && (
@@ -1524,35 +1489,8 @@ export default function Admin() {
                 <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0' }}>Contact: {org.contact_email_shown}</p>
               )}
 
-              <p style={{ color: '#4ecca3', fontSize: '0.75rem', fontWeight: 600, margin: '0.6rem 0 0.3rem' }}>Members ({org.members.length})</p>
-              {org.members.length === 0 && <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0 0 0.4rem' }}>No members yet</p>}
-              {org.members.map(m => (
-                <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.3rem 0' }}>
-                  <span style={{ fontSize: '0.8rem', color: '#ccc' }}><UserName userId={m.user_id} name={m.display_name} /></span>
-                  <span style={{ display: 'flex', gap: '0.4rem' }}>
-                    {m.user_id !== user.id && <button onClick={() => messageUser(m.user_id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.7rem', minHeight: '32px' }}>Message</button>}
-                    <button onClick={() => removeOrgMember(m.id, org.id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.7rem', minHeight: '32px' }}>Remove</button>
-                  </span>
-                </div>
-              ))}
-
-              <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
-                <input
-                  value={memberSearchQuery[org.id] || ''}
-                  onChange={(e) => setMemberSearchQuery(prev => ({ ...prev, [org.id]: e.target.value }))}
-                  onKeyDown={(e) => { if (e.key === 'Enter') searchMembersToAdd(org.id) }}
-                  placeholder="Search user by name to add"
-                  style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.8rem' }}
-                />
-                <button onClick={() => searchMembersToAdd(org.id)} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem' }}>Search</button>
-              </div>
-              {(memberSearchResults[org.id] || []).length > 0 && (
-                <div style={{ marginTop: '0.4rem' }}>
-                  {memberSearchResults[org.id].map(u => (
-                    <button key={u.user_id} onClick={() => addOrgMember(org.id, u.user_id)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.35rem 0.5rem', borderRadius: '6px', border: 'none', background: '#2a2a2a', color: '#eee', cursor: 'pointer', fontSize: '0.8rem', marginBottom: '0.2rem' }}>+ Add {u.display_name || 'Unnamed'}</button>
-                  ))}
-                </div>
-              )}
+              <p style={{ color: '#4ecca3', fontSize: '0.75rem', fontWeight: 600, margin: '0.6rem 0 0.3rem' }}>Members: {org.member_count}</p>
+              <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0 0 0.4rem' }}>Names and member lists are private to the group. Only its Head and organizers can see or change them.</p>
             </div>
           ))}
         </>
