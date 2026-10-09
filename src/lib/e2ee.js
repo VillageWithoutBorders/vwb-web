@@ -185,6 +185,19 @@ export function ensureDeviceKeypair(userId) {
   return keypairSetups.get(userId)
 }
 
+// Only one tab at a time may make this device's key, so two tabs opening at
+// once cannot each make one and leave an extra device behind.
+async function withKeyLock(fn) {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.locks && navigator.locks.request) {
+      return await navigator.locks.request('vwb-device-key', fn)
+    }
+  } catch (e) {
+    console.error('[e2ee] key lock unavailable, continuing without it', e?.message || e)
+  }
+  return fn()
+}
+
 // People who chose "start fresh" instead of restoring, this session.
 const restoreSkipped = new Set()
 
@@ -216,24 +229,29 @@ async function setUpDeviceKeypair(userId) {
       if (backup) return null
     }
 
-    const keypair = sodium.crypto_box_keypair()
-    const stored = {
-      deviceId: randomDeviceId(),
-      publicKey: sodium.to_base64(keypair.publicKey),
-      privateKey: sodium.to_base64(keypair.privateKey),
-    }
-    await idbSet(IDENTITY_KEY, stored)
+    return await withKeyLock(async () => {
+      // Another tab may have made this device's key while we waited for the lock.
+      const raced = await idbGet(IDENTITY_KEY)
+      if (raced) return raced
+      const keypair = sodium.crypto_box_keypair()
+      const stored = {
+        deviceId: randomDeviceId(),
+        publicKey: sodium.to_base64(keypair.publicKey),
+        privateKey: sodium.to_base64(keypair.privateKey),
+      }
+      await idbSet(IDENTITY_KEY, stored)
 
-    const { error } = await supabase
-      .from('user_devices')
-      .upsert(
-        { user_id: userId, device_id: stored.deviceId, public_key: stored.publicKey },
-        { onConflict: 'user_id,device_id' }
-      )
-    if (error) console.error('[e2ee] failed to publish device key', error)
-    await recordDeviceInfo(userId, stored.deviceId)
+      const { error } = await supabase
+        .from('user_devices')
+        .upsert(
+          { user_id: userId, device_id: stored.deviceId, public_key: stored.publicKey },
+          { onConflict: 'user_id,device_id' }
+        )
+      if (error) console.error('[e2ee] failed to publish device key', error)
+      await recordDeviceInfo(userId, stored.deviceId)
 
-    return stored
+      return stored
+    })
   } catch (e) {
     console.error('[e2ee] device key setup skipped (expected until npm install has run):', e?.message || e)
     return null
@@ -929,12 +947,18 @@ export async function fetchVillageBodies(items) {
   for (const it of items) senderOf[it.id] = it.sender
   const { data, error } = await supabase
     .from('campfire_message_copies')
-    .select('message_id, ciphertext, nonce')
+    .select('message_id, version, ciphertext, nonce')
     .eq('device_id', deviceId)
     .in('message_id', items.map(i => i.id))
   if (error) { console.error('[e2ee] failed to fetch village copies', error); return out }
   const t1 = performance.now()
-  const opened = await decryptMany((data || []).map(c => ({ key: c.message_id, ciphertext: c.ciphertext, nonce: c.nonce, senderId: senderOf[c.message_id] })))
+  // An edited message has one copy per version; open the newest.
+  const newest = new Map()
+  for (const c of data || []) {
+    const cur = newest.get(c.message_id)
+    if (!cur || c.version > cur.version) newest.set(c.message_id, c)
+  }
+  const opened = await decryptMany([...newest.values()].map(c => ({ key: c.message_id, ciphertext: c.ciphertext, nonce: c.nonce, senderId: senderOf[c.message_id] })))
   const t2 = performance.now()
   for (const [k, v] of opened) out.set(k, v)
   recordScrambleTiming({
@@ -943,5 +967,60 @@ export async function fetchVillageBodies(items) {
     downloadKB: r1(new Blob([JSON.stringify(data || [])]).size / 1024),
     fetchMs: r1(t1 - t0), unlockMs: r1(t2 - t1), totalMs: r1(t2 - t0),
   })
+  return out
+}
+
+// Edit your last village post (within 15 minutes). The new words are locked for
+// everyone who could read the original. Returns 'edited', 'not-allowed',
+// 'not-ready', or 'error'.
+export async function editVillagePost({ messageId, boardId, senderId, text }) {
+  let sodium
+  try {
+    sodium = (await import('libsodium-wrappers')).default
+    await sodium.ready
+  } catch (e) {
+    console.error('[e2ee] encryption library failed to load', e?.message || e)
+    return 'not-ready'
+  }
+  const identity = await ensureDeviceKeypair(senderId)
+  if (!identity) return 'not-ready'
+  const { data: members, error: lookupErr } = await supabase.rpc('village_scramble_targets', { p_board: boardId })
+  if (lookupErr || !members || members.length === 0) {
+    console.error('[e2ee] failed to look up village members for edit', lookupErr)
+    return 'error'
+  }
+  const targets = members.filter(m => m.device_id).map(m => ({ userId: m.member_id, deviceId: m.device_id, publicKey: m.public_key }))
+  if (!targets.some(t => t.userId === senderId && t.deviceId === identity.deviceId)) {
+    targets.push({ userId: senderId, deviceId: identity.deviceId, publicKey: identity.publicKey })
+  }
+  let rows
+  try {
+    rows = encryptCopies(sodium, identity, text, targets)
+  } catch (e) {
+    console.error('[e2ee] failed to encrypt village edit', e)
+    return 'error'
+  }
+  const { error } = await supabase.rpc('edit_village_scrambled', { p_message: Number(messageId), p_rows: rows })
+  if (error) {
+    console.error('[e2ee] village edit failed', error)
+    return error.code === '42501' ? 'not-allowed' : 'error'
+  }
+  return 'edited'
+}
+
+// Every version of one village post, oldest first, as readable text.
+export async function fetchVillageEditHistory({ messageId, userId, senderId }) {
+  const deviceId = await getDeviceId()
+  if (!deviceId) return []
+  const { data, error } = await supabase
+    .from('campfire_message_copies').select('version, ciphertext, nonce')
+    .eq('message_id', messageId).eq('user_id', userId).eq('device_id', deviceId)
+    .order('version', { ascending: true })
+  if (error) { console.error('[e2ee] failed to load village edit history', error); return [] }
+  const out = []
+  for (const c of data || []) {
+    const text = await decryptFromSender(c.ciphertext, c.nonce, senderId)
+    out.push({ version: c.version, text: text ?? "[This version can't be opened on this device]" })
+  }
   return out
 }

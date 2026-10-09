@@ -10,7 +10,7 @@ import { MUTE_OPTIONS } from '../utils/muteOptions'
 import { SPARK_NAME, SPARK_HINT } from '../utils/spark'
 import VillagePeople, { VillageNewMembers } from '../components/VillagePeople'
 import { useGoBack } from '../components/BackLink'
-import { sendVillagePost, fetchVillageBodies } from '../lib/e2ee'
+import { sendVillagePost, fetchVillageBodies, editVillagePost, fetchVillageEditHistory } from '../lib/e2ee'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
@@ -32,6 +32,9 @@ export default function Campfire() {
   // Scrambled village posts: id -> opened text (or null if this phone cannot open it).
   const openedRef = useRef(new Map())
   const [sendNote, setSendNote] = useState('')
+  const [history, setHistory] = useState(null)
+  // Opened text is remembered per message AND edit count, so an edit shows up.
+  const ck = (m) => m.id + ':' + (m.edit_count || 0)
   const [pickerSearch, setPickerSearch] = useState('')
   const [newBoardName, setNewBoardName] = useState('')
   const [boardError, setBoardError] = useState('')
@@ -357,13 +360,13 @@ export default function Campfire() {
     let data = newest ? [...newest].reverse() : null
     if (data) {
       // Scrambled village posts arrive with an empty body; open the ones we have not tried yet.
-      const toOpen = data.filter(m => m.body === '' && !openedRef.current.has(m.id))
+      const toOpen = data.filter(m => m.body === '' && !openedRef.current.has(ck(m)))
       if (toOpen.length > 0) {
         const opened = await fetchVillageBodies(toOpen.map(m => ({ id: m.id, sender: m.user_id })))
-        for (const m of toOpen) openedRef.current.set(m.id, opened.has(m.id) ? opened.get(m.id) : null)
+        for (const m of toOpen) openedRef.current.set(ck(m), opened.has(m.id) ? opened.get(m.id) : null)
         if (boardAtStart !== boardRef.current) return // switched boards while opening
       }
-      data = data.map(m => m.body === '' ? { ...m, body: openedRef.current.get(m.id) ?? LOCKED_NOTE, locked: true } : m)
+      data = data.map(m => m.body === '' ? { ...m, body: openedRef.current.get(ck(m)) ?? LOCKED_NOTE, locked: true } : m)
     }
     if (data) {
       setMessages(data)
@@ -411,6 +414,23 @@ export default function Campfire() {
 
     // Editing one of your own messages
     if (editing) {
+      if (activeBoard?.scrambled) {
+        const text = newMsg.trim()
+        if (text === editing.body) { setEditing(null); setNewMsg(''); setSending(false); return }
+        const result = await editVillagePost({ messageId: editing.id, boardId: activeBoardId, senderId: user.id, text })
+        setSending(false)
+        if (result === 'edited') {
+          openedRef.current.set(editing.id + ':' + ((editing.edit_count || 0) + 1), text)
+          setEditing(null); setNewMsg(''); setSendNote('')
+          await loadMessages()
+        } else if (result === 'not-allowed') {
+          setSendNote('You can only edit your last message, within 15 minutes of sending it.')
+          setEditing(null); setNewMsg('')
+        } else {
+          setSendNote('Could not save your edit. Check your connection and try again.')
+        }
+        return
+      }
       const { error } = await supabase.from('campfire_messages').update({ body: newMsg.trim() }).eq('id', editing.id)
       if (error) {
         console.error('Failed to edit Village Square message:', error)
@@ -432,7 +452,7 @@ export default function Campfire() {
         setSending(false)
         return
       }
-      openedRef.current.set(res.id, text)
+      openedRef.current.set(res.id + ':0', text)
       setSendNote(res.missed > 0 ? (res.missed === 1 ? '1 neighbor has not opened VWB since joining, so they cannot read this yet.' : res.missed + ' neighbors have not opened VWB since joining, so they cannot read this yet.') : '')
       setNewMsg(''); setReplyTo(null); setIntroHint(false)
       await loadMessages()
@@ -463,6 +483,19 @@ export default function Campfire() {
   function startReply(msg) {
     setOpenMsgMenu(null); setEditing(null); setReplyTo(msg)
     setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  // In a scrambled chat: only your newest message, within 15 minutes. The database decides.
+  const lastMineId = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) if (messages[i].user_id === user.id) return messages[i].id
+    return null
+  })()
+  function canEditScrambled(m) {
+    return !!m.locked && m.id === lastMineId && m.body !== LOCKED_NOTE && Date.now() - new Date(m.created_at).getTime() < 15 * 60 * 1000
+  }
+  async function showHistory(m) {
+    const versions = await fetchVillageEditHistory({ messageId: m.id, userId: user.id, senderId: m.user_id })
+    setHistory({ versions })
   }
 
   function startEdit(msg) {
@@ -726,7 +759,10 @@ export default function Campfire() {
                 <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.4, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{msg.body}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
                   {msg.pinned && <span title="Pinned">&#128204;</span>}
-                  <span style={{ fontSize: '0.7rem', opacity: 0.75 }} title={fullTime}>{formatTime(msg.created_at)}{msg.edited_at ? ' \u00b7 edited' : ''}</span>
+                  <span style={{ fontSize: '0.7rem', opacity: 0.75 }} title={fullTime}>{formatTime(msg.created_at)}{msg.edited_at && !msg.locked ? ' \u00b7 edited' : ''}</span>
+                  {msg.locked && msg.edit_count > 0 && (
+                    <button type="button" onClick={(e) => { e.stopPropagation(); showHistory(msg) }} style={{ background: 'none', border: 'none', color: 'inherit', opacity: 0.85, textDecoration: 'underline', fontSize: '0.7rem', cursor: 'pointer', padding: '0.5rem 0.35rem', margin: '-0.5rem -0.35rem' }}>{'\u00b7 edited'}</button>
+                  )}
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); toggleSpark(msg) }}
@@ -759,7 +795,7 @@ export default function Campfire() {
                       Reply
                     </button>
                     )}
-                    {isMe && !msg.locked && !activeBoard?.scrambled && (
+                    {isMe && (activeBoard?.scrambled ? canEditScrambled(msg) : true) && (
                       <button onClick={() => startEdit(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
                         Edit
                       </button>
@@ -942,6 +978,22 @@ export default function Campfire() {
         </div>
         </>)}
       </div>
+      {history && (
+        <>
+          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setHistory(null)} />
+          <div role="dialog" aria-modal="true" aria-labelledby="cf-history-title" className="edit-history">
+            <h3 id="cf-history-title">Edit history</h3>
+            {history.versions.length === 0 && <p>The earlier versions can't be opened on this phone.</p>}
+            {history.versions.map((v, i) => (
+              <div key={v.version} className="edit-history-row">
+                <strong>{i === history.versions.length - 1 ? 'Now' : (i === 0 ? 'Original' : 'Edit ' + i)}</strong>
+                <p>{v.text}</p>
+              </div>
+            ))}
+            <button type="button" className="btn btn-outline btn-full" onClick={() => setHistory(null)}>Close</button>
+          </div>
+        </>
+      )}
       {showPeople && isVillageBoard && (
         <VillagePeople
           villageId={activeBoard.village_id}
