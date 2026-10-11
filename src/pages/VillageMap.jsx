@@ -1,16 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import 'leaflet/dist/leaflet.css'
 import BackLink from '../components/BackLink'
 
-// The villages of Village Without Borders, as a map and as a network web.
-// Shows village names, places, and rough sizes only. Never people.
+// The Village Network, in two tabs.
+// Neighborhoods: zip code villages as a map and as a network web. Names, places, and rough sizes only, never people.
+// Organizations: approved organizations as a list. Each row opens to show its details and a link to its page.
+// Contact email is left to the organization page, which only shows it when the organization chose to.
+// Deep link: /villages?tab=orgs opens the Organizations tab.
 
 function countText(v) {
   if (v.just_starting || v.member_count == null) return 'Just getting started'
   return v.member_count + ' neighbors'
+}
+
+// Only open web addresses that start with http or https.
+function safeUrl(u) {
+  if (!u) return null
+  const t = String(u).trim()
+  if (/^https?:\/\//i.test(t)) return t
+  if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(t)) return 'https://' + t
+  return null
 }
 
 function distanceMiles(a, b) {
@@ -70,6 +82,16 @@ function layout(list, w, h, pad) {
 export default function VillageMap() {
   const { profile } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = searchParams.get('tab') === 'orgs' ? 'orgs' : 'hoods'
+  function setTab(t) {
+    const next = new URLSearchParams(searchParams)
+    if (t === 'orgs') next.set('tab', 'orgs'); else next.delete('tab')
+    setSearchParams(next, { replace: true })
+  }
+  const [orgs, setOrgs] = useState(null)
+  const [orgsError, setOrgsError] = useState('')
+  const [openOrgs, setOpenOrgs] = useState({})
   const [zipText, setZipText] = useState('')
   const [searchPoint, setSearchPoint] = useState(null)
   const [zipError, setZipError] = useState('')
@@ -115,6 +137,18 @@ export default function VillageMap() {
       setBoards(data || [])
     })
   }, [])
+
+  useEffect(() => {
+    // Approved organizations, loaded the first time the Organizations tab opens.
+    if (tab !== 'orgs' || orgs !== null) return
+    let alive = true
+    supabase.from('organizations').select('id, name, description, website_url').eq('approved', true).order('name').then(({ data, error: err }) => {
+      if (!alive) return
+      if (err) { console.error('Failed to load organizations:', err); setOrgsError("We couldn't load the organizations. Try again in a moment."); setOrgs([]); return }
+      setOrgs(data || [])
+    })
+    return () => { alive = false }
+  }, [tab, orgs])
 
   const placed = useMemo(() => villages.filter((v) => v.latitude != null && v.longitude != null), [villages])
   const unplaced = useMemo(() => villages.filter((v) => v.latitude == null || v.longitude == null), [villages])
@@ -168,7 +202,7 @@ export default function VillageMap() {
 
   // The real map. Leaflet loads only when this page opens.
   useEffect(() => {
-    if (view !== 'map' || !placed.length || !mapEl.current) return
+    if (tab !== 'hoods' || view !== 'map' || !placed.length || !mapEl.current) return
     let cancelled = false
     import('leaflet').then((mod) => {
       if (cancelled || !mapEl.current) return
@@ -213,7 +247,7 @@ export default function VillageMap() {
       cancelled = true
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
     }
-  }, [view, placed, searchPoint, nearSearch, pointsByVillage])
+  }, [tab, view, placed, searchPoint, nearSearch, pointsByVillage])
 
   // The web: villages placed by where they really are, joined to their closest neighbors.
   const web = useMemo(() => {
@@ -228,13 +262,53 @@ export default function VillageMap() {
   return (
     <div className="cal-page hub-page">
       <BackLink fallback="/" fallbackLabel="Home" />
-      <h1 className="hub-org-name">Village map</h1>
-      <p className="cal-sub">Every Village Without Borders village. Only names, places, and rough sizes are shown, never people.</p>
+      <h1 className="hub-org-name">The Village Network</h1>
+
+      <div role="tablist" aria-label="Village Network" style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0 0.75rem' }}>
+        <button type="button" role="tab" id="tab-hoods" aria-selected={tab === 'hoods'} aria-controls="panel-hoods" className={'btn ' + (tab === 'hoods' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('hoods')}>{'\u{1F333}'} Neighborhoods</button>
+        <button type="button" role="tab" id="tab-orgs" aria-selected={tab === 'orgs'} aria-controls="panel-orgs" className={'btn ' + (tab === 'orgs' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('orgs')}>{'\u{1F465}'} Organizations</button>
+      </div>
+
+      {tab === 'orgs' && (
+        <section id="panel-orgs" role="tabpanel" aria-labelledby="tab-orgs">
+          <p className="cal-sub">Organizations working with Village Without Borders. Tap a name to see more.</p>
+          {orgs === null && <p className="cal-empty">Loading...</p>}
+          {orgsError && <p className="form-error" role="alert">{orgsError}</p>}
+          {orgs && !orgsError && orgs.length === 0 && <p className="cal-empty">No organizations yet.</p>}
+          {orgs && orgs.map((o) => {
+            const open = !!openOrgs[o.id]
+            const site = safeUrl(o.website_url)
+            return (
+              <div key={o.id} className="cal-card" style={{ width: '100%', padding: 0 }}>
+                <button type="button" aria-expanded={open} aria-controls={'org-' + o.id} onClick={() => setOpenOrgs((m) => ({ ...m, [o.id]: !m[o.id] }))} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', minHeight: '56px', padding: '0.5rem 0.75rem', background: 'none', border: 0, color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
+                  <span aria-hidden="true" style={{ flex: 'none', width: '44px', height: '44px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', background: 'rgba(78, 204, 163, 0.15)' }}>{'\u{1F465}'}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span className="cal-card-title" style={{ display: 'block' }}>{o.name}</span>
+                    <span className="cal-card-meta">Organization</span>
+                  </span>
+                  <span aria-hidden="true" style={{ flex: 'none', transform: open ? 'rotate(180deg)' : 'none' }}>{'\u25BE'}</span>
+                </button>
+                {open && (
+                  <div id={'org-' + o.id} style={{ padding: '0 0.75rem 0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.12)' }}>
+                    {o.description ? <p style={{ margin: '0.6rem 0' }}>{o.description}</p> : <p className="cal-sub" style={{ margin: '0.6rem 0' }}>No description yet.</p>}
+                    {site && <a className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} href={site} target="_blank" rel="noopener noreferrer">Visit their website</a>}
+                    <Link className="btn btn-primary btn-full" style={{ minHeight: '44px' }} to={'/orgs/' + o.id}>Open {o.name}</Link>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </section>
+      )}
+
+      {tab === 'hoods' && (
+      <div id="panel-hoods" role="tabpanel" aria-labelledby="tab-hoods">
+      <p className="cal-sub">Every neighborhood village. Only names, places, and rough sizes are shown, never people.</p>
       <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', margin: '0.5rem 0' }} onClick={() => navigate('/find-village')}>Find, join, or start a village chat</button>
 
       <form onSubmit={searchZip} style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0' }}>
         <label htmlFor="map-zip" className="sr-only">Search the map by zip code</label>
-        <input id="map-zip" type="text" inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" value={zipText} onChange={(e) => setZipText(e.target.value.replace(/\D/g, ''))} placeholder="Search by zip code" style={{ flex: 1, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
+        <input id="map-zip" type="text" inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" value={zipText} onChange={(e) => setZipText(e.target.value.replace(/\D/g, ''))} placeholder="Search by zip code" style={{ flex: 1, minWidth: 0, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
         <button type="submit" className="btn btn-outline" style={{ minHeight: '44px' }} disabled={zipBusy}>Search</button>
       </form>
       {zipError && <p className="form-error" role="alert">{zipError}</p>}
@@ -244,8 +318,8 @@ export default function VillageMap() {
           <h2 id="zip-result">Near {searchPoint.zip}{searchPoint.city ? ' (' + searchPoint.city + ', ' + searchPoint.state + ')' : ''}</h2>
           {nearSearch.length > 0 ? nearSearch.map(({ v, miles }) => (
             <button key={v.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} onClick={() => setSelectedId(v.id)}>
-              <span className="cal-card-title">{v.name}{v.is_mine ? ' · joined' : ''}</span>
-              <span className="cal-card-meta">{countText(v)} · about {miles} miles away</span>
+              <span className="cal-card-title">{v.name}{v.is_mine ? ' \u00B7 joined' : ''}</span>
+              <span className="cal-card-meta">{countText(v)}{' \u00B7 about '}{miles} miles away</span>
             </button>
           )) : (
             <>
@@ -306,7 +380,7 @@ export default function VillageMap() {
             <section className="cal-box" aria-live="polite" aria-labelledby="village-sel">
               <h2 id="village-sel">{selected.name}{selected.is_mine ? ' (you joined)' : ''}</h2>
               {selected.region_label && <p className="cal-sub">{selected.region_label}</p>}
-              <p className="cal-sub">{countText(selected)}{selected.zip_count ? ' · covers ' + selected.zip_count + ' zip codes' : ''}</p>
+              <p className="cal-sub">{countText(selected)}{selected.zip_count ? ' \u00B7 covers ' + selected.zip_count + ' zip codes' : ''}</p>
               {selected.towns && <p className="cal-sub">Towns: {selected.towns}</p>}
               {selected.is_mine && boardFor(selected) && (
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village chat</button>
@@ -326,8 +400,8 @@ export default function VillageMap() {
             {[...placed, ...unplaced].map((v) => (
               <div key={v.id}>
                 <button type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} aria-pressed={v.id === selectedId} onClick={() => openVillage(v)}>
-                  <span className="cal-card-title">{v.name}{v.is_mine ? ' · joined' : ''}</span>
-                  <span className="cal-card-meta">{v.region_label ? v.region_label + ' · ' : ''}{countText(v)}</span>
+                  <span className="cal-card-title">{v.name}{v.is_mine ? ' \u00B7 joined' : ''}</span>
+                  <span className="cal-card-meta">{v.region_label ? v.region_label + ' \u00B7 ' : ''}{countText(v)}</span>
                   {(v.is_mine || covers(v, myZip)) && <span className="cal-card-meta" style={{ color: '#7fe0bf', fontWeight: 600 }}>{v.is_mine ? 'Tap to open the chat' : 'Tap to join'}</span>}
                 </button>
                 {listNote && listNote.id === v.id && <p className="cal-sub" role="status" style={{ margin: '0.25rem 0 0.5rem' }}>{listNote.text}</p>}
@@ -335,6 +409,8 @@ export default function VillageMap() {
             ))}
           </section>
         </>
+      )}
+      </div>
       )}
     </div>
   )
