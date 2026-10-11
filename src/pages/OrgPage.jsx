@@ -9,6 +9,7 @@ import { resourceCats } from '../utils/resourceCategories'
 import QrShare from '../components/QrShare'
 import CalendarSubscribe from '../components/CalendarSubscribe'
 import BackLink from '../components/BackLink'
+import OrgVillages from '../components/OrgVillages'
 
 // One organization: who they are, what's coming up, what they share, and
 // how to reach them. Organizers can set the group's home area here.
@@ -173,6 +174,8 @@ export default function OrgPage() {
       </section>
 
       {!org.hide_from_public && <CalendarSubscribe orgId={id} orgName={org.name} />}
+
+      <OrgVillages orgId={id} orgName={org.name} canManage={canManage} />
 
 
       <section className="hub-section" aria-labelledby="org-resources">
