@@ -79,6 +79,48 @@ function layout(list, w, h, pad) {
   return pts.map((p) => ({ x: offX + (p.x - minX) * scale, y: offY + (p.y - minY) * scale }))
 }
 
+const LABEL_FONT = 12
+function labelWidth(name) { return Math.round(String(name || '').length * 7 + 22) }
+function nodeRadius(v) { return v.member_count ? Math.min(24, 13 + Math.sqrt(v.member_count) * 0.9) : 13 }
+
+// Each village takes up a box: its circle plus the name pill under it.
+// Push boxes apart until none overlap, then fit everything in the view.
+function spreadWeb(list, pts) {
+  const boxes = list.map((v, i) => {
+    const r = nodeRadius(v), lw = labelWidth(v.name)
+    return { x: pts[i].x, y: pts[i].y, r, w: Math.max(lw, r * 2) + 16, h: r * 2 + 54 }
+  })
+  for (let pass = 0; pass < 200; pass++) {
+    let moved = false
+    // Push sideways while the web is narrow, so lines run beside the name pills.
+    // Once it gets wide, push up and down instead, so it stays readable on a phone.
+    const spanW = Math.max(...boxes.map((b) => b.x)) - Math.min(...boxes.map((b) => b.x))
+    const spanH = Math.max(...boxes.map((b) => b.y)) - Math.min(...boxes.map((b) => b.y))
+    const bias = spanW > spanH * 1.1 + 120 ? 0.5 : 2.5
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i], b = boxes[j]
+        // Box centers sit a little below the circle so the label is inside the box.
+        const ay = a.y + 10, by = b.y + 10
+        const ox = (a.w + b.w) / 2 - Math.abs(a.x - b.x)
+        const oy = (a.h + b.h) / 2 - Math.abs(ay - by)
+        if (ox > 0 && oy > 0) {
+          moved = true
+          if (ox < oy * bias) { const p = (ox / 2 + 1) * (a.x <= b.x ? -1 : 1); a.x += p; b.x -= p }
+          else { const p = (oy / 2 + 1) * (ay <= by ? -1 : 1); a.y += p; b.y -= p }
+        }
+      }
+    }
+    if (!moved) break
+  }
+  const pad = 14
+  const minX = Math.min(...boxes.map((b) => b.x - b.w / 2)) - pad
+  const maxX = Math.max(...boxes.map((b) => b.x + b.w / 2)) + pad
+  const minY = Math.min(...boxes.map((b) => b.y - b.r)) - pad
+  const maxY = Math.max(...boxes.map((b) => b.y + b.r + 30)) + pad
+  return { boxes, vb: [minX, minY, Math.max(maxX - minX, 200), Math.max(maxY - minY, 160)] }
+}
+
 export default function VillageMap() {
   const { profile } = useAuth()
   const navigate = useNavigate()
@@ -103,11 +145,15 @@ export default function VillageMap() {
   const [error, setError] = useState('')
   const [view, setView] = useState('map')
   const [selectedId, setSelectedId] = useState(null)
+  // The line someone tapped, so the card can say what the two villages share.
+  const [linkInfo, setLinkInfo] = useState(null)
   // A short note under a village in the list, for a village the person cannot join.
   const [listNote, setListNote] = useState(null)
   const mapEl = useRef(null)
   const mapRef = useRef(null)
   const markersRef = useRef({})
+  const selectedRef = useRef(null)
+  selectedRef.current = selectedId
 
   useEffect(() => {
     let alive = true
@@ -213,6 +259,12 @@ export default function VillageMap() {
         maxZoom: 18,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map)
+      // Lines join villages. Drawn first so circles sit on top.
+      const links = networkLinks(placed, pointsByVillage)
+      links.forEach((e) => {
+        const a = placed[e.i], b = placed[e.j]
+        L.polyline([[Number(a.latitude), Number(a.longitude)], [Number(b.latitude), Number(b.longitude)]], { color: '#f4dca4', weight: e.shared ? 3 : 2, opacity: e.shared ? 0.9 : 0.6, dashArray: e.shared ? '1 8' : '6 8', lineCap: 'round', interactive: false }).addTo(map)
+      })
       const bounds = []
       markersRef.current = {}
       placed.forEach((v) => {
@@ -220,20 +272,39 @@ export default function VillageMap() {
         bounds.push(ll)
         // Each zip code the village covers shows as a small dot.
         ;(pointsByVillage[v.id] || []).forEach((p) => {
-          L.circleMarker([Number(p.latitude), Number(p.longitude)], { radius: 5, color: '#4ecca3', weight: 1, fillColor: '#4ecca3', fillOpacity: 0.35, interactive: false }).addTo(map)
+          L.circleMarker([Number(p.latitude), Number(p.longitude)], { radius: 5, color: '#4ecca3', weight: 1, fillColor: '#4ecca3', fillOpacity: 0.3, interactive: false }).addTo(map)
         })
-        const size = v.member_count ? Math.min(22, 9 + Math.sqrt(v.member_count)) : 9
-        const m = L.circleMarker(ll, { radius: size, color: v.is_mine ? '#ffaa44' : '#1a4a3a', weight: 3, fillColor: v.is_mine ? '#ffcc66' : '#4ecca3', fillOpacity: 0.95 }).addTo(map)
-        m.bindTooltip(v.name, { direction: 'top' })
-        m.on('click', () => setSelectedId(v.id))
+        const picked = String(v.id) === String(selectedRef.current)
+        const m = L.circleMarker(ll, { radius: nodeRadius(v), color: picked || v.is_mine ? '#ffcc66' : '#8fe6cd', weight: picked ? 5 : v.is_mine ? 4 : 2, fillColor: '#52c9aa', fillOpacity: 0.9 }).addTo(map)
+        // Names stay on screen, since phones cannot hover.
+        m.bindTooltip(v.name, { permanent: true, direction: 'bottom', offset: [0, 6], className: 'vwb-map-label' })
+        m.on('click', () => { setSelectedId(v.id); setLinkInfo(null) })
         markersRef.current[v.id] = m
       })
-      // Solid lines join villages that share zip codes. Dashed lines join separate groups.
-      networkLinks(placed, pointsByVillage).forEach((e) => {
+      // A small dot on each line. Tap it to see what the two villages share.
+      links.forEach((e) => {
         const a = placed[e.i], b = placed[e.j]
-        L.polyline([[Number(a.latitude), Number(a.longitude)], [Number(b.latitude), Number(b.longitude)]], { color: '#4ecca3', weight: e.shared ? 3 : 2, opacity: e.shared ? 0.8 : 0.5, dashArray: e.shared ? null : '6 6' })
-          .bindTooltip(e.shared ? 'Shares ' + e.shared + ' zip code' + (e.shared === 1 ? '' : 's') : Math.round(e.d) + ' miles apart', { sticky: true }).addTo(map)
+        const mid = [(Number(a.latitude) + Number(b.latitude)) / 2, (Number(a.longitude) + Number(b.longitude)) / 2]
+        L.circleMarker(mid, { radius: 7, color: '#0b3b38', weight: 2, fillColor: '#f6f0e0', fillOpacity: 1 })
+          .on('click', () => setLinkInfo({ a: a.name, b: b.name, shared: e.shared, miles: Math.round(e.d) }))
+          .addTo(map)
       })
+      // When names would sit on top of each other, show the most important ones:
+      // your village first, then bigger villages. Tap any circle to see its name below.
+      const order = [...placed].sort((x, y) => (y.is_mine ? 1 : 0) - (x.is_mine ? 1 : 0) || (y.member_count || 0) - (x.member_count || 0))
+      const declutter = () => {
+        const kept = []
+        order.forEach((v) => {
+          const m = markersRef.current[v.id]
+          const el = m && m.getTooltip && m.getTooltip() && m.getTooltip().getElement()
+          if (!el) return
+          el.style.visibility = 'visible'
+          const r = el.getBoundingClientRect()
+          if (kept.some((k) => r.left < k.right && k.left < r.right && r.top < k.bottom && k.top < r.bottom)) el.style.visibility = 'hidden'
+          else kept.push(r)
+        })
+      }
+      map.on('zoomend moveend', declutter)
       if (searchPoint) {
         const ll = [searchPoint.latitude, searchPoint.longitude]
         L.circleMarker(ll, { radius: 7, color: '#fff', weight: 2, fillColor: '#ff8844', fillOpacity: 1 }).addTo(map).bindTooltip('Your search: ' + searchPoint.zip, { direction: 'top' })
@@ -242,6 +313,7 @@ export default function VillageMap() {
         else map.setView(ll, 9)
       } else if (bounds.length === 1) map.setView(bounds[0], 9)
       else map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10 })
+      setTimeout(declutter, 0)
     }).catch((err) => console.error('Map failed to load:', err))
     return () => {
       cancelled = true
@@ -249,12 +321,41 @@ export default function VillageMap() {
     }
   }, [tab, view, placed, searchPoint, nearSearch, pointsByVillage])
 
+  // Show which village is picked by giving its circle a thicker ring.
+  useEffect(() => {
+    Object.entries(markersRef.current).forEach(([id, m]) => {
+      const v = villages.find((x) => String(x.id) === String(id))
+      if (!v || !m.setStyle) return
+      const on = String(id) === String(selectedId)
+      m.setStyle({ color: on || v.is_mine ? '#ffcc66' : '#8fe6cd', weight: on ? 5 : v.is_mine ? 4 : 2 })
+    })
+  }, [selectedId, villages, tab, view, placed])
+
   // The web: villages placed by where they really are, joined to their closest neighbors.
   const web = useMemo(() => {
     if (!placed.length) return null
     const W = 340, H = 300
-    const pts = layout(placed, W, H, 46)
-    return { W, H, pts, edges: networkLinks(placed, pointsByVillage).map((e) => ({ ...e, miles: Math.round(e.d) })) }
+    const { boxes, vb } = spreadWeb(placed, layout(placed, W, H, 60))
+    // Put each line's dot where no circle or name pill covers it.
+    const clear = (x, y) => boxes.every((b, k) => {
+      const v = placed[k], w = labelWidth(v.name)
+      const inCircle = Math.hypot(x - b.x, y - b.y) < b.r + 10
+      const inLabel = x > b.x - w / 2 - 9 && x < b.x + w / 2 + 9 && y > b.y + b.r + 4 - 9 && y < b.y + b.r + 25 + 9
+      return !inCircle && !inLabel
+    })
+    // Dots also keep apart from each other, so each one is easy to tap.
+    const taken = []
+    const free = (x, y) => clear(x, y) && taken.every((d) => Math.hypot(x - d[0], y - d[1]) > 34)
+    const edges = networkLinks(placed, pointsByVillage).map((e) => {
+      const a = boxes[e.i], b = boxes[e.j]
+      let t = 0.5
+      for (const c of [0.5, 0.4, 0.6, 0.3, 0.7, 0.25, 0.75, 0.2, 0.8]) {
+        if (free(a.x + (b.x - a.x) * c, a.y + (b.y - a.y) * c)) { t = c; break }
+      }
+      taken.push([a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t])
+      return { ...e, miles: Math.round(e.d), mx: a.x + (b.x - a.x) * t, my: a.y + (b.y - a.y) * t }
+    })
+    return { vb, pts: boxes, edges }
   }, [placed, pointsByVillage])
 
   if (loading) return <div className="cal-page"><p className="cal-empty">Loading...</p></div>
@@ -262,6 +363,7 @@ export default function VillageMap() {
   return (
     <div className="cal-page hub-page">
       <BackLink fallback="/" fallbackLabel="Home" />
+      <style>{'.vwb-map-label{background:#f6f0e0;color:#0b3b38;border:1.5px solid #0b3b38;border-radius:10px;padding:2px 8px;font-weight:600;font-size:12px;box-shadow:none}.vwb-map-label:before{display:none}'}</style>
       <h1 className="hub-org-name">The Village Network</h1>
 
       <div role="tablist" aria-label="Village Network" style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0 0.75rem' }}>
@@ -349,31 +451,63 @@ export default function VillageMap() {
           {view === 'map' && placed.length > 0 && (
             <>
               <div ref={mapEl} className="village-map" role="application" aria-label="Map of villages. The same villages are listed below." />
-              <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Solid lines join villages that share zip codes. Dashed lines join villages that share none, by distance.</p>
+              <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Dotted lines join villages that share zip codes. Dashed lines join villages that share none, by distance. Tap the dot on a line to see more.</p>
               <p className="cal-sub">Dots show zip code areas and village centers, never people.</p>
             </>
           )}
 
           {view === 'web' && web && (
-            <svg className="village-web" viewBox={'0 0 ' + web.W + ' ' + web.H} role="group" aria-label="Network web of villages. The same villages are listed below.">
-              {web.edges.map((e, i) => (
-                <g key={i}>
-                  <line x1={web.pts[e.i].x} y1={web.pts[e.i].y} x2={web.pts[e.j].x} y2={web.pts[e.j].y} stroke="#4ecca3" strokeWidth={e.shared ? 3 : 2} strokeOpacity={e.shared ? 0.85 : 0.5} strokeDasharray={e.shared ? undefined : '6 6'} />
-                  <text x={(web.pts[e.i].x + web.pts[e.j].x) / 2} y={(web.pts[e.i].y + web.pts[e.j].y) / 2 - 4} fill="#9ab" fontSize="9" textAnchor="middle">{e.shared ? 'shares ' + e.shared + ' zip' + (e.shared === 1 ? '' : 's') : e.miles + ' mi'}</text>
-                </g>
-              ))}
+            // A big web keeps its names readable and scrolls sideways inside its own box.
+            <div style={{ overflowX: 'auto', borderRadius: '16px', background: '#0f7f74' }}>
+            <svg className="village-web" viewBox={web.vb.join(' ')} width="100%" style={{ display: 'block', margin: '0 auto', minWidth: Math.round(web.vb[2] * 0.85) + 'px', maxWidth: Math.round(web.vb[2] * 1.6) + 'px', height: 'auto', maxHeight: '460px' }} role="group" aria-label="Network web of villages. The same villages are listed below.">
+              <defs>
+                <radialGradient id="vwbHood" cx=".42" cy=".38" r=".7"><stop offset="0" stopColor="#7fdcc0" /><stop offset=".7" stopColor="#55c8a8" /><stop offset="1" stopColor="#3fb594" /></radialGradient>
+              </defs>
+              {web.edges.map((e, i) => {
+                const a = web.pts[e.i], b = web.pts[e.j]
+                return <line key={'l' + i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#f4dca4" strokeWidth={e.shared ? 3 : 2} strokeLinecap="round" strokeDasharray={e.shared ? '1 8' : '6 8'} strokeOpacity={e.shared ? 0.95 : 0.6} />
+              })}
               {placed.map((v, i) => {
-                const r = v.member_count ? Math.min(26, 12 + Math.sqrt(v.member_count)) : 12
-                const on = v.id === selectedId
+                const p = web.pts[i], on = v.id === selectedId
                 return (
-                  <g key={v.id} tabIndex={0} role="button" aria-label={v.name + ', ' + countText(v)} aria-pressed={on} onClick={() => setSelectedId(v.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(v.id) } }} style={{ cursor: 'pointer' }}>
-                    <circle cx={web.pts[i].x} cy={web.pts[i].y} r={Math.max(r, 22)} fill="transparent" />
-                    <circle cx={web.pts[i].x} cy={web.pts[i].y} r={r} fill={v.is_mine ? '#ffcc66' : '#4ecca3'} stroke={on ? '#fff' : '#1a4a3a'} strokeWidth={on ? 3 : 2} />
-                    <text x={web.pts[i].x} y={web.pts[i].y + r + 13} fill="#ddd" fontSize="11" fontWeight="600" textAnchor="middle">{v.name}</text>
+                  <g key={v.id} tabIndex={0} role="button" aria-label={v.name + ', ' + countText(v)} aria-pressed={on} onClick={() => { setSelectedId(v.id); setLinkInfo(null) }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(v.id); setLinkInfo(null) } }} style={{ cursor: 'pointer' }}>
+                    <circle cx={p.x} cy={p.y} r={Math.max(p.r, 22)} fill="transparent" />
+                    <circle cx={p.x} cy={p.y} r={p.r} fill="url(#vwbHood)" stroke={v.is_mine ? '#ffcc66' : '#8fe6cd'} strokeWidth={v.is_mine ? 3 : 1.5} />
+                    {on && <circle cx={p.x} cy={p.y} r={p.r + 4} fill="none" stroke="#ffd27a" strokeWidth="3" />}
+                  </g>
+                )
+              })}
+              {placed.map((v, i) => {
+                const p = web.pts[i], w = labelWidth(v.name), ty = p.y + p.r + 18
+                return (
+                  <g key={'n' + v.id} pointerEvents="none">
+                    <rect x={p.x - w / 2} y={ty - 14} width={w} height="21" rx="10.5" fill="#f6f0e0" stroke="#0b3b38" strokeWidth="1.5" />
+                    <text x={p.x} y={ty + 1} fill="#0b3b38" fontSize={LABEL_FONT} fontWeight="600" textAnchor="middle">{v.name}</text>
+                  </g>
+                )
+              })}
+              {web.edges.map((e, i) => {
+                const mx = e.mx, my = e.my
+                const label = placed[e.i].name + ' and ' + placed[e.j].name + (e.shared ? ' share ' + e.shared + ' zip code' + (e.shared === 1 ? '' : 's') : ', about ' + e.miles + ' miles apart')
+                const pick = () => setLinkInfo({ a: placed[e.i].name, b: placed[e.j].name, shared: e.shared, miles: e.miles })
+                return (
+                  <g key={'d' + i} tabIndex={0} role="button" aria-label={label} onClick={pick} onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick() } }} style={{ cursor: 'pointer' }}>
+                    <circle cx={mx} cy={my} r="22" fill="transparent" />
+                    <circle cx={mx} cy={my} r="7" fill="#f6f0e0" stroke="#0b3b38" strokeWidth="2" />
                   </g>
                 )
               })}
             </svg>
+            </div>
+          )}
+
+          {view === 'web' && web && <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Dotted lines join villages that share zip codes. Dashed lines join villages that share none. Tap the dot on a line to see more.</p>}
+
+          {linkInfo && (
+            <section className="cal-box" aria-live="polite">
+              <p style={{ margin: 0 }}>{linkInfo.shared ? linkInfo.a + ' and ' + linkInfo.b + ' share ' + linkInfo.shared + ' zip code' + (linkInfo.shared === 1 ? '' : 's') + '. People in a shared zip code can join either village.' : linkInfo.a + ' and ' + linkInfo.b + ' share no zip codes. They are about ' + linkInfo.miles + ' miles apart.'}</p>
+              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginTop: '0.5rem' }} onClick={() => setLinkInfo(null)}>Close</button>
+            </section>
           )}
 
           {selected && (
