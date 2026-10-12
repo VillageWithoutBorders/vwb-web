@@ -55,24 +55,27 @@ function NearbyNeedTiles() {
     { label: 'This week or later', value: later, color: '#8fc' },
   ]
 
+  // Nothing open: one quiet line instead of four zeros.
+  if (total === 0) {
+    return (
+      <button type="button" className="home-need-quiet" onClick={() => navigate('/skillshare')}>
+        <span aria-hidden="true">{'\u{1F33F}'}</span> No open requests near you right now.
+      </button>
+    )
+  }
+
   return (
-    <div style={{ marginBottom: '1.25rem' }}>
-      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-        Need nearby
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.6rem' }}>
+    <section className="home-need" aria-labelledby="home-need-h">
+      <h2 id="home-need-h" className="home-more-label">Need nearby</h2>
+      <div className="home-need-tiles">
         {tiles.map(t => (
-          <button
-            key={t.label}
-            onClick={() => navigate('/skillshare')}
-            style={{ textAlign: 'left', padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #333', background: '#1e1e1e', cursor: 'pointer', fontFamily: 'inherit' }}
-          >
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: t.color }}>{t.value}</div>
-            <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.15rem' }}>{t.label}</div>
+          <button key={t.label} type="button" className="home-need-tile" onClick={() => navigate('/skillshare')}>
+            <span className="home-need-num" style={{ color: t.color }}>{t.value}</span>
+            <span className="home-need-label">{t.label}</span>
           </button>
         ))}
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -140,12 +143,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-      <AmbassadorBanner />
-      {(profile?.is_hope_ambassador || isAdmin) && <NearbyNeedTiles />}
-      <VillageAsk />
-      <PushBanner />
-      <InstallBanner />
-      <RecoveryNudge />
       <div className="welcome-section">
         <h1>Welcome back, {displayName}</h1>
         <p className="welcome-sub">What do you need today?</p>
@@ -163,6 +160,12 @@ export default function Dashboard() {
         </button>
       </div>
       <HomeTasks />
+      {(profile?.is_hope_ambassador || isAdmin) && <NearbyNeedTiles />}
+      <AmbassadorBanner />
+      <VillageAsk />
+      <PushBanner />
+      <InstallBanner />
+      <RecoveryNudge />
       <p className="home-more-label">More</p>
       <div className="home-tiles">
         <button type="button" className="home-tile" aria-label="Calendar: events and volunteer sign-ups near you" onClick={() => navigate('/calendar')}>

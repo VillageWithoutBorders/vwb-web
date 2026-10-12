@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import MyOffers from '../components/MyOffers'
+import HelpSwitch from '../components/HelpSwitch'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import VouchButton from '../components/VouchButton'
@@ -608,7 +609,8 @@ export default function ActiveTasks() {
   // =============================================
   return (
     <div className="tasks-page">
-      <div className="tasks-header"><h1>Tasks</h1></div>
+      <div className="tasks-header"><h1>Help</h1></div>
+      <HelpSwitch />
 
       <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
         <button className={'tasks-tab' + (tab === 'active' ? ' tasks-tab-active' : '')} onClick={() => setTab('active')}>

@@ -11,6 +11,7 @@ import VouchButton from '../components/VouchButton'
 import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
+import HelpSwitch from '../components/HelpSwitch'
 
 // Request statuses that mean "not looking for helpers anymore".
 const NO_LONGER_OPEN = ['in_progress', 'matched', 'completed', 'cancelled', 'closed', 'archived']
@@ -324,7 +325,8 @@ export default function Feed() {
         <div className="feed-page">
             <div className="feed-header">
             <div className="feed-sticky">
-                <h1>SkillShare</h1>
+                <h1>Help</h1>
+                <HelpSwitch />
                 <p className="feed-subtitle">Help requests and free offers from your neighbors</p>
             </div>
 

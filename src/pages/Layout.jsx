@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import BottomTabs from '../components/BottomTabs'
-import AppMenu from '../components/AppMenu'
+import MeButton from '../components/MeButton'
 import AlertsMenu from '../components/AlertsMenu'
 import AppTour from '../components/AppTour'
 import KeyRestorePrompt from '../components/KeyRestorePrompt'
@@ -22,7 +22,7 @@ export default function Layout() {
           <div className="header-actions">
             {/* Tap for your 5 newest alerts, with "See all alerts" at the bottom. */}
             <AlertsMenu />
-            <AppMenu />
+            <MeButton />
           </div>
         </div>
       </header>

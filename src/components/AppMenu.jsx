@@ -15,7 +15,8 @@ const APP_URL = window.location.origin
 const SIGNUP_URL = `${APP_URL}/login?mode=signup`
 const SHARE_TEXT = 'Village Without Borders is a mutual aid network where neighbors help neighbors. Join us:'
 
-export default function AppMenu() {
+// inline: shown as a plain list inside Your corner (/me), with no button and no pop-up.
+export default function AppMenu({ inline = false }) {
   const navigate = useNavigate()
   const { signOut, isAdmin } = useAuth()
   const { canInstall, isStandalone, isIOS, promptInstall } = useInstallPrompt()
@@ -27,7 +28,7 @@ export default function AppMenu() {
 
   // Open: focus the first item. Escape closes and returns focus to the button.
   useEffect(() => {
-    if (!open) return
+    if (!open || inline) return
     menuRef.current?.querySelector('button, a')?.focus()
     function onKey(e) {
       if (e.key === 'Escape') { setOpen(false); buttonRef.current?.focus() }
@@ -82,6 +83,7 @@ export default function AppMenu() {
 
   return (
     <div className="app-menu">
+      {!inline && (
       <button
         ref={buttonRef}
         type="button"
@@ -96,11 +98,12 @@ export default function AppMenu() {
         <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>
         <span className="header-btn-label">Menu</span>
       </button>
+      )}
 
-      {open && (
+      {(open || inline) && (
         <>
-          <button type="button" className="app-menu-scrim" aria-label="Close menu" tabIndex={-1} onClick={() => setOpen(false)} />
-          <div id="appMenuList" className="app-menu-list" ref={menuRef}>
+          {!inline && <button type="button" className="app-menu-scrim" aria-label="Close menu" tabIndex={-1} onClick={() => setOpen(false)} />}
+          <div id="appMenuList" className={'app-menu-list' + (inline ? ' app-menu-inline' : '')} ref={menuRef}>
             <p className="app-menu-heading">Your account</p>
             <button type="button" className="app-menu-item" onClick={() => go('/profile', { openEdit: true })}>
               <span aria-hidden="true">{'\u{1F464}'}</span> Edit my profile

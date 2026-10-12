@@ -89,10 +89,10 @@ const ALL_STEPS = [
   },
   {
     route: '/community',
-    target: TAB('community'),
-    icon: '\u{1F4DA}',
-    title: 'Community',
-    body: "This is the Community tab. See what's happening near you and who is organizing. Standing next to a friend? Open a chat and tap Show QR code. They scan it with their phone camera to join.",
+    target: TAB('village'),
+    icon: '\u{1F333}',
+    title: 'Village',
+    body: "This is the Village tab. See what's happening near you and who is organizing. Standing next to a friend? Open a chat and tap Show QR code. They scan it with their phone camera to join.",
   },
   {
     route: '/community',
@@ -103,10 +103,10 @@ const ALL_STEPS = [
   },
   {
     route: '/skillshare',
-    target: TAB('skillshare'),
+    target: TAB('help'),
     icon: '\u{1F91D}',
-    title: 'SkillShare',
-    body: 'This is the SkillShare tab. See what neighbors near you need, and what they are giving away for free.',
+    title: 'Help',
+    body: 'This is the Help tab. Near you shows what neighbors need and what they share for free. Mine holds your own requests, offers, and tasks.',
   },
   {
     route: '/skillshare',
@@ -162,10 +162,10 @@ const ALL_STEPS = [
   },
   {
     route: '/tasks',
-    target: TAB('tasks'),
+    target: '.help-switch',
     icon: '\u2705',
-    title: 'Tasks',
-    body: "This is the Tasks tab. Keep track of help you asked for and help you're giving. When it's done, mark it done and thank each other.",
+    title: 'Mine',
+    body: "Tap Mine in the Help tab to keep track of help you asked for and help you're giving. When it's done, mark it done and thank each other.",
   },
   {
     route: '/tasks',
@@ -175,11 +175,11 @@ const ALL_STEPS = [
     body: 'Active tasks are still going. When both of you have said how it went, the task moves to Archived.',
   },
   {
-    route: '/profile',
-    target: TAB('profile'),
+    route: '/me',
+    target: '[data-tour="me"]',
     icon: '\u{1F6E1}\uFE0F',
-    title: 'Profile',
-    body: 'This is the Profile tab. Your name, photo, skills, and settings live here. You can block or report anyone, any time.',
+    title: 'Your corner',
+    body: 'Tap your letter at the top any time. Your profile, past tasks, villages, and settings live here. You can block or report anyone, any time.',
   },
   {
     route: '/profile',
@@ -195,10 +195,11 @@ const ALL_STEPS = [
     body: 'New messages, requests, and updates show up here. Tap the bell to see your newest.',
   },
   {
-    target: '[data-tour="menu"]',
+    route: '/me',
+    target: '.app-menu-inline',
     icon: '\u2630',
-    title: 'Menu',
-    body: 'Settings, Help, and Log out are here. In Settings you can turn on phone notifications and add two-step login. Tap the logo any time to go Home.',
+    title: 'Settings and help',
+    body: 'Settings, Help, sharing the app, and Log out are at the bottom of Your corner. In Settings you can turn on phone notifications and add two-step login. Tap the logo any time to go Home.',
   },
   {
     icon: '\u{1F331}',

@@ -10,6 +10,7 @@ import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Feed from './pages/Feed'
 const Profile = lazyPage(() => import('./pages/Profile'))
+const YourCorner = lazyPage(() => import('./pages/YourCorner'))
 const Settings = lazyPage(() => import('./pages/Settings'))
 const Help = lazyPage(() => import('./pages/Help'))
 const AskForHelp = lazyPage(() => import('./pages/AskForHelp'))
@@ -140,6 +141,7 @@ function AppRoutes() {
         <Route path="skillshare" element={<Feed />} />
         <Route path="tasks" element={<ActiveTasks />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="me" element={<YourCorner />} />
         <Route path="settings" element={<Settings />} />
         <Route path="community" element={<Community />} />
         <Route path="villages" element={<Suspense fallback={<div className="cal-page"><p className="cal-empty">Loading...</p></div>}><VillageMap /></Suspense>} />
