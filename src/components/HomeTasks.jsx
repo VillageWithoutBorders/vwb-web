@@ -15,10 +15,10 @@ const TABS = [
 ]
 const SHOW = 5
 const EMPTY = {
-  requests: { text: 'You have no open requests.', cta: 'Ask for help', to: '/ask' },
-  offers: { text: 'You have not offered any help yet.', cta: 'Offer help', to: '/post-offer' },
-  active: { text: 'No tasks in progress.', cta: 'See who needs help', to: '/skillshare' },
-  archived: { text: 'Finished tasks will show up here.', cta: null, to: null },
+  requests: { text: 'No open requests. Tap Ask for help above when you need a hand.', cta: null, to: null },
+  offers: { text: 'Share a skill so neighbors know what you can do.', cta: 'Offer a skill', to: '/post-offer' },
+  active: { text: 'No tasks in progress. When someone takes your request, or you help a neighbor, it shows here.', cta: null, to: null },
+  archived: { text: 'Finished tasks rest here and in your Profile.', cta: null, to: null },
 }
 
 function whenText(d) {
@@ -85,7 +85,7 @@ export default function HomeTasks() {
               onClick={() => pick(t.id)}
             >
               <span aria-hidden="true">{t.icon}</span> {t.label}
-              {n !== null && <span className="home-tasks-count">{n}</span>}
+              {n > 0 && <span className="home-tasks-count">{n}</span>}
               {t.id === 'active' && waitingOnYou > 0 && <span className="home-tasks-dot" aria-label="Something is waiting on you" />}
             </button>
           )

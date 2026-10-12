@@ -580,7 +580,7 @@ body {
 
 .welcome-section h1 {
   font-size: 1.375rem;
-  color: var(--green-dark);
+  color: #7fe0bf;
   margin-bottom: 0.25rem;
 }
 
@@ -4962,3 +4962,46 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 .home-tasks-empty { color: #aaa; font-size: 0.95rem; margin: 0.25rem 0; }
 .home-tasks-more { color: #aaa; font-size: 0.85rem; margin: 0.5rem 0 0; }
 @media (prefers-reduced-motion: reduce) { .home-tasks-tab:active, .home-task:active { transform: none; } }
+
+/* ---------- Home: need nearby, smaller and calmer ---------- */
+.home-need { margin: 0 0 1rem; }
+.home-need-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+@media (min-width: 480px) { .home-need-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.home-need-tile { min-height: 56px; min-width: 0; display: flex; align-items: baseline; gap: 0.45rem; padding: 0.5rem 0.75rem; border: 1px solid #333; border-radius: 10px; background: #1e1e1e; color: #ccc; font: inherit; text-align: left; cursor: pointer; }
+.home-need-num { font-size: 1.25rem; font-weight: 800; }
+.home-need-label { font-size: 0.85rem; color: #aaa; }
+.home-need-quiet { display: flex; align-items: center; gap: 0.5rem; width: 100%; min-height: 48px; margin: 0 0 1rem; padding: 0.5rem 0.85rem; border: 1px dashed #3a3a3a; border-radius: 10px; background: none; color: #aaa; font: inherit; font-size: 0.95rem; text-align: left; cursor: pointer; }
+.home-need-tile:focus-visible, .home-need-quiet:focus-visible { outline: 3px solid #ffb27a; outline-offset: 2px; }
+.home-need-tile:active, .home-need-quiet:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .home-need-tile:active, .home-need-quiet:active { transform: none; } }
+
+
+/* ---------- Four tabs: your letter, Your corner, Help switch ---------- */
+.me-btn { width: 44px; height: 44px; box-sizing: border-box; border-radius: 50%; border: 2px solid #4ecca3; background: #1f3a2f; color: #eef2ec; font-weight: 700; font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; flex: none; }
+.me-btn.on { background: #2d6a4f; }
+.me-btn:focus-visible { outline: 3px solid #ffb27a; outline-offset: 2px; }
+.me-btn:active { transform: scale(0.95); }
+
+.corner-page { padding-bottom: 1rem; }
+.corner-title { font-size: 1.375rem; color: #7fe0bf; margin: 0 0 0.75rem; }
+.corner-card { display: flex; gap: 0.9rem; align-items: center; padding: 0.85rem; border-radius: 14px; border: 1px solid #333; background: #1e1e1e; color: #eee; text-decoration: none; margin-bottom: 0.9rem; }
+.corner-letter { flex: none; width: 60px; height: 60px; border-radius: 50%; border: 2px solid #4ecca3; background: #1f3a2f; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 700; }
+.corner-who { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.corner-who b { font-size: 1.1rem; overflow-wrap: anywhere; }
+.corner-who span { color: #aaa; font-size: 0.95rem; }
+.corner-who .corner-chip { color: #4ecca3; font-weight: 700; }
+.corner-who .corner-see { color: #7fe0bf; }
+.corner-list { display: flex; flex-direction: column; border: 1px solid #333; border-radius: 14px; overflow: hidden; background: #1e1e1e; margin-bottom: 0.9rem; }
+.corner-item { display: flex; align-items: center; gap: 0.6rem; min-height: 52px; padding: 0 0.9rem; color: #eee; text-decoration: none; font-size: 1rem; border-bottom: 1px solid #2c2c2c; }
+.corner-item:last-child { border-bottom: 0; }
+.corner-arrow { margin-left: auto; color: #888; }
+.corner-card:focus-visible, .corner-item:focus-visible { outline: 3px solid #ffb27a; outline-offset: -3px; }
+.corner-item:active, .corner-card:active { background: #252525; }
+
+.app-menu-list.app-menu-inline { position: static; width: auto; max-height: none; overflow: visible; box-shadow: none; background: #1e1e1e; border-color: #333; }
+
+.help-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 2px solid #333; border-radius: 12px; overflow: hidden; margin: 0.5rem 0 0.75rem; }
+.help-switch-btn { min-height: 48px; display: flex; align-items: center; justify-content: center; background: #1e1e1e; color: #aaa; font-weight: 700; text-decoration: none; }
+.help-switch-btn.on { background: #2d6a4f; color: #fff; }
+.help-switch-btn:focus-visible { outline: 3px solid #ffb27a; outline-offset: -3px; }
+@media (prefers-reduced-motion: reduce) { .me-btn:active { transform: none; } }
