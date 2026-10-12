@@ -20,6 +20,7 @@ const btn = { minHeight: '44px', padding: '0 0.9rem', borderRadius: '999px', bor
 export function VillageNewMembers({ villageId, myId }) {
   const key = 'vwb_village_joiners_seen_' + myId + '_' + villageId
   const [rows, setRows] = useState([])
+  const [guests, setGuests] = useState([])
   const [seen, setSeen] = useState(() => {
     try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] }
   })
@@ -31,6 +32,11 @@ export function VillageNewMembers({ villageId, myId }) {
       if (!alive) return
       if (error) { console.error('Failed to load new members:', error); return }
       setRows(data || [])
+    })
+    supabase.rpc('village_guest_ids', { p_village: villageId }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load village guests:', error); return }
+      setGuests(data || [])
     })
     try { setSeen(JSON.parse(localStorage.getItem(key) || '[]')) } catch { setSeen([]) }
     return () => { alive = false }
@@ -45,7 +51,11 @@ export function VillageNewMembers({ villageId, myId }) {
     try { localStorage.setItem(key, JSON.stringify(next)) } catch {}
   }
 
-  const names = fresh.slice(0, 3).map(r => r.display_name || 'A neighbor')
+  // Guests are named as guests, so everyone knows who came in from outside the village.
+  const names = fresh.slice(0, 3).map((r) => {
+    const g = guests.find((x) => x.user_id === r.user_id)
+    return (r.display_name || 'A neighbor') + (g ? (g.via === 'sister' ? ' (from Sister Village ' + (g.from_village_name || '') + ')' : ' (guest)') : '')
+  })
   const more = fresh.length - names.length
   const text = (more > 0 ? names.join(', ') + ' and ' + more + ' more' : names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]) + (fresh.length === 1 ? ' just joined.' : ' just joined.')
 
@@ -70,6 +80,54 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
+  const [guestIds, setGuestIds] = useState([])
+  const [sisterIds, setSisterIds] = useState([])
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteQ, setInviteQ] = useState('')
+  const [inviteResults, setInviteResults] = useState([])
+  const [inviteNote, setInviteNote] = useState('')
+
+  async function loadGuests() {
+    const { data, error } = await supabase.rpc('village_guest_ids', { p_village: villageId })
+    if (error) { console.error('Failed to load village guests:', error); return }
+    setGuestIds((data || []).map((r) => r.user_id))
+    setSisterIds((data || []).filter((r) => r.via === 'sister').map((r) => r.user_id))
+  }
+  useEffect(() => { loadGuests() }, [villageId])
+  const iAmGuest = guestIds.includes(myId)
+
+  // Invite search: only people you already know on VWB, same as starting a message.
+  useEffect(() => {
+    if (!inviteOpen) return
+    const q = inviteQ.trim()
+    if (q.length < 2) { setInviteResults([]); return }
+    const t = setTimeout(async () => {
+      const { data, error } = await supabase.rpc('search_people_to_message', { p_query: q.replace(/[%_]/g, '') })
+      if (error) { console.error('Guest invite search failed:', error); setInviteNote("We couldn't search just now. Try again."); return }
+      const here = new Set(people.map((p) => p.user_id))
+      setInviteResults((data || []).filter((p) => !here.has(p.user_id) && p.user_id !== myId))
+    }, 250)
+    return () => clearTimeout(t)
+  }, [inviteQ, inviteOpen])
+
+  async function inviteGuest(person) {
+    setBusy(true); setInviteNote('')
+    const { data, error } = await supabase.rpc('invite_village_guest', { p_village: villageId, p_user: person.user_id })
+    setBusy(false)
+    const name = person.display_name || 'They'
+    if (error) { console.error('Guest invite failed:', error); setInviteNote(error.message || "We couldn't send that invite. Try again."); return }
+    const msg = {
+      invited: 'Invite sent. ' + name + ' will get a notice and can say yes or no.',
+      already: name + ' is already in this village.',
+      removed: name + ' was removed from this village before, so they cannot be invited.',
+      declined: name + ' said no to an invite here recently. You can try again in a few weeks.',
+      missing: 'We could not find that person.',
+      canjoin: name + ' lives in this village\u2019s area, so they can join on their own from Find a village.',
+      guest: 'Only full members can invite guests.',
+    }[data] || 'Done.'
+    setInviteNote(msg)
+    if (data === 'invited') setInviteResults((r) => r.filter((p) => p.user_id !== person.user_id))
+  }
 
   async function load(term) {
     const { data, error } = await supabase.rpc('village_people', { p_village: villageId, p_search: term || null, p_limit: 100 })
@@ -174,6 +232,31 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
           </div>
         )}
 
+        {iAmGuest
+          ? <p style={{ margin: '0 0 0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #4a2a35', borderRadius: '10px', background: '#2a1a20', color: '#ffb3c7', fontSize: '0.85rem', lineHeight: 1.4 }}>{sisterIds.includes(myId) ? 'You joined from a Sister Village.' : 'You are a guest here.'} You can read and post. Only full members can invite guests.</p>
+          : (
+          <div style={{ margin: '0 0 0.75rem' }}>
+            {!inviteOpen
+              ? <button type="button" style={{ ...btn, width: '100%' }} onClick={() => { setInviteOpen(true); setInviteNote('') }}>Invite a guest</button>
+              : (
+              <div style={{ padding: '0.75rem', border: '1px solid #4a2a35', borderRadius: '10px', background: '#2a1a20' }}>
+                <p style={{ margin: '0 0 0.5rem', color: '#ffb3c7', fontSize: '0.85rem', lineHeight: 1.4 }}>Invite someone you know who lives outside this village. They get a Guest badge, everyone here sees that they joined, and they cannot invite others.</p>
+                <label htmlFor="vp-invite" className="sr-only">Search people you know</label>
+                <input id="vp-invite" type="search" value={inviteQ} onChange={(e) => setInviteQ(e.target.value)} placeholder="Search people you know" autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0 0.75rem', marginBottom: '0.5rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#eee', fontSize: '1rem' }} />
+                {inviteResults.map((p) => (
+                  <div key={p.user_id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.3rem 0' }}>
+                    <span style={{ flex: 1, minWidth: 0, color: '#fff', fontSize: '0.9rem' }}>{p.display_name || 'Neighbor'}</span>
+                    <button type="button" style={btn} disabled={busy} onClick={() => inviteGuest(p)}>Invite</button>
+                  </div>
+                ))}
+                {inviteQ.trim().length >= 2 && inviteResults.length === 0 && <p style={{ margin: '0.25rem 0', color: '#999', fontSize: '0.8rem' }}>No one you know matches. To reach someone new, send them a message request from their name first.</p>}
+                {inviteNote && <p role="status" style={{ margin: '0.4rem 0 0', color: '#ffcc66', fontSize: '0.85rem' }}>{inviteNote}</p>}
+                <button type="button" style={{ ...btn, marginTop: '0.5rem' }} onClick={() => { setInviteOpen(false); setInviteQ(''); setInviteResults([]) }}>Done</button>
+              </div>
+            )}
+          </div>
+        )}
+
         <label htmlFor="vp-search" className="sr-only">Search people in this chat</label>
         <input id="vp-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name" autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0 0.75rem', marginBottom: '0.6rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#eee', fontSize: '1rem' }} />
         {note && <p role="status" style={{ margin: '0 0 0.6rem', color: '#ffcc66', fontSize: '0.85rem' }}>{note}</p>}
@@ -199,11 +282,12 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                       {p.is_hope_ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
                       {p.user_id === keepers.starter_id && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: '#ffcc66', padding: '0 4px', borderRadius: '3px' }}>Keeper</span>}
                       {keepers.helper_ids.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: '#ffcc66', padding: '0 4px', borderRadius: '3px' }}>Helper</span>}
+                      {guestIds.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a2a35', color: '#ffb3c7', padding: '0 4px', borderRadius: '3px' }}>{sisterIds.includes(p.user_id) ? 'Sister' : 'Guest'}</span>}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#999' }}>Joined {new Date(p.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                   </div>
                   {!me && (
-                    <button type="button" aria-expanded={open} aria-label={'Options for ' + (p.display_name || 'this neighbor')} onClick={() => { setOpenId(open ? null : p.user_id); setReasonFor(null); setReason(''); setNote('') }} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', minWidth: '44px', minHeight: '44px', fontSize: '1rem' }}>{open ? '▲' : '▼'}</button>
+                    <button type="button" aria-expanded={open} aria-label={'Options for ' + (p.display_name || 'this neighbor')} onClick={() => { setOpenId(open ? null : p.user_id); setReasonFor(null); setReason(''); setNote('') }} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', minWidth: '44px', minHeight: '44px', fontSize: '1rem' }}>{open ? '\u25B2' : '\u25BC'}</button>
                   )}
                 </div>
                 {open && !me && (

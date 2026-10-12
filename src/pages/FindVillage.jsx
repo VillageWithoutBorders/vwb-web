@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import VillageRiskDialog from '../components/VillageRiskDialog'
+import VillageGuestInvites from '../components/VillageGuestInvites'
 import BackLink from '../components/BackLink'
 
 // Find village chats, join as many as cover your zip code, or start your own.
@@ -192,6 +193,8 @@ export default function FindVillage() {
       <h1 className="hub-org-name">Find village chats</h1>
       <p className="cal-sub">A village chat is for neighbors in the zip codes it covers. Anyone with an account can join a village that has their zip code. You can join more than one, especially where villages overlap. Any neighbor can start one.</p>
       <p style={{ margin: '0 0 0.75rem' }}><Link to="/villages">See the village map</Link></p>
+
+      <VillageGuestInvites />
 
       {!hasZip && (
         <section className="cal-box" aria-labelledby="fv-zip">

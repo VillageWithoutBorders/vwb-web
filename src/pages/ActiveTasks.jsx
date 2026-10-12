@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import MyOffers from '../components/MyOffers'
 import { supabase } from '../supabaseClient'
@@ -26,7 +26,9 @@ const ADMIN_SEES = ['no_show', 'felt_off']
 export default function ActiveTasks() {
   const { user, profile, organizations } = useAuth()
   const navigate = useNavigate()
-  const [tab, setTab] = useState('active')
+  // /tasks?tab=archived opens the Archived tab (Home and Profile link here).
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState(searchParams.get('tab') === 'archived' ? 'archived' : 'active')
   const [myRequests, setMyRequests] = useState([])
   const [helpingWith, setHelpingWith] = useState([])
   const [loading, setLoading] = useState(true)

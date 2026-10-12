@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { VouchRequestsForMe } from '../components/PersonalVouches'
+import PastTasks from '../components/PastTasks'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -377,6 +378,8 @@ function captureCoverageLocation() {
             <span className="detail-value">{profile?.tasks_completed || 0}</span>
           </div>
         </div>
+
+        <PastTasks />
 
         {profile?.is_hope_ambassador && (
           <div className="profile-details" style={{ marginTop: '1rem' }}>
