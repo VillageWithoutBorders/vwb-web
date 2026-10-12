@@ -4,12 +4,14 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import 'leaflet/dist/leaflet.css'
 import BackLink from '../components/BackLink'
+import SisterVillages from '../components/SisterVillages'
 
 // The Village Network, in two tabs.
-// Neighborhoods: zip code villages as a map and as a network web. Names, places, and rough sizes only, never people.
+// Neighborhoods: zip code villages as a circle map (like the prototype) or a street map. Names, places, and rough sizes only, never people.
 // Organizations: approved organizations as a list. Each row opens to show its details and a link to its page.
 // Contact email is left to the organization page, which only shows it when the organization chose to.
 // Deep link: /villages?tab=orgs opens the Organizations tab.
+// Organizations pick the neighborhoods they work in. A neighborhood keeper can remove one.
 
 function countText(v) {
   if (v.just_starting || v.member_count == null) return 'Just getting started'
@@ -83,42 +85,79 @@ const LABEL_FONT = 12
 function labelWidth(name) { return Math.round(String(name || '').length * 7 + 22) }
 function nodeRadius(v) { return v.member_count ? Math.min(24, 13 + Math.sqrt(v.member_count) * 0.9) : 13 }
 
-// Each village takes up a box: its circle plus the name pill under it.
-// Push boxes apart until none overlap, then fit everything in the view.
-function spreadWeb(list, pts) {
-  const boxes = list.map((v, i) => {
-    const r = nodeRadius(v), lw = labelWidth(v.name)
-    return { x: pts[i].x, y: pts[i].y, r, w: Math.max(lw, r * 2) + 16, h: r * 2 + 54 }
-  })
-  for (let pass = 0; pass < 200; pass++) {
-    let moved = false
-    // Push sideways while the web is narrow, so lines run beside the name pills.
-    // Once it gets wide, push up and down instead, so it stays readable on a phone.
-    const spanW = Math.max(...boxes.map((b) => b.x)) - Math.min(...boxes.map((b) => b.x))
-    const spanH = Math.max(...boxes.map((b) => b.y)) - Math.min(...boxes.map((b) => b.y))
-    const bias = spanW > spanH * 1.1 + 120 ? 0.5 : 2.5
-    for (let i = 0; i < boxes.length; i++) {
-      for (let j = i + 1; j < boxes.length; j++) {
-        const a = boxes[i], b = boxes[j]
-        // Box centers sit a little below the circle so the label is inside the box.
-        const ay = a.y + 10, by = b.y + 10
-        const ox = (a.w + b.w) / 2 - Math.abs(a.x - b.x)
-        const oy = (a.h + b.h) / 2 - Math.abs(ay - by)
-        if (ox > 0 && oy > 0) {
-          moved = true
-          if (ox < oy * bias) { const p = (ox / 2 + 1) * (a.x <= b.x ? -1 : 1); a.x += p; b.x -= p }
-          else { const p = (oy / 2 + 1) * (ay <= by ? -1 : 1); a.y += p; b.y -= p }
-        }
+// The circle map, laid out from real data like the prototype:
+// each neighborhood is a circle sized by how many zip codes it covers,
+// circles that share zip codes overlap (more shared, more overlap), and
+// circles that share nothing never touch. Starts from real locations.
+function circleLayout(list, pointsByVillage) {
+  const zips = list.map((v) => new Set((pointsByVillage[v.id] || []).map((p) => p.zip)))
+  const zcount = list.map((v, i) => Math.max(1, zips[i].size || Number(v.zip_count) || 1))
+  const start = layout(list, 420, 380, 80)
+  const n = list.map((v, i) => ({ x: start[i].x, y: start[i].y, r: Math.max(32, Math.min(62, 28 + 7 * Math.sqrt(zcount[i]))) }))
+  const pairs = []
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) {
+      let shared = 0
+      for (const z of zips[i]) if (zips[j].has(z)) shared++
+      const a = n[i], b = n[j], small = Math.min(a.r, b.r)
+      let target = null
+      if (shared) {
+        const ratio = shared / Math.min(zcount[i], zcount[j])
+        const overlap = Math.max(16, Math.min(small * 0.6, small * (0.3 + 0.35 * ratio)))
+        target = Math.max(Math.abs(a.r - b.r) + 12, Math.max(a.r, b.r) * 0.95, a.r + b.r - overlap)
       }
+      pairs.push({ i, j, shared, target })
     }
-    if (!moved) break
   }
-  const pad = 14
-  const minX = Math.min(...boxes.map((b) => b.x - b.w / 2)) - pad
-  const maxX = Math.max(...boxes.map((b) => b.x + b.w / 2)) + pad
-  const minY = Math.min(...boxes.map((b) => b.y - b.r)) - pad
-  const maxY = Math.max(...boxes.map((b) => b.y + b.r + 30)) + pad
-  return { boxes, vb: [minX, minY, Math.max(maxX - minX, 200), Math.max(maxY - minY, 160)] }
+  for (let pass = 0; pass < 500; pass++) {
+    pairs.forEach((p) => {
+      const a = n[p.i], b = n[p.j]
+      let dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy)
+      if (d < 0.01) { dx = 1; dy = 0.5; d = Math.hypot(dx, dy) }
+      let want = null
+      if (p.target != null) want = p.target
+      else if (d < a.r + b.r + 34) want = a.r + b.r + 34
+      if (want == null) return
+      const k = p.target != null ? 0.25 : 0.5
+      const move = ((d - want) / d) * k * 0.5
+      a.x += dx * move; a.y += dy * move; b.x -= dx * move; b.y -= dy * move
+    })
+  }
+  // Name pills: under the circle if there is room, else above, else in the middle.
+  const labels = []
+  const hitsCircle = (r, k) => n.some((c, m) => {
+    if (m === k) return false
+    const cx = Math.max(r.left, Math.min(c.x, r.right)), cy = Math.max(r.top, Math.min(c.y, r.bottom))
+    return Math.hypot(c.x - cx, c.y - cy) < c.r - 4
+  })
+  const hitsLabel = (r) => labels.some((o) => r.left < o.right && o.left < r.right && r.top < o.bottom && o.top < r.bottom)
+  list.forEach((v, k) => {
+    const c = n[k], w = labelWidth(v.name)
+    // Try the spot under the circle first, then above, then the middle,
+    // then a little further out, so no two names ever sit on each other.
+    const spots = [[0, c.r + 16], [0, -c.r - 12], [0, 4]]
+    for (let step = 1; step <= 6; step++) spots.push([0, c.r + 16 + step * 24], [0, -c.r - 12 - step * 24], [-(w / 2 + c.r * 0.6), 4], [w / 2 + c.r * 0.6, 4])
+    const box = (dx, dy) => ({ left: c.x + dx - w / 2, right: c.x + dx + w / 2, top: c.y + dy - 14, bottom: c.y + dy + 7, ty: c.y + dy, tx: c.x + dx })
+    let pick = null
+    for (const [dx, dy] of spots.slice(0, 3)) { const r = box(dx, dy); if (!hitsLabel(r) && !hitsCircle(r, k)) { pick = r; break } }
+    if (!pick) for (const [dx, dy] of spots) { const r = box(dx, dy); if (!hitsLabel(r)) { pick = r; break } }
+    if (!pick) pick = box(0, c.r + 16)
+    labels.push(pick)
+  })
+  // One dot per shared border, in the middle of where the two circles overlap.
+  const links = pairs.filter((p) => p.shared).map((p) => {
+    const a = n[p.i], b = n[p.j], d = Math.hypot(b.x - a.x, b.y - a.y) || 1
+    const t = Math.max(a.r * 0.4, Math.min(d - b.r * 0.4, (d * d + a.r * a.r - b.r * b.r) / (2 * d)))
+    return { i: p.i, j: p.j, shared: p.shared, mx: a.x + ((b.x - a.x) * t) / d, my: a.y + ((b.y - a.y) * t) / d }
+  })
+  const pad = 18
+  const minX = Math.min(...n.map((c) => c.x - c.r), ...labels.map((l) => l.left)) - pad
+  const maxX = Math.max(...n.map((c) => c.x + c.r), ...labels.map((l) => l.right)) + pad
+  const minY = Math.min(...n.map((c) => c.y - c.r), ...labels.map((l) => l.top)) - pad
+  const maxY = Math.max(...n.map((c) => c.y + c.r), ...labels.map((l) => l.bottom)) + pad
+  const w = Math.max(maxX - minX, 280), h = Math.max(maxY - minY, 220)
+  const ox = minX - (w - (maxX - minX)) / 2, oy = minY - (h - (maxY - minY)) / 2
+  return { nodes: n, labels, links, vb: [ox, oy, w, h] }
 }
 
 export default function VillageMap() {
@@ -143,10 +182,21 @@ export default function VillageMap() {
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [view, setView] = useState('map')
+  // The circle map is the main view. The street map is there for people who want roads.
+  const [view, setView] = useState('circles')
   const [selectedId, setSelectedId] = useState(null)
   // The line someone tapped, so the card can say what the two villages share.
   const [linkInfo, setLinkInfo] = useState(null)
+  // Which organizations work in which neighborhoods.
+  const [orgLinks, setOrgLinks] = useState([])
+  // Whether you keep the picked neighborhood, and an organization you are about to remove from it.
+  const [keeperOf, setKeeperOf] = useState(null)
+  const [removing, setRemoving] = useState(null)
+  const [removeNote, setRemoveNote] = useState('')
+  // Sister Villages: every sister pair, villages you can join as a sister, and whether you started (keep) the picked one.
+  const [sisters, setSisters] = useState([])
+  const [sisterJoins, setSisterJoins] = useState([])
+  const [starterOf, setStarterOf] = useState(null)
   // A short note under a village in the list, for a village the person cannot join.
   const [listNote, setListNote] = useState(null)
   const mapEl = useRef(null)
@@ -196,6 +246,62 @@ export default function VillageMap() {
     return () => { alive = false }
   }, [tab, orgs])
 
+  function loadOrgLinks() {
+    supabase.rpc('org_village_links').then(({ data, error: err }) => {
+      if (err) { console.error('Failed to load organization neighborhoods:', err); return }
+      setOrgLinks(data || [])
+    })
+  }
+  useEffect(() => { loadOrgLinks() }, [])
+
+  function loadSisters() {
+    supabase.rpc('village_sister_list').then(({ data, error: err }) => {
+      if (err) { console.error('Failed to load sister villages:', err); return }
+      setSisters(data || [])
+    })
+    supabase.rpc('sister_join_options').then(({ data, error: err }) => {
+      if (err) { console.error('Failed to load sister village joins:', err); return }
+      setSisterJoins(data || [])
+    })
+  }
+  useEffect(() => { loadSisters() }, [])
+
+  const worksIn = useMemo(() => {
+    const m = {}
+    orgLinks.forEach((r) => { (m[r.org_id] = m[r.org_id] || []).push(r.village_name) })
+    return m
+  }, [orgLinks])
+  const workingHere = useMemo(() => {
+    const m = {}
+    orgLinks.forEach((r) => { (m[r.village_id] = m[r.village_id] || []).push({ id: r.org_id, name: r.org_name }) })
+    return m
+  }, [orgLinks])
+
+  useEffect(() => {
+    // Only a member can keep a village, so only ask about villages you are in.
+    setKeeperOf(null); setStarterOf(null); setRemoving(null); setRemoveNote('')
+    const v = villages.find((x) => x.id === selectedId)
+    if (!v || !v.is_mine) return
+    let alive = true
+    supabase.rpc('village_keepers_info', { p_village: v.id }).then(({ data, error: err }) => {
+      if (!alive) return
+      if (err) { console.error('Failed to check village keeper:', err); return }
+      const row = Array.isArray(data) ? data[0] : data
+      if (row && row.i_am_keeper) setKeeperOf(v.id)
+      if (row && row.i_am_starter) setStarterOf(v.id)
+    })
+    return () => { alive = false }
+  }, [selectedId, villages])
+
+  async function confirmRemove() {
+    if (!removing || !keeperOf) return
+    const { error: err } = await supabase.rpc('remove_org_from_village', { p_org: removing.id, p_village: keeperOf })
+    if (err) { console.error('Failed to remove organization from village:', err); setRemoveNote("We couldn't remove them. Try again."); return }
+    setRemoveNote(removing.name + ' was removed from this neighborhood.')
+    setRemoving(null)
+    loadOrgLinks()
+  }
+
   const placed = useMemo(() => villages.filter((v) => v.latitude != null && v.longitude != null), [villages])
   const unplaced = useMemo(() => villages.filter((v) => v.latitude == null || v.longitude == null), [villages])
   const selected = villages.find((v) => v.id === selectedId) || null
@@ -226,7 +332,6 @@ export default function VillageMap() {
     if (err) { console.error('Zip lookup failed:', err); setZipError('We could not look that up. Try again.'); return }
     if (!data) { setSearchPoint(null); setZipError('We could not find that zip code.'); return }
     setSearchPoint({ zip: data.zip, city: data.city, state: data.state, latitude: Number(data.latitude), longitude: Number(data.longitude) })
-    setView('map')
   }
 
   function clearSearch() { setSearchPoint(null); setZipText(''); setZipError('') }
@@ -248,7 +353,7 @@ export default function VillageMap() {
 
   // The real map. Leaflet loads only when this page opens.
   useEffect(() => {
-    if (tab !== 'hoods' || view !== 'map' || !placed.length || !mapEl.current) return
+    if (tab !== 'hoods' || view !== 'street' || !placed.length || !mapEl.current) return
     let cancelled = false
     import('leaflet').then((mod) => {
       if (cancelled || !mapEl.current) return
@@ -292,16 +397,20 @@ export default function VillageMap() {
       // When names would sit on top of each other, show the most important ones:
       // your village first, then bigger villages. Tap any circle to see its name below.
       const order = [...placed].sort((x, y) => (y.is_mine ? 1 : 0) - (x.is_mine ? 1 : 0) || (y.member_count || 0) - (x.member_count || 0))
+      // Work out where each name would sit from the map itself, so it works
+      // even before the browser has drawn the labels.
       const declutter = () => {
         const kept = []
         order.forEach((v) => {
           const m = markersRef.current[v.id]
           const el = m && m.getTooltip && m.getTooltip() && m.getTooltip().getElement()
           if (!el) return
-          el.style.visibility = 'visible'
-          const r = el.getBoundingClientRect()
-          if (kept.some((k) => r.left < k.right && k.left < r.right && r.top < k.bottom && k.top < r.bottom)) el.style.visibility = 'hidden'
-          else kept.push(r)
+          const pt = map.latLngToContainerPoint([Number(v.latitude), Number(v.longitude)])
+          const w = labelWidth(v.name), top = pt.y + nodeRadius(v) + 6
+          const r = { left: pt.x - w / 2, right: pt.x + w / 2, top, bottom: top + 22 }
+          const hit = kept.some((k) => r.left < k.right && k.left < r.right && r.top < k.bottom && k.top < r.bottom)
+          el.style.visibility = hit ? 'hidden' : 'visible'
+          if (!hit) kept.push(r)
         })
       }
       map.on('zoomend moveend', declutter)
@@ -313,7 +422,7 @@ export default function VillageMap() {
         else map.setView(ll, 9)
       } else if (bounds.length === 1) map.setView(bounds[0], 9)
       else map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10 })
-      setTimeout(declutter, 0)
+      map.whenReady(() => setTimeout(declutter, 50))
     }).catch((err) => console.error('Map failed to load:', err))
     return () => {
       cancelled = true
@@ -331,32 +440,11 @@ export default function VillageMap() {
     })
   }, [selectedId, villages, tab, view, placed])
 
-  // The web: villages placed by where they really are, joined to their closest neighbors.
-  const web = useMemo(() => {
-    if (!placed.length) return null
-    const W = 340, H = 300
-    const { boxes, vb } = spreadWeb(placed, layout(placed, W, H, 60))
-    // Put each line's dot where no circle or name pill covers it.
-    const clear = (x, y) => boxes.every((b, k) => {
-      const v = placed[k], w = labelWidth(v.name)
-      const inCircle = Math.hypot(x - b.x, y - b.y) < b.r + 10
-      const inLabel = x > b.x - w / 2 - 9 && x < b.x + w / 2 + 9 && y > b.y + b.r + 4 - 9 && y < b.y + b.r + 25 + 9
-      return !inCircle && !inLabel
-    })
-    // Dots also keep apart from each other, so each one is easy to tap.
-    const taken = []
-    const free = (x, y) => clear(x, y) && taken.every((d) => Math.hypot(x - d[0], y - d[1]) > 34)
-    const edges = networkLinks(placed, pointsByVillage).map((e) => {
-      const a = boxes[e.i], b = boxes[e.j]
-      let t = 0.5
-      for (const c of [0.5, 0.4, 0.6, 0.3, 0.7, 0.25, 0.75, 0.2, 0.8]) {
-        if (free(a.x + (b.x - a.x) * c, a.y + (b.y - a.y) * c)) { t = c; break }
-      }
-      taken.push([a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t])
-      return { ...e, miles: Math.round(e.d), mx: a.x + (b.x - a.x) * t, my: a.y + (b.y - a.y) * t }
-    })
-    return { vb, pts: boxes, edges }
-  }, [placed, pointsByVillage])
+  // The circle map, built from real villages and the zip codes they share.
+  const circles = useMemo(() => (placed.length ? circleLayout(placed, pointsByVillage) : null), [placed, pointsByVillage])
+
+  // After a zip search, pick the closest village that covers it.
+  useEffect(() => { if (nearSearch.length) setSelectedId(nearSearch[0].v.id) }, [nearSearch])
 
   if (loading) return <div className="cal-page"><p className="cal-empty">Loading...</p></div>
 
@@ -393,6 +481,7 @@ export default function VillageMap() {
                 {open && (
                   <div id={'org-' + o.id} style={{ padding: '0 0.75rem 0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.12)' }}>
                     {o.description ? <p style={{ margin: '0.6rem 0' }}>{o.description}</p> : <p className="cal-sub" style={{ margin: '0.6rem 0' }}>No description yet.</p>}
+                    {worksIn[o.id] && worksIn[o.id].length > 0 && <p className="cal-sub" style={{ margin: '0 0 0.6rem' }}>Works in: {worksIn[o.id].join(', ')}</p>}
                     {site && <a className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} href={site} target="_blank" rel="noopener noreferrer">Visit their website</a>}
                     <Link className="btn btn-primary btn-full" style={{ minHeight: '44px' }} to={'/orgs/' + o.id}>Open {o.name}</Link>
                   </div>
@@ -405,14 +494,15 @@ export default function VillageMap() {
 
       {tab === 'hoods' && (
       <div id="panel-hoods" role="tabpanel" aria-labelledby="tab-hoods">
-      <p className="cal-sub">Every neighborhood village. Only names, places, and rough sizes are shown, never people.</p>
-      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', margin: '0.5rem 0' }} onClick={() => navigate('/find-village')}>Find, join, or start a village chat</button>
-
-      <form onSubmit={searchZip} style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0' }}>
-        <label htmlFor="map-zip" className="sr-only">Search the map by zip code</label>
-        <input id="map-zip" type="text" inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" value={zipText} onChange={(e) => setZipText(e.target.value.replace(/\D/g, ''))} placeholder="Search by zip code" style={{ flex: 1, minWidth: 0, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
-        <button type="submit" className="btn btn-outline" style={{ minHeight: '44px' }} disabled={zipBusy}>Search</button>
-      </form>
+      <section className="cal-box" aria-labelledby="zip-find" style={{ marginBottom: '0.75rem' }}>
+        <h2 id="zip-find" style={{ marginTop: 0 }}>Find your village by zip code</h2>
+        <form onSubmit={searchZip} style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0' }}>
+          <label htmlFor="map-zip" className="sr-only">Zip code</label>
+          <input id="map-zip" type="text" inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" value={zipText} onChange={(e) => setZipText(e.target.value.replace(/\D/g, ''))} placeholder="Example: 30736" style={{ flex: 1, minWidth: 0, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
+          <button type="submit" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={zipBusy}>{zipBusy ? 'Looking...' : 'Find'}</button>
+        </form>
+        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>Join or start a village chat</button>
+      </section>
       {zipError && <p className="form-error" role="alert">{zipError}</p>}
 
       {searchPoint && (
@@ -441,59 +531,55 @@ export default function VillageMap() {
 
       {villages.length > 0 && (
         <>
-          <div role="tablist" aria-label="Map view" style={{ display: 'flex', gap: '0.5rem', margin: '0.75rem 0' }}>
-            <button type="button" role="tab" aria-selected={view === 'map'} className={'btn ' + (view === 'map' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '44px' }} onClick={() => setView('map')}>Map</button>
-            <button type="button" role="tab" aria-selected={view === 'web'} className={'btn ' + (view === 'web' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '44px' }} onClick={() => setView('web')}>Network web</button>
-          </div>
-
           {placed.length === 0 && <p className="cal-empty">These villages don't have a location yet, so there's nothing to draw. They're listed below.</p>}
 
-          {view === 'map' && placed.length > 0 && (
-            <>
-              <div ref={mapEl} className="village-map" role="application" aria-label="Map of villages. The same villages are listed below." />
-              <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Dotted lines join villages that share zip codes. Dashed lines join villages that share none, by distance. Tap the dot on a line to see more.</p>
-              <p className="cal-sub">Dots show zip code areas and village centers, never people.</p>
-            </>
-          )}
+          {placed.length > 0 && <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>{view === 'circles' ? 'Tap a neighborhood to see what it has. Tap the dot where two circles overlap to see the zip codes they share.' : 'Tap a village to see what it has. Tap the dot on a line to see more.'}</p>}
 
-          {view === 'web' && web && (
-            // A big web keeps its names readable and scrolls sideways inside its own box.
-            <div style={{ overflowX: 'auto', borderRadius: '16px', background: '#0f7f74' }}>
-            <svg className="village-web" viewBox={web.vb.join(' ')} width="100%" style={{ display: 'block', margin: '0 auto', minWidth: Math.round(web.vb[2] * 0.85) + 'px', maxWidth: Math.round(web.vb[2] * 1.6) + 'px', height: 'auto', maxHeight: '460px' }} role="group" aria-label="Network web of villages. The same villages are listed below.">
+          {view === 'circles' && circles && (
+            // A big map keeps its names readable and scrolls sideways inside its own box.
+            <div style={{ overflowX: 'auto', borderRadius: '20px', marginBottom: '0.5rem', background: 'radial-gradient(ellipse at 50% 42%, #169a88 0%, #0f847a 60%, #0a6a68 90%, #004849 100%)', border: '2px solid #004849' }}>
+            <svg className="village-web" viewBox={circles.vb.join(' ')} width="100%" style={{ display: 'block', margin: '0 auto', background: 'transparent', border: 'none', borderRadius: 0, minWidth: Math.round(circles.vb[2] * 0.7) + 'px', maxWidth: Math.round(circles.vb[2] * 1.5) + 'px', height: 'auto', maxHeight: '480px' }} role="group" aria-label="Map of neighborhood villages and the zip codes they share. The same villages are listed below.">
               <defs>
                 <radialGradient id="vwbHood" cx=".42" cy=".38" r=".7"><stop offset="0" stopColor="#7fdcc0" /><stop offset=".7" stopColor="#55c8a8" /><stop offset="1" stopColor="#3fb594" /></radialGradient>
               </defs>
-              {web.edges.map((e, i) => {
-                const a = web.pts[e.i], b = web.pts[e.j]
-                return <line key={'l' + i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#f4dca4" strokeWidth={e.shared ? 3 : 2} strokeLinecap="round" strokeDasharray={e.shared ? '1 8' : '6 8'} strokeOpacity={e.shared ? 0.95 : 0.6} />
-              })}
               {placed.map((v, i) => {
-                const p = web.pts[i], on = v.id === selectedId
+                const c = circles.nodes[i], on = v.id === selectedId
                 return (
                   <g key={v.id} tabIndex={0} role="button" aria-label={v.name + ', ' + countText(v)} aria-pressed={on} onClick={() => { setSelectedId(v.id); setLinkInfo(null) }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(v.id); setLinkInfo(null) } }} style={{ cursor: 'pointer' }}>
-                    <circle cx={p.x} cy={p.y} r={Math.max(p.r, 22)} fill="transparent" />
-                    <circle cx={p.x} cy={p.y} r={p.r} fill="url(#vwbHood)" stroke={v.is_mine ? '#ffcc66' : '#8fe6cd'} strokeWidth={v.is_mine ? 3 : 1.5} />
-                    {on && <circle cx={p.x} cy={p.y} r={p.r + 4} fill="none" stroke="#ffd27a" strokeWidth="3" />}
+                    <circle cx={c.x} cy={c.y} r={c.r} fill="url(#vwbHood)" fillOpacity="0.82" stroke={v.is_mine ? '#ffcc66' : '#8fe6cd'} strokeWidth={v.is_mine ? 2.5 : 1.5} />
                   </g>
                 )
               })}
               {placed.map((v, i) => {
-                const p = web.pts[i], w = labelWidth(v.name), ty = p.y + p.r + 18
+                const c = circles.nodes[i]
+                return v.id === selectedId ? <circle key={'s' + v.id} cx={c.x} cy={c.y} r={c.r + 3} fill="none" stroke="#ffd27a" strokeWidth="4" pointerEvents="none" /> : null
+              })}
+              {circles.links.map((l, i) => {
+                const a = circles.nodes[l.i], b = circles.nodes[l.j]
+                return <line key={'l' + i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#f4dca4" strokeWidth="3" strokeLinecap="round" strokeDasharray="1 8" pointerEvents="none" />
+              })}
+              {sisters.map((sp) => {
+                const i = placed.findIndex((v) => v.id === sp.village_a), j = placed.findIndex((v) => v.id === sp.village_b)
+                if (i < 0 || j < 0) return null
+                const a = circles.nodes[i], b = circles.nodes[j]
+                return <line key={'sis' + sp.village_a + sp.village_b} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#ffd27a" strokeWidth="3" strokeLinecap="round" strokeOpacity="0.9" pointerEvents="none" />
+              })}
+              {circles.links.map((l, i) => {
+                const label = placed[l.i].name + ' and ' + placed[l.j].name + ' share ' + l.shared + ' zip code' + (l.shared === 1 ? '' : 's')
+                const pick = () => setLinkInfo({ a: placed[l.i].name, b: placed[l.j].name, shared: l.shared, miles: 0 })
                 return (
-                  <g key={'n' + v.id} pointerEvents="none">
-                    <rect x={p.x - w / 2} y={ty - 14} width={w} height="21" rx="10.5" fill="#f6f0e0" stroke="#0b3b38" strokeWidth="1.5" />
-                    <text x={p.x} y={ty + 1} fill="#0b3b38" fontSize={LABEL_FONT} fontWeight="600" textAnchor="middle">{v.name}</text>
+                  <g key={'d' + i} tabIndex={0} role="button" aria-label={label} onClick={pick} onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick() } }} style={{ cursor: 'pointer' }}>
+                    <circle cx={l.mx} cy={l.my} r="22" fill="transparent" />
+                    <circle cx={l.mx} cy={l.my} r="7" fill="#f6f0e0" stroke="#0b3b38" strokeWidth="2" />
                   </g>
                 )
               })}
-              {web.edges.map((e, i) => {
-                const mx = e.mx, my = e.my
-                const label = placed[e.i].name + ' and ' + placed[e.j].name + (e.shared ? ' share ' + e.shared + ' zip code' + (e.shared === 1 ? '' : 's') : ', about ' + e.miles + ' miles apart')
-                const pick = () => setLinkInfo({ a: placed[e.i].name, b: placed[e.j].name, shared: e.shared, miles: e.miles })
+              {placed.map((v, i) => {
+                const lb = circles.labels[i], c = circles.nodes[i], w = lb.right - lb.left
                 return (
-                  <g key={'d' + i} tabIndex={0} role="button" aria-label={label} onClick={pick} onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick() } }} style={{ cursor: 'pointer' }}>
-                    <circle cx={mx} cy={my} r="22" fill="transparent" />
-                    <circle cx={mx} cy={my} r="7" fill="#f6f0e0" stroke="#0b3b38" strokeWidth="2" />
+                  <g key={'n' + v.id} pointerEvents="none">
+                    <rect x={lb.left} y={lb.top} width={w} height="21" rx="10.5" fill="#f6f0e0" stroke="#0b3b38" strokeWidth="1.5" />
+                    <text x={lb.tx} y={lb.ty + 1} fill="#0b3b38" fontSize={LABEL_FONT} fontWeight="600" textAnchor="middle">{v.name}</text>
                   </g>
                 )
               })}
@@ -501,7 +587,15 @@ export default function VillageMap() {
             </div>
           )}
 
-          {view === 'web' && web && <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Dotted lines join villages that share zip codes. Dashed lines join villages that share none. Tap the dot on a line to see more.</p>}
+          {view === 'street' && placed.length > 0 && (
+            <div ref={mapEl} className="village-map" role="application" aria-label="Street map of villages. The same villages are listed below." />
+          )}
+
+          {placed.length > 0 && (
+            <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.75rem' }} onClick={() => { setView(view === 'circles' ? 'street' : 'circles'); setLinkInfo(null) }}>
+              {view === 'circles' ? 'Show the street map' : 'Back to the circle map'}
+            </button>
+          )}
 
           {linkInfo && (
             <section className="cal-box" aria-live="polite">
@@ -516,6 +610,34 @@ export default function VillageMap() {
               {selected.region_label && <p className="cal-sub">{selected.region_label}</p>}
               <p className="cal-sub">{countText(selected)}{selected.zip_count ? ' \u00B7 covers ' + selected.zip_count + ' zip codes' : ''}</p>
               {selected.towns && <p className="cal-sub">Towns: {selected.towns}</p>}
+              {(workingHere[selected.id] || []).length > 0 && (
+                <div style={{ margin: '0.5rem 0' }}>
+                  <p className="cal-sub" style={{ margin: '0 0 0.25rem' }}>Working here</p>
+                  {(workingHere[selected.id] || []).map((o) => (
+                    <div key={o.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', margin: '0.25rem 0' }}>
+                      <Link to={'/orgs/' + o.id} className="btn btn-outline" style={{ flex: 1, minWidth: 0, minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem' }}>{'\u{1F465}'} {o.name}</Link>
+                      {keeperOf === selected.id && <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 'none' }} onClick={() => { setRemoving(o); setRemoveNote('') }} aria-label={'Remove ' + o.name + ' from ' + selected.name}>Remove</button>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {removing && keeperOf === selected.id && (
+                <div role="alertdialog" aria-labelledby="remove-org-q" className="cal-box" style={{ margin: '0.5rem 0' }}>
+                  <p id="remove-org-q" style={{ margin: '0 0 0.5rem' }}>Remove {removing.name} from {selected.name}? They will not be able to add {selected.name} back unless a keeper lets them.</p>
+                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={confirmRemove}>Yes, remove them</button>
+                  <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => setRemoving(null)}>Keep them</button>
+                </div>
+              )}
+              {removeNote && <p className="cal-sub" role="status">{removeNote}</p>}
+              <SisterVillages
+                village={selected}
+                villages={villages}
+                sisters={sisters}
+                isKeeper={starterOf === selected.id}
+                joinOptions={sisterJoins}
+                onPick={(id) => { setSelectedId(id); setLinkInfo(null) }}
+                onChanged={loadSisters}
+              />
               {selected.is_mine && boardFor(selected) && (
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village chat</button>
               )}
@@ -528,6 +650,10 @@ export default function VillageMap() {
               {!selected.is_mine && <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Anyone with an account near this village can join. You will read a short warning first.</p>}
             </section>
           )}
+
+          <p className="cal-sub" style={{ margin: '0.5rem 0' }}>{view === 'circles'
+            ? 'Each circle is a neighborhood. Bigger circles cover more zip codes. Circles overlap where they share zip codes. A solid gold line joins Sister Villages. Only places are shown, never people.'
+            : 'Dotted lines join villages that share zip codes. Dashed lines join villages that share none, by distance. Small dots are zip code areas, never people.'}</p>
 
           <section className="hub-section" aria-labelledby="village-list">
             <div className="hub-section-head"><h2 id="village-list">All villages ({villages.length})</h2></div>

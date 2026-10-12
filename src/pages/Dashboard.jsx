@@ -8,6 +8,7 @@ import PushBanner from '../components/PushBanner'
 import InstallBanner from '../components/InstallBanner'
 import RecoveryNudge from '../components/RecoveryNudge'
 import AmbassadorBanner from '../components/AmbassadorBanner'
+import HomeTasks from '../components/HomeTasks'
 
 // A few tiles for Hope Ambassadors and admins: how much open need there is
 // nearby right now, grouped by urgency. Same radius idea as the SkillShare
@@ -161,6 +162,7 @@ export default function Dashboard() {
           <span aria-hidden="true">&#128154;</span> I can help
         </button>
       </div>
+      <HomeTasks />
       <p className="home-more-label">More</p>
       <div className="home-tiles">
         <button type="button" className="home-tile" aria-label="Calendar: events and volunteer sign-ups near you" onClick={() => navigate('/calendar')}>
