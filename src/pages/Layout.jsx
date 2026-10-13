@@ -15,8 +15,8 @@ export default function Layout() {
     <div className="app-shell">
       <header className="app-header">
         <div className="app-header-inner">
-          {/* The logo is a plain way home, like on most apps and websites. */}
-          <Link to="/" className="header-logo" aria-label="Village Without Borders, go to Home">
+          {/* The logo is a plain way home to the globe, like on most apps and websites. */}
+          <Link to="/" className="header-logo" aria-label="Village Without Borders, go to the globe">
             <img src="/images/vwb_header.png" alt="" width="40" height="40" />
           </Link>
           <div className="header-actions">

@@ -23,7 +23,7 @@ export default function GrantReport() {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>
         <h2>Admin access required</h2>
-        <button className="btn btn-outline" onClick={() => navigate('/')}>Back to Dashboard</button>
+        <button className="btn btn-outline" onClick={() => navigate('/home')}>Back to Your day</button>
       </div>
     )
   }
