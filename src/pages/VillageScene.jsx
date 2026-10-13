@@ -295,6 +295,7 @@ export default function VillageScene() {
             )
           })}
         </div>
+        <Link className="btn btn-outline btn-full vs-big" to="/community">Local help, events, and calendar</Link>
       </div>
 
       {sheet && (
