@@ -7,7 +7,8 @@ import Layout from './pages/Layout'
 import Welcome from './pages/Welcome'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
-import Dashboard from './pages/Dashboard'
+const Dashboard = lazyPage(() => import('./pages/Dashboard'))
+import World from './pages/World'
 import Feed from './pages/Feed'
 const Profile = lazyPage(() => import('./pages/Profile'))
 const YourCorner = lazyPage(() => import('./pages/YourCorner'))
@@ -45,7 +46,7 @@ const CalendarEmbed = lazyPage(() => import('./pages/CalendarEmbed'))
 const EventPage = lazyPage(() => import('./pages/EventPage'))
 const Groups = lazyPage(() => import('./pages/Groups'))
 const VillageScene = lazyPage(() => import('./pages/VillageScene'))
-const World = lazyPage(() => import('./pages/World'))
+const MyVillage = lazyPage(() => import('./pages/MyVillage'))
 const GroupBoard = lazyPage(() => import('./pages/GroupBoard'))
 const JoinGroup = lazyPage(() => import('./pages/JoinGroup'))
 const VillageMap = lazy(() => import('./pages/VillageMap'))
@@ -139,7 +140,8 @@ function AppRoutes() {
       <Route path="/events/:id" element={<EventPage />} />
       <Route path="/groups/join/:token" element={<JoinGroup />} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route index element={<Dashboard />} />
+        <Route index element={<World />} />
+        <Route path="home" element={<Dashboard />} />
         <Route path="skillshare" element={<Feed />} />
         <Route path="tasks" element={<ActiveTasks />} />
         <Route path="profile" element={<Profile />} />
@@ -163,7 +165,8 @@ function AppRoutes() {
         <Route path="campfire" element={<Campfire />} />
         <Route path="find-village" element={<FindVillage />} />
         <Route path="village/:id" element={<VillageScene />} />
-        <Route path="world" element={<World />} />
+        <Route path="world" element={<Navigate to="/" replace />} />
+        <Route path="village" element={<MyVillage />} />
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="u/:userId" element={<PublicProfile />} />
         <Route path="messages" element={<MessagesPage />} />

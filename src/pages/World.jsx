@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { peekReturnTo } from '../utils/returnTo'
 import { circleLayout } from '../utils/circleLayout'
 import '../village-scene.css'
 import '../world.css'
@@ -67,6 +68,13 @@ export default function World() {
   const lastFocus = useRef(null)
 
   const myOrgs = useMemo(() => organizations || [], [organizations])
+
+  // Coming back from "confirm your email" after tapping Sign up on an event:
+  // send them to that event instead of leaving them on the globe.
+  useEffect(() => {
+    const back = peekReturnTo()
+    if (back) navigate(back, { replace: true })
+  }, [navigate])
 
   useEffect(() => {
     let alive = true
@@ -286,7 +294,7 @@ export default function World() {
         {net === 'villages' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages')}>See every village</button>}
         {net === 'villages' && !hasMine && <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/find-village')}>Find my village</button>}
         {net === 'orgs' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages?tab=orgs')}>See every organization</button>}
-        <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/')}>Your day</button>
+        <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/home')}>Your day</button>
       </div>
 
       {sheet && (
