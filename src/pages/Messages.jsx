@@ -7,6 +7,7 @@ import { supabase } from '../supabaseClient'
 import { MUTE_OPTIONS } from '../utils/muteOptions'
 import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
+import { acceptHelpOffer, declineHelpOffer } from '../utils/helpOffers'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import MessageRequests from '../components/MessageRequests'
@@ -161,109 +162,26 @@ export default function Messages({ embedded = false }) {
 
   async function acceptOffer(offer) {
     setProcessingOffer(offer.id)
-
-    const { error: acceptErr } = await supabase
-      .from('skill_matches')
-      .update({ accepted: true })
-      .eq('id', offer.id)
-
-    if (acceptErr) {
-      console.error('Failed to accept offer:', acceptErr)
+    const { ok, convoId } = await acceptHelpOffer(offer, user.id)
+    if (!ok) {
       alert('Could not accept this offer. Try again.')
       setProcessingOffer(null)
       return
     }
-
-    // Reuse any existing conversation with this helper, regardless of which
-    // request started it, so messages with the same neighbor group into one
-    // thread instead of splitting per request.
-    const { data: existingConvo, error: existingErr } = await supabase
-      .from('conversations')
-      .select('id')
-      .or('and(helper_id.eq.' + offer.helper_id + ',requester_id.eq.' + user.id + '),and(helper_id.eq.' + user.id + ',requester_id.eq.' + offer.helper_id + ')')
-      .maybeSingle()
-    if (existingErr) console.error('Failed to check for an existing conversation:', existingErr)
-
-    let convo = existingConvo
-    if (!convo) {
-      const { data: newConvo, error: convoErr } = await supabase
-        .from('conversations')
-        .insert({
-          request_id: offer.request_id,
-          helper_id: offer.helper_id,
-          requester_id: user.id,
-        })
-        .select()
-        .single()
-      if (convoErr) console.error('Failed to create conversation for accepted offer:', convoErr)
-      convo = newConvo
-    } else {
-      // Point the reused conversation at this newest request so its banner
-      // reflects what you're currently talking about, not whatever started the thread.
-      const { error: updErr } = await supabase
-        .from('conversations')
-        .update({ request_id: offer.request_id })
-        .eq('id', convo.id)
-      if (updErr) console.error('Failed to update conversation context:', updErr)
-    }
-
-    // No "has been accepted" message is posted into the chat any more (it
-    // was stored as plain text). Conversation.jsx's banner shows the
-    // acceptance instead, straight from skill_matches.
-
-    createNotification({
-      userId: offer.helper_id,
-      type: 'offer_accepted',
-      title: 'Your offer was accepted!',
-      body: `You've been accepted to help with: ${offer.skill_needed}`,
-      link: convo ? '/conversation/' + convo.id : '/tasks',
-    })
-
-    const newAcceptedCount = offer.accepted_count + 1
-    if (offer.max_helpers !== null && newAcceptedCount >= offer.max_helpers) {
-      const { error: statusErr } = await supabase
-        .from('help_requests')
-        .update({ status: 'in_progress' })
-        .eq('id', offer.request_id)
-      if (statusErr) console.error('Failed to mark request in_progress:', statusErr)
-    }
-
     setProcessingOffer(null)
     await loadPendingOffers()
     // Open the chat right away so the two of you can plan.
-    if (convo) { navigate('/conversation/' + convo.id); return }
+    if (convoId) { navigate('/conversation/' + convoId); return }
     alert('You accepted this offer, but the chat could not be opened. Find it under Messages in a moment.')
     await loadConversations()
   }
 
   async function declineOffer(offer) {
     setProcessingOffer(offer.id)
-
-    const { data: deleted, error: declineErr } = await supabase
-      .from('skill_matches')
-      .delete()
-      .eq('id', offer.id)
-      .select('id')
-    // The database can refuse a delete without an error. Treat "nothing removed" as a failure.
-    const error = declineErr || (!deleted || deleted.length === 0 ? { message: 'No offer was removed.' } : null)
-
-    if (error) {
-      console.error('Failed to decline offer:', error)
-      alert('Could not decline this offer. Try again.')
-      setProcessingOffer(null)
-      return
-    }
-
-    createNotification({
-      userId: offer.helper_id,
-      type: 'offer_declined',
-      title: 'Help update',
-      body: 'The requester found help from someone else. Thank you for offering!',
-      link: '/skillshare',
-    })
-
+    const ok = await declineHelpOffer(offer)
+    if (!ok) alert('Could not decline this offer. Try again.')
     setProcessingOffer(null)
-    await loadPendingOffers()
+    if (ok) await loadPendingOffers()
   }
 
   // =============================================
@@ -1065,4 +983,4 @@ export default function Messages({ embedded = false }) {
       )})}
     </div>
   )
-}
+}
