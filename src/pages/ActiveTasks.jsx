@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import MyOffers from '../components/MyOffers'
 import HelpSwitch from '../components/HelpSwitch'
+import { acceptHelpOffer, declineHelpOffer } from '../utils/helpOffers'
+import { getBlockedUserIds } from '../utils/blockedUsers'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import VouchButton from '../components/VouchButton'
@@ -28,8 +30,19 @@ export default function ActiveTasks() {
   const { user, profile, organizations } = useAuth()
   const navigate = useNavigate()
   // /tasks?tab=archived opens the Archived tab (Home and Profile link here).
-  const [searchParams] = useSearchParams()
-  const [tab, setTab] = useState(searchParams.get('tab') === 'archived' ? 'archived' : 'active')
+  const [searchParams, setSearchParams] = useSearchParams()
+  // Mine has four tabs: Requests (nobody has taken them yet), Offers, Active, Archived.
+  // /tasks?tab=requests|offers|active|archived opens one directly.
+  const [tab, setTabState] = useState(() => {
+    const t = searchParams.get('tab')
+    return ['requests', 'offers', 'active', 'archived'].includes(t) ? t : 'active'
+  })
+  function setTab(t) {
+    setTabState(t)
+    const next = new URLSearchParams(searchParams)
+    next.set('tab', t)
+    setSearchParams(next, { replace: true })
+  }
   const [myRequests, setMyRequests] = useState([])
   const [helpingWith, setHelpingWith] = useState([])
   const [loading, setLoading] = useState(true)
@@ -130,8 +143,16 @@ export default function ActiveTasks() {
       .eq('accepted', true)
     if (matchesErr) console.error('Failed to load accepted helpers:', matchesErr)
 
+    // Neighbors who offered to help and are waiting for your yes or no.
+    const [{ data: pendingRows, error: pendingErr }, blockedIds] = await Promise.all([
+      supabase.from('skill_matches').select('id, request_id, helper_id, created_at').in('request_id', requestIds).is('accepted', null),
+      getBlockedUserIds(user.id),
+    ])
+    if (pendingErr) console.error('Failed to load offers to help:', pendingErr)
+    const pending = (pendingRows || []).filter(m => !blockedIds.has(m.helper_id))
+
     // Enrich helpers with names
-    const helperIds = [...new Set((matches || []).map(m => m.helper_id))]
+    const helperIds = [...new Set([...(matches || []), ...pending].map(m => m.helper_id))]
     const helperProfiles = {}
     for (const hid of helperIds) {
       const { data: p, error: profErr } = await supabase
@@ -155,7 +176,11 @@ export default function ActiveTasks() {
 
       const allDone = reqMatches.length > 0 && reqMatches.every(m => m.helper_completed && m.requester_completed)
 
-      return { ...req, matches: reqMatches, allDone }
+      const reqPending = pending
+        .filter(m => m.request_id === req.id)
+        .map(m => ({ ...m, helper_name: helperProfiles[m.helper_id]?.display_name || 'A neighbor', is_ambassador: helperProfiles[m.helper_id]?.is_hope_ambassador || false }))
+
+      return { ...req, matches: reqMatches, pending: reqPending, allDone }
     })
 
     setMyRequests(enriched)
@@ -472,6 +497,28 @@ export default function ActiveTasks() {
   }
 
   // =============================================
+  // Say yes or no to a neighbor who offered to help
+  // =============================================
+  const [offerBusy, setOfferBusy] = useState(null)
+  async function sayYes(req, m) {
+    setOfferBusy(m.id)
+    const { ok, convoId } = await acceptHelpOffer({ id: m.id, helper_id: m.helper_id, request_id: req.id, skill_needed: req.skill_needed, max_helpers: req.max_helpers, accepted_count: req.matches.length }, user.id)
+    setOfferBusy(null)
+    if (!ok) { alert('Could not say yes just now. Try again.'); return }
+    // Open the chat so the two of you can plan.
+    if (convoId) { navigate('/conversation/' + convoId); return }
+    setNotice(m.helper_name + ' is helping now. Find your chat under Messages in a moment.')
+    loadTasks()
+  }
+  async function sayNotNow(m) {
+    setOfferBusy(m.id)
+    const ok = await declineHelpOffer(m)
+    setOfferBusy(null)
+    if (!ok) { alert('Could not save that. Try again.'); return }
+    loadTasks()
+  }
+
+  // =============================================
   // Filter by Active vs Archived
   // =============================================
   // A finished task stays under Active until BOTH people have said how it went.
@@ -488,6 +535,21 @@ export default function ActiveTasks() {
   const activeHelping = helpingWith.filter(h => !h.request?.archived_at && (!h.isDone || holdOpen(h.id)))
 
   const archivedRequests = myRequests.filter(r => r.archived_at || (r.status === 'completed' && !stillNeedsAnswer(r)))
+
+  // Requests tab: still waiting for a helper. Active tab: someone said yes.
+  // (r.matches only holds helpers who were accepted.)
+  const openRequests = activeRequests.filter(r => r.matches.length === 0)
+  const takenRequests = activeRequests.filter(r => r.matches.length > 0)
+  // Something is waiting on you: they marked it done and you have not, or it is done and you have not said how it went.
+  const waitsOnMe = (m, iAmRequester) => {
+    const mine = iAmRequester ? m.requester_completed : m.helper_completed
+    const theirs = iAmRequester ? m.helper_completed : m.requester_completed
+    if (m.helper_completed && m.requester_completed) return feedbackReady && !myFeedback[m.id]
+    return !mine && theirs
+  }
+  const requestsWaiting = openRequests.filter(r => (r.pending || []).length > 0).length
+  const activeWaiting = takenRequests.filter(r => r.matches.some(m => waitsOnMe(m, true))).length +
+    activeHelping.filter(h => waitsOnMe(h, false)).length
   const archivedHelping = helpingWith.filter(h => h.request?.archived_at || (h.isDone && !holdOpen(h.id)))
 
   // The form that opens when you tap "Step back" or "End their help".
@@ -599,10 +661,27 @@ export default function ActiveTasks() {
     )
   }
 
-  const showActive = tab === 'active'
-  const currentRequests = showActive ? activeRequests : archivedRequests
-  const currentHelping = showActive ? activeHelping : archivedHelping
+  // showActive: the task buttons for live tasks (mark done, step back, and so on).
+  const showActive = tab !== 'archived'
+  const currentRequests = tab === 'requests' ? openRequests : tab === 'active' ? takenRequests : tab === 'archived' ? archivedRequests : []
+  const currentHelping = tab === 'active' ? activeHelping : tab === 'archived' ? archivedHelping : []
   const isEmpty = currentRequests.length === 0 && currentHelping.length === 0
+  const counts = {
+    requests: openRequests.length,
+    active: takenRequests.length + activeHelping.length,
+    archived: archivedRequests.length + archivedHelping.length,
+  }
+  const EMPTY = {
+    requests: ['No open requests', 'When you ask for help, your request waits here until a neighbor says yes.', 'Ask for help', '/ask'],
+    active: ['No tasks in progress', 'When someone takes your request, or you help a neighbor, it shows here.', 'See who needs help', '/skillshare'],
+    archived: ['Nothing archived yet', 'Finished tasks move here once you have both said how it went.', null, null],
+  }
+  const MINE_TABS = [
+    { id: 'requests', label: 'Requests', icon: '\u{1F198}' },
+    { id: 'offers', label: 'Offers', icon: '\u{1F49A}' },
+    { id: 'active', label: 'Active', icon: '\u{1F91D}' },
+    { id: 'archived', label: 'Archived', icon: '\u{1F4E6}' },
+  ]
 
   // =============================================
   // Render
@@ -612,18 +691,22 @@ export default function ActiveTasks() {
       <div className="tasks-header"><h1>Help</h1></div>
       <HelpSwitch />
 
-      <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
-        <button className={'tasks-tab' + (tab === 'active' ? ' tasks-tab-active' : '')} onClick={() => setTab('active')}>
-          Active
-        </button>
-        <button className={'tasks-tab' + (tab === 'archived' ? ' tasks-tab-active' : '')} onClick={() => setTab('archived')}>
-          Archived
-          {(archivedRequests.length + archivedHelping.length) > 0 && (
-            <span style={{ marginLeft: '0.35rem', fontSize: '0.75rem', opacity: 0.7 }}>
-              ({archivedRequests.length + archivedHelping.length})
-            </span>
-          )}
-        </button>
+      <div className="home-tasks-tabs mine-tabs" role="tablist" aria-label="My help">
+        {MINE_TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            id={'mine-' + t.id}
+            aria-selected={tab === t.id}
+            className={'home-tasks-tab' + (tab === t.id ? ' on' : '')}
+            onClick={() => setTab(t.id)}
+          >
+            <span aria-hidden="true">{t.icon}</span> {t.label}
+            {counts[t.id] > 0 && <span className="home-tasks-count">{counts[t.id]}</span>}
+            {((t.id === 'active' && activeWaiting > 0) || (t.id === 'requests' && requestsWaiting > 0)) && <span className="home-tasks-dot" aria-label="Something is waiting on you" />}
+          </button>
+        ))}
       </div>
 
       {notice && (
@@ -632,17 +715,20 @@ export default function ActiveTasks() {
         </p>
       )}
 
-      {showActive && <MyOffers />}
-
-      {loading ? (
+      {tab === 'offers' ? (
+        <div role="tabpanel" aria-labelledby="mine-offers">
+          <MyOffers />
+          <p className="home-tasks-empty" style={{ margin: '0.25rem 0 0.75rem' }}>Offers are skills, time, or things you can share. Neighbors who are interested send you a message request.</p>
+        </div>
+      ) : loading ? (
         <div className="feed-loading"><div className="feed-loading-spinner" /><p>Loading tasks...</p></div>
       ) : isEmpty ? (
         <div className="feed-empty">
           <span className="feed-empty-icon"></span>
-          <h2>{showActive ? 'No active tasks' : 'Nothing archived yet'}</h2>
-          <p>{showActive ? 'Check the SkillShare feed for requests near you, or post your own.' : 'Completed and archived tasks will show up here.'}</p>
-          {showActive && (
-            <button className="btn btn-primary" onClick={() => navigate('/skillshare')}>Go to SkillShare</button>
+          <h2>{EMPTY[tab][0]}</h2>
+          <p>{EMPTY[tab][1]}</p>
+          {EMPTY[tab][2] && (
+            <button className="btn btn-primary" style={{ minHeight: '44px' }} onClick={() => navigate(EMPTY[tab][3])}>{EMPTY[tab][2]}</button>
           )}
         </div>
       ) : (
@@ -714,9 +800,26 @@ export default function ActiveTasks() {
                   )}
 
                   {/* Helper count */}
+                  {req.matches.length === 0 && showActive && (req.pending || []).length > 0 && (
+                    <div className="offer-waits" aria-label="Neighbors who offered to help">
+                      {req.pending.map(m => (
+                        <div key={m.id} className="offer-wait">
+                          <p className="offer-wait-text">
+                            <UserName userId={m.helper_id} name={m.helper_name} style={{ fontWeight: 700, color: '#fff' }} /> offered to help. Say yes?
+                            {m.is_ambassador && <span className="offer-wait-chip">Hope Ambassador</span>}
+                          </p>
+                          <button type="button" className="offer-wait-profile" onClick={() => navigate('/u/' + m.helper_id)}>See {m.helper_name}&apos;s profile first</button>
+                          <div className="offer-wait-btns">
+                            <button type="button" className="btn btn-primary" disabled={offerBusy === m.id} onClick={() => sayYes(req, m)}>{offerBusy === m.id ? 'Saving...' : 'Say yes'}</button>
+                            <button type="button" className="btn btn-outline" disabled={offerBusy === m.id} onClick={() => sayNotNow(m)}>Not now</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ fontSize: '0.8rem', color: '#aaa', margin: '0.5rem 0' }}>
                     {req.matches.length === 0
-                      ? 'No helpers accepted yet'
+                      ? ((req.pending || []).length > 0 ? '' : 'Waiting for a neighbor to offer')
                       : `${req.matches.length} helper${req.matches.length !== 1 ? 's' : ''} accepted`
                     }
                     {req.max_helpers !== null && req.matches.length > 0 && (
@@ -903,6 +1006,10 @@ export default function ActiveTasks() {
           )}
         </div>
       )}
+
+      <button type="button" className="fab fab-labeled" onClick={() => navigate(tab === 'offers' ? '/post-offer' : '/ask')}>
+        <span aria-hidden="true">+</span> {tab === 'offers' ? 'Offer something' : 'Ask for help'}
+      </button>
     </div>
   )
 }

@@ -5005,3 +5005,14 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 .help-switch-btn.on { background: #2d6a4f; color: #fff; }
 .help-switch-btn:focus-visible { outline: 3px solid #ffb27a; outline-offset: -3px; }
 @media (prefers-reduced-motion: reduce) { .me-btn:active { transform: none; } }
+
+
+/* ---------- Help > Mine > Requests: neighbors who offered ---------- */
+.offer-waits { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.5rem 0; }
+.offer-wait { padding: 0.75rem; border: 1px solid #ffcc66; border-radius: 10px; background: #26231a; }
+.offer-wait-text { margin: 0 0 0.4rem; font-size: 1rem; color: #ffe2a0; line-height: 1.4; }
+.offer-wait-chip { display: inline-block; margin-left: 0.4rem; font-size: 0.75rem; font-weight: 700; color: #4ecca3; }
+.offer-wait-profile { display: block; width: 100%; min-height: 44px; margin-bottom: 0.5rem; border-radius: 8px; border: 1px solid #4ecca3; background: none; color: #7fe0bf; font: inherit; font-weight: 600; cursor: pointer; }
+.offer-wait-btns { display: flex; gap: 0.5rem; }
+.offer-wait-btns .btn { flex: 1; min-height: 44px; }
+.offer-wait-profile:focus-visible { outline: 3px solid #ffb27a; outline-offset: 2px; }

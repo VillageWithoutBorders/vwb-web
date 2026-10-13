@@ -55,7 +55,7 @@ export default function HomeTasks() {
   }
 
   function open() {
-    navigate(tab === 'archived' ? '/tasks?tab=archived' : '/tasks')
+    navigate('/tasks?tab=' + tab)
   }
 
   const rows = data ? data[tab] : []
@@ -125,7 +125,7 @@ export default function HomeTasks() {
           <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginTop: '0.5rem' }} onClick={() => navigate('/profile#past-tasks')}>See all in your Profile</button>
         )}
         {data && tab !== 'archived' && rows.length > 0 && (
-          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginTop: '0.5rem' }} onClick={() => navigate('/tasks')}>Open Tasks</button>
+          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginTop: '0.5rem' }} onClick={() => navigate('/tasks?tab=' + tab)}>Open in Help</button>
         )}
       </div>
     </section>

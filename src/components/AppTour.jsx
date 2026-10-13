@@ -169,10 +169,10 @@ const ALL_STEPS = [
   },
   {
     route: '/tasks',
-    target: '.tasks-tabs',
+    target: '.mine-tabs',
     icon: '\u{1F4C2}',
-    title: 'Active and Archived',
-    body: 'Active tasks are still going. When both of you have said how it went, the task moves to Archived.',
+    title: 'Requests, Offers, Active, Archived',
+    body: 'Requests wait here until a neighbor says yes. Offers are what you share. Active tasks are still going. When both of you have said how it went, the task moves to Archived.',
   },
   {
     route: '/me',
