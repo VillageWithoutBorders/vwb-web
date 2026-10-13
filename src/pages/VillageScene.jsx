@@ -1,0 +1,310 @@
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams, Link } from 'react-router-dom'
+import { supabase } from '../supabaseClient'
+import { useAuth } from '../context/AuthContext'
+import { useUnreadCount } from '../context/UnreadCountContext'
+import { VILLAGE_SPOTS, VILLAGE_DECOR } from '../data/worldElements'
+import '../village-scene.css'
+
+// The Village page: one village as a little world. Every element on the
+// hills is a button that goes to its own page. A plain list sits below for
+// anyone who would rather tap a list. Names follow the VWB Vocabulary sheet.
+// Route: /village/:id
+
+export default function VillageScene() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { unreadCount } = useUnreadCount()
+
+  const [village, setVillage] = useState(null)
+  const [allVillages, setAllVillages] = useState([])
+  const [loadError, setLoadError] = useState('')
+  const [board, setBoard] = useState(null)
+  const [chatUnread, setChatUnread] = useState(0)
+  const [keepers, setKeepers] = useState(null)
+  const [keeperNames, setKeeperNames] = useState([])
+  const [isGuest, setIsGuest] = useState(false)
+  const [sisters, setSisters] = useState([])
+  const [orgs, setOrgs] = useState([])
+  const [sheet, setSheet] = useState(null)
+  const [bump, setBump] = useState(null)
+  const sheetRef = useRef(null)
+  const lastFocus = useRef(null)
+
+  // The village itself, and the others (for sister names).
+  useEffect(() => {
+    let alive = true
+    setVillage(null); setLoadError('')
+    supabase.rpc('village_network').then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load villages:', error); setLoadError("We couldn't load this village. Check your connection and try again."); return }
+      const rows = data || []
+      setAllVillages(rows)
+      const v = rows.find((r) => r.id === id)
+      if (!v) { setLoadError("We couldn't find this village. It may have closed."); return }
+      setVillage(v)
+    })
+    return () => { alive = false }
+  }, [id])
+
+  // The village chat and its unread count.
+  useEffect(() => {
+    let alive = true
+    supabase.from('campfire_boards').select('id, name').eq('village_id', id).eq('archived', false).order('sort_order').limit(1).then(({ data: rows, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load the village chat:', error); return }
+      const data = (rows || [])[0] || null
+      setBoard(data)
+      if (!data) return
+      supabase.rpc('campfire_unread').then(({ data: u, error: uErr }) => {
+        if (!alive) return
+        if (uErr) { console.error('Failed to load unread village chats:', uErr); return }
+        const row = (u || []).find((r) => r.board_id === data.id)
+        setChatUnread(row ? Number(row.unread) : 0)
+      })
+    })
+    return () => { alive = false }
+  }, [id])
+
+  // Members only: keepers and whether I came in as a guest.
+  useEffect(() => {
+    if (!village || !village.is_mine) { setKeepers(null); setIsGuest(false); return }
+    let alive = true
+    supabase.rpc('village_keepers_info', { p_village: id }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load keepers:', error); return }
+      const row = (data || [])[0] || null
+      setKeepers(row)
+      const ids = row ? [row.starter_id, ...(row.helper_ids || [])].filter(Boolean) : []
+      if (!ids.length) { setKeeperNames([]); return }
+      supabase.from('helper_profiles_public').select('user_id, display_name').in('user_id', ids).then(({ data: p, error: pErr }) => {
+        if (!alive) return
+        if (pErr) { console.error('Failed to load keeper names:', pErr); return }
+        const byId = Object.fromEntries((p || []).map((r) => [r.user_id, r.display_name]))
+        setKeeperNames(ids.map((k) => byId[k]).filter(Boolean))
+      })
+    })
+    supabase.rpc('village_guest_ids', { p_village: id }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load guests:', error); return }
+      setIsGuest((data || []).some((g) => g.user_id === user.id))
+    })
+    return () => { alive = false }
+  }, [village, id, user.id])
+
+  // Sister villages and organizations working here.
+  useEffect(() => {
+    let alive = true
+    supabase.rpc('village_sister_list').then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load sister villages:', error); return }
+      setSisters((data || []).filter((s) => s.village_a === id || s.village_b === id).map((s) => (s.village_a === id ? s.village_b : s.village_a)))
+    })
+    supabase.rpc('org_village_links').then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load organizations working here:', error); return }
+      setOrgs((data || []).filter((r) => r.village_id === id).map((r) => ({ id: r.org_id, name: r.org_name })))
+    })
+    return () => { alive = false }
+  }, [id])
+
+  // Sheet: Escape closes, focus goes in and comes back.
+  useEffect(() => {
+    if (!sheet) return
+    const first = sheetRef.current && sheetRef.current.querySelector('button, a')
+    if (first) first.focus()
+    function onKey(e) { if (e.key === 'Escape') closeSheet() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [sheet])
+
+  function openSheet(s) { lastFocus.current = document.activeElement; setSheet(s) }
+  function closeSheet() {
+    setSheet(null)
+    if (lastFocus.current && lastFocus.current.focus) lastFocus.current.focus()
+  }
+
+  const mine = !!(village && village.is_mine)
+  const nameOf = (vid) => (allVillages.find((v) => v.id === vid) || {}).name || 'A village'
+
+  function info(k) {
+    switch (k) {
+      case 'guidelines': return { sub: 'How we look after each other here' }
+      case 'sisters': return { sub: sisters.length ? sisters.length + ' sister village' + (sisters.length === 1 ? '' : 's') : 'No sister villages yet' }
+      case 'keeper': return { sub: keeperNames.length ? 'Looked after by ' + keeperNames.join(', ') : 'The neighbor who looks after this village' }
+      case 'chat': return { sub: mine ? (chatUnread ? chatUnread + ' new since you last looked' : 'Say hello and share news') : 'Join this village to read its chat', badge: mine ? chatUnread : 0 }
+      case 'campfires': return { sub: 'Coming soon' }
+      case 'sidechats': return { sub: 'Coming soon' }
+      case 'skillshare': return { sub: 'Help nearby: requests and offers' }
+      case 'neighbors': return { sub: village && village.member_count ? village.member_count + ' neighbors live here' : 'A few neighbors so far' }
+      case 'cottage': return { sub: 'Private chats with people you chose' }
+      case 'me': return { sub: 'Your profile, vouches, and settings' }
+      case 'messages': return { sub: unreadCount ? unreadCount + ' unread' : 'Requests and private messages', badge: unreadCount }
+      case 'orgs': return { sub: orgs.length ? orgs.length + ' working here' : 'None working here yet' }
+      case 'groups': return { sub: 'Coming soon' }
+      default: return { sub: '' }
+    }
+  }
+
+  function tap(spot) {
+    if (!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setBump(spot.k); setTimeout(() => setBump(null), 450)
+    }
+    if (spot.soon) { openSheet({ k: spot.k }); return }
+    switch (spot.k) {
+      case 'chat':
+        if (mine && board) navigate('/campfire?board=' + board.id)
+        else if (!mine) navigate('/find-village?join=' + id)
+        else openSheet({ k: 'chat' })
+        return
+      case 'skillshare': navigate('/skillshare'); return
+      case 'cottage': navigate('/messages'); return
+      case 'messages': navigate('/messages'); return
+      case 'me': navigate('/me'); return
+      default: openSheet({ k: spot.k })
+    }
+  }
+
+  function sheetBody(k) {
+    const spot = VILLAGE_SPOTS.find((s) => s.k === k)
+    const title = <h2 id="vs-sheet-title"><span aria-hidden="true">{spot.em}</span> {spot.label}</h2>
+    if (spot.soon) {
+      return <>{title}<p>This part of the village is coming soon.</p></>
+    }
+    switch (k) {
+      case 'guidelines':
+        return <>{title}
+          <div className="vs-item"><b>We look after each other.</b><small>Help is given freely, and anyone can ask for it.</small></div>
+          <div className="vs-item"><b>We keep private things private.</b><small>Keep addresses and private details out of the village chat.</small></div>
+          <div className="vs-item"><b>Safety is in your hands.</b><small>You can block, report, and vouch for people.</small></div>
+          <Link className="btn btn-primary btn-full" to="/terms">Read the full Community Guidelines</Link>
+        </>
+      case 'sisters':
+        return <>{title}
+          {sisters.length === 0 && <p>This village has no sister villages yet. The keeper can ask another village from the Village Network map.</p>}
+          {sisters.map((sid) => (
+            <button key={sid} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/village/' + sid) }}>
+              <span aria-hidden="true">{'\u{1F3D8}️'}</span> {nameOf(sid)}<small>Sister village</small>
+            </button>
+          ))}
+          <p className="vs-note">Members of a sister village can join this one as a guest.</p>
+        </>
+      case 'keeper':
+        return <>{title}
+          {!mine && <p>Join this village to see who looks after it.</p>}
+          {mine && keeperNames.length === 0 && <p>Loading the keeper...</p>}
+          {mine && keeperNames.map((n) => <div key={n} className="vs-item"><b>{n}</b><small>Keeper</small></div>)}
+          {mine && keepers && keepers.i_am_keeper && <p className="vs-note">You are a keeper here. You post announcements in the village chat and can hand the role to another member.</p>}
+        </>
+      case 'chat':
+        return <>{title}<p>We couldn't find this village's chat. Try again in a moment.</p></>
+      case 'neighbors':
+        return <>{title}
+          <p>{info('neighbors').sub}.</p>
+          {mine && board
+            ? <><p className="vs-note">See who is here, vouch, or send a message request from the People button in the village chat.</p>
+                <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/campfire?board=' + board.id)}>Open the village chat</button></>
+            : <p className="vs-note">Join this village to see who lives here.</p>}
+        </>
+      case 'orgs':
+        return <>{title}
+          {orgs.length === 0 && <p>No organizations work in this village yet.</p>}
+          {orgs.map((o) => (
+            <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
+              <span aria-hidden="true">{'\u{1F465}'}</span> {o.name}<small>Organization</small>
+            </button>
+          ))}
+        </>
+      default: return title
+    }
+  }
+
+  if (loadError) {
+    return <div className="vs-page"><div className="vs-top"><Link className="vs-crumb" to="/villages">Village Network</Link></div><p className="vs-error" role="alert">{loadError}</p></div>
+  }
+  if (!village) {
+    return <div className="vs-page"><p className="vs-loading" role="status">Loading the village...</p></div>
+  }
+
+  const path = 'M' + VILLAGE_SPOTS.slice().sort((a, b) => a.y - b.y).map((s) => s.x + ' ' + s.y).join(' L')
+
+  return (
+    <div className="vs-page">
+      <nav className="vs-top" aria-label="Where you are">
+        <Link className="vs-crumb" to="/villages">Village Network</Link>
+        <span className="vs-sep" aria-hidden="true">&#8250;</span>
+        <span className="vs-here" aria-current="page">{village.name}</span>
+      </nav>
+
+      <div className="vs-title">
+        <h1>{village.name}</h1>
+        <div className="vs-chips">
+          {mine && !isGuest && <span className="vs-chip vs-chip-in">You are in</span>}
+          {mine && isGuest && <span className="vs-chip vs-chip-guest">Guest</span>}
+          {mine && keepers && keepers.i_am_keeper && <span className="vs-chip vs-chip-in">Keeper</span>}
+          {!mine && <span className="vs-chip">Not joined yet</span>}
+          <span className="vs-chip">{village.member_count ? village.member_count + ' neighbors' : 'Just starting'}</span>
+          {village.towns && <span className="vs-chip">{village.towns}</span>}
+        </div>
+      </div>
+
+      <div className="vs-scene">
+        <img className="vs-ground" src="/art/village-ground.webp" alt="" width="901" height="451" fetchpriority="high" />
+        <svg className="vs-walk" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d={path} fill="none" stroke="#e9e1c8" strokeOpacity="0.55" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1 3" vectorEffect="non-scaling-stroke" style={{ strokeWidth: '10px' }} />
+        </svg>
+        {VILLAGE_DECOR.map(([em, x, y], i) => (
+          <span key={i} className="vs-deco" aria-hidden="true" style={{ left: x + '%', top: y + '%' }}>{em}</span>
+        ))}
+        {VILLAGE_SPOTS.map((s) => {
+          const i = info(s.k)
+          return (
+            <button key={s.k} type="button"
+              className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' : '') + (bump === s.k ? ' vs-bump' : '')}
+              style={{ left: s.x + '%', top: s.y + '%' }}
+              aria-label={s.label + '. ' + i.sub}
+              onClick={() => tap(s)}>
+              <span className="vs-em" aria-hidden="true">{s.em}</span>
+              <span className="vs-lab">{s.short}</span>
+              {i.badge > 0 && <span className="vs-badge" aria-hidden="true">{i.badge > 9 ? '9+' : i.badge}</span>}
+            </button>
+          )
+        })}
+        <div className="vs-fade" />
+      </div>
+
+      <p className="vs-hint">Tap anything in the village to go there.</p>
+
+      <div className="vs-body">
+        {!mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>Join {village.name}</button>}
+        <div className="vs-help">
+          <button type="button" className="vs-big vs-ask" onClick={() => navigate('/ask')}>Ask for help</button>
+          <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>
+        </div>
+        <h2>Or pick from the list</h2>
+        <div className="vs-list">
+          {VILLAGE_SPOTS.map((s) => {
+            const i = info(s.k)
+            return (
+              <button key={s.k} type="button" className={'vs-room' + (s.soon ? ' vs-soon' : '')} onClick={() => tap(s)}>
+                <span className="vs-room-ic" aria-hidden="true">{s.em}</span>
+                <span className="vs-room-text"><b>{s.label}{i.badge > 0 && <span className="vs-dot" aria-label="New" />}</b><small>{i.sub}</small></span>
+                <span className="vs-go" aria-hidden="true">&#8250;</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {sheet && (
+        <div className="vs-shade" onClick={(e) => { if (e.target === e.currentTarget) closeSheet() }}>
+          <div className="vs-sheet" role="dialog" aria-modal="true" aria-labelledby="vs-sheet-title" ref={sheetRef}>
+            {sheetBody(sheet.k)}
+            <button type="button" className="btn btn-outline btn-full" onClick={closeSheet}>Back to the village</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

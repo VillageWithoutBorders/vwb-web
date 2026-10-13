@@ -204,6 +204,19 @@ export default function VillageMap() {
   const markersRef = useRef({})
   const selectedRef = useRef(null)
   selectedRef.current = selectedId
+  const cardRef = useRef(null)
+  // Your own village: step straight in. Any other: show its card and bring it into view.
+  function tapCircle(v) {
+    setLinkInfo(null)
+    if (v.is_mine) { navigate('/village/' + v.id); return }
+    setSelectedId(v.id)
+    setTimeout(() => {
+      const el = cardRef.current
+      if (!el) return
+      const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+    }, 50)
+  }
 
   useEffect(() => {
     let alive = true
@@ -533,7 +546,7 @@ export default function VillageMap() {
         <>
           {placed.length === 0 && <p className="cal-empty">These villages don't have a location yet, so there's nothing to draw. They're listed below.</p>}
 
-          {placed.length > 0 && <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>{view === 'circles' ? 'Tap a neighborhood to see what it has. Tap the dot where two circles overlap to see the zip codes they share.' : 'Tap a village to see what it has. Tap the dot on a line to see more.'}</p>}
+          {placed.length > 0 && <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>{view === 'circles' ? 'Tap your village to step inside. Tap any other village to see what it has. Tap the dot where two circles overlap to see the zip codes they share.' : 'Tap a village to see what it has. Tap the dot on a line to see more.'}</p>}
 
           {view === 'circles' && circles && (
             // A big map keeps its names readable and scrolls sideways inside its own box.
@@ -545,7 +558,7 @@ export default function VillageMap() {
               {placed.map((v, i) => {
                 const c = circles.nodes[i], on = v.id === selectedId
                 return (
-                  <g key={v.id} tabIndex={0} role="button" aria-label={v.name + ', ' + countText(v)} aria-pressed={on} onClick={() => { setSelectedId(v.id); setLinkInfo(null) }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(v.id); setLinkInfo(null) } }} style={{ cursor: 'pointer' }}>
+                  <g key={v.id} tabIndex={0} role="button" aria-label={v.name + ', ' + countText(v)} aria-pressed={on} onClick={() => tapCircle(v)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tapCircle(v) } }} style={{ cursor: 'pointer' }}>
                     <circle cx={c.x} cy={c.y} r={c.r} fill="url(#vwbHood)" fillOpacity="0.82" stroke={v.is_mine ? '#ffcc66' : '#8fe6cd'} strokeWidth={v.is_mine ? 2.5 : 1.5} />
                   </g>
                 )
@@ -605,7 +618,7 @@ export default function VillageMap() {
           )}
 
           {selected && (
-            <section className="cal-box" aria-live="polite" aria-labelledby="village-sel">
+            <section ref={cardRef} className="cal-box" aria-live="polite" aria-labelledby="village-sel" style={{ scrollMarginTop: 'calc(var(--header-height) + 12px)' }}>
               <h2 id="village-sel">{selected.name}{selected.is_mine ? ' (you joined)' : ''}</h2>
               {selected.region_label && <p className="cal-sub">{selected.region_label}</p>}
               <p className="cal-sub">{countText(selected)}{selected.zip_count ? ' \u00B7 covers ' + selected.zip_count + ' zip codes' : ''}</p>
@@ -638,6 +651,7 @@ export default function VillageMap() {
                 onPick={(id) => { setSelectedId(id); setLinkInfo(null) }}
                 onChanged={loadSisters}
               />
+              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={() => navigate('/village/' + selected.id)}>{'\u{1F3D8}\uFE0F'} Step into {selected.name}</button>
               {selected.is_mine && boardFor(selected) && (
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village chat</button>
               )}

@@ -786,7 +786,7 @@ export default function ActiveTasks() {
                           </select>
                         </label>
                         {narrowNote && <p role="alert" style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#ffaa44' }}>{narrowNote}</p>}
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                           <button className="btn btn-primary btn-sm" disabled={narrowBusy} style={{ flex: 1, minHeight: '44px' }} onClick={() => narrowToGroup(req.id)}>{narrowBusy ? 'Saving...' : 'Keep it with my group'}</button>
                           <button className="btn btn-outline btn-sm" style={{ flex: 1, minHeight: '44px' }} onClick={() => { setNarrowing(null); setNarrowNote('') }}>Cancel</button>
                         </div>
@@ -920,7 +920,7 @@ export default function ActiveTasks() {
                           ? 'This task is finished. Deleting it also removes the record that you helped each other, so you cannot vouch for that person on that basis later. Vouches already given stay.'
                           : 'Neighbors who said yes will be told it was removed.'}</p>
                       {deleteNote && <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#ffaa44' }}>{deleteNote}</p>}
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <button className="btn btn-sm" disabled={deleteBusy} style={{ flex: 1, minHeight: '44px', background: '#c0392b', color: '#fff', border: 'none' }} onClick={() => deleteRequestForGood(req.id)}>{deleteBusy ? 'Deleting...' : 'Yes, delete'}</button>
                         <button className="btn btn-outline btn-sm" style={{ flex: 1, minHeight: '44px' }} onClick={() => { setDeletingId(null); setDeleteNote('') }}>Keep it</button>
                       </div>
