@@ -35,8 +35,9 @@ function fitToLand(lay) {
       const c = n[i], gx = ox + (c.x - minX) * s, gy = oy + (c.y - minY) * s, k = (c.r * s) / c.r
       const dx = l.tx - c.x, dy = l.ty - c.y
       // Pills sit just outside the circle on the side the layout picked.
-      const out = Math.hypot(dx, dy) > c.r ? 3 : 0
-      return { lx: gx + dx * k, ly: gy + dy * k + Math.sign(dy) * out }
+      // A pill inside the circle would cover its house, so it goes just under the circle instead.
+      if (Math.hypot(dx, dy) < c.r) return { lx: gx, ly: gy + c.r * k + 3 }
+      return { lx: gx + dx * k, ly: gy + dy * k + Math.sign(dy) * 3 }
     }),
   }
 }

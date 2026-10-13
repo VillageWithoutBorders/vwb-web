@@ -23,8 +23,10 @@
 .wd-tag, .wd-org-tag { white-space: nowrap; font-size: 0.78rem; font-weight: 700; line-height: 1; padding: 5px 9px; border-radius: 999px; background: #f6f0e0; color: #0b3b38; border: 1.5px solid #0b3b38; pointer-events: none; }
 .wd-tag { position: absolute; transform: translate(-50%, -60%); z-index: 2; max-width: 46%; overflow: hidden; text-overflow: ellipsis; }
 .wd-org { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 56px; min-height: 56px; border: 0; background: none; padding: 4px; cursor: pointer; border-radius: 50%; color: inherit; }
-.wd-org.wd-in .wd-em { border-radius: 50%; box-shadow: 0 0 0 3px var(--vs-gold); padding: 6px; background: rgba(127, 220, 192, 0.35); }
-.wd-org.wd-none .wd-em, .wd-org.wd-none .wd-org-tag { opacity: 0.75; }
+.wd-org .wd-em { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%; background: #f6f0e0; border: 2px solid #0b3b38; font-size: 1.4rem; filter: none; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
+.wd-org.wd-in .wd-em { border: 3px solid var(--vs-gold); box-shadow: 0 0 0 3px rgba(242, 199, 99, 0.35), 0 2px 0 rgba(0, 0, 0, 0.3); }
+.wd-org.wd-none .wd-em { background: rgba(246, 240, 224, 0.75); }
+.wd-org.wd-none .wd-org-tag { opacity: 0.85; }
 .wd-org-tag { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; }
 .wd-mid { position: absolute; transform: translate(-50%, -50%); width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--vs-gold); background: #f6f0e0; display: grid; place-items: center; font-size: 1.25rem; cursor: pointer; z-index: 4; padding: 0; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
 .wd-mid.wd-faint { border-color: rgba(242, 199, 99, 0.55); background: rgba(246, 240, 224, 0.75); }
