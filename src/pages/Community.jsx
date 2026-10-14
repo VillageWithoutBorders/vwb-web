@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { fetchCalendarEvents, filterByDistance, savePlace, startingOrigin, memberArea, dayLabel } from '../utils/calendar'
 import { CalendarLocationBar, CalendarEventCard } from '../components/CalendarParts'
-import { CATEGORIES, CAT_ICONS } from '../utils/resourceCategories'
+import { CATEGORIES, CAT_ICON_FILES } from '../utils/resourceCategories'
+import '../find-help.css'
 
 // Community: what's happening and who's organizing near you, then a way
 // to find help, then a way to start something. The place comes from the
@@ -249,7 +250,7 @@ export default function Community() {
         <div className="hub-tiles">
           {CATEGORIES.map((cat) => (
             <Link key={cat} className="hub-tile" to={'/community/resources?cat=' + encodeURIComponent(cat)}>
-              <span className="hub-tile-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: CAT_ICONS[cat] || '&#128204;' }} />
+              <img className="hub-tile-icon" src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="40" height="40" />
               <span>{cat}</span>
             </Link>
           ))}
