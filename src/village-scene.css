@@ -76,3 +76,11 @@
 
 /* Sister villages sheet: the village row with its Sister Campfire button under it. */
 .vs-sister { display: grid; gap: 8px; margin-bottom: 12px; }
+
+/* Organization page (OrgPage.jsx): members-only spots carry a small lock. */
+.vs-lock { position: absolute; right: -10px; bottom: -4px; font-size: 0.9rem; filter: none; }
+.vs-help-one { display: grid; gap: 8px; }
+.vs-sheet .cal-box, .vs-sheet .hub-section { margin: 0; }
+.vs-sheet .hub-resource-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+.vs-sheet .hub-resource-links a { color: var(--vs-gold); min-height: 44px; display: inline-flex; align-items: center; }
+.vs-body .cal-box h3 { margin: 0 0 0.4rem; font-size: 1.05rem; }

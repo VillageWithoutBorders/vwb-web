@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
-import OrgMemberNames from '../components/OrgMemberNames'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { fetchCalendarEvents } from '../utils/calendar'
@@ -8,39 +7,68 @@ import { CalendarEventList } from '../components/CalendarParts'
 import { resourceCats } from '../utils/resourceCategories'
 import QrShare from '../components/QrShare'
 import CalendarSubscribe from '../components/CalendarSubscribe'
-import BackLink from '../components/BackLink'
 import OrgVillages from '../components/OrgVillages'
+import OrgRules from '../components/OrgRules'
+import OrgMemberNames from '../components/OrgMemberNames'
+import { ORG_SPOTS, ORG_DECOR } from '../data/worldElements'
+import '../village-scene.css'
 
-// One organization: who they are, what's coming up, what they share, and
-// how to reach them. Organizers can set the group's home area here.
+// The Organization page: one organization as a little world, the same way a
+// village page works. Every element on the hills opens its part. Members-only
+// parts show faded with a lock to everyone else. A plain list sits below.
+// Heads and organizers also get their settings at the bottom.
+// Names follow the VWB Vocabulary sheet. Route: /orgs/:id
+
+const ROLE = { admin: 'Head', organizer: 'Organizer', member: 'Member' }
 
 function safeLink(url) {
   if (!url) return null
   return /^https?:\/\//i.test(url) ? url : 'https://' + url
 }
 
+function stillMotion() {
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+}
+
 export default function OrgPage() {
   const { id } = useParams()
-  const { organizations } = useAuth()
+  const navigate = useNavigate()
+  const { user, organizations } = useAuth()
+
   const [org, setOrg] = useState(null)
   const [place, setPlace] = useState('')
   const [loading, setLoading] = useState(true)
   const [missing, setMissing] = useState(false)
   const [events, setEvents] = useState([])
-  const [allEvents, setAllEvents] = useState([])
   const [resources, setResources] = useState([])
+  const [contactEmail, setContactEmail] = useState(null)
+  const [links, setLinks] = useState([])
+  const [villageCount, setVillageCount] = useState(0)
+  const [chats, setChats] = useState([])
+  const [posts, setPosts] = useState(null)
+  const [postsError, setPostsError] = useState('')
+  const [asked, setAsked] = useState(false)
+  const [askNote, setAskNote] = useState('')
+  const [asking, setAsking] = useState(false)
 
+  const [sheet, setSheet] = useState(null)
+  const [bump, setBump] = useState(null)
+  const sheetRef = useRef(null)
+  const lastFocus = useRef(null)
+
+  // Organizer settings (moved here unchanged from the old page)
   const [zip, setZip] = useState('')
   const [savingZip, setSavingZip] = useState(false)
   const [zipNote, setZipNote] = useState('')
   const [savingPrivacy, setSavingPrivacy] = useState(false)
   const [privacyNote, setPrivacyNote] = useState('')
-  const [contactEmail, setContactEmail] = useState(null)
   const [savingEmail, setSavingEmail] = useState(false)
   const [emailNote, setEmailNote] = useState('')
 
-  const mine = organizations.find((o) => o.id === id)
+  const mine = (organizations || []).find((o) => o.id === id)
+  const isMember = !!mine
   const canManage = !!mine && (mine.role === 'admin' || mine.role === 'organizer')
+  const isHead = !!mine && mine.role === 'admin'
 
   async function loadOrg() {
     const { data, error } = await supabase
@@ -52,10 +80,12 @@ export default function OrgPage() {
     if (error) console.error('Failed to load organization:', error)
     if (!data) { setMissing(true); return null }
     setOrg(data)
-    const { data: em } = await supabase.rpc('get_org_contact_email', { p_org: id })
+    const { data: em, error: emErr } = await supabase.rpc('get_org_contact_email', { p_org: id })
+    if (emErr) console.error('Failed to load contact email:', emErr)
     setContactEmail(typeof em === 'string' && em ? em : null)
     if (data.home_zip) {
-      const { data: z } = await supabase.from('zip_codes').select('city, state').eq('zip', data.home_zip).maybeSingle()
+      const { data: z, error: zErr } = await supabase.from('zip_codes').select('city, state').eq('zip', data.home_zip).maybeSingle()
+      if (zErr) console.error('Failed to load home area:', zErr)
       setPlace(z ? z.city + ', ' + z.state : data.home_zip)
     } else {
       setPlace('')
@@ -63,10 +93,10 @@ export default function OrgPage() {
     return data
   }
 
+  // The organization, its events, and what it shares.
   useEffect(() => {
     let alive = true
-    setLoading(true)
-    setMissing(false)
+    setLoading(true); setMissing(false); setSheet(null); setPosts(null)
     Promise.all([
       loadOrg(),
       fetchCalendarEvents(),
@@ -74,7 +104,6 @@ export default function OrgPage() {
     ]).then(([, ev, res]) => {
       if (!alive) return
       const now = Date.now()
-      setAllEvents(ev.events || [])
       setEvents((ev.events || [])
         .filter((e) => e.organization_id === id && e.status !== 'cancelled' && new Date(e.ends_at || e.starts_at).getTime() >= now)
         .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at)))
@@ -85,6 +114,247 @@ export default function OrgPage() {
     return () => { alive = false }
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Connections and the villages it works in. Names only.
+  useEffect(() => {
+    let alive = true
+    supabase.rpc('org_connection_lines').then(async ({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load connections:', error); return }
+      const others = (data || []).filter((r) => r.org_a === id || r.org_b === id).map((r) => (r.org_a === id ? r.org_b : r.org_a))
+      if (!others.length) { setLinks([]); return }
+      const { data: names, error: nErr } = await supabase.from('organizations').select('id, name').in('id', others).order('name')
+      if (!alive) return
+      if (nErr) { console.error('Failed to load connected organizations:', nErr); return }
+      setLinks(names || [])
+    })
+    supabase.rpc('org_village_links').then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load villages for this organization:', error); return }
+      setVillageCount((data || []).filter((r) => r.org_id === id).length)
+    })
+    return () => { alive = false }
+  }, [id])
+
+  // Members: the Campfires I am in (general chat, sidechats, shared Campfires).
+  useEffect(() => {
+    if (!isMember || !user) { setChats([]); return }
+    let alive = true
+    Promise.all([
+      supabase.from('community_group_members')
+        .select('group_id, status, community_groups!inner (id, name, organization_id, is_general, parent_group_id)')
+        .eq('user_id', user.id)
+        .eq('community_groups.organization_id', id),
+      canManage ? supabase.rpc('my_org_chats', { p_org: id }) : Promise.resolve({ data: [] }),
+    ]).then(([own, shared]) => {
+      if (!alive) return
+      if (own.error) console.error('Failed to load Campfires:', own.error)
+      if (shared.error) console.error('Failed to load shared Campfires:', shared.error)
+      const byId = new Map()
+      ;(own.data || []).filter((r) => r.status !== 'waiting' && r.community_groups).forEach((r) => byId.set(r.community_groups.id, r.community_groups))
+      ;(shared.data || []).forEach((c) => { if (!byId.has(c.id)) byId.set(c.id, { ...c, shared: true }) })
+      const rank = (c) => (c.is_general ? 0 : c.shared ? 2 : 1)
+      setChats([...byId.values()].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name)))
+    })
+    return () => { alive = false }
+  }, [id, isMember, canManage, user])
+
+  // Not a member: did I already ask to join this week?
+  useEffect(() => {
+    if (isMember) { setAsked(false); return }
+    let alive = true
+    supabase.rpc('my_org_join_ask', { p_org: id }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to check your ask to join:', error); return }
+      setAsked(!!data)
+    })
+    return () => { alive = false }
+  }, [id, isMember])
+
+  // Needs and offers load when someone opens them.
+  async function loadPosts() {
+    setPostsError('')
+    if (canManage) {
+      const { data, error } = await supabase.rpc('org_needs_and_offers', { p_org: id })
+      if (error) { console.error('Failed to load needs and offers:', error); setPostsError("We couldn't load needs and offers. Try again."); setPosts([]); return }
+      setPosts((data || []).filter((p) => p.status === 'open'))
+      return
+    }
+    const [r, o] = await Promise.all([
+      supabase.from('help_requests').select('id, skill_needed, description, status, created_at').eq('organization_id', id).eq('status', 'open').order('created_at', { ascending: false }).limit(30),
+      supabase.from('offers').select('id, title, description, is_available, created_at').eq('organization_id', id).eq('is_available', true).order('created_at', { ascending: false }).limit(30),
+    ])
+    if (r.error) console.error('Failed to load needs:', r.error)
+    if (o.error) console.error('Failed to load offers:', o.error)
+    if (r.error && o.error) setPostsError("We couldn't load needs and offers. Try again.")
+    setPosts([
+      ...(r.data || []).map((x) => ({ kind: 'need', id: x.id, title: x.skill_needed, description: x.description, created_at: x.created_at })),
+      ...(o.data || []).map((x) => ({ kind: 'offer', id: x.id, title: x.title, description: x.description, created_at: x.created_at })),
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
+  }
+
+  async function askToJoin() {
+    if (asking) return
+    setAsking(true); setAskNote('')
+    const { data, error } = await supabase.rpc('ask_to_join_org', { p_org: id })
+    setAsking(false)
+    if (error) { console.error('Failed to ask to join:', error); setAskNote("We couldn't send that. Check your connection and try again."); return }
+    if (data === 'asked' || data === 'wait') { setAsked(true); setAskNote(data === 'asked' ? 'Sent. The organizers will see your name and can add you.' : 'You already asked this week. The organizers have your name.'); return }
+    if (data === 'member') { setAskNote('You are already part of this organization.'); return }
+    setAskNote("We couldn't send that right now. Try again later.")
+  }
+
+  // Sheet: Escape closes, focus goes in and comes back.
+  useEffect(() => {
+    if (!sheet) return
+    const first = sheetRef.current && sheetRef.current.querySelector('button, a, input')
+    if (first) first.focus()
+    function onKey(e) { if (e.key === 'Escape') closeSheet() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [sheet])
+
+  function openSheet(s) { lastFocus.current = document.activeElement; setSheet(s) }
+  function closeSheet() {
+    setSheet(null)
+    if (lastFocus.current && lastFocus.current.focus) lastFocus.current.focus()
+  }
+
+  const locked = (s) => !!s.members && !isMember
+  const spots = ORG_SPOTS.filter((s) => !s.organizers || canManage)
+  const general = chats.find((c) => c.is_general)
+
+  function info(k) {
+    switch (k) {
+      case 'rules': return { sub: isMember ? 'How this organization runs' : 'Members only' }
+      case 'where': return { sub: villageCount ? 'Works in ' + villageCount + ' village' + (villageCount === 1 ? '' : 's') : 'No villages picked yet' }
+      case 'links': return { sub: links.length ? links.length + ' connected organization' + (links.length === 1 ? '' : 's') : 'No connections yet' }
+      case 'news': return { sub: 'Coming soon' }
+      case 'fires': return { sub: !isMember ? 'Members only' : chats.length ? chats.length + ' Campfire' + (chats.length === 1 ? '' : 's') + ' you are in' : 'No Campfires yet' }
+      case 'events': return { sub: events.length ? events.length + ' coming up' : 'Nothing on the calendar yet' }
+      case 'needs': return { sub: isMember ? 'What we need and what we offer' : 'Members only' }
+      case 'share': return { sub: resources.length ? resources.length + ' shared resource' + (resources.length === 1 ? '' : 's') : 'Nothing shared yet' }
+      case 'members': return { sub: isMember ? 'Who is part of this organization' : 'Members only' }
+      case 'involved': return { sub: isMember ? 'Share this page with a friend' : asked ? 'You asked to join' : 'Ask to join or reach the organizers' }
+      case 'tools': return { sub: 'Members, chats, events, connections' }
+      default: return { sub: '' }
+    }
+  }
+
+  function tap(s) {
+    if (!stillMotion()) { setBump(s.k); setTimeout(() => setBump(null), 450) }
+    if (s.k === 'tools') { navigate('/orgs/' + id + '/dashboard'); return }
+    if (s.k === 'fires' && isMember && chats.length === 1) { navigate('/groups/' + chats[0].id); return }
+    if (s.k === 'needs' && isMember && posts === null) loadPosts()
+    openSheet({ k: s.k })
+  }
+
+  function askButton() {
+    return <>
+      <button type="button" className="btn btn-primary btn-full" onClick={askToJoin} disabled={asking || asked}>
+        {asking ? 'Sending...' : asked ? 'You asked to join' : 'Ask to join ' + org.name}
+      </button>
+      {askNote && <p className="vs-note" role="status">{askNote}</p>}
+    </>
+  }
+
+  function sheetBody(k) {
+    const spot = ORG_SPOTS.find((s) => s.k === k)
+    const title = <h2 id="op-sheet-title"><span aria-hidden="true">{spot.em}</span> {spot.label}</h2>
+    if (locked(spot)) {
+      return <>{title}
+        <p><span aria-hidden="true">{'\u{1F512}'} </span>Only members of {org.name} can open this.</p>
+        {askButton()}
+      </>
+    }
+    if (spot.soon) return <>{title}<p>This part of the organization is coming soon.</p></>
+    switch (k) {
+      case 'rules':
+        return <>{title}<OrgRules orgId={id} isHead={isHead} /></>
+      case 'where':
+        return <>{title}<OrgVillages orgId={id} orgName={org.name} canManage={canManage} /></>
+      case 'links':
+        return <>{title}
+          {links.length === 0 && <p>{org.name} is not connected with another organization yet.</p>}
+          {links.map((o) => (
+            <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
+              <span aria-hidden="true">{'\u{1F465}'}</span> {o.name}<small>Connected organization</small>
+            </button>
+          ))}
+          <p className="vs-note">Heads and organizers of connected organizations share a Campfire {'\u{1F525}'}.</p>
+          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Connect with another organization</Link>}
+        </>
+      case 'fires':
+        return <>{title}
+          {chats.length === 0 && <p>{canManage ? 'No Campfires yet. Start the general chat from Organizer tools.' : 'No Campfires yet. Heads and organizers start the general chat.'}</p>}
+          {chats.map((c) => (
+            <button key={c.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/groups/' + c.id) }}>
+              <span aria-hidden="true">{c.is_general || c.shared ? '\u{1F525}' : '\u{1F4AC}'}</span> {c.name}
+              <small>{c.is_general ? 'General chat, every member' : c.shared ? 'Shared Campfire with a connected organization' : 'Sidechat'}</small>
+            </button>
+          ))}
+          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Start a sidechat</Link>}
+        </>
+      case 'events':
+        return <>{title}
+          <CalendarEventList events={events} emptyText="No upcoming events from this organization yet." />
+          {canManage && <Link className="btn btn-outline btn-full" to="/calendar/new">Post an event</Link>}
+          {!org.hide_from_public && <CalendarSubscribe orgId={id} orgName={org.name} />}
+        </>
+      case 'needs':
+        return <>{title}
+          {posts === null && <p role="status">Loading...</p>}
+          {postsError && <p className="vs-note" role="alert">{postsError}</p>}
+          {posts && posts.length === 0 && !postsError && <p>No open needs or offers right now.</p>}
+          {posts && posts.map((p) => (
+            <button key={p.kind + p.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/skillshare') }}>
+              <span aria-hidden="true">{p.kind === 'need' ? '\u{1F64F}' : '\u{1F381}'}</span> {p.title || (p.kind === 'need' ? 'A need' : 'An offer')}
+              <small>{p.kind === 'need' ? 'Need' : 'Offer'}{p.description ? ': ' + p.description.slice(0, 90) : ''}</small>
+            </button>
+          ))}
+          <div className="vs-help">
+            <button type="button" className="vs-big vs-ask" onClick={() => navigate('/ask')}>Ask for help</button>
+            <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>
+          </div>
+        </>
+      case 'share':
+        return <>{title}
+          {resources.length === 0 && <p>Nothing shared yet.</p>}
+          {resources.map((r) => (
+            <div key={r.id} className="vs-item">
+              <b>{r.name}</b>
+              {r.description && <small>{r.description}</small>}
+              <small>{resourceCats(r).join(' · ')}</small>
+              {(r.phone || r.url) && (
+                <span className="hub-resource-links">
+                  {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')}>Call {r.phone}</a>}
+                  {r.url && <a href={safeLink(r.url)} target="_blank" rel="noopener noreferrer">Website</a>}
+                </span>
+              )}
+            </div>
+          ))}
+        </>
+      case 'members':
+        return <>{title}
+          <OrgMemberNames orgId={id} />
+          <p className="vs-note">{canManage ? 'You can see and add members in Organizer tools.' : 'If no names show, the Head keeps the list private.'}</p>
+          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Open Organizer tools</Link>}
+        </>
+      case 'involved': {
+        const website = safeLink(org.website_url)
+        const social = safeLink(org.social_links?.primary)
+        return <>{title}
+          {isMember ? <p>You are part of {org.name} as {(ROLE[mine.role] || 'member').toLowerCase()}.</p> : askButton()}
+          {contactEmail && org.show_contact_email && <a className="btn btn-outline btn-full" href={'mailto:' + contactEmail}>Email {org.name}</a>}
+          {website && <a className="btn btn-outline btn-full" href={website} target="_blank" rel="noopener noreferrer">Visit their website</a>}
+          {social && <a className="btn btn-outline btn-full" href={social} target="_blank" rel="noopener noreferrer">Follow them online</a>}
+          {isMember && <QrShare url={window.location.origin + '/orgs/' + id} title={org.name} hint="Your friend scans this to open this organization's page, see what's coming up, and get in touch." />}
+        </>
+      }
+      default: return title
+    }
+  }
+
+  // ----- Organizer settings (same as before) -----
   async function saveZip(e, raw = zip) {
     e.preventDefault()
     const clean = String(raw || '').replace(/[^0-9]/g, '')
@@ -92,11 +362,7 @@ export default function OrgPage() {
     setSavingZip(true); setZipNote('')
     const { data, error } = await supabase.rpc('set_org_home_zip', { p_org: id, p_zip: clean || null })
     setSavingZip(false)
-    if (error) {
-      console.error('Failed to set home zip:', error)
-      setZipNote("We couldn't save that. Try again.")
-      return
-    }
+    if (error) { console.error('Failed to set home zip:', error); setZipNote("We couldn't save that. Try again."); return }
     if (data === 'not_found') { setZipNote("We couldn't find that zip code. Check it and try again."); return }
     setZip('')
     setZipNote(data === 'cleared' ? 'Home area removed.' : 'Saved. Neighbors nearby will see your group.')
@@ -108,11 +374,7 @@ export default function OrgPage() {
     setSavingPrivacy(true); setPrivacyNote('')
     const { error } = await supabase.rpc('set_org_hide_from_public', { p_org: id, p_hide: next })
     setSavingPrivacy(false)
-    if (error) {
-      console.error('Failed to change group privacy:', error)
-      setPrivacyNote("We couldn't save that. Try again.")
-      return
-    }
+    if (error) { console.error('Failed to change group privacy:', error); setPrivacyNote("We couldn't save that. Try again."); return }
     setPrivacyNote(next ? 'Saved. Your group is now hidden from the public.' : 'Saved. Your group can now be seen by anyone.')
     await loadOrg()
   }
@@ -122,132 +384,142 @@ export default function OrgPage() {
     setSavingEmail(true); setEmailNote('')
     const { error } = await supabase.rpc('set_org_show_contact_email', { p_org: id, p_show: next })
     setSavingEmail(false)
-    if (error) {
-      console.error('Failed to change contact email setting:', error)
-      setEmailNote("We couldn't save that. Try again.")
-      return
-    }
+    if (error) { console.error('Failed to change contact email setting:', error); setEmailNote("We couldn't save that. Try again."); return }
     setEmailNote(next ? 'Saved. Your contact email now shows on this page.' : 'Saved. Your contact email is hidden.')
     await loadOrg()
   }
 
-  if (loading) return <div className="cal-page"><p className="cal-empty">Loading...</p></div>
+  if (loading) return <div className="vs-page"><p className="vs-loading" role="status">Loading the organization...</p></div>
   if (missing || !org) {
-    return (
-      <div className="cal-page">
-        <BackLink fallback="/community" fallbackLabel="Community" />
-        <p className="cal-empty">We couldn't find this group. It may not be on VWB anymore.</p>
-      </div>
-    )
+    return <div className="vs-page">
+      <div className="vs-top"><Link className="vs-crumb" to="/villages?tab=orgs">Village Network</Link></div>
+      <p className="vs-error" role="alert">We couldn't find this organization. It may not be on VWB anymore.</p>
+    </div>
   }
 
-  const website = safeLink(org.website_url)
-  const social = safeLink(org.social_links?.primary)
+  const path = 'M' + spots.slice().sort((a, b) => a.y - b.y).map((s) => s.x + ' ' + s.y).join(' L')
 
   return (
-    <div className="cal-page hub-page">
-      <BackLink fallback="/community" fallbackLabel="Community" />
-      <h1 className="hub-org-name">{org.name}</h1>
-      {place && <p className="cal-sub">Based near {place}</p>}
-      {mine && <p className="hub-member-note">You're part of this group</p>}
-      {canManage && <Link to={'/orgs/' + id + '/dashboard'} className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.75rem' }}>Open organization dashboard</Link>}
-      {org.description && <p className="hub-org-about">{org.description}</p>}
-      {(mine || canManage) && <QrShare url={window.location.origin + '/orgs/' + id} title={org.name} hint="Your friend scans this to open this group's page, see what's coming up, and get in touch." />}
+    <div className="vs-page">
+      <nav className="vs-top" aria-label="Where you are">
+        <Link className="vs-crumb" to="/villages?tab=orgs">Village Network</Link>
+        <span className="vs-sep" aria-hidden="true">&#8250;</span>
+        <span className="vs-here" aria-current="page">{org.name}</span>
+      </nav>
 
-      {(contactEmail && org.show_contact_email || website || social) && (
-        <section className="cal-box" aria-labelledby="org-contact">
-          <h2 id="org-contact">Get involved</h2>
-          <div className="cal-actions">
-            {contactEmail && org.show_contact_email && <a className="btn btn-primary btn-full" href={'mailto:' + contactEmail}>Email {org.name}</a>}
-            {website && <a className="btn btn-outline btn-full" href={website} target="_blank" rel="noopener noreferrer">Visit their website</a>}
-            {social && <a className="btn btn-outline btn-full" href={social} target="_blank" rel="noopener noreferrer">Follow them online</a>}
-          </div>
-        </section>
-      )}
-
-      <section className="hub-section" aria-labelledby="org-events">
-        <div className="hub-section-head">
-          <h2 id="org-events">Coming up</h2>
-          {canManage && <Link to="/calendar/new" className="hub-more">+ Post an event</Link>}
+      <div className="vs-title">
+        <h1>{org.name}</h1>
+        <div className="vs-chips">
+          {isMember ? <span className="vs-chip vs-chip-in">{ROLE[mine.role] || 'Member'}</span> : <span className="vs-chip">Public view</span>}
+          <span className="vs-chip">{'\u{1F465}'} Organization</span>
+          {place && <span className="vs-chip">Near {place}</span>}
+          {org.hide_from_public && <span className="vs-chip">Seen only by VWB members</span>}
         </div>
-        <CalendarEventList events={events} emptyText="No upcoming events from this group yet." />
-      </section>
+        {org.description && <p className="vs-note" style={{ marginTop: 10 }}>{org.description}</p>}
+      </div>
 
-      {!org.hide_from_public && <CalendarSubscribe orgId={id} orgName={org.name} />}
-
-      <OrgVillages orgId={id} orgName={org.name} canManage={canManage} />
-
-
-      <section className="hub-section" aria-labelledby="org-resources">
-        <div className="hub-section-head">
-          <h2 id="org-resources">What they share</h2>
-        </div>
-        {resources.length === 0 && <p className="hub-empty">No resources shared yet.</p>}
-        {resources.map((r) => (
-          <div key={r.id} className="cal-card hub-resource">
-            <span className="cal-card-title">{r.name}</span>
-            {r.description && <span className="hub-org-desc">{r.description}</span>}
-            <span className="cal-card-meta">{resourceCats(r).join(' · ')}</span>
-            {(r.phone || r.url) && (
-              <span className="hub-resource-links">
-                {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')}>Call {r.phone}</a>}
-                {r.url && <a href={safeLink(r.url)} target="_blank" rel="noopener noreferrer">Website</a>}
-              </span>
-            )}
-          </div>
+      <div className="vs-scene">
+        <img className="vs-ground" src="/art/village-ground.webp" alt="" width="901" height="451" fetchpriority="high" />
+        <svg className="vs-walk" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d={path} fill="none" stroke="#f2c763" strokeOpacity="0.6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1 3" vectorEffect="non-scaling-stroke" style={{ strokeWidth: '10px' }} />
+        </svg>
+        {ORG_DECOR.map(([em, x, y], i) => (
+          <span key={i} className="vs-deco" aria-hidden="true" style={{ left: x + '%', top: y + '%' }}>{em}</span>
         ))}
-      </section>
+        {spots.map((s) => {
+          const i = info(s.k)
+          const lock = locked(s)
+          return (
+            <button key={s.k} type="button"
+              className={'vs-el' + (s.soon || lock ? ' vs-soon' : '') + (s.k === 'fires' && !lock ? ' vs-flame' : '') + (bump === s.k ? ' vs-bump' : '')}
+              style={{ left: s.x + '%', top: s.y + '%' }}
+              aria-label={s.label + '. ' + i.sub}
+              onClick={() => tap(s)}>
+              <span className="vs-em" aria-hidden="true">{s.em}{lock && <span className="vs-lock">{'\u{1F512}'}</span>}</span>
+              <span className="vs-lab">{s.short}</span>
+            </button>
+          )
+        })}
+        <div className="vs-fade" />
+      </div>
 
-      {canManage && (
-        <section className="cal-box" aria-labelledby="org-home">
-          <h2 id="org-home">Home area</h2>
-          <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
-            {org.home_zip
-              ? 'Your group shows up for neighbors near ' + (place || org.home_zip) + '. Only the zip code is saved, never an address.'
-              : "Add the zip code where your group serves, so neighbors can find you even before you post. Only the zip code is saved, never an address."}
-          </p>
-          <form className="hub-search" onSubmit={(e) => saveZip(e)} noValidate>
-            <label htmlFor="org-zip" className="sr-only">Home zip code</label>
-            <input id="org-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} placeholder={org.home_zip || '12345'} value={zip} onChange={(e) => { setZip(e.target.value.replace(/[^0-9]/g, '')); setZipNote('') }} aria-describedby={zipNote ? 'org-zip-note' : undefined} />
-            <button type="submit" className="btn btn-primary" disabled={savingZip || !zip}>{savingZip ? 'Saving...' : 'Save'}</button>
-          </form>
-          {org.home_zip && (
-            <button type="button" className="hub-link-btn" onClick={() => { setZip(''); saveZip({ preventDefault() {} }, '') }} disabled={savingZip}>Remove home area</button>
+      <p className="vs-hint">Tap anything to go there.</p>
+
+      <div className="vs-body">
+        {!isMember && <div className="vs-help-one">{askButton()}</div>}
+        {isMember && general && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/groups/' + general.id)}>{'\u{1F525}'} Open the general chat</button>}
+        <h2>Or pick from the list</h2>
+        <div className="vs-list">
+          {spots.map((s) => {
+            const i = info(s.k)
+            const lock = locked(s)
+            return (
+              <button key={s.k} type="button" className={'vs-room' + (s.soon || lock ? ' vs-soon' : '')} onClick={() => tap(s)}>
+                <span className="vs-room-ic" aria-hidden="true">{s.em}</span>
+                <span className="vs-room-text"><b>{s.label}{lock && <span aria-hidden="true"> {'\u{1F512}'}</span>}</b><small>{i.sub}</small></span>
+                <span className="vs-go" aria-hidden="true">&#8250;</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {canManage && <>
+          <h2>Organizer settings</h2>
+          <section className="cal-box" aria-labelledby="org-home">
+            <h3 id="org-home">Home area</h3>
+            <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
+              {org.home_zip
+                ? 'Your group shows up for neighbors near ' + (place || org.home_zip) + '. Only the zip code is saved, never an address.'
+                : 'Add the zip code where your group serves, so neighbors can find you even before you post. Only the zip code is saved, never an address.'}
+            </p>
+            <form className="hub-search" onSubmit={(e) => saveZip(e)} noValidate>
+              <label htmlFor="org-zip" className="sr-only">Home zip code</label>
+              <input id="org-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} placeholder={org.home_zip || '12345'} value={zip} onChange={(e) => { setZip(e.target.value.replace(/[^0-9]/g, '')); setZipNote('') }} aria-describedby={zipNote ? 'org-zip-note' : undefined} />
+              <button type="submit" className="btn btn-primary" disabled={savingZip || !zip}>{savingZip ? 'Saving...' : 'Save'}</button>
+            </form>
+            {org.home_zip && (
+              <button type="button" className="hub-link-btn" onClick={() => { setZip(''); saveZip({ preventDefault() {} }, '') }} disabled={savingZip}>Remove home area</button>
+            )}
+            {zipNote && <p id="org-zip-note" className="hub-note" role="status">{zipNote}</p>}
+          </section>
+
+          <section className="cal-box" aria-labelledby="org-privacy">
+            <h3 id="org-privacy">Who can see your group</h3>
+            <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
+              {org.hide_from_public
+                ? 'Only people with a VWB account can see your group, its resources and its events. Nothing shows to the public or on the website.'
+                : 'Your group, its resources and its public events can be seen by anyone, including on the website.'}
+            </p>
+            <button type="button" className="btn btn-outline btn-full" onClick={togglePrivacy} disabled={savingPrivacy} style={{ minHeight: '44px' }}>
+              {savingPrivacy ? 'Saving...' : org.hide_from_public ? 'Show my group to the public' : 'Only show my group to people with an account'}
+            </button>
+            {privacyNote && <p className="hub-note" role="status">{privacyNote}</p>}
+          </section>
+
+          {contactEmail && (
+            <section className="cal-box" aria-labelledby="org-email">
+              <h3 id="org-email">Your contact email</h3>
+              <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
+                {org.show_contact_email
+                  ? 'Your email button shows on this page for anyone who can see your group.'
+                  : 'Your email is private. Nobody can see it, not even VWB admins. You can choose to show an Email button.'}
+              </p>
+              <button type="button" className="btn btn-outline btn-full" onClick={toggleContactEmail} disabled={savingEmail} style={{ minHeight: '44px' }}>
+                {savingEmail ? 'Saving...' : org.show_contact_email ? 'Hide my email' : 'Show an Email button'}
+              </button>
+              {emailNote && <p className="hub-note" role="status">{emailNote}</p>}
+            </section>
           )}
-          {zipNote && <p id="org-zip-note" className="hub-note" role="status">{zipNote}</p>}
-        </section>
-      )}
+        </>}
+      </div>
 
-      {canManage && (
-        <section className="cal-box" aria-labelledby="org-privacy">
-          <h2 id="org-privacy">Who can see your group</h2>
-          <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
-            {org.hide_from_public
-              ? 'Only people with a VWB account can see your group, its resources and its events. Nothing shows to the public or on the website.'
-              : 'Your group, its resources and its public events can be seen by anyone, including on the website.'}
-          </p>
-          <button type="button" className="btn btn-outline btn-full" onClick={togglePrivacy} disabled={savingPrivacy} style={{ minHeight: '44px' }}>
-            {savingPrivacy ? 'Saving...' : org.hide_from_public ? 'Show my group to the public' : 'Only show my group to people with an account'}
-          </button>
-          {privacyNote && <p className="hub-note" role="status">{privacyNote}</p>}
-        </section>
-      )}
-
-      {mine && !canManage && <OrgMemberNames orgId={id} />}
-
-      {canManage && contactEmail && (
-        <section className="cal-box" aria-labelledby="org-email">
-          <h2 id="org-email">Your contact email</h2>
-          <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
-            {org.show_contact_email
-              ? 'Your email button shows on this page for anyone who can see your group.'
-              : 'Your email is private. Nobody can see it, not even VWB admins. You can choose to show an Email button.'}
-          </p>
-          <button type="button" className="btn btn-outline btn-full" onClick={toggleContactEmail} disabled={savingEmail} style={{ minHeight: '44px' }}>
-            {savingEmail ? 'Saving...' : org.show_contact_email ? 'Hide my email' : 'Show an Email button'}
-          </button>
-          {emailNote && <p className="hub-note" role="status">{emailNote}</p>}
-        </section>
+      {sheet && (
+        <div className="vs-shade" onClick={(e) => { if (e.target === e.currentTarget) closeSheet() }}>
+          <div className="vs-sheet" role="dialog" aria-modal="true" aria-labelledby="op-sheet-title" ref={sheetRef}>
+            {sheetBody(sheet.k)}
+            <button type="button" className="btn btn-outline btn-full" onClick={closeSheet}>Back to {org.name}</button>
+          </div>
+        </div>
       )}
     </div>
   )
