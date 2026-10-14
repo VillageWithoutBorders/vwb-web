@@ -293,7 +293,7 @@ export default function VillageScene() {
         {VILLAGE_SPOTS.map((s) => {
           const i = info(s.k)
           return (
-            <button key={s.k} type="button"
+            <button key={s.k} type="button" data-spot={s.k}
               className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' : '') + (bump === s.k ? ' vs-bump' : '')}
               style={{ left: s.x + '%', top: s.y + '%', '--s': s.s || 1 }}
               aria-label={s.label + '. ' + i.sub}
@@ -311,7 +311,7 @@ export default function VillageScene() {
 
       <div className="vs-body">
         {!mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>Join {village.name}</button>}
-        {mine && keepers && keepers.i_am_keeper && <button type="button" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true">{'\u{1F9F0}'}</span> Keeper tools</button>}
+        {mine && keepers && keepers.i_am_keeper && <button type="button" data-tour="keeper-tools" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true">{'\u{1F9F0}'}</span> Keeper tools</button>}
         <div className="vs-help">
           <button type="button" className="vs-big vs-ask" onClick={() => navigate('/ask')}>Ask for help</button>
           <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>

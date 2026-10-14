@@ -424,7 +424,7 @@ export default function OrgPage() {
           const i = info(s.k)
           const lock = locked(s)
           return (
-            <button key={s.k} type="button"
+            <button key={s.k} type="button" data-spot={s.k}
               className={'vs-el' + (s.soon || lock ? ' vs-soon' : '') + (s.k === 'fires' && !lock ? ' vs-flame' : '') + (bump === s.k ? ' vs-bump' : '')}
               style={{ left: s.x + '%', top: s.y + '%', '--s': s.s || 1 }}
               aria-label={s.label + '. ' + i.sub}

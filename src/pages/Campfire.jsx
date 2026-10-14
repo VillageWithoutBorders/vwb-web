@@ -616,7 +616,7 @@ export default function Campfire() {
           ['Other villages', orderedBoards.filter(x => x.village_id && !memberSet.has(x.village_id) && match(x))],
         ]
         const row = (b) => (
-          <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid var(--accent)' : '1px solid #333', background: b.id === activeBoardId ? 'var(--success-bg)' : '#222', color: b.id === activeBoardId ? 'var(--accent)' : '#eee', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
+          <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid var(--accent)' : '1px solid var(--border)', background: b.id === activeBoardId ? 'var(--success-bg)' : 'var(--surface-2)', color: b.id === activeBoardId ? 'var(--accent)' : 'var(--text)', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
             <span style={{ flex: 1 }}>{b.sister_a && <span aria-hidden="true">{'\u{1F525}'} </span>}{b.name}{b.sister_a && b.archived ? ' (closed)' : ''}</span>
             {unreadFor(b) > 0 && <span aria-label={unreadFor(b) + ' new'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{unreadFor(b) > 99 ? '99+' : unreadFor(b)}</span>}
             {b.id === activeBoardId && <span aria-hidden="true">&#10003;</span>}
@@ -667,7 +667,7 @@ export default function Campfire() {
 
       {isVillageBoard && inVillage && <VillageNewMembers villageId={activeBoard.village_id} myId={user.id} />}
       {isSister && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 1rem', borderBottom: '1px solid var(--warn-bg)', background: sisterClosed ? '#2a1a20' : '#2e2a1a', color: sisterClosed ? '#ffb3c7' : 'var(--gold)', fontSize: '0.9rem', lineHeight: 1.4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 1rem', borderBottom: '1px solid var(--warn-bg)', background: sisterClosed ? '#2a1a20' : 'var(--warn-bg)', color: sisterClosed ? '#ffb3c7' : 'var(--gold)', fontSize: '0.9rem', lineHeight: 1.4 }}>
           <p style={{ margin: 0, flex: '1 1 12rem' }}>
             <span aria-hidden="true">{'\u{1F525}'} </span>
             {sisterClosed
@@ -678,13 +678,13 @@ export default function Campfire() {
         </div>
       )}
       {isVillageBoard && inVillage && removalRequests.some(r => r.requested_by !== user.id) && (
-        <button type="button" onClick={() => setShowPeople(true)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem 1rem', minHeight: '44px', background: '#2e2a1a', border: 'none', borderBottom: '1px solid var(--warn-bg)', color: 'var(--gold)', fontSize: '0.9rem', cursor: 'pointer' }}>
+        <button type="button" onClick={() => setShowPeople(true)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem 1rem', minHeight: '44px', background: 'var(--warn-bg)', border: 'none', borderBottom: '1px solid var(--warn-bg)', color: 'var(--gold)', fontSize: '0.9rem', cursor: 'pointer' }}>
           &#9888; A member asked to remove someone. A second member is needed. Tap to look.
         </button>
       )}
 
       {visibleEmergencies.length > 0 && (
-        <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--warn-bg)', background: '#2e2a1a' }}>
+        <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--warn-bg)', background: 'var(--warn-bg)' }}>
           {visibleEmergencies.map(ev => (
             <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', border: '2px solid var(--warn)', borderRadius: '12px', padding: '0.65rem 0.85rem', background: 'var(--warn-bg)' }}>
               <span style={{ fontSize: '1.5rem', lineHeight: 1, color: 'var(--warn)', flexShrink: 0 }}>&#9888;</span>
@@ -775,7 +775,7 @@ export default function Campfire() {
                   setRevealedMeta(prev => prev === msg.id ? null : msg.id)
                   if (openMsgMenu && openMsgMenu !== msg.id) setOpenMsgMenu(null)
                 }}
-                style={{ position: 'relative', padding: '0.5rem 0.75rem', borderRadius: bubbleRadius, background: isMe ? 'var(--accent)' : '#2a2a2a', color: isMe ? 'var(--on-accent)' : '#eee', border: isMe ? 'none' : '1px solid #444' }}
+                style={{ position: 'relative', padding: '0.5rem 0.75rem', borderRadius: bubbleRadius, background: isMe ? 'var(--accent)' : 'var(--surface-2)', color: isMe ? 'var(--on-accent)' : 'var(--text)', border: isMe ? 'none' : '1px solid var(--border-strong)' }}
               >
                 {msg.reply_to && (() => {
                   const orig = messages.find(m => m.id === msg.reply_to)
@@ -878,7 +878,7 @@ export default function Campfire() {
           Say hello. Add what you like doing and how you would like to be involved in your community.
         </p>
       )}
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', padding: '0.75rem 1rem', borderTop: introHint && !editing ? 'none' : '1px solid #333', background: 'var(--surface)' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', padding: '0.75rem 1rem', borderTop: introHint && !editing ? 'none' : '1px solid var(--border)', background: 'var(--surface)' }}>
         <textarea
           ref={inputRef}
           rows={Math.min(6, Math.max(1, newMsg.split('\n').length))}
