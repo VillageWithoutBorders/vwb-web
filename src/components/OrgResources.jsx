@@ -17,7 +17,7 @@ const FIELDS = [
   ['requirements', 'What to bring, or things to know', 'area'],
 ]
 
-const inputStyle = { display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem', fontFamily: 'inherit' }
+const inputStyle = { display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', fontFamily: 'inherit' }
 
 export default function OrgResources({ orgId }) {
   const [rows, setRows] = useState(null)
@@ -119,26 +119,26 @@ export default function OrgResources({ orgId }) {
         ))}
         <span id={idPrefix + '-links'} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Other links (Facebook page, sign-up form, map)</span>
         {draft.links.map((l, i) => (
-          <div key={i} role="group" aria-label={'Link ' + (i + 1)} style={{ marginBottom: '0.6rem', padding: '0.5rem', border: '1px solid #333', borderRadius: '8px' }}>
+          <div key={i} role="group" aria-label={'Link ' + (i + 1)} style={{ marginBottom: '0.6rem', padding: '0.5rem', border: '1px solid var(--border)', borderRadius: '8px' }}>
             <label htmlFor={idPrefix + '-ll-' + i} style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.2rem' }}>What to call it</label>
             <input id={idPrefix + '-ll-' + i} type="text" maxLength={40} autoComplete="off" value={l.label} onChange={(e) => setLink(i, 'label', e.target.value)} placeholder="Facebook page" style={inputStyle} />
             <label htmlFor={idPrefix + '-lu-' + i} style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Link</label>
             <input id={idPrefix + '-lu-' + i} type="url" inputMode="url" autoComplete="off" value={l.url} onChange={(e) => setLink(i, 'url', e.target.value)} placeholder="https://" style={inputStyle} />
-            <button type="button" onClick={() => setDraft({ ...draft, links: draft.links.filter((_, j) => j !== i) })} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #c0392b', background: 'none', color: '#ff7b6b', fontSize: '0.95rem', cursor: 'pointer' }}>Remove this link</button>
+            <button type="button" onClick={() => setDraft({ ...draft, links: draft.links.filter((_, j) => j !== i) })} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid var(--error)', background: 'none', color: 'var(--danger)', fontSize: '0.95rem', cursor: 'pointer' }}>Remove this link</button>
           </div>
         ))}
         {draft.links.length < 8 && (
-          <button type="button" onClick={() => setDraft({ ...draft, links: [...draft.links, { label: '', url: '' }] })} style={{ minHeight: '44px', padding: '0 1rem', marginBottom: '0.75rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer' }}>+ Add a link</button>
+          <button type="button" onClick={() => setDraft({ ...draft, links: [...draft.links, { label: '', url: '' }] })} style={{ minHeight: '44px', padding: '0 1rem', marginBottom: '0.75rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer' }}>+ Add a link</button>
         )}
         <span id={idPrefix + '-cats'} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Categories (pick one or more)</span>
         <div role="group" aria-labelledby={idPrefix + '-cats'} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
           {CATEGORIES.map((c) => (
-            <button key={c} type="button" aria-pressed={draft.categories.includes(c)} onClick={() => toggleCat(c)} style={{ minHeight: '44px', padding: '0 0.85rem', borderRadius: '22px', border: '1px solid ' + (draft.categories.includes(c) ? '#4ecca3' : '#444'), background: draft.categories.includes(c) ? '#4ecca3' : 'none', color: draft.categories.includes(c) ? '#1a1a1a' : '#ddd', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>{c}</button>
+            <button key={c} type="button" aria-pressed={draft.categories.includes(c)} onClick={() => toggleCat(c)} style={{ minHeight: '44px', padding: '0 0.85rem', borderRadius: '22px', border: '1px solid ' + (draft.categories.includes(c) ? 'var(--accent)' : 'var(--border-strong)'), background: draft.categories.includes(c) ? 'var(--accent)' : 'none', color: draft.categories.includes(c) ? 'var(--on-accent)' : 'var(--text)', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>{c}</button>
           ))}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button type="submit" disabled={busy} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>{busy ? 'Saving...' : adding ? 'Add resource' : 'Save'}</button>
-          <button type="button" onClick={() => { setEditing(null); setAdding(false) }} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#ccc', fontSize: '1rem', cursor: 'pointer' }}>Cancel</button>
+          <button type="submit" disabled={busy} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>{busy ? 'Saving...' : adding ? 'Add resource' : 'Save'}</button>
+          <button type="button" onClick={() => { setEditing(null); setAdding(false) }} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontSize: '1rem', cursor: 'pointer' }}>Cancel</button>
         </div>
       </form>
     )
@@ -148,46 +148,46 @@ export default function OrgResources({ orgId }) {
     <section className="hub-section" aria-labelledby="od-resources">
       <div className="hub-section-head">
         <h2 id="od-resources">Resources</h2>
-        {!adding && <button type="button" onClick={openAdd} style={{ background: 'none', border: 'none', color: '#4ecca3', minHeight: '44px', padding: '0 0.25rem', fontSize: '1rem', cursor: 'pointer' }}>+ Add resource</button>}
+        {!adding && <button type="button" onClick={openAdd} style={{ background: 'none', border: 'none', color: 'var(--accent)', minHeight: '44px', padding: '0 0.25rem', fontSize: '1rem', cursor: 'pointer' }}>+ Add resource</button>}
       </div>
-      {adding && <div style={{ padding: '0.75rem', background: '#1e1e1e', border: '1px solid #4ecca3', borderRadius: '10px', marginBottom: '0.5rem' }}>{renderForm('or-new')}</div>}
+      {adding && <div style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--accent)', borderRadius: '10px', marginBottom: '0.5rem' }}>{renderForm('or-new')}</div>}
       {rows === null && <p>Loading...</p>}
       {rows && rows.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No resources are listed under this group yet. Tap Add resource to list one.</p>}
       {rows && rows.length > 0 && (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {rows.map((r) => (
-            <li key={r.id} style={{ padding: '0.75rem', background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px' }}>
+            <li key={r.id} style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px' }}>
               {editing === r.id ? (
                 renderForm('or-' + r.id)
               ) : (
                 <>
                   <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{r.name}</div>
-                  {!r.verified && <div style={{ fontSize: '0.85rem', color: '#e0b84c', marginTop: '0.2rem' }}>Waiting for review. Only organizers see it.</div>}
-                  {r.description && <p style={{ margin: '0.3rem 0 0', fontSize: '0.9rem', color: '#ccc', overflowWrap: 'anywhere' }}>{r.description}</p>}
-                  {Array.isArray(r.links) && r.links.length > 0 && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#aaa' }}>{r.links.length} extra {r.links.length === 1 ? 'link' : 'links'}</p>}
-                  {(r.phone || r.address) && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: '#aaa', overflowWrap: 'anywhere' }}>{r.phone}{r.phone && r.address ? ' · ' : ''}{r.address && <AddressLink address={r.address} inline />}</p>}
-                  <button type="button" onClick={() => open(r)} style={{ marginTop: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Edit</button>
+                  {!r.verified && <div style={{ fontSize: '0.85rem', color: 'var(--gold)', marginTop: '0.2rem' }}>Waiting for review. Only organizers see it.</div>}
+                  {r.description && <p style={{ margin: '0.3rem 0 0', fontSize: '0.9rem', color: 'var(--text-soft)', overflowWrap: 'anywhere' }}>{r.description}</p>}
+                  {Array.isArray(r.links) && r.links.length > 0 && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{r.links.length} extra {r.links.length === 1 ? 'link' : 'links'}</p>}
+                  {(r.phone || r.address) && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', overflowWrap: 'anywhere' }}>{r.phone}{r.phone && r.address ? ' · ' : ''}{r.address && <AddressLink address={r.address} inline />}</p>}
+                  <button type="button" onClick={() => open(r)} style={{ marginTop: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Edit</button>
                   {removing === r.id ? (
                     <div style={{ marginTop: '0.5rem' }}>
                       <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>Remove this for everyone? This can't be undone.</p>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button type="button" disabled={busy} onClick={() => remove(r)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: '#c0392b', color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>Yes, remove</button>
-                        <button type="button" onClick={() => setRemoving(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#ccc', fontSize: '1rem', cursor: 'pointer' }}>Keep it</button>
+                        <button type="button" disabled={busy} onClick={() => remove(r)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: 'var(--error)', color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>Yes, remove</button>
+                        <button type="button" onClick={() => setRemoving(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontSize: '1rem', cursor: 'pointer' }}>Keep it</button>
                       </div>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => { setNote(''); setEditing(null); setAdding(false); setRemoving(r.id) }} style={{ marginTop: '0.5rem', marginLeft: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #c0392b', background: 'none', color: '#ff7b6b', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Remove</button>
+                    <button type="button" onClick={() => { setNote(''); setEditing(null); setAdding(false); setRemoving(r.id) }} style={{ marginTop: '0.5rem', marginLeft: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid var(--error)', background: 'none', color: 'var(--danger)', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Remove</button>
                   )}
                   {releasing === r.id ? (
                     <div style={{ marginTop: '0.5rem' }}>
                       <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>Let go of this? It stays in the Library, but your group can no longer edit it.</p>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button type="button" disabled={busy} onClick={() => release(r)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>Yes, release</button>
-                        <button type="button" onClick={() => setReleasing(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#ccc', fontSize: '1rem', cursor: 'pointer' }}>Keep it</button>
+                        <button type="button" disabled={busy} onClick={() => release(r)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>Yes, release</button>
+                        <button type="button" onClick={() => setReleasing(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontSize: '1rem', cursor: 'pointer' }}>Keep it</button>
                       </div>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => { setNote(''); setEditing(null); setAdding(false); setRemoving(null); setReleasing(r.id) }} style={{ marginTop: '0.5rem', marginLeft: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #666', background: 'none', color: '#ccc', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Release</button>
+                    <button type="button" onClick={() => { setNote(''); setEditing(null); setAdding(false); setRemoving(null); setReleasing(r.id) }} style={{ marginTop: '0.5rem', marginLeft: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Release</button>
                   )}
                 </>
               )}

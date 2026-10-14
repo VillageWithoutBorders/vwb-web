@@ -11,7 +11,7 @@ export default function AddressLink({ address, inline = false }) {
     <a
       href={href}
       {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-      style={{ color: '#4ecca3', overflowWrap: 'anywhere', ...(inline ? {} : { display: 'inline-flex', alignItems: 'center', minHeight: 44 }) }}
+      style={{ color: 'var(--accent)', overflowWrap: 'anywhere', ...(inline ? {} : { display: 'inline-flex', alignItems: 'center', minHeight: 44 }) }}
     >{address}</a>
   )
 }

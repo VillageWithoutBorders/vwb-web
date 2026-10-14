@@ -597,13 +597,13 @@ export default function Messages({ embedded = false }) {
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
   }
 
-  const tabStyle = (active) => ({ padding: '0.5rem 1rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? '#4ecca3' : '#2a2a2a', color: active ? '#1a1a1a' : '#aaa' })
-  const sidebarStyle = { position: 'fixed', top: 0, right: showSidebar ? 0 : '-320px', width: '300px', height: '100%', background: '#1a1a1a', borderLeft: '1px solid #333', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }
+  const tabStyle = (active) => ({ padding: '0.5rem 1rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : '#2a2a2a', color: active ? 'var(--on-accent)' : '#aaa' })
+  const sidebarStyle = { position: 'fixed', top: 0, right: showSidebar ? 0 : '-320px', width: '300px', height: '100%', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }
   const overlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: showSidebar ? 'block' : 'none' }
-  const sectionTitle = { fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1.5rem', marginBottom: '0.5rem' }
-  const menuBtn = { display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }
-  const toggleRow = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid #2a2a2a' }
-  const toggleDot = (on) => ({ width: '40px', height: '22px', borderRadius: '11px', background: on ? '#4ecca3' : '#444', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', border: 'none', padding: 0, flexShrink: 0 })
+  const sectionTitle = { fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1.5rem', marginBottom: '0.5rem' }
+  const menuBtn = { display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }
+  const toggleRow = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid var(--border)' }
+  const toggleDot = (on) => ({ width: '40px', height: '22px', borderRadius: '11px', background: on ? 'var(--accent)' : '#444', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', border: 'none', padding: 0, flexShrink: 0 })
   const toggleKnob = (on) => ({ position: 'absolute', top: '2px', left: on ? '20px' : '2px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' })
 
   const offerCardStyle = {
@@ -617,8 +617,8 @@ export default function Messages({ embedded = false }) {
     padding: '0.5rem 1.25rem',
     borderRadius: '8px',
     border: 'none',
-    background: '#4ecca3',
-    color: '#1a1a1a',
+    background: 'var(--accent)',
+    color: 'var(--on-accent)',
     fontWeight: 700,
     cursor: 'pointer',
     fontSize: '0.85rem',
@@ -626,9 +626,9 @@ export default function Messages({ embedded = false }) {
   const offerBtnDecline = {
     padding: '0.5rem 1.25rem',
     borderRadius: '8px',
-    border: '1px solid #666',
+    border: '1px solid var(--border-strong)',
     background: 'none',
-    color: '#aaa',
+    color: 'var(--text-secondary)',
     fontWeight: 600,
     cursor: 'pointer',
     fontSize: '0.85rem',
@@ -640,75 +640,75 @@ export default function Messages({ embedded = false }) {
       <div style={sidebarStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Settings</h2>
-          <button onClick={() => setShowSidebar(false)} aria-label="Close settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <button onClick={() => setShowSidebar(false)} aria-label="Close settings" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
 
         <div style={sectionTitle}>Folders</div>
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <input type="text" placeholder="New folder name" value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createFolder()} maxLength={30} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
-          <button onClick={createFolder} style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Add</button>
+          <input type="text" placeholder="New folder name" value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createFolder()} maxLength={30} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
+          <button onClick={createFolder} style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Add</button>
         </div>
         {folders.map(f => (
-          <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid #2a2a2a' }}>
-            <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{f.name}</span>
-            <button onClick={() => { if (confirm('Delete folder "' + f.name + '"? Conversations will move back to All.')) deleteFolder(f.id) }} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.85rem' }}>Delete</button>
+          <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{f.name}</span>
+            <button onClick={() => { if (confirm('Delete folder "' + f.name + '"? Conversations will move back to All.')) deleteFolder(f.id) }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>Delete</button>
           </div>
         ))}
 
         <div style={sectionTitle}>Disappearing Messages</div>
-        <p style={{ color: '#888', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>New conversations will auto-delete messages after the chosen time.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>New conversations will auto-delete messages after the chosen time.</p>
         <div style={{ padding: '0 0.25rem' }}>
-          <input type="range" min={0} max={DISAPPEAR_STEPS.length - 1} step={1} value={getSliderIndex()} onChange={e => saveDisappearPref(DISAPPEAR_STEPS[parseInt(e.target.value)].mins)} style={{ width: '100%', accentColor: '#4ecca3', cursor: 'pointer' }} />
+          <input type="range" min={0} max={DISAPPEAR_STEPS.length - 1} step={1} value={getSliderIndex()} onChange={e => saveDisappearPref(DISAPPEAR_STEPS[parseInt(e.target.value)].mins)} style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
             {DISAPPEAR_STEPS.map((s, i) => (
-              <span key={i} style={{ fontSize: '0.65rem', color: getSliderIndex() === i ? '#4ecca3' : '#666', fontWeight: getSliderIndex() === i ? 700 : 400, textAlign: 'center', flex: 1 }}>{s.label}</span>
+              <span key={i} style={{ fontSize: '0.65rem', color: getSliderIndex() === i ? 'var(--accent)' : '#666', fontWeight: getSliderIndex() === i ? 700 : 400, textAlign: 'center', flex: 1 }}>{s.label}</span>
             ))}
           </div>
         </div>
 
         <div style={sectionTitle}>Privacy</div>
         <div style={toggleRow}>
-          <span style={{ color: '#ddd', fontSize: '0.9rem' }}>Read receipts</span>
+          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>Read receipts</span>
           <button role="switch" aria-checked={readReceipts} aria-label="Read receipts" style={toggleDot(readReceipts)} onClick={toggleReadReceipts}><span style={toggleKnob(readReceipts)} /></button>
         </div>
-        <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Show when you have read a message. If you turn this off, you won't see when others read yours either.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Show when you have read a message. If you turn this off, you won't see when others read yours either.</p>
 
         <div style={sectionTitle}>Safety</div>
         <div style={toggleRow}>
-          <span style={{ color: '#ddd', fontSize: '0.9rem' }}>Safety check-ins</span>
+          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>Safety check-ins</span>
           <button role="switch" aria-checked={safetyCheckins} aria-label="Safety check-ins" style={toggleDot(safetyCheckins)} onClick={toggleSafetyCheckins}><span style={toggleKnob(safetyCheckins)} /></button>
         </div>
-        <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Receive periodic check-in prompts during active help sessions</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Receive periodic check-in prompts during active help sessions</p>
 
         <div style={toggleRow}>
-          <span style={{ color: '#ddd', fontSize: '0.9rem' }}>Hide details on my lock screen</span>
+          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>Hide details on my lock screen</span>
           <button role="switch" aria-checked={hidePushDetails} aria-label="Hide details on my lock screen" style={toggleDot(hidePushDetails)} onClick={toggleHidePushDetails}><span style={toggleKnob(hidePushDetails)} /></button>
         </div>
-        <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>When on, phone alerts only say you have an update. Names and group titles stay inside the app, so nobody glancing at your phone can see them.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>When on, phone alerts only say you have an update. Names and group titles stay inside the app, so nobody glancing at your phone can see them.</p>
 
         <div style={sectionTitle}>Default greeting</div>
         {editingHelpMsg ? (
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input type="text" value={defaultHelpMsg} onChange={e => setDefaultHelpMsg(e.target.value)} maxLength={200} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
-            <button onClick={saveHelpMsg} style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Save</button>
+            <input type="text" value={defaultHelpMsg} onChange={e => setDefaultHelpMsg(e.target.value)} maxLength={200} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
+            <button onClick={saveHelpMsg} style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Save</button>
           </div>
         ) : (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0' }}>
-            <span style={{ color: '#ddd', fontSize: '0.9rem', fontStyle: 'italic' }}>"{defaultHelpMsg}"</span>
-            <button onClick={() => setEditingHelpMsg(true)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem' }}>Edit</button>
+            <span style={{ color: 'var(--text)', fontSize: '0.9rem', fontStyle: 'italic' }}>"{defaultHelpMsg}"</span>
+            <button onClick={() => setEditingHelpMsg(true)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem' }}>Edit</button>
           </div>
         )}
-        <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Auto-sent when you tap "I can help" on a request</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Auto-sent when you tap "I can help" on a request</p>
 
         <div style={sectionTitle}>Blocked Users</div>
         {blockedUsers.length === 0 ? (
-          <p style={{ color: '#8a8a8a', fontSize: '0.85rem' }}>No blocked users</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No blocked users</p>
         ) : blockedUsers.map(b => (
-          <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid #2a2a2a' }}>
-            <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{b.name}</span>
+          <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{b.name}</span>
             <span style={{ display: 'flex', gap: '0.75rem' }}>
-              <button onClick={() => navigate('/u/' + b.blocked_id, { state: { safety: 'report' } })} style={{ background: 'none', border: 'none', color: '#ff6666', cursor: 'pointer', fontSize: '0.85rem', minHeight: '44px' }}>Report</button>
-              <button onClick={() => unblockUser(b.id)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem', minHeight: '44px' }}>Unblock</button>
+              <button onClick={() => navigate('/u/' + b.blocked_id, { state: { safety: 'report' } })} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem', minHeight: '44px' }}>Report</button>
+              <button onClick={() => unblockUser(b.id)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', minHeight: '44px' }}>Unblock</button>
             </span>
           </div>
         ))}
@@ -736,30 +736,30 @@ export default function Messages({ embedded = false }) {
       {/* ========== Help Offers for Requesters (Accept/Decline) ========== */}
       {pendingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
             🤝 Help Offers ({pendingOffers.length})
           </div>
           {pendingOffers.map(offer => (
             <div key={offer.id} style={offerCardStyle}>
-              <div style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '0.5rem' }}>
-                For your request: <span style={{ color: '#4ecca3', fontWeight: 600 }}>{offer.skill_needed}</span>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                For your request: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{offer.skill_needed}</span>
                 {offer.max_helpers !== null && (
-                  <span style={{ marginLeft: '0.5rem', color: '#888' }}>
+                  <span style={{ marginLeft: '0.5rem', color: 'var(--text-muted)' }}>
                     ({offer.accepted_count}/{offer.max_helpers} accepted)
                   </span>
                 )}
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={offer.avatar_url} userId={offer.helper_id} size={32} /><UserName userId={offer.helper_id} name={offer.helper_name} style={{ fontWeight: 700, color: '#fff', fontSize: '0.95rem' }} /></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={offer.avatar_url} userId={offer.helper_id} size={32} /><UserName userId={offer.helper_id} name={offer.helper_name} style={{ fontWeight: 700, color: 'var(--text-strong)', fontSize: '0.95rem' }} /></div>
                 {offer.is_ambassador && (
-                  <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
+                  <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
                     Hope Ambassador
                   </span>
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.8rem', color: '#999', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                 {offer.vouch_count > 0 && (
                   <span>&#x1F91D; {offer.vouch_count} vouch{offer.vouch_count !== 1 ? 'es' : ''}</span>
                 )}
@@ -769,7 +769,7 @@ export default function Messages({ embedded = false }) {
               </div>
 
               {!blockedBy.has(offer.helper_id) && (
-                <button type="button" onClick={() => navigate('/u/' + offer.helper_id)} style={{ display: 'block', width: '100%', minHeight: '44px', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
+                <button type="button" onClick={() => navigate('/u/' + offer.helper_id)} style={{ display: 'block', width: '100%', minHeight: '44px', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
                   View {offer.helper_name}&apos;s profile first
                 </button>
               )}
@@ -803,14 +803,14 @@ export default function Messages({ embedded = false }) {
           {myOutgoingOffers.map(offer => (
             <div key={offer.id} style={{ background: '#2a2518', border: '1px solid #5a4a2a', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div>
-                <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem' }}>{offer.skill_needed}</div>
-                <div style={{ color: '#999', fontSize: '0.8rem' }}>
+                <div style={{ color: 'var(--text-strong)', fontWeight: 600, fontSize: '0.9rem' }}>{offer.skill_needed}</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                   For {offer.requester_name} &middot; Waiting for response
                 </div>
               </div>
               <button
                 onClick={() => { if (confirm('Withdraw your offer to help?')) withdrawOffer(offer.id) }}
-                style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid #666', background: 'none', color: '#aaa', fontSize: '0.8rem', cursor: 'pointer' }}
+                style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
               >
                 Withdraw
               </button>
@@ -823,9 +823,9 @@ export default function Messages({ embedded = false }) {
 
       <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
         <button style={tabStyle(activeFolder === 'unread')} onClick={() => setActiveFolder('unread')}>Unread</button>
-        <button style={{ ...tabStyle(activeFolder === 'all'), outline: dropTarget === 'all' ? '2px solid #4ecca3' : 'none' }} onClick={() => setActiveFolder('all')} onDragOver={(e) => { e.preventDefault(); setDropTarget('all') }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), 'remove'); setDraggingConvo(null) }}>All</button>
+        <button style={{ ...tabStyle(activeFolder === 'all'), outline: dropTarget === 'all' ? '2px solid var(--accent)' : 'none' }} onClick={() => setActiveFolder('all')} onDragOver={(e) => { e.preventDefault(); setDropTarget('all') }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), 'remove'); setDraggingConvo(null) }}>All</button>
         {folders.map(f => (
-          <button key={f.id} style={{ ...tabStyle(activeFolder === f.id), outline: dropTarget === f.id ? '2px solid #4ecca3' : 'none' }} onClick={() => setActiveFolder(f.id)} onDragOver={(e) => { e.preventDefault(); setDropTarget(f.id) }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), f.id); setDraggingConvo(null) }}>{f.name}</button>
+          <button key={f.id} style={{ ...tabStyle(activeFolder === f.id), outline: dropTarget === f.id ? '2px solid var(--accent)' : 'none' }} onClick={() => setActiveFolder(f.id)} onDragOver={(e) => { e.preventDefault(); setDropTarget(f.id) }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), f.id); setDraggingConvo(null) }}>{f.name}</button>
         ))}
         {(followUpCount > 0 || activeFolder === 'followup') && (
           <button style={tabStyle(activeFolder === 'followup')} onClick={() => setActiveFolder('followup')}>&#128681; Follow up ({followUpCount})</button>
@@ -847,16 +847,16 @@ export default function Messages({ embedded = false }) {
 
       {showDeleteConfirm && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#222', borderRadius: '12px', padding: '1.5rem', maxWidth: '320px', width: '90%' }}>
-            <h3 style={{ margin: '0 0 0.75rem', color: '#ff6666' }}>Delete Conversation</h3>
-            <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '1rem' }}>This cannot be undone. These messages will be lost forever.</p>
+          <div style={{ background: 'var(--surface-2)', borderRadius: '12px', padding: '1.5rem', maxWidth: '320px', width: '90%' }}>
+            <h3 style={{ margin: '0 0 0.75rem', color: 'var(--danger)' }}>Delete Conversation</h3>
+            <p style={{ color: 'var(--text-soft)', fontSize: '0.9rem', marginBottom: '1rem' }}>This cannot be undone. These messages will be lost forever.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
               <button onClick={() => setDeleteMode('me')} style={{ ...tabStyle(deleteMode === 'me'), borderRadius: '8px', textAlign: 'left' }}>Delete just for me</button>
               <button onClick={() => setDeleteMode('everyone')} style={{ ...tabStyle(deleteMode === 'everyone'), borderRadius: '8px', textAlign: 'left' }}>Delete for everyone</button>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={() => setShowDeleteConfirm(null)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={() => deleteConversation(showDeleteConfirm)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#ff4444', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Delete</button>
+              <button onClick={() => setShowDeleteConfirm(null)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => deleteConversation(showDeleteConfirm)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Delete</button>
             </div>
           </div>
         </div>
@@ -865,17 +865,17 @@ export default function Messages({ embedded = false }) {
       {!loading && showCampfireCard && (
         <div className="message-card" style={{ position: 'relative', borderLeft: '3px solid #e8833a' }}>
           <div onClick={() => navigate('/campfire')} role="button" tabIndex={0} aria-label={'Open Village Square' + (campfire.unread ? ', new messages' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/campfire') } }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#3a2a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>&#128227;</span>
+            <span aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--warn-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>&#128227;</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="message-card-header">
                 <span className="message-card-name" style={{ fontWeight: campfire.unread ? 800 : 600 }}>
                   Village Square
-                  {campfire.unread && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#4ecca3', marginLeft: '6px' }} />}
+                  {campfire.unread && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent)', marginLeft: '6px' }} />}
                 </span>
-                {campfire.last && <span className="message-card-time" style={{ color: campfire.unread ? '#4ecca3' : undefined }}>{formatTime(campfire.last.created_at)}</span>}
+                {campfire.last && <span className="message-card-time" style={{ color: campfire.unread ? 'var(--accent)' : undefined }}>{formatTime(campfire.last.created_at)}</span>}
               </div>
               <p className="message-card-skill">Announcements and your village chat</p>
-              <p className="message-card-preview" style={{ color: campfire.unread ? '#ddd' : undefined, fontWeight: campfire.unread ? 600 : 400 }}>
+              <p className="message-card-preview" style={{ color: campfire.unread ? 'var(--text)' : undefined, fontWeight: campfire.unread ? 600 : 400 }}>
                 {campfire.noVillage ? 'Add your zip code to join your area\u2019s Village Square.' : campfire.last ? campfire.name + ': ' + ((campfire.last.body || '').length > 70 ? campfire.last.body.slice(0, 70) + '...' : (campfire.last.body || '')) : 'Nothing posted yet.'}
               </p>
             </div>
@@ -890,7 +890,7 @@ export default function Messages({ embedded = false }) {
         const unread = isUnread(c)
         const followUp = convoSettings[c.id]?.follow_up
         return (
-        <div key={c.id} className="message-card" style={{ position: 'relative', cursor: 'grab', opacity: draggingConvo === c.id ? 0.5 : 1, borderLeft: isPinned ? '3px solid #4ecca3' : 'none' }} draggable onDragStart={(e) => { setDraggingConvo(c.id); e.dataTransfer.setData('text/plain', c.id) }} onDragEnd={() => { setDraggingConvo(null); setDropTarget(null) }}>
+        <div key={c.id} className="message-card" style={{ position: 'relative', cursor: 'grab', opacity: draggingConvo === c.id ? 0.5 : 1, borderLeft: isPinned ? '3px solid var(--accent)' : 'none' }} draggable onDragStart={(e) => { setDraggingConvo(c.id); e.dataTransfer.setData('text/plain', c.id) }} onDragEnd={() => { setDraggingConvo(null); setDropTarget(null) }}>
           <div onClick={() => openConvo(c)} role="button" tabIndex={0} aria-label={'Open conversation with ' + c.otherName + (unread ? ', unread' : '') + (followUp ? ', marked follow up' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openConvo(c) } }} style={{ cursor: 'pointer', paddingRight: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <AvatarDisplay url={c.otherAvatar} userId={c.otherId} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -917,18 +917,18 @@ export default function Messages({ embedded = false }) {
               if (!closing) positionOptionsMenu(e)
             }}
             aria-label={'Options for conversation with ' + c.otherName}
-            style={{ position: 'absolute', bottom: '0.6rem', right: '0.6rem', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '1.25rem', padding: '4px 6px', lineHeight: 1 }}
+            style={{ position: 'absolute', bottom: '0.6rem', right: '0.6rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.25rem', padding: '4px 6px', lineHeight: 1 }}
             title="Options">&#8943;</button>
 
           {openMenu === c.id && (
-            <div ref={optionsMenuRef} onClick={(e) => e.stopPropagation()} style={{ background: '#2a2a2a', border: '1px solid #444', borderRadius: '10px', minWidth: '180px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden', ...optionsMenuStyle }}>
+            <div ref={optionsMenuRef} onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: '10px', minWidth: '180px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden', ...optionsMenuStyle }}>
               {unread ? (
                 <button style={menuBtn} onClick={() => markRead(c)}>
                   <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9993;</span> Mark as read
                 </button>
               ) : (
                 <button style={menuBtn} onClick={() => markUnread(c.id)}>
-                  <span style={{ width: '1.2rem', textAlign: 'center', color: '#4ecca3' }}>&#9679;</span> Mark as unread
+                  <span style={{ width: '1.2rem', textAlign: 'center', color: 'var(--accent)' }}>&#9679;</span> Mark as unread
                 </button>
               )}
               <button style={menuBtn} onClick={() => toggleFollowUp(c.id)}>
@@ -950,7 +950,7 @@ export default function Messages({ embedded = false }) {
                 </button>
               )}
               {showMuteMenu === c.id && (
-                <div style={{ borderTop: '1px solid #444', background: '#333' }}>
+                <div style={{ borderTop: '1px solid var(--border-strong)', background: 'var(--surface-3)' }}>
                   {MUTE_OPTIONS.map((opt, i) => (
                     <button key={i} style={{ ...menuBtn, paddingLeft: '2.5rem', fontSize: '0.8rem' }} onClick={() => muteConvo(c.id, opt.ms)}>{opt.label}</button>
                   ))}
@@ -962,7 +962,7 @@ export default function Messages({ embedded = false }) {
                 </button>
               )}
               <button style={menuBtn} onClick={() => reportConversation(c.id)}>
-                <span style={{ width: '1.2rem', textAlign: 'center', color: '#ff4444' }}>&#9873;</span> Report
+                <span style={{ width: '1.2rem', textAlign: 'center', color: 'var(--danger)' }}>&#9873;</span> Report
               </button>
               <button style={menuBtn} onClick={() => blockUser(c.otherId, c.otherName)}>
                 <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128683;</span> Block user
@@ -974,9 +974,9 @@ export default function Messages({ embedded = false }) {
           )}
 
           {assigningConvo === c.id && (
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', padding: '0.5rem 0 0.25rem', borderTop: '1px solid #333', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', padding: '0.5rem 0 0.25rem', borderTop: '1px solid var(--border)', marginTop: '0.5rem' }}>
               {folders.map(f => (<button key={f.id} onClick={() => assignToFolder(c.id, f.id)} style={{ ...tabStyle((assignments[c.id] || []).includes(f.id)), fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}>{f.name}</button>))}
-              {assignments[c.id] && assignments[c.id].length > 0 && (<button onClick={() => assignToFolder(c.id, 'remove')} style={{ ...tabStyle(false), fontSize: '0.8rem', padding: '0.35rem 0.75rem', color: '#ff6666' }}>Remove</button>)}
+              {assignments[c.id] && assignments[c.id].length > 0 && (<button onClick={() => assignToFolder(c.id, 'remove')} style={{ ...tabStyle(false), fontSize: '0.8rem', padding: '0.35rem 0.75rem', color: 'var(--danger)' }}>Remove</button>)}
             </div>
           )}
         </div>

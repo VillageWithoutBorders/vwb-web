@@ -49,9 +49,9 @@ function NearbyNeedTiles() {
   const total = now + today + later
 
   const tiles = [
-    { label: 'Open near you', value: total, color: '#4ecca3' },
-    { label: 'Right now', value: now, color: '#ff6666' },
-    { label: 'Today', value: today, color: '#ffaa44' },
+    { label: 'Open near you', value: total, color: 'var(--accent)' },
+    { label: 'Right now', value: now, color: 'var(--danger)' },
+    { label: 'Today', value: today, color: 'var(--warn)' },
     { label: 'This week or later', value: later, color: '#8fc' },
   ]
 

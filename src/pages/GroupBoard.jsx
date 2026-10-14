@@ -456,10 +456,10 @@ export default function GroupBoard() {
 
   // The decision an alert pointed at gets an outline and a label.
   const focusStyle = (key) => focusKey === key
-    ? { outline: '2px solid #4ecca3', background: 'rgba(78,204,163,0.12)', borderRadius: '8px', padding: '0.5rem', margin: '0.35rem 0' }
+    ? { outline: '2px solid var(--accent)', background: 'rgba(78,204,163,0.12)', borderRadius: '8px', padding: '0.5rem', margin: '0.35rem 0' }
     : undefined
   const focusLabel = (key) => focusKey === key
-    ? <span style={{ display: 'block', width: '100%', color: '#4ecca3', fontWeight: 700, fontSize: '0.8rem' }}>&#128073; This is the one you were asked about</span>
+    ? <span style={{ display: 'block', width: '100%', color: 'var(--accent)', fontWeight: 700, fontSize: '0.8rem' }}>&#128073; This is the one you were asked about</span>
     : null
 
   const DISAPPEAR_CHOICES = [[0, 'Off (posts stay)'], [1440, '1 day'], [10080, '7 days'], [43200, '30 days']]
@@ -635,7 +635,7 @@ export default function GroupBoard() {
       </div>
 
       {sidechats.length > 0 && (
-        <nav aria-label="Sidechats" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid #333' }}>
+        <nav aria-label="Sidechats" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
           <span className="cal-sub" style={{ alignSelf: 'center' }}>Sidechats:</span>
           {sidechats.map((s) => (
             <button key={s.id} type="button" className="btn btn-outline group-small-btn" onClick={() => navigate('/groups/' + s.id)}>{'\u21B3 '}{s.name}</button>
@@ -644,7 +644,7 @@ export default function GroupBoard() {
       )}
       <VillageRoomPanel groupId={group.id} onInfo={setVillageRoom} onLeave={leave} onChanged={() => loadGroup()} />
       {isSidechat && parentId && (
-        <nav aria-label="Back to the general chat" style={{ padding: '0.4rem 1rem', borderBottom: '1px solid #333' }}>
+        <nav aria-label="Back to the general chat" style={{ padding: '0.4rem 1rem', borderBottom: '1px solid var(--border)' }}>
           <button type="button" className="group-post-delete" onClick={() => navigate('/groups/' + parentId)}>{'\u2190 '}Back to {parentName || 'the general chat'}</button>
         </nav>
       )}

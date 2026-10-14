@@ -555,9 +555,9 @@ export default function Campfire() {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
         <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>&#128227;</p>
-        <h2 style={{ color: '#ffaa44', marginBottom: '0.5rem' }}>Come sit by the fire</h2>
-        <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>The Village Square is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Apply to become a Hope Ambassador. An admin looks over each application so this stays a place people can trust, and once you're in, you'll have a seat.</p>
-        <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>Apply to be a Hope Ambassador</button>
+        <h2 style={{ color: 'var(--warn)', marginBottom: '0.5rem' }}>Come sit by the fire</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>The Village Square is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Apply to become a Hope Ambassador. An admin looks over each application so this stays a place people can trust, and once you're in, you'll have a seat.</p>
+        <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>Apply to be a Hope Ambassador</button>
       </div>
     )
   }
@@ -579,29 +579,29 @@ export default function Campfire() {
   )
 
   return (
-    <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1a1a1a' }}>
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid #333', background: '#1a1a1a', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+    <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--surface)' }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <button onClick={() => goBack('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span>&#128227;</span> The Village Square
           </h1>
-          <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.sister_a ? 'Sister Campfire' + (activeBoard.archived ? ', closed' : '') : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.75rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.sister_a ? 'Sister Campfire' + (activeBoard.archived ? ', closed' : '') : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
         </div>
-        <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
+        <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
         {isVillageBoard && inVillage && (
-          <button onClick={() => setShowPeople(true)} aria-label={'People in ' + activeBoard.name + (removalRequests.some(r => r.requested_by !== user.id) ? ', a removal request needs a second member' : '')} title="People" style={{ position: 'relative', background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }}>
+          <button onClick={() => setShowPeople(true)} aria-label={'People in ' + activeBoard.name + (removalRequests.some(r => r.requested_by !== user.id) ? ', a removal request needs a second member' : '')} title="People" style={{ position: 'relative', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }}>
             &#128101;
             {removalRequests.some(r => r.requested_by !== user.id) && <span aria-hidden="true" style={{ position: 'absolute', top: '6px', right: '6px', width: '10px', height: '10px', borderRadius: '50%', background: '#ff8844' }} />}
           </button>
         )}
-        <button onClick={() => setShowSettings(true)} aria-label="Village Square settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'>&#9881;</button>
+        <button onClick={() => setShowSettings(true)} aria-label="Village Square settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'>&#9881;</button>
       </div>
 
-      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #333', background: '#1a1a1a' }}>
-        <button type="button" onClick={() => { setPickerOpen(true); setPickerSearch('') }} aria-haspopup="dialog" aria-expanded={pickerOpen} aria-label={'Change chat. Now in ' + (activeBoard?.name || 'no chat')} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid #4ecca3', background: '#1a4a3a', color: '#4ecca3', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>
+      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+        <button type="button" onClick={() => { setPickerOpen(true); setPickerSearch('') }} aria-haspopup="dialog" aria-expanded={pickerOpen} aria-label={'Change chat. Now in ' + (activeBoard?.name || 'no chat')} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid var(--accent)', background: 'var(--success-bg)', color: 'var(--accent)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeBoard?.name || 'Pick a chat'}</span>
-          {otherUnread > 0 && <span role="status" aria-label={otherUnread + ' new in other chats'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: '#ffaa44', color: '#1a1a1a', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{otherUnread > 99 ? '99+' : otherUnread}</span>}
+          {otherUnread > 0 && <span role="status" aria-label={otherUnread + ' new in other chats'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{otherUnread > 99 ? '99+' : otherUnread}</span>}
           {orderedBoards.length > 1 && <span style={{ fontWeight: 500, fontSize: '0.8rem', color: '#9fe0c8' }}>{orderedBoards.length} chats</span>}
           <span aria-hidden="true">&#9662;</span>
         </button>
@@ -616,58 +616,58 @@ export default function Campfire() {
           ['Other villages', orderedBoards.filter(x => x.village_id && !memberSet.has(x.village_id) && match(x))],
         ]
         const row = (b) => (
-          <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid #4ecca3' : '1px solid #333', background: b.id === activeBoardId ? '#1a4a3a' : '#222', color: b.id === activeBoardId ? '#4ecca3' : '#eee', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
+          <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid var(--accent)' : '1px solid #333', background: b.id === activeBoardId ? 'var(--success-bg)' : '#222', color: b.id === activeBoardId ? 'var(--accent)' : '#eee', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
             <span style={{ flex: 1 }}>{b.sister_a && <span aria-hidden="true">{'\u{1F525}'} </span>}{b.name}{b.sister_a && b.archived ? ' (closed)' : ''}</span>
-            {unreadFor(b) > 0 && <span aria-label={unreadFor(b) + ' new'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: '#ffaa44', color: '#1a1a1a', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{unreadFor(b) > 99 ? '99+' : unreadFor(b)}</span>}
+            {unreadFor(b) > 0 && <span aria-label={unreadFor(b) + ' new'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{unreadFor(b) > 99 ? '99+' : unreadFor(b)}</span>}
             {b.id === activeBoardId && <span aria-hidden="true">&#10003;</span>}
           </button>
         )
         return (
           <div role="dialog" aria-modal="true" aria-label="Choose a chat" onClick={() => setPickerOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-            <div onClick={e => e.stopPropagation()} role="listbox" style={{ width: '100%', maxWidth: '32rem', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box', background: '#1a1a1a', borderTop: '1px solid #444', borderRadius: '16px 16px 0 0', padding: '1rem' }}>
+            <div onClick={e => e.stopPropagation()} role="listbox" style={{ width: '100%', maxWidth: '32rem', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--surface)', borderTop: '1px solid var(--border-strong)', borderRadius: '16px 16px 0 0', padding: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <h2 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', flex: 1 }}>Your chats</h2>
-                <button type="button" onClick={() => setPickerOpen(false)} aria-label="Close" style={{ minWidth: '44px', minHeight: '44px', background: 'none', border: 'none', color: '#aaa', fontSize: '1.4rem', cursor: 'pointer' }}>&#10005;</button>
+                <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-strong)', flex: 1 }}>Your chats</h2>
+                <button type="button" onClick={() => setPickerOpen(false)} aria-label="Close" style={{ minWidth: '44px', minHeight: '44px', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer' }}>&#10005;</button>
               </div>
               {orderedBoards.length > 6 && (
                 <>
                   <label htmlFor="chat-search" className="sr-only">Search your chats</label>
-                  <input id="chat-search" type="search" value={pickerSearch} onChange={e => setPickerSearch(e.target.value)} placeholder="Search your chats" style={{ width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0 0.9rem', marginBottom: '0.75rem', borderRadius: '10px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem' }} />
+                  <input id="chat-search" type="search" value={pickerSearch} onChange={e => setPickerSearch(e.target.value)} placeholder="Search your chats" style={{ width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0 0.9rem', marginBottom: '0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem' }} />
                 </>
               )}
               {groups.map(([label, list]) => list.length > 0 && (
                 <div key={label} style={{ marginBottom: '0.5rem' }}>
-                  <p style={{ margin: '0.4rem 0', color: '#888', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
+                  <p style={{ margin: '0.4rem 0', color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
                   {list.map(row)}
                 </div>
               ))}
-              {q && groups.every(([, l]) => l.length === 0) && <p style={{ color: '#aaa' }}>No chat matches that.</p>}
+              {q && groups.every(([, l]) => l.length === 0) && <p style={{ color: 'var(--text-secondary)' }}>No chat matches that.</p>}
               {memberVillages !== null && (
-                <button type="button" onClick={() => { setPickerOpen(false); navigate('/find-village') }} style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontSize: '1rem', cursor: 'pointer' }}>
+                <button type="button" onClick={() => { setPickerOpen(false); navigate('/find-village') }} style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontSize: '1rem', cursor: 'pointer' }}>
                   {memberSet.size > 0 ? '+ Join another village chat' : 'Find your village chat'}
                 </button>
               )}
               {isAdmin && !creatingBoard && (
-                <button type="button" onClick={() => { setCreatingBoard(true); setBoardError('') }} aria-label="Add a board" style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px dashed #555', background: 'none', color: '#aaa', fontSize: '1rem', cursor: 'pointer' }}>+ New board</button>
+                <button type="button" onClick={() => { setCreatingBoard(true); setBoardError('') }} aria-label="Add a board" style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px dashed var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '1rem', cursor: 'pointer' }}>+ New board</button>
               )}
               {isAdmin && creatingBoard && (
                 <form onSubmit={addBoard} style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                   <label htmlFor="new-board-name" className="sr-only">Board name</label>
-                  <input id="new-board-name" type="text" value={newBoardName} onChange={e => setNewBoardName(e.target.value)} maxLength={40} placeholder="Board name" autoFocus style={{ flex: 1, minWidth: '8rem', minHeight: '48px', boxSizing: 'border-box', padding: '0 0.75rem', borderRadius: '10px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem' }} />
-                  <button type="submit" disabled={!newBoardName.trim()} style={{ minHeight: '48px', padding: '0 1rem', borderRadius: '10px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: newBoardName.trim() ? 1 : 0.5 }}>Add</button>
-                  <button type="button" onClick={() => { setCreatingBoard(false); setNewBoardName(''); setBoardError('') }} style={{ minHeight: '48px', padding: '0 0.75rem', borderRadius: '10px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer' }}>Cancel</button>
+                  <input id="new-board-name" type="text" value={newBoardName} onChange={e => setNewBoardName(e.target.value)} maxLength={40} placeholder="Board name" autoFocus style={{ flex: 1, minWidth: '8rem', minHeight: '48px', boxSizing: 'border-box', padding: '0 0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem' }} />
+                  <button type="submit" disabled={!newBoardName.trim()} style={{ minHeight: '48px', padding: '0 1rem', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: newBoardName.trim() ? 1 : 0.5 }}>Add</button>
+                  <button type="button" onClick={() => { setCreatingBoard(false); setNewBoardName(''); setBoardError('') }} style={{ minHeight: '48px', padding: '0 0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
                 </form>
               )}
-              {boardError && <p role="alert" style={{ color: '#ff8888', fontSize: '0.85rem' }}>{boardError}</p>}
+              {boardError && <p role="alert" style={{ color: 'var(--danger)', fontSize: '0.85rem' }}>{boardError}</p>}
             </div>
           </div>
         )
       })()}
-      {boardError && <p role="alert" style={{ margin: 0, padding: '0.4rem 1rem', color: '#ff8888', fontSize: '0.8rem', background: '#241414' }}>{boardError}</p>}
+      {boardError && <p role="alert" style={{ margin: 0, padding: '0.4rem 1rem', color: 'var(--danger)', fontSize: '0.8rem', background: '#241414' }}>{boardError}</p>}
 
       {isVillageBoard && inVillage && <VillageNewMembers villageId={activeBoard.village_id} myId={user.id} />}
       {isSister && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 1rem', borderBottom: '1px solid #3a3020', background: sisterClosed ? '#2a1a20' : '#2e2a1a', color: sisterClosed ? '#ffb3c7' : '#ffcc66', fontSize: '0.9rem', lineHeight: 1.4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 1rem', borderBottom: '1px solid var(--warn-bg)', background: sisterClosed ? '#2a1a20' : '#2e2a1a', color: sisterClosed ? '#ffb3c7' : 'var(--gold)', fontSize: '0.9rem', lineHeight: 1.4 }}>
           <p style={{ margin: 0, flex: '1 1 12rem' }}>
             <span aria-hidden="true">{'\u{1F525}'} </span>
             {sisterClosed
@@ -678,23 +678,23 @@ export default function Campfire() {
         </div>
       )}
       {isVillageBoard && inVillage && removalRequests.some(r => r.requested_by !== user.id) && (
-        <button type="button" onClick={() => setShowPeople(true)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem 1rem', minHeight: '44px', background: '#2e2a1a', border: 'none', borderBottom: '1px solid #3a3020', color: '#ffcc66', fontSize: '0.9rem', cursor: 'pointer' }}>
+        <button type="button" onClick={() => setShowPeople(true)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem 1rem', minHeight: '44px', background: '#2e2a1a', border: 'none', borderBottom: '1px solid var(--warn-bg)', color: 'var(--gold)', fontSize: '0.9rem', cursor: 'pointer' }}>
           &#9888; A member asked to remove someone. A second member is needed. Tap to look.
         </button>
       )}
 
       {visibleEmergencies.length > 0 && (
-        <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid #3a3020', background: '#2e2a1a' }}>
+        <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--warn-bg)', background: '#2e2a1a' }}>
           {visibleEmergencies.map(ev => (
-            <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', border: '2px solid #ffaa44', borderRadius: '12px', padding: '0.65rem 0.85rem', background: '#241f14' }}>
-              <span style={{ fontSize: '1.5rem', lineHeight: 1, color: '#ffaa44', flexShrink: 0 }}>&#9888;</span>
+            <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', border: '2px solid var(--warn)', borderRadius: '12px', padding: '0.65rem 0.85rem', background: 'var(--warn-bg)' }}>
+              <span style={{ fontSize: '1.5rem', lineHeight: 1, color: 'var(--warn)', flexShrink: 0 }}>&#9888;</span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, color: '#ffcc00', fontWeight: 700, fontSize: '0.9rem' }}>{ev.title}</p>
+                <p style={{ margin: 0, color: 'var(--gold)', fontWeight: 700, fontSize: '0.9rem' }}>{ev.title}</p>
                 <p style={{ margin: '0.1rem 0 0', color: '#cc9999', fontSize: '0.75rem' }}>{ev.location_name || 'Location not given'} &middot; Active emergency</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
-                <button onClick={() => navigate('/emergency/' + ev.id)} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: '#ffaa44', color: '#1a1a1a', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}>Organize help</button>
-                <button onClick={() => dismissEmergency(ev.id)} style={{ padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid #665', background: 'none', color: '#aaa', fontSize: '0.7rem', cursor: 'pointer' }}>Dismiss</button>
+                <button onClick={() => navigate('/emergency/' + ev.id)} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}>Organize help</button>
+                <button onClick={() => dismissEmergency(ev.id)} style={{ padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid #665', background: 'none', color: 'var(--text-secondary)', fontSize: '0.7rem', cursor: 'pointer' }}>Dismiss</button>
               </div>
             </div>
           ))}
@@ -705,7 +705,7 @@ export default function Campfire() {
         <div style={{ borderBottom: '1px solid #3a2a10', background: '#241c10' }}>
           <button
             onClick={() => setShowPinned(p => !p)}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'none', border: 'none', color: '#ffaa44', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'none', border: 'none', color: 'var(--warn)', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}
           >
             &#128204; {pinnedMessages.length} {isVillageBoard ? 'announcement' : 'pinned message'}{pinnedMessages.length !== 1 ? 's' : ''}
             <span style={{ marginLeft: 'auto' }}>{showPinned ? '▲' : '▼'}</span>
@@ -713,12 +713,12 @@ export default function Campfire() {
           {showPinned && (
             <div style={{ padding: '0 1rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '35vh', overflowY: 'auto' }}>
               {pinnedMessages.map(m => (
-                <div key={m.id} style={{ background: '#1a1a1a', border: '1px solid #444', borderRadius: '8px', padding: '0.5rem 0.75rem' }}>
+                <div key={m.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0.5rem 0.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffaa44' }}>{names[m.user_id]?.name || 'Neighbor'}</span>
-                    {canPin && <button onClick={() => togglePin(m)} style={{ background: 'none', border: 'none', color: '#888', fontSize: '0.7rem', cursor: 'pointer', padding: 0, minHeight: '32px' }}>Unpin</button>}
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--warn)' }}>{names[m.user_id]?.name || 'Neighbor'}</span>
+                    {canPin && <button onClick={() => togglePin(m)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.7rem', cursor: 'pointer', padding: 0, minHeight: '32px' }}>Unpin</button>}
                   </div>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#ddd', lineHeight: 1.4 }}>{m.body}</p>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.4 }}>{m.body}</p>
                 </div>
               ))}
             </div>
@@ -727,10 +727,10 @@ export default function Campfire() {
       )}
 
       <div ref={containerRef} onScroll={onScroll} className="hide-scrollbar" role="log" aria-live="polite" aria-relevant="additions" aria-label="Village Square messages" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
-        {loading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
+        {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</p>}
 
         {!loading && visibleMessages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#8a8a8a' }}>
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
             <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128227;</p>
             {isVillageBoard
               ? <><p>Nothing here yet. Say hello to your neighbors.</p><p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>You see what is said after you joined. People who join later will not see your older messages.</p></>
@@ -753,7 +753,7 @@ export default function Campfire() {
           const far = isGroupEnd ? '0.25rem' : '1rem'
           const bubbleRadius = isMe ? `1rem ${near} ${far} 1rem` : `${near} 1rem 1rem ${far}`
           return (
-            <div key={msg.id} id={'cf-msg-' + msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%', display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginTop: isGroupStart ? '0.75rem' : '0.15rem', borderRadius: '1rem', outline: flashId === msg.id ? '2px solid #ffaa44' : 'none', outlineOffset: '3px', transition: 'outline-color 0.3s' }}>
+            <div key={msg.id} id={'cf-msg-' + msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '80%', display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginTop: isGroupStart ? '0.75rem' : '0.15rem', borderRadius: '1rem', outline: flashId === msg.id ? '2px solid var(--warn)' : 'none', outlineOffset: '3px', transition: 'outline-color 0.3s' }}>
               {!isMe && (isGroupStart
                 ? <AvatarDisplay url={info.avatar} userId={msg.user_id} size={28} />
                 : <div style={{ width: '28px', flexShrink: 0 }} />)}
@@ -761,11 +761,11 @@ export default function Campfire() {
               {!isMe && isGroupStart && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.15rem' }}>
                   {info.role
-                    ? <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? '#c77dff' : info.role === 'admin' ? '#66aaff' : '#4ecca3' }} />
-                    : <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888' }} />}
+                    ? <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? '#c77dff' : info.role === 'admin' ? 'var(--info)' : 'var(--accent)' }} />
+                    : <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }} />}
                   {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
-                  {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
-                  {info.ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
+                  {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
+                  {info.ambassador && <span style={{ fontSize: '0.6rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
                 </div>
               )}
               <div
@@ -775,13 +775,13 @@ export default function Campfire() {
                   setRevealedMeta(prev => prev === msg.id ? null : msg.id)
                   if (openMsgMenu && openMsgMenu !== msg.id) setOpenMsgMenu(null)
                 }}
-                style={{ position: 'relative', padding: '0.5rem 0.75rem', borderRadius: bubbleRadius, background: isMe ? '#4ecca3' : '#2a2a2a', color: isMe ? '#1a1a1a' : '#eee', border: isMe ? 'none' : '1px solid #444' }}
+                style={{ position: 'relative', padding: '0.5rem 0.75rem', borderRadius: bubbleRadius, background: isMe ? 'var(--accent)' : '#2a2a2a', color: isMe ? 'var(--on-accent)' : '#eee', border: isMe ? 'none' : '1px solid #444' }}
               >
                 {msg.reply_to && (() => {
                   const orig = messages.find(m => m.id === msg.reply_to)
                   const origName = orig ? (orig.user_id === user.id ? 'You' : (names[orig.user_id]?.name || 'Neighbor')) : ''
                   return (
-                    <button type="button" onClick={(e) => { e.stopPropagation(); if (orig) jumpToMessage(orig.id) }} aria-label={orig ? 'Replying to ' + origName + ': ' + snippet(orig.body) + '. Jump to it.' : 'Replying to an earlier message'} style={{ display: 'block', width: '100%', textAlign: 'left', margin: '0 0 0.35rem', padding: '0.25rem 0.5rem', borderRadius: '6px', border: 'none', borderLeft: '3px solid ' + (isMe ? '#1a1a1a' : '#4ecca3'), background: isMe ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.06)', color: 'inherit', font: 'inherit', fontSize: '0.75rem', cursor: orig ? 'pointer' : 'default', opacity: 0.9 }}>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); if (orig) jumpToMessage(orig.id) }} aria-label={orig ? 'Replying to ' + origName + ': ' + snippet(orig.body) + '. Jump to it.' : 'Replying to an earlier message'} style={{ display: 'block', width: '100%', textAlign: 'left', margin: '0 0 0.35rem', padding: '0.25rem 0.5rem', borderRadius: '6px', border: 'none', borderLeft: '3px solid ' + (isMe ? '#1a1a1a' : 'var(--accent)'), background: isMe ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.06)', color: 'inherit', font: 'inherit', fontSize: '0.75rem', cursor: orig ? 'pointer' : 'default', opacity: 0.9 }}>
                       {orig ? (<><strong>{origName}</strong><br />{snippet(orig.body)}</>) : <em>Earlier message</em>}
                     </button>
                   )
@@ -818,25 +818,25 @@ export default function Campfire() {
                   <div
                     ref={msgMenuRef}
                     onClick={e => e.stopPropagation()}
-                    style={{ background: '#2a2a2a', border: '1px solid #444', borderRadius: '8px', minWidth: '140px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', ...msgMenuStyle }}
+                    style={{ background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: '8px', minWidth: '140px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', ...msgMenuStyle }}
                   >
                     {canPost && (
-                    <button onClick={() => startReply(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                    <button onClick={() => startReply(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
                       Reply
                     </button>
                     )}
                     {isMe && (activeBoard?.scrambled ? canEditScrambled(msg) : true) && (
-                      <button onClick={() => startEdit(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                      <button onClick={() => startEdit(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
                         Edit
                       </button>
                     )}
                     {canPin && (
-                      <button onClick={() => togglePin(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>
+                      <button onClick={() => togglePin(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>
                         {msg.pinned ? 'Unpin' : isVillageBoard ? '📌 Make an announcement' : '📌 Pin message'}
                       </button>
                     )}
                     {!isMe && (
-                      <button onClick={() => reportMessage(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>
+                      <button onClick={() => reportMessage(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>
                         Report
                       </button>
                     )}
@@ -851,34 +851,34 @@ export default function Campfire() {
           )
         })}
         {showNew && (
-          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
+          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
         )}
       </div>
 
       {(replyTo || editing) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem', borderTop: '1px solid #333', background: '#222' }}>
-          <div style={{ flex: 1, minWidth: 0, borderLeft: '3px solid #ffaa44', paddingLeft: '0.5rem' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffaa44' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem', borderTop: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+          <div style={{ flex: 1, minWidth: 0, borderLeft: '3px solid var(--warn)', paddingLeft: '0.5rem' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--warn)' }}>
               {editing ? 'Editing your message' : 'Replying to ' + (replyTo.user_id === user.id ? 'yourself' : (names[replyTo.user_id]?.name || 'Neighbor'))}
             </div>
-            <div style={{ fontSize: '0.8rem', color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{snippet((editing || replyTo).body)}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{snippet((editing || replyTo).body)}</div>
           </div>
-          <button type="button" onClick={cancelComposeMode} aria-label={editing ? 'Cancel editing' : 'Cancel reply'} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.2rem', cursor: 'pointer', minWidth: '44px', minHeight: '44px' }}>&#10005;</button>
+          <button type="button" onClick={cancelComposeMode} aria-label={editing ? 'Cancel editing' : 'Cancel reply'} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.2rem', cursor: 'pointer', minWidth: '44px', minHeight: '44px' }}>&#10005;</button>
         </div>
       )}
       {canPost ? (
       <>
       {activeBoard?.scrambled && (
-        <p style={{ margin: 0, padding: '0.4rem 1rem 0', borderTop: '1px solid #333', background: '#1a1a1a', color: '#9ad6c0', fontSize: '0.8rem', lineHeight: 1.4 }}>
+        <p style={{ margin: 0, padding: '0.4rem 1rem 0', borderTop: '1px solid var(--border)', background: 'var(--surface)', color: '#9ad6c0', fontSize: '0.8rem', lineHeight: 1.4 }}>
           {'\uD83D\uDD12'} Scrambled test: only people in this village chat can read these messages. VWB cannot.{sendNote ? ' ' + sendNote : ''}
         </p>
       )}
       {introHint && !editing && (
-        <p style={{ margin: 0, padding: '0.5rem 1rem 0', borderTop: '1px solid #333', background: '#1a1a1a', color: '#bfe8d9', fontSize: '0.9rem', lineHeight: 1.4 }}>
+        <p style={{ margin: 0, padding: '0.5rem 1rem 0', borderTop: '1px solid var(--border)', background: 'var(--surface)', color: '#bfe8d9', fontSize: '0.9rem', lineHeight: 1.4 }}>
           Say hello. Add what you like doing and how you would like to be involved in your community.
         </p>
       )}
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', padding: '0.75rem 1rem', borderTop: introHint && !editing ? 'none' : '1px solid #333', background: '#1a1a1a' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', padding: '0.75rem 1rem', borderTop: introHint && !editing ? 'none' : '1px solid #333', background: 'var(--surface)' }}>
         <textarea
           ref={inputRef}
           rows={Math.min(6, Math.max(1, newMsg.split('\n').length))}
@@ -893,7 +893,7 @@ export default function Campfire() {
           placeholder={editing ? 'Edit your message...' : 'Say something to ' + (activeBoard ? (activeBoard.village_id ? activeBoard.name : 'the ' + activeBoard.name + ' board') : 'the group') + '...'}
           aria-label={editing ? 'Edit your message' : 'Message the Village Square'}
           disabled={sending}
-          style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', minHeight: '44px', maxHeight: '40vh', padding: '0.6rem 0.875rem', borderRadius: '1.25rem', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem', lineHeight: 1.35, outline: 'none', resize: 'none', fontFamily: 'inherit' }}
+          style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', minHeight: '44px', maxHeight: '40vh', padding: '0.6rem 0.875rem', borderRadius: '1.25rem', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', lineHeight: 1.35, outline: 'none', resize: 'none', fontFamily: 'inherit' }}
         />
         <button
           onClick={sendMessage}
@@ -905,51 +905,51 @@ export default function Campfire() {
       </div>
       </>
       ) : (
-        <div style={{ borderTop: '1px solid #333', background: '#1a1a1a', padding: '0.75rem 1rem', textAlign: 'center' }}>
+        <div style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)', padding: '0.75rem 1rem', textAlign: 'center' }}>
         {activeBoard && activeBoard.village_id && memberVillages !== null && !memberSet.has(activeBoard.village_id) && (
           <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginBottom: '0.6rem' }} onClick={() => navigate('/find-village?join=' + activeBoard.village_id)}>Join this village chat</button>
         )}
-        <p style={{ margin: 0, color: '#aaa', fontSize: '0.85rem' }}>
+        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
           {activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : activeBoard && activeBoard.village_id ? 'You are not in this village chat. Join it from the map to read and post.' : activeBoard && activeBoard.sister_a ? 'This Sister Campfire is closed. You can read it, but no one can post.' : 'You can read this board. You cannot post here.'}
         </p>
         </div>
       )}
 
       {showSettings && <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />}
-      <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: '#1a1a1a', borderLeft: '1px solid #333', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
+      <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Village Square Settings</h2>
-          <button onClick={() => setShowSettings(false)} aria-label="Close Village Square settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <button onClick={() => setShowSettings(false)} aria-label="Close Village Square settings" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
-        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
-        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>Announcements are open for every member to read, and only Ambassadors and admins can post there. Village chats are for neighbors near you. Anyone with an account can join, and there is no limit on size. You can join more than one. New members only see what is said after they join. Only people who joined a village chat can read it, and VWB admins cannot open village chats. Everyone in a chat can read it, so keep sensitive details out.</p>
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>Announcements are open for every member to read, and only Ambassadors and admins can post there. Village chats are for neighbors near you. Anyone with an account can join, and there is no limit on size. You can join more than one. New members only see what is said after they join. Only people who joined a village chat can read it, and VWB admins cannot open village chats. Everyone in a chat can read it, so keep sensitive details out.</p>
 
-        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
-        <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>You get one notification after a chat goes quiet, not one for every message. Choose for each chat.</p>
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>You get one notification after a chat goes quiet, not one for every message. Choose for each chat.</p>
         {orderedBoards.map(b => {
           const on = alertsOn(b)
           const muted = on && alertsMuted(b)
           return (
-            <div key={b.id} style={{ padding: '0.6rem 0', borderBottom: '1px solid #2a2a2a' }}>
+            <div key={b.id} style={{ padding: '0.6rem 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ color: '#ddd', fontSize: '0.9rem' }}>{b.name}</span>
-                <button type="button" role="switch" aria-checked={on} aria-label={'Notifications for ' + b.name} disabled={alertSaving} onClick={() => saveAlert(b.id, on ? { alerts: 'off' } : { alerts: 'all', muted_until: null })} style={{ width: '40px', height: '22px', borderRadius: '11px', background: on ? '#4ecca3' : '#444', border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0, padding: 0 }}>
+                <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{b.name}</span>
+                <button type="button" role="switch" aria-checked={on} aria-label={'Notifications for ' + b.name} disabled={alertSaving} onClick={() => saveAlert(b.id, on ? { alerts: 'off' } : { alerts: 'all', muted_until: null })} style={{ width: '40px', height: '22px', borderRadius: '11px', background: on ? 'var(--accent)' : '#444', border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0, padding: 0 }}>
                   <span style={{ position: 'absolute', top: '2px', left: on ? '20px' : '2px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
                 </button>
               </div>
               {muted && (
-                <p style={{ margin: '0.35rem 0 0', color: '#aaa', fontSize: '0.8rem' }}>
+                <p style={{ margin: '0.35rem 0 0', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                   Muted{new Date(alertMap[b.id].muted_until).getFullYear() > 2090 ? ' until you turn it back on' : ' until ' + new Date(alertMap[b.id].muted_until).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.{' '}
-                  <button type="button" disabled={alertSaving} onClick={() => saveAlert(b.id, { alerts: 'all', muted_until: null })} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', padding: '0 0.25rem', minHeight: '44px', fontSize: '0.8rem' }}>Unmute</button>
+                  <button type="button" disabled={alertSaving} onClick={() => saveAlert(b.id, { alerts: 'all', muted_until: null })} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: '0 0.25rem', minHeight: '44px', fontSize: '0.8rem' }}>Unmute</button>
                 </p>
               )}
               {on && !muted && (
                 <>
-                  <button type="button" aria-expanded={muteOpenFor === b.id} onClick={() => setMuteOpenFor(muteOpenFor === b.id ? null : b.id)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', padding: '0 0.25rem 0 0', minHeight: '44px', fontSize: '0.8rem' }}>&#128263; Mute &#9656;</button>
+                  <button type="button" aria-expanded={muteOpenFor === b.id} onClick={() => setMuteOpenFor(muteOpenFor === b.id ? null : b.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0 0.25rem 0 0', minHeight: '44px', fontSize: '0.8rem' }}>&#128263; Mute &#9656;</button>
                   {muteOpenFor === b.id && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.25rem' }}>
                       {MUTE_OPTIONS.map((opt, k) => (
-                        <button key={k} type="button" disabled={alertSaving} onClick={async () => { await saveAlert(b.id, { alerts: 'all', muted_until: opt.ms === null ? '2099-01-01T00:00:00Z' : new Date(Date.now() + opt.ms).toISOString() }); setMuteOpenFor(null) }} style={{ minHeight: '44px', padding: '0 0.85rem', borderRadius: '999px', border: '1px solid #444', background: '#222', color: '#ddd', cursor: 'pointer', fontSize: '0.8rem' }}>{opt.label}</button>
+                        <button key={k} type="button" disabled={alertSaving} onClick={async () => { await saveAlert(b.id, { alerts: 'all', muted_until: opt.ms === null ? '2099-01-01T00:00:00Z' : new Date(Date.now() + opt.ms).toISOString() }); setMuteOpenFor(null) }} style={{ minHeight: '44px', padding: '0 0.85rem', borderRadius: '999px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', cursor: 'pointer', fontSize: '0.8rem' }}>{opt.label}</button>
                       ))}
                     </div>
                   )}
@@ -959,18 +959,18 @@ export default function Campfire() {
           )
         })}
 
-        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Actions</div>
-        <button onClick={() => navigate('/find-village')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#4ecca3', padding: '0.6rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Actions</div>
+        <button onClick={() => navigate('/find-village')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--accent)', padding: '0.6rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
           &#127969; Find or join a village chat
         </button>
         {isVillageBoard && inVillage && (
-        <button onClick={leaveVillageChat} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
+        <button onClick={leaveVillageChat} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', padding: '0.6rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
           &#128682; Leave {activeBoard.name}
         </button>
         )}
 
         {isStaff && !isVillageBoard && (<>
-        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>People here ({Object.keys(names).length})</div>
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>People here ({Object.keys(names).length})</div>
         {Object.keys(names).length > 8 && (
           <input
             type="text"
@@ -978,7 +978,7 @@ export default function Campfire() {
             onChange={(e) => setMemberSearch(e.target.value)}
             placeholder="Search members..."
             aria-label="Search members"
-            style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#eee', fontSize: '0.85rem' }}
+            style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', fontSize: '0.85rem' }}
           />
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -987,23 +987,23 @@ export default function Campfire() {
             .filter(([, info]) => (info.name || 'Neighbor').toLowerCase().includes(memberSearch.trim().toLowerCase()))
             .sort(([, a], [, b]) => (a.name || '').localeCompare(b.name || ''))
             .map(([uid, info]) => (
-            <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: '#222', width: '100%', boxSizing: 'border-box', textAlign: 'left' }}>
+            <div key={uid} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '8px', background: 'var(--surface-2)', width: '100%', boxSizing: 'border-box', textAlign: 'left' }}>
               <AvatarDisplay url={info.avatar} userId={uid} size={32} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
-                  <UserName userId={uid} name={info.name} style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }} />
+                  <UserName userId={uid} name={info.name} style={{ color: 'var(--text-strong)', fontSize: '0.85rem', fontWeight: 600 }} />
                   {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
-                  {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
-                  {info.ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
+                  {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
+                  {info.ambassador && <span style={{ fontSize: '0.6rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: '#888' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                   {info.joined && <span>Joined {new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>}
                 </div>
               </div>
             </div>
           ))}
           {memberSearch.trim() && Object.entries(names).filter(([, info]) => (info.name || 'Neighbor').toLowerCase().includes(memberSearch.trim().toLowerCase())).length === 0 && (
-            <p style={{ color: '#8a8a8a', fontSize: '0.8rem', textAlign: 'center', padding: '0.75rem 0' }}>No members match "{memberSearch.trim()}".</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', padding: '0.75rem 0' }}>No members match "{memberSearch.trim()}".</p>
           )}
         </div>
         </>)}

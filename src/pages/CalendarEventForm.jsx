@@ -318,7 +318,7 @@ export default function CalendarEventForm() {
   if (!editing && hostChoices.length === 0) {
     return (
       <div className="cal-page">
-        <h1 style={{ color: '#4ecca3' }}>Post an event</h1>
+        <h1 style={{ color: 'var(--accent)' }}>Post an event</h1>
         <p>Events can be posted by organizers of a group that's part of Village Without Borders, and by VWB admins.</p>
         <p className="cal-sub">If you run a group and want to post events here, reach out to Village Without Borders to get your group set up.</p>
         <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/calendar')}>Back to the calendar</button>

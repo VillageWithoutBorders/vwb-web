@@ -263,7 +263,7 @@ export default function FindVillage() {
             </div>
             {reachBusy && <p className="cal-empty">Loading...</p>}
             {/* A dropdown: closed by default, so 40 zip codes do not fill the screen. */}
-            <details style={{ border: '1px solid #444', borderRadius: '8px', margin: '0 0 0.5rem' }}>
+            <details style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', margin: '0 0 0.5rem' }}>
               <summary style={{ minHeight: '44px', display: 'flex', alignItems: 'center', padding: '0 0.75rem', cursor: 'pointer', fontSize: '1rem' }}>
                 Zip codes: {tickedCount} of {suggested.length} ticked (tap to change)
               </summary>

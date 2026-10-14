@@ -7,8 +7,8 @@ import { useGoBack } from '../components/BackLink'
 
 const EVENT_TYPES = ['Flood', 'Storm', 'Tornado', 'Fire', 'Ice/Snow', 'Power Outage', 'Housing Crisis', 'Other']
 
-const fieldStyle = { display: 'block', width: '100%', marginBottom: '0.5rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid #444', background: '#1a1a1a', color: '#fff', fontSize: '1rem', boxSizing: 'border-box' }
-const labelStyle = { display: 'block', marginBottom: '0.25rem', marginTop: '1rem', fontWeight: 600, color: '#ccc' }
+const fieldStyle = { display: 'block', width: '100%', marginBottom: '0.5rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text-strong)', fontSize: '1rem', boxSizing: 'border-box' }
+const labelStyle = { display: 'block', marginBottom: '0.25rem', marginTop: '1rem', fontWeight: 600, color: 'var(--text-soft)' }
 
 function textSimilarity(a, b) {
   if (!a && !b) return 1
@@ -138,10 +138,10 @@ export default function CreateEvent() {
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-        <button onClick={() => goBack('/calendar')} aria-label="Back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
-        <h1 style={{ color: '#ffcc00', margin: 0, fontSize: '1.5rem' }}>Create Emergency Event</h1>
+        <button onClick={() => goBack('/calendar')} aria-label="Back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
+        <h1 style={{ color: 'var(--gold)', margin: 0, fontSize: '1.5rem' }}>Create Emergency Event</h1>
       </div>
-      <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>Alert your community about an emergency. Neighbors can sign up as affected or as responders.</p>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Alert your community about an emergency. Neighbors can sign up as affected or as responders.</p>
 
       <form onSubmit={handleSubmit}>
         {error && <div style={{ background: '#5c1a1a', color: '#ff9999', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}
@@ -162,38 +162,38 @@ export default function CreateEvent() {
         <input style={fieldStyle} type="text" placeholder="Town or county" value={locationName} onChange={e => setLocationName(e.target.value)} maxLength={100} />
 
         <label style={labelStyle}>Response radius: {radius} miles</label>
-        <input type="range" min={5} max={50} step={5} value={radius} onChange={e => setRadius(parseInt(e.target.value))} style={{ width: '100%', accentColor: '#ff6644', cursor: 'pointer' }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#8a8a8a', fontSize: '0.7rem' }}>
+        <input type="range" min={5} max={50} step={5} value={radius} onChange={e => setRadius(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--danger)', cursor: 'pointer' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.7rem' }}>
           <span>5 mi</span><span>25 mi</span><span>50 mi</span>
         </div>
 
-        <button type="submit" disabled={submitting} style={{ display: 'block', width: '100%', marginTop: '1.5rem', padding: '0.875rem', borderRadius: '8px', border: 'none', background: '#ff6644', color: '#fff', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', opacity: submitting ? 0.6 : 1 }}>
+        <button type="submit" disabled={submitting} style={{ display: 'block', width: '100%', marginTop: '1.5rem', padding: '0.875rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', opacity: submitting ? 0.6 : 1 }}>
           {submitting ? 'Checking...' : 'Create Event'}
         </button>
       </form>
 
       {dupMatch && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setDupMatch(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#1e1e1e', border: '1px solid #444', borderRadius: '12px', maxWidth: '440px', width: '100%', overflow: 'hidden' }}>
-            <div style={{ padding: '1rem 1rem 0.75rem', borderBottom: '1px solid #333' }}>
-              <h2 style={{ margin: 0, fontSize: '1.1rem', color: '#ffaa44' }}>Is this the same event?</h2>
-              <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.35rem 0 0' }}>An existing event looks similar to what you are reporting.</p>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '12px', maxWidth: '440px', width: '100%', overflow: 'hidden' }}>
+            <div style={{ padding: '1rem 1rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--warn)' }}>Is this the same event?</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.35rem 0 0' }}>An existing event looks similar to what you are reporting.</p>
             </div>
             <div style={{ padding: '1rem' }}>
-              <div style={{ background: '#2a2a2a', borderRadius: '8px', padding: '0.75rem', border: '1px solid #333' }}>
+              <div style={{ background: 'var(--surface-2)', borderRadius: '8px', padding: '0.75rem', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span style={{ background: '#ff6644', color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{dupMatch.event_type}</span>
-                  {dupMatch.verified && <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.6rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>&#10003; Verified</span>}
-                  <span style={{ color: '#8a8a8a', fontSize: '0.75rem', marginLeft: 'auto' }}>{timeAgo(dupMatch.created_at)}</span>
+                  <span style={{ background: 'var(--danger)', color: '#fff', fontSize: '0.6rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{dupMatch.event_type}</span>
+                  {dupMatch.verified && <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.6rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>&#10003; Verified</span>}
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: 'auto' }}>{timeAgo(dupMatch.created_at)}</span>
                 </div>
-                <p style={{ margin: '0 0 0.35rem', fontWeight: 700, fontSize: '1rem', color: '#fff' }}>{dupMatch.title}</p>
-                {dupMatch.location_name && <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.25rem' }}>{dupMatch.location_name}</p>}
-                {dupMatch.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.25rem 0 0', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{dupMatch.description}</p>}
+                <p style={{ margin: '0 0 0.35rem', fontWeight: 700, fontSize: '1rem', color: 'var(--text-strong)' }}>{dupMatch.title}</p>
+                {dupMatch.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.25rem' }}>{dupMatch.location_name}</p>}
+                {dupMatch.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.25rem 0 0', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{dupMatch.description}</p>}
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem 1rem 1rem', borderTop: '1px solid #333' }}>
-              <button onClick={() => { setDupMatch(null); navigate('/emergency/' + dupMatch.id) }} style={{ flex: 1, padding: '0.7rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>Same Event</button>
-              <button onClick={() => { setDupMatch(null); createEvent() }} style={{ flex: 1, padding: '0.7rem', borderRadius: '8px', border: '1px solid #ff6644', background: 'none', color: '#ff6644', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>Different Event</button>
+            <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem 1rem 1rem', borderTop: '1px solid var(--border)' }}>
+              <button onClick={() => { setDupMatch(null); navigate('/emergency/' + dupMatch.id) }} style={{ flex: 1, padding: '0.7rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>Same Event</button>
+              <button onClick={() => { setDupMatch(null); createEvent() }} style={{ flex: 1, padding: '0.7rem', borderRadius: '8px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>Different Event</button>
             </div>
           </div>
         </div>

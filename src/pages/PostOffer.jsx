@@ -8,8 +8,8 @@ import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES
 import { useGoBack } from '../components/BackLink'
 
 
-const fieldStyle = { display: 'block', width: '100%', marginBottom: '0.5rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid #444', background: '#1a1a1a', color: '#fff', fontSize: '1rem' }
-const labelStyle = { display: 'block', marginBottom: '0.25rem', marginTop: '1rem', fontWeight: 600, color: '#ccc' }
+const fieldStyle = { display: 'block', width: '100%', marginBottom: '0.5rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text-strong)', fontSize: '1rem' }
+const labelStyle = { display: 'block', marginBottom: '0.25rem', marginTop: '1rem', fontWeight: 600, color: 'var(--text-soft)' }
 
 export default function PostOffer() {
   const { user, profile, established, organizations } = useAuth()
@@ -82,11 +82,11 @@ export default function PostOffer() {
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
-        <h1 style={{ color: '#4ecca3', margin: 0, fontSize: '1.5rem' }}>Share an Offer</h1>
+        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
+        <h1 style={{ color: 'var(--accent)', margin: 0, fontSize: '1.5rem' }}>Share an Offer</h1>
       </div>
 
-      <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
         Let your neighbors know what you have to share. Free meals, supplies, labor, rides, anything helps.
       </p>
 
@@ -130,7 +130,7 @@ export default function PostOffer() {
           </>
         )}
 
-        <button type="submit" disabled={submitting} style={{ display: 'block', width: '100%', marginTop: '1.5rem', padding: '0.875rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', opacity: submitting ? 0.6 : 1 }}>
+        <button type="submit" disabled={submitting} style={{ display: 'block', width: '100%', marginTop: '1.5rem', padding: '0.875rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', opacity: submitting ? 0.6 : 1 }}>
           {submitting ? 'Posting...' : 'Post Offer'}
         </button>
       </form>

@@ -141,7 +141,7 @@ export default function SisterVillages({ village, villages, sisters, isKeeper, j
           )}
         </div>
       )}
-      {note && <p className="cal-sub" role="status" style={{ margin: '0.5rem 0 0', color: '#ffcc66' }}>{note}</p>}
+      {note && <p className="cal-sub" role="status" style={{ margin: '0.5rem 0 0', color: 'var(--gold)' }}>{note}</p>}
       {risk && (
         <VillageRiskDialog villageName={village.name} busy={busy} error={riskError} onAgree={joinAsSister} onCancel={() => { if (!busy) setRisk(false) }} />
       )}
