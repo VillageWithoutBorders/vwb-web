@@ -125,7 +125,7 @@ export default function VillageRoomPanel({ groupId, onInfo, onLeave, onChanged }
               </>}
         </div>
       )}
-      {note && <p role="status" style={{ margin: 0, padding: '0.4rem 1rem', color: '#9fe0c8', fontSize: '0.9rem' }}>{note}</p>}
+      {note && <p role="status" style={{ margin: 0, padding: '0.4rem 1rem', color: 'var(--accent)', fontSize: '0.9rem' }}>{note}</p>}
     </div>
   )
 }
