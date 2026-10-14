@@ -597,7 +597,7 @@ export default function Messages({ embedded = false }) {
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
   }
 
-  const tabStyle = (active) => ({ padding: '0.5rem 1rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : '#2a2a2a', color: active ? 'var(--on-accent)' : '#aaa' })
+  const tabStyle = (active) => ({ padding: '0.5rem 1rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : 'var(--surface-2)', color: active ? 'var(--on-accent)' : 'var(--text-secondary)' })
   const sidebarStyle = { position: 'fixed', top: 0, right: showSidebar ? 0 : '-320px', width: '300px', height: '100%', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }
   const overlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: showSidebar ? 'block' : 'none' }
   const sectionTitle = { fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1.5rem', marginBottom: '0.5rem' }
@@ -607,7 +607,7 @@ export default function Messages({ embedded = false }) {
   const toggleKnob = (on) => ({ position: 'absolute', top: '2px', left: on ? '20px' : '2px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' })
 
   const offerCardStyle = {
-    background: '#1a2e26',
+    background: 'var(--success-bg)',
     border: '1px solid #2d6a4f',
     borderRadius: '12px',
     padding: '1rem',
@@ -661,7 +661,7 @@ export default function Messages({ embedded = false }) {
           <input type="range" min={0} max={DISAPPEAR_STEPS.length - 1} step={1} value={getSliderIndex()} onChange={e => saveDisappearPref(DISAPPEAR_STEPS[parseInt(e.target.value)].mins)} style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
             {DISAPPEAR_STEPS.map((s, i) => (
-              <span key={i} style={{ fontSize: '0.65rem', color: getSliderIndex() === i ? 'var(--accent)' : '#666', fontWeight: getSliderIndex() === i ? 700 : 400, textAlign: 'center', flex: 1 }}>{s.label}</span>
+              <span key={i} style={{ fontSize: '0.65rem', color: getSliderIndex() === i ? 'var(--accent)' : 'var(--text-muted)', fontWeight: getSliderIndex() === i ? 700 : 400, textAlign: 'center', flex: 1 }}>{s.label}</span>
             ))}
           </div>
         </div>
@@ -727,7 +727,7 @@ export default function Messages({ embedded = false }) {
         <span className="groups-row-meta">Everyone you have connected with &#8250;</span>
       </button>
 
-      <button type="button" className="groups-row groups-entry" onClick={() => navigate('/groups')}>
+      <button type="button" className="groups-row groups-entry" data-tour="cottage-chats" onClick={() => navigate('/groups')}>
         <span className="groups-row-name"><span aria-hidden="true">&#128101;</span> Cottage Chats &amp; Campfires</span>
         <span className="groups-row-meta">Members-only boards &#8250;</span>
       </button>
