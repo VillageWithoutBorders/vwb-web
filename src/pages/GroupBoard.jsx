@@ -11,6 +11,7 @@ import { sendGroupPost, decryptMany, getDeviceId, editGroupPost, fetchEditHistor
 import { submitUserReport } from '../utils/submitUserReport'
 import { useCampfireIds } from '../hooks/useCampfireIds'
 import { useSidechatParents } from '../hooks/useSidechatParents'
+import VillageRoomPanel from '../components/VillageRoomPanel'
 import SidechatAdd from '../components/SidechatAdd'
 import { useGoBack } from '../components/BackLink'
 
@@ -52,6 +53,8 @@ export default function GroupBoard() {
   const goBack = useGoBack()
   const location = useLocation()
   const campfires = useCampfireIds()
+  // Set when this chat is a village Campfire or Sidechat (VillageRoomPanel tells us).
+  const [villageRoom, setVillageRoom] = useState(null)
   const sidechatParents = useSidechatParents()
   const parentId = sidechatParents.get(id) || null
   const isSidechat = !!parentId
@@ -624,7 +627,9 @@ export default function GroupBoard() {
         <button className="convo-back" onClick={() => goBack('/groups')} aria-label="Back to chats">&#8592;</button>
         <div className="convo-header-info">
           <h1>{campfires.has(group.id) ? '\u{1F525} ' : ''}{group.name}</h1>
-          <p className="convo-context">{isSidechat ? 'Sidechat' + (parentName ? ' of ' + parentName : '') + ' · ' : (orgName ? 'For ' + orgName + ' · ' : '')}{members.length} {members.length === 1 ? 'member' : 'members'} · {campfires.has(group.id) ? 'Campfire' : 'Cottage Chat'}</p>
+          <p className="convo-context">{villageRoom
+            ? (villageRoom.kind === 'sidechat' ? 'Sidechat in ' : 'Campfire in ') + villageRoom.village_name + ' · ' + members.length + ' ' + (members.length === 1 ? 'member' : 'members')
+            : <>{isSidechat ? 'Sidechat' + (parentName ? ' of ' + parentName : '') + ' · ' : (orgName ? 'For ' + orgName + ' · ' : '')}{members.length} {members.length === 1 ? 'member' : 'members'} · {campfires.has(group.id) ? 'Campfire' : 'Cottage Chat'}</>}</p>
         </div>
         <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">Settings{waiting.length > 0 ? ' (' + waiting.length + ' waiting)' : ''}</button>
       </div>
@@ -637,6 +642,7 @@ export default function GroupBoard() {
           ))}
         </nav>
       )}
+      <VillageRoomPanel groupId={group.id} onInfo={setVillageRoom} onLeave={leave} onChanged={() => loadGroup()} />
       {isSidechat && parentId && (
         <nav aria-label="Back to the general chat" style={{ padding: '0.4rem 1rem', borderBottom: '1px solid #333' }}>
           <button type="button" className="group-post-delete" onClick={() => navigate('/groups/' + parentId)}>{'\u2190 '}Back to {parentName || 'the general chat'}</button>
