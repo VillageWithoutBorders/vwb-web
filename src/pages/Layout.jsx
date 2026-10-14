@@ -9,6 +9,9 @@ export default function Layout() {
   const { pathname } = useLocation()
   // Chats fill the space between the top bar and the tabs, edge to edge,
   // instead of sitting inside the padded page column.
+  // World pages (the globe, a village, an organization) fill the whole screen
+  // with their own teal background, edge to edge.
+  const isWorld = pathname === '/' || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
   const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
 
   return (
@@ -26,7 +29,7 @@ export default function Layout() {
           </div>
         </div>
       </header>
-      <main className={'app-main' + (isChat ? ' app-main-chat' : '')}>
+      <main className={'app-main' + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '')}>
         <Outlet />
       </main>
       <BottomTabs />
