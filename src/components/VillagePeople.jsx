@@ -60,10 +60,10 @@ export function VillageNewMembers({ villageId, myId }) {
   const text = (more > 0 ? names.join(', ') + ' and ' + more + ' more' : names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]) + (fresh.length === 1 ? ' just joined.' : ' just joined.')
 
   return (
-    <div role="status" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#16302a', borderBottom: '1px solid #234', color: '#bfe8d9', fontSize: '0.9rem' }}>
+    <div role="status" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#16302a', borderBottom: '1px solid #234', color: 'var(--accent)', fontSize: '0.9rem' }}>
       <span aria-hidden="true">&#127793;</span>
       <span style={{ flex: 1 }}>{text} Say hello.</span>
-      <button type="button" onClick={dismiss} aria-label="Dismiss new member notice" style={{ background: 'none', border: 'none', color: '#bfe8d9', cursor: 'pointer', minWidth: '44px', minHeight: '44px', fontSize: '1.1rem' }}>&#10005;</button>
+      <button type="button" onClick={dismiss} aria-label="Dismiss new member notice" style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', minWidth: '44px', minHeight: '44px', fontSize: '1.1rem' }}>&#10005;</button>
     </div>
   )
 }
@@ -226,21 +226,21 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                 <p style={{ margin: '0.2rem 0 0.4rem', color: 'var(--text-soft)', fontSize: '0.85rem' }}>Reason: {r.reason}</p>
                 {r.requested_by === myId
                   ? <button type="button" style={btn} disabled={busy} onClick={() => takeBack(r.target_id)}>Take back my request</button>
-                  : <button type="button" style={{ ...btn, borderColor: '#ff8844', color: '#ffb088' }} disabled={busy} onClick={() => agree(r.target_id)}>I agree. Remove them</button>}
+                  : <button type="button" style={{ ...btn, borderColor: 'var(--warn)', color: '#ffb088' }} disabled={busy} onClick={() => agree(r.target_id)}>I agree. Remove them</button>}
               </div>
             ))}
           </div>
         )}
 
         {iAmGuest
-          ? <p style={{ margin: '0 0 0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #4a2a35', borderRadius: '10px', background: '#2a1a20', color: '#ffb3c7', fontSize: '0.85rem', lineHeight: 1.4 }}>{sisterIds.includes(myId) ? 'You are a guest here, from a Sister Village.' : 'You are a guest here.'} You can read and post. Only full members can invite guests.</p>
+          ? <p style={{ margin: '0 0 0.75rem', padding: '0.6rem 0.75rem', border: '1px solid var(--danger-bg)', borderRadius: '10px', background: 'var(--danger-bg)', color: 'var(--danger)', fontSize: '0.85rem', lineHeight: 1.4 }}>{sisterIds.includes(myId) ? 'You are a guest here, from a Sister Village.' : 'You are a guest here.'} You can read and post. Only full members can invite guests.</p>
           : (
           <div style={{ margin: '0 0 0.75rem' }}>
             {!inviteOpen
               ? <button type="button" style={{ ...btn, width: '100%' }} onClick={() => { setInviteOpen(true); setInviteNote('') }}>Invite a guest</button>
               : (
-              <div style={{ padding: '0.75rem', border: '1px solid #4a2a35', borderRadius: '10px', background: '#2a1a20' }}>
-                <p style={{ margin: '0 0 0.5rem', color: '#ffb3c7', fontSize: '0.85rem', lineHeight: 1.4 }}>Invite someone you know who lives outside this village. They get a Guest badge, everyone here sees that they joined, and they cannot invite others.</p>
+              <div style={{ padding: '0.75rem', border: '1px solid var(--danger-bg)', borderRadius: '10px', background: 'var(--danger-bg)' }}>
+                <p style={{ margin: '0 0 0.5rem', color: 'var(--danger)', fontSize: '0.85rem', lineHeight: 1.4 }}>Invite someone you know who lives outside this village. They get a Guest badge, everyone here sees that they joined, and they cannot invite others.</p>
                 <label htmlFor="vp-invite" className="sr-only">Search people you know</label>
                 <input id="vp-invite" type="search" value={inviteQ} onChange={(e) => setInviteQ(e.target.value)} placeholder="Search people you know" autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0 0.75rem', marginBottom: '0.5rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', fontSize: '1rem' }} />
                 {inviteResults.map((p) => (
@@ -277,12 +277,12 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
                       <UserName userId={p.user_id} name={p.display_name || 'Neighbor'} style={{ color: 'var(--text-strong)', fontSize: '0.9rem', fontWeight: 600 }} />
                       {me && <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>(you)</span>}
-                      {p.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
+                      {p.role === 'founder' && <span style={{ fontSize: '0.6rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
                       {p.role === 'admin' && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
                       {p.is_hope_ambassador && <span style={{ fontSize: '0.6rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
-                      {p.user_id === keepers.starter_id && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: 'var(--gold)', padding: '0 4px', borderRadius: '3px' }}>Keeper</span>}
-                      {keepers.helper_ids.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: 'var(--gold)', padding: '0 4px', borderRadius: '3px' }}>Helper</span>}
-                      {guestIds.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a2a35', color: '#ffb3c7', padding: '0 4px', borderRadius: '3px' }}>Guest</span>}
+                      {p.user_id === keepers.starter_id && <span style={{ fontSize: '0.6rem', background: 'var(--warn-bg)', color: 'var(--gold)', padding: '0 4px', borderRadius: '3px' }}>Keeper</span>}
+                      {keepers.helper_ids.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: 'var(--warn-bg)', color: 'var(--gold)', padding: '0 4px', borderRadius: '3px' }}>Helper</span>}
+                      {guestIds.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: 'var(--danger-bg)', color: 'var(--danger)', padding: '0 4px', borderRadius: '3px' }}>Guest</span>}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Joined {new Date(p.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                   </div>

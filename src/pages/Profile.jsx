@@ -430,11 +430,11 @@ function captureCoverageLocation() {
         )}
 
         {!profile?.is_hope_ambassador && !isAdmin && ambApplication?.status !== 'pending' && !showAmbassadorSignup && (
-          <button onClick={() => setShowAmbassadorSignup(true)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "0.75rem", padding: "0.75rem", background: "linear-gradient(135deg, #3a2a10, #4a3520)", border: "2px solid #ff8844", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => setShowAmbassadorSignup(true)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "0.75rem", padding: "0.75rem", background: "linear-gradient(135deg, #3a2a10, #4a3520)", border: "2px solid var(--warn)", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
             <span style={{ fontSize: "1.5rem" }}>&#128227;</span>
             <div>
-              <span style={{ display: "block", color: "#ffaa44", fontWeight: 700, fontSize: "0.95rem" }}>Become a Hope Ambassador</span>
-              <span style={{ color: "#cc9966", fontSize: "0.75rem" }}>Post in Announcements and join the Ambassadors board. Apply above &#8594;</span>
+              <span style={{ display: "block", color: "var(--warn)", fontWeight: 700, fontSize: "0.95rem" }}>Become a Hope Ambassador</span>
+              <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Post in Announcements and join the Ambassadors board. Apply above &#8594;</span>
             </div>
           </button>
         )}
@@ -490,7 +490,7 @@ function captureCoverageLocation() {
         {error && <p className="form-error" role="alert" style={{ marginTop: '1rem' }}>{error}</p>}
 
         {isAdmin && !profile?.admin_latitude && (
-          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
+          <div style={{ background: 'linear-gradient(135deg, var(--info-bg), var(--info-bg))', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
             <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>Set up your coverage area</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Emergency dispute reviews (a false alarm or duplicate flag) route to the nearest admin, so add your area and share your location to catch the ones near you. Reports about a person or message go to every admin right away, wherever they're located.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -506,7 +506,7 @@ function captureCoverageLocation() {
           </div>
         )}
         {profile?.is_hope_ambassador && !isAdmin && !adminAppStatus && (
-          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
+          <div style={{ background: 'linear-gradient(135deg, var(--info-bg), var(--info-bg))', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
             <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>Apply to become an Admin</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Admins help coordinate responses in their region and keep the community safe.</p>
             {!showAdminApp ? (
@@ -524,7 +524,7 @@ function captureCoverageLocation() {
           </div>
         )}
         {adminAppStatus === 'invited' && (
-          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
+          <div style={{ background: 'linear-gradient(135deg, var(--info-bg), var(--info-bg))', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
             <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>You've been invited to become an Admin</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>An admin thinks you'd be a good fit to help coordinate responses in your area. Accepting sends this back to them for final confirmation.</p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -534,7 +534,7 @@ function captureCoverageLocation() {
           </div>
         )}
         {adminAppStatus === 'pending' && (
-          <div style={{ background: '#1a2a4a', border: '1px solid var(--info)', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
+          <div style={{ background: 'var(--info-bg)', border: '1px solid var(--info)', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
             <p style={{ color: 'var(--info)', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your admin application is under review</p>
           </div>
         )}
@@ -544,11 +544,11 @@ function captureCoverageLocation() {
           </div>
         )}
 
-        <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'linear-gradient(135deg, var(--success-bg), #2d5a45)', border: '2px solid var(--accent)', borderRadius: '12px', textDecoration: 'none', marginTop: '0.75rem' }}>
+        <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'linear-gradient(135deg, var(--success-bg), var(--border))', border: '2px solid var(--accent)', borderRadius: '12px', textDecoration: 'none', marginTop: '0.75rem' }}>
           <img src="/images/vwb_header.png" alt="VWB" style={{ height: '40px', borderRadius: '50%' }} />
           <div>
             <span style={{ display: 'block', color: 'var(--accent)', fontWeight: 700, fontSize: '0.95rem' }}>Village Without Borders</span>
-            <span style={{ color: '#8fc', fontSize: '0.75rem' }}>Visit our website &#8599;</span>
+            <span style={{ color: 'var(--accent)', fontSize: '0.75rem' }}>Visit our website &#8599;</span>
           </div>
         </a>
 

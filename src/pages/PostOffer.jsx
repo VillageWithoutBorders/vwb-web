@@ -95,7 +95,7 @@ export default function PostOffer() {
       )}
 
       <form onSubmit={handleSubmit}>
-        {error && <div style={{ background: '#5c1a1a', color: '#ff9999', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}
+        {error && <div style={{ background: 'var(--danger-bg)', color: 'var(--danger)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}
 
         <label style={labelStyle} htmlFor="offer-category">Category</label>
         <select id="offer-category" style={fieldStyle} value={category} onChange={e => setCategory(e.target.value)}>

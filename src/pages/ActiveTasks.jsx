@@ -751,7 +751,7 @@ export default function ActiveTasks() {
                   {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
                   <p className="task-card-desc">{req.description}</p>
                   {req.audience && req.audience !== 'everyone' && !req.archived_at && (!req.opens_to_all_at || new Date(req.opens_to_all_at) > new Date()) && (
-                    <div style={{ margin: '0.25rem 0 0.5rem', padding: '0.6rem 0.75rem', border: '1px solid #3a4a7a', borderRadius: '8px' }}>
+                    <div style={{ margin: '0.25rem 0 0.5rem', padding: '0.6rem 0.75rem', border: '1px solid var(--info-bg)', borderRadius: '8px' }}>
                       <p style={{ margin: '0 0 0.4rem', fontSize: '0.9rem' }}>
                         Only {req.audience === 'network' ? 'your group and its network' : 'your group'} can see this
                         {req.opens_to_all_at ? ' until ' + new Date(req.opens_to_all_at).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : ''}.
@@ -764,7 +764,7 @@ export default function ActiveTasks() {
                   {/* Reverse: take an open request back to the group */}
                   {showActive && organizations.length > 0 && req.audience === 'everyone' && !req.archived_at && req.status === 'open' && (
                     narrowing === req.id ? (
-                      <div style={{ margin: '0.25rem 0 0.5rem', padding: '0.6rem 0.75rem', border: '1px solid #3a4a7a', borderRadius: '8px' }}>
+                      <div style={{ margin: '0.25rem 0 0.5rem', padding: '0.6rem 0.75rem', border: '1px solid var(--info-bg)', borderRadius: '8px' }}>
                         <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>Keep this with your group for a while. Neighbors who already said yes keep their spot. It opens to everyone again on its own.</p>
                         {organizations.length > 1 && (
                           <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Which group?
@@ -942,14 +942,14 @@ export default function ActiveTasks() {
           {/* ========== Requests I'm Helping With ========== */}
           {currentHelping.length > 0 && (
             <>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: currentRequests.length > 0 ? '1.25rem' : '0.25rem' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: currentRequests.length > 0 ? '1.25rem' : '0.25rem' }}>
                 Helping Others
               </div>
               {currentHelping.map(match => {
                 const req = match.request
                 const bothDone = match.helper_completed && match.requester_completed
                 return (
-                  <div key={match.id} className="task-card" style={{ borderLeft: '3px solid #b8860b' }}>
+                  <div key={match.id} className="task-card" style={{ borderLeft: '3px solid var(--gold)' }}>
                     <div className="task-card-top">
                       <span className={'urgency-badge urgency-' + req.urgency}>{URGENCY_LABELS[req.urgency] || 'Flexible'}</span>
                       <span className="feed-card-time">{timeAgo(match.created_at)}</span>

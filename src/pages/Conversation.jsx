@@ -549,7 +549,7 @@ export default function Conversation() {
                   <input type="checkbox" checked={includeEvidence} onChange={(e) => setIncludeEvidence(e.target.checked)} style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: 'var(--accent)', flexShrink: 0 }} />
                   <span>Attach the last few messages from this conversation, so an admin has something to go on</span>
                 </label>
-                {reportError && <p role="alert" style={{ margin: '0.6rem 0 0', color: '#ff8080', fontSize: '0.85rem' }}>{reportError}</p>}
+                {reportError && <p role="alert" style={{ margin: '0.6rem 0 0', color: 'var(--danger)', fontSize: '0.85rem' }}>{reportError}</p>}
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                   <button type="button" onClick={closeReportDialog} style={{ flex: 1, padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>Cancel</button>
                   <button type="button" onClick={submitConversationReport} disabled={reportBusy} style={{ flex: 1, padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{reportBusy ? 'Sending...' : 'Send report'}</button>

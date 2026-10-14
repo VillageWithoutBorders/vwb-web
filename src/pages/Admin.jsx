@@ -1177,7 +1177,7 @@ export default function Admin() {
                   <AvatarDisplay url={u.avatar_url} userId={u.user_id} size={32} />
                   <div>
                     <UserName userId={u.user_id} name={u.display_name || 'Unnamed'} style={{ fontWeight: 700 }} />
-                    {u.role === 'founder' && <span style={{ marginLeft: '0.4rem', background: '#3a1a4a', color: '#c77dff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Founder</span>}
+                    {u.role === 'founder' && <span style={{ marginLeft: '0.4rem', background: 'var(--purple-bg)', color: 'var(--purple)', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Founder</span>}
                     {u.role === 'admin' && <span style={{ marginLeft: '0.4rem', background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
                     {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Ambassador</span>}
                   </div>
@@ -1188,7 +1188,7 @@ export default function Admin() {
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
                 <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem' }}>Message</button>
                 {!u.is_hope_ambassador && (
-                  <button onClick={() => promoteUser(u.user_id, 'ambassador')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: '#2d5a45', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Make Ambassador</button>
+                  <button onClick={() => promoteUser(u.user_id, 'ambassador')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--border)', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Make Ambassador</button>
                 )}
                 {isFounder && u.role !== 'admin' && u.role !== 'founder' && u.is_hope_ambassador && u.user_id !== user.id && (
                   u.admin_app_status === 'invited' ? (

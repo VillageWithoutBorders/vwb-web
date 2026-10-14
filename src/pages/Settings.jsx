@@ -360,7 +360,7 @@ export default function Settings() {
             {newPw && (
               <div id="newPwStrength" style={{ marginTop: '0.4rem' }}>
                 <div style={{ height: '6px', borderRadius: '3px', background: 'var(--surface-3)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: (passwordStrength(newPw).level + 1) * 25 + '%', background: ['var(--danger)', 'var(--warn)', '#8fc', 'var(--accent)'][passwordStrength(newPw).level] }} />
+                  <div style={{ height: '100%', width: (passwordStrength(newPw).level + 1) * 25 + '%', background: ['var(--danger)', 'var(--warn)', 'var(--accent)', 'var(--accent)'][passwordStrength(newPw).level] }} />
                 </div>
                 <span className="field-hint">{passwordStrength(newPw).label}</span>
               </div>
