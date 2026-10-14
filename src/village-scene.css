@@ -97,3 +97,8 @@
 .vs-room-ic .vs-icon { width: 40px; height: 40px; }
 .vs-room-ic:has(.vs-icon) { background: none; }
 .vs-sheet-ic .vs-icon { display: inline-block; width: 36px; height: 36px; vertical-align: middle; }
+
+/* World pages fill the screen (Layout adds .app-main-world): the teal runs
+   edge to edge and top to bottom; the content stays centered. */
+.app-main.app-main-world { max-width: none; padding-left: 0; padding-right: 0; padding-top: var(--header-height); padding-bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px)); background: #1b3838; display: flex; flex-direction: column; }
+.app-main-world > .vs-page { flex: 1; width: 100%; min-height: calc(100dvh - var(--header-height) - var(--tab-height) - env(safe-area-inset-bottom, 0px)); }
