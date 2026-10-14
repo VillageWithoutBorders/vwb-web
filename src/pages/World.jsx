@@ -246,7 +246,7 @@ export default function World() {
               </button>
             ))}
             {net === 'villages' && villageMap && villageMap.nodes.map((v) => (
-              <span key={'t' + v.id} className="wd-tag" aria-hidden="true" style={{ left: v.lx + '%', top: v.ly + '%' }}>
+              <span key={'t' + v.id} className={'wd-tag' + (v.is_mine ? ' wd-tag-under' : ' wd-tag-mid')} aria-hidden="true" style={{ left: v.gx + '%', top: v.gy + '%' }}>
                 {v.is_mine ? '' : '+ '}{v.name}
               </span>
             ))}
