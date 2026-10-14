@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { VILLAGE_SPOTS, VILLAGE_DECOR } from '../data/worldElements'
+import SisterCampfireButton from '../components/SisterCampfireButton'
 import '../village-scene.css'
 
 // The Village page: one village as a little world. Every element on the
@@ -26,6 +27,7 @@ export default function VillageScene() {
   const [keeperNames, setKeeperNames] = useState([])
   const [isGuest, setIsGuest] = useState(false)
   const [sisters, setSisters] = useState([])
+  const [sisterFires, setSisterFires] = useState([])
   const [orgs, setOrgs] = useState([])
   const [sheet, setSheet] = useState(null)
   const [bump, setBump] = useState(null)
@@ -100,6 +102,11 @@ export default function VillageScene() {
       if (!alive) return
       if (error) { console.error('Failed to load sister villages:', error); return }
       setSisters((data || []).filter((s) => s.village_a === id || s.village_b === id).map((s) => (s.village_a === id ? s.village_b : s.village_a)))
+    })
+    supabase.rpc('sister_campfires', { p_village: id }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load Sister Campfires:', error); return }
+      setSisterFires((data || []).filter((c) => !c.closed_at))
     })
     supabase.rpc('org_village_links').then(({ data, error }) => {
       if (!alive) return
@@ -184,9 +191,12 @@ export default function VillageScene() {
         return <>{title}
           {sisters.length === 0 && <p>This village has no sister villages yet. The keeper can ask another village from the Village Network map.</p>}
           {sisters.map((sid) => (
-            <button key={sid} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/village/' + sid) }}>
-              <span aria-hidden="true">{'\u{1F3D8}️'}</span> {nameOf(sid)}<small>Sister village</small>
-            </button>
+            <div key={sid} className="vs-sister">
+              <button type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/village/' + sid) }}>
+                <span aria-hidden="true">{'\u{1F3D8}️'}</span> {nameOf(sid)}<small>Sister village</small>
+              </button>
+              <SisterCampfireButton campfire={sisterFires.find((c) => c.village_a === sid || c.village_b === sid)} />
+            </div>
           ))}
           <p className="vs-note">Members of a sister village can join this one as a guest.</p>
         </>
