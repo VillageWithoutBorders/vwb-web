@@ -11,11 +11,19 @@ import { useSidechatParents } from '../hooks/useSidechatParents'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import { UserName } from '../components/AvatarDisplay'
 import BackLink from '../components/BackLink'
+import { useDashTab, NeedsYou, DashTabs, DashPanel } from '../components/DashShell'
 
-// The organizer's home base for one group: shortcuts, members, upcoming
-// events with sign-up counts, and the needs and offers posted under the
-// group's name. Only the head and organizers see this. The database checks
-// that too, so a hidden button is never the only protection.
+// The organizer's home base for one organization. Needs-you card on top,
+// then four tabs: People, Chats, Events and posts, Settings.
+// Only Heads and organizers see this. The database checks that too,
+// so a hidden button is never the only protection.
+
+const TABS = [
+  { k: 'people', em: '\u{1F4C7}', label: 'People' },
+  { k: 'chats', em: '\u{1F525}', label: 'Chats' },
+  { k: 'events', em: '\u{1F4C5}', label: 'Events' },
+  { k: 'settings', em: '\u2699\uFE0F', label: 'Settings' },
+]
 
 const ROLE_LABEL = { admin: 'Head', organizer: 'Organizer', member: 'Member' }
 
@@ -53,15 +61,24 @@ export default function OrgDashboard() {
   const [chatName, setChatName] = useState('')
   const [chatBusy, setChatBusy] = useState(false)
   const [chatNote, setChatNote] = useState('')
+  const [asks, setAsks] = useState([])
+  const [linkAsks, setLinkAsks] = useState(0)
+  const [tab, setTab] = useDashTab(TABS)
 
   const load = useCallback(async () => {
     if (!id || !allowed) return
-    const [m, p, ev, o] = await Promise.all([
+    const [m, p, ev, o, a, c] = await Promise.all([
       supabase.rpc('list_org_members', { p_org: id }),
       supabase.rpc('org_needs_and_offers', { p_org: id }),
       fetchCalendarEvents(),
       supabase.from('organizations').select('id, name, is_umbrella, affiliate_label').eq('id', id).maybeSingle(),
+      supabase.rpc('org_join_asks_list', { p_org: id }),
+      supabase.rpc('my_org_connections', { p_org: id }),
     ])
+    if (a.error) console.error('Failed to load join asks:', a.error)
+    if (c.error) console.error('Failed to load connection requests:', c.error)
+    setAsks(a.data || [])
+    setLinkAsks((c.data || []).filter((l) => l.status === 'pending' && !l.asked_by_me).length)
     if (m.error) console.error('Failed to load members:', m.error)
     if (p.error) console.error('Failed to load needs and offers:', p.error)
     setMembers(m.data || [])
@@ -136,7 +153,7 @@ export default function OrgDashboard() {
 
   const addMember = (u) => run(async () => {
     const r = await supabase.rpc('add_org_member', { p_org: id, p_user: u.user_id })
-    if (!r.error) { setFound((f) => f.filter((x) => x.user_id !== u.user_id)) }
+    if (!r.error) { setFound((f) => f.filter((x) => x.user_id !== u.user_id)); setAsks((l) => l.filter((x) => x.user_id !== u.user_id)) }
     return r
   }, u.display_name + ' was added.')
 
@@ -155,6 +172,11 @@ export default function OrgDashboard() {
     run(() => supabase.rpc('step_down_org_head', { p_org: id }), 'You are now an organizer.')
   }
 
+  const notNow = (u) => run(
+    () => supabase.rpc('dismiss_org_join_ask', { p_org: id, p_user: u.user_id }),
+    'Cleared. ' + u.display_name + ' is not told.',
+  )
+
   const headCount = members.filter((x) => x.role === 'admin').length
 
   const removeMember = (u) => {
@@ -167,7 +189,7 @@ export default function OrgDashboard() {
     const choices = managed
     if (managed.length === 1) return <Navigate to={'/orgs/' + managed[0].id + '/dashboard'} replace />
     return (
-      <div className="cal-page hub-page">
+      <div className="cal-page hub-page dash-page">
         <BackLink fallback="/" fallbackLabel="Home" />
         <h1 className="hub-org-name">Organization dashboard</h1>
         {choices.length === 0 && (
@@ -182,7 +204,7 @@ export default function OrgDashboard() {
 
   if (!allowed) {
     return (
-      <div className="cal-page hub-page">
+      <div className="cal-page hub-page dash-page">
         <BackLink fallback="/" fallbackLabel="Home" />
         <p className="cal-empty">This dashboard is only for this group's organizers.</p>
       </div>
@@ -197,176 +219,212 @@ export default function OrgDashboard() {
   const shownPeople = people.filter((u) => !sideFilter.trim() || (u.display_name || '').toLowerCase().includes(sideFilter.trim().toLowerCase()))
   const chatRow = (c, nested) => (
     <button key={c.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + c.id)}>
-      <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{campfires.has(c.id) ? '\u{1F525} ' : ''}{c.name}</span>
+      <span className="groups-row-name">{nested ? '↳ ' : ''}{campfires.has(c.id) ? '\u{1F525} ' : ''}{c.name}</span>
       <span className="groups-row-meta">Open chat &#8250;</span>
     </button>
   )
   const openPosts = posts.filter((p) => p.status !== 'closed' && p.status !== 'completed' && p.status !== 'cancelled')
-  const tile = { padding: '0.85rem 1rem', borderRadius: '12px', border: '1px solid #333', background: '#1e1e1e' }
+  const weekOut = Date.now() + 7 * 864e5
+  const soon = events.filter((e) => e.status !== 'cancelled' && new Date(e.starts_at).getTime() < weekOut)
+
+  const needs = loading ? null : [
+    asks.length && { k: 'asks', tab: 'people', em: '\u{1F64B}', text: asks.length === 1 ? asks[0].display_name + ' asked to join' : asks.length + ' people asked to join' },
+    linkAsks && { k: 'links', tab: 'chats', em: '\u{1F517}', text: linkAsks === 1 ? 'An organization asked to connect' : linkAsks + ' organizations asked to connect' },
+    !general && chatsReady && { k: 'general', tab: 'chats', em: '\u{1F525}', text: 'Start your general chat so members have a place to talk' },
+    soon.length && { k: 'soon', tab: 'events', em: '\u{1F4C5}', text: soon.length === 1 ? soon[0].title + ' is this week' : soon.length + ' events this week' },
+  ].filter(Boolean)
+
+  const shortcut = (em, label, to) => (
+    <button type="button" className="dash-shortcut" onClick={() => navigate(to)}><span aria-hidden="true">{em}</span>{label}</button>
+  )
 
   return (
-    <div className="cal-page hub-page">
-      <BackLink fallback="/" fallbackLabel="Home" />
-      <h1 className="hub-org-name">{orgName || 'Your group'}</h1>
-      <p className="cal-sub">Organization dashboard</p>
+    <div className="cal-page hub-page dash-page">
+      <BackLink fallback={'/orgs/' + id} fallbackLabel={orgName || 'Organization'} />
+      <div className="dash-head">
+        <span className="dash-head-icon" aria-hidden="true">{'\u{1F9F0}'}</span>
+        <h1>{orgName || 'Your organization'}</h1>
+      </div>
+      <p className="dash-sub">Organizer tools{isHead ? ' · You are a Head' : ' · You are an organizer'}</p>
 
-      {loading && <p className="cal-empty">Loading...</p>}
+      {loading && <p className="cal-empty" role="status">Loading...</p>}
+      <NeedsYou items={needs} onGo={setTab} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', margin: '0.75rem 0 1rem' }}>
-        <div style={tile}><div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#4ecca3' }}>{members.length}</div><div style={{ fontSize: '0.75rem', color: '#999' }}>Members</div></div>
-        <div style={tile}><div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#4ecca3' }}>{events.length}</div><div style={{ fontSize: '0.75rem', color: '#999' }}>Upcoming events</div></div>
-        <div style={tile}><div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#4ecca3' }}>{openPosts.length}</div><div style={{ fontSize: '0.75rem', color: '#999' }}>Open needs and offers</div></div>
+      <div className="dash-stats">
+        <button type="button" className="dash-stat" onClick={() => setTab('people')}><b>{members.length}</b><small>Members</small></button>
+        <button type="button" className="dash-stat" onClick={() => setTab('events')}><b>{events.length}</b><small>Upcoming events</small></button>
+        <button type="button" className="dash-stat" onClick={() => setTab('events')}><b>{openPosts.length}</b><small>Open needs and offers</small></button>
       </div>
 
-      <section className="hub-section" aria-labelledby="od-shortcuts">
-        <div className="hub-section-head"><h2 id="od-shortcuts">Shortcuts</h2></div>
-        <div className="quick-actions">
-          <button type="button" className="action-card" onClick={() => navigate('/calendar/new?org=' + id)}>
-            <span className="action-icon" aria-hidden="true">&#128197;</span>
-            <span className="action-label">Post an event</span>
-            <span className="action-desc">With volunteer sign-ups if you want them</span>
-          </button>
-          <button type="button" className="action-card" onClick={() => navigate('/calendar/import?org=' + id)}>
-            <span className="action-icon" aria-hidden="true">&#128229;</span>
-            <span className="action-label">Import events</span>
-            <span className="action-desc">Bring in your calendar from Google, Apple, Outlook, or Facebook</span>
-          </button>
-          <button type="button" className="action-card" onClick={() => navigate('/ask?org=' + id)}>
-            <span className="action-icon" aria-hidden="true">&#127384;</span>
-            <span className="action-label">Post a need</span>
-            <span className="action-desc">Ask neighbors for help as your group</span>
-          </button>
-          <button type="button" className="action-card" onClick={() => navigate('/post-offer?org=' + id)}>
-            <span className="action-icon" aria-hidden="true">&#127873;</span>
-            <span className="action-label">Post an offer</span>
-            <span className="action-desc">Share what your group can give</span>
-          </button>
-          <button type="button" className="action-card" onClick={() => navigate('/orgs/' + id)}>
-            <span className="action-icon" aria-hidden="true">&#127968;</span>
-            <span className="action-label">Our public page</span>
-            <span className="action-desc">Home area, privacy, and contact email</span>
-          </button>
-          <button type="button" className="action-card" onClick={() => navigate('/community/resources')}>
-            <span className="action-icon" aria-hidden="true">&#128214;</span>
-            <span className="action-label">Resources</span>
-            <span className="action-desc">Browse or add to the resource list</span>
-          </button>
-        </div>
-      </section>
+      <DashTabs tabs={TABS} tab={tab} setTab={setTab} dots={{ people: asks.length > 0, chats: linkAsks > 0 }} />
 
-      <section className="hub-section" aria-labelledby="od-chats">
-        <div className="hub-section-head"><h2 id="od-chats">Campfires</h2></div>
-        <p className="hub-org-desc">{general ? 'The general chat has everyone in ' + (orgName || 'your organization') + '. Start a sidechat under it for one task or topic, and pick who joins. Only the people you pick see it.' : 'Private chats for ' + (orgName || 'your organization') + '. The general chat adds everyone in your organization automatically.'}</p>
-        {chatsReady && chats.length === 0 && <p className="hub-empty">No chats yet. Start your general chat below.</p>}
-        {general && chatRow(general, false)}
-        {sidechats.map((c) => chatRow(c, true))}
-        {otherChats.map((c) => chatRow(c, false))}
-        <form onSubmit={startChat} noValidate style={{ marginTop: '0.75rem' }}>
-          <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{!general ? 'Name for your general chat' : 'Start a sidechat under ' + general.name}</label>
-          <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={!general ? (orgName || 'Organization') + ' general chat' : 'For example, Volunteers or Food drive'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
-          {general && (
-            <fieldset style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
-              <legend className="cal-sub">Who is in it (you are added automatically)</legend>
-              {people.length > 8 && (
-                <input type="search" aria-label="Search the group by name" placeholder="Type a name" value={sideFilter} onChange={(e) => setSideFilter(e.target.value)} autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: 44, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
-              )}
-              <div style={{ maxHeight: 260, overflowY: 'auto' }}>
-                {shownPeople.map((u) => (
-                  <label key={u.user_id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minHeight: 44 }}>
-                    <input type="checkbox" checked={sidePicked.includes(u.user_id)} onChange={() => setSidePicked((s) => (s.includes(u.user_id) ? s.filter((x) => x !== u.user_id) : [...s, u.user_id]))} style={{ width: 22, height: 22 }} />
-                    <span>{u.display_name}</span>
-                  </label>
-                ))}
-                {people.length === 0 && <p className="hub-empty">No one else is in the group yet.</p>}
-              </div>
-              {people.length > 1 && (
-                <button type="button" className="btn btn-outline group-small-btn" style={{ marginTop: '0.4rem' }} onClick={() => setSidePicked(sidePicked.length === people.length ? [] : people.map((u) => u.user_id))}>{sidePicked.length === people.length ? 'Clear everyone' : 'Pick everyone'}</button>
-              )}
-            </fieldset>
+      {tab === 'people' && (
+        <DashPanel k="people">
+          {asks.length > 0 && (
+            <section className="hub-section" aria-labelledby="od-asks">
+              <div className="hub-section-head"><h2 id="od-asks">Asking to join</h2></div>
+              {asks.map((u) => (
+                <div key={u.user_id} className="dash-row">
+                  <div className="dash-row-main"><strong><UserName userId={u.user_id} name={u.display_name} /></strong><small>Asked {new Date(u.asked_at).toLocaleDateString()}</small></div>
+                  <div className="dash-btns">
+                    <button type="button" className="btn btn-primary" disabled={busy} onClick={() => addMember(u)}>Add</button>
+                    <button type="button" className="btn btn-outline" disabled={busy} onClick={() => notNow(u)}>Not now</button>
+                  </div>
+                </div>
+              ))}
+            </section>
           )}
-          {chatNote && <p role="alert" className="groups-error">{chatNote}</p>}
-          <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : !general ? 'Start the general chat' : 'Start sidechat'}</button>
-        </form>
-      </section>
 
-      {mine && <OrgConnections orgId={id} orgName={orgName} />}
+          <section className="hub-section" aria-labelledby="od-members">
+            <div className="hub-section-head"><h2 id="od-members">Members ({members.length})</h2></div>
+            {members.map((u) => (
+              <div key={u.user_id} className="dash-row">
+                <div className="dash-row-main">
+                  <strong><UserName userId={u.user_id} name={u.display_name} /></strong>
+                  <small>{ROLE_LABEL[u.role] || u.role}{u.user_id === user.id ? ' (you)' : ''}</small>
+                </div>
+                {u.role === 'admin' && u.user_id === user.id && headCount > 1 && (
+                  <div className="dash-btns">
+                    <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={stepDown}>Step down as Head</button>
+                  </div>
+                )}
+                {u.role !== 'admin' && (
+                  <div className="dash-btns">
+                    {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => makeHead(u)}>Make Head</button>}
+                    {isHead && u.role === 'member' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'organizer')}>Make organizer</button>}
+                    {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'member')}>Make member</button>}
+                    {(isHead || u.role === 'member') && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => removeMember(u)}>Remove</button>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </section>
 
-      {mine && <OrgRules orgId={id} isHead={mine.role === 'admin'} />}
+          <section className="hub-section" aria-labelledby="od-add">
+            <div className="hub-section-head"><h2 id="od-add">Add someone</h2></div>
+            <form className="hub-search" onSubmit={search} noValidate>
+              <label htmlFor="od-find" className="sr-only">Find a VWB member by name</label>
+              <input id="od-find" type="text" autoComplete="off" placeholder="Find a VWB member by name" value={query} onChange={(e) => { setQuery(e.target.value); setSearched(false) }} />
+              <button type="submit" className="btn btn-primary" disabled={query.trim().length < 2}>Search</button>
+            </form>
+            {searched && found.length === 0 && <p className="hub-empty">No one found. They need a VWB account first.</p>}
+            {found.map((u) => (
+              <div key={u.user_id} className="dash-row">
+                <div className="dash-row-main"><strong><UserName userId={u.user_id} name={u.display_name} /></strong></div>
+                <button type="button" className="btn btn-primary group-small-btn" disabled={busy} onClick={() => addMember(u)}>Add</button>
+              </div>
+            ))}
+          </section>
+          {note && <p className="dash-note" role="status">{note}</p>}
+        </DashPanel>
+      )}
 
-      <section className="hub-section" aria-labelledby="od-events">
-        <div className="hub-section-head">
-          <h2 id="od-events">Events and sign-ups</h2>
-          <Link to={'/calendar/new?org=' + id} className="hub-more">+ Post an event</Link>
-        </div>
-        {!loading && events.length === 0 && <p className="hub-empty">No upcoming events yet.</p>}
-        {events.map((e) => (
-          <Link key={e.id} to={'/events/' + e.id} className="cal-card" style={{ display: 'block', textDecoration: 'none' }}>
-            <span className="cal-card-title">{e.title}{e.status === 'cancelled' ? ' (cancelled)' : ''}</span>
-            <span className="cal-card-meta">{when(e.starts_at)}</span>
-            <span className="cal-card-meta">
-              {e.signup_enabled
-                ? e.signup_count + (e.signup_limit ? ' of ' + e.signup_limit : '') + ' signed up'
-                : 'No sign-up'}
-            </span>
-          </Link>
-        ))}
-      </section>
+      {tab === 'chats' && (
+        <DashPanel k="chats">
+          <section className="hub-section" aria-labelledby="od-chats">
+            <div className="hub-section-head"><h2 id="od-chats">Campfires</h2></div>
+            <p className="hub-org-desc">{general ? 'The general chat has everyone in ' + (orgName || 'your organization') + '. Start a sidechat under it for one task or topic, and pick who joins. Only the people you pick see it.' : 'Private chats for ' + (orgName || 'your organization') + '. The general chat adds everyone in your organization automatically.'}</p>
+            {chatsReady && chats.length === 0 && <p className="hub-empty">No chats yet. Start your general chat below.</p>}
+            {general && chatRow(general, false)}
+            {sidechats.map((c) => chatRow(c, true))}
+            {otherChats.map((c) => chatRow(c, false))}
+            <form onSubmit={startChat} noValidate style={{ marginTop: '0.75rem' }}>
+              <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{!general ? 'Name for your general chat' : 'Start a sidechat under ' + general.name}</label>
+              <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={!general ? (orgName || 'Organization') + ' general chat' : 'For example, Volunteers or Food drive'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
+              {general && (
+                <fieldset style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
+                  <legend className="cal-sub">Who is in it (you are added automatically)</legend>
+                  {people.length > 8 && (
+                    <input type="search" aria-label="Search the group by name" placeholder="Type a name" value={sideFilter} onChange={(e) => setSideFilter(e.target.value)} autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: 44, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
+                  )}
+                  <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+                    {shownPeople.map((u) => (
+                      <label key={u.user_id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minHeight: 44 }}>
+                        <input type="checkbox" checked={sidePicked.includes(u.user_id)} onChange={() => setSidePicked((s) => (s.includes(u.user_id) ? s.filter((x) => x !== u.user_id) : [...s, u.user_id]))} style={{ width: 22, height: 22 }} />
+                        <span>{u.display_name}</span>
+                      </label>
+                    ))}
+                    {people.length === 0 && <p className="hub-empty">No one else is in the group yet.</p>}
+                  </div>
+                  {people.length > 1 && (
+                    <button type="button" className="btn btn-outline group-small-btn" style={{ marginTop: '0.4rem' }} onClick={() => setSidePicked(sidePicked.length === people.length ? [] : people.map((u) => u.user_id))}>{sidePicked.length === people.length ? 'Clear everyone' : 'Pick everyone'}</button>
+                  )}
+                </fieldset>
+              )}
+              {chatNote && <p role="alert" className="groups-error">{chatNote}</p>}
+              <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : !general ? 'Start the general chat' : 'Start sidechat'}</button>
+            </form>
+          </section>
 
-      <section className="hub-section" aria-labelledby="od-posts">
-        <div className="hub-section-head"><h2 id="od-posts">Needs and offers</h2></div>
-        {!loading && posts.length === 0 && <p className="hub-empty">Nothing posted under your group's name yet. Use the shortcuts above.</p>}
-        {posts.map((p) => (
-          <div key={p.kind + p.id} className="cal-card">
-            <span className="cal-card-title">{p.kind === 'need' ? 'Need' : 'Offer'}: {p.title}</span>
-            {p.description && <span className="hub-org-desc">{p.description}</span>}
-            <span className="cal-card-meta">{p.status} &middot; {new Date(p.created_at).toLocaleDateString()}</span>
-            {p.kind === 'need' && !['completed', 'cancelled', 'closed', 'archived'].includes(p.status) && (
-              <Link to={'/ask?edit=' + p.id} className="hub-more">Edit</Link>
-            )}
+          <OrgConnections orgId={id} orgName={orgName} />
+        </DashPanel>
+      )}
+
+      {tab === 'events' && (
+        <DashPanel k="events">
+          <div className="dash-shortcuts">
+            {shortcut('\u{1F4C5}', 'Post an event', '/calendar/new?org=' + id)}
+            {shortcut('\u{1F4E5}', 'Import events', '/calendar/import?org=' + id)}
+            {shortcut('\u{1F198}', 'Post a need', '/ask?org=' + id)}
+            {shortcut('\u{1F381}', 'Post an offer', '/post-offer?org=' + id)}
           </div>
-        ))}
-      </section>
 
-      <OrgResources orgId={id} />
+          <section className="hub-section" aria-labelledby="od-events">
+            <div className="hub-section-head"><h2 id="od-events">Events and sign-ups</h2></div>
+            {!loading && events.length === 0 && <p className="hub-empty">No upcoming events yet.</p>}
+            {events.map((e) => (
+              <Link key={e.id} to={'/events/' + e.id} className="cal-card" style={{ display: 'block', textDecoration: 'none' }}>
+                <span className="cal-card-title">{e.title}{e.status === 'cancelled' ? ' (cancelled)' : ''}</span>
+                <span className="cal-card-meta">{when(e.starts_at)}</span>
+                <span className="cal-card-meta">
+                  {e.signup_enabled
+                    ? e.signup_count + (e.signup_limit ? ' of ' + e.signup_limit : '') + ' signed up'
+                    : 'No sign-up'}
+                </span>
+              </Link>
+            ))}
+          </section>
 
-      <section className="hub-section" aria-labelledby="od-members">
-        <div className="hub-section-head"><h2 id="od-members">Members</h2></div>
-        {members.map((u) => (
-          <div key={u.user_id} className="ban-row">
-            <div className="ban-row-main">
-              <strong><UserName userId={u.user_id} name={u.display_name} /></strong>
-              <span className="group-member-sub">{ROLE_LABEL[u.role] || u.role}</span>
+          <section className="hub-section" aria-labelledby="od-posts">
+            <div className="hub-section-head"><h2 id="od-posts">Needs and offers</h2></div>
+            {!loading && posts.length === 0 && <p className="hub-empty">Nothing posted under your group's name yet.</p>}
+            {posts.map((p) => (
+              <div key={p.kind + p.id} className="cal-card">
+                <span className="cal-card-title">{p.kind === 'need' ? 'Need' : 'Offer'}: {p.title}</span>
+                {p.description && <span className="hub-org-desc">{p.description}</span>}
+                <span className="cal-card-meta">{p.status} &middot; {new Date(p.created_at).toLocaleDateString()}</span>
+                {p.kind === 'need' && !['completed', 'cancelled', 'closed', 'archived'].includes(p.status) && (
+                  <Link to={'/ask?edit=' + p.id} className="hub-more">Edit</Link>
+                )}
+              </div>
+            ))}
+          </section>
+
+          <OrgResources orgId={id} />
+        </DashPanel>
+      )}
+
+      {tab === 'settings' && (
+        <DashPanel k="settings">
+          <section className="hub-section" aria-labelledby="od-public">
+            <div className="hub-section-head"><h2 id="od-public">Your public page</h2></div>
+            <p className="hub-org-desc">Home area, who can see your organization, and your contact email are set at the bottom of your organization page.</p>
+            <div className="dash-shortcuts">
+              {shortcut('\u{1F3E1}', 'Open our page', '/orgs/' + id)}
+              {shortcut('\u{1F4D6}', 'Resource list', '/community/resources')}
             </div>
-            {u.role === 'admin' && u.user_id === user.id && headCount > 1 && (
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={stepDown}>Step down as Head</button>
-              </div>
-            )}
-            {u.role !== 'admin' && (
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => makeHead(u)}>Make Head</button>}
-                {isHead && u.role === 'member' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'organizer')}>Make organizer</button>}
-                {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'member')}>Make member</button>}
-                {(isHead || u.role === 'member') && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => removeMember(u)}>Remove</button>}
-              </div>
-            )}
-          </div>
-        ))}
-
-        <form className="hub-search" onSubmit={search} noValidate style={{ marginTop: '0.75rem' }}>
-          <label htmlFor="od-find" className="sr-only">Find a VWB member by name</label>
-          <input id="od-find" type="text" autoComplete="off" placeholder="Find a VWB member by name" value={query} onChange={(e) => { setQuery(e.target.value); setSearched(false) }} />
-          <button type="submit" className="btn btn-primary" disabled={query.trim().length < 2}>Search</button>
-        </form>
-        {searched && found.length === 0 && <p className="hub-empty">No one found. They need a VWB account first.</p>}
-        {found.map((u) => (
-          <div key={u.user_id} className="ban-row">
-            <div className="ban-row-main"><strong><UserName userId={u.user_id} name={u.display_name} /></strong></div>
-            <button type="button" className="btn btn-primary group-small-btn" disabled={busy} onClick={() => addMember(u)}>Add</button>
-          </div>
-        ))}
-        {note && <p className="hub-note" role="status">{note}</p>}
-      </section>
+          </section>
+          <OrgRules orgId={id} isHead={isHead} />
+          {isHead && headCount > 1 && (
+            <section className="hub-section" aria-labelledby="od-step">
+              <div className="hub-section-head"><h2 id="od-step">Your role</h2></div>
+              <p className="hub-org-desc">You are one of {headCount} Heads. You can step down and stay on as an organizer.</p>
+              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} disabled={busy} onClick={stepDown}>Step down as Head</button>
+              {note && <p className="dash-note" role="status">{note}</p>}
+            </section>
+          )}
+        </DashPanel>
+      )}
     </div>
   )
 }

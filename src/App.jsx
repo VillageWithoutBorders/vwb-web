@@ -46,6 +46,7 @@ const CalendarEmbed = lazyPage(() => import('./pages/CalendarEmbed'))
 const EventPage = lazyPage(() => import('./pages/EventPage'))
 const Groups = lazyPage(() => import('./pages/Groups'))
 const VillageScene = lazyPage(() => import('./pages/VillageScene'))
+const KeeperDashboard = lazyPage(() => import('./pages/KeeperDashboard'))
 const MyVillage = lazyPage(() => import('./pages/MyVillage'))
 const GroupBoard = lazyPage(() => import('./pages/GroupBoard'))
 const JoinGroup = lazyPage(() => import('./pages/JoinGroup'))
@@ -165,6 +166,7 @@ function AppRoutes() {
         <Route path="campfire" element={<Campfire />} />
         <Route path="find-village" element={<FindVillage />} />
         <Route path="village/:id" element={<VillageScene />} />
+        <Route path="village/:id/keeper" element={<KeeperDashboard />} />
         <Route path="world" element={<Navigate to="/" replace />} />
         <Route path="village" element={<MyVillage />} />
         <Route path="conversation/:id" element={<Conversation />} />

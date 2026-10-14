@@ -231,7 +231,10 @@ export default function VillageScene() {
           {!mine && <p>Join this village to see who looks after it.</p>}
           {mine && keeperNames.length === 0 && <p>Loading the keeper...</p>}
           {mine && keeperNames.map((n) => <div key={n} className="vs-item"><b>{n}</b><small>Keeper</small></div>)}
-          {mine && keepers && keepers.i_am_keeper && <p className="vs-note">You are a keeper here. You post announcements in the village chat and can hand the role to another member.</p>}
+          {mine && keepers && keepers.i_am_keeper && <>
+            <p className="vs-note">You are a keeper here. You post announcements in the village chat and can hand the role to another member.</p>
+            <button type="button" className="btn btn-primary btn-full" onClick={() => { setSheet(null); navigate('/village/' + id + '/keeper') }}>{'\u{1F9F0}'} Open keeper tools</button>
+          </>}
         </>
       case 'chat':
         return <>{title}<p>We couldn't find this village's chat. Try again in a moment.</p></>
@@ -314,6 +317,7 @@ export default function VillageScene() {
 
       <div className="vs-body">
         {!mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>Join {village.name}</button>}
+        {mine && keepers && keepers.i_am_keeper && <button type="button" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true">{'\u{1F9F0}'}</span> Keeper tools</button>}
         <div className="vs-help">
           <button type="button" className="vs-big vs-ask" onClick={() => navigate('/ask')}>Ask for help</button>
           <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>
