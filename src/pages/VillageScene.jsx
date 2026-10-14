@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { VILLAGE_SPOTS, VILLAGE_DECOR } from '../data/worldElements'
 import SisterCampfireButton from '../components/SisterCampfireButton'
+import VillageRooms from '../components/VillageRooms'
 import '../village-scene.css'
 
 // The Village page: one village as a little world. Every element on the
@@ -28,6 +29,7 @@ export default function VillageScene() {
   const [isGuest, setIsGuest] = useState(false)
   const [sisters, setSisters] = useState([])
   const [sisterFires, setSisterFires] = useState([])
+  const [rooms, setRooms] = useState([])
   const [orgs, setOrgs] = useState([])
   const [sheet, setSheet] = useState(null)
   const [bump, setBump] = useState(null)
@@ -68,6 +70,18 @@ export default function VillageScene() {
     })
     return () => { alive = false }
   }, [id])
+
+  // Members only: this village's Campfires and Sidechats I can see.
+  function loadRooms() {
+    supabase.rpc('village_rooms', { p_village: id }).then(({ data, error }) => {
+      if (error) { console.error('Failed to load Campfires and Sidechats:', error); return }
+      setRooms(data || [])
+    })
+  }
+  useEffect(() => {
+    if (!village || !village.is_mine) { setRooms([]); return }
+    loadRooms()
+  }, [village, id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Members only: keepers and whether I came in as a guest.
   useEffect(() => {
@@ -141,8 +155,17 @@ export default function VillageScene() {
       case 'sisters': return { sub: sisters.length ? sisters.length + ' sister village' + (sisters.length === 1 ? '' : 's') : 'No sister villages yet' }
       case 'keeper': return { sub: keeperNames.length ? 'Looked after by ' + keeperNames.join(', ') : 'The neighbor who looks after this village' }
       case 'chat': return { sub: mine ? (chatUnread ? chatUnread + ' new since you last looked' : 'Say hello and share news') : 'Join this village to read its chat', badge: mine ? chatUnread : 0 }
-      case 'campfires': return { sub: 'Coming soon' }
-      case 'sidechats': return { sub: 'Coming soon' }
+      case 'campfires': {
+        if (!mine) return { sub: 'Join this village to sit at its Campfires' }
+        const f = rooms.filter((r) => r.kind === 'campfire'), inF = f.filter((r) => r.i_am_in).length
+        const asks = f.reduce((n, r) => n + (r.asks_waiting || 0), 0)
+        return { sub: f.length ? f.length + ' here' + (inF ? ', you are in ' + inF : '') + (asks ? ', ' + asks + ' asking to join' : '') : 'Start the first one', badge: asks }
+      }
+      case 'sidechats': {
+        if (!mine) return { sub: 'Join this village first' }
+        const s = rooms.filter((r) => r.kind === 'sidechat').length
+        return { sub: s ? 'You are in ' + s : (keepers && keepers.i_am_keeper ? 'Start one for a few neighbors' : 'Small chats a keeper starts') }
+      }
       case 'skillshare': return { sub: 'Help nearby: requests and offers' }
       case 'neighbors': return { sub: village && village.member_count ? village.member_count + ' neighbors live here' : 'A few neighbors so far' }
       case 'cottage': return { sub: 'Private chats with people you chose' }
@@ -200,6 +223,9 @@ export default function VillageScene() {
           ))}
           <p className="vs-note">Members of a sister village can join this one as a guest.</p>
         </>
+      case 'campfires':
+      case 'sidechats':
+        return <>{title}<VillageRooms villageId={id} kind={k === 'sidechats' ? 'sidechat' : 'campfire'} isMember={mine} isKeeper={!!(keepers && keepers.i_am_keeper)} onChanged={loadRooms} /></>
       case 'keeper':
         return <>{title}
           {!mine && <p>Join this village to see who looks after it.</p>}
