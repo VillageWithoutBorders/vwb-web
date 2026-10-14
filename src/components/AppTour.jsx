@@ -11,7 +11,7 @@ import { supabase } from '../supabaseClient'
 // on any phone or computer. (The agreement to the guidelines is separate and
 // happens on the Guidelines screen.)
 //
-// Everyone: can take it again any time from Menu, Help, or Settings. A
+// Everyone: can take it again any time from Help or Settings. A
 // replay can be closed whenever they like.
 //
 // Each step opens the real screen, dims everything else, and rings the
@@ -32,81 +32,102 @@ const START_EVENT = 'vwb:start-tour'
 // Steps with no target show a plain card over the dimmed screen.
 const TAB = (name) => '.tab-item[data-tour="' + name + '"]'
 
+// need: show the step only when it fits this person.
+//   'village'   in at least one village      'noVillage' not in any village yet
+//   'keeper'    looks after a village         'organizer' Head or organizer of an organization
+// route can be a function of ctx ({ villageId }).
+const VILLAGE = (c) => '/village/' + c.villageId
+const SPOT = (k) => '.vs-el[data-spot="' + k + '"]'
+
 const ALL_STEPS = [
   {
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
-    body: 'Here is a quick walk through the app. Each step opens a real screen and rings the button or tab to look at. Tap Next to keep going. You can skip any time.',
+    body: 'Here is a quick walk through the app. Each step opens a real screen and rings the spot to look at. Tap Next to keep going. You can skip any time.',
   },
   {
-    route: '/home',
-    target: '.home-primary .btn-primary',
-    icon: '\u{1F64B}',
-    title: 'Ask for help',
-    body: 'Need a hand? Tap this button. Pick what you need and how soon. Neighbors near you will see it. Your address is never shown.',
+    route: '/',
+    target: '.wd-globe-wrap',
+    icon: '\u{1F30D}',
+    title: 'Your world',
+    body: 'The app opens on the globe. Gold circles are villages you are in. Faded circles are villages you can join. Tap your village to step inside.',
   },
   {
-    route: '/home',
-    target: '.home-primary .btn-outline',
-    icon: '\u{1F49A}',
-    title: 'I can help',
-    body: 'Want to lend a hand? Tap this to see what neighbors near you need.',
+    route: '/',
+    target: '.wd-switch',
+    icon: '\u{1F465}',
+    title: 'Villages and Organizations',
+    body: 'Switch here to see organizations instead: groups, nonprofits, and churches working near you.',
   },
   {
-    route: '/home',
-    target: '.home-tile[aria-label^="Calendar"]',
-    icon: '\u{1F4C5}',
-    title: 'Calendar',
-    body: 'Events, drives, and volunteer sign-ups near you. You can add one to your phone calendar.',
-  },
-  {
-    route: '/home',
-    target: '.home-tile[aria-label^="Cottage Chats"]',
-    icon: '\u{1F91D}',
-    title: 'Cottage Chats and Campfires',
-    body: 'A Cottage Chat is a private chat you start with people you choose. A Campfire is a chat that a group you belong to starts.',
-  },
-  {
-    route: '/home',
-    target: '.home-tile[aria-label^="Village Square"]',
+    route: '/',
+    target: '.wd-news',
     icon: '\u{1F4E3}',
-    title: 'Village Square',
-    body: 'Everyone can read the Announcements here. You can also join the chat for your village and talk with neighbors who chose to join.',
+    title: 'Announcements',
+    body: 'The megaphone holds news for everyone on Village Without Borders.',
   },
   {
-    route: '/home',
-    target: '.home-tile[aria-label^="Village Map"]',
-    icon: '\u{1F5FA}\uFE0F',
-    title: 'Village Map',
-    body: 'See every village and how they connect. Only places and rough numbers show, never people.',
+    need: 'noVillage',
+    route: '/find-village',
+    target: '#fv-search',
+    icon: '\u{1F3D8}️',
+    title: 'Find your village',
+    body: 'Search by town or zip code, then tap Join. You can join more than one village. Do not see yours? Any neighbor can start one.',
   },
   {
-    route: '/home',
-    target: '[data-tour="emergency"]',
-    icon: '\u26A0\uFE0F',
-    title: 'Emergency Response',
-    body: 'When a flood, fire, or storm hits, tap here to see active emergencies or report one.',
+    need: 'village',
+    route: VILLAGE,
+    target: '.vs-scene',
+    icon: '\u{1F3D8}️',
+    title: 'Inside your village',
+    body: 'Your village is a little map. Every picture is a place. Tap one to go there. A plain list of the same places sits below the map.',
   },
   {
-    route: '/community',
-    target: TAB('village'),
-    icon: '\u{1F333}',
-    title: 'Village',
-    body: "This is the Village tab. It opens your village. Local help, events, and who is organizing are here too. Standing next to a friend? Open a chat and tap Show QR code. They scan it with their phone camera to join.",
+    need: 'village',
+    route: VILLAGE,
+    target: SPOT('chat'),
+    icon: '\u{1F4E3}',
+    title: 'Village chat',
+    body: 'Talk with neighbors who joined your village. The keeper pins news here. Only members can read it.',
   },
   {
-    route: '/community',
-    target: '.hub-search',
-    icon: '\u{1F50D}',
-    title: 'Find local help',
-    body: 'Search for food pantries, clinics, and other help near you. Or tap a tile below to browse by kind of help.',
+    need: 'village',
+    route: VILLAGE,
+    target: SPOT('campfires'),
+    icon: '\u{1F525}',
+    title: 'Campfires',
+    body: 'Smaller chats for a topic or a crew. Some are shown and some are hidden. Ask to join one, or start your own.',
+  },
+  {
+    need: 'village',
+    route: VILLAGE,
+    target: SPOT('neighbors'),
+    icon: '\u{1F44B}',
+    title: 'Neighbors',
+    body: 'See who lives here. Vouch for people you trust, and send a message request to say hello.',
+  },
+  {
+    need: 'village',
+    route: VILLAGE,
+    target: '.vs-help',
+    icon: '\u{1F64B}',
+    title: 'Ask for help, or help out',
+    body: 'These two buttons sit under every village map. Pick what you need and how soon. Neighbors near you will see it. Your address is never shown.',
+  },
+  {
+    need: 'keeper',
+    route: VILLAGE,
+    target: '[data-tour="keeper-tools"]',
+    icon: '\u{1F9F0}',
+    title: 'Keeper tools',
+    body: 'You look after this village. Keeper tools show what needs you: people asking to join, sister villages, and more.',
   },
   {
     route: '/skillshare',
     target: TAB('help'),
     icon: '\u{1F91D}',
     title: 'Help',
-    body: 'This is the Help tab. Near you shows what neighbors need and what they share for free. Mine holds your own requests, offers, and tasks.',
+    body: 'This is the Help tab. Near you shows what neighbors need and what they share for free.',
   },
   {
     route: '/skillshare',
@@ -117,9 +138,9 @@ const ALL_STEPS = [
   },
   {
     practice: 'intro',
-    icon: '\u270B',
+    icon: '✋',
     title: 'Want to practice?',
-    body: 'Try a sample request, offer, and event. Nothing is real, nobody is told, and nothing is saved. It takes about a minute. Or skip it. You can always take the tour again later.',
+    body: 'Try a sample request, offer, and event. Nothing is real, nobody is told, and nothing is saved. It takes about a minute. Or skip it.',
   },
   {
     practice: 'request',
@@ -140,44 +161,51 @@ const ALL_STEPS = [
     body: 'Events are gatherings and drives in your area. Tap the button to try it.',
   },
   {
+    route: '/tasks',
+    target: '.mine-tabs',
+    icon: '\u{1F4C2}',
+    title: 'Mine',
+    body: 'Mine keeps your own help in one place. Requests wait until a neighbor says yes. Active tasks are still going. When you both say how it went, it moves to Archived.',
+  },
+  {
     route: '/messages',
     target: TAB('messages'),
     icon: '\u{1F4AC}',
     title: 'Messages',
-    body: "This is the Messages tab. Talk with neighbors one to one. Tap \u22EF on a chat to mark it unread or flag it to follow up. Don't want to hear from someone? Block them. Messages stay private.",
+    body: "Talk with neighbors one to one. Tap ⋯ on a chat to mark it unread or flag it. Don't want to hear from someone? Block them. Messages stay private.",
   },
   {
     route: '/messages',
-    target: '[aria-label^="Open Village Square"]',
-    icon: '\u{1F4E3}',
-    title: 'Your Village Square',
-    body: 'Your Village Square is pinned at the top of Messages. Tap it to read the Announcements and chat with your village.',
+    target: '[data-tour="cottage-chats"]',
+    icon: '\u{1F3E1}',
+    title: 'Cottage Chats and Campfires',
+    body: 'A Cottage Chat is a private chat you start with people you choose. Campfires are chats your village or organization starts.',
   },
   {
-    route: '/find-village',
-    target: '#fv-search',
-    icon: '\u{1F3D8}\uFE0F',
-    title: 'Find your village chat',
-    body: 'Search by town or zip code, then tap Join. You can join more than one village. Do not see yours? Any neighbor can start one.',
+    route: '/',
+    target: '.wd-actions',
+    icon: '☀️',
+    title: 'Your day',
+    body: 'Tap Your day under the globe for your tasks, needs near you, and the calendar of events and sign-ups.',
   },
   {
-    route: '/tasks',
-    target: '.help-switch',
-    icon: '\u2705',
-    title: 'Mine',
-    body: "Tap Mine in the Help tab to keep track of help you asked for and help you're giving. When it's done, mark it done and thank each other.",
+    route: '/home',
+    target: '[data-tour="emergency"]',
+    icon: '⚠️',
+    title: 'Emergency Response',
+    body: 'When a flood, fire, or storm hits, find this at the bottom of Your day to see active emergencies or report one.',
   },
   {
-    route: '/tasks',
-    target: '.mine-tabs',
-    icon: '\u{1F4C2}',
-    title: 'Requests, Offers, Active, Archived',
-    body: 'Requests wait here until a neighbor says yes. Offers are what you share. Active tasks are still going. When both of you have said how it went, the task moves to Archived.',
+    need: 'organizer',
+    route: '/org-dashboard',
+    icon: '\u{1F9F0}',
+    title: 'Organizer tools',
+    body: 'You help run an organization. Organizer tools show who is asking to join, your chats, events, and settings. Open them from the toolbox on your organization page.',
   },
   {
     route: '/me',
     target: '[data-tour="me"]',
-    icon: '\u{1F6E1}\uFE0F',
+    icon: '\u{1F6E1}️',
     title: 'Your corner',
     body: 'Tap your letter at the top any time. Your profile, past tasks, villages, and settings live here. You can block or report anyone, any time.',
   },
@@ -197,15 +225,15 @@ const ALL_STEPS = [
   {
     route: '/me',
     target: '.app-menu-inline',
-    icon: '\u2630',
+    icon: '⚙️',
     title: 'Settings and help',
-    body: 'Settings, Help, sharing the app, and Log out are at the bottom of Your corner. In Settings you can turn on phone notifications and add two-step login. Tap the logo any time to go Home.',
+    body: 'Settings, Help, and Log out are at the bottom of Your corner. In Settings you can pick light or dark colors, turn on phone notifications, and add two-step login.',
   },
   {
     icon: '\u{1F331}',
     title: 'How trust grows',
     body: 'New here? You can ask for help and offer to help right away. Once a neighbor vouches for you, or you finish a task together, you can message people first and post offers too.',
-    last: 'You can take this tour again any time from Menu, Help, or Settings.',
+    last: 'You can take this tour again any time from Settings or Help.',
   },
 ]
 
@@ -252,9 +280,15 @@ function SampleCard({ kind }) {
   )
 }
 
-// Everyone sees the same walk-through.
-function stepsFor() {
-  return ALL_STEPS
+// Steps that fit this person (see "need" above).
+function stepsFor(ctx) {
+  return ALL_STEPS.filter((st) => {
+    if (st.need === 'village') return !!ctx.villageId
+    if (st.need === 'noVillage') return ctx.ready && !ctx.villageId
+    if (st.need === 'keeper') return !!ctx.isKeeper
+    if (st.need === 'organizer') return !!ctx.isOrganizer
+    return true
+  })
 }
 
 // Call from anywhere (Menu, Help, Settings) to replay the tour.
@@ -263,7 +297,7 @@ export function startAppTour() {
 }
 
 export default function AppTour() {
-  const { user, profile, isAdmin, refreshProfile } = useAuth()
+  const { user, profile, organizations, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   // Only when the column exists and is empty. If the database step hasn't
@@ -281,7 +315,27 @@ export default function AppTour() {
   const startPath = useRef('/')
   const pathRef = useRef(pathname)
   pathRef.current = pathname
-  const STEPS = stepsFor(profile, isAdmin)
+  // Which village to show, and whether this person keeps it or runs an organization.
+  const [ctx, setCtx] = useState({ ready: false, villageId: null, isKeeper: false })
+  useEffect(() => {
+    if (!open || !user) return
+    let alive = true
+    supabase.rpc('village_network').then(async ({ data, error: vErr }) => {
+      if (!alive) return
+      if (vErr) console.error('Tour: failed to load villages:', vErr)
+      const mine = (data || []).find((v) => v.is_mine)
+      let keeper = false
+      if (mine) {
+        const { data: k, error: kErr } = await supabase.rpc('village_keepers_info', { p_village: mine.id })
+        if (kErr) console.error('Tour: failed to check keeper:', kErr)
+        keeper = !!((Array.isArray(k) ? k[0] : k) || {}).i_am_keeper
+      }
+      if (alive) setCtx({ ready: true, villageId: mine ? mine.id : null, isKeeper: keeper })
+    })
+    return () => { alive = false }
+  }, [open, user])
+  const isOrganizer = (organizations || []).some((o) => o.role === 'admin' || o.role === 'organizer')
+  const STEPS = stepsFor({ ...ctx, isOrganizer })
   const step = STEPS[index] || STEPS[0]
   const isLast = index === STEPS.length - 1
   const inPractice = !!step.practice
@@ -305,8 +359,9 @@ export default function AppTour() {
   // Open the real screen for each step.
   useEffect(() => {
     if (!open) return
-    if (step.route && pathRef.current !== step.route) navigate(step.route)
-  }, [open, index])
+    const to = typeof step.route === 'function' ? step.route(ctx) : step.route
+    if (to && pathRef.current !== to) navigate(to)
+  }, [open, index, ctx.villageId])
 
   // Find the thing to ring. The screen may still be loading, so keep looking
   // for a few seconds, and keep the ring in place if the page moves.

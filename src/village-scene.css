@@ -102,3 +102,15 @@
    edge to edge and top to bottom; the content stays centered. */
 .app-main.app-main-world { max-width: none; padding-left: 0; padding-right: 0; padding-top: var(--header-height); padding-bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px)); background: #1b3838; display: flex; flex-direction: column; }
 .app-main-world > .vs-page { flex: 1; width: 100%; min-height: calc(100dvh - var(--header-height) - var(--tab-height) - env(safe-area-inset-bottom, 0px)); }
+
+/* World pages (globe, village, organization) stay dark teal in light mode too,
+   so buttons and text inside them use the dark color set. */
+.vs-page {
+  color-scheme: dark;
+  --text-strong: #fff; --text: #e8e8e8; --text-soft: #ccc; --text-secondary: #aaa; --text-muted: #8a8a8a;
+  --white: #1e1e1e; --surface: #1e1e1e; --surface-2: #222; --surface-3: #333; --surface-sunk: #111;
+  --border: #333; --border-strong: #444; --green-light: #1a332a;
+  --accent: #4ecca3; --on-accent: #1a1a1a; --btn-bg: #1D9E75; --btn-ink: #1e1e1e; --btn-hover: #2bbf8e;
+  --warn: #ffaa44; --info: #66aaff; --danger: #ff6666; --gold: #ffcc66;
+  --success-bg: #1a4a3a; --info-bg: #1a3a5a; --warn-bg: #3a2a1a; --danger-bg: #3a1a1a;
+}
