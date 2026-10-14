@@ -22,7 +22,7 @@ const OPTIONS = [
 
 const linkStyle = {
   background: 'none', border: 'none', padding: 0, minHeight: 44, display: 'inline-flex', alignItems: 'center',
-  textAlign: 'left', font: 'inherit', color: '#4ecca3', textDecoration: 'underline', cursor: 'pointer',
+  textAlign: 'left', font: 'inherit', color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer',
 }
 const smallLink = { ...linkStyle, fontSize: '0.9rem', color: 'var(--text-secondary)' }
 

@@ -30,7 +30,7 @@ function sinceText(iso) {
 
 const chip = (on) => ({
   minHeight: 44, padding: '0 0.9rem', borderRadius: 22, cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem',
-  border: '1px solid ' + (on ? '#4ecca3' : '#444'), background: on ? '#4ecca3' : 'none', color: on ? '#1a1a1a' : '#ccc',
+  border: '1px solid ' + (on ? 'var(--accent)' : 'var(--border-strong)'), background: on ? 'var(--accent)' : 'none', color: on ? 'var(--on-accent)' : 'var(--text-soft)',
 })
 
 export default function Connections({ embedded = false }) {
@@ -62,7 +62,7 @@ export default function Connections({ embedded = false }) {
     <div className="cal-page" style={{ maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}>
       {!embedded && (
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-        <button type="button" onClick={() => goBack('/')} aria-label="Back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
+        <button type="button" onClick={() => goBack('/')} aria-label="Back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Connections</h1>
       </div>
       )}
@@ -72,7 +72,7 @@ export default function Connections({ embedded = false }) {
       <input
         id="conn-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Type a name"
         autoComplete="off"
-        style={{ width: '100%', boxSizing: 'border-box', minHeight: 44, fontSize: 16, padding: '0 0.75rem', borderRadius: 8, border: '1px solid #444', background: '#111', color: '#eee' }}
+        style={{ width: '100%', boxSizing: 'border-box', minHeight: 44, fontSize: 16, padding: '0 0.75rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)' }}
       />
 
       <div role="group" aria-label="Filter connections" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.75rem 0' }}>
@@ -95,23 +95,23 @@ export default function Connections({ embedded = false }) {
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.4rem' }}>
                 <UserName userId={r.user_id} name={r.display_name} style={{ fontWeight: 700 }} />
-                {r.is_ambassador && <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.7rem', fontWeight: 600, padding: '1px 6px', borderRadius: 4 }}>Ambassador</span>}
+                {r.is_ambassador && <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.7rem', fontWeight: 600, padding: '1px 6px', borderRadius: 4 }}>Ambassador</span>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.3rem' }}>
                 {(r.reasons || []).map((k) => (
-                  <span key={k} style={{ background: '#2a2a2a', color: '#ddd', fontSize: '0.75rem', padding: '2px 8px', borderRadius: 10 }}>{WHY[k] || k}</span>
+                  <span key={k} style={{ background: 'var(--surface-2)', color: 'var(--text)', fontSize: '0.75rem', padding: '2px 8px', borderRadius: 10 }}>{WHY[k] || k}</span>
                 ))}
               </div>
-              {r.last_at && <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '0.3rem' }}>{sinceText(r.last_at)}</div>}
+              {r.last_at && <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.3rem' }}>{sinceText(r.last_at)}</div>}
             </div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             <button type="button" onClick={() => navigate(r.conversation_id ? '/conversation/' + r.conversation_id : '/u/' + r.user_id)}
-              style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer' }}>
+              style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>
               {r.conversation_id ? 'Open messages' : 'Say hello'}
             </button>
             <button type="button" onClick={() => navigate('/u/' + r.user_id)}
-              style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid #444', background: 'none', color: '#ccc', cursor: 'pointer' }}>
+              style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer' }}>
               View profile
             </button>
           </div>

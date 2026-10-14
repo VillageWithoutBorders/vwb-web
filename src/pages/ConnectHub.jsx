@@ -55,7 +55,7 @@ export default function ConnectHub() {
 
   const chip = (on) => ({
     flex: '1 1 auto', minHeight: '44px', padding: '0.4rem 0.9rem', borderRadius: '22px', border: 'none', cursor: 'pointer',
-    fontSize: '0.9rem', fontWeight: 600, background: on ? '#4ecca3' : '#2a2a2a', color: on ? '#1a1a1a' : '#ccc',
+    fontSize: '0.9rem', fontWeight: 600, background: on ? 'var(--accent)' : 'var(--surface-2)', color: on ? 'var(--on-accent)' : 'var(--text-soft)',
   })
 
   return (
@@ -68,7 +68,7 @@ export default function ConnectHub() {
           {tabs.map((t) => (
             <button key={t.key} type="button" role="tab" id={'hub-tab-' + t.key} aria-selected={active === t.key} aria-controls="hub-panel" style={chip(active === t.key)}
               onClick={() => setParams(t.key === 'messages' ? {} : { tab: t.key }, { replace: true })}>
-              {t.label}{t.badge > 0 && <span style={{ marginLeft: '0.4rem', background: '#ff4444', color: '#fff', borderRadius: '9px', padding: '0 6px', fontSize: '0.75rem' }}>{t.badge > 9 ? '9+' : t.badge}</span>}
+              {t.label}{t.badge > 0 && <span style={{ marginLeft: '0.4rem', background: 'var(--danger)', color: '#fff', borderRadius: '9px', padding: '0 6px', fontSize: '0.75rem' }}>{t.badge > 9 ? '9+' : t.badge}</span>}
             </button>
           ))}
         </div>

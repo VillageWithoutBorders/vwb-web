@@ -2,18 +2,18 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const COLORS = {
-  bg: '#121212',
-  card: '#1e1e1e',
-  cardAlt: '#182420',
-  border: '#333',
-  text: '#e8e8e8',
-  textDim: '#ddd',
-  textMuted: '#8a8a8a',
-  green: '#4ecca3',
+  bg: 'var(--bg)',
+  card: 'var(--surface)',
+  cardAlt: 'var(--green-light)',
+  border: 'var(--border)',
+  text: 'var(--text)',
+  textDim: 'var(--text)',
+  textMuted: 'var(--text-muted)',
+  green: 'var(--accent)',
   greenDark: '#2d6a4f',
-  greenLight: '#1a332a',
-  orange: '#ff6644',
-  orangeText: '#ffaa44',
+  greenLight: 'var(--success-bg)',
+  orange: 'var(--danger)',
+  orangeText: 'var(--warn)',
 }
 
 const pageStyle = { background: COLORS.bg, color: COLORS.text, minHeight: '100vh' }
@@ -43,7 +43,7 @@ const btnPrimary = {
   borderRadius: '10px',
   border: 'none',
   background: COLORS.green,
-  color: '#0d1f18',
+  color: 'var(--on-accent)',
   fontWeight: 700,
   fontSize: '1rem',
   textDecoration: 'none',

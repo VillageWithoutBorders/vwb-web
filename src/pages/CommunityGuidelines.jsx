@@ -13,13 +13,13 @@ function reportError(context, error, userMessage) {
 }
 
 const COLORS = {
-  bg: '#121212',
-  card: '#1e1e1e',
-  border: '#333',
-  text: '#e8e8e8',
-  textDim: '#ddd',
-  textMuted: '#8a8a8a',
-  green: '#4ecca3',
+  bg: 'var(--bg)',
+  card: 'var(--surface)',
+  border: 'var(--border)',
+  text: 'var(--text)',
+  textDim: 'var(--text)',
+  textMuted: 'var(--text-muted)',
+  green: 'var(--accent)',
   greenDark: '#2d6a4f',
   dotInactive: '#3a3a3a',
 }
@@ -228,7 +228,7 @@ export default function CommunityGuidelines({ onAgree }) {
                 borderRadius: '10px',
                 border: 'none',
                 background: COLORS.green,
-                color: '#0d1f18',
+                color: 'var(--on-accent)',
                 fontWeight: 700,
                 fontSize: '1rem',
                 cursor: 'pointer',
@@ -246,7 +246,7 @@ export default function CommunityGuidelines({ onAgree }) {
                 borderRadius: '10px',
                 border: 'none',
                 background: COLORS.green,
-                color: '#0d1f18',
+                color: 'var(--on-accent)',
                 fontWeight: 700,
                 fontSize: '1rem',
                 cursor: agreeing ? 'default' : 'pointer',

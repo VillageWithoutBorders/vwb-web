@@ -13,7 +13,7 @@ const REMOVE_REASONS = [
   'Something else',
 ]
 
-const btn = { minHeight: '44px', padding: '0 0.9rem', borderRadius: '999px', border: '1px solid #444', background: '#222', color: '#ddd', cursor: 'pointer', fontSize: '0.85rem' }
+const btn = { minHeight: '44px', padding: '0 0.9rem', borderRadius: '999px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', cursor: 'pointer', fontSize: '0.85rem' }
 
 // Notice at the top of a village chat when neighbors have just joined.
 // It is a quiet banner, not a push notification. Dismissing it is remembered on this device.
@@ -206,24 +206,24 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />
-      <div role="dialog" aria-label={'People in ' + villageName} style={{ position: 'fixed', top: 0, right: 0, width: 'min(340px, 100%)', height: '100%', boxSizing: 'border-box', background: '#1a1a1a', borderLeft: '1px solid #333', zIndex: 1000, overflowY: 'auto', padding: '1.25rem 1rem' }}>
+      <div role="dialog" aria-label={'People in ' + villageName} style={{ position: 'fixed', top: 0, right: 0, width: 'min(340px, 100%)', height: '100%', boxSizing: 'border-box', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, overflowY: 'auto', padding: '1.25rem 1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.1rem' }}>People in {villageName}{total ? ' (' + total + ')' : ''}</h2>
-          <button type="button" onClick={onClose} aria-label="Close the list of people" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer', minWidth: '44px', minHeight: '44px' }}>&#10005;</button>
+          <button type="button" onClick={onClose} aria-label="Close the list of people" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer', minWidth: '44px', minHeight: '44px' }}>&#10005;</button>
         </div>
-        <p style={{ margin: '0 0 0.75rem', color: '#aaa', fontSize: '0.85rem', lineHeight: 1.4 }}>Tap a name to open their profile. Tap the arrow to vouch for them or ask to remove them. A vouch means you trust them. It does not guarantee they are safe.</p>
+        <p style={{ margin: '0 0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.4 }}>Tap a name to open their profile. Tap the arrow to vouch for them or ask to remove them. A vouch means you trust them. It does not guarantee they are safe.</p>
 
         {keepers.i_am_starter && (
-          <p style={{ margin: '0 0 0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #665', borderRadius: '10px', background: '#241f14', color: '#ffcc66', fontSize: '0.85rem', lineHeight: 1.4 }}>You keep this village. You can pin announcements, name up to 2 helpers, or hand it to someone else. Open a name to do that.</p>
+          <p style={{ margin: '0 0 0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #665', borderRadius: '10px', background: 'var(--warn-bg)', color: 'var(--gold)', fontSize: '0.85rem', lineHeight: 1.4 }}>You keep this village. You can pin announcements, name up to 2 helpers, or hand it to someone else. Open a name to do that.</p>
         )}
 
         {requests.length > 0 && (
-          <div style={{ margin: '0 0 1rem', padding: '0.75rem', border: '1px solid #665', borderRadius: '10px', background: '#241f14' }}>
-            <div style={{ fontWeight: 700, color: '#ffcc66', fontSize: '0.9rem', marginBottom: '0.4rem' }}>A second member is needed</div>
+          <div style={{ margin: '0 0 1rem', padding: '0.75rem', border: '1px solid #665', borderRadius: '10px', background: 'var(--warn-bg)' }}>
+            <div style={{ fontWeight: 700, color: 'var(--gold)', fontSize: '0.9rem', marginBottom: '0.4rem' }}>A second member is needed</div>
             {requests.map(r => (
-              <div key={r.target_id} style={{ padding: '0.5rem 0', borderTop: '1px solid #3a3020' }}>
-                <p style={{ margin: 0, color: '#eee', fontSize: '0.9rem' }}>A member asked to remove <strong>{r.target_name || 'someone'}</strong>.</p>
-                <p style={{ margin: '0.2rem 0 0.4rem', color: '#bbb', fontSize: '0.85rem' }}>Reason: {r.reason}</p>
+              <div key={r.target_id} style={{ padding: '0.5rem 0', borderTop: '1px solid var(--warn-bg)' }}>
+                <p style={{ margin: 0, color: 'var(--text)', fontSize: '0.9rem' }}>A member asked to remove <strong>{r.target_name || 'someone'}</strong>.</p>
+                <p style={{ margin: '0.2rem 0 0.4rem', color: 'var(--text-soft)', fontSize: '0.85rem' }}>Reason: {r.reason}</p>
                 {r.requested_by === myId
                   ? <button type="button" style={btn} disabled={busy} onClick={() => takeBack(r.target_id)}>Take back my request</button>
                   : <button type="button" style={{ ...btn, borderColor: '#ff8844', color: '#ffb088' }} disabled={busy} onClick={() => agree(r.target_id)}>I agree. Remove them</button>}
@@ -242,15 +242,15 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
               <div style={{ padding: '0.75rem', border: '1px solid #4a2a35', borderRadius: '10px', background: '#2a1a20' }}>
                 <p style={{ margin: '0 0 0.5rem', color: '#ffb3c7', fontSize: '0.85rem', lineHeight: 1.4 }}>Invite someone you know who lives outside this village. They get a Guest badge, everyone here sees that they joined, and they cannot invite others.</p>
                 <label htmlFor="vp-invite" className="sr-only">Search people you know</label>
-                <input id="vp-invite" type="search" value={inviteQ} onChange={(e) => setInviteQ(e.target.value)} placeholder="Search people you know" autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0 0.75rem', marginBottom: '0.5rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#eee', fontSize: '1rem' }} />
+                <input id="vp-invite" type="search" value={inviteQ} onChange={(e) => setInviteQ(e.target.value)} placeholder="Search people you know" autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0 0.75rem', marginBottom: '0.5rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', fontSize: '1rem' }} />
                 {inviteResults.map((p) => (
                   <div key={p.user_id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.3rem 0' }}>
-                    <span style={{ flex: 1, minWidth: 0, color: '#fff', fontSize: '0.9rem' }}>{p.display_name || 'Neighbor'}</span>
+                    <span style={{ flex: 1, minWidth: 0, color: 'var(--text-strong)', fontSize: '0.9rem' }}>{p.display_name || 'Neighbor'}</span>
                     <button type="button" style={btn} disabled={busy} onClick={() => inviteGuest(p)}>Invite</button>
                   </div>
                 ))}
-                {inviteQ.trim().length >= 2 && inviteResults.length === 0 && <p style={{ margin: '0.25rem 0', color: '#999', fontSize: '0.8rem' }}>No one you know matches. To reach someone new, send them a message request from their name first.</p>}
-                {inviteNote && <p role="status" style={{ margin: '0.4rem 0 0', color: '#ffcc66', fontSize: '0.85rem' }}>{inviteNote}</p>}
+                {inviteQ.trim().length >= 2 && inviteResults.length === 0 && <p style={{ margin: '0.25rem 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No one you know matches. To reach someone new, send them a message request from their name first.</p>}
+                {inviteNote && <p role="status" style={{ margin: '0.4rem 0 0', color: 'var(--gold)', fontSize: '0.85rem' }}>{inviteNote}</p>}
                 <button type="button" style={{ ...btn, marginTop: '0.5rem' }} onClick={() => { setInviteOpen(false); setInviteQ(''); setInviteResults([]) }}>Done</button>
               </div>
             )}
@@ -258,10 +258,10 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
         )}
 
         <label htmlFor="vp-search" className="sr-only">Search people in this chat</label>
-        <input id="vp-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name" autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0 0.75rem', marginBottom: '0.6rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#eee', fontSize: '1rem' }} />
-        {note && <p role="status" style={{ margin: '0 0 0.6rem', color: '#ffcc66', fontSize: '0.85rem' }}>{note}</p>}
-        {loading && <p style={{ color: '#888', fontSize: '0.85rem' }}>Loading...</p>}
-        {!loading && people.length === 0 && <p style={{ color: '#8a8a8a', fontSize: '0.85rem', textAlign: 'center', padding: '0.75rem 0' }}>{search ? 'No one matches "' + search + '".' : 'No one else is here yet.'}</p>}
+        <input id="vp-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name" autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0 0.75rem', marginBottom: '0.6rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', fontSize: '1rem' }} />
+        {note && <p role="status" style={{ margin: '0 0 0.6rem', color: 'var(--gold)', fontSize: '0.85rem' }}>{note}</p>}
+        {loading && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading...</p>}
+        {!loading && people.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '0.75rem 0' }}>{search ? 'No one matches "' + search + '".' : 'No one else is here yet.'}</p>}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
           {people.map(p => {
@@ -270,24 +270,24 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
             const protectedRole = p.role === 'admin' || p.role === 'founder' || p.is_hope_ambassador
             const pending = pendingFor(p.user_id)
             return (
-              <div key={p.user_id} style={{ borderRadius: '8px', background: '#222', padding: '0.4rem 0.5rem' }}>
+              <div key={p.user_id} style={{ borderRadius: '8px', background: 'var(--surface-2)', padding: '0.4rem 0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <AvatarDisplay url={p.avatar_url} userId={p.user_id} size={32} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
-                      <UserName userId={p.user_id} name={p.display_name || 'Neighbor'} style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }} />
-                      {me && <span style={{ fontSize: '0.65rem', color: '#aaa' }}>(you)</span>}
+                      <UserName userId={p.user_id} name={p.display_name || 'Neighbor'} style={{ color: 'var(--text-strong)', fontSize: '0.9rem', fontWeight: 600 }} />
+                      {me && <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>(you)</span>}
                       {p.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
-                      {p.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
-                      {p.is_hope_ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
-                      {p.user_id === keepers.starter_id && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: '#ffcc66', padding: '0 4px', borderRadius: '3px' }}>Keeper</span>}
-                      {keepers.helper_ids.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: '#ffcc66', padding: '0 4px', borderRadius: '3px' }}>Helper</span>}
+                      {p.role === 'admin' && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
+                      {p.is_hope_ambassador && <span style={{ fontSize: '0.6rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
+                      {p.user_id === keepers.starter_id && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: 'var(--gold)', padding: '0 4px', borderRadius: '3px' }}>Keeper</span>}
+                      {keepers.helper_ids.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: 'var(--gold)', padding: '0 4px', borderRadius: '3px' }}>Helper</span>}
                       {guestIds.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a2a35', color: '#ffb3c7', padding: '0 4px', borderRadius: '3px' }}>Guest</span>}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#999' }}>Joined {new Date(p.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Joined {new Date(p.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                   </div>
                   {!me && (
-                    <button type="button" aria-expanded={open} aria-label={'Options for ' + (p.display_name || 'this neighbor')} onClick={() => { setOpenId(open ? null : p.user_id); setReasonFor(null); setReason(''); setNote('') }} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', minWidth: '44px', minHeight: '44px', fontSize: '1rem' }}>{open ? '\u25B2' : '\u25BC'}</button>
+                    <button type="button" aria-expanded={open} aria-label={'Options for ' + (p.display_name || 'this neighbor')} onClick={() => { setOpenId(open ? null : p.user_id); setReasonFor(null); setReason(''); setNote('') }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', minWidth: '44px', minHeight: '44px', fontSize: '1rem' }}>{open ? '\u25B2' : '\u25BC'}</button>
                   )}
                 </div>
                 {open && !me && (
@@ -304,15 +304,15 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                     {!protectedRole && !pending && reasonFor !== p.user_id && (
                       <button type="button" onClick={() => { setReasonFor(p.user_id); setReason(''); setNote('') }} style={{ ...btn, marginTop: '0.5rem', borderColor: '#663', color: '#ffb088' }}>{isAdmin ? 'Remove from this chat' : 'Ask to remove'}</button>
                     )}
-                    {pending && <p style={{ margin: '0.5rem 0 0', color: '#ffcc66', fontSize: '0.8rem' }}>A removal request is open. It needs a second member.</p>}
+                    {pending && <p style={{ margin: '0.5rem 0 0', color: 'var(--gold)', fontSize: '0.8rem' }}>A removal request is open. It needs a second member.</p>}
                     {reasonFor === p.user_id && (
                       <div style={{ marginTop: '0.5rem' }}>
-                        <label htmlFor={'vp-reason-' + p.user_id} style={{ display: 'block', color: '#ddd', fontSize: '0.85rem', marginBottom: '0.3rem' }}>Why? Pick one.</label>
-                        <select id={'vp-reason-' + p.user_id} value={reason} onChange={(e) => setReason(e.target.value)} style={{ width: '100%', minHeight: '44px', boxSizing: 'border-box', background: '#111', color: '#fff', border: '1px solid #444', borderRadius: '8px', padding: '0 0.5rem', fontSize: '1rem' }}>
+                        <label htmlFor={'vp-reason-' + p.user_id} style={{ display: 'block', color: 'var(--text)', fontSize: '0.85rem', marginBottom: '0.3rem' }}>Why? Pick one.</label>
+                        <select id={'vp-reason-' + p.user_id} value={reason} onChange={(e) => setReason(e.target.value)} style={{ width: '100%', minHeight: '44px', boxSizing: 'border-box', background: 'var(--surface-sunk)', color: 'var(--text-strong)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0 0.5rem', fontSize: '1rem' }}>
                           <option value="">Choose a reason</option>
                           {REMOVE_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
-                        <p style={{ margin: '0.4rem 0', color: '#999', fontSize: '0.8rem' }}>{isAdmin ? 'You can remove them right away.' : 'A second member must agree before they are removed. They are not shown this request.'}</p>
+                        <p style={{ margin: '0.4rem 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{isAdmin ? 'You can remove them right away.' : 'A second member must agree before they are removed. They are not shown this request.'}</p>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button type="button" style={btn} onClick={() => { setReasonFor(null); setReason('') }}>Cancel</button>
                           <button type="button" style={{ ...btn, background: '#4a2020', borderColor: '#a44' }} disabled={busy || !reason} onClick={() => ask(p.user_id)}>{isAdmin ? 'Remove' : 'Ask'}</button>
@@ -325,10 +325,10 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
             )
           })}
         </div>
-        {total > people.length && <p style={{ color: '#999', fontSize: '0.8rem', textAlign: 'center', marginTop: '0.6rem' }}>Showing {people.length} of {total}. Search by name to find someone.</p>}
+        {total > people.length && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', marginTop: '0.6rem' }}>Showing {people.length} of {total}. Search by name to find someone.</p>}
 
         {onLeave && (
-          <button type="button" onClick={onLeave} style={{ ...btn, width: '100%', marginTop: '1.25rem', color: '#ff6666', borderColor: '#533' }}>Leave this village chat</button>
+          <button type="button" onClick={onLeave} style={{ ...btn, width: '100%', marginTop: '1.25rem', color: 'var(--danger)', borderColor: '#533' }}>Leave this village chat</button>
         )}
       </div>
     </>

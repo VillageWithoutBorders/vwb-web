@@ -36,22 +36,22 @@ export default function MyOffers() {
 
   return (
     <section aria-labelledby="my-offers-h" style={{ marginBottom: '1rem' }}>
-      <div id="my-offers-h" style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>My offers</div>
+      <div id="my-offers-h" style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>My offers</div>
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {rows.map((o) => (
-          <li key={o.id} style={{ padding: '0.75rem', background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px' }}>
+          <li key={o.id} style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px' }}>
             <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{o.title}</div>
-            <div style={{ fontSize: '0.85rem', color: '#aaa' }}>{o.category} &middot; {new Date(o.created_at).toLocaleDateString()}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{o.category} &middot; {new Date(o.created_at).toLocaleDateString()}</div>
             {confirming === o.id ? (
               <div role="alert" style={{ marginTop: '0.5rem' }}>
                 <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>Delete this offer for good? It can't be undone.</p>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="button" disabled={busy} onClick={() => remove(o.id)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: '#c0392b', color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>{busy ? 'Deleting...' : 'Yes, delete'}</button>
-                  <button type="button" onClick={() => setConfirming(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#ccc', fontSize: '1rem', cursor: 'pointer' }}>Keep it</button>
+                  <button type="button" disabled={busy} onClick={() => remove(o.id)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: 'var(--error)', color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>{busy ? 'Deleting...' : 'Yes, delete'}</button>
+                  <button type="button" onClick={() => setConfirming(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontSize: '1rem', cursor: 'pointer' }}>Keep it</button>
                 </div>
               </div>
             ) : (
-              <button type="button" onClick={() => { setNote(''); setConfirming(o.id) }} style={{ marginTop: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #c0392b', background: 'none', color: '#ff7b6b', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Delete offer</button>
+              <button type="button" onClick={() => { setNote(''); setConfirming(o.id) }} style={{ marginTop: '0.5rem', minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid var(--error)', background: 'none', color: 'var(--danger)', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>Delete offer</button>
             )}
           </li>
         ))}

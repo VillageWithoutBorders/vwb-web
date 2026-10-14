@@ -174,7 +174,7 @@ export default function AskForHelp() {
     return (
         <div className="ask-page">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+                <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
                 <h1 style={{ margin: 0 }}>{editId ? 'Edit your request' : 'Ask for help'}</h1>
             </div>
             <p className="ask-intro">
@@ -305,11 +305,11 @@ export default function AskForHelp() {
                         </label>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'group'} onChange={() => setAudience('group')} style={{ marginTop: '0.3rem' }} />
-                            <span>Only {groupName} first<small style={{ display: 'block', color: '#aaa' }}>Members of your group can see it right away. Neighbors and Hope Ambassadors do not, until it opens.</small></span>
+                            <span>Only {groupName} first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>Members of your group can see it right away. Neighbors and Hope Ambassadors do not, until it opens.</small></span>
                         </label>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'network'} onChange={() => setAudience('network')} style={{ marginTop: '0.3rem' }} />
-                            <span>{groupName} and its network first<small style={{ display: 'block', color: '#aaa' }}>If your group is linked to a council, the council and its other groups can see it too.</small></span>
+                            <span>{groupName} and its network first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>If your group is linked to a council, the council and its other groups can see it too.</small></span>
                         </label>
                         {audience !== 'everyone' && (
                             <>

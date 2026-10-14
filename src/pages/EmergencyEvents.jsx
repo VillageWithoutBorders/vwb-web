@@ -130,16 +130,16 @@ export default function EmergencyEvents() {
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#ffcc00' }}>Emergency Response</h1>
-          <p style={{ color: '#888', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>Events in your area</p>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--gold)' }}>Emergency Response</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>Events in your area</p>
         </div>
-        <button onClick={() => goBack('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
       </div>
 
-      <button onClick={() => navigate('/emergency/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '1rem', borderRadius: '10px', border: '2px solid #ffaa44', background: 'linear-gradient(135deg, #2e2a1a, #3a3020)', cursor: 'pointer', textAlign: 'left', marginBottom: '1.25rem' }}>
+      <button onClick={() => navigate('/emergency/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '1rem', borderRadius: '10px', border: '2px solid var(--warn)', background: 'linear-gradient(135deg, var(--warn-bg), var(--warn-bg))', cursor: 'pointer', textAlign: 'left', marginBottom: '1.25rem' }}>
         <span style={{ fontSize: '1.75rem' }}>&#9888;</span>
         <div>
-          <span style={{ display: 'block', color: '#ffcc00', fontWeight: 700, fontSize: '0.95rem' }}>Report Active Emergency</span>
+          <span style={{ display: 'block', color: 'var(--gold)', fontWeight: 700, fontSize: '0.95rem' }}>Report Active Emergency</span>
           <span style={{ color: '#cc9999', fontSize: '0.8rem' }}>Report a disaster or emergency in your area</span>
         </div>
       </button>
@@ -153,7 +153,7 @@ export default function EmergencyEvents() {
         </button>
       </div>
 
-      {loading && <p style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>Loading...</p>}
+      {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Loading...</p>}
 
       {/* ========== ACTIVE TAB ========== */}
       {!loading && tab === 'active' && (
@@ -162,35 +162,35 @@ export default function EmergencyEvents() {
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>&#127783;</p>
               <p style={{ fontWeight: 700 }}>No active emergencies</p>
-              <p style={{ color: '#888', fontSize: '0.875rem' }}>When a disaster or emergency happens, events will appear here.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>When a disaster or emergency happens, events will appear here.</p>
             </div>
           )}
 
           {pending.length > 0 && (
             <>
-              <p style={{ color: '#ffaa44', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Pending verification ({pending.length})</p>
+              <p style={{ color: 'var(--warn)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Pending verification ({pending.length})</p>
               {pending.map(ev => {
                 const myRole = mySignups[ev.id]
                 const voted = myUpvotes[ev.id]
                 return (
-                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: '#1e1e1e', border: '1px solid #444', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #ffaa44', opacity: 0.9 }}>
+                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--warn)', opacity: 0.9 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <span style={{ background: '#ffaa44', color: '#1a1a1a', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>Unverified</span>
-                        {ev.created_by === user.id && <span style={{ background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
+                        <span style={{ background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>Unverified</span>
+                        {ev.created_by === user.id && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
                         <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.05rem' }}>{ev.title}</h3>
                       </div>
-                      <span style={{ color: '#888', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
                     </div>
-                    {ev.location_name && <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
-                    {ev.description && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
+                    {ev.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
+                    {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem' }}>
-                      <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid #4ecca3' : '1px solid #666', background: voted ? '#1a3a2a' : 'none', color: voted ? '#4ecca3' : '#aaa', cursor: voted ? 'default' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
+                      <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid var(--accent)' : '1px solid var(--border-strong)', background: voted ? 'var(--success-bg)' : 'none', color: voted ? 'var(--accent)' : 'var(--text-secondary)', cursor: voted ? 'default' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
                         &#9650; {ev.upvote_count || 0}
                       </button>
-                      <span style={{ color: '#8a8a8a', fontSize: '0.75rem' }}>{(ev.upvote_count || 0) + ' verified'}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{(ev.upvote_count || 0) + ' verified'}</span>
                       {canVerify && !voted && (
-                        <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Verify</button>
+                        <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Verify</button>
                       )}
                     </div>
                   </div>
@@ -201,24 +201,24 @@ export default function EmergencyEvents() {
 
           {verified.length > 0 && (
             <>
-              {pending.length > 0 && <p style={{ color: '#ffcc00', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Verified emergencies ({verified.length})</p>}
+              {pending.length > 0 && <p style={{ color: 'var(--gold)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Verified emergencies ({verified.length})</p>}
               {verified.map(ev => {
                 const myRole = mySignups[ev.id]
                 return (
-                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #ffcc00' }}>
+                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--gold)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <span style={{ background: '#ffcc00', color: '#1a1a1a', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type || 'Emergency'}</span>
-                        <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>&#10003; Verified</span>
-                        {ev.created_by === user.id && <span style={{ background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
+                        <span style={{ background: 'var(--gold)', color: 'var(--on-accent)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type || 'Emergency'}</span>
+                        <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>&#10003; Verified</span>
+                        {ev.created_by === user.id && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
                         <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.1rem' }}>{ev.title}</h3>
                       </div>
-                      <span style={{ color: '#888', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
                     </div>
-                    {ev.location_name && <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
-                    {ev.description && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
+                    {ev.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
+                    {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
                     {myRole && (
-                      <span style={{ display: 'inline-block', marginTop: '0.5rem', background: myRole === 'responder' ? '#1a4a3a' : myRole === 'coordinator' ? '#1a3a5a' : '#4a3a1a', color: myRole === 'responder' ? '#4ecca3' : myRole === 'coordinator' ? '#66aaff' : '#ffaa44', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
+                      <span style={{ display: 'inline-block', marginTop: '0.5rem', background: myRole === 'responder' ? 'var(--success-bg)' : myRole === 'coordinator' ? 'var(--info-bg)' : '#4a3a1a', color: myRole === 'responder' ? 'var(--accent)' : myRole === 'coordinator' ? 'var(--info)' : 'var(--warn)', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
                         {myRole === 'responder' ? 'Signed up to help' : myRole === 'coordinator' ? 'Coordinator' : 'Signed up as affected'}
                       </span>
                     )}
@@ -237,28 +237,28 @@ export default function EmergencyEvents() {
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>&#128203;</p>
               <p style={{ fontWeight: 700 }}>No resolved events</p>
-              <p style={{ color: '#888', fontSize: '0.875rem' }}>Closed events will be archived here.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Closed events will be archived here.</p>
             </div>
           ) : (
             resolvedEvents.map(ev => {
               const myRole = mySignups[ev.id]
               return (
-                <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2d6a4f', opacity: 0.8 }}>
+                <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2d6a4f', opacity: 0.8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                      <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
                         {CLOSE_REASON_LABELS[ev.close_reason] || 'Closed'}
                       </span>
-                      {ev.event_type && <span style={{ color: '#888', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>{ev.event_type}</span>}
-                      <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.05rem', color: '#ccc' }}>{ev.title}</h3>
+                      {ev.event_type && <span style={{ color: 'var(--text-muted)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>{ev.event_type}</span>}
+                      <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.05rem', color: 'var(--text-soft)' }}>{ev.title}</h3>
                     </div>
-                    <span style={{ color: '#8a8a8a', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
                       {ev.resolved_at ? timeAgo(ev.resolved_at) : timeAgo(ev.created_at)}
                     </span>
                   </div>
-                  {ev.location_name && <p style={{ color: '#888', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
+                  {ev.location_name && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
                   {myRole && (
-                    <span style={{ display: 'inline-block', marginTop: '0.5rem', background: '#222', color: '#888', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
+                    <span style={{ display: 'inline-block', marginTop: '0.5rem', background: 'var(--surface-2)', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
                       {myRole === 'responder' ? 'You helped' : myRole === 'coordinator' ? 'You coordinated' : 'You were affected'}
                     </span>
                   )}
