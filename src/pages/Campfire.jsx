@@ -602,7 +602,7 @@ export default function Campfire() {
         <button type="button" onClick={() => { setPickerOpen(true); setPickerSearch('') }} aria-haspopup="dialog" aria-expanded={pickerOpen} aria-label={'Change chat. Now in ' + (activeBoard?.name || 'no chat')} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid var(--accent)', background: 'var(--success-bg)', color: 'var(--accent)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeBoard?.name || 'Pick a chat'}</span>
           {otherUnread > 0 && <span role="status" aria-label={otherUnread + ' new in other chats'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{otherUnread > 99 ? '99+' : otherUnread}</span>}
-          {orderedBoards.length > 1 && <span style={{ fontWeight: 500, fontSize: '0.8rem', color: '#9fe0c8' }}>{orderedBoards.length} chats</span>}
+          {orderedBoards.length > 1 && <span style={{ fontWeight: 500, fontSize: '0.8rem', color: 'var(--accent)' }}>{orderedBoards.length} chats</span>}
           <span aria-hidden="true">&#9662;</span>
         </button>
       </div>

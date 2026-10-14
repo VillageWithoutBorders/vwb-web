@@ -206,8 +206,8 @@ export default function FindVillage() {
 
       <form onSubmit={search} style={{ display: 'flex', gap: '0.5rem', margin: '0.75rem 0' }}>
         <label htmlFor="fv-search" className="sr-only">Search villages by name</label>
-        <input id="fv-search" type="search" value={text} onChange={e => setText(e.target.value)} placeholder="Search by town or village name" autoComplete="off" style={{ flex: 1, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
-        <button type="submit" className="btn btn-outline" style={{ minHeight: '44px' }}>Search</button>
+        <input id="fv-search" type="search" value={text} onChange={e => setText(e.target.value)} placeholder="Search by town or village name" autoComplete="off" style={{ flex: 1, minWidth: 0, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
+        <button type="submit" className="btn btn-outline" style={{ minHeight: '44px', flex: 'none' }}>Search</button>
       </form>
 
       {error && <p className="form-error" role="alert">{error}</p>}

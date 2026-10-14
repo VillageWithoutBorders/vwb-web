@@ -464,7 +464,7 @@ export default function EventPage() {
               {cancelled
                 ? <button type="button" className="btn btn-outline btn-full" onClick={() => setStatus('active')}>Bring event back</button>
                 : <button type="button" className="btn btn-outline btn-full" onClick={() => setStatus('cancelled')}>Cancel event</button>}
-              <button type="button" className="link-button" style={{ color: '#ff9f9f', minHeight: '44px' }} onClick={deleteEvent}>Delete event</button>
+              <button type="button" className="link-button" style={{ color: 'var(--danger)', minHeight: '44px' }} onClick={deleteEvent}>Delete event</button>
             </div>
             <h2 style={{ marginTop: '1rem' }}>Message everyone coming</h2>
             {(() => {
