@@ -73,3 +73,6 @@
 .vs-note { color: var(--vs-muted); font-size: 0.92rem; }
 @media (max-width: 360px) { .vs-help { grid-template-columns: 1fr; } .vs-lab { font-size: 0.72rem; } }
 @media (prefers-reduced-motion: reduce) { .vs-bump, .vs-flame .vs-em { animation: none !important; } .vs-big:active, .vs-room:active, .vs-crumb:active { transform: none; } }
+
+/* Sister villages sheet: the village row with its Sister Campfire button under it. */
+.vs-sister { display: grid; gap: 8px; margin-bottom: 12px; }

@@ -93,12 +93,12 @@ export default function SisterVillages({ village, villages, sisters, isKeeper, j
             ))}
           </div>
         )}
-      <p className="cal-sub" style={{ margin: '0.25rem 0' }}>Sister Villages are villages that chose each other. Members of one can join the other, even outside its zip codes, with a Sister badge.</p>
+      <p className="cal-sub" style={{ margin: '0.25rem 0' }}>Sister Villages are villages that chose each other. Members of one can join the other, even outside its zip codes, with a Guest badge. The two villages share a Sister Campfire that anyone in either village can join.</p>
 
       {joinVia && (
         <>
           <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px', marginTop: '0.25rem' }} disabled={busy} onClick={() => { setRiskError(''); setRisk(true) }}>Join as a sister neighbor</button>
-          <p className="cal-sub" style={{ margin: '0.25rem 0 0' }}>You can join because you are in {joinVia.via_village_name}. Everyone here will see that you joined and a Sister badge by your name.</p>
+          <p className="cal-sub" style={{ margin: '0.25rem 0 0' }}>You can join because you are in {joinVia.via_village_name}. Everyone here will see that you joined and a Guest badge by your name.</p>
         </>
       )}
 
@@ -119,10 +119,10 @@ export default function SisterVillages({ village, villages, sisters, isKeeper, j
           ))}
           {mySisters.map((id) => (
             <div key={'end' + id} style={row}>
-              <span style={{ flex: 1, minWidth: 0 }}>{nameOf(id)}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>{ending === id ? 'End with ' + nameOf(id) + '? Your Sister Campfire closes and is deleted for good in 30 days.' : nameOf(id)}</span>
               {ending === id
                 ? <>
-                    <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={busy} onClick={() => call('end_sister_village', { p_mine: village.id, p_other: id }, { ended: 'Sister link ended. Anyone who already joined stays.', none: 'That link is already gone.' })}>Yes, end it</button>
+                    <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={busy} onClick={() => call('end_sister_village', { p_mine: village.id, p_other: id }, { ended: 'Sister link ended. Anyone who already joined stays. The Sister Campfire closes and is deleted for good in 30 days.', none: 'That link is already gone.' })}>Yes, end it</button>
                     <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => setEnding(null)}>Keep it</button>
                   </>
                 : <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => setEnding(id)}>End</button>}

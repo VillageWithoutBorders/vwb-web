@@ -95,7 +95,8 @@ export default function Campfire() {
   // The boards inside the Campfire: General first, then your own village,
   // then the rest, then any an admin has added.
   async function loadBoards() {
-    const { data, error } = await supabase.from('campfire_boards').select('id, name, village_id, is_general, sort_order, scrambled').eq('archived', false)
+    // Closed Sister Campfires stay readable to their members for 30 days.
+    const { data, error } = await supabase.from('campfire_boards').select('id, name, village_id, is_general, sort_order, scrambled, sister_a, sister_b, archived, closed_at').or('archived.eq.false,sister_a.not.is.null')
     if (error) { console.error('Failed to load Village Square boards:', error); return }
     setBoards(data || [])
   }
@@ -110,7 +111,7 @@ export default function Campfire() {
   const memberSet = new Set((memberVillages || []).map(m => m.village_id))
 
   const orderedBoards = [...boards].sort((a, b) => {
-    const rank = (x) => x.is_general ? 0 : x.village_id && memberSet.has(x.village_id) ? 1 : x.village_id ? 3 : 2
+    const rank = (x) => x.is_general ? 0 : x.village_id && memberSet.has(x.village_id) ? 1 : x.sister_a ? (x.archived ? 3 : 2) : x.village_id ? 5 : 4
     return rank(a) - rank(b) || (a.sort_order - b.sort_order) || a.name.localeCompare(b.name)
   })
   const wantedBoard = searchParams.get('board')
@@ -119,6 +120,22 @@ export default function Campfire() {
   boardRef.current = activeBoardId
   const isVillageBoard = !!activeBoard?.village_id
   const inVillage = isVillageBoard && memberSet.has(activeBoard.village_id)
+  // A Sister Campfire: the shared chat between two Sister Villages. You only see the ones you joined.
+  const isSister = !!activeBoard?.sister_a
+  const sisterClosed = isSister && activeBoard.archived
+  const sisterGoneOn = sisterClosed && activeBoard.closed_at
+    ? new Date(new Date(activeBoard.closed_at).getTime() + 30 * 864e5).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
+    : ''
+  const [leavingSister, setLeavingSister] = useState(false)
+  async function leaveSister() {
+    if (!activeBoard?.sister_a || leavingSister) return
+    setLeavingSister(true)
+    const { data, error } = await supabase.rpc('leave_sister_campfire', { p_board: activeBoard.id })
+    setLeavingSister(false)
+    if (error || data !== 'ok') { console.error('Failed to leave the Sister Campfire:', error || data); setBoardError("We couldn't take you out of this Sister Campfire. Try again."); return }
+    await loadBoards()
+    setSearchParams({}, { replace: true })
+  }
 
   // Am I a keeper (starter or helper) of this village? Keepers can pin announcements.
   const [keeper, setKeeper] = useState(false)
@@ -557,6 +574,7 @@ export default function Campfire() {
   const canPost = !!activeBoard && (
     activeBoard.is_general ? isStaff
       : activeBoard.village_id ? memberSet.has(activeBoard.village_id)
+      : activeBoard.sister_a ? !activeBoard.archived
       : isStaff
   )
 
@@ -568,7 +586,7 @@ export default function Campfire() {
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span>&#128227;</span> The Village Square
           </h1>
-          <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
+          <p style={{ margin: 0, color: '#888', fontSize: '0.75rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.sister_a ? 'Sister Campfire' + (activeBoard.archived ? ', closed' : '') : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
         </div>
         <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
         {isVillageBoard && inVillage && (
@@ -592,13 +610,14 @@ export default function Campfire() {
         const q = pickerSearch.trim().toLowerCase()
         const match = (x) => !q || x.name.toLowerCase().includes(q)
         const groups = [
-          ['Announcements and Ambassadors', orderedBoards.filter(x => !x.village_id && match(x))],
+          ['Announcements and Ambassadors', orderedBoards.filter(x => !x.village_id && !x.sister_a && match(x))],
           ['My villages', orderedBoards.filter(x => x.village_id && memberSet.has(x.village_id) && match(x))],
+          ['Sister Campfires', orderedBoards.filter(x => x.sister_a && match(x))],
           ['Other villages', orderedBoards.filter(x => x.village_id && !memberSet.has(x.village_id) && match(x))],
         ]
         const row = (b) => (
           <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid #4ecca3' : '1px solid #333', background: b.id === activeBoardId ? '#1a4a3a' : '#222', color: b.id === activeBoardId ? '#4ecca3' : '#eee', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
-            <span style={{ flex: 1 }}>{b.name}</span>
+            <span style={{ flex: 1 }}>{b.sister_a && <span aria-hidden="true">{'\u{1F525}'} </span>}{b.name}{b.sister_a && b.archived ? ' (closed)' : ''}</span>
             {unreadFor(b) > 0 && <span aria-label={unreadFor(b) + ' new'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: '#ffaa44', color: '#1a1a1a', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{unreadFor(b) > 99 ? '99+' : unreadFor(b)}</span>}
             {b.id === activeBoardId && <span aria-hidden="true">&#10003;</span>}
           </button>
@@ -647,6 +666,17 @@ export default function Campfire() {
       {boardError && <p role="alert" style={{ margin: 0, padding: '0.4rem 1rem', color: '#ff8888', fontSize: '0.8rem', background: '#241414' }}>{boardError}</p>}
 
       {isVillageBoard && inVillage && <VillageNewMembers villageId={activeBoard.village_id} myId={user.id} />}
+      {isSister && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 1rem', borderBottom: '1px solid #3a3020', background: sisterClosed ? '#2a1a20' : '#2e2a1a', color: sisterClosed ? '#ffb3c7' : '#ffcc66', fontSize: '0.9rem', lineHeight: 1.4 }}>
+          <p style={{ margin: 0, flex: '1 1 12rem' }}>
+            <span aria-hidden="true">{'\u{1F525}'} </span>
+            {sisterClosed
+              ? 'This Sister Campfire is closed. The villages are no longer sisters. You can read it until ' + sisterGoneOn + '. Then it is deleted for good and cannot be brought back.'
+              : 'Sister Campfire. Anyone in either village can join. Members only, not scrambled. Messages delete after 30 days.'}
+          </p>
+          <button type="button" onClick={leaveSister} disabled={leavingSister} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '10px', border: '1px solid currentColor', background: 'none', color: 'inherit', fontSize: '0.9rem', cursor: 'pointer' }}>{leavingSister ? 'Leaving...' : 'Leave'}</button>
+        </div>
+      )}
       {isVillageBoard && inVillage && removalRequests.some(r => r.requested_by !== user.id) && (
         <button type="button" onClick={() => setShowPeople(true)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem 1rem', minHeight: '44px', background: '#2e2a1a', border: 'none', borderBottom: '1px solid #3a3020', color: '#ffcc66', fontSize: '0.9rem', cursor: 'pointer' }}>
           &#9888; A member asked to remove someone. A second member is needed. Tap to look.
@@ -880,7 +910,7 @@ export default function Campfire() {
           <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginBottom: '0.6rem' }} onClick={() => navigate('/find-village?join=' + activeBoard.village_id)}>Join this village chat</button>
         )}
         <p style={{ margin: 0, color: '#aaa', fontSize: '0.85rem' }}>
-          {activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : activeBoard && activeBoard.village_id ? 'You are not in this village chat. Join it from the map to read and post.' : 'You can read this board. You cannot post here.'}
+          {activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : activeBoard && activeBoard.village_id ? 'You are not in this village chat. Join it from the map to read and post.' : activeBoard && activeBoard.sister_a ? 'This Sister Campfire is closed. You can read it, but no one can post.' : 'You can read this board. You cannot post here.'}
         </p>
         </div>
       )}

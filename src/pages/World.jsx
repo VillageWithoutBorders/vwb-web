@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { peekReturnTo } from '../utils/returnTo'
 import { circleLayout } from '../utils/circleLayout'
+import SisterCampfireButton from '../components/SisterCampfireButton'
 import '../village-scene.css'
 import '../world.css'
 
@@ -59,6 +60,7 @@ export default function World() {
   const [sisters, setSisters] = useState([])
   const [orgs, setOrgs] = useState([])
   const [orgLinks, setOrgLinks] = useState([])
+  const [sisterFires, setSisterFires] = useState([])
   const [announceBoard, setAnnounceBoard] = useState(null)
   const [error, setError] = useState('')
   const [sheet, setSheet] = useState(null)
@@ -93,6 +95,16 @@ export default function World() {
       if (err) { console.error('Failed to load sister villages:', err); return }
       setSisters(data || [])
     })
+    supabase.rpc('sister_campfires').then(({ data, error: err }) => {
+      if (!alive) return
+      if (err) { console.error('Failed to load Sister Campfires:', err); return }
+      setSisterFires((data || []).filter((c) => !c.closed_at))
+    })
+    supabase.rpc('org_connection_lines').then(({ data, error: err }) => {
+      if (!alive) return
+      if (err) { console.error('Failed to load organization connections:', err); return }
+      setOrgLinks((data || []).map((r) => [r.org_a, r.org_b]))
+    })
     supabase.from('organizations').select('id, name, description').eq('approved', true).order('name').then(({ data, error: err }) => {
       if (!alive) return
       if (err) { console.error('Failed to load organizations:', err); return }
@@ -105,25 +117,6 @@ export default function World() {
     })
     return () => { alive = false }
   }, [])
-
-  // Connections between organizations. Only Heads and organizers can read
-  // their organization's connections today, so others see the organizations
-  // without lines.
-  useEffect(() => {
-    let alive = true
-    const leads = myOrgs.filter((o) => o.role === 'admin' || o.role === 'organizer')
-    if (!leads.length) { setOrgLinks([]); return }
-    Promise.all(leads.map((o) => supabase.rpc('my_org_connections', { p_org: o.id }).then(({ data, error: err }) => {
-      if (err) { console.error('Failed to load connections:', err); return [] }
-      return (data || []).filter((c) => c.status === 'active').map((c) => [o.id, c.other_id])
-    }))).then((lists) => {
-      if (!alive) return
-      const seen = new Set(), out = []
-      lists.flat().forEach(([a, b]) => { const k = [a, b].sort().join('|'); if (!seen.has(k)) { seen.add(k); out.push([a, b]) } })
-      setOrgLinks(out)
-    })
-    return () => { alive = false }
-  }, [myOrgs])
 
   const pointsByVillage = useMemo(() => {
     const m = {}
@@ -309,7 +302,8 @@ export default function World() {
             </>}
             {sheet.kind === 'sister' && <>
               <h2 id="wd-sheet-title"><span aria-hidden="true">{'\u{1F525}'}</span> {sheet.a.name} and {sheet.b.name}</h2>
-              <p>These are sister villages. Their Sister Campfire is coming soon. Anyone in either village will be able to join it.</p>
+              <p>These are sister villages. They share a Sister Campfire. Anyone in either village can join it.</p>
+              <SisterCampfireButton campfire={sisterFires.find((c) => [c.village_a, c.village_b].sort().join('|') === [sheet.a.id, sheet.b.id].sort().join('|'))} />
             </>}
             {sheet.kind === 'orglink' && <>
               <h2 id="wd-sheet-title"><span aria-hidden="true">{'\u{1F525}'}</span> {sheet.a.name} and {sheet.b.name}</h2>

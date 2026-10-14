@@ -54,7 +54,7 @@ export function VillageNewMembers({ villageId, myId }) {
   // Guests are named as guests, so everyone knows who came in from outside the village.
   const names = fresh.slice(0, 3).map((r) => {
     const g = guests.find((x) => x.user_id === r.user_id)
-    return (r.display_name || 'A neighbor') + (g ? (g.via === 'sister' ? ' (from Sister Village ' + (g.from_village_name || '') + ')' : ' (guest)') : '')
+    return (r.display_name || 'A neighbor') + (g ? (g.via === 'sister' ? ' (guest from Sister Village ' + (g.from_village_name || '') + ')' : ' (guest)') : '')
   })
   const more = fresh.length - names.length
   const text = (more > 0 ? names.join(', ') + ' and ' + more + ' more' : names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]) + (fresh.length === 1 ? ' just joined.' : ' just joined.')
@@ -233,7 +233,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
         )}
 
         {iAmGuest
-          ? <p style={{ margin: '0 0 0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #4a2a35', borderRadius: '10px', background: '#2a1a20', color: '#ffb3c7', fontSize: '0.85rem', lineHeight: 1.4 }}>{sisterIds.includes(myId) ? 'You joined from a Sister Village.' : 'You are a guest here.'} You can read and post. Only full members can invite guests.</p>
+          ? <p style={{ margin: '0 0 0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #4a2a35', borderRadius: '10px', background: '#2a1a20', color: '#ffb3c7', fontSize: '0.85rem', lineHeight: 1.4 }}>{sisterIds.includes(myId) ? 'You are a guest here, from a Sister Village.' : 'You are a guest here.'} You can read and post. Only full members can invite guests.</p>
           : (
           <div style={{ margin: '0 0 0.75rem' }}>
             {!inviteOpen
@@ -282,7 +282,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                       {p.is_hope_ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
                       {p.user_id === keepers.starter_id && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: '#ffcc66', padding: '0 4px', borderRadius: '3px' }}>Keeper</span>}
                       {keepers.helper_ids.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a3a1a', color: '#ffcc66', padding: '0 4px', borderRadius: '3px' }}>Helper</span>}
-                      {guestIds.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a2a35', color: '#ffb3c7', padding: '0 4px', borderRadius: '3px' }}>{sisterIds.includes(p.user_id) ? 'Sister' : 'Guest'}</span>}
+                      {guestIds.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: '#4a2a35', color: '#ffb3c7', padding: '0 4px', borderRadius: '3px' }}>Guest</span>}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#999' }}>Joined {new Date(p.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                   </div>
