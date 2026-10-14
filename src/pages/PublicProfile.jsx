@@ -125,8 +125,8 @@ export default function PublicProfile() {
   if (!profile) {
     return (
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
-        <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>This profile isn't available.</div>
+        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>This profile isn't available.</div>
       </div>
     )
   }
@@ -136,46 +136,46 @@ export default function PublicProfile() {
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
-      <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', marginBottom: '0.5rem' }}>&#8592;</button>
+      <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', marginBottom: '0.5rem' }}>&#8592;</button>
 
       {/* Profile header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
         <img
           src={avatarUrl}
           alt=""
-          style={{ width: '72px', height: '72px', borderRadius: '50%', background: '#222', border: '2px solid #333' }}
+          style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'var(--surface-2)', border: '2px solid var(--border)' }}
         />
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <h1 style={{ margin: 0, fontSize: '1.4rem' }}>{profile.display_name || 'Neighbor'}</h1>
             {profile.is_hope_ambassador && (
-              <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
+              <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
                 Hope Ambassador
               </span>
             )}
           </div>
-          <div style={{ color: '#999', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+          <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
             Member since {formatDate(profile.created_at)}
           </div>
           {profile.show_location && profile.neighborhood && (
-            <div style={{ color: '#888', fontSize: '0.8rem' }}>{profile.neighborhood}</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{profile.neighborhood}</div>
           )}
           {user && user.id !== userId && !blockedThem && (
-            <button type="button" onClick={msgStatus === 'pending_in' ? () => navigate('/messages') : messageThem} disabled={messaging || msgStatus === 'pending_out'} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Sending...' : msgStatus === 'open' ? 'Message' : msgStatus === 'pending_out' ? 'Request sent' : msgStatus === 'pending_in' ? 'They asked to message you' : 'Ask to message'}</button>
+            <button type="button" onClick={msgStatus === 'pending_in' ? () => navigate('/messages') : messageThem} disabled={messaging || msgStatus === 'pending_out'} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Sending...' : msgStatus === 'open' ? 'Message' : msgStatus === 'pending_out' ? 'Request sent' : msgStatus === 'pending_in' ? 'They asked to message you' : 'Ask to message'}</button>
           )}
           <ProfileSafetyActions userId={userId} name={profile.display_name} myId={user?.id} onBlockChange={setBlockedThem} openWith={location.state?.safety} onOpened={() => navigate(location.pathname, { replace: true, state: {} })} />
         </div>
       </div>
 
       {/* Vouches */}
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem', padding: '0.75rem 1rem', background: '#1a1a1a', borderRadius: '12px', border: '1px solid #333' }}>
+      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem', padding: '0.75rem 1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
         <VouchButton userId={userId} name={profile.display_name || 'this neighbor'} size="sm" showCount={true} allowPersonal={!blockedThem} />
         <KnowsVouchList userId={userId} />
         <p className="vouch-caution">Vouches show that neighbors trust this person. They aren't a background check. Meet somewhere public the first time, and trust your own judgment.</p>
       </div>
 
       {!canSeeHistory && (
-        <p style={{ color: '#999', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>Request and event history is shared once you are connected.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>Request and event history is shared once you are connected.</p>
       )}
 
       {canSeeHistory && (<>
@@ -192,21 +192,21 @@ export default function PublicProfile() {
       {/* Requests tab */}
       {tab === 'requests' && (
         requests.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>No completed requests yet</div>
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No completed requests yet</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {requests.map((r, i) => (
-              <div key={r.id + '-' + r.role + '-' + i} style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={r.id + '-' + r.role + '-' + i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>{r.skill_needed}</div>
-                  <div style={{ color: '#888', fontSize: '0.75rem' }}>
+                  <div style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }}>{r.skill_needed}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                     {r.role === 'helper' ? 'Helped' : 'Requested'} &middot; {formatDate(r.created_at)}
                   </div>
                 </div>
                 <span style={{
                   fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
-                  background: r.status === 'completed' ? '#1a2e26' : '#2a2518',
-                  color: r.status === 'completed' ? '#4ecca3' : '#b8860b',
+                  background: r.status === 'completed' ? 'var(--success-bg)' : '#2a2518',
+                  color: r.status === 'completed' ? 'var(--accent)' : '#b8860b',
                 }}>
                   {r.status === 'completed' ? 'Completed' : r.status}
                 </span>
@@ -219,21 +219,21 @@ export default function PublicProfile() {
       {/* Events tab */}
       {tab === 'events' && (
         events.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>No event participation yet</div>
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No event participation yet</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {events.map((e, i) => (
-              <div key={e.id + '-' + i} style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={e.id + '-' + i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>{e.title}</div>
-                  <div style={{ color: '#888', fontSize: '0.75rem' }}>
+                  <div style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }}>{e.title}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                     {e.event_type} &middot; {formatDate(e.created_at)}
                   </div>
                 </div>
                 <span style={{
                   fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
-                  background: e.status === 'closed' ? '#1a2e26' : '#2a2518',
-                  color: e.status === 'closed' ? '#4ecca3' : '#b8860b',
+                  background: e.status === 'closed' ? 'var(--success-bg)' : '#2a2518',
+                  color: e.status === 'closed' ? 'var(--accent)' : '#b8860b',
                 }}>
                   {e.status === 'closed' ? 'Resolved' : 'Active'}
                 </span>

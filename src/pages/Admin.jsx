@@ -838,7 +838,7 @@ export default function Admin() {
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128274;</p>
         <p style={{ fontWeight: 700 }}>Admin access only</p>
-        <button onClick={() => navigate('/profile')} style={{ marginTop: '1rem', padding: '0.6rem 1.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>Back to Profile</button>
+        <button onClick={() => navigate('/profile')} style={{ marginTop: '1rem', padding: '0.6rem 1.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>Back to Profile</button>
       </div>
     )
   }
@@ -889,11 +889,11 @@ export default function Admin() {
     .filter(c => contentFilter === 'all' || (contentFilter === 'dupes' ? c.is_duplicate : c.kind === contentFilter.slice(0, -1)))
     .filter(c => !contentSearch || [c.title, c.description, c.poster_name, c.neighborhood].filter(Boolean).join(' ').toLowerCase().includes(contentSearch))
   const hiddenLabel = { position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }
-  const filterSelect = { padding: '0.4rem 0.5rem', minHeight: '36px', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#ccc', fontSize: '0.8rem' }
+  const filterSelect = { padding: '0.4rem 0.5rem', minHeight: '36px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text-soft)', fontSize: '0.8rem' }
 
-  const tabStyle = (active) => ({ padding: '0.5rem 0.85rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? '#4ecca3' : '#2a2a2a', color: active ? '#1a1a1a' : '#aaa' })
-  const cardStyle = { background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }
-  const statCardStyle = { textAlign: 'center', padding: '0.75rem', background: '#1e1e1e', borderRadius: '8px', border: '1px solid #333', width: '100%', fontFamily: 'inherit', gridColumn: 'span 2' }
+  const tabStyle = (active) => ({ padding: '0.5rem 0.85rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : 'var(--surface-2)', color: active ? 'var(--on-accent)' : 'var(--text-secondary)' })
+  const cardStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }
+  const statCardStyle = { textAlign: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)', width: '100%', fontFamily: 'inherit', gridColumn: 'span 2' }
 
   const falseAlarms = approvals.filter(a => a.type === 'false_alarm_request')
   const duplicates = approvals.filter(a => a.type === 'duplicate_merge_request')
@@ -901,43 +901,43 @@ export default function Admin() {
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => goBack('/profile')} aria-label="Back to Profile" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
-        <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#4ecca3', flex: 1 }}>Admin Panel</h1>
-        <button onClick={() => navigate('/admin/report')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem', display: isFounder ? 'inline-block' : 'none' }}>Grant Report</button>
+        <button onClick={() => goBack('/profile')} aria-label="Back to Profile" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--accent)', flex: 1 }}>Admin Panel</h1>
+        <button onClick={() => navigate('/admin/report')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem', display: isFounder ? 'inline-block' : 'none' }}>Grant Report</button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
         <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('all'); setTab('users') }} style={statCardStyle}>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.users}</div>
-          <div style={{ fontSize: '0.7rem', color: '#888' }}>Users</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{stats.users}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Users</div>
         </button>
         <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('ambassadors'); setTab('users') }} style={statCardStyle}>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.ambassadors}</div>
-          <div style={{ fontSize: '0.7rem', color: '#888' }}>Ambassadors</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{stats.ambassadors}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Ambassadors</div>
         </button>
         <button type="button" className="admin-stat-card" onClick={() => { setContentFilter('requests'); setTab('content') }} style={statCardStyle}>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4ecca3' }}>{stats.requests}</div>
-          <div style={{ fontSize: '0.7rem', color: '#888' }}>Requests</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{stats.requests}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Requests</div>
         </button>
         <div style={statCardStyle} title="Neighbors who offered to help and are waiting for the requester to say yes or no">
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#66aaff' }}>{stats.offersWaiting}</div>
-          <div style={{ fontSize: '0.7rem', color: '#888' }}>Offers waiting</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--info)' }}>{stats.offersWaiting}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Offers waiting</div>
         </div>
         <div style={statCardStyle} title="Offers the requester said yes to">
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#66aaff' }}>{stats.accepted}</div>
-          <div style={{ fontSize: '0.7rem', color: '#888' }}>Accepted</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--info)' }}>{stats.accepted}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Accepted</div>
         </div>
         <div style={statCardStyle} title="Tasks both people marked done">
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#66aaff' }}>{stats.completed}</div>
-          <div style={{ fontSize: '0.7rem', color: '#888' }}>Completed</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--info)' }}>{stats.completed}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Completed</div>
         </div>
         <button type="button" className="admin-stat-card" onClick={() => setTab('emergencies')} style={{ ...statCardStyle, gridColumn: 'span 3' }}>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#ff6644' }}>{stats.events}</div>
-          <div style={{ fontSize: '0.7rem', color: '#888' }}>Events</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger)' }}>{stats.events}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Events</div>
         </button>
         <button type="button" className="admin-stat-card" onClick={() => setTab('reports')} style={{ ...statCardStyle, gridColumn: 'span 3' }}>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: stats.alerts > 0 ? '#ff4444' : '#888' }}>{stats.alerts}</div>
-          <div style={{ fontSize: '0.7rem', color: '#888' }}>Reports</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: stats.alerts > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>{stats.alerts}</div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Reports</div>
         </button>
       </div>
 
@@ -946,46 +946,46 @@ export default function Admin() {
           Wraps instead of scrolling so nothing is ever hidden off-screen as more
           sections get added. */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length + ambApplications.length + resourceClaims.length) > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length + ambApplications.length + resourceClaims.length}</span>}</button>
+        <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length + ambApplications.length + resourceClaims.length) > 0 && <span style={{ marginLeft: '0.3rem', background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length + ambApplications.length + resourceClaims.length}</span>}</button>
         <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length}){organizations.some(o => !o.approved) ? ' \u00b7 ' + organizations.filter(o => !o.approved).length + ' waiting' : ''}</button>
         <button style={tabStyle(tab === 'villages')} onClick={() => setTab('villages')}>Villages ({villages.length})</button>
-        <button style={tabStyle(tab === 'content')} onClick={() => setTab('content')}>SkillShare {duplicateCount > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{duplicateCount}</span>}</button>
-        <button style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports {stats.alerts > 0 && <span style={{ marginLeft: '0.3rem', background: '#ff4444', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{stats.alerts}</span>}</button>
+        <button style={tabStyle(tab === 'content')} onClick={() => setTab('content')}>SkillShare {duplicateCount > 0 && <span style={{ marginLeft: '0.3rem', background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{duplicateCount}</span>}</button>
+        <button style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports {stats.alerts > 0 && <span style={{ marginLeft: '0.3rem', background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{stats.alerts}</span>}</button>
       </div>
 
-      {loading && <p style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>Loading...</p>}
+      {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Loading...</p>}
 
       {!loading && tab === 'approvals' && (
         <>
           <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
           {approvals.length === 0 && adminApplications.length === 0 && ambApplications.length === 0 && resourceClaims.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No pending approvals</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No pending approvals</p>
           ) : (
             <>
               {ambApplications.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: '0.85rem', color: '#ffaa44', margin: '0.5rem 0' }}>Hope Ambassador Applications</h3>
+                  <h3 style={{ fontSize: '0.85rem', color: 'var(--warn)', margin: '0.5rem 0' }}>Hope Ambassador Applications</h3>
                   {ambApplications.map(a => {
                     const villageName = villages.find(v => v.id === a.applicant.village_id)?.name
                     const skillList = Array.isArray(a.applicant.skills) ? a.applicant.skills.join(', ') : ''
                     const when = typeof a.applicant.availability === 'string' ? availabilityDisplayString(a.applicant.availability) : ''
                     return (
-                      <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid #ffaa44' }}>
+                      <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid var(--warn)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <AvatarDisplay url={a.applicant.avatar_url} userId={a.user_id} size={32} />
                           <div>
-                            <strong style={{ color: '#eee', fontSize: '0.9rem' }}><UserName userId={a.user_id} name={a.applicant.display_name || 'Unnamed'} /></strong>
-                            <div style={{ color: '#888', fontSize: '0.7rem' }}>Applied {timeAgo(a.created_at)}{villageName ? ' \u00b7 ' + villageName : ''}</div>
+                            <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}><UserName userId={a.user_id} name={a.applicant.display_name || 'Unnamed'} /></strong>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Applied {timeAgo(a.created_at)}{villageName ? ' \u00b7 ' + villageName : ''}</div>
                           </div>
                         </div>
-                        <p style={{ color: '#ddd', fontSize: '0.8rem', margin: '0.5rem 0 0.25rem' }}><strong style={{ color: '#ffaa44' }}>How they know us:</strong> {a.how_known || 'Not given'}</p>
-                        {skillList && <p style={{ color: '#aaa', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>Skills:</strong> {skillList}</p>}
-                        {when && <p style={{ color: '#aaa', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>Available:</strong> {when}</p>}
-                        {typeof a.applicant.interests === 'string' && a.applicant.interests && <p style={{ color: '#aaa', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>About:</strong> {a.applicant.interests}</p>}
-                        {a.user_id !== user.id && <button type="button" onClick={() => messageUser(a.user_id)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, minHeight: '44px', padding: 0 }}>Message applicant</button>}
+                        <p style={{ color: 'var(--text)', fontSize: '0.8rem', margin: '0.5rem 0 0.25rem' }}><strong style={{ color: 'var(--warn)' }}>How they know us:</strong> {a.how_known || 'Not given'}</p>
+                        {skillList && <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>Skills:</strong> {skillList}</p>}
+                        {when && <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>Available:</strong> {when}</p>}
+                        {typeof a.applicant.interests === 'string' && a.applicant.interests && <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>About:</strong> {a.applicant.interests}</p>}
+                        {a.user_id !== user.id && <button type="button" onClick={() => messageUser(a.user_id)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, minHeight: '44px', padding: 0 }}>Message applicant</button>}
                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
-                          <button onClick={() => reviewAmbassadorApplication(a.id, true)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Approve</button>
-                          <button onClick={() => reviewAmbassadorApplication(a.id, false)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem' }}>Decline</button>
+                          <button onClick={() => reviewAmbassadorApplication(a.id, true)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Approve</button>
+                          <button onClick={() => reviewAmbassadorApplication(a.id, false)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem' }}>Decline</button>
                         </div>
                       </div>
                     )
@@ -994,31 +994,31 @@ export default function Admin() {
               )}
               {isFounder && adminApplications.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: '0.85rem', color: '#4ecca3', margin: '0.5rem 0' }}>Admin Access Requests</h3>
+                  <h3 style={{ fontSize: '0.85rem', color: 'var(--accent)', margin: '0.5rem 0' }}>Admin Access Requests</h3>
                   {adminApplications.map(a => (
-                    <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid #4ecca3' }}>
+                    <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid var(--accent)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
                           <AvatarDisplay url={a.applicant_avatar} userId={a.user_id} size={32} />
                           <div>
-                            <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>ADMIN REQUEST</span>
-                            <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}><UserName userId={a.user_id} name={a.applicant_name} /></h4>
+                            <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>ADMIN REQUEST</span>
+                            <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: 'var(--text)' }}><UserName userId={a.user_id} name={a.applicant_name} /></h4>
                           </div>
                         </div>
-                        <span style={{ color: '#888', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(a.created_at)}</span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(a.created_at)}</span>
                       </div>
                       {a.invited_by_name ? (
-                        <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.2rem 0' }}>Accepted the invitation sent by {a.invited_by_name}</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0' }}>Accepted the invitation sent by {a.invited_by_name}</p>
                       ) : (
                         <>
-                          {a.region && <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.2rem 0' }}>Region: {a.region}</p>}
-                          {a.reason && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.2rem 0' }}>{a.reason}</p>}
+                          {a.region && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0' }}>Region: {a.region}</p>}
+                          {a.reason && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.2rem 0' }}>{a.reason}</p>}
                         </>
                       )}
-                      {a.user_id !== user.id && <button type="button" onClick={() => messageUser(a.user_id)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, minHeight: '44px', padding: 0 }}>Message applicant</button>}
+                      {a.user_id !== user.id && <button type="button" onClick={() => messageUser(a.user_id)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, minHeight: '44px', padding: 0 }}>Message applicant</button>}
                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
-                        <button onClick={() => approveAdminApplication(a)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Grant Admin Access</button>
-                        <button onClick={() => declineAdminApplication(a)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem' }}>Decline</button>
+                        <button onClick={() => approveAdminApplication(a)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Grant Admin Access</button>
+                        <button onClick={() => declineAdminApplication(a)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Decline</button>
                       </div>
                     </div>
                   ))}
@@ -1027,22 +1027,22 @@ export default function Admin() {
 
               {falseAlarms.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: '0.85rem', color: '#ffaa44', margin: '0.5rem 0' }}>False Alarm Reports</h3>
+                  <h3 style={{ fontSize: '0.85rem', color: 'var(--warn)', margin: '0.5rem 0' }}>False Alarm Reports</h3>
                   {falseAlarms.map(n => (
-                    <div key={n.id} style={{ ...cardStyle, borderLeft: '3px solid #ffaa44' }}>
+                    <div key={n.id} style={{ ...cardStyle, borderLeft: '3px solid var(--warn)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div style={{ flex: 1 }}>
-                          <span style={{ background: '#3a2a1a', color: '#ffaa44', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>FALSE ALARM</span>
-                          <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}>{n.event?.title || 'Unknown event'}</h4>
+                          <span style={{ background: 'var(--warn-bg)', color: 'var(--warn)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>FALSE ALARM</span>
+                          <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: 'var(--text)' }}>{n.event?.title || 'Unknown event'}</h4>
                         </div>
-                        <span style={{ color: '#888', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(n.created_at)}</span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(n.created_at)}</span>
                       </div>
-                      {n.event?.location_name && <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.2rem 0' }}>{n.event.location_name}</p>}
-                      {n.event?.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.2rem 0' }}>{n.event.description}</p>}
-                      <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.3rem 0' }}>Signups: {n.event?.signup_count || 0} | Verified: {n.event?.verified ? 'Yes' : 'No'}</p>
+                      {n.event?.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0' }}>{n.event.location_name}</p>}
+                      {n.event?.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.2rem 0' }}>{n.event.description}</p>}
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.3rem 0' }}>Signups: {n.event?.signup_count || 0} | Verified: {n.event?.verified ? 'Yes' : 'No'}</p>
                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                        <button onClick={() => approveFalseAlarm(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#ffaa44', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Confirm False Alarm</button>
-                        <button onClick={() => rejectFalseAlarm(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem' }}>Keep Event</button>
+                        <button onClick={() => approveFalseAlarm(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Confirm False Alarm</button>
+                        <button onClick={() => rejectFalseAlarm(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Keep Event</button>
                       </div>
                     </div>
                   ))}
@@ -1051,30 +1051,30 @@ export default function Admin() {
 
               {duplicates.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: '0.85rem', color: '#66aaff', margin: '0.75rem 0 0.5rem' }}>Duplicate Merge Requests</h3>
+                  <h3 style={{ fontSize: '0.85rem', color: 'var(--info)', margin: '0.75rem 0 0.5rem' }}>Duplicate Merge Requests</h3>
                   {duplicates.map(n => (
-                    <div key={n.id} style={{ ...cardStyle, borderLeft: '3px solid #66aaff' }}>
+                    <div key={n.id} style={{ ...cardStyle, borderLeft: '3px solid var(--info)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ background: '#1a2a3a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>DUPLICATE</span>
-                        <span style={{ color: '#888', fontSize: '0.7rem' }}>{timeAgo(n.created_at)}</span>
+                        <span style={{ background: '#1a2a3a', color: 'var(--info)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>DUPLICATE</span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{timeAgo(n.created_at)}</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '0.5rem', margin: '0.5rem 0', alignItems: 'center' }}>
-                        <div style={{ background: '#2a1a1a', borderRadius: '8px', padding: '0.5rem', border: '1px solid #ff6644' }}>
-                          <p style={{ fontSize: '0.7rem', color: '#ff6644', margin: '0 0 0.2rem', fontWeight: 600 }}>Remove</p>
-                          <p style={{ fontSize: '0.85rem', color: '#eee', margin: 0, fontWeight: 600 }}>{n.duplicateEvent?.title || 'Unknown'}</p>
-                          {n.duplicateEvent?.location_name && <p style={{ fontSize: '0.7rem', color: '#aaa', margin: '0.2rem 0 0' }}>{n.duplicateEvent.location_name}</p>}
+                        <div style={{ background: '#2a1a1a', borderRadius: '8px', padding: '0.5rem', border: '1px solid var(--danger)' }}>
+                          <p style={{ fontSize: '0.7rem', color: 'var(--danger)', margin: '0 0 0.2rem', fontWeight: 600 }}>Remove</p>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, fontWeight: 600 }}>{n.duplicateEvent?.title || 'Unknown'}</p>
+                          {n.duplicateEvent?.location_name && <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0' }}>{n.duplicateEvent.location_name}</p>}
                         </div>
-                        <span style={{ color: '#8a8a8a', fontSize: '1.2rem' }}>&#8594;</span>
-                        <div style={{ background: '#1a2a1a', borderRadius: '8px', padding: '0.5rem', border: '1px solid #4ecca3' }}>
-                          <p style={{ fontSize: '0.7rem', color: '#4ecca3', margin: '0 0 0.2rem', fontWeight: 600 }}>Keep</p>
-                          <p style={{ fontSize: '0.85rem', color: '#eee', margin: 0, fontWeight: 600 }}>{n.targetEvent?.title || 'Unknown'}</p>
-                          {n.targetEvent?.location_name && <p style={{ fontSize: '0.7rem', color: '#aaa', margin: '0.2rem 0 0' }}>{n.targetEvent.location_name}</p>}
+                        <span style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>&#8594;</span>
+                        <div style={{ background: '#1a2a1a', borderRadius: '8px', padding: '0.5rem', border: '1px solid var(--accent)' }}>
+                          <p style={{ fontSize: '0.7rem', color: 'var(--accent)', margin: '0 0 0.2rem', fontWeight: 600 }}>Keep</p>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, fontWeight: 600 }}>{n.targetEvent?.title || 'Unknown'}</p>
+                          {n.targetEvent?.location_name && <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0' }}>{n.targetEvent.location_name}</p>}
                         </div>
                       </div>
-                      <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0' }}>Signups and resources from the duplicate will be moved to the kept event.</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.2rem 0' }}>Signups and resources from the duplicate will be moved to the kept event.</p>
                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                        <button onClick={() => approveDuplicateMerge(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#66aaff', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Merge Events</button>
-                        <button onClick={() => rejectDuplicateMerge(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem' }}>Dismiss</button>
+                        <button onClick={() => approveDuplicateMerge(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--info)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Merge Events</button>
+                        <button onClick={() => rejectDuplicateMerge(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Dismiss</button>
                       </div>
                     </div>
                   ))}
@@ -1088,22 +1088,22 @@ export default function Admin() {
       {!loading && tab === 'emergencies' && (
         <>
           {pendingEvents.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No pending emergency reports</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No pending emergency reports</p>
           ) : pendingEvents.map(ev => (
             <div key={ev.id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div>
-                  <span style={{ background: '#ffaa44', color: '#1a1a1a', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>PENDING</span>
+                  <span style={{ background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>PENDING</span>
                   <h3 style={{ margin: '0.4rem 0 0.2rem', fontSize: '1rem' }}>{ev.title}</h3>
                 </div>
-                <span style={{ color: '#888', fontSize: '0.75rem' }}>{timeAgo(ev.created_at)}</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{timeAgo(ev.created_at)}</span>
               </div>
-              {ev.location_name && <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.2rem 0' }}>{ev.location_name}</p>}
-              {ev.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.2rem 0' }}>{ev.description}</p>}
-              <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.4rem 0' }}>Upvotes: {ev.upvote_count || 0} / 2 needed</p>
+              {ev.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0' }}>{ev.location_name}</p>}
+              {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.2rem 0' }}>{ev.description}</p>}
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.4rem 0' }}>Upvotes: {ev.upvote_count || 0} / 2 needed</p>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button onClick={() => verifyEvent(ev.id)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Approve</button>
-                <button onClick={() => rejectEvent(ev.id)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.85rem' }}>Reject</button>
+                <button onClick={() => verifyEvent(ev.id)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Approve</button>
+                <button onClick={() => rejectEvent(ev.id)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>Reject</button>
               </div>
             </div>
           ))}
@@ -1127,7 +1127,7 @@ export default function Admin() {
           <BannedAccountsPanel refreshKey={banRefresh} onChange={loadUsers} />
           <div style={{ marginBottom: '0.75rem' }}>
             <label htmlFor="user-search" style={hiddenLabel}>Search people by name</label>
-            <input id="user-search" type="search" value={userQuery} onChange={(e) => { setUserQuery(e.target.value); setUserLimit(USER_PAGE_SIZE) }} placeholder="Search by name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
+            <input id="user-search" type="search" value={userQuery} onChange={(e) => { setUserQuery(e.target.value); setUserLimit(USER_PAGE_SIZE) }} placeholder="Search by name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
             <div role="group" aria-label="Filter people" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
               {USER_FILTERS.map(([key, label]) => (
                 <button key={key} type="button" aria-pressed={userFilter === key} onClick={() => { setUserFilter(key); setUserLimit(USER_PAGE_SIZE) }} style={{ ...tabStyle(userFilter === key), minHeight: '36px' }}>
@@ -1149,20 +1149,20 @@ export default function Admin() {
                   <option value="none">No village</option>
                 </select>
               )}
-              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, padding: '0.25rem' }}>Clear filters</button>}
-              <span role="status" style={{ marginLeft: 'auto', color: '#888', fontSize: '0.75rem' }}>Showing {Math.min(userLimit, visibleUsers.length)} of {visibleUsers.length}{visibleUsers.length !== users.length ? ' (' + users.length + ' total)' : ''}</span>
+              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, padding: '0.25rem' }}>Clear filters</button>}
+              <span role="status" style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '0.75rem' }}>Showing {Math.min(userLimit, visibleUsers.length)} of {visibleUsers.length}{visibleUsers.length !== users.length ? ' (' + users.length + ' total)' : ''}</span>
             </div>
           </div>
 
           {visibleUsers.slice(0, userLimit).map(u => u.no_profile ? (
-            <div key={u.user_id} style={{ ...cardStyle, borderLeft: '3px solid #666' }}>
+            <div key={u.user_id} style={{ ...cardStyle, borderLeft: '3px solid var(--border-strong)' }}>
               <div>
                 <span style={{ fontWeight: 700 }}><UserName userId={u.user_id} name={u.display_name || 'No name given'} /></span>
-                <span style={{ marginLeft: '0.4rem', background: '#2a2a2a', color: '#bbb', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>No profile yet</span>
+                <span style={{ marginLeft: '0.4rem', background: 'var(--surface-2)', color: 'var(--text-soft)', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>No profile yet</span>
               </div>
-              <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>{u.email_hint || 'No email'} &middot; Signed up {new Date(u.created_at).toLocaleDateString()}</p>
-              <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>{u.email_confirmed ? 'Email confirmed' : 'Email not confirmed yet'} &middot; {u.last_sign_in_at ? 'Last signed in ' + new Date(u.last_sign_in_at).toLocaleDateString() : 'Never signed in'}</p>
-              <p style={{ color: '#777', fontSize: '0.72rem', margin: '0.3rem 0 0' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>{u.email_hint || 'No email'} &middot; Signed up {new Date(u.created_at).toLocaleDateString()}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>{u.email_confirmed ? 'Email confirmed' : 'Email not confirmed yet'} &middot; {u.last_sign_in_at ? 'Last signed in ' + new Date(u.last_sign_in_at).toLocaleDateString() : 'Never signed in'}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.72rem', margin: '0.3rem 0 0' }}>
                 {!u.email_confirmed
                   ? 'They need to confirm their email and sign in. Their profile is made the first time they sign in.'
                   : u.last_sign_in_at
@@ -1178,45 +1178,45 @@ export default function Admin() {
                   <div>
                     <UserName userId={u.user_id} name={u.display_name || 'Unnamed'} style={{ fontWeight: 700 }} />
                     {u.role === 'founder' && <span style={{ marginLeft: '0.4rem', background: '#3a1a4a', color: '#c77dff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Founder</span>}
-                    {u.role === 'admin' && <span style={{ marginLeft: '0.4rem', background: '#1a3a5a', color: '#66aaff', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
-                    {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Ambassador</span>}
+                    {u.role === 'admin' && <span style={{ marginLeft: '0.4rem', background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
+                    {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Ambassador</span>}
                   </div>
                 </div>
-                <span style={{ color: '#888', fontSize: '0.7rem' }}>{u.vouch_count} vouches</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{u.vouch_count} vouches</span>
               </div>
-              <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>Joined {new Date(u.created_at).toLocaleDateString()}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>Joined {new Date(u.created_at).toLocaleDateString()}</p>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem' }}>Message</button>
+                <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem' }}>Message</button>
                 {!u.is_hope_ambassador && (
-                  <button onClick={() => promoteUser(u.user_id, 'ambassador')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: '#2d5a45', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Make Ambassador</button>
+                  <button onClick={() => promoteUser(u.user_id, 'ambassador')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: '#2d5a45', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Make Ambassador</button>
                 )}
                 {isFounder && u.role !== 'admin' && u.role !== 'founder' && u.is_hope_ambassador && u.user_id !== user.id && (
                   u.admin_app_status === 'invited' ? (
-                    <span style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', background: '#1a3a5a', color: '#66aaff', fontSize: '0.75rem', fontWeight: 600 }}>Invite Sent</span>
+                    <span style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.75rem', fontWeight: 600 }}>Invite Sent</span>
                   ) : u.admin_app_status === 'pending' ? (
-                    <button onClick={() => setTab('approvals')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review in Approvals</button>
+                    <button onClick={() => setTab('approvals')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review in Approvals</button>
                   ) : (
-                    <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: '#1a3a5a', color: '#66aaff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>{u.admin_app_status === 'declined' ? 'Invite Admin Again' : 'Invite Admin'}</button>
+                    <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--info-bg)', color: 'var(--info)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>{u.admin_app_status === 'declined' ? 'Invite Admin Again' : 'Invite Admin'}</button>
                   )
                 )}
                 {(u.role === 'admin' || u.role === 'founder') && u.user_id !== user.id && (
-                  <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem' }}>Remove Admin</button>
+                  <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.75rem' }}>Remove Admin</button>
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.is_hope_ambassador || u.role === 'admin') && (
-                  <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer', fontSize: '0.75rem' }}>Reset to Neighbor</button>
+                  <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem' }}>Reset to Neighbor</button>
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.role !== 'admin' || isFounder) && (
                   <button type="button" onClick={() => setBanTarget({ userId: u.user_id, name: u.display_name || 'this person', role: u.role })} className="ban-row-btn">Ban</button>
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.role !== 'admin' || isFounder) && (
-                  <button onClick={() => resetTwoStep(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer', fontSize: '0.75rem' }}>Reset two-step</button>
+                  <button onClick={() => resetTwoStep(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem' }}>Reset two-step</button>
                 )}
                 {villages.length > 1 && (
                   <select
                     value={u.village_id || ''}
                     onChange={(e) => reassignUserVillage(u.user_id, e.target.value)}
                     aria-label={'Village for ' + (u.display_name || 'this person')}
-                    style={{ padding: '0.35rem 0.5rem', minHeight: '44px', flex: '1 1 100%', maxWidth: '100%', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#aaa', fontSize: '0.75rem' }}
+                    style={{ padding: '0.35rem 0.5rem', minHeight: '44px', flex: '1 1 100%', maxWidth: '100%', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text-secondary)', fontSize: '0.75rem' }}
                   >
                     <option value="">No village</option>
                     {villages.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -1227,12 +1227,12 @@ export default function Admin() {
           ))}
 
           {visibleUsers.length > userLimit && (
-            <button type="button" onClick={() => setUserLimit(n => n + USER_PAGE_SIZE)} style={{ width: '100%', padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#4ecca3', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Show {Math.min(USER_PAGE_SIZE, visibleUsers.length - userLimit)} more</button>
+            <button type="button" onClick={() => setUserLimit(n => n + USER_PAGE_SIZE)} style={{ width: '100%', padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Show {Math.min(USER_PAGE_SIZE, visibleUsers.length - userLimit)} more</button>
           )}
           {visibleUsers.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#8a8a8a' }}>
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
               <p>{users.length === 0 ? 'No one has signed up yet.' : 'No one matches.'}</p>
-              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontWeight: 600 }}>Clear filters</button>}
+              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }}>Clear filters</button>}
             </div>
           )}
         </>
@@ -1247,28 +1247,28 @@ export default function Admin() {
             const renderMsg = (m) => {
               const isDone = m.status === 'done'
               return (
-                <div key={m.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (m.followup ? '#ff6666' : String(m.body).startsWith('[Problem]') ? '#ffaa33' : '#4ecca3'), opacity: isDone ? 0.65 : 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', color: '#888', fontSize: '0.75rem', marginBottom: '0.3rem' }}>
+                <div key={m.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (m.followup ? 'var(--danger)' : String(m.body).startsWith('[Problem]') ? '#ffaa33' : 'var(--accent)'), opacity: isDone ? 0.65 : 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.3rem' }}>
                     <span>{m.created_at ? timeAgo(m.created_at) : ''}</span>
-                    {m.followup && <span style={{ color: '#ff6666', fontWeight: 700 }}>NEEDS FOLLOW-UP</span>}
+                    {m.followup && <span style={{ color: 'var(--danger)', fontWeight: 700 }}>NEEDS FOLLOW-UP</span>}
                   </div>
-                  <p style={{ color: '#ddd', fontSize: '0.9rem', margin: '0 0 0.6rem', whiteSpace: 'pre-wrap' }}>{m.body}</p>
+                  <p style={{ color: 'var(--text)', fontSize: '0.9rem', margin: '0 0 0.6rem', whiteSpace: 'pre-wrap' }}>{m.body}</p>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {m.user_id && m.user_id !== user.id && <button type="button" onClick={() => messageUser(m.user_id)} style={{ ...small, background: 'none', border: '1px solid #4ecca3', color: '#4ecca3' }}>Message them</button>}
-                    <button type="button" onClick={() => updateHelpMessage(m.id, { followup: !m.followup })} style={{ ...small, background: m.followup ? '#3a1a1a' : '#222', border: '1px solid ' + (m.followup ? '#ff6666' : '#555'), color: m.followup ? '#ff6666' : '#ddd' }}>{m.followup ? 'Clear follow-up' : 'Flag for follow-up'}</button>
-                    <button type="button" onClick={() => updateHelpMessage(m.id, { status: isDone ? 'open' : 'done' })} style={{ ...small, background: isDone ? '#222' : '#4ecca3', border: isDone ? '1px solid #555' : 'none', color: isDone ? '#ddd' : '#1a1a1a' }}>{isDone ? 'Reopen' : 'Done'}</button>
+                    {m.user_id && m.user_id !== user.id && <button type="button" onClick={() => messageUser(m.user_id)} style={{ ...small, background: 'none', border: '1px solid var(--accent)', color: 'var(--accent)' }}>Message them</button>}
+                    <button type="button" onClick={() => updateHelpMessage(m.id, { followup: !m.followup })} style={{ ...small, background: m.followup ? 'var(--danger-bg)' : 'var(--surface-2)', border: '1px solid ' + (m.followup ? 'var(--danger)' : 'var(--border-strong)'), color: m.followup ? 'var(--danger)' : 'var(--text)' }}>{m.followup ? 'Clear follow-up' : 'Flag for follow-up'}</button>
+                    <button type="button" onClick={() => updateHelpMessage(m.id, { status: isDone ? 'open' : 'done' })} style={{ ...small, background: isDone ? 'var(--surface-2)' : 'var(--accent)', border: isDone ? '1px solid var(--border-strong)' : 'none', color: isDone ? 'var(--text)' : 'var(--on-accent)' }}>{isDone ? 'Reopen' : 'Done'}</button>
                   </div>
                 </div>
               )
             }
             return (
               <div style={{ marginBottom: '1rem' }}>
-                <h3 style={{ color: '#fff', fontSize: '1rem', margin: '0 0 0.5rem' }}>Messages from the Help page ({openMsgs.length} open)</h3>
-                {openMsgs.length === 0 && <p style={{ color: '#8a8a8a', margin: '0 0 0.5rem' }}>All caught up.</p>}
+                <h3 style={{ color: 'var(--text-strong)', fontSize: '1rem', margin: '0 0 0.5rem' }}>Messages from the Help page ({openMsgs.length} open)</h3>
+                {openMsgs.length === 0 && <p style={{ color: 'var(--text-muted)', margin: '0 0 0.5rem' }}>All caught up.</p>}
                 {openMsgs.map(renderMsg)}
                 {doneMsgs.length > 0 && (
                   <>
-                    <button type="button" onClick={() => setShowDoneHelp(v => !v)} style={{ ...small, background: 'none', border: '1px solid #444', color: '#aaa', marginBottom: '0.5rem' }}>{showDoneHelp ? 'Hide' : 'Show'} done ({doneMsgs.length})</button>
+                    <button type="button" onClick={() => setShowDoneHelp(v => !v)} style={{ ...small, background: 'none', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{showDoneHelp ? 'Hide' : 'Show'} done ({doneMsgs.length})</button>
                     {showDoneHelp && doneMsgs.map(renderMsg)}
                   </>
                 )}
@@ -1279,22 +1279,22 @@ export default function Admin() {
             const renderReport = (a) => {
             const open = a.status === 'open'
             const sourceLabel = { profile: 'From a profile', conversation: 'From a chat', messages: 'From messages', campfire: 'From the Village Square', event: 'From an event' }[a.source] || a.source
-            const linkBtn = { background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', padding: '0.25rem 0', fontWeight: 600 }
+            const linkBtn = { background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8rem', padding: '0.25rem 0', fontWeight: 600 }
             return (
-              <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (open ? '#ff4444' : '#555'), opacity: open ? 1 : 0.7 }}>
+              <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (open ? 'var(--danger)' : 'var(--border-strong)'), opacity: open ? 1 : 0.7 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ background: open ? '#3a1a1a' : '#2a2a2a', color: open ? '#ff6666' : '#999', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{open ? 'Open' : a.status === 'reviewed' ? 'Reviewed' : 'Dismissed'}</span>
-                  <span style={{ color: '#888', fontSize: '0.75rem' }}>{sourceLabel} &middot; {timeAgo(a.created_at)}</span>
+                  <span style={{ background: open ? 'var(--danger-bg)' : 'var(--surface-2)', color: open ? 'var(--danger)' : 'var(--text-muted)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{open ? 'Open' : a.status === 'reviewed' ? 'Reviewed' : 'Dismissed'}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{sourceLabel} &middot; {timeAgo(a.created_at)}</span>
                 </div>
-                <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
-                  <span style={{ color: '#aaa' }}>Reported by:</span> <UserName userId={a.reporter_id} name={a.reporter_name} />
-                  <span style={{ color: '#aaa' }}> about </span>
+                <p style={{ color: 'var(--text-soft)', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Reported by:</span> <UserName userId={a.reporter_id} name={a.reporter_name} />
+                  <span style={{ color: 'var(--text-secondary)' }}> about </span>
                   <UserName userId={a.reported_user_id} name={a.reported_name} />
                 </p>
-                {a.reason && <p style={{ color: '#ddd', fontSize: '0.85rem', fontWeight: 600, margin: '0.2rem 0' }}>{a.reason}</p>}
-                {a.details && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{a.details}</p>}
-                <label htmlFor={'report-note-' + a.id} style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', margin: '0.6rem 0 0.25rem' }}>Private admin note (the person who reported cannot see this)</label>
-                <textarea id={'report-note-' + a.id} rows={2} maxLength={1000} value={noteDrafts[a.id] ?? a.admin_note} onChange={(e) => setNoteDrafts(d => ({ ...d, [a.id]: e.target.value }))} style={{ width: '100%', boxSizing: 'border-box', background: '#1a1a1a', color: '#ddd', border: '1px solid #333', borderRadius: '8px', padding: '0.5rem', fontSize: '1rem', fontFamily: 'inherit' }} />
+                {a.reason && <p style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.2rem 0' }}>{a.reason}</p>}
+                {a.details && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.2rem 0' }}>{a.details}</p>}
+                <label htmlFor={'report-note-' + a.id} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.6rem 0 0.25rem' }}>Private admin note (the person who reported cannot see this)</label>
+                <textarea id={'report-note-' + a.id} rows={2} maxLength={1000} value={noteDrafts[a.id] ?? a.admin_note} onChange={(e) => setNoteDrafts(d => ({ ...d, [a.id]: e.target.value }))} style={{ width: '100%', boxSizing: 'border-box', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', fontSize: '1rem', fontFamily: 'inherit' }} />
                 {noteDrafts[a.id] !== undefined && noteDrafts[a.id].trim() !== a.admin_note && (
                   <button type="button" disabled={noteSaving === a.id} onClick={() => saveReportNote(a.id)} style={{ ...linkBtn, minHeight: '44px' }}>{noteSaving === a.id ? 'Saving...' : 'Save note'}</button>
                 )}
@@ -1306,18 +1306,18 @@ export default function Admin() {
                     <button type="button" onClick={() => { setBanReportId(a.id); setBanTarget({ userId: a.reported_user_id, name: a.reported_name, role: a.reported_role }) }} className="ban-row-btn">Ban</button>
                   )}
                   {open && <button type="button" onClick={() => reviewReport(a.id, 'reviewed')} style={linkBtn}>Mark reviewed</button>}
-                  {open && <button type="button" onClick={() => reviewReport(a.id, 'dismissed')} style={{ ...linkBtn, color: '#999' }}>Dismiss</button>}
+                  {open && <button type="button" onClick={() => reviewReport(a.id, 'dismissed')} style={{ ...linkBtn, color: 'var(--text-muted)' }}>Dismiss</button>}
                 </div>
               </div>
             )
             }
             const segBtn = (key, label) => (
-              <button type="button" onClick={() => { setReportView(key); if (key === 'closed') loadClosedReports(true) }} aria-pressed={reportView === key} style={{ flex: 1, minHeight: '44px', padding: '0.4rem', borderRadius: '8px', border: reportView === key ? '2px solid #4ecca3' : '1px solid #444', background: reportView === key ? '#1d3a31' : '#222', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{label}</button>
+              <button type="button" onClick={() => { setReportView(key); if (key === 'closed') loadClosedReports(true) }} aria-pressed={reportView === key} style={{ flex: 1, minHeight: '44px', padding: '0.4rem', borderRadius: '8px', border: reportView === key ? '2px solid var(--accent)' : '1px solid var(--border-strong)', background: reportView === key ? '#1d3a31' : 'var(--surface-2)', color: 'var(--text-strong)', fontWeight: 700, cursor: 'pointer' }}>{label}</button>
             )
             const q = closedSearch.trim().toLowerCase()
             const shownClosed = q ? closedReports.filter(a => [a.reporter_name, a.reported_name, a.reason, a.details, a.admin_note].some(v => String(v || '').toLowerCase().includes(q))) : closedReports
             const chip = (key, label) => (
-              <button type="button" onClick={() => { setClosedFilter(key); loadClosedReports(true, key) }} aria-pressed={closedFilter === key} style={{ minHeight: '44px', padding: '0.3rem 0.8rem', borderRadius: '999px', border: closedFilter === key ? '2px solid #4ecca3' : '1px solid #444', background: '#222', color: '#ddd', fontWeight: 600, cursor: 'pointer' }}>{label}</button>
+              <button type="button" onClick={() => { setClosedFilter(key); loadClosedReports(true, key) }} aria-pressed={closedFilter === key} style={{ minHeight: '44px', padding: '0.3rem 0.8rem', borderRadius: '999px', border: closedFilter === key ? '2px solid var(--accent)' : '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', fontWeight: 600, cursor: 'pointer' }}>{label}</button>
             )
             return (
               <>
@@ -1327,19 +1327,19 @@ export default function Admin() {
                 </div>
                 {reportView === 'open' ? (
                   alerts.length === 0
-                    ? <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No open reports about people</p>
+                    ? <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No open reports about people</p>
                     : alerts.map(renderReport)
                 ) : (
                   <>
-                    <input type="search" value={closedSearch} onChange={e => setClosedSearch(e.target.value)} placeholder="Search closed reports" aria-label="Search closed reports" style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0.5rem 0.7rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem', marginBottom: '0.5rem' }} />
+                    <input type="search" value={closedSearch} onChange={e => setClosedSearch(e.target.value)} placeholder="Search closed reports" aria-label="Search closed reports" style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0.5rem 0.7rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', marginBottom: '0.5rem' }} />
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
                       {chip('all', 'All')}{chip('reviewed', 'Reviewed')}{chip('dismissed', 'Dismissed')}
                     </div>
-                    {shownClosed.length === 0 && !closedLoading && <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No closed reports{q ? ' match that search' : ''}</p>}
+                    {shownClosed.length === 0 && !closedLoading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No closed reports{q ? ' match that search' : ''}</p>}
                     {shownClosed.map(renderReport)}
-                    {closedLoading && <p style={{ textAlign: 'center', color: '#888' }}>Loading...</p>}
+                    {closedLoading && <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</p>}
                     {closedHasMore && !closedLoading && (
-                      <button type="button" onClick={() => loadClosedReports(false)} style={{ display: 'block', width: '100%', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', fontWeight: 700, cursor: 'pointer', marginBottom: '0.75rem' }}>Load 25 more</button>
+                      <button type="button" onClick={() => loadClosedReports(false)} style={{ display: 'block', width: '100%', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontWeight: 700, cursor: 'pointer', marginBottom: '0.75rem' }}>Load 25 more</button>
                     )}
                   </>
                 )}
@@ -1349,29 +1349,29 @@ export default function Admin() {
 
           {taskIssues.length > 0 && (
             <>
-              <h3 style={{ fontSize: '0.85rem', color: '#aaa', margin: '1.25rem 0 0.5rem', fontWeight: 700 }}>Tasks that did not go well</h3>
+              <h3 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '1.25rem 0 0.5rem', fontWeight: 700 }}>Tasks that did not go well</h3>
               {taskIssues.map(t => {
                 const open = t.status === 'open'
-                const linkBtn = { background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', padding: '0.25rem 0', fontWeight: 600 }
+                const linkBtn = { background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8rem', padding: '0.25rem 0', fontWeight: 600 }
                 return (
-                  <div key={'issue-' + t.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (open ? '#ffaa44' : '#555'), opacity: open ? 1 : 0.7 }}>
+                  <div key={'issue-' + t.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (open ? 'var(--warn)' : 'var(--border-strong)'), opacity: open ? 1 : 0.7 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ background: open ? '#2e2a1a' : '#2a2a2a', color: open ? '#ffaa44' : '#999', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{open ? 'Open' : t.status === 'reviewed' ? 'Reviewed' : 'Dismissed'}</span>
-                      <span style={{ color: '#888', fontSize: '0.75rem' }}>{timeAgo(t.created_at)}</span>
+                      <span style={{ background: open ? 'var(--warn-bg)' : 'var(--surface-2)', color: open ? 'var(--warn)' : 'var(--text-muted)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{open ? 'Open' : t.status === 'reviewed' ? 'Reviewed' : 'Dismissed'}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{timeAgo(t.created_at)}</span>
                     </div>
-                    <p style={{ color: '#ddd', fontSize: '0.85rem', fontWeight: 600, margin: '0.4rem 0 0.2rem' }}>{TASK_ISSUE_LABELS[t.outcome] || t.outcome}</p>
-                    <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0.2rem 0' }}>
-                      <span style={{ color: '#aaa' }}>From:</span> <UserName userId={t.from_user_id} name={t.from_name} />
-                      <span style={{ color: '#aaa' }}> about </span><UserName userId={t.about_user_id} name={t.about_name} />
-                      <span style={{ color: '#aaa' }}> &middot; task: </span>{t.skill}
+                    <p style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.4rem 0 0.2rem' }}>{TASK_ISSUE_LABELS[t.outcome] || t.outcome}</p>
+                    <p style={{ color: 'var(--text-soft)', fontSize: '0.85rem', margin: '0.2rem 0' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>From:</span> <UserName userId={t.from_user_id} name={t.from_name} />
+                      <span style={{ color: 'var(--text-secondary)' }}> about </span><UserName userId={t.about_user_id} name={t.about_name} />
+                      <span style={{ color: 'var(--text-secondary)' }}> &middot; task: </span>{t.skill}
                     </p>
-                    {t.note && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{t.note}</p>}
+                    {t.note && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.2rem 0' }}>{t.note}</p>}
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
                       {t.about_user_id && <button type="button" onClick={() => navigate('/u/' + t.about_user_id)} style={linkBtn}>View their profile</button>}
                       {t.from_user_id && t.from_user_id !== user.id && <button type="button" onClick={() => messageUser(t.from_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>Message {t.from_name}</button>}
                       {t.about_user_id && t.about_user_id !== user.id && <button type="button" onClick={() => messageUser(t.about_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>Message {t.about_name}</button>}
                       {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'reviewed')} style={linkBtn}>Mark reviewed</button>}
-                      {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'dismissed')} style={{ ...linkBtn, color: '#999' }}>Dismiss</button>}
+                      {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'dismissed')} style={{ ...linkBtn, color: 'var(--text-muted)' }}>Dismiss</button>}
                     </div>
                   </div>
                 )
@@ -1381,17 +1381,17 @@ export default function Admin() {
 
           {checkinAlerts.length > 0 && (
             <>
-              <h3 style={{ fontSize: '0.85rem', color: '#aaa', margin: '1.25rem 0 0.5rem', fontWeight: 700 }}>Safety check-in alerts</h3>
+              <h3 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '1.25rem 0 0.5rem', fontWeight: 700 }}>Safety check-in alerts</h3>
               {checkinAlerts.map(c => (
-                <div key={'checkin-' + c.id} style={{ ...cardStyle, borderLeft: '3px solid #ffaa44' }}>
+                <div key={'checkin-' + c.id} style={{ ...cardStyle, borderLeft: '3px solid var(--warn)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ background: '#2e2a1a', color: '#ffaa44', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{String(c.alert_type).replace(/_/g, ' ')}</span>
-                    <span style={{ color: '#888', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
+                    <span style={{ background: 'var(--warn-bg)', color: 'var(--warn)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{String(c.alert_type).replace(/_/g, ' ')}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
                   </div>
-                  <p style={{ color: '#ccc', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
-                    <span style={{ color: '#aaa' }}>Task check-in from:</span> <UserName userId={c.reporter_id} name={c.reporter_name} />
+                  <p style={{ color: 'var(--text-soft)', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Task check-in from:</span> <UserName userId={c.reporter_id} name={c.reporter_name} />
                   </p>
-                  {c.notes && <p style={{ color: '#999', fontSize: '0.85rem', margin: '0.2rem 0' }}>{c.notes}</p>}
+                  {c.notes && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.2rem 0' }}>{c.notes}</p>}
                 </div>
               ))}
             </>
@@ -1402,49 +1402,49 @@ export default function Admin() {
       {!loading && tab === 'organizations' && (
         <>
           <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
-          <button onClick={() => setShowNewOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewOrgForm ? 'Cancel' : '+ New Organization'}</button>
+          <button onClick={() => setShowNewOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewOrgForm ? 'Cancel' : '+ New Organization'}</button>
 
           {showNewOrgForm && (
             <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
-              <input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="Organization name *" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
-              <textarea value={newOrgDesc} onChange={(e) => setNewOrgDesc(e.target.value)} placeholder="Short description" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem', minHeight: '3rem' }} />
-              <input value={newOrgEmail} onChange={(e) => setNewOrgEmail(e.target.value)} placeholder="Contact email" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
-              <input value={newOrgWebsite} onChange={(e) => setNewOrgWebsite(e.target.value)} placeholder="Website URL" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
-              <input value={newOrgSocial} onChange={(e) => setNewOrgSocial(e.target.value)} placeholder="Social media link (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
-              <button onClick={createOrganization} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create Organization</button>
+              <input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="Organization name *" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <textarea value={newOrgDesc} onChange={(e) => setNewOrgDesc(e.target.value)} placeholder="Short description" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '3rem' }} />
+              <input value={newOrgEmail} onChange={(e) => setNewOrgEmail(e.target.value)} placeholder="Contact email" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <input value={newOrgWebsite} onChange={(e) => setNewOrgWebsite(e.target.value)} placeholder="Website URL" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <input value={newOrgSocial} onChange={(e) => setNewOrgSocial(e.target.value)} placeholder="Social media link (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <button onClick={createOrganization} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create Organization</button>
             </div>
           )}
 
-          <button onClick={() => setShowInviteOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showInviteOrgForm ? 'Cancel' : '+ Invite an Organization'}</button>
+          <button onClick={() => setShowInviteOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showInviteOrgForm ? 'Cancel' : '+ Invite an Organization'}</button>
 
           {showInviteOrgForm && (
             <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
-              <p style={{ color: '#999', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>Generates a link you send yourself (text, email, whatever). Whoever opens it fills in their own organization's details and joins as its first member -- it lands here as PENDING APPROVAL just like one you create yourself.</p>
-              <input value={inviteContactName} onChange={(e) => setInviteContactName(e.target.value)} placeholder="Contact name (for your reference)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
-              <input value={inviteContactEmail} onChange={(e) => setInviteContactEmail(e.target.value)} placeholder="Contact email (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
-              <textarea value={inviteNote} onChange={(e) => setInviteNote(e.target.value)} placeholder="A short note they'll see on the invite page (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem', minHeight: '3rem' }} />
-              <button onClick={createOrgInvitation} disabled={creatingInvite} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{creatingInvite ? 'Creating...' : 'Generate Invite Link'}</button>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>Generates a link you send yourself (text, email, whatever). Whoever opens it fills in their own organization's details and joins as its first member -- it lands here as PENDING APPROVAL just like one you create yourself.</p>
+              <input value={inviteContactName} onChange={(e) => setInviteContactName(e.target.value)} placeholder="Contact name (for your reference)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <input value={inviteContactEmail} onChange={(e) => setInviteContactEmail(e.target.value)} placeholder="Contact email (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <textarea value={inviteNote} onChange={(e) => setInviteNote(e.target.value)} placeholder="A short note they'll see on the invite page (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '3rem' }} />
+              <button onClick={createOrgInvitation} disabled={creatingInvite} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{creatingInvite ? 'Creating...' : 'Generate Invite Link'}</button>
             </div>
           )}
 
           {orgInvitations.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>
-              <p style={{ color: '#4ecca3', fontSize: '0.8rem', fontWeight: 600, margin: '0 0 0.4rem' }}>Sent invites</p>
+              <p style={{ color: 'var(--accent)', fontSize: '0.8rem', fontWeight: 600, margin: '0 0 0.4rem' }}>Sent invites</p>
               {orgInvitations.map(inv => (
                 <div key={inv.id} style={{ ...cardStyle, marginBottom: '0.5rem', padding: '0.6rem 0.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
                     <div>
-                      <span style={{ background: inv.status === 'accepted' ? '#1a4a3a' : inv.status === 'revoked' ? '#3a1a1a' : '#3a2a1a', color: inv.status === 'accepted' ? '#4ecca3' : inv.status === 'revoked' ? '#ff6666' : '#ffaa44', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{inv.status.toUpperCase()}</span>
-                      <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: '#eee' }}>{inv.contact_name || 'No name given'}{inv.contact_email ? ` · ${inv.contact_email}` : ''}</p>
+                      <span style={{ background: inv.status === 'accepted' ? 'var(--success-bg)' : inv.status === 'revoked' ? 'var(--danger-bg)' : 'var(--warn-bg)', color: inv.status === 'accepted' ? 'var(--accent)' : inv.status === 'revoked' ? 'var(--danger)' : 'var(--warn)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{inv.status.toUpperCase()}</span>
+                      <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: 'var(--text)' }}>{inv.contact_name || 'No name given'}{inv.contact_email ? ` · ${inv.contact_email}` : ''}</p>
                     </div>
                     {inv.status === 'pending' && (
-                      <button onClick={() => revokeOrgInvitation(inv.id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>Revoke</button>
+                      <button onClick={() => revokeOrgInvitation(inv.id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>Revoke</button>
                     )}
                   </div>
                   {inv.status === 'pending' && (
                     <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
-                      <input readOnly value={inviteLink(inv.token)} onFocus={(e) => e.target.select()} style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#aaa', fontSize: '0.75rem' }} />
-                      <button onClick={() => copyInviteLink(inv.token)} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Copy Link</button>
+                      <input readOnly value={inviteLink(inv.token)} onFocus={(e) => e.target.select()} style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text-secondary)', fontSize: '0.75rem' }} />
+                      <button onClick={() => copyInviteLink(inv.token)} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>Copy Link</button>
                     </div>
                   )}
                 </div>
@@ -1453,44 +1453,44 @@ export default function Admin() {
           )}
 
           {organizations.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No organizations yet</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No organizations yet</p>
           ) : organizations.map(org => (
             <div key={org.id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <span style={{ background: org.approved ? '#1a4a3a' : '#3a2a1a', color: org.approved ? '#4ecca3' : '#ffaa44', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{org.approved ? 'APPROVED' : 'PENDING APPROVAL'}</span>
-                  <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: '#eee' }}>{org.name}</h4>
+                  <span style={{ background: org.approved ? 'var(--success-bg)' : 'var(--warn-bg)', color: org.approved ? 'var(--accent)' : 'var(--warn)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{org.approved ? 'APPROVED' : 'PENDING APPROVAL'}</span>
+                  <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: 'var(--text)' }}>{org.name}</h4>
                 </div>
                 {org.approved ? (
-                  <button onClick={() => toggleOrgApproved(org)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: '#ff4444', border: '1px solid #ff4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Unapprove</button>
+                  <button onClick={() => toggleOrgApproved(org)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: 'var(--danger)', border: '1px solid var(--danger)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Unapprove</button>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
-                    <button onClick={() => reviewOrgRequest(org, true)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: '#4ecca3', color: '#1a1a1a', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>Approve</button>
-                    <button onClick={() => reviewOrgRequest(org, false)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'none', color: '#ffaa44', border: '1px solid #ffaa44', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Turn down</button>
+                    <button onClick={() => reviewOrgRequest(org, true)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'var(--accent)', color: 'var(--on-accent)', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>Approve</button>
+                    <button onClick={() => reviewOrgRequest(org, false)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'none', color: 'var(--warn)', border: '1px solid var(--warn)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Turn down</button>
                   </div>
                 )}
               </div>
               {org.approved && (
-                <p style={{ margin: '0.3rem 0', fontSize: '0.75rem', color: '#aaa' }}>
+                <p style={{ margin: '0.3rem 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   {org.hide_from_public ? 'Hidden from the public. Only people with an account can see this group.' : 'Visible to the public.'} The group sets this itself.
                 </p>
               )}
               {org.approved && (
-                <p style={{ margin: '0.3rem 0', fontSize: '0.75rem', color: '#aaa' }}>
+                <p style={{ margin: '0.3rem 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   {org.is_umbrella ? 'This is a council. Other groups can link to it.' : 'Not a council.'}{' '}
-                  <button onClick={() => toggleOrgUmbrella(org)} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'underline', padding: '0.5rem 0.25rem', minHeight: '44px' }}>{org.is_umbrella ? 'Make it a regular group' : 'Make it a council'}</button>
+                  <button onClick={() => toggleOrgUmbrella(org)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'underline', padding: '0.5rem 0.25rem', minHeight: '44px' }}>{org.is_umbrella ? 'Make it a regular group' : 'Make it a council'}</button>
                 </p>
               )}
-              {org.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.3rem 0' }}>{org.description}</p>}
+              {org.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.3rem 0' }}>{org.description}</p>}
               {org.website_url && (
-                <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0' }}>{org.website_url}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.2rem 0' }}>{org.website_url}</p>
               )}
               {org.contact_email_shown && (
-                <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0' }}>Contact: {org.contact_email_shown}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.2rem 0' }}>Contact: {org.contact_email_shown}</p>
               )}
 
-              <p style={{ color: '#4ecca3', fontSize: '0.75rem', fontWeight: 600, margin: '0.6rem 0 0.3rem' }}>Members: {org.member_count}</p>
-              <p style={{ color: '#8a8a8a', fontSize: '0.75rem', margin: '0 0 0.4rem' }}>Names and member lists are private to the group. Only its Head and organizers can see or change them.</p>
+              <p style={{ color: 'var(--accent)', fontSize: '0.75rem', fontWeight: 600, margin: '0.6rem 0 0.3rem' }}>Members: {org.member_count}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.4rem' }}>Names and member lists are private to the group. Only its Head and organizers can see or change them.</p>
             </div>
           ))}
         </>
@@ -1498,86 +1498,86 @@ export default function Admin() {
 
       {!loading && tab === 'villages' && (
         <>
-          <p style={{ color: '#888', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
             Each village has its own village chat. Anyone whose zip code is on its list can join, after agreeing to a risk warning. People can join more than one, and there is no cap. New members only see messages from after they joined. Two members can remove someone, and admins can too. Any neighbor can start a village (up to 3 each, up to 40 zip codes), and you get an alert. You can edit any village\u2019s zip list here. The Users tab village menu sets a person's main village. It does not add them to a chat.
           </p>
-          <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? 'Cancel' : '+ New Village'}</button>
+          <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? 'Cancel' : '+ New Village'}</button>
 
           {showNewVillageForm && (
             <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
-              <input value={newVillageName} onChange={(e) => setNewVillageName(e.target.value)} placeholder="Village name * (e.g. Bay Area, CA)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
-              <input value={newVillageRegion} onChange={(e) => setNewVillageRegion(e.target.value)} placeholder="Region description (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+              <input value={newVillageName} onChange={(e) => setNewVillageName(e.target.value)} placeholder="Village name * (e.g. Bay Area, CA)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <input value={newVillageRegion} onChange={(e) => setNewVillageRegion(e.target.value)} placeholder="Region description (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <label style={{ flex: '1 1 8rem', fontSize: '0.8rem', color: '#ccc' }}>Center zip *
-                  <input value={newVillageZip} onChange={(e) => setNewVillageZip(e.target.value)} inputMode="numeric" autoComplete="off" maxLength={5} placeholder="30736" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '1rem' }} />
+                <label style={{ flex: '1 1 8rem', fontSize: '0.8rem', color: 'var(--text-soft)' }}>Center zip *
+                  <input value={newVillageZip} onChange={(e) => setNewVillageZip(e.target.value)} inputMode="numeric" autoComplete="off" maxLength={5} placeholder="30736" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
                 </label>
-                <button type="button" onClick={() => suggestZips(newVillageZip, setNewVillageZips)} style={{ flex: '1 1 8rem', alignSelf: 'center', padding: '0.5rem', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>Suggest zips within 10 miles</button>
+                <button type="button" onClick={() => suggestZips(newVillageZip, setNewVillageZips)} style={{ flex: '1 1 8rem', alignSelf: 'center', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>Suggest zips within 10 miles</button>
               </div>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: '#ccc', marginTop: '0.4rem' }}>Zip codes this village covers (separate with commas)
-                <textarea value={newVillageZips} onChange={(e) => setNewVillageZips(e.target.value)} rows={3} inputMode="numeric" placeholder="30736, 30742, 30707" style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '1rem' }} />
+              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-soft)', marginTop: '0.4rem' }}>Zip codes this village covers (separate with commas)
+                <textarea value={newVillageZips} onChange={(e) => setNewVillageZips(e.target.value)} rows={3} inputMode="numeric" placeholder="30736, 30742, 30707" style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
               </label>
-              <button onClick={createVillage} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create Village</button>
+              <button onClick={createVillage} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create Village</button>
             </div>
           )}
 
           {villages.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>No villages yet</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No villages yet</p>
           ) : villages.map(c => (
             <div key={c.id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 {editingVillageId === c.id ? (
                   <div style={{ flex: 1 }}>
-                    <input value={editVillageName} onChange={(e) => setEditVillageName(e.target.value)} placeholder="Village name *" aria-label="Village name" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
-                    <input value={editVillageRegion} onChange={(e) => setEditVillageRegion(e.target.value)} placeholder="Region description (optional)" aria-label="Region description" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem' }} />
+                    <input value={editVillageName} onChange={(e) => setEditVillageName(e.target.value)} placeholder="Village name *" aria-label="Village name" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+                    <input value={editVillageRegion} onChange={(e) => setEditVillageRegion(e.target.value)} placeholder="Region description (optional)" aria-label="Region description" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <label style={{ flex: '1 1 8rem', fontSize: '0.8rem', color: '#ccc' }}>Center zip
-                        <input value={editVillageZip} onChange={(e) => setEditVillageZip(e.target.value)} inputMode="numeric" autoComplete="off" maxLength={5} placeholder={c.auto_started && !c.center_zip ? 'Set by the ambassador' : '30736'} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '1rem' }} />
+                      <label style={{ flex: '1 1 8rem', fontSize: '0.8rem', color: 'var(--text-soft)' }}>Center zip
+                        <input value={editVillageZip} onChange={(e) => setEditVillageZip(e.target.value)} inputMode="numeric" autoComplete="off" maxLength={5} placeholder={c.auto_started && !c.center_zip ? 'Set by the ambassador' : '30736'} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
                       </label>
-                      <button type="button" onClick={() => suggestZips(editVillageZip, setEditVillageZips)} style={{ flex: '1 1 8rem', alignSelf: 'center', padding: '0.5rem', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>Suggest zips within 10 miles</button>
+                      <button type="button" onClick={() => suggestZips(editVillageZip, setEditVillageZips)} style={{ flex: '1 1 8rem', alignSelf: 'center', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>Suggest zips within 10 miles</button>
                     </div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#ccc', margin: '0.4rem 0 0' }}>Zip codes (separate with commas)
-                      <textarea value={editVillageZips} onChange={(e) => setEditVillageZips(e.target.value)} rows={4} inputMode="numeric" aria-label="Zip codes this village covers" style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '1rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-soft)', margin: '0.4rem 0 0' }}>Zip codes (separate with commas)
+                      <textarea value={editVillageZips} onChange={(e) => setEditVillageZips(e.target.value)} rows={4} inputMode="numeric" aria-label="Zip codes this village covers" style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
                     </label>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button onClick={saveVillageEdit} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Save</button>
-                      <button onClick={() => setEditingVillageId(null)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                      <button onClick={saveVillageEdit} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Save</button>
+                      <button onClick={() => setEditingVillageId(null)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                     </div>
                   </div>
                 ) : (
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#eee' }}>{c.name}</h4>
-                    {c.is_default && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Default</span>}
-                    {!c.active && <span style={{ fontSize: '0.6rem', background: '#3a2a1a', color: '#ffaa44', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Inactive</span>}
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text)' }}>{c.name}</h4>
+                    {c.is_default && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Default</span>}
+                    {!c.active && <span style={{ fontSize: '0.6rem', background: 'var(--warn-bg)', color: 'var(--warn)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Inactive</span>}
                     {c.auto_started && <span style={{ fontSize: '0.6rem', background: '#2a2a3a', color: '#aab4ff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Started by a neighbor</span>}
                   </div>
-                  {c.region_label && c.region_label !== c.name && <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>{c.region_label}</p>}
-                  <p style={{ color: c.latitude == null ? '#ffaa44' : '#aaa', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>
+                  {c.region_label && c.region_label !== c.name && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>{c.region_label}</p>}
+                  <p style={{ color: c.latitude == null ? 'var(--warn)' : 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>
                     {c.latitude == null ? 'No center yet. Edit to add a center zip and zip codes, or nobody can join.' : (c.center_zip ? 'Center ' + c.center_zip : 'Centered on where it started') + ' \u00b7 ' + (c.zips?.length || 0) + ' zip codes'}
                   </p>
                 </div>
                 )}
                 {editingVillageId !== c.id && (
                   <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start' }}>
-                    <button onClick={() => startEditVillage(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: '#4ecca3', border: '1px solid #4ecca3', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Edit</button>
+                    <button onClick={() => startEditVillage(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: 'var(--accent)', border: '1px solid var(--accent)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Edit</button>
                 {!c.is_default && (
-                  <button onClick={() => toggleVillageActive(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: c.active ? 'none' : '#4ecca3', color: c.active ? '#ff4444' : '#1a1a1a', border: c.active ? '1px solid #ff4444' : 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{c.active ? 'Deactivate' : 'Activate'}</button>
+                  <button onClick={() => toggleVillageActive(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: c.active ? 'none' : 'var(--accent)', color: c.active ? 'var(--danger)' : 'var(--on-accent)', border: c.active ? '1px solid var(--danger)' : 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{c.active ? 'Deactivate' : 'Activate'}</button>
                 )}
                   </div>
                 )}
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
-                <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: '#161616', borderRadius: '8px' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#4ecca3' }}>{c.member_count}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#888' }}>member{c.member_count !== 1 ? 's' : ''}</div>
+                <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: 'var(--surface)', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--accent)' }}>{c.member_count}</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>member{c.member_count !== 1 ? 's' : ''}</div>
                 </div>
-                <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: '#161616', borderRadius: '8px' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: c.messages_this_week > 0 ? '#4ecca3' : '#666' }}>{c.messages_this_week}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#888' }}>msg{c.messages_this_week !== 1 ? 's' : ''} this week</div>
+                <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: 'var(--surface)', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: c.messages_this_week > 0 ? 'var(--accent)' : 'var(--text-muted)' }}>{c.messages_this_week}</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>msg{c.messages_this_week !== 1 ? 's' : ''} this week</div>
                 </div>
-                <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: '#161616', borderRadius: '8px' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.8rem', color: c.last_message_at ? '#eee' : '#666' }}>{c.last_message_at ? timeAgo(c.last_message_at) : 'No activity'}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#888' }}>last message</div>
+                <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: 'var(--surface)', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.8rem', color: c.last_message_at ? 'var(--text)' : 'var(--text-muted)' }}>{c.last_message_at ? timeAgo(c.last_message_at) : 'No activity'}</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>last message</div>
                 </div>
               </div>
             </div>
@@ -1587,12 +1587,12 @@ export default function Admin() {
 
       {!loading && tab === 'content' && (
         <>
-          <p style={{ color: '#888', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
             Deleting here is permanent. It removes the request or offer from SkillShare for good; any chat about it stays.
           </p>
           <div style={{ marginBottom: '0.75rem' }}>
             <label htmlFor="content-search" style={hiddenLabel}>Search SkillShare posts</label>
-            <input id="content-search" type="search" value={contentQuery} onChange={(e) => setContentQuery(e.target.value)} placeholder="Search by skill, title, or name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
+            <input id="content-search" type="search" value={contentQuery} onChange={(e) => setContentQuery(e.target.value)} placeholder="Search by skill, title, or name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
             <div role="group" aria-label="Filter SkillShare posts" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
               {CONTENT_FILTERS.map(([key, label]) => (
                 <button key={key} type="button" aria-pressed={contentFilter === key} onClick={() => setContentFilter(key)} style={{ ...tabStyle(contentFilter === key), minHeight: '36px' }}>
@@ -1603,39 +1603,39 @@ export default function Admin() {
           </div>
 
           {visibleContent.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '2rem' }}>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
               {contentFilter === 'dupes' ? 'No possible duplicates found.' : 'Nothing matches.'}
             </p>
           ) : visibleContent.map(c => {
             const key = c.kind + '-' + c.id
             const confirming = deletingKey === key
             return (
-              <div key={key} style={{ ...cardStyle, borderLeft: '3px solid ' + (c.is_duplicate ? '#ffaa44' : '#444') }}>
+              <div key={key} style={{ ...cardStyle, borderLeft: '3px solid ' + (c.is_duplicate ? 'var(--warn)' : 'var(--border-strong)') }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.3rem' }}>
                   <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                    <span style={{ background: c.kind === 'request' ? '#1a3a5a' : '#1a4a3a', color: c.kind === 'request' ? '#66aaff' : '#4ecca3', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{c.kind === 'request' ? 'Request' : 'Offer'}</span>
-                    {c.is_duplicate && <span style={{ background: '#3a2a1a', color: '#ffaa44', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>POSSIBLE DUPLICATE</span>}
-                    <span style={{ background: '#2a2a2a', color: '#999', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>{c.status}</span>
+                    <span style={{ background: c.kind === 'request' ? 'var(--info-bg)' : 'var(--success-bg)', color: c.kind === 'request' ? 'var(--info)' : 'var(--accent)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{c.kind === 'request' ? 'Request' : 'Offer'}</span>
+                    {c.is_duplicate && <span style={{ background: 'var(--warn-bg)', color: 'var(--warn)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>POSSIBLE DUPLICATE</span>}
+                    <span style={{ background: 'var(--surface-2)', color: 'var(--text-muted)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>{c.status}</span>
                   </div>
-                  <span style={{ color: '#888', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
                 </div>
-                <h4 style={{ margin: '0.4rem 0 0.15rem', fontSize: '0.95rem', color: '#eee' }}>{c.title || 'Untitled'}</h4>
-                <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.15rem 0' }}>
-                  <UserName userId={c.poster_id} name={c.poster_name} style={{ color: '#4ecca3' }} />
+                <h4 style={{ margin: '0.4rem 0 0.15rem', fontSize: '0.95rem', color: 'var(--text)' }}>{c.title || 'Untitled'}</h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.15rem 0' }}>
+                  <UserName userId={c.poster_id} name={c.poster_name} style={{ color: 'var(--accent)' }} />
                   {c.neighborhood ? ' · ' + c.neighborhood : ''}{c.tag ? ' · ' + String(c.tag).replace(/_/g, ' ') : ''}
                 </p>
-                {c.description && <p style={{ color: '#999', fontSize: '0.8rem', margin: '0.2rem 0' }}>{c.description}</p>}
+                {c.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.2rem 0' }}>{c.description}</p>}
 
                 {confirming ? (
-                  <div style={{ marginTop: '0.5rem', padding: '0.6rem', background: '#2a1414', border: '1px solid #ff4444', borderRadius: '8px' }}>
+                  <div style={{ marginTop: '0.5rem', padding: '0.6rem', background: '#2a1414', border: '1px solid var(--danger)', borderRadius: '8px' }}>
                     <p style={{ color: '#ffb3b3', fontSize: '0.8rem', margin: '0 0 0.5rem', fontWeight: 600 }}>Delete this {c.kind} for good? This can't be undone.</p>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button type="button" disabled={deleteBusy} onClick={() => confirmDeleteContent(c)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#ff4444', color: '#fff', fontWeight: 700, cursor: deleteBusy ? 'default' : 'pointer', fontSize: '0.85rem', opacity: deleteBusy ? 0.6 : 1 }}>{deleteBusy ? 'Deleting…' : 'Delete for good'}</button>
-                      <button type="button" disabled={deleteBusy} onClick={cancelDeleteContent} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                      <button type="button" disabled={deleteBusy} onClick={() => confirmDeleteContent(c)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: deleteBusy ? 'default' : 'pointer', fontSize: '0.85rem', opacity: deleteBusy ? 0.6 : 1 }}>{deleteBusy ? 'Deleting…' : 'Delete for good'}</button>
+                      <button type="button" disabled={deleteBusy} onClick={cancelDeleteContent} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                     </div>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => askDeleteContent(c)} style={{ marginTop: '0.4rem', padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #ff4444', background: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Delete permanently</button>
+                  <button type="button" onClick={() => askDeleteContent(c)} style={{ marginTop: '0.4rem', padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Delete permanently</button>
                 )}
               </div>
             )

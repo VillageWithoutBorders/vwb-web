@@ -7,6 +7,7 @@ import { startAppTour } from '../components/AppTour'
 import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
 import RecoveryKeySection from '../components/RecoveryKeySection'
 import { useGoBack } from '../components/BackLink'
+import AppearancePicker from '../components/AppearancePicker'
 
 // A plain read on how strong a new password is. Length matters most.
 function passwordStrength(pw) {
@@ -304,13 +305,15 @@ export default function Settings() {
   return (
     <div className="profile-page">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button onClick={() => goBack('/me')} aria-label="Back to Your corner" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
-        <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#4ecca3' }}>Settings &amp; Privacy</h1>
+        <button onClick={() => goBack('/me')} aria-label="Back to Your corner" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--accent)' }}>Settings &amp; Privacy</h1>
       </div>
 
       <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '44px', marginBottom: '1rem' }}>
         <span aria-hidden="true">{'\u{1F9ED}'}</span> Take the app tour again
       </button>
+
+      <AppearancePicker />
 
       <div className="profile-details">
         <div className="detail-row">
@@ -356,8 +359,8 @@ export default function Settings() {
             <input id="newPw" type={showPw ? 'text' : 'password'} value={newPw} onChange={(e) => setNewPw(e.target.value)} autoComplete="new-password" aria-describedby="newPwStrength" />
             {newPw && (
               <div id="newPwStrength" style={{ marginTop: '0.4rem' }}>
-                <div style={{ height: '6px', borderRadius: '3px', background: '#333', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: (passwordStrength(newPw).level + 1) * 25 + '%', background: ['#ff6666', '#ffaa44', '#8fc', '#4ecca3'][passwordStrength(newPw).level] }} />
+                <div style={{ height: '6px', borderRadius: '3px', background: 'var(--surface-3)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: (passwordStrength(newPw).level + 1) * 25 + '%', background: ['var(--danger)', 'var(--warn)', '#8fc', 'var(--accent)'][passwordStrength(newPw).level] }} />
                 </div>
                 <span className="field-hint">{passwordStrength(newPw).label}</span>
               </div>
@@ -391,7 +394,7 @@ export default function Settings() {
         {twoStepLoaded && !enroll && twoStep && (
           <div className="detail-row">
             <span className="detail-value" style={{ textAlign: 'left' }}>On. You enter a 6-digit code each time you sign in.</span>
-            <button type="button" className="link-button" style={{ fontSize: '0.8125rem', color: '#ff6666' }} onClick={turnOffTwoStep} disabled={twoStepBusy}>
+            <button type="button" className="link-button" style={{ fontSize: '0.8125rem', color: 'var(--danger)' }} onClick={turnOffTwoStep} disabled={twoStepBusy}>
               Turn off
             </button>
           </div>
@@ -401,7 +404,7 @@ export default function Settings() {
             <p className="field-hint">1. Open an authenticator app (Google Authenticator, Microsoft Authenticator, Authy, or your password manager) and scan this picture.</p>
             <img src={enroll.qr} alt="QR code to scan with your authenticator app" width={180} height={180} style={{ background: '#fff', padding: '8px', borderRadius: '8px', display: 'block', margin: '0.5rem 0', maxWidth: '100%', height: 'auto' }} />
             <p className="field-hint">Can't scan it? Type this key into the app instead:</p>
-            <code style={{ display: 'block', wordBreak: 'break-all', padding: '0.5rem', background: '#1a1a1a', borderRadius: '6px', fontSize: '0.85rem' }}>{enroll.secret}</code>
+            <code style={{ display: 'block', wordBreak: 'break-all', padding: '0.5rem', background: 'var(--surface)', borderRadius: '6px', fontSize: '0.85rem' }}>{enroll.secret}</code>
             <p className="field-hint" style={{ marginTop: '0.75rem' }}>2. Enter the 6-digit code the app shows.</p>
             <label htmlFor="twoStepCode" className="sr-only">6-digit code</label>
             <input id="twoStepCode" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={7} value={twoStepCode} onChange={(e) => setTwoStepCode(e.target.value)} />
@@ -513,7 +516,7 @@ export default function Settings() {
         })}
         {deviceNote && <p className="form-success" role="status" style={{ padding: '0 1rem 0.75rem' }}>{deviceNote}</p>}
         <div style={{ padding: '0 1rem 1rem' }}>
-          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', color: '#ff6666', borderColor: '#ff6666' }} onClick={handleSignOutEverywhere} disabled={signingOutAll}>
+          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={handleSignOutEverywhere} disabled={signingOutAll}>
             {signingOutAll ? 'Signing out...' : 'Sign out of all devices'}
           </button>
           <p className="privacy-toggle-desc" style={{ marginTop: '0.5rem' }}>
@@ -528,7 +531,7 @@ export default function Settings() {
         {!showDelete ? (
           <div className="detail-row">
             <span className="detail-value" style={{ textAlign: 'left' }}>Leave Village Without Borders for good.</span>
-            <button type="button" className="link-button" style={{ fontSize: '0.8125rem', color: '#ff6666' }} onClick={() => { setShowDelete(true); setDeleteError('') }}>
+            <button type="button" className="link-button" style={{ fontSize: '0.8125rem', color: 'var(--danger)' }} onClick={() => { setShowDelete(true); setDeleteError('') }}>
               Delete account
             </button>
           </div>
@@ -544,7 +547,7 @@ export default function Settings() {
             {deleteError && <p className="form-error" role="alert">{deleteError}</p>}
             <div className="form-row" style={{ marginTop: '0.5rem' }}>
               <button type="button" className="btn btn-outline" onClick={() => { setShowDelete(false); setDeletePw(''); setDeleteWord(''); setDeleteError('') }} disabled={deleting}>Cancel</button>
-              <button type="submit" className="btn btn-outline" style={{ flex: 1, color: '#ff6666', borderColor: '#ff6666' }} disabled={deleting}>{deleting ? 'Deleting...' : 'Delete my account'}</button>
+              <button type="submit" className="btn btn-outline" style={{ flex: 1, color: 'var(--danger)', borderColor: 'var(--danger)' }} disabled={deleting}>{deleting ? 'Deleting...' : 'Delete my account'}</button>
             </div>
           </form>
         )}
@@ -556,7 +559,7 @@ export default function Settings() {
       <div className="form-row" style={{ marginTop: '1.5rem' }}>
         <button className="btn btn-outline" style={{ flex: 1 }} onClick={signOut}>Sign out</button>
         {!isFounder && (profile?.is_hope_ambassador || isAdmin || (profile?.skills?.length > 0)) && (
-          <button className="btn btn-outline" style={{ flex: 1, borderColor: '#666', color: '#999' }} onClick={handleResetToBase} disabled={resetting}>
+          <button className="btn btn-outline" style={{ flex: 1, borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }} onClick={handleResetToBase} disabled={resetting}>
             {resetting ? 'Resetting...' : 'Reset to Neighbor'}
           </button>
         )}

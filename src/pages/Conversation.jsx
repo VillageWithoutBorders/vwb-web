@@ -378,7 +378,7 @@ export default function Conversation() {
           <h1><UserName userId={otherUserId} name={otherName} /></h1>
           {request && <p className="convo-context">{request.skill_needed}</p>}
         </div>
-        <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
+        <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
 
 
 
@@ -432,7 +432,7 @@ export default function Conversation() {
           </p>
         )}
         {showNew && (
-          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
+          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
         )}
       </div>
 
@@ -491,24 +491,24 @@ export default function Conversation() {
       )}
 
       {showSettings && <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />}
-      <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: '#1a1a1a', borderLeft: '1px solid #333', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
+      <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Chat Settings</h2>
-          <button onClick={() => setShowSettings(false)} aria-label="Close chat settings" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <button onClick={() => setShowSettings(false)} aria-label="Close chat settings" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
 
-        <button type="button" disabled={blockedBy.has(otherUserId)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#222', borderRadius: '10px', marginBottom: '1.25rem', cursor: blockedBy.has(otherUserId) ? 'default' : 'pointer', border: 'none', width: '100%', textAlign: 'left' }} onClick={() => { setShowSettings(false); if (!blockedBy.has(otherUserId)) navigate('/u/' + otherUserId) }}>
+        <button type="button" disabled={blockedBy.has(otherUserId)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'var(--surface-2)', borderRadius: '10px', marginBottom: '1.25rem', cursor: blockedBy.has(otherUserId) ? 'default' : 'pointer', border: 'none', width: '100%', textAlign: 'left' }} onClick={() => { setShowSettings(false); if (!blockedBy.has(otherUserId)) navigate('/u/' + otherUserId) }}>
           <AvatarDisplay url={otherAvatar} userId={otherUserId} size={44} />
           <div>
-            <div style={{ fontWeight: 700, color: '#fff' }}>{otherName}</div>
-            {!blockedBy.has(otherUserId) && <div style={{ color: '#4ecca3', fontSize: '0.8rem' }}>View profile</div>}
+            <div style={{ fontWeight: 700, color: 'var(--text-strong)' }}>{otherName}</div>
+            {!blockedBy.has(otherUserId) && <div style={{ color: 'var(--accent)', fontSize: '0.8rem' }}>View profile</div>}
           </div>
         </button>
 
-        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Actions</div>
+        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Actions</div>
 
         {!blockedBy.has(otherUserId) && (
-        <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+        <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128100;</span> View Profile
         </button>
         )}
@@ -518,10 +518,10 @@ export default function Conversation() {
           setShowSettings(false)
           if (error) { console.error('Failed to block user:', error); alert('Could not block this user. Try again.'); return }
           alert('User blocked.')
-        }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ddd', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+        }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128683;</span> Block User
         </button>
-        <button onClick={() => { setShowSettings(false); setReportDialog('report') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#ff6666', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+        <button onClick={() => { setShowSettings(false); setReportDialog('report') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9873;</span> Report User
         </button>
       </div>
@@ -529,39 +529,39 @@ export default function Conversation() {
       {reportDialog && (
         <>
           <div onClick={closeReportDialog} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100 }} />
-          <div role="dialog" aria-modal="true" aria-labelledby="report-title" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#1e1e1e', border: '1px solid #333', borderRadius: '16px', padding: '1.25rem', zIndex: 1101, width: 'min(360px, calc(100vw - 2rem))', maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="report-title" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.25rem', zIndex: 1101, width: 'min(360px, calc(100vw - 2rem))', maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
             {reportDialog === 'report' && (
               <>
-                <h2 id="report-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: '#fff' }}>Report {otherName}</h2>
-                <p style={{ margin: '0 0 0.75rem', color: '#bbb', fontSize: '0.9rem', lineHeight: 1.5 }}>Only admins see your report. Messages here are end-to-end encrypted, so admins cannot read this conversation themselves -- if you want them to see what was said, attach it below.</p>
+                <h2 id="report-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>Report {otherName}</h2>
+                <p style={{ margin: '0 0 0.75rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>Only admins see your report. Messages here are end-to-end encrypted, so admins cannot read this conversation themselves -- if you want them to see what was said, attach it below.</p>
                 <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-                  <legend style={{ color: '#ddd', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>What happened?</legend>
+                  <legend style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>What happened?</legend>
                   {REASONS.map((r) => (
-                    <label key={r} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0', minHeight: '40px', color: '#eee', fontSize: '0.9rem', cursor: 'pointer' }}>
-                      <input type="radio" name="report-reason" value={r} checked={reportReason === r} onChange={() => { setReportReason(r); setReportError('') }} style={{ width: '18px', height: '18px', accentColor: '#4ecca3' }} />
+                    <label key={r} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0', minHeight: '40px', color: 'var(--text)', fontSize: '0.9rem', cursor: 'pointer' }}>
+                      <input type="radio" name="report-reason" value={r} checked={reportReason === r} onChange={() => { setReportReason(r); setReportError('') }} style={{ width: '18px', height: '18px', accentColor: 'var(--accent)' }} />
                       {r}
                     </label>
                   ))}
                 </fieldset>
-                <label htmlFor="report-details" style={{ display: 'block', color: '#ddd', fontSize: '0.85rem', fontWeight: 600, margin: '0.75rem 0 0.3rem' }}>Anything else we should know? (optional)</label>
-                <textarea id="report-details" value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} maxLength={500} rows={3} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: '8px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.9rem', resize: 'vertical' }} />
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '0.75rem', color: '#ddd', fontSize: '0.85rem', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={includeEvidence} onChange={(e) => setIncludeEvidence(e.target.checked)} style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#4ecca3', flexShrink: 0 }} />
+                <label htmlFor="report-details" style={{ display: 'block', color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.75rem 0 0.3rem' }}>Anything else we should know? (optional)</label>
+                <textarea id="report-details" value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} maxLength={500} rows={3} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.9rem', resize: 'vertical' }} />
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '0.75rem', color: 'var(--text)', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={includeEvidence} onChange={(e) => setIncludeEvidence(e.target.checked)} style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: 'var(--accent)', flexShrink: 0 }} />
                   <span>Attach the last few messages from this conversation, so an admin has something to go on</span>
                 </label>
                 {reportError && <p role="alert" style={{ margin: '0.6rem 0 0', color: '#ff8080', fontSize: '0.85rem' }}>{reportError}</p>}
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                  <button type="button" onClick={closeReportDialog} style={{ flex: 1, padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>Cancel</button>
-                  <button type="button" onClick={submitConversationReport} disabled={reportBusy} style={{ flex: 1, padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{reportBusy ? 'Sending...' : 'Send report'}</button>
+                  <button type="button" onClick={closeReportDialog} style={{ flex: 1, padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>Cancel</button>
+                  <button type="button" onClick={submitConversationReport} disabled={reportBusy} style={{ flex: 1, padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{reportBusy ? 'Sending...' : 'Send report'}</button>
                 </div>
               </>
             )}
 
             {reportDialog === 'reported' && (
               <>
-                <h2 id="report-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: '#fff' }}>Thank you</h2>
-                <p style={{ margin: '0 0 1rem', color: '#bbb', fontSize: '0.9rem', lineHeight: 1.5 }}>An admin will look at this.</p>
-                <button type="button" onClick={closeReportDialog} style={{ width: '100%', padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>Done</button>
+                <h2 id="report-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>Thank you</h2>
+                <p style={{ margin: '0 0 1rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>An admin will look at this.</p>
+                <button type="button" onClick={closeReportDialog} style={{ width: '100%', padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>Done</button>
               </>
             )}
           </div>

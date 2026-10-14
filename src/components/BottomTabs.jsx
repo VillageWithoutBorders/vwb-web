@@ -37,7 +37,7 @@ export default function BottomTabs() {
       <NavLink to="/messages" className="tab-item" data-tour="messages" style={{ position: 'relative' }}>
         <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
         {unreadCount > 0 && (
-          <span aria-label={unreadCount + ' unread'} style={{ position: 'absolute', top: '2px', right: '50%', transform: 'translateX(12px)', background: '#ff4444', color: '#fff', fontSize: '0.65rem', fontWeight: 700, borderRadius: '9px', minWidth: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', lineHeight: 1 }}>
+          <span aria-label={unreadCount + ' unread'} style={{ position: 'absolute', top: '2px', right: '50%', transform: 'translateX(12px)', background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, borderRadius: '9px', minWidth: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', lineHeight: 1 }}>
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

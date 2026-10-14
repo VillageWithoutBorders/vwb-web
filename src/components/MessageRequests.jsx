@@ -42,15 +42,15 @@ export default function MessageRequests() {
   if (rows.length === 0) return null
 
   return (
-    <section aria-labelledby="msg-requests" style={{ margin: '0 0 1rem', padding: '0.75rem', border: '1px solid #4ecca3', borderRadius: '12px' }}>
+    <section aria-labelledby="msg-requests" style={{ margin: '0 0 1rem', padding: '0.75rem', border: '1px solid var(--accent)', borderRadius: '12px' }}>
       <h2 id="msg-requests" style={{ fontSize: '1rem', margin: '0 0 0.5rem' }}>Message requests ({rows.length})</h2>
       <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Nothing opens until you say yes. If you decline, they are not told.</p>
       {rows.map((r) => (
-        <div key={r.id} style={{ padding: '0.5rem 0', borderTop: '1px solid #333' }}>
+        <div key={r.id} style={{ padding: '0.5rem 0', borderTop: '1px solid var(--border)' }}>
           <div style={{ fontWeight: 700 }}>{r.name}</div>
           {r.note && <div style={{ fontSize: '0.9rem', margin: '0.25rem 0' }}>&ldquo;{r.note}&rdquo;</div>}
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <button type="button" disabled={busy === r.id} onClick={() => answer(r, true)} style={{ minHeight: '44px', padding: '0 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer' }}>Accept</button>
+            <button type="button" disabled={busy === r.id} onClick={() => answer(r, true)} style={{ minHeight: '44px', padding: '0 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>Accept</button>
             <button type="button" disabled={busy === r.id} onClick={() => answer(r, false)} style={{ minHeight: '44px', padding: '0 1.25rem', borderRadius: '8px', border: '1px solid #888', background: 'none', color: 'inherit', fontWeight: 600, cursor: 'pointer' }}>Decline</button>
           </div>
         </div>

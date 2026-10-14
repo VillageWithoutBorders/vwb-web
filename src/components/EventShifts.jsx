@@ -58,18 +58,18 @@ export default function EventShifts({ eventId, token, user, canManage, past, can
       {!user && !past && !cancelled && (
         <p className="cal-sub" style={{ marginTop: 0 }}>Taking a shift needs a free Village Without Borders account, so organizers know who is coming.</p>
       )}
-      {message && <p role="status" style={{ color: '#7fe0bf' }}>{message}</p>}
+      {message && <p role="status" style={{ color: 'var(--accent)' }}>{message}</p>}
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
         {shifts.map((s) => {
           const left = s.capacity - s.taken
           const full = left <= 0
           return (
-            <li key={s.id} style={{ padding: '0.75rem', background: '#1e1e1e', border: '1px solid ' + (s.mine ? '#4ecca3' : '#333'), borderRadius: '10px' }}>
+            <li key={s.id} style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid ' + (s.mine ? 'var(--accent)' : 'var(--border)'), borderRadius: '10px' }}>
               <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{s.label}</div>
-              {s.starts_at && <div style={{ fontSize: '0.9rem', color: '#ccc' }}>{clock(s.starts_at)}{s.ends_at ? ' to ' + clock(s.ends_at) : ''}</div>}
-              <div style={{ fontSize: '0.9rem', color: full ? '#e0b84c' : '#aaa' }}>{s.taken} of {s.capacity} spots filled{full ? '. Full.' : ''}</div>
+              {s.starts_at && <div style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>{clock(s.starts_at)}{s.ends_at ? ' to ' + clock(s.ends_at) : ''}</div>}
+              <div style={{ fontSize: '0.9rem', color: full ? 'var(--gold)' : 'var(--text-secondary)' }}>{s.taken} of {s.capacity} spots filled{full ? '. Full.' : ''}</div>
               {canManage && people[s.id] && people[s.id].length > 0 && (
-                <div style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '0.2rem', overflowWrap: 'anywhere' }}>Signed up: {people[s.id].join(', ')}</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-soft)', marginTop: '0.2rem', overflowWrap: 'anywhere' }}>Signed up: {people[s.id].join(', ')}</div>
               )}
               {!past && !cancelled && (
                 !user ? (

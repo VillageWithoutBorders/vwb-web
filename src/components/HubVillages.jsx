@@ -47,7 +47,7 @@ export default function HubVillages() {
     return (
       <button key={b.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px', marginBottom: '0.6rem' }}
         aria-label={b.name + (n ? ', ' + n + ' new' : '')} onClick={() => navigate('/campfire?board=' + b.id)}>
-        <span className="cal-card-title"><span aria-hidden="true">{icon}</span> {b.name}{n > 0 && <span style={{ marginLeft: '0.5rem', color: '#4ecca3', fontWeight: 700 }}>{n > 9 ? '9+' : n} new</span>}</span>
+        <span className="cal-card-title"><span aria-hidden="true">{icon}</span> {b.name}{n > 0 && <span style={{ marginLeft: '0.5rem', color: 'var(--accent)', fontWeight: 700 }}>{n > 9 ? '9+' : n} new</span>}</span>
         <span className="cal-card-meta">{note}</span>
       </button>
     )

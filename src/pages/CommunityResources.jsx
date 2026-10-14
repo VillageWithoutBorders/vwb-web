@@ -356,8 +356,8 @@ export default function CommunityResources() {
 
   const submitOrgOptions = isAdmin ? allOrgs : (myOrgs || [])
 
-  const fieldStyle = { display: 'block', width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem', marginBottom: '0.5rem', boxSizing: 'border-box' }
-  const labelStyle = { display: 'block', color: '#aaa', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.25rem' }
+  const fieldStyle = { display: 'block', width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', marginBottom: '0.5rem', boxSizing: 'border-box' }
+  const labelStyle = { display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.25rem' }
 
   return (
     <div className="community-page">
@@ -373,61 +373,61 @@ export default function CommunityResources() {
 
           {allOrgs.length > 0 && (
             <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', marginBottom: '0.75rem' }}>
-              <button onClick={() => setOrgFilter('all')} aria-pressed={orgFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: orgFilter === 'all' ? 'none' : '1px solid #444', background: orgFilter === 'all' ? '#4ecca3' : 'none', color: orgFilter === 'all' ? '#1a1a1a' : '#aaa', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All orgs</button>
+              <button onClick={() => setOrgFilter('all')} aria-pressed={orgFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: orgFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: orgFilter === 'all' ? 'var(--accent)' : 'none', color: orgFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All orgs</button>
               {allOrgs.map(o => (
-                <button key={o.id} onClick={() => setOrgFilter(o.id)} aria-pressed={orgFilter === o.id} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: orgFilter === o.id ? 'none' : '1px solid #444', background: orgFilter === o.id ? '#4ecca3' : 'none', color: orgFilter === o.id ? '#1a1a1a' : '#aaa', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{o.name}</button>
+                <button key={o.id} onClick={() => setOrgFilter(o.id)} aria-pressed={orgFilter === o.id} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: orgFilter === o.id ? 'none' : '1px solid var(--border-strong)', background: orgFilter === o.id ? 'var(--accent)' : 'none', color: orgFilter === o.id ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{o.name}</button>
               ))}
             </div>
           )}
 
           {allRegions.length > 1 && (
             <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', marginBottom: '0.75rem' }}>
-              <button onClick={() => setRegionFilter('all')} aria-pressed={regionFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: regionFilter === 'all' ? 'none' : '1px solid #444', background: regionFilter === 'all' ? '#4ecca3' : 'none', color: regionFilter === 'all' ? '#1a1a1a' : '#aaa', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All areas</button>
+              <button onClick={() => setRegionFilter('all')} aria-pressed={regionFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: regionFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: regionFilter === 'all' ? 'var(--accent)' : 'none', color: regionFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All areas</button>
               {allRegions.map(reg => (
-                <button key={reg} onClick={() => setRegionFilter(reg)} aria-pressed={regionFilter === reg} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: regionFilter === reg ? 'none' : '1px solid #444', background: regionFilter === reg ? '#4ecca3' : 'none', color: regionFilter === reg ? '#1a1a1a' : '#aaa', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{reg}</button>
+                <button key={reg} onClick={() => setRegionFilter(reg)} aria-pressed={regionFilter === reg} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: regionFilter === reg ? 'none' : '1px solid var(--border-strong)', background: regionFilter === reg ? 'var(--accent)' : 'none', color: regionFilter === reg ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{reg}</button>
               ))}
             </div>
           )}
 
           {myLocation && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflowX: 'auto', marginBottom: '0.75rem' }}>
-              <span style={{ color: '#999', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>Distance:</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>Distance:</span>
               {[['all', 'All'], [10, '10 mi'], [25, '25 mi'], [50, '50 mi']].map(([val, label]) => (
-                <button key={String(val)} onClick={() => setRadiusFilter(val)} aria-pressed={radiusFilter === val} style={{ padding: '0.5rem 0.8rem', minHeight: '40px', borderRadius: '16px', border: radiusFilter === val ? 'none' : '1px solid #444', background: radiusFilter === val ? '#4ecca3' : 'none', color: radiusFilter === val ? '#1a1a1a' : '#aaa', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{label}</button>
+                <button key={String(val)} onClick={() => setRadiusFilter(val)} aria-pressed={radiusFilter === val} style={{ padding: '0.5rem 0.8rem', minHeight: '40px', borderRadius: '16px', border: radiusFilter === val ? 'none' : '1px solid var(--border-strong)', background: radiusFilter === val ? 'var(--accent)' : 'none', color: radiusFilter === val ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{label}</button>
               ))}
             </div>
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <h2 style={{ fontSize: '1.1rem', color: '#4ecca3', margin: 0 }}>Resource Library</h2>
-            {canSubmit && <button onClick={() => { setShowSubmit(true); setSubmitted(false) }} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>+ Add Resource</button>}
+            <h2 style={{ fontSize: '1.1rem', color: 'var(--accent)', margin: 0 }}>Resource Library</h2>
+            {canSubmit && <button onClick={() => { setShowSubmit(true); setSubmitted(false) }} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>+ Add Resource</button>}
           </div>
 
           {!canSubmit && (
-            <p style={{ color: '#888', fontSize: '0.75rem', margin: '0 0 0.75rem' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.75rem' }}>
               Resources are added by verified partner organizations.{user && <>{' '}
-              <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: '#4ecca3', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline', padding: 0 }}>Want your org involved?</button></>}
+              <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline', padding: 0 }}>Want your org involved?</button></>}
             </p>
           )}
 
           {user && profile && profile.latitude == null && (
-            <p role="note" style={{ color: '#ccc', fontSize: '0.8rem', background: '#1e1e1e', border: '1px solid #333', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem' }}>
+            <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.8rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem' }}>
               Showing national resources. Add your zip code in your profile to see ones near you.
             </p>
           )}
 
           {showSubmit && (
             <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowSubmit(false)}>
-              <div ref={submitModalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="submit-resource-title" style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '12px', padding: '1.25rem', maxWidth: '400px', width: '90%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+              <div ref={submitModalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="submit-resource-title" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', maxWidth: '400px', width: '90%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <h3 id="submit-resource-title" style={{ margin: 0, color: '#4ecca3' }}>Submit a Resource</h3>
-                  <button onClick={() => setShowSubmit(false)} aria-label="Close" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
+                  <h3 id="submit-resource-title" style={{ margin: 0, color: 'var(--accent)' }}>Submit a Resource</h3>
+                  <button onClick={() => setShowSubmit(false)} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
                 </div>
                 {submitted ? (
-                  <p style={{ color: '#4ecca3', fontWeight: 600, margin: 0 }}>Thank you! Your resource has been submitted for review.</p>
+                  <p style={{ color: 'var(--accent)', fontWeight: 600, margin: 0 }}>Thank you! Your resource has been submitted for review.</p>
                 ) : (
                   <>
-                    <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>Share a resource with your community. Hope Ambassadors will verify submissions.</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>Share a resource with your community. Hope Ambassadors will verify submissions.</p>
                     {submitOrgOptions.length > 0 && (
                       <>
                         <label htmlFor="sub-org" style={labelStyle}>Organization</label>
@@ -440,7 +440,7 @@ export default function CommunityResources() {
                     <label id="sub-cat-label" style={labelStyle}>Category (required, choose one or more)</label>
                     <div role="group" aria-labelledby="sub-cat-label" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
                       {CATEGORIES.map(c => (
-                        <button key={c} type="button" onClick={() => setSubCats(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])} aria-pressed={subCats.includes(c)} style={{ padding: '0.5rem 0.75rem', minHeight: '40px', borderRadius: '16px', border: subCats.includes(c) ? 'none' : '1px solid #444', background: subCats.includes(c) ? '#4ecca3' : 'none', color: subCats.includes(c) ? '#1a1a1a' : '#aaa', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
+                        <button key={c} type="button" onClick={() => setSubCats(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])} aria-pressed={subCats.includes(c)} style={{ padding: '0.5rem 0.75rem', minHeight: '40px', borderRadius: '16px', border: subCats.includes(c) ? 'none' : '1px solid var(--border-strong)', background: subCats.includes(c) ? 'var(--accent)' : 'none', color: subCats.includes(c) ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
                       ))}
                     </div>
                     <label htmlFor="sub-name" style={labelStyle}>Resource name (required)</label>
@@ -454,7 +454,7 @@ export default function CommunityResources() {
                     <label htmlFor="sub-address" style={labelStyle}>Address (optional)</label>
                     <input id="sub-address" style={fieldStyle} placeholder="e.g. 123 Main St, Ringgold, GA" value={subAddress} onChange={e => setSubAddress(e.target.value)} />
                     {subAddress.trim() && (
-                      <button type="button" onClick={captureSubLocation} disabled={capturingSubLocation} style={{ display: 'block', width: '100%', padding: '0.65rem', minHeight: '44px', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+                      <button type="button" onClick={captureSubLocation} disabled={capturingSubLocation} style={{ display: 'block', width: '100%', padding: '0.65rem', minHeight: '44px', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
                         {capturingSubLocation ? 'Getting your location...' : (subLat != null ? '📍 Location captured — tap to update' : '📍 Pin this address (optional, helps neighbors see how far away it is)')}
                       </button>
                     )}
@@ -462,7 +462,7 @@ export default function CommunityResources() {
                     <input id="sub-hood" style={fieldStyle} placeholder="Town or county" value={subHood} onChange={e => setSubHood(e.target.value)} />
                     <label htmlFor="sub-requirements" style={labelStyle}>What to bring or know before you go (optional)</label>
                     <textarea id="sub-requirements" style={{ ...fieldStyle, minHeight: '50px', resize: 'vertical' }} placeholder="e.g. Photo ID and proof of address, first-come-first-served, no appointment needed" value={subRequirements} onChange={e => setSubRequirements(e.target.value)} maxLength={300} />
-                    <button onClick={submitResource} disabled={!subName.trim() || !subCats.length || submitting} style={{ padding: '0.75rem 1.25rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: (!subName.trim() || !subCats.length || submitting) ? 0.5 : 1 }}>
+                    <button onClick={submitResource} disabled={!subName.trim() || !subCats.length || submitting} style={{ padding: '0.75rem 1.25rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: (!subName.trim() || !subCats.length || submitting) ? 0.5 : 1 }}>
                       {submitting ? 'Submitting...' : 'Submit Resource'}
                     </button>
                   </>
@@ -473,94 +473,94 @@ export default function CommunityResources() {
 
           {canVerify && pendingResources.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>
-              <p style={{ color: '#ffaa44', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>Pending review ({pendingResources.length})</p>
+              <p style={{ color: 'var(--warn)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>Pending review ({pendingResources.length})</p>
               {pendingResources.map(r => (
-                <div key={r.id} style={{ background: '#1e1e1e', border: '1px solid #444', borderRadius: '8px', padding: '0.6rem', marginBottom: '0.35rem', borderLeft: '3px solid #ffaa44' }}>
+                <div key={r.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0.6rem', marginBottom: '0.35rem', borderLeft: '3px solid var(--warn)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{r.name}</span>
-                    <button onClick={() => verifyResource(r.id)} style={{ padding: '0.3rem 0.6rem', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.75rem' }}>Verify</button>
+                    <button onClick={() => verifyResource(r.id)} style={{ padding: '0.3rem 0.6rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.75rem' }}>Verify</button>
                   </div>
-                  {r.description && <p style={{ color: '#aaa', fontSize: '0.75rem', margin: '0.2rem 0' }}>{r.description}</p>}
-                  <span style={{ color: '#999', fontSize: '0.78rem' }}>{resourceCats(r).join(' · ')}{r.organizations ? ' · ' + r.organizations.name : ''}</span>
+                  {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.2rem 0' }}>{r.description}</p>}
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{resourceCats(r).join(' · ')}{r.organizations ? ' · ' + r.organizations.name : ''}</span>
                 </div>
               ))}
             </div>
           )}
 
-          {loadingResources && <p style={{ textAlign: 'center', color: '#888', padding: '1rem' }}>Loading...</p>}
+          {loadingResources && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Loading...</p>}
 
           {!loadingResources && Object.keys(grouped).map(cat => {
             const isOpen = expandedCats.includes(cat) || !!query.trim()
             return (
               <div key={cat} style={{ marginBottom: '0.5rem' }}>
-                <button onClick={() => toggleCat(cat)} aria-expanded={isOpen} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0.75rem', background: '#1e1e1e', border: '1px solid #333', borderRadius: isOpen ? '10px 10px 0 0' : '10px', cursor: 'pointer', textAlign: 'left' }}>
+                <button onClick={() => toggleCat(cat)} aria-expanded={isOpen} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: isOpen ? '10px 10px 0 0' : '10px', cursor: 'pointer', textAlign: 'left' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span dangerouslySetInnerHTML={{ __html: CAT_ICONS[cat] || '&#128204;' }} style={{ fontSize: '1.1rem', color: cat === 'Emergency Help' ? '#ffaa44' : undefined }} />
-                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ddd' }}>{cat}</span>
-                    <span style={{ color: '#888', fontSize: '0.8rem' }}>({grouped[cat].length})</span>
+                    <span dangerouslySetInnerHTML={{ __html: CAT_ICONS[cat] || '&#128204;' }} style={{ fontSize: '1.1rem', color: cat === 'Emergency Help' ? 'var(--warn)' : undefined }} />
+                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>{cat}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>({grouped[cat].length})</span>
                   </div>
-                  <span style={{ color: '#4ecca3', fontSize: '1rem', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>&#9660;</span>
+                  <span style={{ color: 'var(--accent)', fontSize: '1rem', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>&#9660;</span>
                 </button>
                 {isOpen && (
-                  <div style={{ border: '1px solid #333', borderTop: 'none', borderRadius: '0 0 10px 10px', overflow: 'hidden' }}>
+                  <div style={{ border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 10px 10px', overflow: 'hidden' }}>
                     {grouped[cat].map(r => (
-                      <div key={r.id} style={{ padding: '0.75rem', borderBottom: '1px solid #2a2a2a' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#eee' }}>{r.name}</span>
-                        {r.description && <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0.2rem 0 0.4rem', lineHeight: 1.4 }}>{r.description}</p>}
-                        {r.address && <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.1rem 0' }}><AddressLink address={r.address} /></p>}
-                        {r.neighborhood && <p style={{ color: '#888', fontSize: '0.75rem', margin: '0.1rem 0' }}>Area: {r.neighborhood}</p>}
+                      <div key={r.id} style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text)' }}>{r.name}</span>
+                        {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0 0.4rem', lineHeight: 1.4 }}>{r.description}</p>}
+                        {r.address && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0' }}><AddressLink address={r.address} /></p>}
+                        {r.neighborhood && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0' }}>Area: {r.neighborhood}</p>}
                         {r.requirements && <p style={{ color: '#ddaa44', fontSize: '0.78rem', margin: '0.2rem 0', lineHeight: 1.4 }}>&#128203; What to bring: {r.requirements}</p>}
                         {resourceDistance(r) != null && (
-                          <p style={{ color: '#4ecca3', fontSize: '0.78rem', fontWeight: 600, margin: '0.2rem 0 0' }}>&#128205; {resourceDistance(r).toFixed(1)} mi away</p>
+                          <p style={{ color: 'var(--accent)', fontSize: '0.78rem', fontWeight: 600, margin: '0.2rem 0 0' }}>&#128205; {resourceDistance(r).toFixed(1)} mi away</p>
                         )}
                         {r.organizations && !user && (
-                          <p style={{ color: '#4ecca3', fontSize: '0.78rem', fontWeight: 600, margin: '0.4rem 0 0' }}>Shared by {r.organizations.name}</p>
+                          <p style={{ color: 'var(--accent)', fontSize: '0.78rem', fontWeight: 600, margin: '0.4rem 0 0' }}>Shared by {r.organizations.name}</p>
                         )}
                         {r.organizations && user && (
-                          <button onClick={() => navigate('/orgs/' + r.organizations.id)} style={{ display: 'block', background: 'none', border: 'none', padding: '0.3rem 0', marginTop: '0.2rem', color: '#4ecca3', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>Shared by {r.organizations.name}</button>
+                          <button onClick={() => navigate('/orgs/' + r.organizations.id)} style={{ display: 'block', background: 'none', border: 'none', padding: '0.3rem 0', marginTop: '0.2rem', color: 'var(--accent)', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>Shared by {r.organizations.name}</button>
                         )}
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
-                          {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#4ecca3', textDecoration: 'none', fontWeight: 600 }}>Visit &#8599;</a>}
-                          {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')} style={{ fontSize: '0.8rem', color: '#66aaff', textDecoration: 'none', fontWeight: 600 }}>Call {r.phone}</a>}
+                          {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>Visit &#8599;</a>}
+                          {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')} style={{ fontSize: '0.8rem', color: 'var(--info)', textDecoration: 'none', fontWeight: 600 }}>Call {r.phone}</a>}
                           {Array.isArray(r.links) && r.links.filter((l) => l && /^https?:\/\//i.test(l.url || '')).map((l, i) => (
-                            <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: '#4ecca3', textDecoration: 'none', fontWeight: 600 }}>{l.label || 'Link'} &#8599;</a>
+                            <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>{l.label || 'Link'} &#8599;</a>
                           ))}
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                           {user && (<>
-<button onClick={() => castVote(r.id, 1)} title="This checked out for me" aria-pressed={myVotes[r.id] === 1} aria-label={'This checked out for me, ' + (voteCounts[r.id]?.upvotes || 0) + ' people agree' + (myVotes[r.id] === 1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === 1 ? 'rgba(78,204,163,0.15)' : 'none', border: '1px solid ' + (myVotes[r.id] === 1 ? '#4ecca3' : '#444'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === 1 ? '#4ecca3' : '#aaa', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+<button onClick={() => castVote(r.id, 1)} title="This checked out for me" aria-pressed={myVotes[r.id] === 1} aria-label={'This checked out for me, ' + (voteCounts[r.id]?.upvotes || 0) + ' people agree' + (myVotes[r.id] === 1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === 1 ? 'rgba(78,204,163,0.15)' : 'none', border: '1px solid ' + (myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
                             &#128077; {voteCounts[r.id]?.upvotes || 0}
                           </button>
-                          <button onClick={() => castVote(r.id, -1)} title="This didn't work out for me" aria-pressed={myVotes[r.id] === -1} aria-label={"This didn't work out for me, " + (voteCounts[r.id]?.downvotes || 0) + ' people agree' + (myVotes[r.id] === -1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === -1 ? 'rgba(255,90,90,0.12)' : 'none', border: '1px solid ' + (myVotes[r.id] === -1 ? '#ff5a5a' : '#444'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === -1 ? '#ff8888' : '#aaa', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+                          <button onClick={() => castVote(r.id, -1)} title="This didn't work out for me" aria-pressed={myVotes[r.id] === -1} aria-label={"This didn't work out for me, " + (voteCounts[r.id]?.downvotes || 0) + ' people agree' + (myVotes[r.id] === -1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === -1 ? 'rgba(255,90,90,0.12)' : 'none', border: '1px solid ' + (myVotes[r.id] === -1 ? '#ff5a5a' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === -1 ? 'var(--danger)' : 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
                             &#128078; {voteCounts[r.id]?.downvotes || 0}
                           </button>
 </>)}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: 'auto' }}>
-                            <button onClick={() => toggleHistory(r.id)} aria-expanded={openHistoryFor.includes(r.id)} style={{ background: 'none', border: 'none', color: '#66aaff', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '40px' }}>
+                            <button onClick={() => toggleHistory(r.id)} aria-expanded={openHistoryFor.includes(r.id)} style={{ background: 'none', border: 'none', color: 'var(--info)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '40px' }}>
                               {(editHistoryByResource[r.id] || []).filter(e => !e.reverted).length > 0 ? (editHistoryByResource[r.id].filter(e => !e.reverted).length) + ' edit' + ((editHistoryByResource[r.id].filter(e => !e.reverted).length === 1) ? '' : 's') : 'Edit history'}
                             </button>
-                            <button onClick={() => toggleReviews(r.id)} aria-expanded={openReviewsFor.includes(r.id)} style={{ background: 'none', border: 'none', color: '#66aaff', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '40px' }}>
+                            <button onClick={() => toggleReviews(r.id)} aria-expanded={openReviewsFor.includes(r.id)} style={{ background: 'none', border: 'none', color: 'var(--info)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '40px' }}>
                               {(reviewsByResource[r.id]?.length || 0) > 0 ? reviewsByResource[r.id].length + ' review' + (reviewsByResource[r.id].length === 1 ? '' : 's') : 'Leave a review'}
                             </button>
                           </div>
                         </div>
 
                         {openReviewsFor.includes(r.id) && (
-                          <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #2a2a2a' }}>
+                          <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
                             {(reviewsByResource[r.id] || []).map(rev => (
                               <div key={rev.id} style={{ marginBottom: '0.5rem' }}>
-                                <p style={{ color: '#ccc', fontSize: '0.78rem', margin: 0, lineHeight: 1.4 }}>{rev.body}</p>
-                                <span style={{ color: '#999', fontSize: '0.75rem' }}>
+                                <p style={{ color: 'var(--text-soft)', fontSize: '0.78rem', margin: 0, lineHeight: 1.4 }}>{rev.body}</p>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                                   Anonymous &middot; {new Date(rev.created_at).toLocaleDateString()}
                                   {rev.user_id === user?.id && (
-                                    <> &middot; <button onClick={() => deleteMyReview(r.id, rev.id)} aria-label="Delete your review" style={{ background: 'none', border: 'none', color: '#ff8888', fontSize: '0.75rem', cursor: 'pointer', padding: '0.35rem 0.1rem', minHeight: '32px' }}>delete</button></>
+                                    <> &middot; <button onClick={() => deleteMyReview(r.id, rev.id)} aria-label="Delete your review" style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.75rem', cursor: 'pointer', padding: '0.35rem 0.1rem', minHeight: '32px' }}>delete</button></>
                                   )}
                                 </span>
                               </div>
                             ))}
                             {(reviewsByResource[r.id] || []).length === 0 && (
-                              <p style={{ color: '#999', fontSize: '0.78rem', margin: '0 0 0.4rem' }}>No reviews yet.</p>
+                              <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: '0 0 0.4rem' }}>No reviews yet.</p>
                             )}
                             {user ? (<>
 <textarea
@@ -569,67 +569,67 @@ export default function CommunityResources() {
                               placeholder="Add an anonymous note about your experience — no name shown, ever"
                               aria-label="Your anonymous review"
                               maxLength={500}
-                              style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.8rem', marginBottom: '0.4rem', minHeight: '50px', resize: 'vertical', boxSizing: 'border-box' }}
+                              style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.8rem', marginBottom: '0.4rem', minHeight: '50px', resize: 'vertical', boxSizing: 'border-box' }}
                             />
-                            <button onClick={() => submitReview(r.id)} disabled={!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id} style={{ padding: '0.55rem 0.9rem', minHeight: '40px', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', opacity: (!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id) ? 0.5 : 1 }}>
+                            <button onClick={() => submitReview(r.id)} disabled={!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id} style={{ padding: '0.55rem 0.9rem', minHeight: '40px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', opacity: (!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id) ? 0.5 : 1 }}>
                               {submittingReviewFor === r.id ? 'Posting...' : 'Post anonymously'}
                             </button>
 </>) : (
-<p style={{ color: '#999', fontSize: '0.78rem', margin: 0 }}>Sign in to add a note about your experience.</p>
+<p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: 0 }}>Sign in to add a note about your experience.</p>
 )}
                           </div>
                         )}
 
                         {openHistoryFor.includes(r.id) && (
-                          <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #2a2a2a' }}>
+                          <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
                             {(editHistoryByResource[r.id] || []).map(ed => (
                               <div key={ed.id} style={{ marginBottom: '0.5rem', opacity: ed.reverted ? 0.5 : 1 }}>
                                 {Object.entries(ed.changes || {}).map(([field, diff]) => (
-                                  <p key={field} style={{ color: '#ccc', fontSize: '0.75rem', margin: '0.1rem 0', lineHeight: 1.4 }}>
-                                    <span style={{ color: '#888', textTransform: 'capitalize' }}>{field}:</span>{' '}
+                                  <p key={field} style={{ color: 'var(--text-soft)', fontSize: '0.75rem', margin: '0.1rem 0', lineHeight: 1.4 }}>
+                                    <span style={{ color: 'var(--text-muted)', textTransform: 'capitalize' }}>{field}:</span>{' '}
                                     {diff?.old ? diff.old : '(blank)'} &rarr; {diff?.new ? diff.new : '(blank)'}
                                   </p>
                                 ))}
-                                <span style={{ color: '#999', fontSize: '0.75rem' }}>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                                   {ed.edited_by_name || 'A neighbor'}{ed.edited_by_is_ambassador ? ' (Hope Ambassador)' : ''} &middot; {new Date(ed.created_at).toLocaleDateString()}
-                                  {ed.source_url && <> &middot; <a href={ed.source_url} target="_blank" rel="noopener noreferrer" style={{ color: '#66aaff' }}>source</a></>}
+                                  {ed.source_url && <> &middot; <a href={ed.source_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--info)' }}>source</a></>}
                                   {ed.reverted && <> &middot; undone{ed.reverted_by_name ? ' by ' + ed.reverted_by_name : ''}</>}
                                   {!ed.reverted && canVerify && (
-                                    <> &middot; <button onClick={() => revertEdit(ed.id)} disabled={revertingId === ed.id} aria-label="Undo this edit" style={{ background: 'none', border: 'none', color: '#ff8888', fontSize: '0.75rem', cursor: 'pointer', padding: '0.35rem 0.1rem', minHeight: '32px' }}>{revertingId === ed.id ? 'undoing...' : 'undo'}</button></>
+                                    <> &middot; <button onClick={() => revertEdit(ed.id)} disabled={revertingId === ed.id} aria-label="Undo this edit" style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.75rem', cursor: 'pointer', padding: '0.35rem 0.1rem', minHeight: '32px' }}>{revertingId === ed.id ? 'undoing...' : 'undo'}</button></>
                                   )}
                                 </span>
                               </div>
                             ))}
                             {(editHistoryByResource[r.id] || []).length === 0 && (
-                              <p style={{ color: '#999', fontSize: '0.78rem', margin: '0 0 0.4rem' }}>No edits yet.</p>
+                              <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: '0 0 0.4rem' }}>No edits yet.</p>
                             )}
 
                             {user && editFormFor !== r.id && (
-                              <button onClick={() => openEditForm(r)} style={{ padding: '0.5rem 0.8rem', minHeight: '40px', borderRadius: '6px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer' }}>
+                              <button onClick={() => openEditForm(r)} style={{ padding: '0.5rem 0.8rem', minHeight: '40px', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer' }}>
                                 Suggest an edit
                               </button>
                             )}
 
                             {editFormFor === r.id && (
-                              <div style={{ marginTop: '0.4rem', padding: '0.6rem', background: '#181818', border: '1px solid #333', borderRadius: '8px' }}>
-                                <p style={{ color: '#999', fontSize: '0.75rem', margin: '0 0 0.5rem', lineHeight: 1.4 }}>Fix anything that's out of date. Change only what's wrong -- everything else stays as-is.</p>
-                                <label htmlFor={`edit-${r.id}-name`} style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Name</label>
-                                <input id={`edit-${r.id}-name`} value={editDraft.name} onChange={e => setEditDraft(prev => ({ ...prev, name: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-desc`} style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Description</label>
-                                <textarea id={`edit-${r.id}-desc`} value={editDraft.description} onChange={e => setEditDraft(prev => ({ ...prev, description: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.82rem', marginBottom: '0.4rem', minHeight: '50px', resize: 'vertical', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-phone`} style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Phone</label>
-                                <input id={`edit-${r.id}-phone`} value={editDraft.phone} onChange={e => setEditDraft(prev => ({ ...prev, phone: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-url`} style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Website</label>
-                                <input id={`edit-${r.id}-url`} value={editDraft.url} onChange={e => setEditDraft(prev => ({ ...prev, url: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-address`} style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Address</label>
-                                <input id={`edit-${r.id}-address`} value={editDraft.address} onChange={e => setEditDraft(prev => ({ ...prev, address: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-requirements`} style={{ display: 'block', color: '#aaa', fontSize: '0.75rem', marginBottom: '0.15rem' }}>What to bring / barriers to know about</label>
-                                <textarea id={`edit-${r.id}-requirements`} value={editDraft.requirements} onChange={e => setEditDraft(prev => ({ ...prev, requirements: e.target.value }))} placeholder="e.g. Photo ID and proof of address required, appointment needed, cash only" style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.82rem', marginBottom: '0.4rem', minHeight: '45px', resize: 'vertical', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-source`} style={{ display: 'block', color: '#4ecca3', fontSize: '0.75rem', marginBottom: '0.15rem', fontWeight: 600 }}>Where did you confirm this? (required)</label>
-                                <input id={`edit-${r.id}-source`} value={editDraft.source_url} onChange={e => setEditDraft(prev => ({ ...prev, source_url: e.target.value }))} placeholder="The organization's own website or social post" style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #4ecca3', background: '#222', color: '#fff', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box' }} />
+                              <div style={{ marginTop: '0.4rem', padding: '0.6rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.5rem', lineHeight: 1.4 }}>Fix anything that's out of date. Change only what's wrong -- everything else stays as-is.</p>
+                                <label htmlFor={`edit-${r.id}-name`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Name</label>
+                                <input id={`edit-${r.id}-name`} value={editDraft.name} onChange={e => setEditDraft(prev => ({ ...prev, name: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
+                                <label htmlFor={`edit-${r.id}-desc`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Description</label>
+                                <textarea id={`edit-${r.id}-desc`} value={editDraft.description} onChange={e => setEditDraft(prev => ({ ...prev, description: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', minHeight: '50px', resize: 'vertical', boxSizing: 'border-box' }} />
+                                <label htmlFor={`edit-${r.id}-phone`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Phone</label>
+                                <input id={`edit-${r.id}-phone`} value={editDraft.phone} onChange={e => setEditDraft(prev => ({ ...prev, phone: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
+                                <label htmlFor={`edit-${r.id}-url`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Website</label>
+                                <input id={`edit-${r.id}-url`} value={editDraft.url} onChange={e => setEditDraft(prev => ({ ...prev, url: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
+                                <label htmlFor={`edit-${r.id}-address`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Address</label>
+                                <input id={`edit-${r.id}-address`} value={editDraft.address} onChange={e => setEditDraft(prev => ({ ...prev, address: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
+                                <label htmlFor={`edit-${r.id}-requirements`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.15rem' }}>What to bring / barriers to know about</label>
+                                <textarea id={`edit-${r.id}-requirements`} value={editDraft.requirements} onChange={e => setEditDraft(prev => ({ ...prev, requirements: e.target.value }))} placeholder="e.g. Photo ID and proof of address required, appointment needed, cash only" style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', minHeight: '45px', resize: 'vertical', boxSizing: 'border-box' }} />
+                                <label htmlFor={`edit-${r.id}-source`} style={{ display: 'block', color: 'var(--accent)', fontSize: '0.75rem', marginBottom: '0.15rem', fontWeight: 600 }}>Where did you confirm this? (required)</label>
+                                <input id={`edit-${r.id}-source`} value={editDraft.source_url} onChange={e => setEditDraft(prev => ({ ...prev, source_url: e.target.value }))} placeholder="The organization's own website or social post" style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box' }} />
                                 <div style={{ display: 'flex', gap: '0.4rem' }}>
-                                  <button onClick={cancelEditForm} style={{ padding: '0.55rem 0.9rem', minHeight: '40px', borderRadius: '6px', border: '1px solid #444', background: 'none', color: '#aaa', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
-                                  <button onClick={() => submitResourceEdit(r)} disabled={!editDraft.source_url?.trim() || submittingEdit} style={{ padding: '0.55rem 0.9rem', minHeight: '40px', borderRadius: '6px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', opacity: (!editDraft.source_url?.trim() || submittingEdit) ? 0.5 : 1 }}>
+                                  <button onClick={cancelEditForm} style={{ padding: '0.55rem 0.9rem', minHeight: '40px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
+                                  <button onClick={() => submitResourceEdit(r)} disabled={!editDraft.source_url?.trim() || submittingEdit} style={{ padding: '0.55rem 0.9rem', minHeight: '40px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', opacity: (!editDraft.source_url?.trim() || submittingEdit) ? 0.5 : 1 }}>
                                     {submittingEdit ? 'Saving...' : 'Save correction'}
                                   </button>
                                 </div>
@@ -647,7 +647,7 @@ export default function CommunityResources() {
 
           {!loadingResources && filteredVerifiedResources.length === 0 && (
             <>
-              <p style={{ textAlign: 'center', color: '#8a8a8a', padding: '1.5rem 1.5rem 0.75rem' }}>
+              <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 1.5rem 0.75rem' }}>
                 {query.trim() ? 'Nothing found for "' + query.trim() + '". Try a shorter word, or ask for help and a neighbor can point you the right way.' : (orgFilter !== 'all' || regionFilter !== 'all' || radiusFilter !== 'all') ? 'No resources match your filters -- try widening them.' : 'No resources yet. Be the first to add one.'}
               </p>
               {query.trim() && user && (

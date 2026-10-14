@@ -329,7 +329,7 @@ function captureCoverageLocation() {
         <div className="profile-header-section">
           <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label="Change avatar" style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
             <AvatarPreview url={profile?.avatar_url} size={80} />
-            <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#4ecca3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#1a1a1a', fontWeight: 700, border: '2px solid #1a1a1a' }}>
+            <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--on-accent)', fontWeight: 700, border: '2px solid #1a1a1a' }}>
               {'✎'}
             </div>
           </button>
@@ -490,12 +490,12 @@ function captureCoverageLocation() {
         {error && <p className="form-error" role="alert" style={{ marginTop: '1rem' }}>{error}</p>}
 
         {isAdmin && !profile?.admin_latitude && (
-          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid #66aaff', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
-            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: '#66aaff' }}>Set up your coverage area</h2>
-            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Emergency dispute reviews (a false alarm or duplicate flag) route to the nearest admin, so add your area and share your location to catch the ones near you. Reports about a person or message go to every admin right away, wherever they're located.</p>
+          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
+            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>Set up your coverage area</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Emergency dispute reviews (a false alarm or duplicate flag) route to the nearest admin, so add your area and share your location to catch the ones near you. Reports about a person or message go to every admin right away, wherever they're located.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <input type="text" placeholder="What area do you cover? (towns or counties)" value={coverageRegion} onChange={e => setCoverageRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
-              <button type="button" className="btn btn-outline" onClick={captureCoverageLocation} disabled={coverageLocating} style={{ borderColor: '#66aaff', color: '#66aaff' }}>
+              <input type="text" placeholder="What area do you cover? (towns or counties)" value={coverageRegion} onChange={e => setCoverageRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
+              <button type="button" className="btn btn-outline" onClick={captureCoverageLocation} disabled={coverageLocating} style={{ borderColor: 'var(--info)', color: 'var(--info)' }}>
                 {coverageLocating ? 'Getting your location...' : coverageLat != null ? '✓ Location captured' : 'Share my location'}
               </button>
               {coverageError && <p className="form-error" role="alert">{coverageError}</p>}
@@ -506,15 +506,15 @@ function captureCoverageLocation() {
           </div>
         )}
         {profile?.is_hope_ambassador && !isAdmin && !adminAppStatus && (
-          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid #66aaff', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
-            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: '#66aaff' }}>Apply to become an Admin</h2>
-            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Admins help coordinate responses in their region and keep the community safe.</p>
+          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
+            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>Apply to become an Admin</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Admins help coordinate responses in their region and keep the community safe.</p>
             {!showAdminApp ? (
-              <button className="btn btn-outline btn-full" onClick={() => setShowAdminApp(true)} style={{ borderColor: '#66aaff', color: '#66aaff' }}>Start Application</button>
+              <button className="btn btn-outline btn-full" onClick={() => setShowAdminApp(true)} style={{ borderColor: 'var(--info)', color: 'var(--info)' }}>Start Application</button>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <input type="text" placeholder="What area would you cover? (towns or counties)" value={adminAppRegion} onChange={e => setAdminAppRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem' }} />
-                <textarea placeholder="Why do you want to help coordinate? What experience do you bring?" value={adminAppReason} onChange={e => setAdminAppReason(e.target.value)} rows={3} maxLength={500} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '0.85rem', resize: 'vertical' }} />
+                <input type="text" placeholder="What area would you cover? (towns or counties)" value={adminAppRegion} onChange={e => setAdminAppRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
+                <textarea placeholder="Why do you want to help coordinate? What experience do you bring?" value={adminAppReason} onChange={e => setAdminAppReason(e.target.value)} rows={3} maxLength={500} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', resize: 'vertical' }} />
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button className="btn btn-outline" onClick={() => { setShowAdminApp(false); setAdminAppRegion(''); setAdminAppReason('') }} disabled={adminAppSaving}>Cancel</button>
                   <button className="btn btn-primary" onClick={submitAdminApplication} disabled={adminAppSaving || !adminAppRegion.trim() || !adminAppReason.trim()} style={{ flex: 1 }}>{adminAppSaving ? 'Submitting...' : 'Submit Application'}</button>
@@ -524,9 +524,9 @@ function captureCoverageLocation() {
           </div>
         )}
         {adminAppStatus === 'invited' && (
-          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid #66aaff', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
-            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: '#66aaff' }}>You've been invited to become an Admin</h2>
-            <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>An admin thinks you'd be a good fit to help coordinate responses in your area. Accepting sends this back to them for final confirmation.</p>
+          <div style={{ background: 'linear-gradient(135deg, #1a2a4a, #2a3a5a)', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
+            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>You've been invited to become an Admin</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>An admin thinks you'd be a good fit to help coordinate responses in your area. Accepting sends this back to them for final confirmation.</p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button className="btn btn-outline" onClick={() => respondToAdminInvite(false)} disabled={adminAppSaving} style={{ flex: 1 }}>Decline</button>
               <button className="btn btn-primary" onClick={() => respondToAdminInvite(true)} disabled={adminAppSaving} style={{ flex: 1 }}>Accept</button>
@@ -534,29 +534,29 @@ function captureCoverageLocation() {
           </div>
         )}
         {adminAppStatus === 'pending' && (
-          <div style={{ background: '#1a2a4a', border: '1px solid #66aaff', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
-            <p style={{ color: '#66aaff', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your admin application is under review</p>
+          <div style={{ background: '#1a2a4a', border: '1px solid var(--info)', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
+            <p style={{ color: 'var(--info)', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your admin application is under review</p>
           </div>
         )}
         {adminAppStatus === 'declined' && (
-          <div style={{ background: '#2a1a1a', border: '1px solid #ff6666', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
-            <p style={{ color: '#ff6666', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your application was not approved at this time</p>
+          <div style={{ background: '#2a1a1a', border: '1px solid var(--danger)', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
+            <p style={{ color: 'var(--danger)', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your application was not approved at this time</p>
           </div>
         )}
 
-        <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'linear-gradient(135deg, #1a4a3a, #2d5a45)', border: '2px solid #4ecca3', borderRadius: '12px', textDecoration: 'none', marginTop: '0.75rem' }}>
+        <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'linear-gradient(135deg, var(--success-bg), #2d5a45)', border: '2px solid var(--accent)', borderRadius: '12px', textDecoration: 'none', marginTop: '0.75rem' }}>
           <img src="/images/vwb_header.png" alt="VWB" style={{ height: '40px', borderRadius: '50%' }} />
           <div>
-            <span style={{ display: 'block', color: '#4ecca3', fontWeight: 700, fontSize: '0.95rem' }}>Village Without Borders</span>
+            <span style={{ display: 'block', color: 'var(--accent)', fontWeight: 700, fontSize: '0.95rem' }}>Village Without Borders</span>
             <span style={{ color: '#8fc', fontSize: '0.75rem' }}>Visit our website &#8599;</span>
           </div>
         </a>
 
-        <button onClick={() => navigate('/connections')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid #4ecca3', borderRadius: '10px', padding: '0.6rem', minHeight: '44px', marginTop: '0.75rem', color: '#4ecca3', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
+        <button onClick={() => navigate('/connections')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid var(--accent)', borderRadius: '10px', padding: '0.6rem', minHeight: '44px', marginTop: '0.75rem', color: 'var(--accent)', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
           My Connections
         </button>
 
-        <button onClick={() => navigate('/help')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid #444', borderRadius: '10px', padding: '0.6rem', marginTop: '0.75rem', color: '#aaa', fontSize: '0.85rem', cursor: 'pointer' }}>
+        <button onClick={() => navigate('/help')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid var(--border-strong)', borderRadius: '10px', padding: '0.6rem', marginTop: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', cursor: 'pointer' }}>
           Help &amp; Feedback
         </button>
       </div>
@@ -568,7 +568,7 @@ function captureCoverageLocation() {
       <div className="profile-header-section">
         <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label="Change avatar" style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
           <AvatarPreview url={profile?.avatar_url} size={80} />
-          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#4ecca3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#1a1a1a', fontWeight: 700, border: '2px solid #1a1a1a' }}>
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--on-accent)', fontWeight: 700, border: '2px solid #1a1a1a' }}>
             {'✎'}
           </div>
         </button>

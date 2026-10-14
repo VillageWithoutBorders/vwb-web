@@ -127,12 +127,12 @@ export default function JoinOrg() {
         {!notFound && !done && invite?.status === 'pending' && (
           <form onSubmit={handleSubmit} className="login-form">
             {councilName && (
-              <p style={{ color: '#4ecca3', fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.75rem' }}>{councilName} invited your group to join. You can link with them after you are approved. You choose, and you can end it any time.</p>
+              <p style={{ color: 'var(--accent)', fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.75rem' }}>{councilName} invited your group to join. You can link with them after you are approved. You choose, and you can end it any time.</p>
             )}
             {invite.note && (
-              <p style={{ color: '#aaa', fontSize: '0.85rem', margin: '0 0 0.75rem', fontStyle: 'italic' }}>&ldquo;{invite.note}&rdquo;</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem', fontStyle: 'italic' }}>&ldquo;{invite.note}&rdquo;</p>
             )}
-            <p style={{ color: '#999', fontSize: '0.85rem', margin: '0 0 1rem' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 1rem' }}>
               Tell us about your organization.{!user ? " You'll make (or sign in to) a Village Without Borders account next." : ''} A founder or admin reviews every new organization before it shows up for neighbors, same as usual.
             </p>
 

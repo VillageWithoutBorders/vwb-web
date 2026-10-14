@@ -2,7 +2,7 @@
 // Email opens the phone's mail app (mailto:). Only http(s) addresses become
 // web links. Everything else stays plain text, so nothing can be injected.
 const PATTERN = /(https?:\/\/[^\s<]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)/g
-const linkStyle = { color: '#4ecca3', overflowWrap: 'anywhere' }
+const linkStyle = { color: 'var(--accent)', overflowWrap: 'anywhere' }
 
 export default function Linkify({ text }) {
   if (!text) return null

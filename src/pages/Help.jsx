@@ -26,7 +26,7 @@ export default function Help() {
   return (
     <div className="help-page">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Help &amp; Feedback</h1>
       </div>
 
@@ -85,7 +85,7 @@ export default function Help() {
         <h2>Report a problem or share an idea</h2>
         <p>Something broken, confusing, or unsafe? Tell us. Your idea about what your community needs is welcome too. To report a person, use the Report button on their profile.</p>
         {feedbackSent ? (
-          <p style={{ color: '#4ecca3', fontWeight: 600 }}>Thank you! We got it and an admin will read it.</p>
+          <p style={{ color: 'var(--accent)', fontWeight: 600 }}>Thank you! We got it and an admin will read it.</p>
         ) : (
           <>
             <div role="radiogroup" aria-label="What kind of message is this?" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -96,7 +96,7 @@ export default function Help() {
                   role="radio"
                   aria-checked={feedbackKind === k}
                   onClick={() => setFeedbackKind(k)}
-                  style={{ flex: 1, minHeight: '44px', padding: '0.5rem', borderRadius: '8px', border: feedbackKind === k ? '2px solid #4ecca3' : '1px solid #444', background: feedbackKind === k ? '#1d3a31' : '#222', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ flex: 1, minHeight: '44px', padding: '0.5rem', borderRadius: '8px', border: feedbackKind === k ? '2px solid var(--accent)' : '1px solid var(--border-strong)', background: feedbackKind === k ? '#1d3a31' : 'var(--surface-2)', color: 'var(--text-strong)', fontWeight: 600, cursor: 'pointer' }}
                 >{label}</button>
               ))}
             </div>
@@ -107,12 +107,12 @@ export default function Help() {
               aria-label={feedbackKind === 'problem' ? 'Describe the problem' : 'Describe your idea'}
               rows={4}
               maxLength={2000}
-              style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem', resize: 'vertical', marginBottom: '0.5rem', boxSizing: 'border-box' }}
+              style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', resize: 'vertical', marginBottom: '0.5rem', boxSizing: 'border-box' }}
             />
             <button
               disabled={!feedbackText.trim() || sendingFeedback}
               onClick={submitFeedback}
-              style={{ minHeight: '44px', padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', opacity: (!feedbackText.trim() || sendingFeedback) ? 0.5 : 1 }}
+              style={{ minHeight: '44px', padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: (!feedbackText.trim() || sendingFeedback) ? 0.5 : 1 }}
             >
               {sendingFeedback ? 'Sending...' : 'Send'}
             </button>

@@ -557,25 +557,25 @@ export default function ActiveTasks() {
     if (!ending || ending.matchId !== matchId) return null
     const reasons = END_REASONS[isRequester ? 'requester' : 'helper']
     return (
-      <div style={{ marginTop: '0.6rem', padding: '0.75rem', background: '#1d1d1d', border: '1px solid #444', borderRadius: '8px' }}>
-        <div style={{ color: '#eee', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+      <div style={{ marginTop: '0.6rem', padding: '0.75rem', background: '#1d1d1d', border: '1px solid var(--border-strong)', borderRadius: '8px' }}>
+        <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.35rem' }}>
           {isRequester ? 'End ' + otherName + "'s help?" : 'Step back from this task?'}
         </div>
-        <p style={{ color: '#aaa', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>
           {isRequester
             ? 'Your request goes back on the feed if it still needs helpers. They are told you closed it out, but not why.'
             : 'The request goes back on the feed so someone else can offer. They are told you can no longer help, but not why.'}
         </p>
         <div role="radiogroup" aria-label="Reason" style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
           {reasons.map(r => (
-            <label key={r.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ddd', fontSize: '0.85rem', cursor: 'pointer' }}>
+            <label key={r.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text)', fontSize: '0.85rem', cursor: 'pointer' }}>
               <input type="radio" name={'end-reason-' + matchId} value={r.value} checked={endReason === r.value} onChange={() => setEndReason(r.value)} />
               {r.label}
             </label>
           ))}
         </div>
         {ADMIN_SEES.includes(endReason) && (
-          <p style={{ color: '#ffaa44', fontSize: '0.78rem', margin: '0.5rem 0 0' }}>An admin will be told, so they can look into it.</p>
+          <p style={{ color: 'var(--warn)', fontSize: '0.78rem', margin: '0.5rem 0 0' }}>An admin will be told, so they can look into it.</p>
         )}
         <textarea
           value={endNote}
@@ -583,7 +583,7 @@ export default function ActiveTasks() {
           maxLength={500}
           placeholder="Anything else you want to share? (optional, only admins see it)"
           aria-label="Anything else you want to share"
-          style={{ width: '100%', marginTop: '0.6rem', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem', minHeight: '3.5rem', boxSizing: 'border-box' }}
+          style={{ width: '100%', marginTop: '0.6rem', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '3.5rem', boxSizing: 'border-box' }}
         />
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
           <button className="btn btn-primary btn-sm" disabled={!endReason || endBusy} onClick={confirmEnd}>
@@ -601,9 +601,9 @@ export default function ActiveTasks() {
       return <div style={{ marginTop: '0.5rem' }}><VouchButton userId={otherUserId} size="sm" showCount={true} /></div>
     }
     const answer = myFeedback[matchId]
-    const box = { marginTop: '0.6rem', padding: '0.75rem', background: '#1a2e26', border: '1px solid #2d6a4f', borderRadius: '8px' }
-    const title = { color: '#eee', fontWeight: 600, fontSize: '0.9rem' }
-    const small = { color: '#aaa', fontSize: '0.8rem', margin: '0.25rem 0 0.5rem' }
+    const box = { marginTop: '0.6rem', padding: '0.75rem', background: 'var(--success-bg)', border: '1px solid #2d6a4f', borderRadius: '8px' }
+    const title = { color: 'var(--text)', fontWeight: 600, fontSize: '0.9rem' }
+    const small = { color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.25rem 0 0.5rem' }
     const waiting = ratedReady && !bothRated[matchId]
       ? <p style={{ ...small, marginBottom: 0, fontStyle: 'italic' }}>Waiting for {otherName} to answer. This task moves to Archived once you have both answered.</p>
       : null
@@ -638,7 +638,7 @@ export default function ActiveTasks() {
             maxLength={500}
             placeholder="Tell us in your own words (optional)"
             aria-label="What happened"
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #444', background: '#111', color: '#eee', fontSize: '0.85rem', minHeight: '4rem', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '4rem', boxSizing: 'border-box' }}
           />
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
             <button className="btn btn-primary btn-sm" disabled={feedbackBusy} onClick={() => submitFeedback(matchId, 'went_wrong')}>
@@ -710,8 +710,8 @@ export default function ActiveTasks() {
       </div>
 
       {notice && (
-        <p role="status" style={{ margin: '0 0 1rem', padding: '0.75rem', background: '#1a2e26', border: '1px solid #2d6a4f', borderRadius: '8px', color: '#7fe0bf' }}>
-          {notice} <button type="button" onClick={() => setNotice('')} style={{ background: 'none', border: 'none', color: '#aaa', textDecoration: 'underline', minHeight: 44, cursor: 'pointer', font: 'inherit' }}>Dismiss</button>
+        <p role="status" style={{ margin: '0 0 1rem', padding: '0.75rem', background: 'var(--success-bg)', border: '1px solid #2d6a4f', borderRadius: '8px', color: 'var(--accent)' }}>
+          {notice} <button type="button" onClick={() => setNotice('')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', textDecoration: 'underline', minHeight: 44, cursor: 'pointer', font: 'inherit' }}>Dismiss</button>
         </p>
       )}
 
@@ -737,7 +737,7 @@ export default function ActiveTasks() {
           {/* ========== Requests I Made ========== */}
           {currentRequests.length > 0 && (
             <>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4ecca3', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: '0.25rem' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: '0.25rem' }}>
                 Your Requests
               </div>
               {currentRequests.map(req => (
@@ -785,7 +785,7 @@ export default function ActiveTasks() {
                             <option value="168">7 days</option>
                           </select>
                         </label>
-                        {narrowNote && <p role="alert" style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#ffaa44' }}>{narrowNote}</p>}
+                        {narrowNote && <p role="alert" style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: 'var(--warn)' }}>{narrowNote}</p>}
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                           <button className="btn btn-primary btn-sm" disabled={narrowBusy} style={{ flex: 1, minHeight: '44px' }} onClick={() => narrowToGroup(req.id)}>{narrowBusy ? 'Saving...' : 'Keep it with my group'}</button>
                           <button className="btn btn-outline btn-sm" style={{ flex: 1, minHeight: '44px' }} onClick={() => { setNarrowing(null); setNarrowNote('') }}>Cancel</button>
@@ -805,7 +805,7 @@ export default function ActiveTasks() {
                       {req.pending.map(m => (
                         <div key={m.id} className="offer-wait">
                           <p className="offer-wait-text">
-                            <UserName userId={m.helper_id} name={m.helper_name} style={{ fontWeight: 700, color: '#fff' }} /> offered to help. Say yes?
+                            <UserName userId={m.helper_id} name={m.helper_name} style={{ fontWeight: 700, color: 'var(--text-strong)' }} /> offered to help. Say yes?
                             {m.is_ambassador && <span className="offer-wait-chip">Hope Ambassador</span>}
                           </p>
                           <button type="button" className="offer-wait-profile" onClick={() => navigate('/u/' + m.helper_id)}>See {m.helper_name}&apos;s profile first</button>
@@ -817,13 +817,13 @@ export default function ActiveTasks() {
                       ))}
                     </div>
                   )}
-                  <div style={{ fontSize: '0.8rem', color: '#aaa', margin: '0.5rem 0' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.5rem 0' }}>
                     {req.matches.length === 0
                       ? ((req.pending || []).length > 0 ? '' : 'Waiting for a neighbor to offer')
                       : `${req.matches.length} helper${req.matches.length !== 1 ? 's' : ''} accepted`
                     }
                     {req.max_helpers !== null && req.matches.length > 0 && (
-                      <span style={{ color: '#888' }}> (of {req.max_helpers})</span>
+                      <span style={{ color: 'var(--text-muted)' }}> (of {req.max_helpers})</span>
                     )}
                   </div>
 
@@ -833,18 +833,18 @@ export default function ActiveTasks() {
                       {req.matches.map(match => {
                         const bothDone = match.helper_completed && match.requester_completed
                         return (
-                          <div key={match.id} style={{ background: bothDone ? '#1a2e26' : '#222', border: '1px solid ' + (bothDone ? '#2d6a4f' : '#333'), borderRadius: '8px', padding: '0.6rem 0.75rem' }}>
+                          <div key={match.id} style={{ background: bothDone ? 'var(--success-bg)' : 'var(--surface-2)', border: '1px solid ' + (bothDone ? '#2d6a4f' : 'var(--border)'), borderRadius: '8px', padding: '0.6rem 0.75rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.35rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={match.helper_avatar} userId={match.helper_id} size={28} /><UserName userId={match.helper_id} name={match.helper_name} style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }} /></div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={match.helper_avatar} userId={match.helper_id} size={28} /><UserName userId={match.helper_id} name={match.helper_name} style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }} /></div>
                                 {match.is_ambassador && (
-                                  <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>HA</span>
+                                  <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>HA</span>
                                 )}
                               </div>
                               {bothDone ? (
-                                <span style={{ fontSize: '0.75rem', color: '#4ecca3', fontWeight: 600 }}>✅ Complete</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600 }}>✅ Complete</span>
                               ) : (
-                                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.7rem', color: '#999' }}>
+                                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                                   <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
                                   <span>{match.helper_completed ? 'Helper done' : 'Helper working'}</span>
                                   <span style={{ margin: '0 0.15rem' }}>&middot;</span>
@@ -894,7 +894,7 @@ export default function ActiveTasks() {
                   {showActive && !req.archived_at && (
                     <button
                       className="btn btn-outline btn-sm"
-                      style={{ color: '#ff6666', borderColor: '#ff6666', marginTop: '0.25rem' }}
+                      style={{ color: 'var(--danger)', borderColor: 'var(--danger)', marginTop: '0.25rem' }}
                       onClick={() => deleteRequest(req.id)}
                     >
                       Archive request
@@ -914,21 +914,21 @@ export default function ActiveTasks() {
 
                   {/* Delete for good */}
                   {deletingId === req.id ? (
-                    <div role="alert" style={{ marginTop: '0.5rem', padding: '0.75rem', border: '1px solid #ff6666', borderRadius: '8px' }}>
+                    <div role="alert" style={{ marginTop: '0.5rem', padding: '0.75rem', border: '1px solid var(--danger)', borderRadius: '8px' }}>
                       <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>Delete this request for good? It can't be undone.{' '}
                         {req.matches.some(m => m.helper_completed && m.requester_completed)
                           ? 'This task is finished. Deleting it also removes the record that you helped each other, so you cannot vouch for that person on that basis later. Vouches already given stay.'
                           : 'Neighbors who said yes will be told it was removed.'}</p>
-                      {deleteNote && <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: '#ffaa44' }}>{deleteNote}</p>}
+                      {deleteNote && <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: 'var(--warn)' }}>{deleteNote}</p>}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <button className="btn btn-sm" disabled={deleteBusy} style={{ flex: 1, minHeight: '44px', background: '#c0392b', color: '#fff', border: 'none' }} onClick={() => deleteRequestForGood(req.id)}>{deleteBusy ? 'Deleting...' : 'Yes, delete'}</button>
+                        <button className="btn btn-sm" disabled={deleteBusy} style={{ flex: 1, minHeight: '44px', background: 'var(--error)', color: '#fff', border: 'none' }} onClick={() => deleteRequestForGood(req.id)}>{deleteBusy ? 'Deleting...' : 'Yes, delete'}</button>
                         <button className="btn btn-outline btn-sm" style={{ flex: 1, minHeight: '44px' }} onClick={() => { setDeletingId(null); setDeleteNote('') }}>Keep it</button>
                       </div>
                     </div>
                   ) : (
                     <button
                       className="btn btn-outline btn-sm"
-                      style={{ color: '#ff6666', borderColor: '#ff6666', marginTop: '0.25rem', marginLeft: '0.5rem' }}
+                      style={{ color: 'var(--danger)', borderColor: 'var(--danger)', marginTop: '0.25rem', marginLeft: '0.5rem' }}
                       onClick={() => { setDeleteNote(''); setDeletingId(req.id) }}
                     >
                       Delete request
@@ -957,13 +957,13 @@ export default function ActiveTasks() {
 
                     <div className="task-card-skill">{req.skill_needed}</div>
                     {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
-                    <div style={{ fontSize: '0.8rem', color: '#999', marginBottom: '0.25rem' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><AvatarDisplay url={null} userId={match.request?.requester_id} size={20} /> Requested by <UserName userId={match.request?.requester_id} name={match.requester_name} /></span>
                     </div>
                     <p className="task-card-desc">{req.description}</p>
 
                     {!bothDone && (
-                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.75rem', color: '#999', margin: '0.5rem 0' }}>
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.5rem 0' }}>
                         <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
                         <span>{match.helper_completed ? 'You confirmed' : 'You pending'}</span>
                         <span style={{ margin: '0 0.15rem' }}>&middot;</span>
@@ -973,7 +973,7 @@ export default function ActiveTasks() {
                     )}
 
                     {bothDone && (
-                      <div style={{ fontSize: '0.8rem', color: '#4ecca3', fontWeight: 600, margin: '0.5rem 0' }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--accent)', fontWeight: 600, margin: '0.5rem 0' }}>
                         ✅ Complete
                       </div>
                     )}

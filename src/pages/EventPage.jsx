@@ -322,7 +322,7 @@ export default function EventPage() {
             <span>
               Online event. Anyone can join from anywhere.
               {ev.online_link && /^https?:\/\//i.test(ev.online_link)
-                ? <><br /><a href={ev.online_link} target="_blank" rel="noopener noreferrer" style={{ color: '#4ecca3', wordBreak: 'break-all' }}>{ev.online_link}</a></>
+                ? <><br /><a href={ev.online_link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', wordBreak: 'break-all' }}>{ev.online_link}</a></>
                 : ev.hide_address ? <><br /><em style={{ color: 'var(--text-secondary)' }}>The link is shared with people who sign up.</em></> : null}
             </span>
           </div>
@@ -331,7 +331,7 @@ export default function EventPage() {
           <span aria-hidden="true">&#128205;</span>
           <span>
             {mapLink(ev) && (ev.location_name || ev.address) ? (
-              <a href={mapLink(ev)} {...(mapLink(ev).startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})} style={{ color: '#4ecca3' }}>
+              <a href={mapLink(ev)} {...(mapLink(ev).startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})} style={{ color: 'var(--accent)' }}>
                 {[ev.location_name, ev.address].filter(Boolean).join(', ')}
                 {ev.town ? <><br />{ev.town}</> : null}
               </a>
@@ -398,7 +398,7 @@ export default function EventPage() {
             {ev.signup_limit != null && (
               <p className="cal-sub" style={{ marginTop: 0 }}>{ev.signup_count} of {ev.signup_limit} spots filled</p>
             )}
-            {message && <p role="status" style={{ color: '#7fe0bf' }}>{message}</p>}
+            {message && <p role="status" style={{ color: 'var(--accent)' }}>{message}</p>}
             {past ? (
               <p className="cal-sub">This event has already happened.</p>
             ) : full && !ev.is_signed_up ? (
@@ -410,7 +410,7 @@ export default function EventPage() {
               </div>
             ) : ev.is_signed_up ? (
               <div className="cal-actions">
-                <p style={{ margin: 0, fontWeight: 700, color: '#7fe0bf' }}>You're signed up.</p>
+                <p style={{ margin: 0, fontWeight: 700, color: 'var(--accent)' }}>You're signed up.</p>
                 <button type="button" className="btn btn-outline btn-full" onClick={cancelSignup} disabled={busy}>Cancel my sign-up</button>
               </div>
             ) : (
@@ -526,7 +526,7 @@ export default function EventPage() {
                       <li key={p.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', minHeight: '44px' }}>
                         <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
                           <UserName userId={p.user_id} name={p.display_name} />
-                          {p.signed_up ? <span style={{ color: '#7fe0bf' }}> (signed up)</span> : <span style={{ color: 'var(--text-secondary)' }}> (invited)</span>}
+                          {p.signed_up ? <span style={{ color: 'var(--accent)' }}> (signed up)</span> : <span style={{ color: 'var(--text-secondary)' }}> (invited)</span>}
                         </span>
                         <span style={{ display: 'flex', gap: '0.5rem', flex: 'none' }}>
                           {!blockedBy.has(p.user_id) && <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => messagePerson(p)}>Message</button>}
@@ -546,9 +546,9 @@ export default function EventPage() {
                   <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.6 }}>
                     {signups.map((s) => (
                       <li key={s.user_id}>
-                        <UserName userId={s.user_id} name={s.display_name} style={{ color: '#4ecca3' }} />
+                        <UserName userId={s.user_id} name={s.display_name} style={{ color: 'var(--accent)' }} />
                         {s.note ? <span style={{ color: 'var(--text-secondary)' }}>: {s.note}</span> : null}
-                        {!blockedBy.has(s.user_id) && <> <button type="button" className="link-button" style={{ minHeight: '44px', color: '#4ecca3' }} onClick={() => messagePerson(s)}>Message</button></>}
+                        {!blockedBy.has(s.user_id) && <> <button type="button" className="link-button" style={{ minHeight: '44px', color: 'var(--accent)' }} onClick={() => messagePerson(s)}>Message</button></>}
                       </li>
                     ))}
                   </ul>

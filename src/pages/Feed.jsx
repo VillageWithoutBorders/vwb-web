@@ -407,10 +407,10 @@ export default function Feed() {
                                             <span className="urgency-badge" style={{ background: '#2d6a4f', color: '#fff' }}>Your request</span>
                                         )}
                                         {req.audience && req.audience !== 'everyone' && (!req.opens_to_all_at || new Date(req.opens_to_all_at) > new Date()) && (
-                                            <span className="urgency-badge" style={{ background: '#3a4a7a', color: '#fff' }}>{req.audience === 'network' ? 'From your network' : 'From your group'}</span>
+                                            <span className="urgency-badge" style={{ background: '#3a4a7a', color: 'var(--text-strong)' }}>{req.audience === 'network' ? 'From your network' : 'From your group'}</span>
                                         )}
                                         {isPending && (
-                                            <span className="urgency-badge" style={{ background: '#b8860b', color: '#fff' }}>Pending</span>
+                                            <span className="urgency-badge" style={{ background: '#b8860b', color: 'var(--text-strong)' }}>Pending</span>
                                         )}
                                         <span className="feed-card-time">{timeAgo(req.created_at)}</span>
                                     </div>
@@ -424,12 +424,12 @@ export default function Feed() {
                                         <UserName userId={req.requester_id} name={req.requester_name || 'A neighbor'} className="feed-card-name" />
                                         {req.neighborhood && <span className="feed-card-hood"> in {req.neighborhood}</span>}
                                         {req.is_ambassador && (
-                                            <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>
+                                            <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>
                                                 Hope Ambassador
                                             </span>
                                         )}
                                         {req.member_since && (
-                                            <span style={{ color: '#8a8a8a', fontSize: '0.7rem', marginLeft: '0.35rem' }}>
+                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginLeft: '0.35rem' }}>
                                                 Member since {new Date(req.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                                             </span>
                                         )}
@@ -442,7 +442,7 @@ export default function Feed() {
                                     )}
 
                                     {/* Helper count status */}
-                                    <div style={{ fontSize: '0.75rem', color: isFull ? '#2d6a4f' : '#888', marginTop: '0.25rem' }}>
+                                    <div style={{ fontSize: '0.75rem', color: isFull ? '#2d6a4f' : 'var(--text-muted)', marginTop: '0.25rem' }}>
                                         {isFull ? "✅ " : "🤝 "}{helperStatus}
                                     </div>
 
@@ -503,12 +503,12 @@ export default function Feed() {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                                             <UserName userId={offer.user_id} name={offer.poster_name} className="feed-card-name" />
                                             {offer.is_ambassador && (
-                                                <span style={{ background: '#1a4a3a', color: '#4ecca3', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
+                                                <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
                                                     Hope Ambassador
                                                 </span>
                                             )}
                                             {offer.member_since && (
-                                                <span style={{ color: '#8a8a8a', fontSize: '0.7rem' }}>
+                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
                                                     Member since {new Date(offer.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                                                 </span>
                                             )}

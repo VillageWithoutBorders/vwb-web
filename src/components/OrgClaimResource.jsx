@@ -4,7 +4,7 @@ import AddressLink from './AddressLink'
 
 // An organizer finds a resource in the Library and asks to claim it. An admin
 // reviews every claim, so a fake claim can't take over a real listing.
-const inputStyle = { display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem', fontFamily: 'inherit' }
+const inputStyle = { display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', fontFamily: 'inherit' }
 
 export default function OrgClaimResource({ orgId, onDone }) {
   const [open, setOpen] = useState(false)
@@ -40,7 +40,7 @@ export default function OrgClaimResource({ orgId, onDone }) {
     if (onDone) onDone()
   }
 
-  const btn = { minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: '#4ecca3', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }
+  const btn = { minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }
 
   if (!open) {
     return (
@@ -52,24 +52,24 @@ export default function OrgClaimResource({ orgId, onDone }) {
   }
 
   return (
-    <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#1e1e1e', border: '1px solid #4ecca3', borderRadius: '10px' }}>
+    <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--accent)', borderRadius: '10px' }}>
       <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.05rem' }}>Claim a resource</h3>
-      <p style={{ margin: '0 0 0.6rem', fontSize: '0.9rem', color: '#ccc' }}>Find it by name. An admin approves every claim. Once approved, your organizers can edit it.</p>
+      <p style={{ margin: '0 0 0.6rem', fontSize: '0.9rem', color: 'var(--text-soft)' }}>Find it by name. An admin approves every claim. Once approved, your organizers can edit it.</p>
       <form onSubmit={search}>
         <label htmlFor="claim-q" style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Resource name</label>
         <input id="claim-q" type="search" autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} style={inputStyle} />
         <button type="submit" disabled={busy} style={{ ...btn, marginBottom: '0.6rem' }}>{busy && !picked ? 'Searching...' : 'Search'}</button>
       </form>
-      {results && results.length === 0 && <p style={{ fontSize: '0.9rem', color: '#ccc' }}>Nothing found. If it is not listed, use Add resource instead.</p>}
+      {results && results.length === 0 && <p style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>Nothing found. If it is not listed, use Add resource instead.</p>}
       {results && results.length > 0 && !picked && (
         <ul style={{ listStyle: 'none', margin: '0 0 0.6rem', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
           {results.map((r) => (
             <li key={r.id}>
-              <button type="button" disabled={r.claim_waiting} onClick={() => setPicked(r)} style={{ width: '100%', textAlign: 'left', minHeight: '48px', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', fontSize: '1rem', cursor: r.claim_waiting ? 'default' : 'pointer', overflowWrap: 'anywhere' }}>
+              <button type="button" disabled={r.claim_waiting} onClick={() => setPicked(r)} style={{ width: '100%', textAlign: 'left', minHeight: '48px', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', cursor: r.claim_waiting ? 'default' : 'pointer', overflowWrap: 'anywhere' }}>
                 <strong>{r.name}</strong>
-                {r.address && <span style={{ display: 'block', fontSize: '0.85rem', color: '#aaa' }}><AddressLink address={r.address} /></span>}
-                {r.held_by && <span style={{ display: 'block', fontSize: '0.85rem', color: '#e0b84c' }}>Now listed under {r.held_by}. An admin will decide.</span>}
-                {r.claim_waiting && <span style={{ display: 'block', fontSize: '0.85rem', color: '#e0b84c' }}>You already asked. Waiting for an admin.</span>}
+                {r.address && <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)' }}><AddressLink address={r.address} /></span>}
+                {r.held_by && <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--gold)' }}>Now listed under {r.held_by}. An admin will decide.</span>}
+                {r.claim_waiting && <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--gold)' }}>You already asked. Waiting for an admin.</span>}
               </button>
             </li>
           ))}
@@ -81,13 +81,13 @@ export default function OrgClaimResource({ orgId, onDone }) {
           <label htmlFor="claim-why" style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>How do you run or manage this? (helps the admin check)</label>
           <textarea id="claim-why" rows={3} maxLength={500} value={why} onChange={(e) => setWhy(e.target.value)} style={inputStyle} />
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button type="submit" disabled={busy} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>{busy ? 'Sending...' : 'Send claim'}</button>
-            <button type="button" onClick={() => setPicked(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#ccc', fontSize: '1rem', cursor: 'pointer' }}>Back</button>
+            <button type="submit" disabled={busy} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>{busy ? 'Sending...' : 'Send claim'}</button>
+            <button type="button" onClick={() => setPicked(null)} style={{ flex: 1, minHeight: '48px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontSize: '1rem', cursor: 'pointer' }}>Back</button>
           </div>
         </form>
       )}
       {msg && <p role="status" style={{ margin: '0.5rem 0 0', fontSize: '0.9rem' }}>{msg}</p>}
-      <button type="button" onClick={reset} style={{ marginTop: '0.5rem', minHeight: '44px', padding: '0 0.25rem', background: 'none', border: 'none', color: '#aaa', fontSize: '1rem', cursor: 'pointer' }}>Close</button>
+      <button type="button" onClick={reset} style={{ marginTop: '0.5rem', minHeight: '44px', padding: '0 0.25rem', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1rem', cursor: 'pointer' }}>Close</button>
     </div>
   )
 }

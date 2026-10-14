@@ -30,10 +30,10 @@ export default function Terms() {
   return (
     <div className="help-page" style={{ maxWidth: '720px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: '#4ecca3', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Terms of Use</h1>
       </div>
-      <p style={{ color: '#8a8a8a', fontSize: '0.85rem', margin: '0.25rem 0 1.5rem' }}>Last updated: September 2026</p>
+      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 1.5rem' }}>Last updated: September 2026</p>
 
       <div className="help-section">
         <p>Welcome to Village Without Borders (VWB). This platform connects neighbors who need help with neighbors who can give it. We are a mutual aid community, not a charity or a government service. By using this app, you agree to the terms below.</p>
@@ -317,7 +317,7 @@ export default function Terms() {
       </details>
       </div>
 
-      <p style={{ textAlign: 'center', color: '#8a8a8a', fontSize: '0.85rem', fontStyle: 'italic', margin: '1.5rem 0' }}>
+      <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', margin: '1.5rem 0' }}>
         Village Without Borders is a mutual aid community. We believe in neighbors helping neighbors, freely and safely. These terms exist to protect that mission and every person who is part of it.
       </p>
     </div>

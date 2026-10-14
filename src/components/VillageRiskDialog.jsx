@@ -24,22 +24,22 @@ export default function VillageRiskDialog({ villageName, busy = false, error = '
         aria-modal="true"
         aria-labelledby="vrd-title"
         onClick={(e) => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: '480px', maxHeight: '92vh', overflowY: 'auto', boxSizing: 'border-box', background: '#1f1f1f', border: '1px solid #444', borderRadius: '16px 16px 0 0', padding: '1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom))', outline: 'none' }}
+        style={{ width: '100%', maxWidth: '480px', maxHeight: '92vh', overflowY: 'auto', boxSizing: 'border-box', background: '#1f1f1f', border: '1px solid var(--border-strong)', borderRadius: '16px 16px 0 0', padding: '1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom))', outline: 'none' }}
       >
-        <h2 id="vrd-title" style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', color: '#ffcc66' }}>Before you join{villageName ? ' ' + villageName : ''}</h2>
-        <p style={{ margin: '0 0 0.5rem', color: '#ddd', fontSize: '1rem', lineHeight: 1.5 }}>A village chat is a community chat. Like any community chat, it comes with risk.</p>
-        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.2rem', color: '#ddd', fontSize: '1rem', lineHeight: 1.5 }}>
+        <h2 id="vrd-title" style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', color: 'var(--gold)' }}>Before you join{villageName ? ' ' + villageName : ''}</h2>
+        <p style={{ margin: '0 0 0.5rem', color: 'var(--text)', fontSize: '1rem', lineHeight: 1.5 }}>A village chat is a community chat. Like any community chat, it comes with risk.</p>
+        <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.2rem', color: 'var(--text)', fontSize: '1rem', lineHeight: 1.5 }}>
           <li>Neighbors who join later can read what you post after they join. There is no limit on how many can join.</li>
           <li>Not everyone is who they say they are. VWB cannot promise that everyone in a chat is safe.</li>
           <li>Keep your address, your schedule, money details, and anything private out of the chat.</li>
           <li>You can leave, mute, block, or report at any time.</li>
           <li>Only people who joined this village chat can open it. VWB admins cannot open it. It is not encrypted like private messages, so keep sensitive details out.</li>
         </ul>
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', margin: '0 0 0.9rem', color: '#fff', fontSize: '1rem', lineHeight: 1.4, minHeight: '44px', cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', margin: '0 0 0.9rem', color: 'var(--text-strong)', fontSize: '1rem', lineHeight: 1.4, minHeight: '44px', cursor: 'pointer' }}>
           <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} style={{ width: '24px', height: '24px', flexShrink: 0, marginTop: '0.1rem' }} />
           <span>I understand the risk I am taking by being in a community chat.</span>
         </label>
-        {error && <p role="alert" style={{ margin: '0 0 0.75rem', color: '#ff8888', fontSize: '0.9rem' }}>{error}</p>}
+        {error && <p role="alert" style={{ margin: '0 0 0.75rem', color: 'var(--danger)', fontSize: '0.9rem' }}>{error}</p>}
         <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginBottom: '0.5rem' }} disabled={!checked || busy} onClick={() => onAgree?.()}>
           {busy ? 'Joining...' : 'I agree. Join the chat'}
         </button>

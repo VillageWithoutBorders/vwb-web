@@ -61,14 +61,14 @@ export default function VillageRoomPanel({ groupId, onInfo, onLeave, onChanged }
   }
 
   if (!room) return null
-  const bar = { padding: '0.6rem 1rem', borderBottom: '1px solid #333', display: 'grid', gap: '0.5rem', fontSize: '0.95rem' }
+  const bar = { padding: '0.6rem 1rem', borderBottom: '1px solid var(--border)', display: 'grid', gap: '0.5rem', fontSize: '0.95rem' }
   const row = { display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', minHeight: 44 }
   const small = { minHeight: 44, padding: '0 0.9rem' }
 
   return (
     <div>
       {room.check_in_waiting && (
-        <div style={{ ...bar, background: '#2e2a1a', color: '#ffcc66' }} role="status">
+        <div style={{ ...bar, background: 'var(--warn-bg)', color: 'var(--gold)' }} role="status">
           <p style={{ margin: 0 }}>Still taking part? It has been two weeks since you posted or sparked here.</p>
           <div style={row}>
             <button type="button" className="btn btn-primary" style={small} disabled={busy === 'stay'} onClick={() => run('stay', () => supabase.rpc('still_in_village_campfire', { p_group: groupId }), 'Thanks. You are still in.')}>Yes, I'm still here</button>
@@ -112,7 +112,7 @@ export default function VillageRoomPanel({ groupId, onInfo, onLeave, onChanged }
             : <>
                 <label htmlFor="vrp-search" className="sr-only">Search neighbors</label>
                 <input id="vrp-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={'Search neighbors in ' + room.village_name} autoComplete="off"
-                  style={{ minHeight: 48, fontSize: '1rem', padding: '0 12px', borderRadius: 12, border: '1px solid #444', background: '#222', color: '#fff' }} />
+                  style={{ minHeight: 48, fontSize: '1rem', padding: '0 12px', borderRadius: 12, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)' }} />
                 {people.map((p) => (
                   <div key={p.user_id} style={row}>
                     <span style={{ flex: 1 }}>{p.display_name || 'A neighbor'}</span>
