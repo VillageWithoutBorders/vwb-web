@@ -95,7 +95,7 @@ export default function OrgDashboard() {
     if (!id || !user?.id) return
     const { data, error } = await supabase
       .from('community_group_members')
-      .select('group_id, status, community_groups!inner (id, name, organization_id, is_general)')
+      .select('group_id, status, community_groups!inner (id, name, organization_id, is_general, is_org_news)')
       .eq('user_id', user.id)
       .eq('community_groups.organization_id', id)
     if (error) console.error('Failed to load group chats:', error)
@@ -127,6 +127,14 @@ export default function OrgDashboard() {
       return
     }
     navigate('/groups/' + newId, { state: { justStarted: true } })
+  }
+
+  async function startNews() {
+    setChatBusy(true); setChatNote('')
+    const { data: gid, error } = await supabase.rpc('start_org_announcements', { p_org: id })
+    setChatBusy(false)
+    if (error || !gid) { console.error('Failed to start Announcements:', error); setChatNote("We couldn't start Announcements. Try again."); return }
+    navigate('/groups/' + gid, { state: { justStarted: true } })
   }
 
   async function search(e) {
@@ -212,9 +220,10 @@ export default function OrgDashboard() {
   }
 
   const general = chats.find((c) => c.is_general)
+  const newsBoard = chats.find((c) => c.is_org_news)
   const sidechats = general ? chats.filter((c) => sidechatParents.get(c.id) === general.id) : []
   const sideIds = new Set(sidechats.map((c) => c.id))
-  const otherChats = chats.filter((c) => c !== general && !sideIds.has(c.id))
+  const otherChats = chats.filter((c) => c !== general && c !== newsBoard && !sideIds.has(c.id))
   const people = members.filter((u) => u.user_id !== user.id)
   const shownPeople = people.filter((u) => !sideFilter.trim() || (u.display_name || '').toLowerCase().includes(sideFilter.trim().toLowerCase()))
   const chatRow = (c, nested) => (
@@ -321,6 +330,19 @@ export default function OrgDashboard() {
 
       {tab === 'chats' && (
         <DashPanel k="chats">
+          <section className="hub-section" aria-labelledby="od-news">
+            <div className="hub-section-head"><h2 id="od-news">{'\u{1F4E3}'} Announcements</h2></div>
+            {newsBoard
+              ? <button type="button" className="groups-row" onClick={() => navigate('/groups/' + newsBoard.id)}>
+                  <span className="groups-row-name">{newsBoard.name}</span>
+                  <span className="groups-row-meta">Post news &#8250;</span>
+                </button>
+              : <>
+                  <p className="hub-org-desc">A board for news to everyone in {orgName || 'your organization'}. Heads and organizers post. Members read it and get an alert.</p>
+                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} disabled={chatBusy} onClick={startNews}>Start Announcements</button>
+                </>}
+          </section>
+
           <section className="hub-section" aria-labelledby="od-chats">
             <div className="hub-section-head"><h2 id="od-chats">Campfires</h2></div>
             <p className="hub-org-desc">{general ? 'The general chat has everyone in ' + (orgName || 'your organization') + '. Start a sidechat under it for one task or topic, and pick who joins. Only the people you pick see it.' : 'Private chats for ' + (orgName || 'your organization') + '. The general chat adds everyone in your organization automatically.'}</p>
