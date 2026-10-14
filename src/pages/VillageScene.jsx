@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
-import { VILLAGE_SPOTS, VILLAGE_DECOR } from '../data/worldElements'
+import { VILLAGE_SPOTS } from '../data/worldElements'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
 import '../village-scene.css'
@@ -198,7 +199,7 @@ export default function VillageScene() {
 
   function sheetBody(k) {
     const spot = VILLAGE_SPOTS.find((s) => s.k === k)
-    const title = <h2 id="vs-sheet-title"><span aria-hidden="true">{spot.em}</span> {spot.label}</h2>
+    const title = <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><SpotIcon spot={spot} size={36} /></span> {spot.label}</h2>
     if (spot.soon) {
       return <>{title}<p>This part of the village is coming soon.</p></>
     }
@@ -266,7 +267,6 @@ export default function VillageScene() {
     return <div className="vs-page"><p className="vs-loading" role="status">Loading the village...</p></div>
   }
 
-  const path = 'M' + VILLAGE_SPOTS.slice().sort((a, b) => a.y - b.y).map((s) => s.x + ' ' + s.y).join(' L')
 
   return (
     <div className="vs-page">
@@ -289,22 +289,16 @@ export default function VillageScene() {
       </div>
 
       <div className="vs-scene">
-        <img className="vs-ground" src="/art/village-ground.webp" alt="" width="901" height="451" fetchpriority="high" />
-        <svg className="vs-walk" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          <path d={path} fill="none" stroke="#e9e1c8" strokeOpacity="0.55" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1 3" vectorEffect="non-scaling-stroke" style={{ strokeWidth: '10px' }} />
-        </svg>
-        {VILLAGE_DECOR.map(([em, x, y], i) => (
-          <span key={i} className="vs-deco" aria-hidden="true" style={{ left: x + '%', top: y + '%' }}>{em}</span>
-        ))}
+        <img className="vs-ground" src="/art/village-roads.webp" alt="" width="547" height="868" fetchpriority="high" />
         {VILLAGE_SPOTS.map((s) => {
           const i = info(s.k)
           return (
             <button key={s.k} type="button"
               className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' : '') + (bump === s.k ? ' vs-bump' : '')}
-              style={{ left: s.x + '%', top: s.y + '%' }}
+              style={{ left: s.x + '%', top: s.y + '%', '--s': s.s || 1 }}
               aria-label={s.label + '. ' + i.sub}
               onClick={() => tap(s)}>
-              <span className="vs-em" aria-hidden="true">{s.em}</span>
+              <span className="vs-em" aria-hidden="true"><SpotIcon spot={s} /></span>
               <span className="vs-lab">{s.short}</span>
               {i.badge > 0 && <span className="vs-badge" aria-hidden="true">{i.badge > 9 ? '9+' : i.badge}</span>}
             </button>
@@ -328,7 +322,7 @@ export default function VillageScene() {
             const i = info(s.k)
             return (
               <button key={s.k} type="button" className={'vs-room' + (s.soon ? ' vs-soon' : '')} onClick={() => tap(s)}>
-                <span className="vs-room-ic" aria-hidden="true">{s.em}</span>
+                <span className="vs-room-ic" aria-hidden="true"><SpotIcon spot={s} size={40} /></span>
                 <span className="vs-room-text"><b>{s.label}{i.badge > 0 && <span className="vs-dot" aria-label="New" />}</b><small>{i.sub}</small></span>
                 <span className="vs-go" aria-hidden="true">&#8250;</span>
               </button>

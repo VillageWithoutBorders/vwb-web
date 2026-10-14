@@ -84,3 +84,16 @@
 .vs-sheet .hub-resource-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
 .vs-sheet .hub-resource-links a { color: var(--vs-gold); min-height: 44px; display: inline-flex; align-items: center; }
 .vs-body .cal-box h3 { margin: 0 0 0.4rem; font-size: 1.05rem; }
+
+/* Layout: roadmap (Oct 14). Jade's road art fills the whole scene;
+   spots sit on the green lots. --s sets a spot's size. */
+.vs-scene { aspect-ratio: 547 / 868; background: #5b887d; }
+.vs-ground { top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+.vs-fade { display: none; }
+.vs-el .vs-em { font-size: calc(clamp(1.9rem, 9.5vw, 2.6rem) * var(--s, 1)); }
+
+/* Spot pictures (public/art/icons). Size follows --s like the emoji did. */
+.vs-em .vs-icon { display: block; width: calc(clamp(48px, 14vw, 60px) * var(--s, 1)); height: auto; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.25)); }
+.vs-room-ic .vs-icon { width: 40px; height: 40px; }
+.vs-room-ic:has(.vs-icon) { background: none; }
+.vs-sheet-ic .vs-icon { display: inline-block; width: 36px; height: 36px; vertical-align: middle; }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { fetchCalendarEvents } from '../utils/calendar'
@@ -10,7 +11,7 @@ import CalendarSubscribe from '../components/CalendarSubscribe'
 import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import OrgMemberNames from '../components/OrgMemberNames'
-import { ORG_SPOTS, ORG_DECOR } from '../data/worldElements'
+import { ORG_SPOTS } from '../data/worldElements'
 import '../village-scene.css'
 
 // The Organization page: one organization as a little world, the same way a
@@ -220,7 +221,7 @@ export default function OrgPage() {
   }
 
   const locked = (s) => !!s.members && !isMember
-  const spots = ORG_SPOTS.filter((s) => !s.organizers || canManage)
+  const spots = ORG_SPOTS.filter((s) => !s.organizers || canManage).map((s) => (s.k === 'involved' && !canManage ? { ...s, x: 50 } : s))
   const general = chats.find((c) => c.is_general)
 
   function info(k) {
@@ -259,7 +260,7 @@ export default function OrgPage() {
 
   function sheetBody(k) {
     const spot = ORG_SPOTS.find((s) => s.k === k)
-    const title = <h2 id="op-sheet-title"><span aria-hidden="true">{spot.em}</span> {spot.label}</h2>
+    const title = <h2 id="op-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><SpotIcon spot={spot} size={36} /></span> {spot.label}</h2>
     if (locked(spot)) {
       return <>{title}
         <p><span aria-hidden="true">{'\u{1F512}'} </span>Only members of {org.name} can open this.</p>
@@ -397,7 +398,6 @@ export default function OrgPage() {
     </div>
   }
 
-  const path = 'M' + spots.slice().sort((a, b) => a.y - b.y).map((s) => s.x + ' ' + s.y).join(' L')
 
   return (
     <div className="vs-page">
@@ -419,23 +419,17 @@ export default function OrgPage() {
       </div>
 
       <div className="vs-scene">
-        <img className="vs-ground" src="/art/village-ground.webp" alt="" width="901" height="451" fetchpriority="high" />
-        <svg className="vs-walk" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          <path d={path} fill="none" stroke="#f2c763" strokeOpacity="0.6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1 3" vectorEffect="non-scaling-stroke" style={{ strokeWidth: '10px' }} />
-        </svg>
-        {ORG_DECOR.map(([em, x, y], i) => (
-          <span key={i} className="vs-deco" aria-hidden="true" style={{ left: x + '%', top: y + '%' }}>{em}</span>
-        ))}
+        <img className="vs-ground" src="/art/village-roads.webp" alt="" width="547" height="868" fetchpriority="high" />
         {spots.map((s) => {
           const i = info(s.k)
           const lock = locked(s)
           return (
             <button key={s.k} type="button"
               className={'vs-el' + (s.soon || lock ? ' vs-soon' : '') + (s.k === 'fires' && !lock ? ' vs-flame' : '') + (bump === s.k ? ' vs-bump' : '')}
-              style={{ left: s.x + '%', top: s.y + '%' }}
+              style={{ left: s.x + '%', top: s.y + '%', '--s': s.s || 1 }}
               aria-label={s.label + '. ' + i.sub}
               onClick={() => tap(s)}>
-              <span className="vs-em" aria-hidden="true">{s.em}{lock && <span className="vs-lock">{'\u{1F512}'}</span>}</span>
+              <span className="vs-em" aria-hidden="true"><SpotIcon spot={s} />{lock && <span className="vs-lock">{'\u{1F512}'}</span>}</span>
               <span className="vs-lab">{s.short}</span>
             </button>
           )
@@ -455,7 +449,7 @@ export default function OrgPage() {
             const lock = locked(s)
             return (
               <button key={s.k} type="button" className={'vs-room' + (s.soon || lock ? ' vs-soon' : '')} onClick={() => tap(s)}>
-                <span className="vs-room-ic" aria-hidden="true">{s.em}</span>
+                <span className="vs-room-ic" aria-hidden="true"><SpotIcon spot={s} size={40} /></span>
                 <span className="vs-room-text"><b>{s.label}{lock && <span aria-hidden="true"> {'\u{1F512}'}</span>}</b><small>{i.sub}</small></span>
                 <span className="vs-go" aria-hidden="true">&#8250;</span>
               </button>
