@@ -1,5 +1,7 @@
 // Resource categories, shared by Community (the tiles) and Find help (the list).
 export const CATEGORIES = ['Emergency Help', 'Safety', 'Food', 'Donation Points', 'Tenant Rights', 'Housing', 'Government', 'Recovery Support', 'Advocacy and Organizing', 'Other']
+// Picture for each kind of help, in public/art/icons (same look as the village map).
+export const CAT_ICON_FILES = { 'Emergency Help': 'cat-emergency', 'Safety': 'cat-safety', 'Food': 'cat-food', 'Donation Points': 'cat-donation', 'Tenant Rights': 'cat-tenant', 'Housing': 'cat-housing', 'Government': 'cat-government', 'Recovery Support': 'cat-recovery', 'Advocacy and Organizing': 'cat-advocacy', 'Other': 'cat-other' }
 export const CAT_ICONS = { 'Emergency Help': '&#9888;', 'Safety': '&#128156;', 'Food': '&#127859;', 'Donation Points': '&#128230;', 'Tenant Rights': '&#127968;', 'Housing': '&#127969;', 'Government': '&#128203;', 'Recovery Support': '&#129419;', 'Advocacy and Organizing': '&#9994;', 'Other': '&#128204;' }
 
 // A resource can belong to more than one category. Falls back to the old

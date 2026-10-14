@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { getCurrentPosition, distanceMiles } from '../utils/location'
 import { startingOrigin } from '../utils/calendar'
-import { CATEGORIES, CAT_ICONS, resourceCats, resourceMatches } from '../utils/resourceCategories'
+import { CATEGORIES, CAT_ICON_FILES, resourceCats, resourceMatches } from '../utils/resourceCategories'
+import '../find-help.css'
 import { searchScore } from '../utils/resourceSearch'
 import AddressLink from '../components/AddressLink'
 import BackLink from '../components/BackLink'
@@ -47,7 +48,8 @@ export default function CommunityResources() {
   // Resource Library
   const [resources, setResources] = useState([])
   const [loadingResources, setLoadingResources] = useState(true)
-  const [expandedCats, setExpandedCats] = useState(() => (searchParams.get('cat') ? [searchParams.get('cat')] : []))
+  const [selectedCat, setSelectedCat] = useState(() => searchParams.get('cat') || null)
+  const [showFilters, setShowFilters] = useState(false)
   const [orgFilter, setOrgFilter] = useState('all')
   const [radiusFilter, setRadiusFilter] = useState('all') // 'all' | 10 | 25 | 50 (miles)
   const [regionFilter, setRegionFilter] = useState('all') // 'all' or a region name, once more than one exists
@@ -316,8 +318,13 @@ export default function CommunityResources() {
     await loadResources()
   }
 
-  function toggleCat(cat) {
-    setExpandedCats(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat])
+  // One kind of help at a time; the address keeps it (?cat=Food) so Back works.
+  function openCat(cat) {
+    setSelectedCat(cat)
+    const next = new URLSearchParams(window.location.search)
+    if (cat) next.set('cat', cat); else next.delete('cat')
+    window.history.replaceState(null, '', window.location.pathname + (next.toString() ? '?' + next : ''))
+    window.scrollTo({ top: 0 })
   }
 
   const verifiedResources = resources.filter(r => r.verified)
@@ -354,162 +361,22 @@ export default function CommunityResources() {
   })
 
 
+  const orderedCats = [...CATEGORIES, ...Object.keys(grouped).filter((c) => !CATEGORIES.includes(c))].filter((c) => grouped[c])
+  const activeFilters = (orgFilter !== 'all' ? 1 : 0) + (regionFilter !== 'all' ? 1 : 0) + (radiusFilter !== 'all' ? 1 : 0)
+  const orgName = (oid) => (allOrgs.find((o) => o.id === oid) || {}).name || 'Organization'
+
   const submitOrgOptions = isAdmin ? allOrgs : (myOrgs || [])
 
   const fieldStyle = { display: 'block', width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', marginBottom: '0.5rem', boxSizing: 'border-box' }
   const labelStyle = { display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.25rem' }
 
-  return (
-    <div className="community-page">
-      <BackLink fallback={user ? '/community' : '/welcome'} fallbackLabel={user ? 'Community' : 'Welcome'} />
-      <h1>Find help</h1>
-      <p className="feed-subtitle" style={{ marginBottom: '1rem' }}>Food, housing, safety, and more, shared by neighbors and local groups.</p>
-
-      <form className="hub-search" role="search" onSubmit={(e) => e.preventDefault()}>
-        <label htmlFor="res-search" className="sr-only">Search resources</label>
-        <input id="res-search" type="search" inputMode="search" enterKeyHint="search" placeholder="What do you need? (food, rent, rides, power bill...)" value={query} onChange={(e) => setQuery(e.target.value)} />
-        {query && <button type="button" className="btn btn-outline" onClick={() => setQuery('')}>Clear</button>}
-      </form>
-
-          {allOrgs.length > 0 && (
-            <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', marginBottom: '0.75rem' }}>
-              <button onClick={() => setOrgFilter('all')} aria-pressed={orgFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: orgFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: orgFilter === 'all' ? 'var(--accent)' : 'none', color: orgFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All orgs</button>
-              {allOrgs.map(o => (
-                <button key={o.id} onClick={() => setOrgFilter(o.id)} aria-pressed={orgFilter === o.id} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: orgFilter === o.id ? 'none' : '1px solid var(--border-strong)', background: orgFilter === o.id ? 'var(--accent)' : 'none', color: orgFilter === o.id ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{o.name}</button>
-              ))}
-            </div>
-          )}
-
-          {allRegions.length > 1 && (
-            <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', marginBottom: '0.75rem' }}>
-              <button onClick={() => setRegionFilter('all')} aria-pressed={regionFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: regionFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: regionFilter === 'all' ? 'var(--accent)' : 'none', color: regionFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All areas</button>
-              {allRegions.map(reg => (
-                <button key={reg} onClick={() => setRegionFilter(reg)} aria-pressed={regionFilter === reg} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: regionFilter === reg ? 'none' : '1px solid var(--border-strong)', background: regionFilter === reg ? 'var(--accent)' : 'none', color: regionFilter === reg ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{reg}</button>
-              ))}
-            </div>
-          )}
-
-          {myLocation && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflowX: 'auto', marginBottom: '0.75rem' }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>Distance:</span>
-              {[['all', 'All'], [10, '10 mi'], [25, '25 mi'], [50, '50 mi']].map(([val, label]) => (
-                <button key={String(val)} onClick={() => setRadiusFilter(val)} aria-pressed={radiusFilter === val} style={{ padding: '0.5rem 0.8rem', minHeight: '40px', borderRadius: '16px', border: radiusFilter === val ? 'none' : '1px solid var(--border-strong)', background: radiusFilter === val ? 'var(--accent)' : 'none', color: radiusFilter === val ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{label}</button>
-              ))}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <h2 style={{ fontSize: '1.1rem', color: 'var(--accent)', margin: 0 }}>Resource Library</h2>
-            {canSubmit && <button onClick={() => { setShowSubmit(true); setSubmitted(false) }} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>+ Add Resource</button>}
-          </div>
-
-          {!canSubmit && (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.75rem' }}>
-              Resources are added by verified partner organizations.{user && <>{' '}
-              <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline', padding: 0 }}>Want your org involved?</button></>}
-            </p>
-          )}
-
-          {user && profile && profile.latitude == null && (
-            <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.8rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem' }}>
-              Showing national resources. Add your zip code in your profile to see ones near you.
-            </p>
-          )}
-
-          {showSubmit && (
-            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowSubmit(false)}>
-              <div ref={submitModalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="submit-resource-title" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', maxWidth: '400px', width: '90%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <h3 id="submit-resource-title" style={{ margin: 0, color: 'var(--accent)' }}>Submit a Resource</h3>
-                  <button onClick={() => setShowSubmit(false)} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
-                </div>
-                {submitted ? (
-                  <p style={{ color: 'var(--accent)', fontWeight: 600, margin: 0 }}>Thank you! Your resource has been submitted for review.</p>
-                ) : (
-                  <>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>Share a resource with your community. Hope Ambassadors will verify submissions.</p>
-                    {submitOrgOptions.length > 0 && (
-                      <>
-                        <label htmlFor="sub-org" style={labelStyle}>Organization</label>
-                        <select id="sub-org" style={fieldStyle} value={subOrgId} onChange={e => setSubOrgId(e.target.value)}>
-                          <option value="">{isAdmin ? 'No organization (post as VWB)' : 'Choose your organization'}</option>
-                          {submitOrgOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-                        </select>
-                      </>
-                    )}
-                    <label id="sub-cat-label" style={labelStyle}>Category (required, choose one or more)</label>
-                    <div role="group" aria-labelledby="sub-cat-label" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
-                      {CATEGORIES.map(c => (
-                        <button key={c} type="button" onClick={() => setSubCats(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])} aria-pressed={subCats.includes(c)} style={{ padding: '0.5rem 0.75rem', minHeight: '40px', borderRadius: '16px', border: subCats.includes(c) ? 'none' : '1px solid var(--border-strong)', background: subCats.includes(c) ? 'var(--accent)' : 'none', color: subCats.includes(c) ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
-                      ))}
-                    </div>
-                    <label htmlFor="sub-name" style={labelStyle}>Resource name (required)</label>
-                    <input id="sub-name" style={fieldStyle} placeholder="e.g. Ringgold Community Food Pantry" value={subName} onChange={e => setSubName(e.target.value)} maxLength={120} required />
-                    <label htmlFor="sub-desc" style={labelStyle}>What do they offer?</label>
-                    <textarea id="sub-desc" style={{ ...fieldStyle, minHeight: '60px', resize: 'vertical' }} placeholder="Who's it for, anything people should know? — e.g. Free groceries every Tuesday, no ID required" value={subDesc} onChange={e => setSubDesc(e.target.value)} maxLength={500} />
-                    <label htmlFor="sub-phone" style={labelStyle}>Phone number (optional)</label>
-                    <input id="sub-phone" style={fieldStyle} placeholder="e.g. (706) 555-0100" value={subPhone} onChange={e => setSubPhone(e.target.value)} />
-                    <label htmlFor="sub-url" style={labelStyle}>Website (optional)</label>
-                    <input id="sub-url" style={fieldStyle} placeholder="e.g. https://example.org" value={subUrl} onChange={e => setSubUrl(e.target.value)} />
-                    <label htmlFor="sub-address" style={labelStyle}>Address (optional)</label>
-                    <input id="sub-address" style={fieldStyle} placeholder="e.g. 123 Main St, Ringgold, GA" value={subAddress} onChange={e => setSubAddress(e.target.value)} />
-                    {subAddress.trim() && (
-                      <button type="button" onClick={captureSubLocation} disabled={capturingSubLocation} style={{ display: 'block', width: '100%', padding: '0.65rem', minHeight: '44px', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
-                        {capturingSubLocation ? 'Getting your location...' : (subLat != null ? '📍 Location captured — tap to update' : '📍 Pin this address (optional, helps neighbors see how far away it is)')}
-                      </button>
-                    )}
-                    <label htmlFor="sub-hood" style={labelStyle}>Neighborhood or area (optional)</label>
-                    <input id="sub-hood" style={fieldStyle} placeholder="Town or county" value={subHood} onChange={e => setSubHood(e.target.value)} />
-                    <label htmlFor="sub-requirements" style={labelStyle}>What to bring or know before you go (optional)</label>
-                    <textarea id="sub-requirements" style={{ ...fieldStyle, minHeight: '50px', resize: 'vertical' }} placeholder="e.g. Photo ID and proof of address, first-come-first-served, no appointment needed" value={subRequirements} onChange={e => setSubRequirements(e.target.value)} maxLength={300} />
-                    <button onClick={submitResource} disabled={!subName.trim() || !subCats.length || submitting} style={{ padding: '0.75rem 1.25rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: (!subName.trim() || !subCats.length || submitting) ? 0.5 : 1 }}>
-                      {submitting ? 'Submitting...' : 'Submit Resource'}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {canVerify && pendingResources.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
-              <p style={{ color: 'var(--warn)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>Pending review ({pendingResources.length})</p>
-              {pendingResources.map(r => (
-                <div key={r.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0.6rem', marginBottom: '0.35rem', borderLeft: '3px solid var(--warn)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{r.name}</span>
-                    <button onClick={() => verifyResource(r.id)} style={{ padding: '0.3rem 0.6rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.75rem' }}>Verify</button>
-                  </div>
-                  {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.2rem 0' }}>{r.description}</p>}
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{resourceCats(r).join(' · ')}{r.organizations ? ' · ' + r.organizations.name : ''}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {loadingResources && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Loading...</p>}
-
-          {!loadingResources && Object.keys(grouped).map(cat => {
-            const isOpen = expandedCats.includes(cat) || !!query.trim()
-            return (
-              <div key={cat} style={{ marginBottom: '0.5rem' }}>
-                <button onClick={() => toggleCat(cat)} aria-expanded={isOpen} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: isOpen ? '10px 10px 0 0' : '10px', cursor: 'pointer', textAlign: 'left' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span dangerouslySetInnerHTML={{ __html: CAT_ICONS[cat] || '&#128204;' }} style={{ fontSize: '1.1rem', color: cat === 'Emergency Help' ? 'var(--warn)' : undefined }} />
-                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>{cat}</span>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>({grouped[cat].length})</span>
-                  </div>
-                  <span style={{ color: 'var(--accent)', fontSize: '1rem', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>&#9660;</span>
-                </button>
-                {isOpen && (
-                  <div style={{ border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 10px 10px', overflow: 'hidden' }}>
-                    {grouped[cat].map(r => (
-                      <div key={r.id} style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+  const resourceCard = (r) => (
+                      <div key={r.id} className="fh-card">
                         <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text)' }}>{r.name}</span>
                         {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0 0.4rem', lineHeight: 1.4 }}>{r.description}</p>}
                         {r.address && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0' }}><AddressLink address={r.address} /></p>}
                         {r.neighborhood && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0' }}>Area: {r.neighborhood}</p>}
-                        {r.requirements && <p style={{ color: '#ddaa44', fontSize: '0.78rem', margin: '0.2rem 0', lineHeight: 1.4 }}>&#128203; What to bring: {r.requirements}</p>}
+                        {r.requirements && <p style={{ color: 'var(--warn)', fontSize: '0.78rem', margin: '0.2rem 0', lineHeight: 1.4 }}>&#128203; What to bring: {r.requirements}</p>}
                         {resourceDistance(r) != null && (
                           <p style={{ color: 'var(--accent)', fontSize: '0.78rem', fontWeight: 600, margin: '0.2rem 0 0' }}>&#128205; {resourceDistance(r).toFixed(1)} mi away</p>
                         )}
@@ -638,12 +505,195 @@ export default function CommunityResources() {
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
+  )
+
+  return (
+    <div className="community-page">
+      <BackLink fallback={user ? '/community' : '/welcome'} fallbackLabel={user ? 'Community' : 'Welcome'} />
+      <div className="fh-head">
+        <img src="/art/icons/heart-hands.svg" alt="" width="48" height="48" />
+        <h1>Find help</h1>
+      </div>
+      <p className="feed-subtitle" style={{ marginBottom: '1rem' }}>Food, housing, safety, and more, shared by neighbors and local groups.</p>
+
+      <form className="hub-search" role="search" onSubmit={(e) => e.preventDefault()}>
+        <label htmlFor="res-search" className="sr-only">Search resources</label>
+        <input id="res-search" type="search" inputMode="search" enterKeyHint="search" placeholder="What do you need? (food, rent, rides, power bill...)" value={query} onChange={(e) => setQuery(e.target.value)} />
+        {query && <button type="button" className="btn btn-outline" onClick={() => setQuery('')}>Clear</button>}
+      </form>
+
+          {(allOrgs.length > 0 || allRegions.length > 1 || myLocation) && (
+            <div className="fh-filterbar">
+              <button type="button" className="fh-filter-btn" aria-haspopup="dialog" onClick={() => setShowFilters(true)}>
+                <span aria-hidden="true">&#9881;&#65039;</span> Filters{activeFilters ? ' (' + activeFilters + ')' : ''}
+              </button>
+              {orgFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setOrgFilter('all')} aria-label={'Remove filter: ' + orgName(orgFilter)}>{orgName(orgFilter)} <span aria-hidden="true">&#10005;</span></button>}
+              {regionFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRegionFilter('all')} aria-label={'Remove filter: ' + regionFilter}>{regionFilter} <span aria-hidden="true">&#10005;</span></button>}
+              {radiusFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRadiusFilter('all')} aria-label={'Remove filter: within ' + radiusFilter + ' miles'}>Within {radiusFilter} mi <span aria-hidden="true">&#10005;</span></button>}
+            </div>
+          )}
+
+          {showFilters && (
+            <div className="fh-shade" onClick={(e) => { if (e.target === e.currentTarget) setShowFilters(false) }}>
+              <div className="fh-sheet" role="dialog" aria-modal="true" aria-labelledby="fh-filters-h">
+                <h2 id="fh-filters-h">Filters</h2>
+          {allOrgs.length > 0 && (
+            <>
+            <h3 className="fh-sheet-h">Who shares it</h3>
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+              <button onClick={() => setOrgFilter('all')} aria-pressed={orgFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: orgFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: orgFilter === 'all' ? 'var(--accent)' : 'none', color: orgFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All orgs</button>
+              {allOrgs.map(o => (
+                <button key={o.id} onClick={() => setOrgFilter(o.id)} aria-pressed={orgFilter === o.id} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: orgFilter === o.id ? 'none' : '1px solid var(--border-strong)', background: orgFilter === o.id ? 'var(--accent)' : 'none', color: orgFilter === o.id ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{o.name}</button>
+              ))}
+            </div>
+            </>
+          )}
+
+          {allRegions.length > 1 && (
+            <>
+            <h3 className="fh-sheet-h">Area</h3>
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+              <button onClick={() => setRegionFilter('all')} aria-pressed={regionFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: regionFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: regionFilter === 'all' ? 'var(--accent)' : 'none', color: regionFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All areas</button>
+              {allRegions.map(reg => (
+                <button key={reg} onClick={() => setRegionFilter(reg)} aria-pressed={regionFilter === reg} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: regionFilter === reg ? 'none' : '1px solid var(--border-strong)', background: regionFilter === reg ? 'var(--accent)' : 'none', color: regionFilter === reg ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{reg}</button>
+              ))}
+            </div>
+            </>
+          )}
+
+          {myLocation && (
+            <>
+            <h3 className="fh-sheet-h">How far</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+              
+              {[['all', 'All'], [10, '10 mi'], [25, '25 mi'], [50, '50 mi']].map(([val, label]) => (
+                <button key={String(val)} onClick={() => setRadiusFilter(val)} aria-pressed={radiusFilter === val} style={{ padding: '0.5rem 0.8rem', minHeight: '40px', borderRadius: '16px', border: radiusFilter === val ? 'none' : '1px solid var(--border-strong)', background: radiusFilter === val ? 'var(--accent)' : 'none', color: radiusFilter === val ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{label}</button>
+              ))}
+            </div>
+          </>
+          )}
+                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48, marginTop: '0.5rem' }} onClick={() => setShowFilters(false)}>
+                  Show {filteredVerifiedResources.length} {filteredVerifiedResources.length === 1 ? 'place' : 'places'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+            <h2 style={{ fontSize: '1.1rem', color: 'var(--text)', margin: 0 }}>{!query.trim() && !selectedCat ? 'Kinds of help' : ''}</h2>
+            {canSubmit && <button onClick={() => { setShowSubmit(true); setSubmitted(false) }} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>+ Add Resource</button>}
+          </div>
+
+          {!canSubmit && (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.75rem' }}>
+              Resources are added by verified partner organizations.{user && <>{' '}
+              <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline', padding: 0 }}>Want your org involved?</button></>}
+            </p>
+          )}
+
+          {user && profile && profile.latitude == null && (
+            <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.8rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem' }}>
+              Showing national resources. Add your zip code in your profile to see ones near you.
+            </p>
+          )}
+
+          {showSubmit && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowSubmit(false)}>
+              <div ref={submitModalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="submit-resource-title" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', maxWidth: '400px', width: '90%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <h3 id="submit-resource-title" style={{ margin: 0, color: 'var(--accent)' }}>Submit a Resource</h3>
+                  <button onClick={() => setShowSubmit(false)} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
+                </div>
+                {submitted ? (
+                  <p style={{ color: 'var(--accent)', fontWeight: 600, margin: 0 }}>Thank you! Your resource has been submitted for review.</p>
+                ) : (
+                  <>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>Share a resource with your community. Hope Ambassadors will verify submissions.</p>
+                    {submitOrgOptions.length > 0 && (
+                      <>
+                        <label htmlFor="sub-org" style={labelStyle}>Organization</label>
+                        <select id="sub-org" style={fieldStyle} value={subOrgId} onChange={e => setSubOrgId(e.target.value)}>
+                          <option value="">{isAdmin ? 'No organization (post as VWB)' : 'Choose your organization'}</option>
+                          {submitOrgOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                        </select>
+                      </>
+                    )}
+                    <label id="sub-cat-label" style={labelStyle}>Category (required, choose one or more)</label>
+                    <div role="group" aria-labelledby="sub-cat-label" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                      {CATEGORIES.map(c => (
+                        <button key={c} type="button" onClick={() => setSubCats(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])} aria-pressed={subCats.includes(c)} style={{ padding: '0.5rem 0.75rem', minHeight: '40px', borderRadius: '16px', border: subCats.includes(c) ? 'none' : '1px solid var(--border-strong)', background: subCats.includes(c) ? 'var(--accent)' : 'none', color: subCats.includes(c) ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
+                      ))}
+                    </div>
+                    <label htmlFor="sub-name" style={labelStyle}>Resource name (required)</label>
+                    <input id="sub-name" style={fieldStyle} placeholder="e.g. Ringgold Community Food Pantry" value={subName} onChange={e => setSubName(e.target.value)} maxLength={120} required />
+                    <label htmlFor="sub-desc" style={labelStyle}>What do they offer?</label>
+                    <textarea id="sub-desc" style={{ ...fieldStyle, minHeight: '60px', resize: 'vertical' }} placeholder="Who's it for, anything people should know? — e.g. Free groceries every Tuesday, no ID required" value={subDesc} onChange={e => setSubDesc(e.target.value)} maxLength={500} />
+                    <label htmlFor="sub-phone" style={labelStyle}>Phone number (optional)</label>
+                    <input id="sub-phone" style={fieldStyle} placeholder="e.g. (706) 555-0100" value={subPhone} onChange={e => setSubPhone(e.target.value)} />
+                    <label htmlFor="sub-url" style={labelStyle}>Website (optional)</label>
+                    <input id="sub-url" style={fieldStyle} placeholder="e.g. https://example.org" value={subUrl} onChange={e => setSubUrl(e.target.value)} />
+                    <label htmlFor="sub-address" style={labelStyle}>Address (optional)</label>
+                    <input id="sub-address" style={fieldStyle} placeholder="e.g. 123 Main St, Ringgold, GA" value={subAddress} onChange={e => setSubAddress(e.target.value)} />
+                    {subAddress.trim() && (
+                      <button type="button" onClick={captureSubLocation} disabled={capturingSubLocation} style={{ display: 'block', width: '100%', padding: '0.65rem', minHeight: '44px', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+                        {capturingSubLocation ? 'Getting your location...' : (subLat != null ? '📍 Location captured — tap to update' : '📍 Pin this address (optional, helps neighbors see how far away it is)')}
+                      </button>
+                    )}
+                    <label htmlFor="sub-hood" style={labelStyle}>Neighborhood or area (optional)</label>
+                    <input id="sub-hood" style={fieldStyle} placeholder="Town or county" value={subHood} onChange={e => setSubHood(e.target.value)} />
+                    <label htmlFor="sub-requirements" style={labelStyle}>What to bring or know before you go (optional)</label>
+                    <textarea id="sub-requirements" style={{ ...fieldStyle, minHeight: '50px', resize: 'vertical' }} placeholder="e.g. Photo ID and proof of address, first-come-first-served, no appointment needed" value={subRequirements} onChange={e => setSubRequirements(e.target.value)} maxLength={300} />
+                    <button onClick={submitResource} disabled={!subName.trim() || !subCats.length || submitting} style={{ padding: '0.75rem 1.25rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: (!subName.trim() || !subCats.length || submitting) ? 0.5 : 1 }}>
+                      {submitting ? 'Submitting...' : 'Submit Resource'}
+                    </button>
+                  </>
                 )}
               </div>
-            )
-          })}
+            </div>
+          )}
+
+          {canVerify && pendingResources.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ color: 'var(--warn)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>Pending review ({pendingResources.length})</p>
+              {pendingResources.map(r => (
+                <div key={r.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0.6rem', marginBottom: '0.35rem', borderLeft: '3px solid var(--warn)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{r.name}</span>
+                    <button onClick={() => verifyResource(r.id)} style={{ padding: '0.3rem 0.6rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.75rem' }}>Verify</button>
+                  </div>
+                  {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.2rem 0' }}>{r.description}</p>}
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{resourceCats(r).join(' · ')}{r.organizations ? ' · ' + r.organizations.name : ''}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {loadingResources && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Loading...</p>}
+
+          {!loadingResources && !query.trim() && !selectedCat && (
+            <div className="fh-grid">
+              {orderedCats.map(cat => (
+                <button key={cat} type="button" className="fh-tile" onClick={() => openCat(cat)}>
+                  <img src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="48" height="48" />
+                  <span className="fh-tile-name">{cat}</span>
+                  <span className="fh-tile-count">{grouped[cat].length} {grouped[cat].length === 1 ? 'place' : 'places'}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!loadingResources && (query.trim() ? orderedCats : selectedCat && grouped[selectedCat] ? [selectedCat] : []).map(cat => (
+            <section key={cat} className="fh-cat" aria-labelledby={'fh-cat-' + cat}>
+              <div className="fh-cat-head">
+                {!query.trim() && <button type="button" className="fh-back" onClick={() => openCat(null)} aria-label="Back to all kinds of help">&#8249;</button>}
+                <img src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="40" height="40" />
+                <h2 id={'fh-cat-' + cat}>{cat} <span>({grouped[cat].length})</span></h2>
+              </div>
+              <div className="fh-list">
+                {grouped[cat].map(resourceCard)}
+              </div>
+            </section>
+          ))}
 
           {!loadingResources && filteredVerifiedResources.length === 0 && (
             <>
