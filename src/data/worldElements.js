@@ -22,3 +22,25 @@ export const VILLAGE_DECOR = [
   ['\u{1F337}', 34, 38], ['\u{1F33C}', 66, 47], ['\u{1F344}', 33, 65], ['\u{1F337}', 67, 74],
   ['\u{1F33C}', 35, 90], ['\u{1F344}', 68, 92], ['\u{1FAA8}', 8, 72], ['\u{1F33C}', 92, 70],
 ]
+
+// The Organization page (OrgPage.jsx). Same hills and path as a village.
+// members: only members can open it (others see it faded with a lock).
+// organizers: only Heads and organizers see it at all.
+export const ORG_SPOTS = [
+  { k: 'rules', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 50, y: 13, members: true },
+  { k: 'where', label: 'Where we work', short: 'Where', em: '\u{1F3D8}️', x: 17, y: 22 },
+  { k: 'links', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 83, y: 22 },
+  { k: 'news', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 50, y: 33, members: true, soon: true },
+  { k: 'fires', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 20, y: 43, members: true },
+  { k: 'events', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 80, y: 43 },
+  { k: 'needs', label: 'Needs and offers', short: 'Needs', em: '\u{1F91D}', x: 50, y: 53, members: true },
+  { k: 'share', label: 'What we share', short: 'Share', em: '\u{1F4E6}', x: 18, y: 63 },
+  { k: 'members', label: 'Members', short: 'Members', em: '\u{1F4C7}', x: 82, y: 63, members: true },
+  { k: 'involved', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 50, y: 74 },
+  { k: 'tools', label: 'Organizer tools', short: 'Tools', em: '\u{1F9F0}', x: 50, y: 87, organizers: true },
+]
+
+export const ORG_DECOR = [
+  ['\u{1F33B}', 34, 37], ['\u{1F33F}', 66, 48], ['\u{1F344}', 33, 68], ['\u{1F33B}', 67, 79],
+  ['\u{1FAA8}', 8, 74], ['\u{1F33F}', 92, 72],
+]
