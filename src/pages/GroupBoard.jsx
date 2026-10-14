@@ -48,7 +48,7 @@ const REPORT_REASONS = [
 
 export default function GroupBoard() {
   const { id } = useParams()
-  const { user } = useAuth()
+  const { user, organizations } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
   const location = useLocation()
@@ -156,7 +156,7 @@ export default function GroupBoard() {
   // Group details, members (with names), open removal requests, invites.
   async function loadGroup() {
     const { data: g, error: gErr } = await supabase
-      .from('community_groups').select('id, name, description, join_token, steward_id, steward_offer_to, organization_id, announcement_only, disappear_after_mins').eq('id', id).maybeSingle()
+      .from('community_groups').select('id, name, description, join_token, steward_id, steward_offer_to, organization_id, announcement_only, is_org_news, disappear_after_mins').eq('id', id).maybeSingle()
     if (gErr) console.error('Failed to load group:', gErr)
     const { data: m, error: mErr } = await supabase
       .from('community_group_members').select('user_id, joined_at, status, added_by').eq('group_id', id)
@@ -617,6 +617,9 @@ export default function GroupBoard() {
   }
 
   const iAmSteward = group.steward_id === user.id
+  // Organization Announcements: any Head or organizer posts; everyone else reads.
+  const iRunOrg = !!group.organization_id && (organizations || []).some((o) => o.id === group.organization_id && (o.role === 'admin' || o.role === 'organizer'))
+  const readOnly = group.is_org_news ? !iRunOrg : !!(group.announcement_only && group.steward_id && !iAmSteward)
   const canChangeLink = !group.steward_id || iAmSteward
   const nameOf = (uid) => members.find(m => m.userId === uid)?.name || 'Former member'
   const avatarOf = (uid) => members.find(m => m.userId === uid)?.avatar || null
@@ -688,8 +691,8 @@ export default function GroupBoard() {
 
       {sendNote && <p className="convo-send-error" role="status">{sendNote}</p>}
       {group.disappear_after_mins ? <p className="group-lock-note">&#9201; Posts here disappear after {group.disappear_after_mins / 1440} day{group.disappear_after_mins === 1440 ? '' : 's'}.</p> : null}
-      {group.announcement_only && group.steward_id && !iAmSteward && <p className="group-lock-note">&#128226; Only the steward posts here. You can still read, and message people outside the group.</p>}
-      {!(group.announcement_only && group.steward_id && !iAmSteward) && (
+      {readOnly && <p className="group-lock-note">&#128226; {group.is_org_news ? 'Only Heads and organizers post Announcements. You can read and spark them.' : 'Only the steward posts here. You can still read, and message people outside the group.'}</p>}
+      {!readOnly && (
       <>
       {editingPost && (
         <p className="convo-editing" role="status">
@@ -797,7 +800,7 @@ export default function GroupBoard() {
                 }}>
                   {DISAPPEAR_CHOICES.map(([mins, label]) => <option key={mins} value={mins}>{label}</option>)}
                 </select>
-                {group.steward_id && iAmSteward && (
+                {group.steward_id && iAmSteward && !group.is_org_news && (
                   <button type="button" className="btn btn-outline group-small-btn" aria-pressed={!!group.announcement_only} disabled={sharedBusy} onClick={() => changeSetting('announce', group.announcement_only ? 'off' : 'on')}>
                     {group.announcement_only ? 'Announcement-only is on (tap to turn off)' : 'Make announcement-only (only you post)'}
                   </button>
@@ -807,7 +810,7 @@ export default function GroupBoard() {
             {!group.steward_id || iAmSteward ? null : (
               <p className="groups-note">
                 Name: {group.name}. {group.disappear_after_mins ? 'Posts disappear after ' + (group.disappear_after_mins / 1440) + ' day' + (group.disappear_after_mins === 1440 ? '' : 's') + '.' : 'Posts stay until someone deletes them.'}
-                {group.announcement_only ? ' Only the steward posts here.' : ''}
+                {group.is_org_news ? ' Only Heads and organizers post here.' : group.announcement_only ? ' Only the steward posts here.' : ''}
               </p>
             )}
             {proposals.map(pr => {

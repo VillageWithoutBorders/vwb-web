@@ -46,6 +46,9 @@ export default function OrgPage() {
   const [links, setLinks] = useState([])
   const [villageCount, setVillageCount] = useState(0)
   const [chats, setChats] = useState([])
+  const [news, setNews] = useState(null)
+  const [newsBusy, setNewsBusy] = useState(false)
+  const [newsNote, setNewsNote] = useState('')
   const [posts, setPosts] = useState(null)
   const [postsError, setPostsError] = useState('')
   const [asked, setAsked] = useState(false)
@@ -142,7 +145,7 @@ export default function OrgPage() {
     let alive = true
     Promise.all([
       supabase.from('community_group_members')
-        .select('group_id, status, community_groups!inner (id, name, organization_id, is_general, parent_group_id)')
+        .select('group_id, status, community_groups!inner (id, name, organization_id, is_general, is_org_news, parent_group_id)')
         .eq('user_id', user.id)
         .eq('community_groups.organization_id', id),
       canManage ? supabase.rpc('my_org_chats', { p_org: id }) : Promise.resolve({ data: [] }),
@@ -154,7 +157,9 @@ export default function OrgPage() {
       ;(own.data || []).filter((r) => r.status !== 'waiting' && r.community_groups).forEach((r) => byId.set(r.community_groups.id, r.community_groups))
       ;(shared.data || []).forEach((c) => { if (!byId.has(c.id)) byId.set(c.id, { ...c, shared: true }) })
       const rank = (c) => (c.is_general ? 0 : c.shared ? 2 : 1)
-      setChats([...byId.values()].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name)))
+      const all = [...byId.values()]
+      setNews(all.find((c) => c.is_org_news) || null)
+      setChats(all.filter((c) => !c.is_org_news).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name)))
     })
     return () => { alive = false }
   }, [id, isMember, canManage, user])
@@ -229,7 +234,7 @@ export default function OrgPage() {
       case 'rules': return { sub: isMember ? 'How this organization runs' : 'Members only' }
       case 'where': return { sub: villageCount ? 'Works in ' + villageCount + ' village' + (villageCount === 1 ? '' : 's') : 'No villages picked yet' }
       case 'links': return { sub: links.length ? links.length + ' connected organization' + (links.length === 1 ? '' : 's') : 'No connections yet' }
-      case 'news': return { sub: 'Coming soon' }
+      case 'news': return { sub: !isMember ? 'Members only' : news ? 'News from ' + org.name : canManage ? 'Start Announcements for your members' : 'No announcements yet' }
       case 'fires': return { sub: !isMember ? 'Members only' : chats.length ? chats.length + ' Campfire' + (chats.length === 1 ? '' : 's') + ' you are in' : 'No Campfires yet' }
       case 'events': return { sub: events.length ? events.length + ' coming up' : 'Nothing on the calendar yet' }
       case 'needs': return { sub: isMember ? 'What we need and what we offer' : 'Members only' }
@@ -244,9 +249,19 @@ export default function OrgPage() {
   function tap(s) {
     if (!stillMotion()) { setBump(s.k); setTimeout(() => setBump(null), 450) }
     if (s.k === 'tools') { navigate('/orgs/' + id + '/dashboard'); return }
+    if (s.k === 'news' && isMember && news) { navigate('/groups/' + news.id); return }
     if (s.k === 'fires' && isMember && chats.length === 1) { navigate('/groups/' + chats[0].id); return }
     if (s.k === 'needs' && isMember && posts === null) loadPosts()
     openSheet({ k: s.k })
+  }
+
+  async function startNews() {
+    setNewsBusy(true); setNewsNote('')
+    const { data: gid, error } = await supabase.rpc('start_org_announcements', { p_org: id })
+    setNewsBusy(false)
+    if (error || !gid) { console.error('Failed to start Announcements:', error); setNewsNote("We couldn't start Announcements. Try again."); return }
+    setSheet(null)
+    navigate('/groups/' + gid, { state: { justStarted: true } })
   }
 
   function askButton() {
@@ -283,6 +298,16 @@ export default function OrgPage() {
           ))}
           <p className="vs-note">Heads and organizers of connected organizations share a Campfire {'\u{1F525}'}.</p>
           {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Connect with another organization</Link>}
+        </>
+      case 'news':
+        return <>{title}
+          {canManage
+            ? <>
+                <p>Announcements is a board for news to everyone in {org.name}. Heads and organizers post. Members read it and get an alert.</p>
+                <button type="button" className="btn btn-primary btn-full" disabled={newsBusy} onClick={startNews}>{newsBusy ? 'Starting...' : 'Start Announcements'}</button>
+                {newsNote && <p className="vs-note" role="alert">{newsNote}</p>}
+              </>
+            : <p>No announcements yet. Heads and organizers can start them.</p>}
         </>
       case 'fires':
         return <>{title}
