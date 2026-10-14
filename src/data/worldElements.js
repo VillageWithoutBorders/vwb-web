@@ -33,7 +33,7 @@ export const ORG_SPOTS = [
   { k: 'where', icon: 'houses', label: 'Where we work', short: 'Where', em: '\u{1F3D8}️', x: 32, y: 17 },
   { k: 'links', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
   { k: 'events', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
-  { k: 'news', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true, soon: true },
+  { k: 'news', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
   { k: 'fires', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52, members: true },
   { k: 'members', icon: 'card', label: 'Members', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
   { k: 'needs', icon: 'heart-hands', label: 'Needs and offers', short: 'Needs', em: '\u{1F91D}', x: 15, y: 74, members: true },
