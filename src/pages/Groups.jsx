@@ -35,7 +35,7 @@ export default function Groups({ embedded = false }) {
   async function load() {
     setLoadError('')
     const [{ data: mine, error: mineErr }, { data: inv, error: invErr }] = await Promise.all([
-      supabase.from('community_group_members').select('group_id, status, community_groups (id, name, description, steward_id)').eq('user_id', user.id),
+      supabase.from('community_group_members').select('group_id, status, community_groups (id, name, description, steward_id, village_kind)').eq('user_id', user.id),
       supabase.from('community_group_invites').select('group_id, invited_by, created_at, community_groups (id, name, description)').eq('invitee_id', user.id),
     ])
     if (mineErr) console.error('Failed to load your groups:', mineErr)
@@ -210,8 +210,8 @@ export default function Groups({ embedded = false }) {
           {groups.length === 0 && <p className="groups-empty">You're not in any chats yet. Start a Cottage Chat, or ask a friend to invite you.</p>}
           {orderedGroups.map(({ g, nested }) => (
             <button key={g.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + g.id)}>
-              <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? '\u{1F4CC} ' : ''}{campfires.has(g.id) ? '\u{1F525} ' : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
-              <span className="groups-row-meta">{g.quiet ? 'Quiet \u00b7 ' : ''}{g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}</span>
+              <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? '\u{1F4CC} ' : ''}{campfires.has(g.id) ? '\u{1F525} ' : g.village_kind === 'sidechat' ? '\u{1F4AC} ' : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
+              <span className="groups-row-meta">{g.village_kind === 'sidechat' ? 'Sidechat \u00b7 ' : ''}{g.quiet ? 'Quiet \u00b7 ' : ''}{g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}</span>
             </button>
           ))}
           {groups.some(g => g.archived) && (
@@ -221,7 +221,7 @@ export default function Groups({ embedded = false }) {
               </button>
               {showArchived && groups.filter(g => g.archived).map(g => (
                 <button key={g.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + g.id)}>
-                  <span className="groups-row-name">{campfires.has(g.id) ? '\u{1F525} ' : ''}{g.name}</span>
+                  <span className="groups-row-name">{campfires.has(g.id) ? '\u{1F525} ' : g.village_kind === 'sidechat' ? '\u{1F4AC} ' : ''}{g.name}</span>
                   <span className="groups-row-meta">Archived</span>
                 </button>
               ))}

@@ -863,7 +863,10 @@ export default function GroupBoard() {
             {isSidechat && (
               <SidechatAdd groupId={id} orgId={group.organization_id} memberIds={new Set(members.map(m => m.userId))} isSteward={iAmSteward} onAdded={loadGroup} />
             )}
-            {!isSidechat && (<>
+            {villageRoom && (
+              <p className="groups-note">Only neighbors in {villageRoom.village_name} can be in this {villageRoom.kind === 'sidechat' ? 'sidechat' : 'Campfire'}. Use "Add a neighbor" at the top of the chat{villageRoom.kind === 'campfire' && villageRoom.shown ? ', or neighbors can ask to join from the village page' : ''}.</p>
+            )}
+            {!isSidechat && !villageRoom && (<>
             <h3 className="groups-section">Invite someone</h3>
             <label htmlFor="invite-search" className="sr-only">Search members by name</label>
             {inviteUnlock && inviteUnlock > new Date() ? (
