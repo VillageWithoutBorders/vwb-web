@@ -182,7 +182,7 @@ export default function PublicProfile() {
       {/* Tabs */}
       <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
         <button className={'tasks-tab' + (tab === 'requests' ? ' tasks-tab-active' : '')} onClick={() => setTab('requests')}>
-          Requests {completedCount > 0 && <span style={{ marginLeft: "0.3rem", background: "#1a4a3a", color: "#4ecca3", fontSize: "0.65rem", fontWeight: 700, padding: "1px 6px", borderRadius: "8px" }}>{completedCount} completed</span>}
+          Requests {completedCount > 0 && <span style={{ marginLeft: "0.3rem", background: "var(--success-bg)", color: "var(--accent)", fontSize: "0.65rem", fontWeight: 700, padding: "1px 6px", borderRadius: "8px" }}>{completedCount} completed</span>}
         </button>
         <button className={'tasks-tab' + (tab === 'events' ? ' tasks-tab-active' : '')} onClick={() => setTab('events')}>
           Events
@@ -205,8 +205,8 @@ export default function PublicProfile() {
                 </div>
                 <span style={{
                   fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
-                  background: r.status === 'completed' ? 'var(--success-bg)' : '#2a2518',
-                  color: r.status === 'completed' ? 'var(--accent)' : '#b8860b',
+                  background: r.status === 'completed' ? 'var(--success-bg)' : 'var(--warn-bg)',
+                  color: r.status === 'completed' ? 'var(--accent)' : 'var(--gold)',
                 }}>
                   {r.status === 'completed' ? 'Completed' : r.status}
                 </span>
@@ -232,8 +232,8 @@ export default function PublicProfile() {
                 </div>
                 <span style={{
                   fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
-                  background: e.status === 'closed' ? 'var(--success-bg)' : '#2a2518',
-                  color: e.status === 'closed' ? 'var(--accent)' : '#b8860b',
+                  background: e.status === 'closed' ? 'var(--success-bg)' : 'var(--warn-bg)',
+                  color: e.status === 'closed' ? 'var(--accent)' : 'var(--gold)',
                 }}>
                   {e.status === 'closed' ? 'Resolved' : 'Active'}
                 </span>

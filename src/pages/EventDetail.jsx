@@ -15,7 +15,7 @@ import { useGoBack } from '../components/BackLink'
 const STATUS_CONFIG = {
   safe:        { label: 'Safe',         color: 'var(--accent)', bg: 'var(--success-bg)', icon: '✔' },
   need_help:   { label: 'Needs Help',   color: 'var(--danger)', bg: 'var(--danger-bg)', icon: '⚠' },
-  evacuated:   { label: 'Evacuated',    color: 'var(--info)', bg: '#1a2a4a', icon: '→' },
+  evacuated:   { label: 'Evacuated',    color: 'var(--info)', bg: 'var(--info-bg)', icon: '→' },
   sheltering:  { label: 'Sheltering',   color: 'var(--warn)', bg: 'var(--warn-bg)', icon: '⌂' },
   no_contact:  { label: 'No Contact',   color: 'var(--danger)', bg: '#4a1a1a', icon: '✗' },
 }
@@ -711,7 +711,7 @@ export default function EventDetail() {
                           <span style={{ background: isNeed ? 'var(--danger-bg)' : 'var(--success-bg)', color: isNeed ? 'var(--danger)' : 'var(--accent)', fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', textTransform: 'uppercase' }}>{isNeed ? 'Need' : 'Offer'}</span>
                           <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{r.category}</span>
                           {isFulfilled && <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '3px' }}>Fulfilled</span>}
-                          {isClaimed && !isFulfilled && <span style={{ background: '#1a2a4a', color: 'var(--info)', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '3px' }}>Claimed</span>}
+                          {isClaimed && !isFulfilled && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '3px' }}>Claimed</span>}
                         </div>
                         <p style={{ margin: '0.2rem 0 0', fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-strong)' }}>{r.item_name} {r.quantity > 1 && <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>x{r.quantity}</span>}</p>
                       </div>
@@ -749,7 +749,7 @@ export default function EventDetail() {
       {event.status === 'active' && (mySignup || event.created_by === user.id || isAdmin) && (
         <>
           {closeVotes.length > 0 && !closeVotes.find(v => v.voter_id === user.id) && (
-            <div style={{ background: '#2a2518', border: '1px solid #5a4a2a', borderRadius: '8px', padding: '0.75rem', marginTop: '1rem', textAlign: 'center' }}>
+            <div style={{ background: 'var(--warn-bg)', border: '1px solid #5a4a2a', borderRadius: '8px', padding: '0.75rem', marginTop: '1rem', textAlign: 'center' }}>
               <p style={{ color: 'var(--warn)', fontSize: '0.85rem', margin: 0 }}>{closeVotes.length} participant{closeVotes.length !== 1 ? 's' : ''} voted to close this event</p>
             </div>
           )}
@@ -768,11 +768,11 @@ export default function EventDetail() {
                 <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--accent)' }}>Event Resolved</div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.15rem' }}>The emergency is over. Close response and archive.</div>
               </button>
-              <button onClick={() => setCloseReason('false_alarm')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'false_alarm' ? '2px solid var(--warn)' : '1px solid var(--border-strong)', background: closeReason === 'false_alarm' ? '#2a2518' : 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', textAlign: 'left' }}>
+              <button onClick={() => setCloseReason('false_alarm')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'false_alarm' ? '2px solid var(--warn)' : '1px solid var(--border-strong)', background: closeReason === 'false_alarm' ? 'var(--warn-bg)' : 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--warn)' }}>False Alarm</div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.15rem' }}>{event.verified ? 'Verified events require admin approval.' : (event.created_by === user.id ? 'This will permanently remove your report. This can\'t be undone.' : 'This will permanently remove the event once one other participant agrees. This can\'t be undone.')}</div>
               </button>
-              <button onClick={() => setCloseReason('duplicate')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'duplicate' ? '2px solid var(--info)' : '1px solid var(--border-strong)', background: closeReason === 'duplicate' ? '#1a2a4a' : 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', textAlign: 'left' }}>
+              <button onClick={() => setCloseReason('duplicate')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'duplicate' ? '2px solid var(--info)' : '1px solid var(--border-strong)', background: closeReason === 'duplicate' ? 'var(--info-bg)' : 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--info)' }}>Duplicate Event</div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.15rem' }}>This is the same as another event. Admin will merge.</div>
               </button>
@@ -786,7 +786,7 @@ export default function EventDetail() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '200px', overflowY: 'auto' }}>
                     {activeEvents.map(ae => (
-                      <button key={ae.id} onClick={() => setSelectedDuplicate(ae.id)} style={{ padding: '0.6rem', borderRadius: '8px', border: selectedDuplicate === ae.id ? '2px solid var(--info)' : '1px solid var(--border-strong)', background: selectedDuplicate === ae.id ? '#1a2a4a' : 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', textAlign: 'left', fontSize: '0.85rem' }}>
+                      <button key={ae.id} onClick={() => setSelectedDuplicate(ae.id)} style={{ padding: '0.6rem', borderRadius: '8px', border: selectedDuplicate === ae.id ? '2px solid var(--info)' : '1px solid var(--border-strong)', background: selectedDuplicate === ae.id ? 'var(--info-bg)' : 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', textAlign: 'left', fontSize: '0.85rem' }}>
                         <span style={{ fontWeight: 600 }}>{ae.title}</span>
                         {ae.event_type && <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem', fontSize: '0.75rem' }}>{ae.event_type}</span>}
                       </button>

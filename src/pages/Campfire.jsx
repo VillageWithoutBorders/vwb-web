@@ -592,7 +592,7 @@ export default function Campfire() {
         {isVillageBoard && inVillage && (
           <button onClick={() => setShowPeople(true)} aria-label={'People in ' + activeBoard.name + (removalRequests.some(r => r.requested_by !== user.id) ? ', a removal request needs a second member' : '')} title="People" style={{ position: 'relative', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }}>
             &#128101;
-            {removalRequests.some(r => r.requested_by !== user.id) && <span aria-hidden="true" style={{ position: 'absolute', top: '6px', right: '6px', width: '10px', height: '10px', borderRadius: '50%', background: '#ff8844' }} />}
+            {removalRequests.some(r => r.requested_by !== user.id) && <span aria-hidden="true" style={{ position: 'absolute', top: '6px', right: '6px', width: '10px', height: '10px', borderRadius: '50%', background: 'var(--warn)' }} />}
           </button>
         )}
         <button onClick={() => setShowSettings(true)} aria-label="Village Square settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'>&#9881;</button>
@@ -667,7 +667,7 @@ export default function Campfire() {
 
       {isVillageBoard && inVillage && <VillageNewMembers villageId={activeBoard.village_id} myId={user.id} />}
       {isSister && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 1rem', borderBottom: '1px solid var(--warn-bg)', background: sisterClosed ? '#2a1a20' : 'var(--warn-bg)', color: sisterClosed ? '#ffb3c7' : 'var(--gold)', fontSize: '0.9rem', lineHeight: 1.4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 1rem', borderBottom: '1px solid var(--warn-bg)', background: sisterClosed ? 'var(--danger-bg)' : 'var(--warn-bg)', color: sisterClosed ? 'var(--danger)' : 'var(--gold)', fontSize: '0.9rem', lineHeight: 1.4 }}>
           <p style={{ margin: 0, flex: '1 1 12rem' }}>
             <span aria-hidden="true">{'\u{1F525}'} </span>
             {sisterClosed
@@ -761,9 +761,9 @@ export default function Campfire() {
               {!isMe && isGroupStart && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.15rem' }}>
                   {info.role
-                    ? <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? '#c77dff' : info.role === 'admin' ? 'var(--info)' : 'var(--accent)' }} />
+                    ? <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.75rem', fontWeight: 700, color: info.role === 'founder' ? 'var(--purple)' : info.role === 'admin' ? 'var(--info)' : 'var(--accent)' }} />
                     : <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }} />}
-                  {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
+                  {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
                   {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
                   {info.ambassador && <span style={{ fontSize: '0.6rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
                 </div>
@@ -874,7 +874,7 @@ export default function Campfire() {
         </p>
       )}
       {introHint && !editing && (
-        <p style={{ margin: 0, padding: '0.5rem 1rem 0', borderTop: '1px solid var(--border)', background: 'var(--surface)', color: '#bfe8d9', fontSize: '0.9rem', lineHeight: 1.4 }}>
+        <p style={{ margin: 0, padding: '0.5rem 1rem 0', borderTop: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--accent)', fontSize: '0.9rem', lineHeight: 1.4 }}>
           Say hello. Add what you like doing and how you would like to be involved in your community.
         </p>
       )}
@@ -898,7 +898,7 @@ export default function Campfire() {
         <button
           onClick={sendMessage}
           disabled={!newMsg.trim() || sending}
-          style={{ minHeight: '44px', padding: '0 1.25rem', borderRadius: '1.5rem', background: '#ff8844', color: '#fff', border: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', opacity: (!newMsg.trim() || sending) ? 0.5 : 1 }}
+          style={{ minHeight: '44px', padding: '0 1.25rem', borderRadius: '1.5rem', background: 'var(--warn)', color: '#fff', border: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', opacity: (!newMsg.trim() || sending) ? 0.5 : 1 }}
         >
           {editing ? 'Save' : 'Send'}
         </button>
@@ -992,7 +992,7 @@ export default function Campfire() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
                   <UserName userId={uid} name={info.name} style={{ color: 'var(--text-strong)', fontSize: '0.85rem', fontWeight: 600 }} />
-                  {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
+                  {info.role === 'founder' && <span style={{ fontSize: '0.6rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
                   {info.role === 'admin' && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
                   {info.ambassador && <span style={{ fontSize: '0.6rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
                 </div>
