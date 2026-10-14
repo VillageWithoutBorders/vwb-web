@@ -797,11 +797,11 @@ export default function Messages({ embedded = false }) {
       {/* ========== Your Pending Offers (helper side) ========== */}
       {myOutgoingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#b8860b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
             ⏳ Your Pending Offers ({myOutgoingOffers.length})
           </div>
           {myOutgoingOffers.map(offer => (
-            <div key={offer.id} style={{ background: '#2a2518', border: '1px solid #5a4a2a', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div key={offer.id} style={{ background: 'var(--warn-bg)', border: '1px solid #5a4a2a', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div>
                 <div style={{ color: 'var(--text-strong)', fontWeight: 600, fontSize: '0.9rem' }}>{offer.skill_needed}</div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
@@ -900,12 +900,12 @@ export default function Messages({ embedded = false }) {
                 {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title="Muted">&#128263;</span>}
                 {followUp && <span style={{ marginRight: '4px' }} title="Follow up">&#128681;</span>}
                 <UserName userId={c.otherId} name={c.otherName} />
-                {unread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#4ecca3", marginLeft: "6px", flexShrink: 0 }} />}
+                {unread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "var(--accent)", marginLeft: "6px", flexShrink: 0 }} />}
               </span>
-              <span className="message-card-time" style={{ color: unread ? "#4ecca3" : undefined }}>{formatTime(c.lastMessageAt)}</span>
+              <span className="message-card-time" style={{ color: unread ? "var(--accent)" : undefined }}>{formatTime(c.lastMessageAt)}</span>
             </div>
             {c.help_requests && (<p className="message-card-skill">{c.help_requests.skill_needed} in {c.help_requests.neighborhood}</p>)}
-            {c.lastMessage && (<p className="message-card-preview" style={{ color: unread ? "#ddd" : undefined, fontWeight: unread ? 600 : 400 }}>{c.lastMessage.length > 80 ? c.lastMessage.slice(0, 80) + '...' : c.lastMessage}</p>)}
+            {c.lastMessage && (<p className="message-card-preview" style={{ color: unread ? "var(--text)" : undefined, fontWeight: unread ? 600 : 400 }}>{c.lastMessage.length > 80 ? c.lastMessage.slice(0, 80) + '...' : c.lastMessage}</p>)}
             </div>
           </div>
 

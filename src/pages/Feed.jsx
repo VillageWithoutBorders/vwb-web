@@ -407,10 +407,10 @@ export default function Feed() {
                                             <span className="urgency-badge" style={{ background: '#2d6a4f', color: '#fff' }}>Your request</span>
                                         )}
                                         {req.audience && req.audience !== 'everyone' && (!req.opens_to_all_at || new Date(req.opens_to_all_at) > new Date()) && (
-                                            <span className="urgency-badge" style={{ background: '#3a4a7a', color: 'var(--text-strong)' }}>{req.audience === 'network' ? 'From your network' : 'From your group'}</span>
+                                            <span className="urgency-badge" style={{ background: 'var(--info-bg)', color: 'var(--text-strong)' }}>{req.audience === 'network' ? 'From your network' : 'From your group'}</span>
                                         )}
                                         {isPending && (
-                                            <span className="urgency-badge" style={{ background: '#b8860b', color: 'var(--text-strong)' }}>Pending</span>
+                                            <span className="urgency-badge" style={{ background: 'var(--gold)', color: 'var(--text-strong)' }}>Pending</span>
                                         )}
                                         <span className="feed-card-time">{timeAgo(req.created_at)}</span>
                                     </div>
@@ -457,7 +457,7 @@ export default function Feed() {
                                             )}
                                             {req.requester_id !== user.id && isPending && (
                                                 <>
-                                                    <span style={{ fontSize: '0.8rem', color: '#b8860b', fontWeight: 600 }}>
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--gold)', fontWeight: 600 }}>
                                                         {"⏳"} Pending
                                                     </span>
                                                     <button className="btn btn-outline btn-sm" onClick={(e) => handleWithdrawOffer(e, req)}>

@@ -1,3 +1,4 @@
+import { isLight } from '../utils/theme'
 import { useEffect, useRef, useState } from 'react'
 
 // Cloudflare Turnstile: a quick "are you a person?" check that stops
@@ -45,7 +46,10 @@ export default function Turnstile({ onToken, resetKey = 0 }) {
       onToken('')
       widgetId.current = window.turnstile.render(box.current, {
         sitekey: TURNSTILE_SITE_KEY,
-        theme: 'auto',
+        // Match the app's light or dark setting, and use the small box on narrow phones
+        // (the normal one is 300px wide and pushed the login card off a 320px screen).
+        theme: isLight() ? 'light' : 'dark',
+        size: box.current.clientWidth < 300 ? 'compact' : 'normal',
         callback: (t) => onToken(t),
         'expired-callback': () => onToken(''),
         'error-callback': () => { onToken(''); setFailed(true) },

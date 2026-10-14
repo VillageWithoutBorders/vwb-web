@@ -52,7 +52,7 @@ function NearbyNeedTiles() {
     { label: 'Open near you', value: total, color: 'var(--accent)' },
     { label: 'Right now', value: now, color: 'var(--danger)' },
     { label: 'Today', value: today, color: 'var(--warn)' },
-    { label: 'This week or later', value: later, color: '#8fc' },
+    { label: 'This week or later', value: later, color: 'var(--accent)' },
   ]
 
   // Nothing open: one quiet line instead of four zeros.
@@ -135,11 +135,11 @@ export default function Dashboard() {
         </p>
       )}
       {profile?.is_hope_ambassador && (
-        <div style={{ marginBottom: "0.75rem", background: "linear-gradient(135deg, #1a4a3a, #2d5a45)", border: "2px solid #4ecca3", borderRadius: "16px", padding: "0.6rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
+        <div style={{ marginBottom: "0.75rem", background: "linear-gradient(135deg, var(--success-bg), var(--border))", border: "2px solid var(--accent)", borderRadius: "16px", padding: "0.6rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
           <span style={{ fontSize: "1.5rem" }}>&#9733;</span>
           <div>
-            <span style={{ display: "block", color: "#4ecca3", fontWeight: 700, fontSize: "0.8rem", lineHeight: 1.2 }}>Hope Ambassador</span>
-            <span style={{ color: "#8fc", fontSize: "0.65rem" }}>Active and ready to help</span>
+            <span style={{ display: "block", color: "var(--accent)", fontWeight: 700, fontSize: "0.8rem", lineHeight: 1.2 }}>Hope Ambassador</span>
+            <span style={{ color: "var(--accent)", fontSize: "0.65rem" }}>Active and ready to help</span>
           </div>
         </div>
       )}
@@ -205,11 +205,11 @@ export default function Dashboard() {
           </div>
         </details>
       )}
-      <button data-tour="emergency" onClick={() => navigate('/emergency')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "1.25rem", padding: "1rem 1.25rem", borderRadius: "12px", border: "2px solid #ffaa44", background: "linear-gradient(135deg, #2e2a1a, #3a3020)", cursor: "pointer", textAlign: "left" }}>
-        <span style={{ fontSize: "2rem", lineHeight: 1, color: "#ffaa44" }}>&#9888;</span>
+      <button data-tour="emergency" onClick={() => navigate('/emergency')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "1.25rem", padding: "1rem 1.25rem", borderRadius: "12px", border: "2px solid var(--warn)", background: "linear-gradient(135deg, var(--warn-bg), var(--warn-bg))", cursor: "pointer", textAlign: "left" }}>
+        <span style={{ fontSize: "2rem", lineHeight: 1, color: "var(--warn)" }}>&#9888;</span>
         <div>
-          <span style={{ display: "block", color: "#ffcc00", fontWeight: 700, fontSize: "1rem" }}>Emergency Response</span>
-          <span style={{ color: "#cc9999", fontSize: "0.8rem" }}>View active emergencies or report a new one</span>
+          <span style={{ display: "block", color: "var(--gold)", fontWeight: 700, fontSize: "1rem" }}>Emergency Response</span>
+          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>View active emergencies or report a new one</span>
         </div>
       </button>
     </div>

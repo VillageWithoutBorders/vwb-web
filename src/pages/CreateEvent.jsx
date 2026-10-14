@@ -144,7 +144,7 @@ export default function CreateEvent() {
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Alert your community about an emergency. Neighbors can sign up as affected or as responders.</p>
 
       <form onSubmit={handleSubmit}>
-        {error && <div style={{ background: '#5c1a1a', color: '#ff9999', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}
+        {error && <div style={{ background: 'var(--danger-bg)', color: 'var(--danger)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}
 
         <label style={labelStyle}>Event type</label>
         <select style={fieldStyle} value={eventType} onChange={e => setEventType(e.target.value)}>

@@ -218,7 +218,7 @@ export default function EmergencyEvents() {
                     {ev.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
                     {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
                     {myRole && (
-                      <span style={{ display: 'inline-block', marginTop: '0.5rem', background: myRole === 'responder' ? 'var(--success-bg)' : myRole === 'coordinator' ? 'var(--info-bg)' : '#4a3a1a', color: myRole === 'responder' ? 'var(--accent)' : myRole === 'coordinator' ? 'var(--info)' : 'var(--warn)', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
+                      <span style={{ display: 'inline-block', marginTop: '0.5rem', background: myRole === 'responder' ? 'var(--success-bg)' : myRole === 'coordinator' ? 'var(--info-bg)' : 'var(--warn-bg)', color: myRole === 'responder' ? 'var(--accent)' : myRole === 'coordinator' ? 'var(--info)' : 'var(--warn)', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
                         {myRole === 'responder' ? 'Signed up to help' : myRole === 'coordinator' ? 'Coordinator' : 'Signed up as affected'}
                       </span>
                     )}

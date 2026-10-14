@@ -138,7 +138,7 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
               <>
                 <h2 id="psa-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>Block {who}?</h2>
                 <p style={{ margin: '0 0 1rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>You will stop seeing each other in messages and offers. They will not be told. You can undo this anytime on their profile or in Settings.</p>
-                {error && <p role="alert" style={{ margin: '0 0 0.75rem', color: '#ff8080', fontSize: '0.85rem' }}>{error}</p>}
+                {error && <p role="alert" style={{ margin: '0 0 0.75rem', color: 'var(--danger)', fontSize: '0.85rem' }}>{error}</p>}
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button type="button" ref={firstRef} onClick={close} style={quiet}>Cancel</button>
                   <button type="button" onClick={block} disabled={busy} style={danger}>{busy ? 'Blocking...' : 'Block'}</button>
@@ -161,7 +161,7 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
                 </fieldset>
                 <label htmlFor="report-details" style={{ display: 'block', color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.75rem 0 0.3rem' }}>Anything else we should know? (optional)</label>
                 <textarea id="report-details" value={details} onChange={(e) => setDetails(e.target.value)} maxLength={500} rows={3} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.9rem', resize: 'vertical' }} />
-                {error && <p role="alert" style={{ margin: '0.6rem 0 0', color: '#ff8080', fontSize: '0.85rem' }}>{error}</p>}
+                {error && <p role="alert" style={{ margin: '0.6rem 0 0', color: 'var(--danger)', fontSize: '0.85rem' }}>{error}</p>}
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                   <button type="button" onClick={close} style={quiet}>Cancel</button>
                   <button type="button" onClick={submitReport} disabled={busy} style={primary}>{busy ? 'Sending...' : 'Send report'}</button>
