@@ -210,7 +210,7 @@ export default function Dashboard() {
         <span style={{ fontSize: "2rem", lineHeight: 1, color: "var(--warn)" }}>&#9888;</span>
         <div>
           <span style={{ display: "block", color: "var(--gold)", fontWeight: 700, fontSize: "1rem" }}>Emergency Response</span>
-          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>View active emergencies or report a new one</span>
+          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Floods, storms, fires, and outages that hit many neighbors</span>
         </div>
       </button>
     </div>
