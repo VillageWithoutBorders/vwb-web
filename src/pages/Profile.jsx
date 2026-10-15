@@ -8,6 +8,7 @@ import GroupedSkillChips from '../components/GroupedSkillChips'
 import { loadSkillCategories } from '../utils/skillGroups'
 import AvatarBuilder, { AvatarPreview } from '../components/AvatarBuilder'
 import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
+import Icon from '../components/Icon'
 
 function reportError(context, error, userMessage) {
   if (!error) return false
@@ -404,7 +405,7 @@ function captureCoverageLocation() {
 
         {!profile?.is_hope_ambassador && ambApplication?.status === 'pending' && (
           <div className="amb-signup-card">
-            <div className="amb-signup-icon" aria-hidden="true">{'🌿'}</div>
+            <div className="amb-signup-icon" aria-hidden="true"><Icon name="leaf" /></div>
             <h2 className="amb-signup-title">Your application is in</h2>
             <p className="amb-signup-desc">
               An admin will look it over and let you know. Until then you can ask
@@ -415,7 +416,7 @@ function captureCoverageLocation() {
 
         {!profile?.is_hope_ambassador && ambApplication?.status !== 'pending' && !showAmbassadorSignup && (
           <div className="amb-signup-card">
-            <div className="amb-signup-icon" aria-hidden="true">{'🌿'}</div>
+            <div className="amb-signup-icon" aria-hidden="true"><Icon name="leaf" /></div>
             <h2 className="amb-signup-title">Become a Hope Ambassador</h2>
             <p className="amb-signup-desc">
               Hope Ambassadors are neighbors who volunteer their time and skills
@@ -446,7 +447,7 @@ function captureCoverageLocation() {
               Tell us a little about how you can help.
             </p>
             <div className="later-note">
-              <span className="later-note-icon" aria-hidden="true">{'\u{1F331}'}</span>
+              <span className="later-note-icon" aria-hidden="true"><Icon name="sprout" /></span>
               <span>No need to get it perfect. Pick at least one skill to start. You can change your skills anytime by editing your Profile.</span>
             </div>
             <div className="form-field">

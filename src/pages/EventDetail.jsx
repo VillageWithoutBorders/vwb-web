@@ -11,13 +11,14 @@ import { createNotification } from '../utils/notificationHelpers'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import { submitUserReport } from '../utils/submitUserReport'
 import { useGoBack } from '../components/BackLink'
+import Icon from '../components/Icon'
 
 const STATUS_CONFIG = {
-  safe:        { label: 'Safe',         color: 'var(--accent)', bg: 'var(--success-bg)', icon: '✔' },
-  need_help:   { label: 'Needs Help',   color: 'var(--danger)', bg: 'var(--danger-bg)', icon: '⚠' },
-  evacuated:   { label: 'Evacuated',    color: 'var(--info)', bg: 'var(--info-bg)', icon: '→' },
-  sheltering:  { label: 'Sheltering',   color: 'var(--warn)', bg: 'var(--warn-bg)', icon: '⌂' },
-  no_contact:  { label: 'No Contact',   color: 'var(--danger)', bg: '#4a1a1a', icon: '✗' },
+  safe:        { label: 'Safe',         color: 'var(--accent)', bg: 'var(--success-bg)', icon: 'check' },
+  need_help:   { label: 'Needs Help',   color: 'var(--danger)', bg: 'var(--danger-bg)', icon: 'cat-emergency' },
+  evacuated:   { label: 'Evacuated',    color: 'var(--info)', bg: 'var(--info-bg)', icon: 'car' },
+  sheltering:  { label: 'Sheltering',   color: 'var(--warn)', bg: 'var(--warn-bg)', icon: 'house' },
+  no_contact:  { label: 'No Contact',   color: 'var(--danger)', bg: '#4a1a1a', icon: 'question' },
 }
 
 const RESOURCE_CATEGORIES = ['Water', 'Food', 'Shelter', 'Tools', 'Transportation', 'Medical', 'Clothing', 'Power/Fuel', 'Tarps/Building', 'Hygiene', 'Other']
@@ -514,7 +515,7 @@ export default function EventDetail() {
             <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Your status: </span>
             {myStatusConf ? (
               <span style={{ background: myStatusConf.bg, color: myStatusConf.color, fontSize: '0.8rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
-                {myStatusConf.icon} {myStatusConf.label}
+                <Icon name={myStatusConf.icon} /> {myStatusConf.label}
               </span>
             ) : (
               <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No check-in yet</span>
@@ -525,7 +526,7 @@ export default function EventDetail() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
                 {Object.entries(STATUS_CONFIG).filter(([k]) => k !== 'no_contact').map(([key, conf]) => (
                   <button key={key} onClick={() => setSelectedStatus(key)} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: selectedStatus === key ? conf.color : conf.bg, color: selectedStatus === key ? 'var(--on-accent)' : conf.color, fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>
-                    {conf.icon} {conf.label}
+                    <Icon name={conf.icon} /> {conf.label}
                   </button>
                 ))}
               </div>
@@ -582,7 +583,7 @@ export default function EventDetail() {
       {(tab === 'check-ins' || isCoordinator) && Object.values(latestStatuses).length > 0 && tab !== 'resources' && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.75rem' }}>
           {Object.entries(STATUS_CONFIG).map(([key, conf]) => (
-            statusCounts[key] > 0 && <span key={key} style={{ background: conf.bg, color: conf.color, fontSize: '0.75rem', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}>{conf.icon} {conf.label}: {statusCounts[key]}</span>
+            statusCounts[key] > 0 && <span key={key} style={{ background: conf.bg, color: conf.color, fontSize: '0.75rem', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}><Icon name={conf.icon} /> {conf.label}: {statusCounts[key]}</span>
           ))}
         </div>
       )}
@@ -617,7 +618,7 @@ export default function EventDetail() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <UserName userId={s.user_id} name={s.display_name} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1.5rem' }}>
-                  {sc && <span style={{ background: sc.bg, color: sc.color, fontSize: '0.7rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>{sc.icon} {sc.label}</span>}
+                  {sc && <span style={{ background: sc.bg, color: sc.color, fontSize: '0.7rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}><Icon name={sc.icon} /> {sc.label}</span>}
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
@@ -635,7 +636,7 @@ export default function EventDetail() {
           const conf = STATUS_CONFIG[c.status] || STATUS_CONFIG.safe
           return (
             <div key={c.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', padding: '0.6rem 0', borderBottom: '1px solid var(--border)' }}>
-              <span style={{ background: conf.bg, color: conf.color, fontSize: '1.1rem', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', flexShrink: 0 }}>{conf.icon}</span>
+              <span style={{ background: conf.bg, color: conf.color, fontSize: '1.1rem', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', flexShrink: 0 }}><Icon name={conf.icon} /></span>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><AvatarDisplay url={c.avatar_url} userId={c.user_id} size={22} /><UserName userId={c.user_id} name={c.display_name} style={{ fontWeight: 600, fontSize: '0.9rem' }} /></div>
@@ -705,7 +706,7 @@ export default function EventDetail() {
                 <div key={r.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', opacity: isFulfilled ? 0.6 : 1, borderLeft: isNeed ? '3px solid var(--danger)' : '3px solid var(--accent)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: '1.3rem' }}>{catIcon}</span>
+                      <span style={{ fontSize: '1.3rem' }}><Icon name={catIcon} /></span>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                           <span style={{ background: isNeed ? 'var(--danger-bg)' : 'var(--success-bg)', color: isNeed ? 'var(--danger)' : 'var(--accent)', fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', textTransform: 'uppercase' }}>{isNeed ? 'Need' : 'Offer'}</span>

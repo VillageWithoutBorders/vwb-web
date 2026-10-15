@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import BackLink from '../components/BackLink'
 import SisterVillages from '../components/SisterVillages'
 import { circleLayout, labelWidth } from '../utils/circleLayout'
+import Icon from '../components/Icon'
 
 // The Village Network, in two tabs.
 // Neighborhoods: zip code villages as a circle map (like the prototype) or a street map. Names, places, and rough sizes only, never people.
@@ -162,7 +163,7 @@ export default function VillageMap() {
     // Approved organizations, loaded the first time the Organizations tab opens.
     if (tab !== 'orgs' || orgs !== null) return
     let alive = true
-    supabase.from('organizations').select('id, name, description, website_url').eq('approved', true).order('name').then(({ data, error: err }) => {
+    supabase.from('organizations').select('id, name, description, website_url, kind').eq('approved', true).order('name').then(({ data, error: err }) => {
       if (!alive) return
       if (err) { console.error('Failed to load organizations:', err); setOrgsError("We couldn't load the organizations. Try again in a moment."); setOrgs([]); return }
       setOrgs(data || [])
@@ -379,13 +380,14 @@ export default function VillageMap() {
       <h1 className="hub-org-name">The Village Network</h1>
 
       <div role="tablist" aria-label="Village Network" style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0 0.75rem' }}>
-        <button type="button" role="tab" id="tab-hoods" aria-selected={tab === 'hoods'} aria-controls="panel-hoods" className={'btn ' + (tab === 'hoods' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('hoods')}>{'\u{1F333}'} Neighborhoods</button>
-        <button type="button" role="tab" id="tab-orgs" aria-selected={tab === 'orgs'} aria-controls="panel-orgs" className={'btn ' + (tab === 'orgs' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('orgs')}>{'\u{1F465}'} Organizations</button>
+        <button type="button" role="tab" id="tab-hoods" aria-selected={tab === 'hoods'} aria-controls="panel-hoods" className={'btn ' + (tab === 'hoods' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('hoods')}><Icon name="tree" /> Neighborhoods</button>
+        <button type="button" role="tab" id="tab-orgs" aria-selected={tab === 'orgs'} aria-controls="panel-orgs" className={'btn ' + (tab === 'orgs' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('orgs')}><Icon name="people" /> Organizations</button>
       </div>
 
       {tab === 'orgs' && (
         <section id="panel-orgs" role="tabpanel" aria-labelledby="tab-orgs">
-          <p className="cal-sub">Organizations working with Village Without Borders. Tap a name to see more.</p>
+          <p className="cal-sub">Organizations working with Village Without Borders, and groups <Icon name="tent" /> that respond to emergencies. Tap a name to see more.</p>
+          <Link className="btn btn-outline btn-full" style={{ minHeight: '48px', marginBottom: '0.75rem' }} to="/start-group"><Icon name="tent" /> Start an emergency response group</Link>
           {orgs === null && <p className="cal-empty">Loading...</p>}
           {orgsError && <p className="form-error" role="alert">{orgsError}</p>}
           {orgs && !orgsError && orgs.length === 0 && <p className="cal-empty">No organizations yet.</p>}
@@ -395,10 +397,10 @@ export default function VillageMap() {
             return (
               <div key={o.id} className="cal-card" style={{ width: '100%', padding: 0 }}>
                 <button type="button" aria-expanded={open} aria-controls={'org-' + o.id} onClick={() => setOpenOrgs((m) => ({ ...m, [o.id]: !m[o.id] }))} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', minHeight: '56px', padding: '0.5rem 0.75rem', background: 'none', border: 0, color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
-                  <span aria-hidden="true" style={{ flex: 'none', width: '44px', height: '44px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', background: 'rgba(78, 204, 163, 0.15)' }}>{'\u{1F465}'}</span>
+                  <span aria-hidden="true" style={{ flex: 'none', width: '44px', height: '44px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', background: 'rgba(78, 204, 163, 0.15)' }}><Icon name={o.kind === 'group' ? 'tent' : 'people'} /></span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span className="cal-card-title" style={{ display: 'block' }}>{o.name}</span>
-                    <span className="cal-card-meta">Organization</span>
+                    <span className="cal-card-meta">{o.kind === 'group' ? 'Emergency response group' : 'Organization'}</span>
                   </span>
                   <span aria-hidden="true" style={{ flex: 'none', transform: open ? 'rotate(180deg)' : 'none' }}>{'\u25BE'}</span>
                 </button>
@@ -539,7 +541,7 @@ export default function VillageMap() {
                   <p className="cal-sub" style={{ margin: '0 0 0.25rem' }}>Working here</p>
                   {(workingHere[selected.id] || []).map((o) => (
                     <div key={o.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', margin: '0.25rem 0' }}>
-                      <Link to={'/orgs/' + o.id} className="btn btn-outline" style={{ flex: 1, minWidth: 0, minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem' }}>{'\u{1F465}'} {o.name}</Link>
+                      <Link to={'/orgs/' + o.id} className="btn btn-outline" style={{ flex: 1, minWidth: 0, minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem' }}><Icon name="people" /> {o.name}</Link>
                       {keeperOf === selected.id && <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 'none' }} onClick={() => { setRemoving(o); setRemoveNote('') }} aria-label={'Remove ' + o.name + ' from ' + selected.name}>Remove</button>}
                     </div>
                   ))}
@@ -562,7 +564,7 @@ export default function VillageMap() {
                 onPick={(id) => { setSelectedId(id); setLinkInfo(null) }}
                 onChanged={loadSisters}
               />
-              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={() => navigate('/village/' + selected.id)}>{'\u{1F3D8}\uFE0F'} Step into {selected.name}</button>
+              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={() => navigate('/village/' + selected.id)}><Icon name="houses" /> Step into {selected.name}</button>
               {selected.is_mine && boardFor(selected) && (
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village chat</button>
               )}

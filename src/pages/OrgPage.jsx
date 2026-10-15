@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -11,8 +11,11 @@ import CalendarSubscribe from '../components/CalendarSubscribe'
 import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import OrgMemberNames from '../components/OrgMemberNames'
-import { ORG_SPOTS } from '../data/worldElements'
+import { ORG_SPOTS, GROUP_SPOTS } from '../data/worldElements'
+import GroupGear from '../components/GroupGear'
+import GroupResponse from '../components/GroupResponse'
 import '../village-scene.css'
+import Icon from '../components/Icon'
 
 // The Organization page: one organization as a little world, the same way a
 // village page works. Every element on the hills opens its part. Members-only
@@ -21,6 +24,8 @@ import '../village-scene.css'
 // Names follow the VWB Vocabulary sheet. Route: /orgs/:id
 
 const ROLE = { admin: 'Head', organizer: 'Organizer', member: 'Member' }
+// Emergency response Groups (kind 'group') are run by keepers.
+const GROUP_ROLE = { admin: 'Lead keeper', organizer: 'Keeper', member: 'Member' }
 
 function safeLink(url) {
   if (!url) return null
@@ -34,6 +39,8 @@ function stillMotion() {
 export default function OrgPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const isNew = params.get('new') === '1'
   const { user, organizations } = useAuth()
 
   const [org, setOrg] = useState(null)
@@ -77,7 +84,7 @@ export default function OrgPage() {
   async function loadOrg() {
     const { data, error } = await supabase
       .from('organizations')
-      .select('id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label')
+      .select('id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label, kind, response_status')
       .eq('id', id)
       .eq('approved', true)
       .maybeSingle()
@@ -204,8 +211,9 @@ export default function OrgPage() {
     const { data, error } = await supabase.rpc('ask_to_join_org', { p_org: id })
     setAsking(false)
     if (error) { console.error('Failed to ask to join:', error); setAskNote("We couldn't send that. Check your connection and try again."); return }
-    if (data === 'asked' || data === 'wait') { setAsked(true); setAskNote(data === 'asked' ? 'Sent. The organizers will see your name and can add you.' : 'You already asked this week. The organizers have your name.'); return }
-    if (data === 'member') { setAskNote('You are already part of this organization.'); return }
+    const who = org?.kind === 'group' ? 'keepers' : 'organizers'
+    if (data === 'asked' || data === 'wait') { setAsked(true); setAskNote(data === 'asked' ? 'Sent. The ' + who + ' will see your name and can add you.' : 'You already asked this week. The ' + who + ' have your name.'); return }
+    if (data === 'member') { setAskNote('You are already part of this ' + (org?.kind === 'group' ? 'group' : 'organization') + '.'); return }
     setAskNote("We couldn't send that right now. Try again later.")
   }
 
@@ -225,22 +233,30 @@ export default function OrgPage() {
     if (lastFocus.current && lastFocus.current.focus) lastFocus.current.focus()
   }
 
+  const isGroup = org?.kind === 'group'
+  const SPOTS = isGroup ? GROUP_SPOTS : ORG_SPOTS
+  const roleName = (r) => (isGroup ? GROUP_ROLE : ROLE)[r] || 'Member'
+  const LEADS = isGroup ? 'Keepers' : 'Heads and organizers'
+  const TOOLS = isGroup ? 'Keeper tools' : 'Organizer tools'
+  const KIND = isGroup ? 'group' : 'organization'
+
   const locked = (s) => !!s.members && !isMember
-  const spots = ORG_SPOTS.filter((s) => !s.organizers || canManage).map((s) => (s.k === 'involved' && !canManage ? { ...s, x: 50 } : s))
+  const spots = SPOTS.filter((s) => !s.organizers || canManage).map((s) => (s.k === 'involved' && !canManage ? { ...s, x: 50 } : s))
   const general = chats.find((c) => c.is_general)
 
   function info(k) {
     switch (k) {
-      case 'rules': return { sub: isMember ? 'How this organization runs' : 'Members only' }
-      case 'where': return { sub: villageCount ? 'Works in ' + villageCount + ' village' + (villageCount === 1 ? '' : 's') : 'No villages picked yet' }
+      case 'rules': return { sub: isMember ? 'How this ' + KIND + ' runs' : 'Members only' }
+      case 'where': return { sub: villageCount ? (isGroup ? 'Covers ' : 'Works in ') + villageCount + ' village' + (villageCount === 1 ? '' : 's') : 'No villages picked yet' }
+      case 'ready': return { sub: org.response_status === 'approved' ? 'Approved to respond to emergencies' : org.response_status === 'asked' ? 'Waiting for approval' : 'Not called to emergencies yet' }
       case 'links': return { sub: links.length ? links.length + ' connected organization' + (links.length === 1 ? '' : 's') : 'No connections yet' }
       case 'news': return { sub: !isMember ? 'Members only' : news ? 'News from ' + org.name : canManage ? 'Start Announcements for your members' : 'No announcements yet' }
       case 'fires': return { sub: !isMember ? 'Members only' : chats.length ? chats.length + ' Campfire' + (chats.length === 1 ? '' : 's') + ' you are in' : 'No Campfires yet' }
       case 'events': return { sub: events.length ? events.length + ' coming up' : 'Nothing on the calendar yet' }
       case 'needs': return { sub: isMember ? 'What we need and what we offer' : 'Members only' }
       case 'share': return { sub: resources.length ? resources.length + ' shared resource' + (resources.length === 1 ? '' : 's') : 'Nothing shared yet' }
-      case 'members': return { sub: isMember ? 'Who is part of this organization' : 'Members only' }
-      case 'involved': return { sub: isMember ? 'Share this page with a friend' : asked ? 'You asked to join' : 'Ask to join or reach the organizers' }
+      case 'members': return { sub: !isMember ? 'Members only' : isGroup ? 'Who is in, and what we bring' : 'Who is part of this organization' }
+      case 'involved': return { sub: isMember ? 'Share this page with a friend' : asked ? 'You asked to join' : 'Ask to join or reach the ' + (isGroup ? 'keepers' : 'organizers') }
       case 'tools': return { sub: 'Members, chats, events, connections' }
       default: return { sub: '' }
     }
@@ -274,15 +290,15 @@ export default function OrgPage() {
   }
 
   function sheetBody(k) {
-    const spot = ORG_SPOTS.find((s) => s.k === k)
+    const spot = SPOTS.find((s) => s.k === k)
     const title = <h2 id="op-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><SpotIcon spot={spot} size={36} /></span> {spot.label}</h2>
     if (locked(spot)) {
       return <>{title}
-        <p><span aria-hidden="true">{'\u{1F512}'} </span>Only members of {org.name} can open this.</p>
+        <p><span aria-hidden="true"><Icon name="lock" /> </span>Only members of {org.name} can open this.</p>
         {askButton()}
       </>
     }
-    if (spot.soon) return <>{title}<p>This part of the organization is coming soon.</p></>
+    if (spot.soon) return <>{title}<p>This part of the {KIND} is coming soon.</p></>
     switch (k) {
       case 'rules':
         return <>{title}<OrgRules orgId={id} isHead={isHead} /></>
@@ -290,39 +306,39 @@ export default function OrgPage() {
         return <>{title}<OrgVillages orgId={id} orgName={org.name} canManage={canManage} /></>
       case 'links':
         return <>{title}
-          {links.length === 0 && <p>{org.name} is not connected with another organization yet.</p>}
+          {links.length === 0 && <p>{org.name} is not connected with an organization or group yet.</p>}
           {links.map((o) => (
             <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
-              <span aria-hidden="true">{'\u{1F465}'}</span> {o.name}<small>Connected organization</small>
+              <span aria-hidden="true"><Icon name="people" /></span> {o.name}<small>Connected organization</small>
             </button>
           ))}
-          <p className="vs-note">Heads and organizers of connected organizations share a Campfire {'\u{1F525}'}.</p>
-          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Connect with another organization</Link>}
+          <p className="vs-note">The leaders of connected organizations and groups share a Campfire <Icon name="campfire" />.</p>
+          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Connect with an organization or group</Link>}
         </>
       case 'news':
         return <>{title}
           {canManage
             ? <>
-                <p>Announcements is a board for news to everyone in {org.name}. Heads and organizers post. Members read it and get an alert.</p>
+                <p>Announcements is a board for news to everyone in {org.name}. {LEADS} post. Members read it and get an alert.</p>
                 <button type="button" className="btn btn-primary btn-full" disabled={newsBusy} onClick={startNews}>{newsBusy ? 'Starting...' : 'Start Announcements'}</button>
                 {newsNote && <p className="vs-note" role="alert">{newsNote}</p>}
               </>
-            : <p>No announcements yet. Heads and organizers can start them.</p>}
+            : <p>No announcements yet. {LEADS} can start them.</p>}
         </>
       case 'fires':
         return <>{title}
-          {chats.length === 0 && <p>{canManage ? 'No Campfires yet. Start the general chat from Organizer tools.' : 'No Campfires yet. Heads and organizers start the general chat.'}</p>}
+          {chats.length === 0 && <p>{canManage ? 'No Campfires yet. Start the general chat from ' + TOOLS + '.' : 'No Campfires yet. ' + LEADS + ' start the general chat.'}</p>}
           {chats.map((c) => (
             <button key={c.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/groups/' + c.id) }}>
-              <span aria-hidden="true">{c.is_general || c.shared ? '\u{1F525}' : '\u{1F4AC}'}</span> {c.name}
-              <small>{c.is_general ? 'General chat, every member' : c.shared ? 'Shared Campfire with a connected organization' : 'Sidechat'}</small>
+              <span aria-hidden="true"><Icon name={c.is_general || c.shared ? 'campfire' : 'sidechats'} /></span> {c.name}
+              <small>{c.is_general ? 'General chat, every member' : c.shared ? 'Shared Campfire with a connected ' + (isGroup ? 'organization or group' : 'organization') : 'Sidechat'}</small>
             </button>
           ))}
           {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Start a sidechat</Link>}
         </>
       case 'events':
         return <>{title}
-          <CalendarEventList events={events} emptyText="No upcoming events from this organization yet." />
+          <CalendarEventList events={events} emptyText={'No upcoming events from this ' + KIND + ' yet.'} />
           {canManage && <Link className="btn btn-outline btn-full" to="/calendar/new">Post an event</Link>}
           {!org.hide_from_public && <CalendarSubscribe orgId={id} orgName={org.name} />}
         </>
@@ -333,7 +349,7 @@ export default function OrgPage() {
           {posts && posts.length === 0 && !postsError && <p>No open needs or offers right now.</p>}
           {posts && posts.map((p) => (
             <button key={p.kind + p.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/skillshare') }}>
-              <span aria-hidden="true">{p.kind === 'need' ? '\u{1F64F}' : '\u{1F381}'}</span> {p.title || (p.kind === 'need' ? 'A need' : 'An offer')}
+              <span aria-hidden="true"><Icon name={p.kind === 'need' ? 'heart-hands' : 'gift'} /></span> {p.title || (p.kind === 'need' ? 'A need' : 'An offer')}
               <small>{p.kind === 'need' ? 'Need' : 'Offer'}{p.description ? ': ' + p.description.slice(0, 90) : ''}</small>
             </button>
           ))}
@@ -342,9 +358,11 @@ export default function OrgPage() {
             <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>
           </div>
         </>
+      case 'ready':
+        return <>{title}<GroupResponse orgId={id} orgName={org.name} isKeeper={canManage} villageCount={villageCount} onChanged={loadOrg} /></>
       case 'share':
         return <>{title}
-          {resources.length === 0 && <p>Nothing shared yet.</p>}
+          {resources.length === 0 && <p>{isGroup ? 'No supplies listed yet. Keepers can add the supplies your group keeps ready, like tarps or water, as resources.' : 'Nothing shared yet.'}</p>}
           {resources.map((r) => (
             <div key={r.id} className="vs-item">
               <b>{r.name}</b>
@@ -362,18 +380,19 @@ export default function OrgPage() {
       case 'members':
         return <>{title}
           <OrgMemberNames orgId={id} />
-          <p className="vs-note">{canManage ? 'You can see and add members in Organizer tools.' : 'If no names show, the Head keeps the list private.'}</p>
-          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Open Organizer tools</Link>}
+          <p className="vs-note">{canManage ? 'You can see and add members in ' + TOOLS + '.' : 'If no names show, the ' + (isGroup ? 'lead keeper' : 'Head') + ' keeps the list private.'}</p>
+          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Open {TOOLS}</Link>}
+          {isGroup && isMember && <GroupGear orgId={id} orgName={org.name} isKeeper={canManage} />}
         </>
       case 'involved': {
         const website = safeLink(org.website_url)
         const social = safeLink(org.social_links?.primary)
         return <>{title}
-          {isMember ? <p>You are part of {org.name} as {(ROLE[mine.role] || 'member').toLowerCase()}.</p> : askButton()}
+          {isMember ? <p>You are part of {org.name} as {roleName(mine.role).toLowerCase()}.</p> : askButton()}
           {contactEmail && org.show_contact_email && <a className="btn btn-outline btn-full" href={'mailto:' + contactEmail}>Email {org.name}</a>}
           {website && <a className="btn btn-outline btn-full" href={website} target="_blank" rel="noopener noreferrer">Visit their website</a>}
           {social && <a className="btn btn-outline btn-full" href={social} target="_blank" rel="noopener noreferrer">Follow them online</a>}
-          {isMember && <QrShare url={window.location.origin + '/orgs/' + id} title={org.name} hint="Your friend scans this to open this organization's page, see what's coming up, and get in touch." />}
+          {isMember && <QrShare url={window.location.origin + '/orgs/' + id} title={org.name} hint={'Your friend scans this to open this ' + KIND + "'s page, see what's coming up, and get in touch."} />}
         </>
       }
       default: return title
@@ -415,7 +434,7 @@ export default function OrgPage() {
     await loadOrg()
   }
 
-  if (loading) return <div className="vs-page"><p className="vs-loading" role="status">Loading the organization...</p></div>
+  if (loading) return <div className="vs-page"><p className="vs-loading" role="status">Loading...</p></div>
   if (missing || !org) {
     return <div className="vs-page">
       <div className="vs-top"><Link className="vs-crumb" to="/villages?tab=orgs">Village Network</Link></div>
@@ -435,8 +454,9 @@ export default function OrgPage() {
       <div className="vs-title">
         <h1>{org.name}</h1>
         <div className="vs-chips">
-          {isMember ? <span className="vs-chip vs-chip-in">{ROLE[mine.role] || 'Member'}</span> : <span className="vs-chip">Public view</span>}
-          <span className="vs-chip">{'\u{1F465}'} Organization</span>
+          {isMember ? <span className="vs-chip vs-chip-in">{roleName(mine.role)}</span> : <span className="vs-chip">Public view</span>}
+          {isGroup ? <span className="vs-chip"><Icon name="tent" /> Emergency response group</span> : <span className="vs-chip"><Icon name="people" /> Organization</span>}
+          {isGroup && org.response_status === 'approved' && <span className="vs-chip vs-chip-in"><Icon name="check" /> Approved to respond</span>}
           {place && <span className="vs-chip">Near {place}</span>}
           {org.hide_from_public && <span className="vs-chip">Seen only by VWB members</span>}
         </div>
@@ -454,7 +474,7 @@ export default function OrgPage() {
               style={{ left: s.x + '%', top: s.y + '%', '--s': s.s || 1 }}
               aria-label={s.label + '. ' + i.sub}
               onClick={() => tap(s)}>
-              <span className="vs-em" aria-hidden="true"><SpotIcon spot={s} />{lock && <span className="vs-lock">{'\u{1F512}'}</span>}</span>
+              <span className="vs-em" aria-hidden="true"><SpotIcon spot={s} />{lock && <span className="vs-lock"><Icon name="lock" /></span>}</span>
               <span className="vs-lab">{s.short}</span>
             </button>
           )
@@ -464,9 +484,22 @@ export default function OrgPage() {
 
       <p className="vs-hint">Tap anything to go there.</p>
 
+      {isNew && isGroup && canManage && (
+        <section className="vs-body gs-new" aria-labelledby="gs-new-h">
+          <h2 id="gs-new-h">Your group is started</h2>
+          <p className="vs-note">Four steps to get ready. You can do them in any order.</p>
+          <ol className="gs-steps">
+            <li><button type="button" className="vs-row" onClick={() => openSheet({ k: 'where' })}><span aria-hidden="true"><Icon name="houses" /></span> Pick the villages you cover<small>{villageCount ? 'Covers ' + villageCount + ' so far' : 'None yet'}</small></button></li>
+            <li><Link className="vs-row" to={'/orgs/' + id + '/dashboard'}><span aria-hidden="true"><Icon name="toolbox" /></span> Add your crew<small>Search for people you know in Keeper tools</small></Link></li>
+            <li><button type="button" className="vs-row" onClick={() => openSheet({ k: 'members' })}><span aria-hidden="true"><Icon name="card" /></span> List what you bring<small>Skills and gear, like a chainsaw or first aid</small></button></li>
+            <li><button type="button" className="vs-row" onClick={() => openSheet({ k: 'ready' })}><span aria-hidden="true"><Icon name="siren" /></span> Ask to be approved to respond<small>So your group is called when an emergency is verified nearby</small></button></li>
+          </ol>
+        </section>
+      )}
+
       <div className="vs-body">
         {!isMember && <div className="vs-help-one">{askButton()}</div>}
-        {isMember && general && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/groups/' + general.id)}>{'\u{1F525}'} Open the general chat</button>}
+        {isMember && general && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/groups/' + general.id)}><Icon name="campfire" /> Open the general chat</button>}
         <h2>Or pick from the list</h2>
         <div className="vs-list">
           {spots.map((s) => {
@@ -475,7 +508,7 @@ export default function OrgPage() {
             return (
               <button key={s.k} type="button" className={'vs-room' + (s.soon || lock ? ' vs-soon' : '')} onClick={() => tap(s)}>
                 <span className="vs-room-ic" aria-hidden="true"><SpotIcon spot={s} size={40} /></span>
-                <span className="vs-room-text"><b>{s.label}{lock && <span aria-hidden="true"> {'\u{1F512}'}</span>}</b><small>{i.sub}</small></span>
+                <span className="vs-room-text"><b>{s.label}{lock && <span aria-hidden="true"> <Icon name="lock" /></span>}</b><small>{i.sub}</small></span>
                 <span className="vs-go" aria-hidden="true">&#8250;</span>
               </button>
             )
@@ -483,7 +516,7 @@ export default function OrgPage() {
         </div>
 
         {canManage && <>
-          <h2>Organizer settings</h2>
+          <h2>{isGroup ? 'Keeper settings' : 'Organizer settings'}</h2>
           <section className="cal-box" aria-labelledby="org-home">
             <h3 id="org-home">Home area</h3>
             <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AppMenu from '../components/AppMenu'
+import Icon from '../components/Icon'
 
 // Your corner: everything about you in one place.
 // Opened from your letter in the top bar. Replaces the Profile tab and the Menu.
@@ -26,11 +27,11 @@ export default function YourCorner() {
       </Link>
 
       <nav aria-label="Your things" className="corner-list">
-        <Link to="/profile#past-tasks" className="corner-item"><span aria-hidden="true">{'\u{1F4E6}'}</span> Past tasks<span className="corner-arrow" aria-hidden="true">›</span></Link>
-        <Link to="/profile" className="corner-item"><span aria-hidden="true">{'\u{1F91D}'}</span> Vouches and trust<span className="corner-arrow" aria-hidden="true">›</span></Link>
-        <Link to="/find-village" className="corner-item"><span aria-hidden="true">{'\u{1F333}'}</span> My villages<span className="corner-arrow" aria-hidden="true">›</span></Link>
+        <Link to="/profile#past-tasks" className="corner-item"><span aria-hidden="true"><Icon name="box" /></span> Past tasks<span className="corner-arrow" aria-hidden="true">›</span></Link>
+        <Link to="/profile" className="corner-item"><span aria-hidden="true"><Icon name="handshake" /></span> Vouches and trust<span className="corner-arrow" aria-hidden="true">›</span></Link>
+        <Link to="/find-village" className="corner-item"><span aria-hidden="true"><Icon name="tree" /></span> My villages<span className="corner-arrow" aria-hidden="true">›</span></Link>
         {runsAGroup && (
-          <Link to="/org-dashboard" className="corner-item"><span aria-hidden="true">{'\u{1F465}'}</span> My organization dashboard<span className="corner-arrow" aria-hidden="true">›</span></Link>
+          <Link to="/org-dashboard" className="corner-item"><span aria-hidden="true"><Icon name="people" /></span> My organization dashboard<span className="corner-arrow" aria-hidden="true">›</span></Link>
         )}
       </nav>
 

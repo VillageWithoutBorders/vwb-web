@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { loadMyTaskOverview, urgencyLabel } from '../utils/myTasks'
+import Icon from './Icon'
 
 // Home dashboard: your SkillShare and Tasks at a glance, in four tabs.
 // Requests and Offers are SkillShare. Active and Archived are Tasks.
@@ -84,7 +85,7 @@ export default function HomeTasks() {
               className={'home-tasks-tab' + (on ? ' on' : '')}
               onClick={() => pick(t.id)}
             >
-              <span aria-hidden="true">{t.icon}</span> {t.label}
+              <span aria-hidden="true"><Icon name={t.icon} /></span> {t.label}
               {n > 0 && <span className="home-tasks-count">{n}</span>}
               {t.id === 'active' && waitingOnYou > 0 && <span className="home-tasks-dot" aria-label="Something is waiting on you" />}
             </button>

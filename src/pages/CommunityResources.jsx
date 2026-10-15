@@ -9,6 +9,7 @@ import '../find-help.css'
 import { searchScore } from '../utils/resourceSearch'
 import AddressLink from '../components/AddressLink'
 import BackLink from '../components/BackLink'
+import Icon from '../components/Icon'
 
 // Keeps Tab/Shift+Tab cycling inside an open dialog instead of leaking focus
 // out to the page behind it.
@@ -636,7 +637,7 @@ export default function CommunityResources() {
                     <input id="sub-address" style={fieldStyle} placeholder="e.g. 123 Main St, Ringgold, GA" value={subAddress} onChange={e => setSubAddress(e.target.value)} />
                     {subAddress.trim() && (
                       <button type="button" onClick={captureSubLocation} disabled={capturingSubLocation} style={{ display: 'block', width: '100%', padding: '0.65rem', minHeight: '44px', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
-                        {capturingSubLocation ? 'Getting your location...' : (subLat != null ? '📍 Location captured — tap to update' : '📍 Pin this address (optional, helps neighbors see how far away it is)')}
+                        {capturingSubLocation ? 'Getting your location...' : (subLat != null ? <><Icon name="pin" /> Location captured. Tap to update.</> : <><Icon name="pin" /> Pin this address (optional, helps neighbors see how far away it is)</>)}
                       </button>
                     )}
                     <label htmlFor="sub-hood" style={labelStyle}>Neighborhood or area (optional)</label>

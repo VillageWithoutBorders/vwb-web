@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import Icon from './Icon'
 
 // A village's Campfires or Sidechats, for the Village page sheet.
 // kind: 'campfire' or 'sidechat'. The database decides who sees and does what.
@@ -85,7 +86,7 @@ export default function VillageRooms({ villageId, kind, isMember, isKeeper, onCh
     {rooms && rooms.map((r) => (
       r.i_am_in
         ? <button key={r.id} type="button" className="vs-row" onClick={() => navigate('/groups/' + r.id)}>
-            <span aria-hidden="true">{icon}</span> {r.name}
+            <span aria-hidden="true"><Icon name={icon} /></span> {r.name}
             <small>
               {r.member_count === 1 ? '1 person' : r.member_count + ' people'}
               {kind === 'campfire' ? (r.shown ? ' · Shown' : ' · Hidden') : ''}
@@ -95,7 +96,7 @@ export default function VillageRooms({ villageId, kind, isMember, isKeeper, onCh
             </small>
           </button>
         : <div key={r.id} className="vs-sister">
-            <div className="vs-item"><b><span aria-hidden="true">{icon}</span> {r.name}</b><small>{r.member_count === 1 ? '1 person' : r.member_count + ' people'}</small></div>
+            <div className="vs-item"><b><span aria-hidden="true"><Icon name={icon} /></span> {r.name}</b><small>{r.member_count === 1 ? '1 person' : r.member_count + ' people'}</small></div>
             <button type="button" className="btn btn-outline btn-full" disabled={busy === r.id || r.i_asked} onClick={() => ask(r)}>
               {r.i_asked ? 'You asked to join' : busy === r.id ? 'Sending...' : 'Ask to join'}
             </button>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import VillageRiskDialog from './VillageRiskDialog'
+import Icon from './Icon'
 
 // Sister Villages, shown on a neighborhood's card on the map.
 // Everyone sees which villages are sisters. Full members of a sister can join.
@@ -83,7 +84,7 @@ export default function SisterVillages({ village, villages, sisters, isKeeper, j
 
   return (
     <div style={box}>
-      <p style={{ margin: '0 0 0.25rem', fontWeight: 700 }}>{'\u{1F91D}'} Sister Villages</p>
+      <p style={{ margin: '0 0 0.25rem', fontWeight: 700 }}><Icon name="handshake" /> Sister Villages</p>
       {mySisters.length === 0
         ? <p className="cal-sub" style={{ margin: '0 0 0.25rem' }}>No Sister Villages yet.</p>
         : (

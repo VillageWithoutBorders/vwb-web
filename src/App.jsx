@@ -22,6 +22,7 @@ const CommunityResources = lazyPage(() => import('./pages/CommunityResources'))
 const PublicResources = lazyPage(() => import('./pages/PublicResources'))
 const OrgPage = lazyPage(() => import('./pages/OrgPage'))
 const OrgDashboard = lazyPage(() => import('./pages/OrgDashboard'))
+const StartGroup = lazyPage(() => import('./pages/StartGroup'))
 const MfaChallenge = lazyPage(() => import('./pages/MfaChallenge'))
 import Conversation from './pages/Conversation'
 const MessagesPage = lazyPage(() => import('./pages/ConnectHub'))
@@ -153,6 +154,7 @@ function AppRoutes() {
         <Route path="community/resources" element={<CommunityResources />} />
         <Route path="orgs/:id" element={<OrgPage />} />
         <Route path="orgs/:id/dashboard" element={<OrgDashboard />} />
+        <Route path="start-group" element={<StartGroup />} />
         <Route path="org-dashboard" element={<OrgDashboard />} />
         <Route path="help" element={<Help />} />
         <Route path="ask" element={<AskForHelp />} />

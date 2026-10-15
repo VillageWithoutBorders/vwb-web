@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import Icon from '../components/Icon'
 
 const COLORS = {
   bg: 'var(--bg)',
@@ -224,7 +225,7 @@ export default function Welcome() {
           <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
             {STEPS.map((s) => (
               <div key={s.title} style={cardStyle}>
-                <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }} aria-hidden="true">{s.icon}</div>
+                <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }} aria-hidden="true"><Icon name={s.icon} /></div>
                 <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.05rem', color: COLORS.text }}>{s.title}</h3>
                 <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.875rem', lineHeight: 1.55 }}>{s.body}</p>
               </div>
@@ -290,7 +291,7 @@ export default function Welcome() {
         <section style={sectionStyle}>
           <div style={{ ...cardStyle, background: '#2a1f16', borderColor: COLORS.orange }}>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-              <span aria-hidden="true" style={{ fontSize: '1.4rem' }}>⚡</span>
+              <span aria-hidden="true" style={{ fontSize: '1.4rem' }}><Icon name="bolt" /></span>
               <div>
                 <h2 style={{ margin: '0 0 0.4rem', fontSize: '1.05rem', color: COLORS.orangeText }}>Urgent situation?</h2>
                 <p style={{ margin: 0, color: COLORS.textDim, fontSize: '0.9rem', lineHeight: 1.6 }}>

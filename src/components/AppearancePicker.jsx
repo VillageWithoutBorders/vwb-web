@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getTheme, setTheme } from '../utils/theme'
+import Icon from './Icon'
 
 // Settings > Appearance. Light, dark, or whatever the phone is set to.
 const CHOICES = [
@@ -20,7 +21,7 @@ export default function AppearancePicker() {
             style={{ minHeight: 56, borderRadius: 12, cursor: 'pointer', font: 'inherit', fontWeight: 600, fontSize: '0.9rem', padding: '0.4rem',
               border: '2px solid ' + (theme === c.k ? 'var(--accent)' : 'var(--border)'),
               background: theme === c.k ? 'var(--green-light)' : 'var(--surface-2)', color: 'var(--text)' }}>
-            <span aria-hidden="true" style={{ display: 'block', fontSize: '1.2rem' }}>{c.em}</span>{c.label}
+            <span aria-hidden="true" style={{ display: 'block', fontSize: '1.2rem' }}><Icon name={c.em} /></span>{c.label}
           </button>
         ))}
       </div>

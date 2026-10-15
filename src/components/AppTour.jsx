@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import Icon from './Icon'
 
 // A short walk-through of the app.
 //
@@ -469,7 +470,7 @@ export default function AppTour() {
         <div className="tour-progress" aria-hidden="true"><span style={{ width: pct + '%' }} /></div>
 
         <div className="tour-card" key={step.title}>
-          <div className="tour-icon" aria-hidden="true">{step.icon}</div>
+          <div className="tour-icon" aria-hidden="true"><Icon name={step.icon} /></div>
           <h2 id="tourTitle" className="tour-title" tabIndex={-1} ref={headingRef}>{step.title}</h2>
           <p id="tourBody" className="tour-body">{step.body}</p>
           {step.practice && step.practice !== 'intro' && <SampleCard kind={step.practice} />}

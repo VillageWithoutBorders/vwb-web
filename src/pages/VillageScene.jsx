@@ -8,6 +8,7 @@ import { VILLAGE_SPOTS } from '../data/worldElements'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
 import '../village-scene.css'
+import Icon from '../components/Icon'
 
 // The Village page: one village as a little world. Every element on the
 // hills is a button that goes to its own page. A plain list sits below for
@@ -126,7 +127,16 @@ export default function VillageScene() {
     supabase.rpc('org_village_links').then(({ data, error }) => {
       if (!alive) return
       if (error) { console.error('Failed to load organizations working here:', error); return }
-      setOrgs((data || []).filter((r) => r.village_id === id).map((r) => ({ id: r.org_id, name: r.org_name })))
+      const here = (data || []).filter((r) => r.village_id === id).map((r) => ({ id: r.org_id, name: r.org_name, kind: 'organization' }))
+      setOrgs(here)
+      if (!here.length) return
+      // Which of these are emergency response Groups (tent) and which are organizations.
+      supabase.from('organizations').select('id, kind').in('id', here.map((o) => o.id)).then(({ data: kinds, error: kErr }) => {
+        if (!alive) return
+        if (kErr) { console.error('Failed to load group kinds:', kErr); return }
+        const k = Object.fromEntries((kinds || []).map((x) => [x.id, x.kind]))
+        setOrgs(here.map((o) => ({ ...o, kind: k[o.id] || 'organization' })))
+      })
     })
     return () => { alive = false }
   }, [id])
@@ -172,8 +182,8 @@ export default function VillageScene() {
       case 'cottage': return { sub: 'Private chats with people you chose' }
       case 'me': return { sub: 'Your profile, vouches, and settings' }
       case 'messages': return { sub: unreadCount ? unreadCount + ' unread' : 'Requests and private messages', badge: unreadCount }
-      case 'orgs': return { sub: orgs.length ? orgs.length + ' working here' : 'None working here yet' }
-      case 'groups': return { sub: 'Coming soon' }
+      case 'orgs': { const n = orgs.filter((o) => o.kind !== 'group').length; return { sub: n ? n + ' working here' : 'None working here yet' } }
+      case 'groups': { const n = orgs.filter((o) => o.kind === 'group').length; return { sub: n ? n + ' emergency response group' + (n === 1 ? '' : 's') : 'Start a crew for when disaster hits' } }
       default: return { sub: '' }
     }
   }
@@ -217,7 +227,7 @@ export default function VillageScene() {
           {sisters.map((sid) => (
             <div key={sid} className="vs-sister">
               <button type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/village/' + sid) }}>
-                <span aria-hidden="true">{'\u{1F3D8}️'}</span> {nameOf(sid)}<small>Sister village</small>
+                <span aria-hidden="true"><Icon name="houses" /></span> {nameOf(sid)}<small>Sister village</small>
               </button>
               <SisterCampfireButton campfire={sisterFires.find((c) => c.village_a === sid || c.village_b === sid)} />
             </div>
@@ -234,7 +244,7 @@ export default function VillageScene() {
           {mine && keeperNames.map((n) => <div key={n} className="vs-item"><b>{n}</b><small>Keeper</small></div>)}
           {mine && keepers && keepers.i_am_keeper && <>
             <p className="vs-note">You are a keeper here. You post announcements in the village chat and can hand the role to another member.</p>
-            <button type="button" className="btn btn-primary btn-full" onClick={() => { setSheet(null); navigate('/village/' + id + '/keeper') }}>{'\u{1F9F0}'} Open keeper tools</button>
+            <button type="button" className="btn btn-primary btn-full" onClick={() => { setSheet(null); navigate('/village/' + id + '/keeper') }}><Icon name="toolbox" /> Open keeper tools</button>
           </>}
         </>
       case 'chat':
@@ -249,13 +259,26 @@ export default function VillageScene() {
         </>
       case 'orgs':
         return <>{title}
-          {orgs.length === 0 && <p>No organizations work in this village yet.</p>}
-          {orgs.map((o) => (
+          {orgs.filter((o) => o.kind !== 'group').length === 0 && <p>No organizations work in this village yet.</p>}
+          {orgs.filter((o) => o.kind !== 'group').map((o) => (
             <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
-              <span aria-hidden="true">{'\u{1F465}'}</span> {o.name}<small>Organization</small>
+              <span aria-hidden="true"><Icon name="people" /></span> {o.name}<small>Organization</small>
             </button>
           ))}
         </>
+      case 'groups': {
+        const groups = orgs.filter((o) => o.kind === 'group')
+        return <>{title}
+          <p>Groups are crews that show up when disaster hits here: flooding, storms, mold, fires. They plan together ahead of time.</p>
+          {groups.length === 0 && <p className="vs-note">No groups cover this village yet.</p>}
+          {groups.map((o) => (
+            <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
+              <span aria-hidden="true"><Icon name="tent" /></span> {o.name}<small>Emergency response group</small>
+            </button>
+          ))}
+          <Link className="btn btn-outline btn-full" to={'/start-group?village=' + id}>Start a group for {village ? village.name : 'this village'}</Link>
+        </>
+      }
       default: return title
     }
   }
@@ -311,7 +334,7 @@ export default function VillageScene() {
 
       <div className="vs-body">
         {!mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>Join {village.name}</button>}
-        {mine && keepers && keepers.i_am_keeper && <button type="button" data-tour="keeper-tools" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true">{'\u{1F9F0}'}</span> Keeper tools</button>}
+        {mine && keepers && keepers.i_am_keeper && <button type="button" data-tour="keeper-tools" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true"><Icon name="toolbox" /></span> Keeper tools</button>}
         <div className="vs-help">
           <button type="button" className="vs-big vs-ask" onClick={() => navigate('/ask')}>Ask for help</button>
           <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>

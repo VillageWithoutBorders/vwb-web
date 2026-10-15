@@ -14,6 +14,7 @@ import { useSidechatParents } from '../hooks/useSidechatParents'
 import VillageRoomPanel from '../components/VillageRoomPanel'
 import SidechatAdd from '../components/SidechatAdd'
 import { useGoBack } from '../components/BackLink'
+import Icon from '../components/Icon'
 
 // One group's board: its own private Campfire. Posts are end-to-end
 // encrypted (see e2ee.js sendGroupPost), so only members can read them and
@@ -599,7 +600,7 @@ export default function GroupBoard() {
     return (
       <div className="conversation-page group-page">
         <div className="groups-page">
-          <h1>{campfires.has(group.id) ? '\u{1F525} ' : ''}{group.name}</h1>
+          <h1>{campfires.has(group.id) ? <><Icon name="campfire" />{' '}</> : ''}{group.name}</h1>
           <p className="groups-note">You're waiting to be let in. A member of the group will approve you soon. You'll see the board once they do.</p>
           <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Back to chats</button>
         </div>
@@ -629,7 +630,7 @@ export default function GroupBoard() {
       <div className="convo-header">
         <button className="convo-back" onClick={() => goBack('/groups')} aria-label="Back to chats">&#8592;</button>
         <div className="convo-header-info">
-          <h1>{campfires.has(group.id) ? '\u{1F525} ' : ''}{group.name}</h1>
+          <h1>{campfires.has(group.id) ? <><Icon name="campfire" />{' '}</> : ''}{group.name}</h1>
           <p className="convo-context">{villageRoom
             ? (villageRoom.kind === 'sidechat' ? 'Sidechat in ' : 'Campfire in ') + villageRoom.village_name + ' · ' + members.length + ' ' + (members.length === 1 ? 'member' : 'members')
             : <>{isSidechat ? 'Sidechat' + (parentName ? ' of ' + parentName : '') + ' · ' : (orgName ? 'For ' + orgName + ' · ' : '')}{members.length} {members.length === 1 ? 'member' : 'members'} · {campfires.has(group.id) ? 'Campfire' : 'Cottage Chat'}</>}</p>

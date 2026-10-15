@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { loadMyTaskOverview, urgencyLabel } from '../utils/myTasks'
+import Icon from './Icon'
 
 // Finished tasks, kept in your Profile. Tap one to see it, and vouch, on the Tasks page.
 export default function PastTasks() {
@@ -26,7 +27,7 @@ export default function PastTasks() {
 
   return (
     <section id="past-tasks" className="home-tasks" aria-labelledby="past-tasks-h" style={{ marginTop: '1rem' }}>
-      <div className="home-tasks-head"><h2 id="past-tasks-h">{'\u{1F4E6}'} Past tasks{rows ? ' (' + rows.length + ')' : ''}</h2></div>
+      <div className="home-tasks-head"><h2 id="past-tasks-h"><Icon name="box" /> Past tasks{rows ? ' (' + rows.length + ')' : ''}</h2></div>
       <p className="home-tasks-empty" style={{ marginTop: 0 }}>Tasks move here once you have both said how it went. Only you can see this list.</p>
       {!rows && <p className="home-tasks-empty">Loading...</p>}
       {rows && rows.length === 0 && <p className="home-tasks-empty">Nothing finished yet.</p>}

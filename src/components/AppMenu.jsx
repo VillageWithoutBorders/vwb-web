@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
 import { startAppTour } from './AppTour'
+import Icon from './Icon'
 
 // The one menu in the top bar. It replaces two hidden menus (tapping the logo,
 // and a separate person icon) that people didn't know were there.
@@ -106,44 +107,44 @@ export default function AppMenu({ inline = false }) {
           <div id="appMenuList" className={'app-menu-list' + (inline ? ' app-menu-inline' : '')} ref={menuRef}>
             <p className="app-menu-heading">Your account</p>
             <button type="button" className="app-menu-item" onClick={() => go('/profile', { openEdit: true })}>
-              <span aria-hidden="true">{'\u{1F464}'}</span> Edit my profile
+              <span aria-hidden="true"><Icon name="person" /></span> Edit my profile
             </button>
             <button type="button" className="app-menu-item" onClick={() => go('/groups')}>
-              <span aria-hidden="true">{'\u{1F465}'}</span> Cottage Chats &amp; Campfires
+              <span aria-hidden="true"><Icon name="people" /></span> Cottage Chats &amp; Campfires
             </button>
             <button type="button" className="app-menu-item" onClick={() => go('/settings')}>
-              <span aria-hidden="true">{'⚙️'}</span> Settings and privacy
+              <span aria-hidden="true"><Icon name="gear" /></span> Settings and privacy
             </button>
             {isAdmin && (
               <button type="button" className="app-menu-item" onClick={() => go('/admin')}>
-                <span aria-hidden="true">{'\u{1F6E1}️'}</span> Admin panel
+                <span aria-hidden="true"><Icon name="shield" /></span> Admin panel
               </button>
             )}
 
             <p className="app-menu-heading">Help</p>
             <button type="button" className="app-menu-item" onClick={() => go('/help')}>
-              <span aria-hidden="true">{'❓'}</span> Help and feedback
+              <span aria-hidden="true"><Icon name="question" /></span> Help and feedback
             </button>
             <button type="button" className="app-menu-item" onClick={() => { setOpen(false); startAppTour() }}>
-              <span aria-hidden="true">{'\u{1F9ED}'}</span> Take the tour
+              <span aria-hidden="true"><Icon name="compass" /></span> Take the tour
             </button>
 
             <p className="app-menu-heading">Village Without Borders</p>
             <button type="button" className="app-menu-item" onClick={() => { setOpen(false); setPanel('share') }}>
-              <span aria-hidden="true">{'\u{1F4E4}'}</span> Share the app
+              <span aria-hidden="true"><Icon name="share" /></span> Share the app
             </button>
             {!isStandalone && (
               <button type="button" className="app-menu-item" onClick={handleInstall}>
-                <span aria-hidden="true">{'\u{1F4F2}'}</span> Put the app on my home screen
+                <span aria-hidden="true"><Icon name="phone-add" /></span> Put the app on my home screen
               </button>
             )}
             <a className="app-menu-item" href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
-              <span aria-hidden="true">{'\u{1F310}'}</span> Visit our website
+              <span aria-hidden="true"><Icon name="globe" /></span> Visit our website
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
 
             <button type="button" className="app-menu-item app-menu-logout" onClick={() => { setOpen(false); setPanel('logout') }}>
-              <span aria-hidden="true">{'\u{1F6AA}'}</span> Log out
+              <span aria-hidden="true"><Icon name="door" /></span> Log out
             </button>
           </div>
         </>

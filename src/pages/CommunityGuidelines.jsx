@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import Icon from '../components/Icon'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also alert the person and let the caller bail out.
@@ -167,7 +168,7 @@ export default function CommunityGuidelines({ onAgree }) {
           aria-label={`${index + 1} of ${CARDS.length}: ${card.title}`}
           className="guide-card"
         >
-          <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }} aria-hidden="true">{card.icon}</div>
+          <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }} aria-hidden="true"><Icon name={card.icon} /></div>
           <h1 style={{ fontSize: '1.4rem', textAlign: 'center', margin: '0 0 1rem', color: COLORS.text }}>{card.title}</h1>
           <p style={{ fontSize: '1rem', lineHeight: 1.6, color: COLORS.textDim, margin: '0 0 1rem' }}>{card.body}</p>
 
