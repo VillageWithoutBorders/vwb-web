@@ -194,7 +194,7 @@ const ALL_STEPS = [
     target: '[data-tour="emergency"]',
     icon: '⚠️',
     title: 'Emergency Response',
-    body: 'When a flood, fire, or storm hits, find this at the bottom of Your day to see active emergencies or report one.',
+    body: 'For disasters that hit many neighbors at once, like a flood, storm, fire, or long power outage. Report one or sign up to help. Once it is confirmed, a Response Camp chat opens for the helpers. Just you? Use Ask for help. In danger? Call 911 first.',
   },
   {
     need: 'organizer',

@@ -97,7 +97,7 @@ export default function Campfire() {
   // then the rest, then any an admin has added.
   async function loadBoards() {
     // Closed Sister Campfires stay readable to their members for 30 days.
-    const { data, error } = await supabase.from('campfire_boards').select('id, name, village_id, is_general, sort_order, scrambled, sister_a, sister_b, archived, closed_at').or('archived.eq.false,sister_a.not.is.null')
+    const { data, error } = await supabase.from('campfire_boards').select('id, name, village_id, is_general, sort_order, scrambled, sister_a, sister_b, archived, closed_at, event_id').or('archived.eq.false,sister_a.not.is.null,event_id.not.is.null')
     if (error) { console.error('Failed to load Village Square boards:', error); return }
     setBoards(data || [])
   }
@@ -112,7 +112,7 @@ export default function Campfire() {
   const memberSet = new Set((memberVillages || []).map(m => m.village_id))
 
   const orderedBoards = [...boards].sort((a, b) => {
-    const rank = (x) => x.is_general ? 0 : x.village_id && memberSet.has(x.village_id) ? 1 : x.sister_a ? (x.archived ? 3 : 2) : x.village_id ? 5 : 4
+    const rank = (x) => x.is_general ? 0 : x.village_id && memberSet.has(x.village_id) ? 1 : x.event_id ? (x.archived ? 3 : 1) : x.sister_a ? (x.archived ? 3 : 2) : x.village_id ? 5 : 4
     return rank(a) - rank(b) || (a.sort_order - b.sort_order) || a.name.localeCompare(b.name)
   })
   const wantedBoard = searchParams.get('board')
@@ -128,6 +128,12 @@ export default function Campfire() {
     ? new Date(new Date(activeBoard.closed_at).getTime() + 30 * 864e5).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
     : ''
   const [leavingSister, setLeavingSister] = useState(false)
+  // A Response Camp: the chat for one verified emergency. Its members are the people signed up to help.
+  const isCamp = !!activeBoard?.event_id
+  const campClosed = isCamp && activeBoard.archived
+  const campGoneOn = campClosed && activeBoard.closed_at
+    ? new Date(new Date(activeBoard.closed_at).getTime() + 30 * 864e5).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
+    : ''
   async function leaveSister() {
     if (!activeBoard?.sister_a || leavingSister) return
     setLeavingSister(true)
@@ -575,7 +581,7 @@ export default function Campfire() {
   const canPost = !!activeBoard && (
     activeBoard.is_general ? isStaff
       : activeBoard.village_id ? memberSet.has(activeBoard.village_id)
-      : activeBoard.sister_a ? !activeBoard.archived
+      : (activeBoard.sister_a || activeBoard.event_id) ? !activeBoard.archived
       : isStaff
   )
 
@@ -587,7 +593,7 @@ export default function Campfire() {
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span>&#128227;</span> The Village Square
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.75rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.sister_a ? 'Sister Campfire' + (activeBoard.archived ? ', closed' : '') : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.75rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.event_id ? 'Response Camp' + (activeBoard.archived ? ', closed' : '') : activeBoard.sister_a ? 'Sister Campfire' + (activeBoard.archived ? ', closed' : '') : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
         </div>
         <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
         {isVillageBoard && inVillage && (
@@ -611,14 +617,15 @@ export default function Campfire() {
         const q = pickerSearch.trim().toLowerCase()
         const match = (x) => !q || x.name.toLowerCase().includes(q)
         const groups = [
-          ['Announcements and Ambassadors', orderedBoards.filter(x => !x.village_id && !x.sister_a && match(x))],
+          ['Announcements and Ambassadors', orderedBoards.filter(x => !x.village_id && !x.sister_a && !x.event_id && match(x))],
+          ['Response Camps', orderedBoards.filter(x => x.event_id && match(x))],
           ['My villages', orderedBoards.filter(x => x.village_id && memberSet.has(x.village_id) && match(x))],
           ['Sister Campfires', orderedBoards.filter(x => x.sister_a && match(x))],
           ['Other villages', orderedBoards.filter(x => x.village_id && !memberSet.has(x.village_id) && match(x))],
         ]
         const row = (b) => (
           <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid var(--accent)' : '1px solid var(--border)', background: b.id === activeBoardId ? 'var(--success-bg)' : 'var(--surface-2)', color: b.id === activeBoardId ? 'var(--accent)' : 'var(--text)', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
-            <span style={{ flex: 1 }}>{b.sister_a && <span aria-hidden="true"><Icon name="campfire" /> </span>}{b.name}{b.sister_a && b.archived ? ' (closed)' : ''}</span>
+            <span style={{ flex: 1 }}>{b.sister_a && <span aria-hidden="true"><Icon name="campfire" /> </span>}{b.event_id && <span aria-hidden="true"><Icon name="tent" /> </span>}{b.name}{(b.sister_a || b.event_id) && b.archived ? ' (closed)' : ''}</span>
             {unreadFor(b) > 0 && <span aria-label={unreadFor(b) + ' new'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{unreadFor(b) > 99 ? '99+' : unreadFor(b)}</span>}
             {b.id === activeBoardId && <span aria-hidden="true">&#10003;</span>}
           </button>
@@ -676,6 +683,17 @@ export default function Campfire() {
               : 'Sister Campfire. Anyone in either village can join. Members only, not scrambled. Messages delete after 30 days.'}
           </p>
           <button type="button" onClick={leaveSister} disabled={leavingSister} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '10px', border: '1px solid currentColor', background: 'none', color: 'inherit', fontSize: '0.9rem', cursor: 'pointer' }}>{leavingSister ? 'Leaving...' : 'Leave'}</button>
+        </div>
+      )}
+      {isCamp && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 1rem', borderBottom: '1px solid var(--warn-bg)', background: campClosed ? 'var(--danger-bg)' : 'var(--warn-bg)', color: campClosed ? 'var(--danger)' : 'var(--gold)', fontSize: '0.9rem', lineHeight: 1.4 }}>
+          <p style={{ margin: 0, flex: '1 1 12rem' }}>
+            <span aria-hidden="true"><Icon name="tent" /> </span>
+            {campClosed
+              ? 'This Response Camp is closed because the emergency is closed. You can read it until ' + campGoneOn + '. Then it is deleted for good and cannot be brought back.'
+              : 'Response Camp. Everyone signed up to help with this emergency is here. Members only, not scrambled. Messages delete after 30 days.'}
+          </p>
+          <button type="button" onClick={() => navigate('/emergency/' + activeBoard.event_id)} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '10px', border: '1px solid currentColor', background: 'none', color: 'inherit', fontSize: '0.9rem', cursor: 'pointer' }}>Event page</button>
         </div>
       )}
       {isVillageBoard && inVillage && removalRequests.some(r => r.requested_by !== user.id) && (
@@ -911,7 +929,7 @@ export default function Campfire() {
           <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginBottom: '0.6rem' }} onClick={() => navigate('/find-village?join=' + activeBoard.village_id)}>Join this village chat</button>
         )}
         <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-          {activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : activeBoard && activeBoard.village_id ? 'You are not in this village chat. Join it from the map to read and post.' : activeBoard && activeBoard.sister_a ? 'This Sister Campfire is closed. You can read it, but no one can post.' : 'You can read this board. You cannot post here.'}
+          {activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : activeBoard && activeBoard.village_id ? 'You are not in this village chat. Join it from the map to read and post.' : activeBoard && activeBoard.event_id ? 'This Response Camp is closed. You can read it, but no one can post.' : activeBoard && activeBoard.sister_a ? 'This Sister Campfire is closed. You can read it, but no one can post.' : 'You can read this board. You cannot post here.'}
         </p>
         </div>
       )}

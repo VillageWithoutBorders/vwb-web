@@ -139,8 +139,8 @@ export default function EmergencyEvents() {
       <button onClick={() => navigate('/emergency/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '1rem', borderRadius: '10px', border: '2px solid var(--warn)', background: 'linear-gradient(135deg, var(--warn-bg), var(--warn-bg))', cursor: 'pointer', textAlign: 'left', marginBottom: '1.25rem' }}>
         <span style={{ fontSize: '1.75rem' }}>&#9888;</span>
         <div>
-          <span style={{ display: 'block', color: 'var(--gold)', fontWeight: 700, fontSize: '0.95rem' }}>Report Active Emergency</span>
-          <span style={{ color: '#cc9999', fontSize: '0.8rem' }}>Report a disaster or emergency in your area</span>
+          <span style={{ display: 'block', color: 'var(--gold)', fontWeight: 700, fontSize: '0.95rem' }}>Report an emergency</span>
+          <span style={{ color: '#cc9999', fontSize: '0.8rem' }}>When many neighbors are hit at once. Someone in danger? Call 911 first.</span>
         </div>
       </button>
 

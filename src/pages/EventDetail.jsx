@@ -12,6 +12,7 @@ import { useMenuPosition } from '../utils/useMenuPosition'
 import { submitUserReport } from '../utils/submitUserReport'
 import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
+import ResponseCamp from '../components/ResponseCamp'
 
 const STATUS_CONFIG = {
   safe:        { label: 'Safe',         color: 'var(--accent)', bg: 'var(--success-bg)', icon: 'check' },
@@ -500,6 +501,8 @@ export default function EventDetail() {
           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Needs</div>
         </div>
       </div>
+
+      <ResponseCamp eventId={id} verified={!!event.verified} closed={event.status === 'closed'} refreshKey={(mySignup?.role || 'none') + ':' + signups.length} />
 
       {event.verified && resources.length === 0 && (isCoordinator || event.created_by === user.id) && (
         <div style={{ background: 'linear-gradient(135deg, var(--success-bg), #2a4a3a)', border: '1px solid var(--accent)', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
