@@ -50,7 +50,8 @@
   --focus: #ffb27a;
   --radius: 10px;
   --shadow: 0 2px 8px rgba(0,0,0,0.3);
-  --header-height: 52px;
+  /* In rem so the top bar grows with the phone's text size instead of covering the page. */
+  --header-height: 3.75rem;
   --tab-height: 60px;
 }
 
