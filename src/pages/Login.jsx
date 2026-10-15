@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -62,6 +62,11 @@ export default function Login() {
   const [captcha, setCaptcha] = useState('')
   const [captchaKey, setCaptchaKey] = useState(0)
   const needCaptcha = !!TURNSTILE_SITE_KEY && !captcha
+  // A token from another screen can be stale or used up. Start fresh
+  // whenever the screen changes, so Safari gets a clean check.
+  useEffect(() => { setCaptcha(''); setCaptchaKey((k) => k + 1) }, [mode, step, wantAmbassador])
+  // Say why the button is grey instead of leaving people stuck.
+  const captchaHint = needCaptcha ? <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: '0 0 0.75rem' }}>Finish the "are you a person?" check above. On iPhone it can take a few seconds or ask you to tap a box.</p> : null
 
   // If the ban check just signed this account out, explain why once.
   const [error, setError] = useState(() => {
@@ -207,7 +212,7 @@ export default function Login() {
                 Forgot password?
               </button>
             )}
-            <Turnstile onToken={setCaptcha} resetKey={captchaKey} />
+            <Turnstile onToken={setCaptcha} resetKey={captchaKey} />{captchaHint}
             <button type="submit" className="btn btn-primary btn-full" disabled={submitting || needCaptcha}>
               {submitting ? 'Signing in...' : 'Sign in'}
             </button>
@@ -283,7 +288,8 @@ export default function Login() {
               </span>
             </label>
             {error && <p className="form-error" role="alert">{error}</p>}
-            {!wantAmbassador && <Turnstile onToken={setCaptcha} resetKey={captchaKey} />}
+            {!wantAmbassador && <Turnstile resetKey={captchaKey} onToken={setCaptcha} />}
+            {!wantAmbassador && captchaHint}
             <button type="submit" className="btn btn-primary btn-full" disabled={submitting || (!wantAmbassador && needCaptcha)}>
               {wantAmbassador ? 'Next' : submitting ? 'Creating account...' : 'Create account'}
             </button>
@@ -362,7 +368,7 @@ export default function Login() {
             </span>
           </label>
           {error && <p className="form-error" role="alert">{error}</p>}
-          <Turnstile onToken={setCaptcha} resetKey={captchaKey} />
+          <Turnstile onToken={setCaptcha} resetKey={captchaKey} />{captchaHint}
           <div className="form-row">
             <button type="button" className="btn btn-outline" onClick={() => setStep(1)}>Back</button>
             <button type="submit" className="btn btn-primary" disabled={submitting || needCaptcha} style={{ flex: 1 }}>
