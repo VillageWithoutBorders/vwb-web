@@ -208,7 +208,7 @@ const ALL_STEPS = [
     target: '[data-tour="me"]',
     icon: '\u{1F6E1}️',
     title: 'Your corner',
-    body: 'Tap your letter at the top any time. Your profile, past tasks, villages, and settings live here. You can block or report anyone, any time.',
+    body: 'Tap your picture at the top any time. Your profile, past tasks, villages, and settings live here. You can block or report anyone, any time.',
   },
   {
     route: '/profile',
