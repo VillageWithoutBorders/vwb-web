@@ -190,6 +190,13 @@ const ALL_STEPS = [
     body: 'These stay at the top on every screen. Home brings you back to the globe. Calendar shows events. Dashboard has your tasks and needs near you. Alerts and your picture are on the right.',
   },
   {
+    route: '/',
+    target: '[data-tour="role-tab"]',
+    icon: '\u{1F9F0}',
+    title: 'Your tools',
+    body: 'The last button at the bottom changes with your role. Neighbors see Emergency. Keepers, organizers, Hope Ambassadors, and VWB admins see their own tools here. More than one role? Tap My tools to pick.',
+  },
+  {
     route: '/home',
     target: '[data-tour="emergency"]',
     icon: '⚠️',
