@@ -5,7 +5,7 @@ import AppMenu from '../components/AppMenu'
 import Icon from '../components/Icon'
 
 // Your corner: everything about you in one place.
-// Opened from your letter in the top bar. Replaces the Profile tab and the Menu.
+// Opened from your avatar in the top bar. Replaces the Profile tab and the Menu.
 export default function YourCorner() {
   const { user, profile, organizations } = useAuth()
   const [avatarFailed, setAvatarFailed] = useState(false)

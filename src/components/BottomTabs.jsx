@@ -5,7 +5,7 @@ import { useUnreadCount } from '../context/UnreadCountContext'
 // Home opens the globe (the start screen). Your day (/home) sits one step in.
 // Village opens your own village, or the village map if you have not joined one.
 // Help holds SkillShare and Tasks. Village holds the community, map, chats by place, and calendar.
-// Your profile and settings live behind your letter in the top bar (Your corner).
+// Your profile and settings live behind your avatar in the top bar (Your corner).
 
 const HELP = ['/skillshare', '/tasks', '/ask', '/post-offer']
 const HOME = ['/', '/home']
