@@ -57,8 +57,8 @@ const ALL_STEPS = [
     route: '/',
     target: '.wd-switch',
     icon: '\u{1F465}',
-    title: 'Villages and Organizations',
-    body: 'Switch here to see organizations instead: groups, nonprofits, and churches working near you.',
+    title: 'Villages, Organizations, and Groups',
+    body: 'Switch between your networks. Villages are neighbors by zip code. Organizations are nonprofits, churches, and causes. Groups are crews that help when an emergency hits. You only see the ones open to you.',
   },
   {
     route: '/',
@@ -184,10 +184,10 @@ const ALL_STEPS = [
   },
   {
     route: '/',
-    target: '.wd-actions',
+    target: '.header-nav',
     icon: '☀️',
-    title: 'Your day',
-    body: 'Tap Your day under the globe for your tasks, needs near you, and the calendar of events and sign-ups.',
+    title: 'The top bar',
+    body: 'These stay at the top on every screen. Home brings you back to the globe. Calendar shows events. Dashboard has your tasks and needs near you. Alerts and your picture are on the right.',
   },
   {
     route: '/home',
