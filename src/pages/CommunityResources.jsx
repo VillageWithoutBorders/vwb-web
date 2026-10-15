@@ -9,6 +9,7 @@ import '../find-help.css'
 import { searchScore } from '../utils/resourceSearch'
 import AddressLink from '../components/AddressLink'
 import BackLink from '../components/BackLink'
+import HelpSwitch from '../components/HelpSwitch'
 import Icon from '../components/Icon'
 
 // Keeps Tab/Shift+Tab cycling inside an open dialog instead of leaking focus
@@ -510,7 +511,7 @@ export default function CommunityResources() {
 
   return (
     <div className="community-page">
-      <BackLink fallback={user ? '/community' : '/welcome'} fallbackLabel={user ? 'Community' : 'Welcome'} />
+      {user ? <HelpSwitch /> : <BackLink fallback="/welcome" fallbackLabel="Welcome" />}
       <div className="fh-head">
         <img src="/art/icons/heart-hands.svg" alt="" width="48" height="48" />
         <h1>Find help</h1>

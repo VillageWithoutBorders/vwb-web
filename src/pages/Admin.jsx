@@ -904,6 +904,7 @@ export default function Admin() {
         <button onClick={() => goBack('/profile')} aria-label="Back to Profile" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--accent)', flex: 1 }}>Admin Panel</h1>
         <button onClick={() => navigate('/admin/report')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem', display: isFounder ? 'inline-block' : 'none' }}>Grant Report</button>
+        <button onClick={() => navigate('/scramble-test')} style={{ padding: '0.4rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem' }}>Scramble test</button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
