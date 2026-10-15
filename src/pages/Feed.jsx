@@ -12,6 +12,7 @@ import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import HelpSwitch from '../components/HelpSwitch'
+import Icon from '../components/Icon'
 
 // Request statuses that mean "not looking for helpers anymore".
 const NO_LONGER_OPEN = ['in_progress', 'matched', 'completed', 'cancelled', 'closed', 'archived']
@@ -443,7 +444,7 @@ export default function Feed() {
 
                                     {/* Helper count status */}
                                     <div style={{ fontSize: '0.75rem', color: isFull ? '#2d6a4f' : 'var(--text-muted)', marginTop: '0.25rem' }}>
-                                        {isFull ? "✅ " : "🤝 "}{helperStatus}
+                                        <Icon name={isFull ? 'check' : 'handshake'} />{' '}{helperStatus}
                                     </div>
 
                                     <p className={'feed-card-desc' + (isExpanded ? '' : ' feed-card-desc-clamp')}>{req.description}</p>
@@ -458,7 +459,7 @@ export default function Feed() {
                                             {req.requester_id !== user.id && isPending && (
                                                 <>
                                                     <span style={{ fontSize: '0.8rem', color: 'var(--gold)', fontWeight: 600 }}>
-                                                        {"⏳"} Pending
+                                                        <Icon name="hourglass" /> Pending
                                                     </span>
                                                     <button className="btn btn-outline btn-sm" onClick={(e) => handleWithdrawOffer(e, req)}>
                                                         Withdraw
@@ -467,7 +468,7 @@ export default function Feed() {
                                             )}
                                             {req.requester_id !== user.id && isFull && !isPending && (
                                                 <span style={{ fontSize: '0.8rem', color: '#2d6a4f', fontWeight: 600 }}>
-                                                    {"✅"} Full
+                                                    <Icon name="check" /> Full
                                                 </span>
                                             )}
                                             {req.requester_id && <VouchButton userId={req.requester_id} size="md" showCount={false} />}

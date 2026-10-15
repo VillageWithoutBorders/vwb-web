@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import '../dashboard.css'
+import Icon from './Icon'
 
 // Shared pieces for the Keeper and Organizer dashboards.
 // The open tab lives in the address (?tab=people) so links and the back button land on it.
@@ -23,7 +24,7 @@ export function NeedsYou({ items, onGo, calm }) {
   if (items.length === 0) {
     return (
       <section className="dash-needs is-calm" aria-label="Needs you now">
-        <p className="dash-needs-calm"><span aria-hidden="true">{'\u{1F33F}'}</span> {calm || 'Nothing is waiting on you right now.'}</p>
+        <p className="dash-needs-calm"><span aria-hidden="true"><Icon name="leaf" /></span> {calm || 'Nothing is waiting on you right now.'}</p>
       </section>
     )
   }
@@ -32,7 +33,7 @@ export function NeedsYou({ items, onGo, calm }) {
       <h2 id="dash-needs-h">Needs you now</h2>
       {items.map((it) => (
         <button key={it.k} type="button" className="dash-need" onClick={() => onGo(it.tab)}>
-          <span className="dash-need-ic" aria-hidden="true">{it.em}</span>
+          <span className="dash-need-ic" aria-hidden="true"><Icon name={it.em} /></span>
           <span className="dash-need-text">{it.text}</span>
           <span className="dash-need-go" aria-hidden="true">&#8250;</span>
         </button>
@@ -60,7 +61,7 @@ export function DashTabs({ tabs, tab, setTab, dots = {} }) {
           id={'dash-tab-' + t.k} aria-controls={'dash-panel-' + t.k} aria-selected={tab === t.k}
           tabIndex={tab === t.k ? 0 : -1} className="dash-tab"
           onClick={() => setTab(t.k)} onKeyDown={(e) => onKey(e, i)}>
-          <span className="dash-tab-ic" aria-hidden="true">{t.em}</span>
+          <span className="dash-tab-ic" aria-hidden="true"><Icon name={t.em} /></span>
           <span className="dash-tab-label">{t.label}</span>
           {dots[t.k] ? <span className="dash-tab-dot" aria-label="Needs you" /> : null}
         </button>

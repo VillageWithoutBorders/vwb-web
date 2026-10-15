@@ -8,6 +8,7 @@ import VillageRooms from '../components/VillageRooms'
 import SisterVillages from '../components/SisterVillages'
 import { UserName } from '../components/AvatarDisplay'
 import { useDashTab, NeedsYou, DashTabs, DashPanel } from '../components/DashShell'
+import Icon from '../components/Icon'
 
 // Keeper tools for one neighborhood village. Same layout as Organizer tools:
 // Needs-you card on top, then four tabs: People, Chats, Sisters, Keeper role.
@@ -156,14 +157,14 @@ export default function KeeperDashboard() {
   ].filter(Boolean)
 
   const go = (em, label, onClick) => (
-    <button type="button" className="dash-shortcut" onClick={onClick}><span aria-hidden="true">{em}</span>{label}</button>
+    <button type="button" className="dash-shortcut" onClick={onClick}><span aria-hidden="true"><Icon name={em} /></span>{label}</button>
   )
 
   return (
     <div className="cal-page hub-page dash-page">
       <BackLink fallback={'/village/' + id} fallbackLabel={village.name} />
       <div className="dash-head">
-        <span className="dash-head-icon" aria-hidden="true">{'\u{1F9F0}'}</span>
+        <span className="dash-head-icon" aria-hidden="true"><Icon name="toolbox" /></span>
         <h1>{village.name}</h1>
       </div>
       <p className="dash-sub">Keeper tools{isStarter ? ' · You keep this village' : ' · You are a helper'}</p>
@@ -215,18 +216,18 @@ export default function KeeperDashboard() {
       {tab === 'chats' && (
         <DashPanel k="chats">
           <section className="hub-section" aria-labelledby="kd-chat">
-            <div className="hub-section-head"><h2 id="kd-chat">{'\u{1F4E3}'} Village chat</h2></div>
+            <div className="hub-section-head"><h2 id="kd-chat"><Icon name="megaphone" /> Village chat</h2></div>
             <p className="hub-org-desc">Everyone in the village. As a keeper you can pin announcements here.</p>
             <div className="dash-shortcuts">
               {go('\u{1F4E3}', 'Open the village chat', () => navigate(board ? '/campfire?board=' + board.id : '/village/' + id))}
             </div>
           </section>
           <section className="hub-section" aria-labelledby="kd-fires">
-            <div className="hub-section-head"><h2 id="kd-fires">{'\u{1F525}'} Campfires</h2></div>
+            <div className="hub-section-head"><h2 id="kd-fires"><Icon name="campfire" /> Campfires</h2></div>
             <VillageRooms villageId={id} kind="campfire" isMember isKeeper onChanged={loadRooms} />
           </section>
           <section className="hub-section" aria-labelledby="kd-side">
-            <div className="hub-section-head"><h2 id="kd-side">{'\u{1F4AC}'} Sidechats ({sidechats.length})</h2></div>
+            <div className="hub-section-head"><h2 id="kd-side"><Icon name="sidechats" /> Sidechats ({sidechats.length})</h2></div>
             <VillageRooms villageId={id} kind="sidechat" isMember isKeeper onChanged={loadRooms} />
           </section>
         </DashPanel>
@@ -241,7 +242,7 @@ export default function KeeperDashboard() {
           </section>
 
           <section className="hub-section" aria-labelledby="kd-orgs">
-            <div className="hub-section-head"><h2 id="kd-orgs">{'\u{1F465}'} Organizations working here</h2></div>
+            <div className="hub-section-head"><h2 id="kd-orgs"><Icon name="people" /> Organizations working here</h2></div>
             <p className="hub-org-desc">Organizations pick the neighborhoods they work in. You can remove one that doesn't belong.</p>
             {orgs.length === 0 && <p className="hub-empty">None yet.</p>}
             {orgs.map((o) => (

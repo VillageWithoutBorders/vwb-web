@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import Icon from './Icon'
 
 const BASE = 'https://api.dicebear.com/7.x/avataaars/svg'
 
@@ -171,7 +172,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
               </button>
             ))}
           </div>
-          <button onClick={shuffle} style={{ display: 'block', width: '100%', marginBottom: '1rem', padding: '0.6rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.9rem' }}>{'🎲'} Shuffle for more</button>
+          <button onClick={shuffle} style={{ display: 'block', width: '100%', marginBottom: '1rem', padding: '0.6rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.9rem' }}><Icon name="dice" /> Shuffle for more</button>
         </>
       )}
 
@@ -181,7 +182,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
             <div style={{ width: '120px', height: '120px', margin: '0 auto', borderRadius: '50%', overflow: 'hidden', background: '#2a2a2a', border: '3px solid #4ecca3' }}>
               {previewUrl && <img src={previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
-            <button onClick={randomizeCustom} style={{ marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.8rem' }}>{'🎲'} Randomize</button>
+            <button onClick={randomizeCustom} style={{ marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.8rem' }}><Icon name="dice" /> Randomize</button>
           </div>
 
           <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.75rem', justifyContent: 'center' }}>
@@ -258,7 +259,7 @@ export function AvatarPreview({ url, size = 40, style = {} }) {
   if (!url) {
     return (
       <div style={{ width: size, height: size, borderRadius: '50%', background: '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8a8a', fontSize: size * 0.5, flexShrink: 0, ...style }}>
-        {'👤'}
+        <Icon name="person" />
       </div>
     )
   }

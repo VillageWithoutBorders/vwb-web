@@ -20,7 +20,7 @@ export const VILLAGE_SPOTS = [
   { k: 'cottage', icon: 'cottage', label: 'Cottage Chats', short: 'Cottage Chats', em: '\u{1F3E1}', x: 74, y: 53 },
   { k: 'skillshare', icon: 'basket', label: 'SkillShare', short: 'SkillShare', em: '\u{1F9FA}', x: 15, y: 74 },
   { k: 'neighbors', icon: 'wave', label: 'Neighbors', short: 'Neighbors', em: '\u{1F44B}', x: 41, y: 74 },
-  { k: 'groups', icon: 'tent', label: 'Groups here', short: 'Groups', em: '⛺', x: 84, y: 68, soon: true },
+  { k: 'groups', icon: 'tent', label: 'Groups here', short: 'Groups', em: '⛺', x: 84, y: 68 },
   { k: 'me', icon: 'house', label: 'Your corner', short: 'You', em: '\u{1F3E0}', x: 27, y: 90, s: 1.1 },
   { k: 'messages', icon: 'mailbox', label: 'Messages', short: 'Messages', em: '\u{1F4EE}', x: 85, y: 90, s: 1.1 },
 ]
@@ -40,4 +40,20 @@ export const ORG_SPOTS = [
   { k: 'share', icon: 'box', label: 'What we share', short: 'Share', em: '\u{1F4E6}', x: 41, y: 74 },
   { k: 'involved', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
   { k: 'tools', icon: 'toolbox', label: 'Organizer tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
+]
+
+// An emergency response Group's page (OrgPage.jsx with kind 'group'). Same roadmap
+// and lots as ORG_SPOTS. Keepers take the place of Heads and organizers.
+export const GROUP_SPOTS = [
+  { k: 'rules', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 14, y: 27, members: true },
+  { k: 'where', icon: 'houses', label: 'Where we cover', short: 'Where', em: '\u{1F3D8}', x: 32, y: 17 },
+  { k: 'links', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
+  { k: 'events', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
+  { k: 'news', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
+  { k: 'fires', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52, members: true },
+  { k: 'members', icon: 'card', label: 'Members and what we bring', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
+  { k: 'ready', icon: 'siren', label: 'Ready to respond', short: 'Respond', em: '\u{1F6A8}', x: 15, y: 74 },
+  { k: 'share', icon: 'box', label: 'Supplies we keep', short: 'Supplies', em: '\u{1F4E6}', x: 41, y: 74 },
+  { k: 'involved', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
+  { k: 'tools', icon: 'toolbox', label: 'Keeper tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
 ]

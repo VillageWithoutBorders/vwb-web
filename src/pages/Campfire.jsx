@@ -11,6 +11,7 @@ import { SPARK_NAME, SPARK_HINT } from '../utils/spark'
 import VillagePeople, { VillageNewMembers } from '../components/VillagePeople'
 import { useGoBack } from '../components/BackLink'
 import { sendVillagePost, fetchVillageBodies, editVillagePost, fetchVillageEditHistory } from '../lib/e2ee'
+import Icon from '../components/Icon'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
@@ -617,7 +618,7 @@ export default function Campfire() {
         ]
         const row = (b) => (
           <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid var(--accent)' : '1px solid var(--border)', background: b.id === activeBoardId ? 'var(--success-bg)' : 'var(--surface-2)', color: b.id === activeBoardId ? 'var(--accent)' : 'var(--text)', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
-            <span style={{ flex: 1 }}>{b.sister_a && <span aria-hidden="true">{'\u{1F525}'} </span>}{b.name}{b.sister_a && b.archived ? ' (closed)' : ''}</span>
+            <span style={{ flex: 1 }}>{b.sister_a && <span aria-hidden="true"><Icon name="campfire" /> </span>}{b.name}{b.sister_a && b.archived ? ' (closed)' : ''}</span>
             {unreadFor(b) > 0 && <span aria-label={unreadFor(b) + ' new'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{unreadFor(b) > 99 ? '99+' : unreadFor(b)}</span>}
             {b.id === activeBoardId && <span aria-hidden="true">&#10003;</span>}
           </button>
@@ -669,7 +670,7 @@ export default function Campfire() {
       {isSister && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 1rem', borderBottom: '1px solid var(--warn-bg)', background: sisterClosed ? 'var(--danger-bg)' : 'var(--warn-bg)', color: sisterClosed ? 'var(--danger)' : 'var(--gold)', fontSize: '0.9rem', lineHeight: 1.4 }}>
           <p style={{ margin: 0, flex: '1 1 12rem' }}>
-            <span aria-hidden="true">{'\u{1F525}'} </span>
+            <span aria-hidden="true"><Icon name="campfire" /> </span>
             {sisterClosed
               ? 'This Sister Campfire is closed. The villages are no longer sisters. You can read it until ' + sisterGoneOn + '. Then it is deleted for good and cannot be brought back.'
               : 'Sister Campfire. Anyone in either village can join. Members only, not scrambled. Messages delete after 30 days.'}
@@ -832,7 +833,7 @@ export default function Campfire() {
                     )}
                     {canPin && (
                       <button onClick={() => togglePin(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem' }}>
-                        {msg.pinned ? 'Unpin' : isVillageBoard ? '📌 Make an announcement' : '📌 Pin message'}
+                        {msg.pinned ? 'Unpin' : isVillageBoard ? <><Icon name="pushpin" /> Make an announcement</> : <><Icon name="pushpin" /> Pin message</>}
                       </button>
                     )}
                     {!isMe && (
@@ -870,7 +871,7 @@ export default function Campfire() {
       <>
       {activeBoard?.scrambled && (
         <p style={{ margin: 0, padding: '0.4rem 1rem 0', borderTop: '1px solid var(--border)', background: 'var(--surface)', color: '#9ad6c0', fontSize: '0.8rem', lineHeight: 1.4 }}>
-          {'\uD83D\uDD12'} Scrambled test: only people in this village chat can read these messages. VWB cannot.{sendNote ? ' ' + sendNote : ''}
+          <Icon name="lock" /> Scrambled test: only people in this village chat can read these messages. VWB cannot.{sendNote ? ' ' + sendNote : ''}
         </p>
       )}
       {introHint && !editing && (
@@ -1039,4 +1040,4 @@ export default function Campfire() {
       )}
     </div>
   )
-}
+}

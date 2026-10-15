@@ -11,6 +11,7 @@ import {
 } from '../utils/notificationHelpers'
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
 import { useGoBack } from '../components/BackLink'
+import Icon from '../components/Icon'
 
 export default function Notifications() {
   const { user } = useAuth()
@@ -164,7 +165,7 @@ export default function Notifications() {
 
       {filtered.length === 0 ? (
         <div className="notifications-empty">
-          <span className="empty-icon" aria-hidden="true">{filter === 'followup' ? '\u2691' : '\u{1F514}'}</span>
+          <span className="empty-icon" aria-hidden="true"><Icon name={filter === 'followup' ? 'flag' : 'bell'} /></span>
           <p>
             {filter === 'unread'
               ? "You're all caught up!"
@@ -235,7 +236,7 @@ function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
       aria-label={(notification.read ? '' : 'New. ') + (flagged ? 'Flagged to follow up. ' : '') + notification.title}
     >
       <div className="notification-icon" aria-hidden="true" style={{ background: color + '26', color: color }}>
-        {icon}
+        <Icon name={icon} />
       </div>
       <div className="notification-content">
         <div className="notification-title">{notification.title}</div>
@@ -245,7 +246,7 @@ function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
         <div className="notification-meta">
           <span className="notification-time">{timeAgo(notification.created_at)}</span>
           {flagged && (
-            <span className="notification-followup-badge"><span aria-hidden="true">{'\u2691'}</span> Follow up</span>
+            <span className="notification-followup-badge"><span aria-hidden="true"><Icon name="flag" /></span> Follow up</span>
           )}
         </div>
       </div>
@@ -258,7 +259,7 @@ function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
           onClick={(e) => onToggleFollowUp(e, notification)}
           aria-label={flagged ? 'Remove follow up flag' : 'Flag to follow up'}
         >
-          <span aria-hidden="true">{'\u2691'}</span>
+          <span aria-hidden="true"><Icon name="flag" /></span>
         </button>
         <button
           type="button"

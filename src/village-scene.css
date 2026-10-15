@@ -115,3 +115,24 @@
   --success-bg: #1a4a3a; --info-bg: #1a3a5a; --warn-bg: #3a2a1a; --danger-bg: #3a1a1a;
   --purple: #c77dff; --purple-bg: #3a1a4a;
 }
+
+/* Emergency response Groups (Oct 15): what we bring, ready to respond, first steps */
+.gg h3 { margin: 18px 0 8px; font-size: 1.05rem; }
+.gg-set { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; }
+.gg-set legend { font-weight: 700; margin-bottom: 8px; }
+.gg-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.gg-chip { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--vs-line); background: var(--vs-card); color: inherit; font: inherit; font-size: 1rem; cursor: pointer; }
+.gg-chip.gg-on { background: var(--vs-teal); border-color: var(--vs-teal); color: var(--vs-on-teal); font-weight: 700; }
+.gg-chip:active { transform: scale(0.97); }
+.gg-chip:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 2px; }
+.gg-add { display: flex; gap: 8px; margin-top: 10px; }
+.gg-add input { flex: 1; min-width: 0; min-height: 44px; font-size: 16px; }
+.gg-label { display: block; font-weight: 700; margin: 8px 0 6px; }
+.gg textarea, .vs-sheet textarea { width: 100%; box-sizing: border-box; font-family: inherit; font-size: 16px; margin-bottom: 10px; }
+.vs-sheet .cal-box .btn-full + .btn-full { margin-top: 8px; }
+.gg-totals { margin: 6px 0; line-height: 1.5; }
+.gr-ok { border-left: 4px solid var(--vs-teal); }
+.gs-new { margin-top: 8px; }
+.gs-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.gs-steps .vs-row { width: 100%; text-decoration: none; box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) { .gg-chip:active { transform: none; } }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import Icon from './Icon'
 
 // Peer connections between organizations, and Campfires (organizing chats) built on them.
 // Shown on the organization dashboard to Heads and organizers.
@@ -170,7 +171,7 @@ export default function OrgConnections({ orgId, orgName }) {
               ))}
             </fieldset>
             {chatNote && <p role="alert" className="groups-error">{chatNote}</p>}
-            <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={busy === 'chat'}>{busy === 'chat' ? 'Starting...' : '\u{1F525} Start a Campfire'}</button>
+            <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={busy === 'chat'}>{busy === 'chat' ? 'Starting...' : <><Icon name="campfire" /> Start a Campfire</>}</button>
           </form>
         </section>
       )}

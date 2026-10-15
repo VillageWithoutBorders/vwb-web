@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useNotifications } from '../hooks/useNotifications'
 import { markNotificationRead } from '../utils/notificationHelpers'
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
+import Icon from './Icon'
 
 // The Alerts button in the top bar. Tapping it opens a small popout with
 // your 5 newest alerts and a "See all alerts" button that opens the full
@@ -94,7 +95,7 @@ export default function AlertsMenu() {
               return (
                 <button key={n.id} type="button" className={'alerts-popout-item' + (n.read ? '' : ' unread')} onClick={() => openAlert(n)}>
                   <span className="alerts-popout-icon" aria-hidden="true" style={{ background: color + '26', color }}>
-                    {TYPE_ICONS[n.type] || '\u{1F514}'}
+                    <Icon name={TYPE_ICONS[n.type] || 'bell'} />
                   </span>
                   <span className="alerts-popout-text">
                     {!n.read && <span className="sr-only">New. </span>}
@@ -102,7 +103,7 @@ export default function AlertsMenu() {
                     <span className="alerts-popout-title">{n.title}</span>
                     <span className="alerts-popout-time">
                       {timeAgo(n.created_at)}
-                      {n.follow_up && <span className="alerts-popout-flag" aria-hidden="true"> {'\u2691'} Follow up</span>}
+                      {n.follow_up && <span className="alerts-popout-flag" aria-hidden="true"> <Icon name="flag" /> Follow up</span>}
                     </span>
                   </span>
                   {!n.read && <span className="unread-dot" aria-hidden="true" />}
