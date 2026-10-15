@@ -5469,3 +5469,36 @@ button[aria-label^="Back"], button[aria-label^="Close"], button[aria-label^="Can
 .header-nav > .app-menu { flex: 1 1 0; min-width: 52px; max-width: 96px; display: flex; }
 .header-nav > .app-menu > .header-btn { flex: 1 1 auto; max-width: none; }
 @media (max-width: 359px) { .header-nav > .app-menu { min-width: 0; } }
+
+/* Bottom bar: 4th button by role (BottomTabs.jsx) */
+.tab-badge { position: absolute; top: 2px; right: 50%; transform: translateX(12px); background: var(--danger); color: #fff; font-size: 0.65rem; font-weight: 700; border-radius: 9px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 4px; line-height: 1; }
+.tab-item-btn { background: none; border: 0; font: inherit; cursor: pointer; }
+.tab-icon-pic { display: grid; place-items: center; width: 24px; height: 24px; }
+.tab-icon-pic .vwb-icon { width: 24px; height: 24px; }
+.tools-shade { position: fixed; inset: 0; z-index: 300; background: rgba(0, 0, 0, 0.55); display: flex; align-items: flex-end; justify-content: center; }
+.tools-sheet { width: 100%; max-width: 32rem; max-height: 80vh; overflow-y: auto; box-sizing: border-box; padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px)); border-radius: 16px 16px 0 0; background: var(--surface); border-top: 1px solid var(--border-strong); }
+.tools-sheet h2 { margin: 0 0 0.75rem; font-size: 1.15rem; color: var(--text-strong); }
+.tools-list { list-style: none; margin: 0 0 0.75rem; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.tools-row { width: 100%; min-height: 56px; display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.9rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); color: var(--text-strong); font: inherit; text-align: left; cursor: pointer; }
+.tools-row span:not(.tools-arrow) { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.tools-row small { color: var(--text-secondary); font-size: 0.9rem; overflow-wrap: anywhere; }
+.tools-arrow { color: var(--text-muted); font-size: 1.3rem; }
+.tools-row:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.tools-row:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .tools-row:active { transform: none; } }
+@media (min-width: 768px) { .tools-shade { align-items: center; padding: 1rem; } .tools-sheet { border-radius: 16px; border: 1px solid var(--border-strong); } }
+
+/* Ambassador tools page (Ambassador.jsx) */
+.amb-page { display: flex; flex-direction: column; gap: 0.9rem; }
+.amb-title { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 1.4rem; color: var(--text-strong); }
+.amb-sub, .amb-note { margin: 0; color: var(--text-secondary); line-height: 1.45; }
+.amb-error { margin: 0; color: var(--danger); font-weight: 600; }
+.amb-box { padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); display: flex; flex-direction: column; gap: 0.6rem; }
+.amb-box h2 { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 1.1rem; color: var(--text-strong); }
+.amb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.amb-row { display: flex; align-items: center; gap: 0.6rem; min-height: 52px; padding: 0.5rem 0.8rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text-strong); text-decoration: none; }
+.amb-row > span:first-child { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.amb-row small { color: var(--text-secondary); font-size: 0.9rem; }
+.amb-row:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.amb-btn { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.help-switch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
