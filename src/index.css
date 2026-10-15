@@ -5079,6 +5079,9 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 .me-btn { width: 44px; height: 44px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--accent); background: var(--green-light); color: var(--text-strong); font-weight: 700; font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; flex: none; }
 .me-btn.on { background: var(--green-dark); color: #fff; }
 .me-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.me-btn-pic { overflow: hidden; padding: 0; }
+.me-btn-pic.on { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); background: var(--green-light); }
+.me-btn-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
 .me-btn:active { transform: scale(0.95); }
 
 .corner-page { padding-bottom: 1rem; }
