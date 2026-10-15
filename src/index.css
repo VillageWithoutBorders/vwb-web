@@ -5076,13 +5076,6 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 
 
 /* ---------- Four tabs: your letter, Your corner, Help switch ---------- */
-.me-btn { width: 44px; height: 44px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--accent); background: var(--green-light); color: var(--text-strong); font-weight: 700; font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; flex: none; }
-.me-btn.on { background: var(--green-dark); color: #fff; }
-.me-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.me-btn-pic { overflow: hidden; padding: 0; }
-.me-btn-pic.on { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); background: var(--green-light); }
-.me-btn-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
-.me-btn:active { transform: scale(0.95); }
 
 .corner-page { padding-bottom: 1rem; }
 .corner-title { font-size: 1.375rem; color: var(--accent); margin: 0 0 0.75rem; }
@@ -5107,7 +5100,7 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 .help-switch-btn { min-height: 48px; display: flex; align-items: center; justify-content: center; background: var(--surface); color: var(--text-secondary); font-weight: 700; text-decoration: none; }
 .help-switch-btn.on { background: var(--green-dark); color: #fff; }
 .help-switch-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
-@media (prefers-reduced-motion: reduce) { .me-btn:active { transform: none; } }
+
 
 
 /* ---------- Help > Mine > Requests: neighbors who offered ---------- */
@@ -5460,3 +5453,18 @@ button[aria-label^="Back"], button[aria-label^="Close"], button[aria-label^="Can
   .ce-modal { align-items: center; padding: 1rem; }
   .ce-sheet { border-radius: 16px; border: 1px solid var(--border-strong); }
 }
+
+/* Top bar: Home, Calendar, Dashboard, Alerts, You. Always there, same order on every screen. */
+.header-nav { justify-content: space-between; gap: 2px; padding: 0 0.25rem; }
+.header-nav .header-btn { flex: 1 1 0; min-width: 52px; max-width: 96px; text-decoration: none; }
+.header-btn.on { background: rgba(255, 255, 255, 0.18); box-shadow: inset 0 -3px 0 #ffd98a; }
+.header-btn:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
+.header-btn:active { transform: scale(0.96); }
+@media (prefers-reduced-motion: reduce) { .header-btn:active { transform: none; } }
+.header-btn-logo { width: 26px; height: 26px; border-radius: 50%; display: block; }
+.me-btn-img, .me-btn-letter { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box; display: block; background: var(--green-light); object-fit: cover; }
+.me-btn-letter { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; color: var(--text-strong); }
+@media (max-width: 359px) { .header-nav .header-btn { min-width: 0; padding: 2px 2px; } .header-nav .header-btn-label { font-size: 0.7rem; } }
+.header-nav > .app-menu { flex: 1 1 0; min-width: 52px; max-width: 96px; display: flex; }
+.header-nav > .app-menu > .header-btn { flex: 1 1 auto; max-width: none; }
+@media (max-width: 359px) { .header-nav > .app-menu { min-width: 0; } }

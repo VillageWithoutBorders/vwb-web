@@ -167,7 +167,9 @@ export default function World() {
   const orgMap = useMemo(() => {
     const mineIds = new Set(myOrgs.map((o) => o.id))
     const linked = new Set(orgLinks.flat())
-    const list = orgs.slice().sort((a, b) => (mineIds.has(b.id) - mineIds.has(a.id)) || (linked.has(b.id) - linked.has(a.id)) || a.name.localeCompare(b.name)).slice(0, MAX_ON_GLOBE)
+    // Organizations and Groups are separate tabs. Each person only gets the ones they are allowed to see.
+    const wantGroups = net === 'groups'
+    const list = orgs.filter((o) => (o.kind === 'group') === wantGroups).sort((a, b) => (mineIds.has(b.id) - mineIds.has(a.id)) || (linked.has(b.id) - linked.has(a.id)) || a.name.localeCompare(b.name)).slice(0, MAX_ON_GLOBE)
     const n = list.length
     const nodes = list.map((o, i) => {
       const ang = i * 2.39996 - Math.PI / 2, rad = n === 1 ? 0 : 10 + 22 * Math.sqrt(i / Math.max(n - 1, 1))
@@ -176,7 +178,7 @@ export default function World() {
     const byId = Object.fromEntries(nodes.map((o) => [o.id, o]))
     const lines = orgLinks.filter(([a, b]) => byId[a] && byId[b]).map(([a, b]) => ({ a: byId[a], b: byId[b], ...curve({ x: byId[a].gx, y: byId[a].gy }, { x: byId[b].gx, y: byId[b].gy }, 5) }))
     return { nodes, lines }
-  }, [orgs, myOrgs, orgLinks])
+  }, [orgs, myOrgs, orgLinks, net])
 
   useEffect(() => {
     if (!sheet) return
@@ -204,7 +206,9 @@ export default function World() {
   function tapOrg(o) { zoomTo(o.gx, o.gy, '/orgs/' + o.id) }
 
   const view = net === 'villages' ? villageMap : orgMap
-  const hasMine = net === 'villages' ? shown.some((v) => v.is_mine) : myOrgs.length > 0
+  const myGroups = myOrgs.filter((o) => o.kind === 'group')
+  const myRealOrgs = myOrgs.filter((o) => o.kind !== 'group')
+  const hasMine = net === 'villages' ? shown.some((v) => v.is_mine) : net === 'groups' ? myGroups.length > 0 : myRealOrgs.length > 0
 
   return (
     <div className="vs-page wd-page">
@@ -213,6 +217,7 @@ export default function World() {
       <div className="wd-switch" role="group" aria-label="Which network">
         <button type="button" aria-pressed={net === 'villages'} onClick={() => setNet('villages')}><span aria-hidden="true"><Icon name="houses" /></span> Villages</button>
         <button type="button" aria-pressed={net === 'orgs'} onClick={() => setNet('orgs')}><span aria-hidden="true"><Icon name="people" /></span> Organizations</button>
+        <button type="button" aria-pressed={net === 'groups'} onClick={() => setNet('groups')}><span aria-hidden="true"><Icon name="tent" /></span> Groups</button>
       </div>
 
       <div className="wd-globe-wrap">
@@ -252,7 +257,7 @@ export default function World() {
               </span>
             ))}
 
-            {net === 'orgs' && orgMap.nodes.map((o) => (
+            {net !== 'villages' && orgMap.nodes.map((o) => (
               <button key={o.id} type="button" className={'wd-org' + (o.mine ? ' wd-in' : ' wd-none')}
                 style={{ left: o.gx + '%', top: o.gy + '%' }}
                 aria-label={o.name + (o.mine ? ', you belong' : ', not joined yet')}
@@ -277,18 +282,21 @@ export default function World() {
       {villages === null && <p className="wd-sub" role="status">Loading your world...</p>}
       {error && <p className="vs-error" role="alert">{error}</p>}
 
-      <h1 className="wd-hint">{net === 'villages' ? 'Your villages' : 'Your organizations'}</h1>
+      <h1 className="wd-hint">{net === 'villages' ? 'Your villages' : net === 'groups' ? 'Your groups' : 'Your organizations'}</h1>
       <p className="wd-sub">
         {net === 'villages'
           ? (hasMine ? 'Villages overlap where they share zip codes. A gold line joins sister villages. Tap your village to step inside.' : 'You have not joined a village yet. Tap a village near you to join, or find yours by zip code.')
-          : (myOrgs.length ? 'Organizations are people working together, not places. A gold line joins two that chose to connect.' : 'You do not belong to an organization yet. Tap one to see what it does.')}
+          : net === 'groups'
+            ? (myGroups.length ? 'Groups are crews that help when an emergency hits. Tap your group to see who is ready and what you bring.' : (orgMap.nodes.length ? 'You are not in a group yet. Groups are crews that help when an emergency hits. Tap one to see what it does.' : 'No groups yet. Groups are crews that help when an emergency hits. You can start one.'))
+            : (myRealOrgs.length ? 'Organizations are people working together, not places. A gold line joins two that chose to connect.' : 'You do not belong to an organization yet. Tap one to see what it does.')}
       </p>
 
       <div className="wd-actions">
         {net === 'villages' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages')}>See every village</button>}
         {net === 'villages' && !hasMine && <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/find-village')}>Find my village</button>}
         {net === 'orgs' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages?tab=orgs')}>See every organization</button>}
-        <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/home')}>Your day</button>
+        {net === 'groups' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages?tab=orgs')}>See every group</button>}
+        {net === 'groups' && !myGroups.length && <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/start-group')}>Start a group</button>}
       </div>
 
       {sheet && (
