@@ -6,6 +6,7 @@ import { DISTANCE_OPTIONS, VISIBILITY, placeFromZip } from '../utils/calendar'
 import { EVENT_TEMPLATES, addMinutes } from '../utils/eventTemplates'
 import { parsePastedEvent } from '../utils/pasteEvent'
 import ShiftsEditor from '../components/ShiftsEditor'
+import Icon from '../components/Icon'
 
 const VWB_HOST = 'vwb'
 
@@ -347,13 +348,13 @@ export default function CalendarEventForm() {
         <div className="evt-pick-grid">
           {EVENT_TEMPLATES.map((t) => (
             <button key={t.key} type="button" className="evt-pick" onClick={() => applyTemplate(t)}>
-              <span className="evt-pick-icon" aria-hidden="true">{t.icon}</span>
+              <span className="evt-pick-icon" aria-hidden="true"><Icon name={t.icon} /></span>
               <span className="evt-pick-name">{t.name}</span>
               <span className="evt-pick-blurb">{t.blurb}</span>
             </button>
           ))}
           <button type="button" className="evt-pick evt-pick-blank" onClick={() => applyTemplate(null)}>
-            <span className="evt-pick-icon" aria-hidden="true">{'\u270F\uFE0F'}</span>
+            <span className="evt-pick-icon" aria-hidden="true"><Icon name="pencil" /></span>
             <span className="evt-pick-name">Start from scratch</span>
             <span className="evt-pick-blurb">A blank form</span>
           </button>
@@ -373,7 +374,7 @@ export default function CalendarEventForm() {
 
       {!editing && (
         <p className="evt-chosen">
-          {chosen ? <><span aria-hidden="true">{chosen.icon}</span> {chosen.name}</> : 'Starting from scratch'}
+          {chosen ? <><span aria-hidden="true"><Icon name={chosen.icon} /></span> {chosen.name}</> : 'Starting from scratch'}
           {' · '}
           <button type="button" className="link-button" onClick={changeTemplate}>Change</button>
         </p>

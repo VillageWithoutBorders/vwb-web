@@ -9,6 +9,7 @@ import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import VouchButton from '../components/VouchButton'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
+import Icon from '../components/Icon'
 
 // Reasons for ending a helper's part before the task is finished.
 const END_REASONS = {
@@ -702,7 +703,7 @@ export default function ActiveTasks() {
             className={'home-tasks-tab' + (tab === t.id ? ' on' : '')}
             onClick={() => setTab(t.id)}
           >
-            <span aria-hidden="true">{t.icon}</span> {t.label}
+            <span aria-hidden="true"><Icon name={t.icon} /></span> {t.label}
             {counts[t.id] > 0 && <span className="home-tasks-count">{counts[t.id]}</span>}
             {((t.id === 'active' && activeWaiting > 0) || (t.id === 'requests' && requestsWaiting > 0)) && <span className="home-tasks-dot" aria-label="Something is waiting on you" />}
           </button>
@@ -842,7 +843,7 @@ export default function ActiveTasks() {
                                 )}
                               </div>
                               {bothDone ? (
-                                <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600 }}>✅ Complete</span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600 }}><Icon name="check" /> Complete</span>
                               ) : (
                                 <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                                   <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
@@ -974,7 +975,7 @@ export default function ActiveTasks() {
 
                     {bothDone && (
                       <div style={{ fontSize: '0.8rem', color: 'var(--accent)', fontWeight: 600, margin: '0.5rem 0' }}>
-                        ✅ Complete
+                        <Icon name="check" /> Complete
                       </div>
                     )}
 

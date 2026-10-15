@@ -13,6 +13,7 @@ import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import MessageRequests from '../components/MessageRequests'
 import NewMessage from '../components/NewMessage'
 import { decryptFromSender, getDeviceId, flushOutbox, getQueuedMessages } from '../lib/e2ee'
+import Icon from '../components/Icon'
 
 const DISAPPEAR_STEPS = [
   { label: 'Off', mins: 0 },
@@ -737,7 +738,7 @@ export default function Messages({ embedded = false }) {
       {pendingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-            🤝 Help Offers ({pendingOffers.length})
+            <Icon name="handshake" /> Help Offers ({pendingOffers.length})
           </div>
           {pendingOffers.map(offer => (
             <div key={offer.id} style={offerCardStyle}>
@@ -798,7 +799,7 @@ export default function Messages({ embedded = false }) {
       {myOutgoingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-            ⏳ Your Pending Offers ({myOutgoingOffers.length})
+            <Icon name="hourglass" /> Your Pending Offers ({myOutgoingOffers.length})
           </div>
           {myOutgoingOffers.map(offer => (
             <div key={offer.id} style={{ background: 'var(--warn-bg)', border: '1px solid #5a4a2a', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>

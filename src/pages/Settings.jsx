@@ -8,6 +8,7 @@ import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
 import RecoveryKeySection from '../components/RecoveryKeySection'
 import { useGoBack } from '../components/BackLink'
 import AppearancePicker from '../components/AppearancePicker'
+import Icon from '../components/Icon'
 
 // A plain read on how strong a new password is. Length matters most.
 function passwordStrength(pw) {
@@ -310,7 +311,7 @@ export default function Settings() {
       </div>
 
       <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '44px', marginBottom: '1rem' }}>
-        <span aria-hidden="true">{'\u{1F9ED}'}</span> Take the app tour again
+        <span aria-hidden="true"><Icon name="compass" /></span> Take the app tour again
       </button>
 
       <AppearancePicker />

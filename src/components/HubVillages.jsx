@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import Icon from './Icon'
 
 // The Villages section of the Messages hub: Announcements, the village chats
 // you joined, and the Ambassadors room for people who can open it. The
@@ -47,7 +48,7 @@ export default function HubVillages() {
     return (
       <button key={b.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px', marginBottom: '0.6rem' }}
         aria-label={b.name + (n ? ', ' + n + ' new' : '')} onClick={() => navigate('/campfire?board=' + b.id)}>
-        <span className="cal-card-title"><span aria-hidden="true">{icon}</span> {b.name}{n > 0 && <span style={{ marginLeft: '0.5rem', color: 'var(--accent)', fontWeight: 700 }}>{n > 9 ? '9+' : n} new</span>}</span>
+        <span className="cal-card-title"><Icon name={icon} /> {b.name}{n > 0 && <span style={{ marginLeft: '0.5rem', color: 'var(--accent)', fontWeight: 700 }}>{n > 9 ? '9+' : n} new</span>}</span>
         <span className="cal-card-meta">{note}</span>
       </button>
     )

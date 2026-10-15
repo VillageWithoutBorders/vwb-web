@@ -12,6 +12,7 @@ import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import { UserName } from '../components/AvatarDisplay'
 import BackLink from '../components/BackLink'
 import { useDashTab, NeedsYou, DashTabs, DashPanel } from '../components/DashShell'
+import Icon from '../components/Icon'
 
 // The organizer's home base for one organization. Needs-you card on top,
 // then four tabs: People, Chats, Events and posts, Settings.
@@ -26,6 +27,8 @@ const TABS = [
 ]
 
 const ROLE_LABEL = { admin: 'Head', organizer: 'Organizer', member: 'Member' }
+// Emergency response Groups use keeper words for the same two roles.
+const GROUP_ROLE_LABEL = { admin: 'Lead keeper', organizer: 'Keeper', member: 'Member' }
 
 function when(iso) {
   return new Date(iso).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
@@ -64,6 +67,10 @@ export default function OrgDashboard() {
   const [asks, setAsks] = useState([])
   const [linkAsks, setLinkAsks] = useState(0)
   const [tab, setTab] = useDashTab(TABS)
+  const isGroup = (orgInfo?.kind || mine?.kind) === 'group'
+  const W = isGroup
+    ? { head: 'Lead keeper', aHead: 'a Lead keeper', organizer: 'keeper', anOrganizer: 'a keeper', leads: 'Keepers', tools: 'Keeper tools' }
+    : { head: 'Head', aHead: 'a Head', organizer: 'organizer', anOrganizer: 'an organizer', leads: 'Heads and organizers', tools: 'Organizer tools' }
 
   const load = useCallback(async () => {
     if (!id || !allowed) return
@@ -71,7 +78,7 @@ export default function OrgDashboard() {
       supabase.rpc('list_org_members', { p_org: id }),
       supabase.rpc('org_needs_and_offers', { p_org: id }),
       fetchCalendarEvents(),
-      supabase.from('organizations').select('id, name, is_umbrella, affiliate_label').eq('id', id).maybeSingle(),
+      supabase.from('organizations').select('id, name, is_umbrella, affiliate_label, kind').eq('id', id).maybeSingle(),
       supabase.rpc('org_join_asks_list', { p_org: id }),
       supabase.rpc('my_org_connections', { p_org: id }),
     ])
@@ -167,17 +174,17 @@ export default function OrgDashboard() {
 
   const setRole = (u, role) => run(
     () => supabase.rpc('set_org_member_role', { p_org: id, p_user: u.user_id, p_role: role }),
-    u.display_name + (role === 'organizer' ? ' is now an organizer.' : ' is now a member.'),
+    u.display_name + (role === 'organizer' ? ' is now ' + W.anOrganizer + '.' : ' is now a member.'),
   )
 
   const makeHead = (u) => {
-    if (!confirm('Make ' + u.display_name + ' a Head of ' + orgName + '? Heads can change anyone\'s role and remove members.')) return
-    run(() => supabase.rpc('make_org_head', { p_org: id, p_user: u.user_id }), u.display_name + ' is now a Head.')
+    if (!confirm('Make ' + u.display_name + ' ' + W.aHead + ' of ' + orgName + '? ' + W.head + 's can change anyone\'s role and remove members.')) return
+    run(() => supabase.rpc('make_org_head', { p_org: id, p_user: u.user_id }), u.display_name + ' is now ' + W.aHead + '.')
   }
 
   const stepDown = () => {
-    if (!confirm('Step down as Head of ' + orgName + '? You will stay on as an organizer.')) return
-    run(() => supabase.rpc('step_down_org_head', { p_org: id }), 'You are now an organizer.')
+    if (!confirm('Step down as ' + W.head + ' of ' + orgName + '? You will stay on as ' + W.anOrganizer + '.')) return
+    run(() => supabase.rpc('step_down_org_head', { p_org: id }), 'You are now ' + W.anOrganizer + '.')
   }
 
   const notNow = (u) => run(
@@ -228,7 +235,7 @@ export default function OrgDashboard() {
   const shownPeople = people.filter((u) => !sideFilter.trim() || (u.display_name || '').toLowerCase().includes(sideFilter.trim().toLowerCase()))
   const chatRow = (c, nested) => (
     <button key={c.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + c.id)}>
-      <span className="groups-row-name">{nested ? '↳ ' : ''}{campfires.has(c.id) ? '\u{1F525} ' : ''}{c.name}</span>
+      <span className="groups-row-name">{nested ? '↳ ' : ''}{campfires.has(c.id) ? <><Icon name="campfire" />{' '}</> : ''}{c.name}</span>
       <span className="groups-row-meta">Open chat &#8250;</span>
     </button>
   )
@@ -244,17 +251,17 @@ export default function OrgDashboard() {
   ].filter(Boolean)
 
   const shortcut = (em, label, to) => (
-    <button type="button" className="dash-shortcut" onClick={() => navigate(to)}><span aria-hidden="true">{em}</span>{label}</button>
+    <button type="button" className="dash-shortcut" onClick={() => navigate(to)}><span aria-hidden="true"><Icon name={em} /></span>{label}</button>
   )
 
   return (
     <div className="cal-page hub-page dash-page">
       <BackLink fallback={'/orgs/' + id} fallbackLabel={orgName || 'Organization'} />
       <div className="dash-head">
-        <span className="dash-head-icon" aria-hidden="true">{'\u{1F9F0}'}</span>
+        <span className="dash-head-icon" aria-hidden="true"><Icon name="toolbox" /></span>
         <h1>{orgName || 'Your organization'}</h1>
       </div>
-      <p className="dash-sub">Organizer tools{isHead ? ' · You are a Head' : ' · You are an organizer'}</p>
+      <p className="dash-sub">{W.tools}{isHead ? ' · You are ' + W.aHead : ' · You are ' + W.anOrganizer}</p>
 
       {loading && <p className="cal-empty" role="status">Loading...</p>}
       <NeedsYou items={needs} onGo={setTab} />
@@ -290,17 +297,17 @@ export default function OrgDashboard() {
               <div key={u.user_id} className="dash-row">
                 <div className="dash-row-main">
                   <strong><UserName userId={u.user_id} name={u.display_name} /></strong>
-                  <small>{ROLE_LABEL[u.role] || u.role}{u.user_id === user.id ? ' (you)' : ''}</small>
+                  <small>{(isGroup ? GROUP_ROLE_LABEL : ROLE_LABEL)[u.role] || u.role}{u.user_id === user.id ? ' (you)' : ''}</small>
                 </div>
                 {u.role === 'admin' && u.user_id === user.id && headCount > 1 && (
                   <div className="dash-btns">
-                    <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={stepDown}>Step down as Head</button>
+                    <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={stepDown}>Step down as {W.head}</button>
                   </div>
                 )}
                 {u.role !== 'admin' && (
                   <div className="dash-btns">
-                    {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => makeHead(u)}>Make Head</button>}
-                    {isHead && u.role === 'member' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'organizer')}>Make organizer</button>}
+                    {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => makeHead(u)}>Make {W.head}</button>}
+                    {isHead && u.role === 'member' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'organizer')}>Make {W.organizer}</button>}
                     {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'member')}>Make member</button>}
                     {(isHead || u.role === 'member') && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => removeMember(u)}>Remove</button>}
                   </div>
@@ -331,14 +338,14 @@ export default function OrgDashboard() {
       {tab === 'chats' && (
         <DashPanel k="chats">
           <section className="hub-section" aria-labelledby="od-news">
-            <div className="hub-section-head"><h2 id="od-news">{'\u{1F4E3}'} Announcements</h2></div>
+            <div className="hub-section-head"><h2 id="od-news"><Icon name="megaphone" /> Announcements</h2></div>
             {newsBoard
               ? <button type="button" className="groups-row" onClick={() => navigate('/groups/' + newsBoard.id)}>
                   <span className="groups-row-name">{newsBoard.name}</span>
                   <span className="groups-row-meta">Post news &#8250;</span>
                 </button>
               : <>
-                  <p className="hub-org-desc">A board for news to everyone in {orgName || 'your organization'}. Heads and organizers post. Members read it and get an alert.</p>
+                  <p className="hub-org-desc">A board for news to everyone in {orgName || 'your organization'}. {W.leads} post. Members read it and get an alert.</p>
                   <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} disabled={chatBusy} onClick={startNews}>Start Announcements</button>
                 </>}
           </section>
@@ -440,8 +447,8 @@ export default function OrgDashboard() {
           {isHead && headCount > 1 && (
             <section className="hub-section" aria-labelledby="od-step">
               <div className="hub-section-head"><h2 id="od-step">Your role</h2></div>
-              <p className="hub-org-desc">You are one of {headCount} Heads. You can step down and stay on as an organizer.</p>
-              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} disabled={busy} onClick={stepDown}>Step down as Head</button>
+              <p className="hub-org-desc">You are one of {headCount} {W.head}s. You can step down and stay on as {W.anOrganizer}.</p>
+              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} disabled={busy} onClick={stepDown}>Step down as {W.head}</button>
               {note && <p className="dash-note" role="status">{note}</p>}
             </section>
           )}

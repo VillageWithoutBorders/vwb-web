@@ -7,6 +7,7 @@ import { circleLayout } from '../utils/circleLayout'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import '../village-scene.css'
 import '../world.css'
+import Icon from '../components/Icon'
 
 // The World: the VWB globe with your connections on it, in two networks.
 // Villages: circles that overlap where they share zip codes, and gold lines
@@ -105,7 +106,7 @@ export default function World() {
       if (err) { console.error('Failed to load organization connections:', err); return }
       setOrgLinks((data || []).map((r) => [r.org_a, r.org_b]))
     })
-    supabase.from('organizations').select('id, name, description').eq('approved', true).order('name').then(({ data, error: err }) => {
+    supabase.from('organizations').select('id, name, description, kind').eq('approved', true).order('name').then(({ data, error: err }) => {
       if (!alive) return
       if (err) { console.error('Failed to load organizations:', err); return }
       setOrgs(data || [])
@@ -210,13 +211,13 @@ export default function World() {
       <div className="wd-brand">Village Without Borders</div>
 
       <div className="wd-switch" role="group" aria-label="Which network">
-        <button type="button" aria-pressed={net === 'villages'} onClick={() => setNet('villages')}><span aria-hidden="true">{'\u{1F3D8}️'}</span> Villages</button>
-        <button type="button" aria-pressed={net === 'orgs'} onClick={() => setNet('orgs')}><span aria-hidden="true">{'\u{1F465}'}</span> Organizations</button>
+        <button type="button" aria-pressed={net === 'villages'} onClick={() => setNet('villages')}><span aria-hidden="true"><Icon name="houses" /></span> Villages</button>
+        <button type="button" aria-pressed={net === 'orgs'} onClick={() => setNet('orgs')}><span aria-hidden="true"><Icon name="people" /></span> Organizations</button>
       </div>
 
       <div className="wd-globe-wrap">
         {announceBoard && (
-          <button type="button" className="wd-news" aria-label="Announcements" onClick={() => navigate('/campfire?board=' + announceBoard)}>{'\u{1F4E3}'}</button>
+          <button type="button" className="wd-news" aria-label="Announcements" onClick={() => navigate('/campfire?board=' + announceBoard)}><Icon name="megaphone" /></button>
         )}
         <div className={'wd-float' + (leaving ? ' wd-leaving' : '')}>
           <div ref={globeRef} className={'wd-globe' + (leaving ? (leaving.spin ? ' wd-spin' : ' wd-zoom') : '')}
@@ -242,7 +243,7 @@ export default function World() {
                 style={{ left: v.gx + '%', top: v.gy + '%', width: (v.gr * 2) + '%' }}
                 aria-label={v.name + (v.is_mine ? ', you are in. Step inside.' : ', not joined yet')}
                 onClick={() => tapVillage(v)}>
-                {v.is_mine && <span className="wd-em" aria-hidden="true">{'\u{1F3D8}️'}</span>}
+                {v.is_mine && <span className="wd-em" aria-hidden="true"><Icon name="houses" /></span>}
               </button>
             ))}
             {net === 'villages' && villageMap && villageMap.nodes.map((v) => (
@@ -256,7 +257,7 @@ export default function World() {
                 style={{ left: o.gx + '%', top: o.gy + '%' }}
                 aria-label={o.name + (o.mine ? ', you belong' : ', not joined yet')}
                 onClick={() => tapOrg(o)}>
-                <span className="wd-em" aria-hidden="true">{'\u{1F465}'}</span>
+                <span className="wd-em" aria-hidden="true"><Icon name={o.kind === 'group' ? 'tent' : 'people'} /></span>
                 <span className="wd-org-tag">{o.mine ? '' : '+ '}{o.name}</span>
               </button>
             ))}
@@ -266,7 +267,7 @@ export default function World() {
                 style={{ left: l.x.toFixed(1) + '%', top: l.y.toFixed(1) + '%' }}
                 aria-label={(net === 'villages' ? 'Sister Campfire for ' : 'Shared Campfire for ') + l.a.name + ' and ' + l.b.name}
                 onClick={() => openSheet({ kind: net === 'villages' ? 'sister' : 'orglink', a: l.a, b: l.b })}>
-                {'\u{1F525}'}
+                <Icon name="campfire" />
               </button>
             ))}
           </div>
@@ -294,19 +295,19 @@ export default function World() {
         <div className="vs-shade" onClick={(e) => { if (e.target === e.currentTarget) closeSheet() }}>
           <div className="vs-sheet" role="dialog" aria-modal="true" aria-labelledby="wd-sheet-title" ref={sheetRef}>
             {sheet.kind === 'village' && <>
-              <h2 id="wd-sheet-title"><span aria-hidden="true">{'\u{1F3D8}️'}</span> {sheet.v.name}</h2>
+              <h2 id="wd-sheet-title"><span aria-hidden="true"><Icon name="houses" /></span> {sheet.v.name}</h2>
               <p>{sheet.v.member_count ? sheet.v.member_count + ' neighbors' : 'Just getting started'}{sheet.v.towns ? '. ' + sheet.v.towns : ''}</p>
               <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/find-village?join=' + sheet.v.id)}>Join {sheet.v.name}</button>
               <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/village/' + sheet.v.id)}>Look around first</button>
               <p className="vs-note">If your zip code is not in this village, you can join as a guest when a member invites you or when it becomes a sister of your village.</p>
             </>}
             {sheet.kind === 'sister' && <>
-              <h2 id="wd-sheet-title"><span aria-hidden="true">{'\u{1F525}'}</span> {sheet.a.name} and {sheet.b.name}</h2>
+              <h2 id="wd-sheet-title"><span aria-hidden="true"><Icon name="campfire" /></span> {sheet.a.name} and {sheet.b.name}</h2>
               <p>These are sister villages. They share a Sister Campfire. Anyone in either village can join it.</p>
               <SisterCampfireButton campfire={sisterFires.find((c) => [c.village_a, c.village_b].sort().join('|') === [sheet.a.id, sheet.b.id].sort().join('|'))} />
             </>}
             {sheet.kind === 'orglink' && <>
-              <h2 id="wd-sheet-title"><span aria-hidden="true">{'\u{1F525}'}</span> {sheet.a.name} and {sheet.b.name}</h2>
+              <h2 id="wd-sheet-title"><span aria-hidden="true"><Icon name="campfire" /></span> {sheet.a.name} and {sheet.b.name}</h2>
               <p>These organizations are connected. Their Heads and organizers share a Campfire. Find it under Cottage Chats and Campfires in Messages.</p>
               <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/messages')}>Open Messages</button>
             </>}

@@ -9,6 +9,7 @@ import InstallBanner from '../components/InstallBanner'
 import RecoveryNudge from '../components/RecoveryNudge'
 import AmbassadorBanner from '../components/AmbassadorBanner'
 import HomeTasks from '../components/HomeTasks'
+import Icon from '../components/Icon'
 
 // A few tiles for Hope Ambassadors and admins: how much open need there is
 // nearby right now, grouped by urgency. Same radius idea as the SkillShare
@@ -59,7 +60,7 @@ function NearbyNeedTiles() {
   if (total === 0) {
     return (
       <button type="button" className="home-need-quiet" onClick={() => navigate('/skillshare')}>
-        <span aria-hidden="true">{'\u{1F33F}'}</span> No open requests near you right now.
+        <span aria-hidden="true"><Icon name="leaf" /></span> No open requests near you right now.
       </button>
     )
   }

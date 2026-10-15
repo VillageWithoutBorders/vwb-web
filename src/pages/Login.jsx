@@ -7,6 +7,7 @@ import GroupedSkillChips from '../components/GroupedSkillChips'
 import { loadSkillCategories } from '../utils/skillGroups'
 import AvailabilityPicker from '../components/AvailabilityPicker'
 import Turnstile, { TURNSTILE_SITE_KEY } from '../components/Turnstile'
+import Icon from '../components/Icon'
 
 // Shown when a banned account tries to log in, or gets signed out by the
 // ban check in AuthContext.
@@ -327,7 +328,7 @@ export default function Login() {
           </div>
           <h2>Tell us about your skills</h2>
           <div className="later-note">
-            <span className="later-note-icon" aria-hidden="true">{'\u{1F331}'}</span>
+            <span className="later-note-icon" aria-hidden="true"><Icon name="sprout" /></span>
             <span>No need to get it perfect. Pick at least one skill to start. You can change your skills, distance, and hours anytime in your Profile.</span>
           </div>
           <div className="form-field">
