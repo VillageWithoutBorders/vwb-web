@@ -60,7 +60,7 @@ export function VillageNewMembers({ villageId, myId }) {
   const text = (more > 0 ? names.join(', ') + ' and ' + more + ' more' : names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]) + (fresh.length === 1 ? ' just joined.' : ' just joined.')
 
   return (
-    <div role="status" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#16302a', borderBottom: '1px solid #234', color: 'var(--accent)', fontSize: '0.9rem' }}>
+    <div role="status" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'var(--success-bg)', borderBottom: '1px solid #234', color: 'var(--accent)', fontSize: '0.9rem' }}>
       <span aria-hidden="true">&#127793;</span>
       <span style={{ flex: 1 }}>{text} Say hello.</span>
       <button type="button" onClick={dismiss} aria-label="Dismiss new member notice" style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', minWidth: '44px', minHeight: '44px', fontSize: '1.1rem' }}>&#10005;</button>
@@ -214,11 +214,11 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
         <p style={{ margin: '0 0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.4 }}>Tap a name to open their profile. Tap the arrow to vouch for them or ask to remove them. A vouch means you trust them. It does not guarantee they are safe.</p>
 
         {keepers.i_am_starter && (
-          <p style={{ margin: '0 0 0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #665', borderRadius: '10px', background: 'var(--warn-bg)', color: 'var(--gold)', fontSize: '0.85rem', lineHeight: 1.4 }}>You keep this village. You can pin announcements, name up to 2 helpers, or hand it to someone else. Open a name to do that.</p>
+          <p style={{ margin: '0 0 0.75rem', padding: '0.6rem 0.75rem', border: '1px solid var(--border-strong)', borderRadius: '10px', background: 'var(--warn-bg)', color: 'var(--gold)', fontSize: '0.85rem', lineHeight: 1.4 }}>You keep this village. You can pin announcements, name up to 2 helpers, or hand it to someone else. Open a name to do that.</p>
         )}
 
         {requests.length > 0 && (
-          <div style={{ margin: '0 0 1rem', padding: '0.75rem', border: '1px solid #665', borderRadius: '10px', background: 'var(--warn-bg)' }}>
+          <div style={{ margin: '0 0 1rem', padding: '0.75rem', border: '1px solid var(--border-strong)', borderRadius: '10px', background: 'var(--warn-bg)' }}>
             <div style={{ fontWeight: 700, color: 'var(--gold)', fontSize: '0.9rem', marginBottom: '0.4rem' }}>A second member is needed</div>
             {requests.map(r => (
               <div key={r.target_id} style={{ padding: '0.5rem 0', borderTop: '1px solid var(--warn-bg)' }}>
@@ -226,7 +226,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                 <p style={{ margin: '0.2rem 0 0.4rem', color: 'var(--text-soft)', fontSize: '0.85rem' }}>Reason: {r.reason}</p>
                 {r.requested_by === myId
                   ? <button type="button" style={btn} disabled={busy} onClick={() => takeBack(r.target_id)}>Take back my request</button>
-                  : <button type="button" style={{ ...btn, borderColor: 'var(--warn)', color: '#ffb088' }} disabled={busy} onClick={() => agree(r.target_id)}>I agree. Remove them</button>}
+                  : <button type="button" style={{ ...btn, borderColor: 'var(--warn)', color: 'var(--warn)' }} disabled={busy} onClick={() => agree(r.target_id)}>I agree. Remove them</button>}
               </div>
             ))}
           </div>
@@ -302,7 +302,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                       </div>
                     )}
                     {!protectedRole && !pending && reasonFor !== p.user_id && (
-                      <button type="button" onClick={() => { setReasonFor(p.user_id); setReason(''); setNote('') }} style={{ ...btn, marginTop: '0.5rem', borderColor: '#663', color: '#ffb088' }}>{isAdmin ? 'Remove from this chat' : 'Ask to remove'}</button>
+                      <button type="button" onClick={() => { setReasonFor(p.user_id); setReason(''); setNote('') }} style={{ ...btn, marginTop: '0.5rem', borderColor: 'var(--warn)', color: 'var(--warn)' }}>{isAdmin ? 'Remove from this chat' : 'Ask to remove'}</button>
                     )}
                     {pending && <p style={{ margin: '0.5rem 0 0', color: 'var(--gold)', fontSize: '0.8rem' }}>A removal request is open. It needs a second member.</p>}
                     {reasonFor === p.user_id && (
@@ -315,7 +315,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                         <p style={{ margin: '0.4rem 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{isAdmin ? 'You can remove them right away.' : 'A second member must agree before they are removed. They are not shown this request.'}</p>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button type="button" style={btn} onClick={() => { setReasonFor(null); setReason('') }}>Cancel</button>
-                          <button type="button" style={{ ...btn, background: '#4a2020', borderColor: '#a44' }} disabled={busy || !reason} onClick={() => ask(p.user_id)}>{isAdmin ? 'Remove' : 'Ask'}</button>
+                          <button type="button" style={{ ...btn, background: 'var(--danger-bg)', borderColor: 'var(--danger)' }} disabled={busy || !reason} onClick={() => ask(p.user_id)}>{isAdmin ? 'Remove' : 'Ask'}</button>
                         </div>
                       </div>
                     )}
@@ -328,7 +328,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
         {total > people.length && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', marginTop: '0.6rem' }}>Showing {people.length} of {total}. Search by name to find someone.</p>}
 
         {onLeave && (
-          <button type="button" onClick={onLeave} style={{ ...btn, width: '100%', marginTop: '1.25rem', color: 'var(--danger)', borderColor: '#533' }}>Leave this village chat</button>
+          <button type="button" onClick={onLeave} style={{ ...btn, width: '100%', marginTop: '1.25rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}>Leave this village chat</button>
         )}
       </div>
     </>

@@ -289,7 +289,7 @@ export default function Welcome() {
 
         {/* Emergency note */}
         <section style={sectionStyle}>
-          <div style={{ ...cardStyle, background: '#2a1f16', borderColor: COLORS.orange }}>
+          <div style={{ ...cardStyle, background: 'var(--warn-bg)', borderColor: COLORS.orange }}>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
               <span aria-hidden="true" style={{ fontSize: '1.4rem' }}><Icon name="bolt" /></span>
               <div>

@@ -24,7 +24,7 @@ export default function VillageRiskDialog({ villageName, busy = false, error = '
         aria-modal="true"
         aria-labelledby="vrd-title"
         onClick={(e) => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: '480px', maxHeight: '92vh', overflowY: 'auto', boxSizing: 'border-box', background: '#1f1f1f', border: '1px solid var(--border-strong)', borderRadius: '16px 16px 0 0', padding: '1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom))', outline: 'none' }}
+        style={{ width: '100%', maxWidth: '480px', maxHeight: '92vh', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: '16px 16px 0 0', padding: '1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom))', outline: 'none' }}
       >
         <h2 id="vrd-title" style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', color: 'var(--gold)' }}>Before you join{villageName ? ' ' + villageName : ''}</h2>
         <p style={{ margin: '0 0 0.5rem', color: 'var(--text)', fontSize: '1rem', lineHeight: 1.5 }}>A village chat is a community chat. Like any community chat, it comes with risk.</p>

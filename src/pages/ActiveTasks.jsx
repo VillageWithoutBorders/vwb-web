@@ -558,7 +558,7 @@ export default function ActiveTasks() {
     if (!ending || ending.matchId !== matchId) return null
     const reasons = END_REASONS[isRequester ? 'requester' : 'helper']
     return (
-      <div style={{ marginTop: '0.6rem', padding: '0.75rem', background: '#1d1d1d', border: '1px solid var(--border-strong)', borderRadius: '8px' }}>
+      <div style={{ marginTop: '0.6rem', padding: '0.75rem', background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: '8px' }}>
         <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.35rem' }}>
           {isRequester ? 'End ' + otherName + "'s help?" : 'Step back from this task?'}
         </div>
@@ -621,7 +621,7 @@ export default function ActiveTasks() {
     }
     if (answer === 'went_wrong') {
       return (
-        <div style={{ ...box, background: '#2a2320', border: '1px solid #6b4f2d' }}>
+        <div style={{ ...box, background: 'var(--warn-bg)', border: '1px solid #6b4f2d' }}>
           <div style={title}>Thank you for telling us.</div>
           <p style={{ ...small, marginBottom: waiting ? '0.5rem' : 0 }}>An admin will take a look. Only admins see what you shared.</p>
           {waiting}
