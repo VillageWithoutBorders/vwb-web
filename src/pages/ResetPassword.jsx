@@ -50,7 +50,7 @@ export default function ResetPassword() {
             <h1>Village Without Borders</h1>
             <p className="login-subtitle">Reset your password</p>
           </div>
-          <p style={{ textAlign: 'center', color: '#b0b0b0', padding: '2rem 1rem' }}>
+          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem 1rem' }}>
             Loading... If this takes more than a few seconds, try clicking the reset link in your email again.
           </p>
         </div>

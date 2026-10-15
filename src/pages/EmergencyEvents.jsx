@@ -140,7 +140,7 @@ export default function EmergencyEvents() {
         <span style={{ fontSize: '1.75rem' }}>&#9888;</span>
         <div>
           <span style={{ display: 'block', color: 'var(--gold)', fontWeight: 700, fontSize: '0.95rem' }}>Report an emergency</span>
-          <span style={{ color: '#cc9999', fontSize: '0.8rem' }}>When many neighbors are hit at once. Someone in danger? Call 911 first.</span>
+          <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>When many neighbors are hit at once. Someone in danger? Call 911 first.</span>
         </div>
       </button>
 

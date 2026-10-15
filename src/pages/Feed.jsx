@@ -411,7 +411,7 @@ export default function Feed() {
                                             <span className="urgency-badge" style={{ background: 'var(--info-bg)', color: 'var(--text-strong)' }}>{req.audience === 'network' ? 'From your network' : 'From your group'}</span>
                                         )}
                                         {isPending && (
-                                            <span className="urgency-badge" style={{ background: 'var(--gold)', color: 'var(--text-strong)' }}>Pending</span>
+                                            <span className="urgency-badge" style={{ background: 'var(--gold)', color: 'var(--on-accent)' }}>Pending</span>
                                         )}
                                         <span className="feed-card-time">{timeAgo(req.created_at)}</span>
                                     </div>

@@ -59,7 +59,7 @@
 .dash-row-main small { display: block; color: var(--text-secondary); font-size: 0.85rem; }
 .dash-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .dash-btns .btn { min-height: 44px; }
-.dash-note { margin: 0.5rem 0 0; color: #ffcc66; }
+.dash-note { margin: 0.5rem 0 0; color: var(--gold); }
 
 .dash-shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 0.5rem; }
 .dash-shortcut {

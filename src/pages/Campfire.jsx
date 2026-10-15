@@ -671,7 +671,7 @@ export default function Campfire() {
           </div>
         )
       })()}
-      {boardError && <p role="alert" style={{ margin: 0, padding: '0.4rem 1rem', color: 'var(--danger)', fontSize: '0.8rem', background: '#241414' }}>{boardError}</p>}
+      {boardError && <p role="alert" style={{ margin: 0, padding: '0.4rem 1rem', color: 'var(--danger)', fontSize: '0.8rem', background: 'var(--danger-bg)' }}>{boardError}</p>}
 
       {isVillageBoard && inVillage && <VillageNewMembers villageId={activeBoard.village_id} myId={user.id} />}
       {isSister && (
@@ -709,11 +709,11 @@ export default function Campfire() {
               <span style={{ fontSize: '1.5rem', lineHeight: 1, color: 'var(--warn)', flexShrink: 0 }}>&#9888;</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, color: 'var(--gold)', fontWeight: 700, fontSize: '0.9rem' }}>{ev.title}</p>
-                <p style={{ margin: '0.1rem 0 0', color: '#cc9999', fontSize: '0.75rem' }}>{ev.location_name || 'Location not given'} &middot; Active emergency</p>
+                <p style={{ margin: '0.1rem 0 0', color: 'var(--danger)', fontSize: '0.75rem' }}>{ev.location_name || 'Location not given'} &middot; Active emergency</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
                 <button onClick={() => navigate('/emergency/' + ev.id)} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}>Organize help</button>
-                <button onClick={() => dismissEmergency(ev.id)} style={{ padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid #665', background: 'none', color: 'var(--text-secondary)', fontSize: '0.7rem', cursor: 'pointer' }}>Dismiss</button>
+                <button onClick={() => dismissEmergency(ev.id)} style={{ padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '0.7rem', cursor: 'pointer' }}>Dismiss</button>
               </div>
             </div>
           ))}
@@ -721,7 +721,7 @@ export default function Campfire() {
       )}
 
       {pinnedMessages.length > 0 && (
-        <div style={{ borderBottom: '1px solid #3a2a10', background: '#241c10' }}>
+        <div style={{ borderBottom: '1px solid #3a2a10', background: 'var(--warn-bg)' }}>
           <button
             onClick={() => setShowPinned(p => !p)}
             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'none', border: 'none', color: 'var(--warn)', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}
@@ -888,7 +888,7 @@ export default function Campfire() {
       {canPost ? (
       <>
       {activeBoard?.scrambled && (
-        <p style={{ margin: 0, padding: '0.4rem 1rem 0', borderTop: '1px solid var(--border)', background: 'var(--surface)', color: '#9ad6c0', fontSize: '0.8rem', lineHeight: 1.4 }}>
+        <p style={{ margin: 0, padding: '0.4rem 1rem 0', borderTop: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--accent)', fontSize: '0.8rem', lineHeight: 1.4 }}>
           <Icon name="lock" /> Scrambled test: only people in this village chat can read these messages. VWB cannot.{sendNote ? ' ' + sendNote : ''}
         </p>
       )}

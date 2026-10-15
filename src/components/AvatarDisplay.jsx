@@ -132,8 +132,8 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
           width: size + 'px',
           height: size + 'px',
           borderRadius: '50%',
-          background: '#222',
-          border: '1px solid #333',
+          background: 'var(--surface-2)',
+          border: '1px solid var(--border)',
           flexShrink: 0,
           objectFit: 'cover',
           cursor: userId ? 'pointer' : 'default',
@@ -143,15 +143,15 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
       {showPopup && createPortal(
         <>
           <div onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1100 }} />
-          <div ref={cardRef} onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: pos ? pos.top + 'px' : 0, left: pos ? pos.left + 'px' : 0, visibility: pos ? 'visible' : 'hidden', background: '#1e1e1e', border: '1px solid #333', borderRadius: '16px', padding: '1.25rem', zIndex: 1101, width: pos ? pos.width + 'px' : 'min(280px, calc(100vw - 16px))', maxHeight: pos ? pos.maxHeight + 'px' : undefined, overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+          <div ref={cardRef} onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: pos ? pos.top + 'px' : 0, left: pos ? pos.left + 'px' : 0, visibility: pos ? 'visible' : 'hidden', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.25rem', zIndex: 1101, width: pos ? pos.width + 'px' : 'min(280px, calc(100vw - 16px))', maxHeight: pos ? pos.maxHeight + 'px' : undefined, overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <img src={popupSrc} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#222', border: '2px solid #333' }} />
+              <img src={popupSrc} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--surface-2)', border: '2px solid var(--border)' }} />
               <div>
-                <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#fff' }}>{info?.name || 'Loading...'}</div>
+                <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-strong)' }}>{info?.name || 'Loading...'}</div>
                 <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
-                  {info?.role === 'founder' && <span style={{ fontSize: '0.6rem', background: '#3a1a4a', color: '#c77dff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Founder</span>}
-                  {info?.role === 'admin' && <span style={{ fontSize: '0.6rem', background: '#1a3a5a', color: '#66aaff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Admin</span>}
-                  {info?.ambassador && <span style={{ fontSize: '0.6rem', background: '#1a4a3a', color: '#4ecca3', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Hope Ambassador</span>}
+                  {info?.role === 'founder' && <span style={{ fontSize: '0.6rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Founder</span>}
+                  {info?.role === 'admin' && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Admin</span>}
+                  {info?.ambassador && <span style={{ fontSize: '0.6rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Hope Ambassador</span>}
                 </div>
               </div>
             </div>
@@ -159,19 +159,19 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                 {(info.eligible || info.hasVouched) ? (
                   <button type="button" onClick={toggleVouch} aria-label={info.hasVouched ? 'Remove your vouch' : 'Vouch for this neighbor'} style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: info.hasVouched ? '#1a4a3a' : '#222', borderRadius: '8px', cursor: 'pointer', border: info.hasVouched ? '1px solid #4ecca3' : '1px solid transparent', transition: 'all 0.2s' }}>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: '#4ecca3' }}>{info.vouches}</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent)' }}>{info.vouches}</div>
                     <div style={{ fontSize: '0.65rem', color: info.hasVouched ? '#4ecca3' : '#888' }}>{info.hasVouched ? 'Vouched' : 'Vouch'}</div>
                   </button>
                 ) : (
-                  <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: '#222', borderRadius: '8px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: '#4ecca3' }}>{info.vouches}</div>
-                    <div style={{ fontSize: '0.65rem', color: '#888' }}>Vouches</div>
+                  <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: 'var(--surface-2)', borderRadius: '8px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent)' }}>{info.vouches}</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Vouches</div>
                   </div>
                 )}
                 {info.joined && (
-                  <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: '#222', borderRadius: '8px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.75rem', color: '#fff' }}>{new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</div>
-                    <div style={{ fontSize: '0.65rem', color: '#888' }}>Joined</div>
+                  <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: 'var(--surface-2)', borderRadius: '8px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--text-strong)' }}>{new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Joined</div>
                   </div>
                 )}
               </div>
@@ -180,7 +180,7 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
               <button type="button" onClick={messageThem} disabled={messaging} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.65rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Opening...' : 'Message'}</button>
             )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Close</button>
+              <button onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Close</button>
               {!blockedBy.has(userId) && (
                 <button onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>View Profile</button>
               )}

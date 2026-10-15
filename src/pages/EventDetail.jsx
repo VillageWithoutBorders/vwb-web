@@ -505,7 +505,7 @@ export default function EventDetail() {
       <ResponseCamp eventId={id} verified={!!event.verified} closed={event.status === 'closed'} refreshKey={(mySignup?.role || 'none') + ':' + signups.length} />
 
       {event.verified && resources.length === 0 && (isCoordinator || event.created_by === user.id) && (
-        <div style={{ background: 'linear-gradient(135deg, var(--success-bg), #2a4a3a)', border: '1px solid var(--accent)', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
+        <div style={{ background: 'linear-gradient(135deg, var(--success-bg), var(--success-bg))', border: '1px solid var(--accent)', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
           <p style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '1rem', margin: '0 0 0.35rem' }}>Event verified!</p>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Next step: add what resources are needed so responders know how to help.</p>
           <button onClick={() => { setTab('resources'); setShowResourceForm('need') }} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>+ Add Resources Needed</button>
