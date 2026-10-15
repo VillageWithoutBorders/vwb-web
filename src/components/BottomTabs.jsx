@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useUnreadCount } from '../context/UnreadCountContext'
 
 // Four doors: Home, Help, Village, Messages.
-// Home opens the globe (the start screen). Your day (/home) sits one step in.
+// Home opens the globe (the start screen). The Dashboard (/home) is in the top bar.
 // Village opens your own village, or the village map if you have not joined one.
 // Help holds SkillShare and Tasks. Village holds the community, map, chats by place, and calendar.
 // Your profile and settings live behind your avatar in the top bar (Your corner).

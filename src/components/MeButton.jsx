@@ -14,14 +14,15 @@ export default function MeButton() {
   return (
     <Link
       to="/me"
-      className={'me-btn' + (here ? ' on' : '') + (failed ? '' : ' me-btn-pic')}
+      className={'header-btn me-btn' + (here ? ' on' : '')}
       data-tour="me"
       aria-label="Your corner: profile, settings, and more"
       aria-current={here ? 'page' : undefined}
     >
       {failed
-        ? <span aria-hidden="true">{letter}</span>
-        : <img className="me-btn-img" src={src} alt="" width="40" height="40" onError={() => setFailed(true)} />}
+        ? <span className="me-btn-letter" aria-hidden="true">{letter}</span>
+        : <img className="me-btn-img" src={src} alt="" width="26" height="26" onError={() => setFailed(true)} />}
+      <span className="header-btn-label" aria-hidden="true">You</span>
     </Link>
   )
 }
