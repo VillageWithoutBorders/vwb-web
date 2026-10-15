@@ -127,7 +127,7 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
         {blocked
           ? <button type="button" onClick={unblock} disabled={busy} style={ghost}>Unblock</button>
           : <button type="button" onClick={() => setDialog('block')} style={ghost}>Block</button>}
-        <button type="button" onClick={() => setDialog('report')} style={{ ...ghost, color: 'var(--danger)', borderColor: '#5a2a2a' }}>Report</button>
+        <button type="button" onClick={() => setDialog('report')} style={{ ...ghost, color: 'var(--danger)', borderColor: 'var(--danger)' }}>Report</button>
       </div>
 
       {dialog && (

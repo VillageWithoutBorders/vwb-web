@@ -1055,17 +1055,17 @@ export default function Admin() {
                   {duplicates.map(n => (
                     <div key={n.id} style={{ ...cardStyle, borderLeft: '3px solid var(--info)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ background: '#1a2a3a', color: 'var(--info)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>DUPLICATE</span>
+                        <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>DUPLICATE</span>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{timeAgo(n.created_at)}</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '0.5rem', margin: '0.5rem 0', alignItems: 'center' }}>
-                        <div style={{ background: '#2a1a1a', borderRadius: '8px', padding: '0.5rem', border: '1px solid var(--danger)' }}>
+                        <div style={{ background: 'var(--danger-bg)', borderRadius: '8px', padding: '0.5rem', border: '1px solid var(--danger)' }}>
                           <p style={{ fontSize: '0.7rem', color: 'var(--danger)', margin: '0 0 0.2rem', fontWeight: 600 }}>Remove</p>
                           <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, fontWeight: 600 }}>{n.duplicateEvent?.title || 'Unknown'}</p>
                           {n.duplicateEvent?.location_name && <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0' }}>{n.duplicateEvent.location_name}</p>}
                         </div>
                         <span style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>&#8594;</span>
-                        <div style={{ background: '#1a2a1a', borderRadius: '8px', padding: '0.5rem', border: '1px solid var(--accent)' }}>
+                        <div style={{ background: 'var(--success-bg)', borderRadius: '8px', padding: '0.5rem', border: '1px solid var(--accent)' }}>
                           <p style={{ fontSize: '0.7rem', color: 'var(--accent)', margin: '0 0 0.2rem', fontWeight: 600 }}>Keep</p>
                           <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, fontWeight: 600 }}>{n.targetEvent?.title || 'Unknown'}</p>
                           {n.targetEvent?.location_name && <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0' }}>{n.targetEvent.location_name}</p>}
@@ -1549,7 +1549,7 @@ export default function Admin() {
                     <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text)' }}>{c.name}</h4>
                     {c.is_default && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Default</span>}
                     {!c.active && <span style={{ fontSize: '0.6rem', background: 'var(--warn-bg)', color: 'var(--warn)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Inactive</span>}
-                    {c.auto_started && <span style={{ fontSize: '0.6rem', background: '#2a2a3a', color: '#aab4ff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Started by a neighbor</span>}
+                    {c.auto_started && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Started by a neighbor</span>}
                   </div>
                   {c.region_label && c.region_label !== c.name && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>{c.region_label}</p>}
                   <p style={{ color: c.latitude == null ? 'var(--warn)' : 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>
@@ -1627,8 +1627,8 @@ export default function Admin() {
                 {c.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.2rem 0' }}>{c.description}</p>}
 
                 {confirming ? (
-                  <div style={{ marginTop: '0.5rem', padding: '0.6rem', background: '#2a1414', border: '1px solid var(--danger)', borderRadius: '8px' }}>
-                    <p style={{ color: '#ffb3b3', fontSize: '0.8rem', margin: '0 0 0.5rem', fontWeight: 600 }}>Delete this {c.kind} for good? This can't be undone.</p>
+                  <div style={{ marginTop: '0.5rem', padding: '0.6rem', background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: '8px' }}>
+                    <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '0 0 0.5rem', fontWeight: 600 }}>Delete this {c.kind} for good? This can't be undone.</p>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button type="button" disabled={deleteBusy} onClick={() => confirmDeleteContent(c)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: deleteBusy ? 'default' : 'pointer', fontSize: '0.85rem', opacity: deleteBusy ? 0.6 : 1 }}>{deleteBusy ? 'Deleting…' : 'Delete for good'}</button>
                       <button type="button" disabled={deleteBusy} onClick={cancelDeleteContent} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AppMenu from '../components/AppMenu'
@@ -6,7 +7,10 @@ import Icon from '../components/Icon'
 // Your corner: everything about you in one place.
 // Opened from your letter in the top bar. Replaces the Profile tab and the Menu.
 export default function YourCorner() {
-  const { profile, organizations } = useAuth()
+  const { user, profile, organizations } = useAuth()
+  const [avatarFailed, setAvatarFailed] = useState(false)
+  // Your avatar from the avatar builder, or the same drawn avatar others see. The letter shows only if it can't load.
+  const avatarSrc = profile?.avatar_url || 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + (user?.id || 'default')
   const name = profile?.display_name || 'Neighbor'
   const letter = (name.trim().charAt(0) || '?').toUpperCase()
   const runsAGroup = organizations.some((o) => o.role === 'admin' || o.role === 'organizer')
@@ -17,7 +21,9 @@ export default function YourCorner() {
       <h1 className="corner-title">Your corner</h1>
 
       <Link to="/profile" className="corner-card">
-        <span className="corner-letter" aria-hidden="true">{letter}</span>
+        {avatarFailed
+          ? <span className="corner-letter" aria-hidden="true">{letter}</span>
+          : <img className="corner-avatar" src={avatarSrc} alt="" width="60" height="60" onError={() => setAvatarFailed(true)} />}
         <span className="corner-who">
           <b>{name}</b>
           {place && <span>{place}</span>}

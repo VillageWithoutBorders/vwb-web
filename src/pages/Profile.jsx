@@ -431,7 +431,7 @@ function captureCoverageLocation() {
         )}
 
         {!profile?.is_hope_ambassador && !isAdmin && ambApplication?.status !== 'pending' && !showAmbassadorSignup && (
-          <button onClick={() => setShowAmbassadorSignup(true)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "0.75rem", padding: "0.75rem", background: "linear-gradient(135deg, #3a2a10, #4a3520)", border: "2px solid var(--warn)", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
+          <button onClick={() => setShowAmbassadorSignup(true)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "0.75rem", padding: "0.75rem", background: "linear-gradient(135deg, var(--warn-bg), var(--warn-bg))", border: "2px solid var(--warn)", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
             <span style={{ fontSize: "1.5rem" }}>&#128227;</span>
             <div>
               <span style={{ display: "block", color: "var(--warn)", fontWeight: 700, fontSize: "0.95rem" }}>Become a Hope Ambassador</span>
@@ -540,7 +540,7 @@ function captureCoverageLocation() {
           </div>
         )}
         {adminAppStatus === 'declined' && (
-          <div style={{ background: '#2a1a1a', border: '1px solid var(--danger)', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
+          <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
             <p style={{ color: 'var(--danger)', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your application was not approved at this time</p>
           </div>
         )}
