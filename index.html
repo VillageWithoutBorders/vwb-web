@@ -32,7 +32,7 @@
     <meta name="twitter:description" content="A free app where neighbors ask for help, offer help, and find local events. No fees. No algorithm. Just connection." />
     <meta name="twitter:image" content="https://app.villagewithoutborders.org/images/vwb_share_card.png" />
     <style>
-      /* Opening splash: Jade's animated logo (portrait video, Oct 14).
+      /* Opening splash: Jade's animated logo (portrait video, updated Oct 15).
          Lives here (not in React) so it shows the instant the page opens,
          before the app's JavaScript has even downloaded. The background
          matches the video's own dark teal, so the video's edges disappear
@@ -40,7 +40,7 @@
       #vwb-splash {
         position: fixed; inset: 0; z-index: 9999;
         display: flex; align-items: center; justify-content: center;
-        background: #0a1616;
+        background: #0c1717;
         transition: opacity 0.45s ease;
         cursor: pointer;
       }
@@ -56,8 +56,8 @@
   </head>
   <body>
     <div id="vwb-splash" role="img" aria-label="Village Without Borders. Building community, one neighbor at a time.">
-      <video id="vwb-splash-video" muted playsinline preload="auto" poster="/splash/vwb-splash-v2-start.webp" width="720" height="1280" aria-hidden="true">
-        <source src="/splash/vwb-splash-v2.mp4" type="video/mp4" />
+      <video id="vwb-splash-video" muted playsinline preload="auto" poster="/splash/vwb-splash-v3-start.webp" width="720" height="1280" aria-hidden="true">
+        <source src="/splash/vwb-splash-v3.mp4" type="video/mp4" />
       </video>
     </div>
     <script>
@@ -84,7 +84,7 @@
         if (reduce) {
           // No animation: show the finished logo briefly instead.
           var img = new Image()
-          img.src = '/splash/vwb-splash-v2-end.webp'
+          img.src = '/splash/vwb-splash-v3-end.webp'
           img.alt = ''
           img.width = 720
           img.height = 1280
