@@ -46,7 +46,7 @@ export default function CalendarEmbed() {
       {standalone && (
         <header className="cal-embed-head">
           <a href="https://villagewithoutborders.org" aria-label="Village Without Borders website">
-            <img src="/images/vwb_header.png" alt="" width="44" height="44" />
+            <img src="/images/vwb_header-v2.png" alt="" width="44" height="44" />
           </a>
           <div>
             <h1>Community Calendar</h1>

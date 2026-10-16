@@ -546,7 +546,7 @@ function captureCoverageLocation() {
         )}
 
         <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'linear-gradient(135deg, var(--success-bg), var(--border))', border: '2px solid var(--accent)', borderRadius: '12px', textDecoration: 'none', marginTop: '0.75rem' }}>
-          <img src="/images/vwb_header.png" alt="VWB" style={{ height: '40px', borderRadius: '50%' }} />
+          <img src="/images/vwb_header-v2.png" alt="VWB" style={{ height: '40px', borderRadius: '50%' }} />
           <div>
             <span style={{ display: 'block', color: 'var(--accent)', fontWeight: 700, fontSize: '0.95rem' }}>Village Without Borders</span>
             <span style={{ color: 'var(--accent)', fontSize: '0.75rem' }}>Visit our website &#8599;</span>

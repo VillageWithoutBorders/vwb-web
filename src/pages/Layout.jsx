@@ -20,7 +20,7 @@ export default function Layout() {
         {/* Always here, left to right: Home (the globe), Calendar, Dashboard (in the middle), Alerts, Your corner. */}
         <nav className="app-header-inner header-nav" aria-label="Top menu">
           <Link to="/" className={'header-btn' + (pathname === '/' ? ' on' : '')} aria-current={pathname === '/' ? 'page' : undefined} aria-label="Home: your networks on the globe" data-tour="top-home">
-            <img className="header-btn-logo" src="/images/vwb_header.png" alt="" width="26" height="26" />
+            <img className="header-btn-logo" src="/images/vwb_header-v2.png" alt="" width="26" height="26" />
             <span className="header-btn-label" aria-hidden="true">Home</span>
           </Link>
           <Link to="/calendar" className={'header-btn' + (pathname.startsWith('/calendar') ? ' on' : '')} aria-current={pathname === '/calendar' ? 'page' : undefined} aria-label="Calendar" data-tour="top-calendar">

@@ -40,7 +40,8 @@ const TAB = (name) => '.tab-item[data-tour="' + name + '"]'
 const VILLAGE = (c) => '/village/' + c.villageId
 const SPOT = (k) => '.vs-el[data-spot="' + k + '"]'
 
-// Six steps for everyone, then the steps for your role, then a last card.
+// Steps for everyone, then the steps for your role, then a last card.
+// Each ringed spot is small on purpose, so the card never has to cover it.
 // The practice round is offered after the Help step and can be skipped.
 const ALL_STEPS = [
   {
@@ -48,14 +49,14 @@ const ALL_STEPS = [
     target: '.header-nav',
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
-    body: 'These five buttons stay at the top of every screen: Home, Calendar, Dashboard, Alerts, and You. Tap Next to keep going. You can skip any time.',
+    body: 'These buttons stay at the top of every screen. Tap Next to see what each part does. You can skip any time.',
   },
   {
     route: '/',
-    target: '.wd-globe-wrap',
+    target: '.wd-switch',
     icon: '\u{1F30D}',
-    title: 'Your world',
-    body: 'Home opens the globe. Gold circles are your villages. Faded ones you can join. Switch to Organizations or Groups above it. The megaphone holds news for everyone.',
+    title: 'Home: your world',
+    body: 'Home opens the globe. Gold circles are your villages. Use these tabs to see your Villages, Organizations, or Groups.',
   },
   {
     need: 'noVillage',
@@ -63,28 +64,42 @@ const ALL_STEPS = [
     target: '#fv-search',
     icon: '\u{1F3D8}\uFE0F',
     title: 'Find your village',
-    body: 'Type your zip code, then tap Join. Your village is your neighbors close by. Do not see yours? Any neighbor can start one.',
+    body: 'Search for your town here, then tap Join. Your village is the neighbors who live near you. No village yet? Anyone can start one.',
   },
   {
     need: 'village',
     route: VILLAGE,
-    target: '.vs-scene',
+    target: SPOT('chat'),
     icon: '\u{1F3D8}\uFE0F',
-    title: 'Inside your village',
-    body: 'Every picture is a place: the village chat, Campfires, your neighbors, and more. Ask for help and I can help sit under the map.',
+    title: 'Your village',
+    body: 'Your village is a little map. Each picture is a place. This one is the village chat, where neighbors talk.',
+  },
+  {
+    route: '/home',
+    target: '[data-tour="top-dashboard"]',
+    icon: '\u2600\uFE0F',
+    title: 'Dashboard',
+    body: 'Your tasks, needs near you, and quick links. Tap Dashboard at the top to come back here.',
+  },
+  {
+    route: '/calendar',
+    target: '[data-tour="top-calendar"]',
+    icon: '\u{1F4C5}',
+    title: 'Calendar',
+    body: 'Events and volunteer sign-ups near you. Tap one to sign up or add it to your phone.',
   },
   {
     route: '/skillshare',
-    target: TAB('help'),
+    target: '.help-cta',
     icon: '\u{1F91D}',
     title: 'Help',
-    body: 'Ask for help or offer something with the buttons at the top. Near you shows what neighbors need. Mine keeps your own. Resources lists places that help.',
+    body: 'Need a hand? Tap Ask for help. Have something to share? Tap Offer something. Below, see what neighbors need.',
   },
   {
     practice: 'intro',
     icon: '\u270B',
     title: 'Want to practice?',
-    body: 'Try a sample request, offer, and event. Nothing is real, nobody is told, and nothing is saved. It takes about a minute. Or skip it.',
+    body: 'Try a pretend request, offer, and event. Nothing is real and nobody is told. It takes about a minute. Or skip it.',
   },
   {
     practice: 'request',
@@ -102,14 +117,21 @@ const ALL_STEPS = [
     practice: 'event',
     icon: '\u{1F4C5}',
     title: 'Practice: an event',
-    body: 'Events are gatherings and drives in your area. Tap the button to try it.',
+    body: 'Events are gatherings and drives near you. Tap the button to try it.',
   },
   {
     route: '/messages',
     target: TAB('messages'),
     icon: '\u{1F4AC}',
     title: 'Messages',
-    body: 'Private chats, your village chats, Cottage Chats, and Campfires all live here. You can block or report anyone, any time.',
+    body: 'All your chats live here. Each kind is a room of a different size: the bigger the room, the less you share. Tap "Why so many kinds of chat?" at the top to learn which one to use.',
+  },
+  {
+    route: '/home',
+    target: '[data-tour="emergency"]',
+    icon: '\u26A0\uFE0F',
+    title: 'Emergencies',
+    body: 'For a flood, storm, fire, or outage that hits many neighbors. Report it or sign up to help. Someone in danger? Call 911 first.',
   },
   {
     need: 'keeper',
@@ -117,14 +139,14 @@ const ALL_STEPS = [
     target: '[data-tour="keeper-tools"]',
     icon: '\u{1F511}',
     title: 'Keeper tools',
-    body: 'You look after this village. Keeper tools show what needs you: people asking to join, sister villages, and more.',
+    body: 'You look after this village. Here you see who wants to join, sister villages, and more.',
   },
   {
     need: 'organizer',
     route: '/org-dashboard',
     icon: '\u{1F9F0}',
     title: 'Organizer tools',
-    body: 'You help run an organization. Organizer tools show who is asking to join, your chats, events, and settings.',
+    body: 'You help run an organization. Here you see who wants to join, your chats, events, and settings.',
   },
   {
     need: 'ambassador',
@@ -139,8 +161,15 @@ const ALL_STEPS = [
     target: '[data-tour="role-tab"]',
     icon: '\u{1F9F0}',
     title: 'Your last button',
-    body: 'Neighbors see Emergency here, for disasters that hit many people at once. If you keep a village, run an organization, or are an Ambassador, your tools are here instead.',
-    last: 'New here? Once a neighbor vouches for you, or you finish a task together, you can message people first and post offers. Take this tour again any time from Settings or Help.',
+    body: 'This button changes with your role. Most people see Emergency. If you keep a village, run an organization, or are an Ambassador, your tools are here.',
+  },
+  {
+    route: '/me',
+    target: '[data-tour="me"]',
+    icon: '\u{1F331}',
+    title: 'You',
+    body: 'Tap your picture for your profile, settings, and help. New here? Once a neighbor vouches for you, or you finish a task together, you can message people first and post offers.',
+    last: 'Take this tour again any time from Settings or Help.',
   },
 ]
 
@@ -298,14 +327,21 @@ export default function AppTour() {
   // Put the card where it does not cover the ringed spot.
   useLayoutEffect(() => {
     if (!open || !rect) { setCardAtTop(false); return }
-    const cardH = sheetRef.current ? sheetRef.current.offsetHeight : 300
+    const sheet = sheetRef.current
+    if (sheet) sheet.style.maxHeight = ''
+    const cardH = sheet ? sheet.offsetHeight : 300
     const vh = window.innerHeight
-    const tabH = 60 + 12
-    const headH = 52 + 8
-    const spaceBelow = vh - tabH - (rect.top + rect.height)
-    const spaceAbove = rect.top - headH
-    // Prefer the bottom. Use the top only when the bottom would cover the spot and the top would not.
-    setCardAtTop(spaceBelow < cardH + 12 && spaceAbove >= cardH + 12)
+    const head = document.querySelector('.app-header')
+    const tabs = document.querySelector('.bottom-tabs')
+    const headH = (head ? head.getBoundingClientRect().height : 60) + 8
+    const tabH = (tabs ? tabs.getBoundingClientRect().height : 60) + 12
+    const spaceBelow = vh - tabH - (rect.top + rect.height) - 12
+    const spaceAbove = rect.top - headH - 12
+    // Prefer the bottom. Use the top when the bottom would cover the spot and the top has room.
+    // When neither side has room, use the bigger side and let the card scroll inside, so the ring stays in view.
+    const top = spaceBelow < cardH && (spaceAbove >= cardH || spaceAbove > spaceBelow)
+    setCardAtTop(top)
+    if (sheet && cardH > Math.max(spaceBelow, spaceAbove)) sheet.style.maxHeight = Math.max(160, top ? spaceAbove : spaceBelow) + 'px'
   }, [open, rect, index])
 
   // Move focus to each new card so screen readers read it.

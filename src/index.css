@@ -5544,3 +5544,20 @@ button[aria-label^="Back"], button[aria-label^="Close"], button[aria-label^="Can
 .welcome-short-actions a { text-align: center; min-height: 48px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
 .welcome-more { min-height: 48px; background: none; border: 0; color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .welcome-more:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+
+/* "Why so many kinds of chat?" (ChatGuide.jsx) */
+.chat-guide { margin: 0.5rem 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.chat-guide-toggle { width: 100%; min-height: 48px; display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.9rem; background: none; border: 0; color: var(--text-strong); font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.chat-guide-toggle > span:nth-child(2) { flex: 1; }
+.chat-guide-caret { color: var(--text-muted); font-size: 0.8rem; }
+.chat-guide-toggle:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; border-radius: 12px; }
+.chat-guide-body { padding: 0 0.9rem 0.9rem; color: var(--text-soft); line-height: 1.5; }
+.chat-guide-lead, .chat-guide-rule { margin: 0 0 0.6rem; }
+.chat-guide-rule { padding: 0.6rem 0.75rem; border-radius: 10px; background: var(--success-bg); color: var(--text-strong); }
+.chat-guide-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.chat-guide-room { display: flex; gap: 0.7rem; align-items: flex-start; padding: 0.6rem 0.7rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.chat-guide-ic { flex: none; }
+.chat-guide-text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; overflow-wrap: anywhere; font-size: 0.95rem; }
+.chat-guide-text b { color: var(--text-strong); font-size: 1rem; }
+.chat-guide-label { font-weight: 700; color: var(--text-secondary); }
+.chat-guide-note { margin: 0.6rem 0 0; color: var(--text-secondary); font-size: 0.95rem; }
