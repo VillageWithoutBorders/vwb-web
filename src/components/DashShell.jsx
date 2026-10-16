@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import '../dashboard.css'
 import Icon from './Icon'
 
@@ -20,6 +20,19 @@ export function useDashTab(tabs) {
 
 // Needs you now: things waiting on this person. Each row jumps to its tab.
 export function NeedsYou({ items, onGo, calm }) {
+  const navigate = useNavigate()
+  // A row with `to` opens that page. Otherwise it opens its tab and scrolls
+  // there, so it still moves even when that tab is already open.
+  function open(it) {
+    if (it.to) { navigate(it.to); return }
+    onGo(it.tab)
+    setTimeout(() => {
+      const el = document.getElementById(it.target || ('dash-panel-' + it.tab))
+      if (!el) return
+      const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+    }, 60)
+  }
   if (!items) return null
   if (items.length === 0) {
     return (
@@ -32,7 +45,7 @@ export function NeedsYou({ items, onGo, calm }) {
     <section className="dash-needs" aria-labelledby="dash-needs-h">
       <h2 id="dash-needs-h">Needs you now</h2>
       {items.map((it) => (
-        <button key={it.k} type="button" className="dash-need" onClick={() => onGo(it.tab)}>
+        <button key={it.k} type="button" className="dash-need" onClick={() => open(it)}>
           <span className="dash-need-ic" aria-hidden="true"><Icon name={it.em} /></span>
           <span className="dash-need-text">{it.text}</span>
           <span className="dash-need-go" aria-hidden="true">&#8250;</span>

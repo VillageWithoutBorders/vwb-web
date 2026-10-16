@@ -149,11 +149,11 @@ export default function KeeperDashboard() {
   const mySisterCount = sisters.filter((s) => s.village_a === id || s.village_b === id).length
 
   const needs = !ready ? null : [
-    secondNeeded.length && { k: 'remove', tab: 'people', em: '⚠️', text: secondNeeded.length === 1 ? 'A removal request needs a second member' : secondNeeded.length + ' removal requests need a second member' },
+    secondNeeded.length && { k: 'remove', tab: 'people', target: 'kd-remove-sec', em: '⚠️', text: secondNeeded.length === 1 ? 'A removal request needs a second member' : secondNeeded.length + ' removal requests need a second member' },
     fireAskCount && { k: 'fires', tab: 'chats', em: '\u{1F525}', text: fireAskCount === 1 ? 'Someone asked to join your Campfire' : fireAskCount + ' people asked to join your Campfires' },
     checkIns.length && { k: 'checkin', tab: 'chats', em: '\u{1F44B}', text: 'A Campfire is asking if you are still taking part' },
     isStarter && sisterAsks.length && { k: 'sisters', tab: 'sisters', em: '\u{1F309}', text: sisterAsks.length === 1 ? sisterAsks[0].other_name + ' asked to be Sister Villages' : sisterAsks.length + ' villages asked to be sisters' },
-    newMembers.length && { k: 'new', tab: 'people', em: '\u{1F331}', text: newMembers.length === 1 ? (newMembers[0].display_name || 'A neighbor') + ' just joined. Say hello?' : newMembers.length + ' neighbors just joined. Say hello?' },
+    newMembers.length && { k: 'new', tab: 'people', target: 'kd-new-sec', to: board ? '/campfire?board=' + board.id : undefined, em: '\u{1F331}', text: newMembers.length === 1 ? (newMembers[0].display_name || 'A neighbor') + ' just joined. Say hello?' : newMembers.length + ' neighbors just joined. Say hello?' },
   ].filter(Boolean)
 
   const go = (em, label, onClick) => (
@@ -183,7 +183,7 @@ export default function KeeperDashboard() {
       {tab === 'people' && (
         <DashPanel k="people">
           {secondNeeded.length > 0 && (
-            <section className="hub-section" aria-labelledby="kd-remove">
+            <section className="hub-section" id="kd-remove-sec" aria-labelledby="kd-remove">
               <div className="hub-section-head"><h2 id="kd-remove">Removal requests</h2></div>
               <p className="hub-org-desc">A neighbor asked to remove someone. It takes two more members agreeing. Open the people list to agree or leave it.</p>
               {secondNeeded.map((r) => (
@@ -194,7 +194,7 @@ export default function KeeperDashboard() {
             </section>
           )}
 
-          <section className="hub-section" aria-labelledby="kd-new">
+          <section className="hub-section" id="kd-new-sec" aria-labelledby="kd-new">
             <div className="hub-section-head"><h2 id="kd-new">New neighbors</h2></div>
             {newMembers.length === 0 && <p className="hub-empty">No one new lately.</p>}
             {newMembers.map((m) => (
@@ -202,7 +202,10 @@ export default function KeeperDashboard() {
                 <div className="dash-row-main"><strong><UserName userId={m.user_id} name={m.display_name} /></strong><small>Joined {new Date(m.joined_at).toLocaleDateString()}</small></div>
               </div>
             ))}
-            {newMembers.length > 0 && board && <p className="hub-org-desc">A short hello in the village chat goes a long way.</p>}
+            {newMembers.length > 0 && board && (<>
+              <p className="hub-org-desc">A short hello in the village chat goes a long way.</p>
+              <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} onClick={() => navigate('/campfire?board=' + board.id)}>Say hello in the village chat</button>
+            </>)}
           </section>
 
           <section className="hub-section" aria-labelledby="kd-all">
