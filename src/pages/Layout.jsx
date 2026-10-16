@@ -1,3 +1,4 @@
+import Icon from '../components/Icon'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import BottomTabs from '../components/BottomTabs'
 import MeButton from '../components/MeButton'
@@ -24,11 +25,11 @@ export default function Layout() {
             <span className="header-btn-label" aria-hidden="true">Home</span>
           </Link>
           <Link to="/calendar" className={'header-btn' + (pathname.startsWith('/calendar') ? ' on' : '')} aria-current={pathname === '/calendar' ? 'page' : undefined} aria-label="Calendar" data-tour="top-calendar">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+            <Icon name="calendar" size={26} className="header-btn-pic" />
             <span className="header-btn-label" aria-hidden="true">Calendar</span>
           </Link>
           <Link to="/home" className={'header-btn' + (pathname === '/home' ? ' on' : '')} aria-current={pathname === '/home' ? 'page' : undefined} aria-label="Dashboard: your tasks and what is near you" data-tour="top-dashboard">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>
+            <Icon name="clipboard" size={26} className="header-btn-pic" />
             <span className="header-btn-label" aria-hidden="true">Dashboard</span>
           </Link>
           {/* Tap for your 5 newest alerts, with "See all alerts" at the bottom. */}
