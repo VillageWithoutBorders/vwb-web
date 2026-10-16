@@ -38,7 +38,7 @@ export default function GrantReport() {
     // Help requests in range
     const { data: requests, error: requestsErr } = await supabase
       .from('help_requests')
-      .select('id, skill_needed, urgency, status, neighborhood, max_helpers, created_at')
+      .select('id, requester_id, skill_needed, urgency, status, neighborhood, max_helpers, created_at, for_name')
       .gte('created_at', from)
       .lte('created_at', to)
     if (requestsErr) { console.error('[GrantReport] help_requests', requestsErr); errors.push('help requests') }
@@ -120,6 +120,7 @@ export default function GrantReport() {
     })
 
     const uniqueRequesters = new Set(reqs.map(r => r.requester_id)).size
+    const forOthers = reqs.filter(r => r.for_name).length
     const uniqueHelpers = new Set(mtch.map(m => m.helper_id)).size
     const completedMatches = mtch.filter(m => m.helper_completed && m.requester_completed).length
 
@@ -153,6 +154,7 @@ export default function GrantReport() {
         statusBreakdown: requestStatusBreakdown,
         neighborhoods,
         uniqueRequesters,
+        forOthers,
       },
       matching: {
         totalMatches: mtch.length,
@@ -198,6 +200,7 @@ export default function GrantReport() {
       ['MUTUAL AID (SkillShare)'],
       ['Total help requests', r.helpRequests.total],
       ['Unique people requesting help', r.helpRequests.uniqueRequesters],
+      ['Requests posted for someone else', r.helpRequests.forOthers],
       ['Unique volunteers matched', r.matching.uniqueHelpers],
       ['Total volunteer matches', r.matching.totalMatches],
       ['Completed (both sides confirmed)', r.matching.completedMatches],
@@ -398,6 +401,7 @@ export default function GrantReport() {
             )}
             <div style={{ marginTop: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
               <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Unique requesters</span><span style={{ color: 'var(--text-strong)' }}>{report.helpRequests.uniqueRequesters}</span></div>
+              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Posted for someone else</span><span style={{ color: 'var(--text-strong)' }}>{report.helpRequests.forOthers || 0}</span></div>
               <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Unique volunteers</span><span style={{ color: 'var(--text-strong)' }}>{report.matching.uniqueHelpers}</span></div>
               <div style={{ ...statRow, borderBottom: 'none' }}><span style={{ color: 'var(--text-secondary)' }}>Completed tasks</span><span style={{ color: 'var(--accent)', fontWeight: 600 }}>{report.matching.completedMatches}</span></div>
             </div>

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import GroupedSkillChips from '../components/GroupedSkillChips'
 import { loadSkillCategories } from '../utils/skillGroups'
-import { getMyLocation } from '../utils/location'
+import { getMyLocation, lookupZip } from '../utils/location'
 import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
 import { useGoBack } from '../components/BackLink'
@@ -53,6 +53,21 @@ export default function AskForHelp() {
     const [maxHelpers, setMaxHelpers] = useState(repost && repost.max_helpers !== undefined ? repost.max_helpers : 1)
     const [neighborhood, setNeighborhood] = useState(repost?.neighborhood || '')
 
+    // Who is this for? 'me' or 'other'. Asked first on a new request.
+    // For someone else: their first name only, their area, and their okay.
+    const [forWho, setForWho] = useState(() => (repost?.for_name ? 'other' : ''))
+    const [forName, setForName] = useState(repost?.for_name || '')
+    const [forConsent, setForConsent] = useState(false)
+    const [forWhere, setForWhere] = useState('near') // 'near' = near me, 'zip' = somewhere else
+    const [forZip, setForZip] = useState('')
+    const [forPlace, setForPlace] = useState(null)
+    const [zipBusy, setZipBusy] = useState(false)
+    const [editForName, setEditForName] = useState('')
+    // Can I post for someone else? Filled from my_ask_for_others_status().
+    const [forStatus, setForStatus] = useState(null)
+    const forOther = !editId && forWho === 'other'
+    const theirName = forName.trim() || 'them'
+
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')
     // Bumped when the person sets or changes their area, to re-read it.
@@ -65,6 +80,35 @@ export default function AskForHelp() {
         }
         loadSkills()
     }, [])
+
+    useEffect(() => {
+        if (editId) return
+        let alive = true
+        supabase.rpc('my_ask_for_others_status').then(({ data, error: stErr }) => {
+            if (!alive) return
+            if (stErr) { console.error('my_ask_for_others_status failed:', stErr); return }
+            setForStatus(Array.isArray(data) ? data[0] || null : data)
+        })
+        return () => { alive = false }
+    }, [editId])
+
+    // Why "Someone else" can't be used right now, or '' if it can.
+    const forBlocked = !forStatus ? ''
+        : !forStatus.allowed ? 'You can ask for someone else after your first 14 days, or once someone vouches for you.'
+        : (!forStatus.unlimited && forStatus.open_count >= 3) ? 'You already have 3 open requests for other people. When one is done, you can post another.'
+        : ''
+
+    async function findTheirZip() {
+        setError('')
+        const clean = forZip.replace(/[^0-9]/g, '')
+        if (clean.length !== 5) { setError('Zip codes have 5 numbers.'); return }
+        setZipBusy(true)
+        const found = await lookupZip(clean)
+        setZipBusy(false)
+        if (!found) { setError("We couldn't find that zip code. Try again."); return }
+        setForPlace(found)
+        setNeighborhood(found.city || found.label)
+    }
 
     useEffect(() => {
         if (!editId && !repost && profile?.neighborhood) {
@@ -88,6 +132,7 @@ export default function AskForHelp() {
             setUrgency(row.urgency || 'today')
             setMaxHelpers(row.max_helpers === undefined ? 1 : row.max_helpers)
             setNeighborhood(row.neighborhood || '')
+            setEditForName(row.for_name || '')
         })
         return () => { alive = false }
     }, [editId])
@@ -99,6 +144,14 @@ export default function AskForHelp() {
     async function handleSubmit(e) {
         e.preventDefault()
         setError('')
+
+        if (forOther) {
+            if (forBlocked) { setError(forBlocked); return }
+            if (!forName.trim()) { setError('Please add their first name.'); return }
+            if (!/^[\p{L}][\p{L} .'-]*$/u.test(forName.trim())) { setError('Please use just their first name, with letters only.'); return }
+            if (forWhere === 'zip' && !forPlace) { setError('Please find their zip code, or choose "Near me".'); return }
+            if (!forConsent) { setError("Please check that they said it's okay to post this for them."); return }
+        }
 
         if (!skillNeeded) {
             setError('Please choose what kind of help you need.')
@@ -130,15 +183,19 @@ export default function AskForHelp() {
         }
 
         // Neighbors are matched by area, so we need one. Never a guess.
-        if (!myLoc) {
-            setError('Add your zip code at the top so neighbors near you can see this.')
+        // For someone else, the area is where they are.
+        const where = forOther && forWhere === 'zip' && forPlace
+            ? { lat: forPlace.latitude, lng: forPlace.longitude }
+            : myLoc
+        if (!where) {
+            setError(forOther ? 'Add your zip code at the top, or choose "Somewhere else" and add their zip code.' : 'Add your zip code at the top so neighbors near you can see this.')
             window.scrollTo({ top: 0, behavior: 'smooth' })
             return
         }
 
         setSubmitting(true)
-        const lat = myLoc.lat
-        const lng = myLoc.lng
+        const lat = where.lat
+        const lng = where.lng
 
         const { error: insertError } = await supabase
             .from('help_requests')
@@ -155,16 +212,19 @@ export default function AskForHelp() {
                 audience,
                 audience_org_id: audience === 'everyone' ? null : groupId,
                 opens_to_all_at: audience === 'everyone' ? null : new Date(Date.now() + Number(openHours) * 3600 * 1000).toISOString(),
+                for_name: forOther ? forName.trim() : null,
+                for_consent: forOther ? forConsent : false,
             })
 
         if (insertError) {
-            setError(insertError.message && insertError.message.length < 140 && /group/i.test(insertError.message) ? insertError.message : 'Something went wrong. Please try again.')
+            const plain = insertError.message && insertError.message.length < 140 && (/group/i.test(insertError.message) || ['P0001', '42501'].includes(insertError.code))
+            setError(plain ? insertError.message : 'Something went wrong. Please try again.')
             console.error(insertError)
             setSubmitting(false)
             return
         }
 
-        navigate('/skillshare', { state: { message: audience === 'everyone' ? 'Your request has been posted.' : 'Your request is posted. Your group can see it now. Everyone nearby sees it after your chosen time, or when you open it from Tasks.' } })
+        navigate('/skillshare', { state: { message: forOther ? 'Your request for ' + forName.trim() + ' has been posted. Helpers will message you.' : audience === 'everyone' ? 'Your request has been posted.' : 'Your request is posted. Your group can see it now. Everyone nearby sees it after your chosen time, or when you open it from Tasks.' } })
     }
 
     if (!checkedResources) {
@@ -174,13 +234,43 @@ export default function AskForHelp() {
     return (
         <div className="ask-page">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+                <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0, minWidth: 44, minHeight: 44 }}>&#8592;</button>
                 <h1 style={{ margin: 0 }}>{editId ? 'Edit your request' : 'Ask for help'}</h1>
             </div>
             <p className="ask-intro">
-                Tell us what you need. Only Hope Ambassadors in your area will see this.
-                No personal details are shared until you say so.
+                {forOther
+                    ? 'Tell us what ' + theirName + ' needs. Helpers will talk with you, and you pass things along. Never share their address here.'
+                    : 'Tell us what you need. Only Hope Ambassadors in your area will see this. No personal details are shared until you say so.'}
             </p>
+
+            {editId && editForName && (
+                <p className="ask-intro"><span className="for-chip">For {editForName}</span> Helpers talk with you about this request.</p>
+            )}
+
+            {!editId && (
+                <fieldset className="form-field ask-who" style={{ border: 'none', padding: 0, margin: '0 0 1rem' }}>
+                    <legend className="ask-who-q">Who is this for?</legend>
+                    <div className="urgency-options ask-who-row">
+                        <label className={'urgency-option' + (forWho === 'me' ? ' active' : '')}>
+                            <input type="radio" name="forWho" className="sr-only" checked={forWho === 'me'} onChange={() => { setForWho('me'); setError('') }} />
+                            <span className="urgency-label">Me</span>
+                        </label>
+                        <label className={'urgency-option' + (forWho === 'other' ? ' active' : '')}>
+                            <input type="radio" name="forWho" className="sr-only" checked={forWho === 'other'} onChange={() => { setForWho('other'); setError('') }} />
+                            <span className="urgency-label">Someone else</span>
+                            <span className="urgency-desc">A family member or neighbor who doesn't use the app</span>
+                        </label>
+                    </div>
+                </fieldset>
+            )}
+
+            {!editId && !forWho && (
+                <p className="field-hint" style={{ fontSize: '0.9375rem' }}>Choose one to keep going.</p>
+            )}
+
+            {forOther && forBlocked && (
+                <p className="form-error" role="alert">{forBlocked}</p>
+            )}
 
             {repost && !editId && (
                 <p className="ask-intro">Filled in from your earlier request. Change anything you like, then post. This is a new request, so neighbors see it fresh.</p>
@@ -190,7 +280,56 @@ export default function AskForHelp() {
                 <p className="ask-intro">Change anything below. If someone already said they can help, we'll let them know it changed.</p>
             )}
 
-            {!editId && (myLoc
+            {(editId || (forWho && !(forOther && forBlocked))) && (<>
+            {forOther && (
+                <div className="ask-for-box">
+                    <div className="form-field">
+                        <label htmlFor="forName">Their first name</label>
+                        <input id="forName" type="text" value={forName} maxLength={30} autoComplete="off" autoCapitalize="words"
+                            onChange={(e) => setForName(e.target.value)} placeholder="Like Ruth" />
+                        <span className="field-hint">First name only. No last name, phone, or address.</span>
+                    </div>
+
+                    <fieldset className="form-field" style={{ border: 'none', padding: 0, margin: '0 0 1rem' }}>
+                        <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>Where do they live?</legend>
+                        <div className="urgency-options">
+                            <label className={'urgency-option' + (forWhere === 'near' ? ' active' : '')}>
+                                <input type="radio" name="forWhere" className="sr-only" checked={forWhere === 'near'} onChange={() => { setForWhere('near'); setForPlace(null); if (profile?.neighborhood) setNeighborhood(profile.neighborhood) }} />
+                                <span className="urgency-label">Near me</span>
+                                <span className="urgency-desc">Use my area</span>
+                            </label>
+                            <label className={'urgency-option' + (forWhere === 'zip' ? ' active' : '')}>
+                                <input type="radio" name="forWhere" className="sr-only" checked={forWhere === 'zip'} onChange={() => setForWhere('zip')} />
+                                <span className="urgency-label">Somewhere else</span>
+                                <span className="urgency-desc">Type their zip code</span>
+                            </label>
+                        </div>
+                        {forWhere === 'zip' && (forPlace ? (
+                            <p className="ask-zip-found">Near {forPlace.label}{' '}
+                                <button type="button" className="link-button" onClick={() => { setForPlace(null); setForZip('') }}>Change</button>
+                            </p>
+                        ) : (
+                            <div className="ask-zip-row">
+                                <label htmlFor="forZip" className="sr-only">Their zip code</label>
+                                <input id="forZip" type="text" inputMode="numeric" pattern="[0-9]*" maxLength={5} autoComplete="off"
+                                    placeholder="Their zip code" value={forZip}
+                                    onChange={(e) => setForZip(e.target.value.replace(/[^0-9]/g, ''))}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); findTheirZip() } }} />
+                                <button type="button" className="btn btn-primary" disabled={zipBusy} onClick={findTheirZip}>{zipBusy ? 'Looking...' : 'Find'}</button>
+                            </div>
+                        ))}
+                        <span className="field-hint">Just the zip code. It is never saved to anyone's profile.</span>
+                    </fieldset>
+
+                    <label className="checkbox-field ask-consent">
+                        <input type="checkbox" checked={forConsent} onChange={(e) => setForConsent(e.target.checked)} />
+                        <span>{(forName.trim() || 'They') + " said it's okay for me to post this."}</span>
+                    </label>
+                    <p className="field-hint" style={{ marginTop: 0 }}>Helpers will message you, not {theirName}. You pass things along.</p>
+                </div>
+            )}
+
+            {!editId && !(forOther && forWhere === 'zip') && (myLoc
                 ? <LocationBar loc={myLoc} prefix="Neighbors near" onChanged={() => setLocTick(t => t + 1)} />
                 : <LocationPrompt
                     title="Where do you need help?"
@@ -201,7 +340,7 @@ export default function AskForHelp() {
             <form onSubmit={handleSubmit} className="ask-form">
 
                 <div className="form-field">
-                    <label htmlFor="skillNeeded">What kind of help do you need?</label>
+                    <label htmlFor="skillNeeded">{forOther ? 'What kind of help does ' + theirName + ' need?' : 'What kind of help do you need?'}</label>
                     <GroupedSkillChips selected={skillNeeded ? [skillNeeded] : []} skills={skills} renderChip={(skill) => (
                         <button
                             key={skill}
@@ -220,14 +359,14 @@ export default function AskForHelp() {
                         id="description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Describe your situation. Be as specific as you're comfortable with."
+                        placeholder={forOther ? 'What does ' + theirName + ' need? Leave out their address and anything private.' : "Describe your situation. Be as specific as you're comfortable with."}
                         rows={4}
                         required
                     />
                 </div>
 
                 <div className="form-field">
-                    <label>How soon do you need help?</label>
+                    <label>{forOther ? 'How soon do they need help?' : 'How soon do you need help?'}</label>
                     <div className="urgency-options">
                         {URGENCY_OPTIONS.map((opt) => (
                             <label
@@ -250,7 +389,7 @@ export default function AskForHelp() {
                 </div>
 
                 <div className="form-field">
-                    <label>How many people do you need?</label>
+                    <label>{forOther ? 'How many people do they need?' : 'How many people do you need?'}</label>
                     <div className="urgency-options">
                         {HELPER_COUNT_OPTIONS.map((opt) => (
                             <label
@@ -278,10 +417,10 @@ export default function AskForHelp() {
                         type="text"
                         value={neighborhood}
                         onChange={(e) => setNeighborhood(e.target.value)}
-                        placeholder="Your town or neighborhood"
+                        placeholder={forOther ? 'Their town or neighborhood' : 'Your town or neighborhood'}
                     />
                     <span className="field-hint">
-                        Just your town or neighborhood. We never share your exact address.
+                        {forOther ? 'Just their town or neighborhood. Never their address.' : 'Just your town or neighborhood. We never share your exact address.'}
                     </span>
                 </div>
 
@@ -354,6 +493,7 @@ export default function AskForHelp() {
                     </button>
                 </div>
             </form>
+            </>)}
         </div>
     )
 }

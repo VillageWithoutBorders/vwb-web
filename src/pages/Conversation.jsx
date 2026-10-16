@@ -135,7 +135,7 @@ export default function Conversation() {
     // be stored as plain text).
     if (c.request_id) {
       const { data: req, error: reqErr } = await supabase
-        .from('help_requests').select('skill_needed, description, urgency').eq('id', c.request_id).single()
+        .from('help_requests').select('skill_needed, description, urgency, for_name').eq('id', c.request_id).single()
       if (reqErr) console.error('Failed to load request details:', reqErr)
       if (req) setRequest(req)
       const { data: match, error: matchErr } = await supabase
@@ -377,7 +377,7 @@ export default function Conversation() {
         <AvatarDisplay url={otherAvatar} userId={otherUserId} size={36} />
         <div className="convo-header-info">
           <h1><UserName userId={otherUserId} name={otherName} /></h1>
-          {request && <p className="convo-context">{request.skill_needed}</p>}
+          {request && <p className="convo-context">{request.skill_needed}{request.for_name ? ' for ' + request.for_name : ''}</p>}
         </div>
         <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'><Icon name="gear" /></button>
 
@@ -390,6 +390,11 @@ export default function Conversation() {
         <div className="convo-request-banner">
           <span className={'urgency-badge urgency-' + request.urgency}>{urgencyLabel}</span>
           <span className="convo-request-skill">{request.skill_needed}</span>
+          {request.for_name && (
+            <p className="for-line">{convo.requester_id === user.id
+              ? 'For ' + request.for_name + '. You pass things along.'
+              : 'For ' + request.for_name + ', posted by ' + (otherName || 'a neighbor') + '. You talk with ' + (otherName || 'them') + ' here.'}</p>
+          )}
           <p className="convo-request-desc">{request.description}</p>
           {accepted && (
             <p className="convo-request-status">&#10003; {convo.helper_id === user.id ? 'You were accepted to help with this' : otherName + ' was accepted to help with this'}</p>
