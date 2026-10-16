@@ -200,7 +200,7 @@ export default function Welcome() {
     <div style={pageStyle}>
       <header style={headerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <img src="/images/vwb_header.png" alt="" style={{ height: '36px', borderRadius: '50%' }} />
+          <img src="/images/vwb_header-v2.png" alt="" style={{ height: '36px', borderRadius: '50%' }} />
           <span style={{ fontWeight: 700, fontSize: '1rem', color: COLORS.text }}>Village Without Borders</span>
         </div>
         <Link to="/login" style={{ ...btnSecondary, padding: '0.5rem 1rem', fontSize: '0.9rem' }}>Log In</Link>
