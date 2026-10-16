@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { useSimpleView } from '../utils/simpleView'
 import Icon from './Icon'
 
 // A short walk-through of the app.
@@ -173,6 +174,32 @@ const ALL_STEPS = [
   },
 ]
 
+// Simple view gets a short tour: three stops.
+const SIMPLE_STEPS = [
+  {
+    route: '/',
+    target: '[data-tour="simple-buttons"]',
+    icon: '\u{1F3E1}',
+    title: 'Welcome to the village',
+    body: 'These three buttons are all you need. Ask for help, help a neighbor, or read your messages.',
+  },
+  {
+    route: '/',
+    target: TAB('messages'),
+    icon: '\u{1F4AC}',
+    title: 'Messages',
+    body: 'When a neighbor writes to you, a red number shows here. Tap it to read and answer.',
+  },
+  {
+    route: '/',
+    target: '[data-tour="me"]',
+    icon: '\u{1F331}',
+    title: 'You',
+    body: 'Tap your picture for your profile and settings. Want the full app? Tap Show me everything at the bottom of Home.',
+    last: 'Take this tour again any time from Settings or Help.',
+  },
+]
+
 // Sample cards for the practice round. Static on purpose: no database, no alerts.
 const SAMPLES = {
   request: {
@@ -218,6 +245,7 @@ function SampleCard({ kind }) {
 
 // Steps that fit this person (see "need" above).
 function stepsFor(ctx) {
+  if (ctx.simple) return SIMPLE_STEPS
   return ALL_STEPS.filter((st) => {
     if (st.need === 'village') return !!ctx.villageId
     if (st.need === 'noVillage') return ctx.ready && !ctx.villageId
@@ -239,7 +267,9 @@ export default function AppTour() {
   const { pathname } = useLocation()
   // Only when the column exists and is empty. If the database step hasn't
   // been run yet, the tour never forces itself on anyone.
-  const needsTour = !!profile && Object.prototype.hasOwnProperty.call(profile, 'tour_done_at') && !profile.tour_done_at
+  // Wait until they've picked Simple or Everything (SimpleOffer asks first).
+  const pickedView = !profile || !Object.prototype.hasOwnProperty.call(profile, 'simple_view') || profile.simple_view !== null
+  const needsTour = !!profile && Object.prototype.hasOwnProperty.call(profile, 'tour_done_at') && !profile.tour_done_at && pickedView
   const [open, setOpen] = useState(false)
   const [required, setRequired] = useState(false)
   const [index, setIndex] = useState(0)
@@ -273,7 +303,8 @@ export default function AppTour() {
   }, [open, user])
   const isOrganizer = (organizations || []).some((o) => o.kind !== 'group' && (o.role === 'admin' || o.role === 'organizer'))
   const isAmbassador = !!profile?.is_hope_ambassador || profile?.role === 'admin' || profile?.role === 'founder'
-  const STEPS = stepsFor({ ...ctx, isOrganizer, isAmbassador })
+  const simple = useSimpleView()
+  const STEPS = stepsFor({ ...ctx, isOrganizer, isAmbassador, simple })
   const step = STEPS[index] || STEPS[0]
   const isLast = index === STEPS.length - 1
   const inPractice = !!step.practice

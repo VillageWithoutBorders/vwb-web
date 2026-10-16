@@ -1,5 +1,9 @@
 import Icon from '../components/Icon'
+import { useEffect } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView'
+import SimpleOffer from '../components/SimpleOffer'
 import BottomTabs from '../components/BottomTabs'
 import MeButton from '../components/MeButton'
 import AlertsMenu from '../components/AlertsMenu'
@@ -8,11 +12,18 @@ import KeyRestorePrompt from '../components/KeyRestorePrompt'
 
 export default function Layout() {
   const { pathname } = useLocation()
+  const { profile } = useAuth()
+  const simple = useSimpleView()
+  // The account says which view to use. Follow it on this phone too.
+  useEffect(() => {
+    const v = profile?.simple_view
+    if (typeof v === 'boolean' && v !== isSimpleView()) setSimpleLocal(v)
+  }, [profile?.simple_view])
   // Chats fill the space between the top bar and the tabs, edge to edge,
   // instead of sitting inside the padded page column.
   // World pages (the globe, a village, an organization) fill the whole screen
   // with their own teal background, edge to edge.
-  const isWorld = pathname === '/' || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
+  const isWorld = (pathname === '/' && !simple) || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
   const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
 
   return (
@@ -20,6 +31,7 @@ export default function Layout() {
       <header className="app-header">
         {/* Always here, left to right: Home (the globe), Calendar, Dashboard (in the middle), Alerts, Your corner. */}
         <nav className="app-header-inner header-nav" aria-label="Top menu">
+          {!simple && (<>
           <Link to="/" className={'header-btn' + (pathname === '/' ? ' on' : '')} aria-current={pathname === '/' ? 'page' : undefined} aria-label="Home: your networks on the globe" data-tour="top-home">
             <img className="header-btn-logo" src="/images/vwb_header-v2.png" alt="" width="26" height="26" />
             <span className="header-btn-label" aria-hidden="true">Home</span>
@@ -32,6 +44,7 @@ export default function Layout() {
             <Icon name="clipboard" size={26} className="header-btn-pic" />
             <span className="header-btn-label" aria-hidden="true">Dashboard</span>
           </Link>
+          </>)}
           {/* Tap for your 5 newest alerts, with "See all alerts" at the bottom. */}
           <AlertsMenu />
           <MeButton />
@@ -41,6 +54,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <BottomTabs />
+      <SimpleOffer />
       <AppTour />
       <KeyRestorePrompt />
     </div>

@@ -8,6 +8,7 @@ import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
 import RecoveryKeySection from '../components/RecoveryKeySection'
 import { useGoBack } from '../components/BackLink'
 import AppearancePicker from '../components/AppearancePicker'
+import SimpleViewPicker from '../components/SimpleViewPicker'
 import Icon from '../components/Icon'
 
 // A plain read on how strong a new password is. Length matters most.
@@ -314,6 +315,7 @@ export default function Settings() {
         <span aria-hidden="true"><Icon name="compass" /></span> Take the app tour again
       </button>
 
+      <SimpleViewPicker />
       <AppearancePicker />
 
       <div className="profile-details">

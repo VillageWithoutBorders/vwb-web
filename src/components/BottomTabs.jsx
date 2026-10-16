@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { useMyTools } from '../hooks/useMyTools'
 import Icon from './Icon'
+import { useSimpleView } from '../utils/simpleView'
 
 // Bottom bar: three doors everyone has (Help, Village, Messages) and a fourth
 // that depends on who you are. Home, Calendar, Dashboard, Alerts and You live in the top bar.
@@ -17,6 +18,7 @@ export default function BottomTabs() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const tools = useMyTools()
+  const simple = useSimpleView()
   const [sheet, setSheet] = useState(false)
   const sheetRef = useRef(null)
   const lastFocus = useRef(null)
@@ -36,6 +38,31 @@ export default function BottomTabs() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [sheet])
+
+  // Simple view: three big doors. Home, Help, Messages. Nothing else.
+  if (simple) {
+    return (
+      <nav className="bottom-tabs" aria-label="Main navigation">
+        <div className="bottom-tabs-inner">
+          <NavLink to="/" end className={({ isActive }) => 'tab-item' + (isActive || pathname === '/home' ? ' active' : '')} data-tour="home">
+            <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="house" size={26} /></span>
+            <span className="tab-label">Home</span>
+          </NavLink>
+          <NavLink to="/skillshare" className={({ isActive }) => 'tab-item' + (isActive || helpOn ? ' active' : '')} data-tour="help">
+            <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="heart-hands" size={26} /></span>
+            <span className="tab-label">Help</span>
+          </NavLink>
+          <NavLink to="/messages" className="tab-item" data-tour="messages" style={{ position: 'relative' }}>
+            <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="envelope" size={26} /></span>
+            {unreadCount > 0 && (
+              <span aria-label={unreadCount + ' unread'} className="tab-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+            )}
+            <span className="tab-label">Messages</span>
+          </NavLink>
+        </div>
+      </nav>
+    )
+  }
 
   function closeSheet() { setSheet(false); if (lastFocus.current && lastFocus.current.focus) lastFocus.current.focus() }
   function go(to) { setSheet(false); navigate(to) }

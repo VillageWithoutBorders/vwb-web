@@ -6,6 +6,7 @@ import { supabase } from '../supabaseClient'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import Messages from './Messages'
 import ChatGuide from '../components/ChatGuide'
+import { useSimpleView } from '../utils/simpleView'
 
 const Groups = lazy(() => import('./Groups'))
 const Connections = lazy(() => import('./Connections'))
@@ -29,8 +30,13 @@ export default function ConnectHub() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [villageUnread, setVillageUnread] = useState(0)
+  const simple = useSimpleView()
 
-  const tabs = [
+  // Simple view: just private messages and Cottage Chats.
+  const tabs = simple ? [
+    { key: 'messages', label: 'Private messages', badge: unreadCount },
+    { key: 'chats', label: 'Cottage Chats' },
+  ] : [
     { key: 'messages', label: 'Messages', badge: unreadCount },
     { key: 'villages', label: 'Villages', badge: villageUnread },
     { key: 'chats', label: 'Cottage Chats & Campfires' },
@@ -63,9 +69,9 @@ export default function ConnectHub() {
     <div>
       <div style={{ maxWidth: '640px', margin: '0 auto', padding: '1rem 1rem 0', boxSizing: 'border-box' }}>
         <h1 style={{ margin: '0 0 0.25rem' }}>Messages</h1>
-        <p className="cal-sub" style={{ marginTop: 0 }}>Chats, villages, and neighbors, all in one place.</p>
+        <p className="cal-sub" style={{ marginTop: 0 }}>{simple ? 'Talk with one neighbor, or with a few people you chose.' : 'Chats, villages, and neighbors, all in one place.'}</p>
         {established === false && <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE}</p>}
-        <ChatGuide />
+        {!simple && <ChatGuide />}
         <div role="tablist" aria-label="Where to connect" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.75rem 0' }}>
           {tabs.map((t) => (
             <button key={t.key} type="button" role="tab" id={'hub-tab-' + t.key} aria-selected={active === t.key} aria-controls="hub-panel" style={chip(active === t.key)}

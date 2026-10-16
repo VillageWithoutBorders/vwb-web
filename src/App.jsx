@@ -9,6 +9,8 @@ import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
 const Dashboard = lazyPage(() => import('./pages/Dashboard'))
 import World from './pages/World'
+import SimpleHome from './pages/SimpleHome'
+import { useSimpleView } from './utils/simpleView'
 import Feed from './pages/Feed'
 const Profile = lazyPage(() => import('./pages/Profile'))
 const YourCorner = lazyPage(() => import('./pages/YourCorner'))
@@ -58,6 +60,11 @@ import { peekReturnTo } from './utils/returnTo'
 // Pages load when first opened, so the first visit downloads less.
 // If a new version went out while a tab was open, the old page file is
 // gone: reload once to pick up the new version.
+// The first screen: the globe, or the Simple home when Simple view is on.
+function HomeIndex() {
+  return useSimpleView() ? <SimpleHome /> : <World />
+}
+
 function lazyPage(load) {
   return lazy(() =>
     load().then(
@@ -143,7 +150,7 @@ function AppRoutes() {
       <Route path="/events/:id" element={<EventPage />} />
       <Route path="/groups/join/:token" element={<JoinGroup />} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route index element={<World />} />
+        <Route index element={<HomeIndex />} />
         <Route path="home" element={<Dashboard />} />
         <Route path="skillshare" element={<Feed />} />
         <Route path="tasks" element={<ActiveTasks />} />

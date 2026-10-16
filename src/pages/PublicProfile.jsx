@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { startConversation } from '../utils/startConversation'
 import ProfileSafetyActions from '../components/ProfileSafetyActions'
 import { useGoBack } from '../components/BackLink'
+import InviteSheet from '../components/InviteSheet'
 
 export default function PublicProfile() {
   const { userId } = useParams()
@@ -19,12 +20,26 @@ export default function PublicProfile() {
   const [messaging, setMessaging] = useState(false)
   const [msgStatus, setMsgStatus] = useState(null)
   const [blockedThem, setBlockedThem] = useState(false)
+  const [canInvite, setCanInvite] = useState(false)
+  const [inviting, setInviting] = useState(false)
   const [profile, setProfile] = useState(null)
   const [tab, setTab] = useState('requests')
   const [requests, setRequests] = useState([])
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [completedCount, setCompletedCount] = useState(0)
+
+  // Show "Invite to..." only when there is somewhere to invite them.
+  useEffect(() => {
+    if (!user || !userId || user.id === userId) { setCanInvite(false); return }
+    let alive = true
+    supabase.rpc('invite_places', { p_user: userId }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to check invite places:', error); setCanInvite(false); return }
+      setCanInvite((data || []).length > 0)
+    })
+    return () => { alive = false }
+  }, [user, userId])
 
   useEffect(() => {
     if (userId) loadProfile()
@@ -163,6 +178,10 @@ export default function PublicProfile() {
           {user && user.id !== userId && !blockedThem && (
             <button type="button" onClick={msgStatus === 'pending_in' ? () => navigate('/messages') : messageThem} disabled={messaging || msgStatus === 'pending_out'} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Sending...' : msgStatus === 'open' ? 'Message' : msgStatus === 'pending_out' ? 'Request sent' : msgStatus === 'pending_in' ? 'They asked to message you' : 'Ask to message'}</button>
           )}
+          {canInvite && !blockedThem && (
+            <button type="button" onClick={() => setInviting(true)} style={{ marginTop: '0.6rem', marginLeft: '0.5rem', minHeight: 44, padding: '0.5rem 1.1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>Invite to...</button>
+          )}
+          {inviting && <InviteSheet person={{ user_id: userId, display_name: profile.display_name }} onClose={() => setInviting(false)} />}
           <ProfileSafetyActions userId={userId} name={profile.display_name} myId={user?.id} onBlockChange={setBlockedThem} openWith={location.state?.safety} onOpened={() => navigate(location.pathname, { replace: true, state: {} })} />
         </div>
       </div>

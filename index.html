@@ -13,6 +13,8 @@
           if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
           var light = t === 'light' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
           if (light) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f6efdc');
+          // Simple view (bigger words and buttons), saved on the account and on this phone.
+          if (localStorage.getItem('vwb_simple') === '1') document.documentElement.classList.add('simple');
         } catch (e) {}
       })();
     </script>

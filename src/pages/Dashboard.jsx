@@ -11,6 +11,8 @@ import AmbassadorBanner from '../components/AmbassadorBanner'
 import HomeTasks from '../components/HomeTasks'
 import Icon from '../components/Icon'
 import NearbyNeedTiles from '../components/NearbyNeedTiles'
+import OrgInvites from '../components/OrgInvites'
+import VillageGuestInvites from '../components/VillageGuestInvites'
 
 function VillageAsk() {
   const { profile, refreshProfile } = useAuth()
@@ -102,6 +104,8 @@ export default function Dashboard() {
       <HomeTasks />
       {(profile?.is_hope_ambassador || isAdmin) && <NearbyNeedTiles />}
       <AmbassadorBanner />
+      <OrgInvites />
+      <VillageGuestInvites />
       <VillageAsk />
       <PushBanner />
       <InstallBanner />
