@@ -72,8 +72,9 @@ const CARDS = [
       'Campfire: for a group, church, or nonprofit working together. Only its members can read it',
       'Village chat: for neighbors in your area. Anyone nearby can join, and you can join more than one. Only people who joined can read it, so keep sensitive details out. Vouch for neighbors you trust. Two members can ask to remove someone who is not safe',
       'Announcements: everyone can read. Only Ambassadors and admins can post',
+      'Any community chat comes with risk. Not everyone is who they say they are. Keep your address, your schedule, and money details out',
     ],
-    footer: null,
+    footer: 'Agreeing to these guidelines also covers joining your first village chat. You can leave, mute, block, or report at any time.',
   },
   {
     icon: '🛡️',

@@ -40,106 +40,49 @@ const TAB = (name) => '.tab-item[data-tour="' + name + '"]'
 const VILLAGE = (c) => '/village/' + c.villageId
 const SPOT = (k) => '.vs-el[data-spot="' + k + '"]'
 
+// Six steps for everyone, then the steps for your role, then a last card.
+// The practice round is offered after the Help step and can be skipped.
 const ALL_STEPS = [
   {
+    route: '/',
+    target: '.header-nav',
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
-    body: 'Here is a quick walk through the app. Each step opens a real screen and rings the spot to look at. Tap Next to keep going. You can skip any time.',
+    body: 'These five buttons stay at the top of every screen: Home, Calendar, Dashboard, Alerts, and You. Tap Next to keep going. You can skip any time.',
   },
   {
     route: '/',
     target: '.wd-globe-wrap',
     icon: '\u{1F30D}',
     title: 'Your world',
-    body: 'The app opens on the globe. Gold circles are villages you are in. Faded circles are villages you can join. Tap your village to step inside.',
-  },
-  {
-    route: '/',
-    target: '.wd-switch',
-    icon: '\u{1F465}',
-    title: 'Villages, Organizations, and Groups',
-    body: 'Switch between your networks. Villages are neighbors by zip code. Organizations are nonprofits, churches, and causes. Groups are crews that help when an emergency hits. You only see the ones open to you.',
-  },
-  {
-    route: '/',
-    target: '.wd-news',
-    icon: '\u{1F4E3}',
-    title: 'Announcements',
-    body: 'The megaphone holds news for everyone on Village Without Borders.',
+    body: 'Home opens the globe. Gold circles are your villages. Faded ones you can join. Switch to Organizations or Groups above it. The megaphone holds news for everyone.',
   },
   {
     need: 'noVillage',
     route: '/find-village',
     target: '#fv-search',
-    icon: '\u{1F3D8}️',
+    icon: '\u{1F3D8}\uFE0F',
     title: 'Find your village',
-    body: 'Search by town or zip code, then tap Join. You can join more than one village. Do not see yours? Any neighbor can start one.',
+    body: 'Type your zip code, then tap Join. Your village is your neighbors close by. Do not see yours? Any neighbor can start one.',
   },
   {
     need: 'village',
     route: VILLAGE,
     target: '.vs-scene',
-    icon: '\u{1F3D8}️',
+    icon: '\u{1F3D8}\uFE0F',
     title: 'Inside your village',
-    body: 'Your village is a little map. Every picture is a place. Tap one to go there. A plain list of the same places sits below the map.',
-  },
-  {
-    need: 'village',
-    route: VILLAGE,
-    target: SPOT('chat'),
-    icon: '\u{1F4E3}',
-    title: 'Village chat',
-    body: 'Talk with neighbors who joined your village. The keeper pins news here. Only members can read it.',
-  },
-  {
-    need: 'village',
-    route: VILLAGE,
-    target: SPOT('campfires'),
-    icon: '\u{1F525}',
-    title: 'Campfires',
-    body: 'Smaller chats for a topic or a crew. Some are shown and some are hidden. Ask to join one, or start your own.',
-  },
-  {
-    need: 'village',
-    route: VILLAGE,
-    target: SPOT('neighbors'),
-    icon: '\u{1F44B}',
-    title: 'Neighbors',
-    body: 'See who lives here. Vouch for people you trust, and send a message request to say hello.',
-  },
-  {
-    need: 'village',
-    route: VILLAGE,
-    target: '.vs-help',
-    icon: '\u{1F64B}',
-    title: 'Ask for help, or help out',
-    body: 'These two buttons sit under every village map. Pick what you need and how soon. Neighbors near you will see it. Your address is never shown.',
-  },
-  {
-    need: 'keeper',
-    route: VILLAGE,
-    target: '[data-tour="keeper-tools"]',
-    icon: '\u{1F9F0}',
-    title: 'Keeper tools',
-    body: 'You look after this village. Keeper tools show what needs you: people asking to join, sister villages, and more.',
+    body: 'Every picture is a place: the village chat, Campfires, your neighbors, and more. Ask for help and I can help sit under the map.',
   },
   {
     route: '/skillshare',
     target: TAB('help'),
     icon: '\u{1F91D}',
     title: 'Help',
-    body: 'This is the Help tab. Near you shows what neighbors need and what they share for free.',
-  },
-  {
-    route: '/skillshare',
-    target: '.tasks-tabs',
-    icon: '\u{1F4CB}',
-    title: 'Requests and Offers',
-    body: 'Requests are neighbors asking for help. Offers are things neighbors share. If you can help with a request, tap I can help on it.',
+    body: 'Ask for help or offer something with the buttons at the top. Near you shows what neighbors need. Mine keeps your own. Resources lists places that help.',
   },
   {
     practice: 'intro',
-    icon: '✋',
+    icon: '\u270B',
     title: 'Want to practice?',
     body: 'Try a sample request, offer, and event. Nothing is real, nobody is told, and nothing is saved. It takes about a minute. Or skip it.',
   },
@@ -162,86 +105,42 @@ const ALL_STEPS = [
     body: 'Events are gatherings and drives in your area. Tap the button to try it.',
   },
   {
-    route: '/tasks',
-    target: '.mine-tabs',
-    icon: '\u{1F4C2}',
-    title: 'Mine',
-    body: 'Mine keeps your own help in one place. Requests wait until a neighbor says yes. Active tasks are still going. When you both say how it went, it moves to Archived.',
-  },
-  {
     route: '/messages',
     target: TAB('messages'),
     icon: '\u{1F4AC}',
     title: 'Messages',
-    body: "Talk with neighbors one to one. Tap ⋯ on a chat to mark it unread or flag it. Don't want to hear from someone? Block them. Messages stay private.",
+    body: 'Private chats, your village chats, Cottage Chats, and Campfires all live here. You can block or report anyone, any time.',
   },
   {
-    route: '/messages',
-    target: '[data-tour="cottage-chats"]',
-    icon: '\u{1F3E1}',
-    title: 'Cottage Chats and Campfires',
-    body: 'A Cottage Chat is a private chat you start with people you choose. Campfires are chats your village or organization starts.',
-  },
-  {
-    route: '/',
-    target: '.header-nav',
-    icon: '☀️',
-    title: 'The top bar',
-    body: 'These stay at the top on every screen. Home brings you back to the globe. Calendar shows events. Dashboard has your tasks and needs near you. Alerts and your picture are on the right.',
-  },
-  {
-    route: '/',
-    target: '[data-tour="role-tab"]',
-    icon: '\u{1F9F0}',
-    title: 'Your tools',
-    body: 'The last button at the bottom changes with your role. Neighbors see Emergency. Keepers, organizers, Hope Ambassadors, and VWB admins see their own tools here. More than one role? Tap My tools to pick.',
-  },
-  {
-    route: '/home',
-    target: '[data-tour="emergency"]',
-    icon: '⚠️',
-    title: 'Emergency Response',
-    body: 'For disasters that hit many neighbors at once, like a flood, storm, fire, or long power outage. Report one or sign up to help. Once it is confirmed, a Response Camp chat opens for the helpers. Just you? Use Ask for help. In danger? Call 911 first.',
+    need: 'keeper',
+    route: VILLAGE,
+    target: '[data-tour="keeper-tools"]',
+    icon: '\u{1F511}',
+    title: 'Keeper tools',
+    body: 'You look after this village. Keeper tools show what needs you: people asking to join, sister villages, and more.',
   },
   {
     need: 'organizer',
     route: '/org-dashboard',
     icon: '\u{1F9F0}',
     title: 'Organizer tools',
-    body: 'You help run an organization. Organizer tools show who is asking to join, your chats, events, and settings. Open them from the toolbox on your organization page.',
+    body: 'You help run an organization. Organizer tools show who is asking to join, your chats, events, and settings.',
   },
   {
-    route: '/me',
-    target: '[data-tour="me"]',
-    icon: '\u{1F6E1}️',
-    title: 'Your corner',
-    body: 'Tap your picture at the top any time. Your profile, past tasks, villages, and settings live here. You can block or report anyone, any time.',
+    need: 'ambassador',
+    route: '/ambassador',
+    target: '.amb-title',
+    icon: '\u2B50',
+    title: 'Ambassador tools',
+    body: 'Emergencies to check, groups asking to respond, and needs near you, all in one place.',
   },
   {
-    route: '/profile',
-    target: '.profile-details .detail-row',
-    icon: '\u{1F4CD}',
-    title: 'Your zip code',
-    body: "Add your zip code so we can show you what's near you. Only your area is shared, never your address.",
-  },
-  {
-    target: '[data-tour="alerts"]',
-    icon: '\u{1F514}',
-    title: 'Alerts',
-    body: 'New messages, requests, and updates show up here. Tap the bell to see your newest.',
-  },
-  {
-    route: '/me',
-    target: '.app-menu-inline',
-    icon: '⚙️',
-    title: 'Settings and help',
-    body: 'Settings, Help, and Log out are at the bottom of Your corner. In Settings you can pick light or dark colors, turn on phone notifications, and add two-step login.',
-  },
-  {
-    icon: '\u{1F331}',
-    title: 'How trust grows',
-    body: 'New here? You can ask for help and offer to help right away. Once a neighbor vouches for you, or you finish a task together, you can message people first and post offers too.',
-    last: 'You can take this tour again any time from Settings or Help.',
+    route: '/',
+    target: '[data-tour="role-tab"]',
+    icon: '\u{1F9F0}',
+    title: 'Your last button',
+    body: 'Neighbors see Emergency here, for disasters that hit many people at once. If you keep a village, run an organization, or are an Ambassador, your tools are here instead.',
+    last: 'New here? Once a neighbor vouches for you, or you finish a task together, you can message people first and post offers. Take this tour again any time from Settings or Help.',
   },
 ]
 
@@ -295,6 +194,7 @@ function stepsFor(ctx) {
     if (st.need === 'noVillage') return ctx.ready && !ctx.villageId
     if (st.need === 'keeper') return !!ctx.isKeeper
     if (st.need === 'organizer') return !!ctx.isOrganizer
+    if (st.need === 'ambassador') return !!ctx.isAmbassador
     return true
   })
 }
@@ -342,8 +242,9 @@ export default function AppTour() {
     })
     return () => { alive = false }
   }, [open, user])
-  const isOrganizer = (organizations || []).some((o) => o.role === 'admin' || o.role === 'organizer')
-  const STEPS = stepsFor({ ...ctx, isOrganizer })
+  const isOrganizer = (organizations || []).some((o) => o.kind !== 'group' && (o.role === 'admin' || o.role === 'organizer'))
+  const isAmbassador = !!profile?.is_hope_ambassador || profile?.role === 'admin' || profile?.role === 'founder'
+  const STEPS = stepsFor({ ...ctx, isOrganizer, isAmbassador })
   const step = STEPS[index] || STEPS[0]
   const isLast = index === STEPS.length - 1
   const inPractice = !!step.practice

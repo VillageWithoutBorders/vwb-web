@@ -56,6 +56,19 @@ export default function FindVillage() {
 
   const hasZip = !!profile?.zip_code
 
+  // One agreement, not two: the Community Guidelines now cover the risk of a
+  // community chat, so a first village join right after agreeing skips the
+  // second warning. Later joins still show it. The database still gets p_agreed.
+  const GUIDELINES_COVER_CHAT_RISK_SINCE = '2026-10-16T00:00:00Z'
+  const [firstJoinCovered, setFirstJoinCovered] = useState(false)
+  useEffect(() => {
+    if (!user || !profile?.guidelines_accepted_at || profile.guidelines_accepted_at < GUIDELINES_COVER_CHAT_RISK_SINCE) return
+    supabase.from('village_members').select('village_id', { count: 'exact', head: true }).eq('user_id', user.id).then(({ count, error: err }) => {
+      if (err) { console.error('Failed to check your villages:', err); return }
+      setFirstJoinCovered((count || 0) === 0)
+    })
+  }, [user?.id, profile?.guidelines_accepted_at]) // eslint-disable-line react-hooks/exhaustive-deps
+
   async function load(term) {
     setLoading(true); setError('')
     const { data, error: err } = await supabase.rpc('find_villages', { p_search: term || null })
@@ -76,7 +89,7 @@ export default function FindVillage() {
   useEffect(() => {
     if (!joinParam || loading || risk) return
     const v = villages.find(x => x.id === joinParam)
-    if (v && v.can_join && !v.is_mine) setRisk({ type: 'join', village: v })
+    if (v && v.can_join && !v.is_mine) { if (firstJoinCovered) agreeAndGo({ type: 'join', village: v }); else setRisk({ type: 'join', village: v }) }
     else if (v && v.is_mine) navigate(v.board_id ? '/campfire?board=' + v.board_id : '/campfire', { replace: true })
     else if (!v) { setError('We could not open that village. Search for it below.'); navigate('/find-village', { replace: true }) }
   }, [joinParam, loading, villages])
@@ -140,14 +153,15 @@ export default function FindVillage() {
   }
 
   // The warning's "I agree" button. The agreement is sent to the database, which checks it.
-  async function agreeAndGo() {
-    if (busy || !risk) return
+  async function agreeAndGo(direct) {
+    const r = direct || risk
+    if (busy || !r) return
     setBusy(true); setRiskError('')
-    const isStart = risk.type === 'start'
+    const isStart = r.type === 'start'
     const zips = suggested.filter(r => ticked[r.zip]).map(r => r.zip)
     const { data, error: err } = isStart
       ? await supabase.rpc('start_my_village', { p_agreed: true, p_name: startName.trim() || null, p_zips: zips })
-      : await supabase.rpc('join_village', { p_village: risk.village.id, p_agreed: true })
+      : await supabase.rpc('join_village', { p_village: r.village.id, p_agreed: true })
     if (err) { console.error('Failed to join village:', err); setRiskError('Could not join. Try again.'); setBusy(false); return }
     if (data !== 'ok') {
       setBusy(false)
@@ -156,15 +170,16 @@ export default function FindVillage() {
       if (data === 'exists') { setStarting(false); load('') }
       return
     }
-    const villageId = isStart ? null : risk.village.id
+    const villageId = isStart ? null : r.village.id
     setRisk(null)
+    setFirstJoinCovered(false)
     setStarting(false)
     await finishJoin(villageId)
     setBusy(false)
   }
 
-  function join(v) { setRiskError(''); setRisk({ type: 'join', village: v }) }
-  function startOne() { setRiskError(''); setRisk({ type: 'start' }) }
+  function join(v) { setRiskError(''); if (firstJoinCovered) { agreeAndGo({ type: 'join', village: v }); return } setRisk({ type: 'join', village: v }) }
+  function startOne() { setRiskError(''); if (firstJoinCovered) { agreeAndGo({ type: 'start' }); return } setRisk({ type: 'start' }) }
   const tickedCount = suggested.filter(r => ticked[r.zip]).length
 
   const searching = searched !== ''
@@ -295,7 +310,7 @@ export default function FindVillage() {
           villageName={risk.type === 'join' ? risk.village.name : 'your new village chat'}
           busy={busy}
           error={riskError}
-          onAgree={agreeAndGo}
+          onAgree={() => agreeAndGo()}
           onCancel={() => { setRisk(null); setRiskError(''); if (joinParam) navigate('/villages', { replace: true }) }}
         />
       )}

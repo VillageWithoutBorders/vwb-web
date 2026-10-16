@@ -77,6 +77,10 @@ export default function Login() {
     return ''
   })
   const [message, setMessage] = useState('')
+  // After sign up: a "Check your email" screen with Resend, instead of a line on the sign-in form.
+  const [sentTo, setSentTo] = useState('')
+  const [resendNote, setResendNote] = useState('')
+  const [resending, setResending] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showForgot, setShowForgot] = useState(false)
@@ -171,7 +175,7 @@ export default function Login() {
         campfire_notifications_enabled: campfireNotify,
       }))
     }
-    setMessage('Check your email to confirm your account, then sign in.')
+    setSentTo(email.trim())
     setMode('signin')
     setStep(1)
     setSubmitting(false)
@@ -185,6 +189,35 @@ export default function Login() {
   }
 
   const strength = passwordStrength(password)
+
+  async function resendConfirm() {
+    setResending(true); setResendNote('')
+    const { error: rErr } = await supabase.auth.resend({ type: 'signup', email: sentTo })
+    setResending(false)
+    if (rErr) { console.error('Failed to resend confirmation email:', rErr); setResendNote("We couldn't send it again just now. Wait a minute and try again."); return }
+    setResendNote('Sent again. It can take a few minutes.')
+  }
+
+  // ---- Check your email (right after sign up) ----
+  if (sentTo) {
+    return (
+      <div className="login-page">
+        <div className="login-card">
+          <div className="login-header">
+            <h1>Check your email</h1>
+            <p className="login-subtitle">One last step</p>
+          </div>
+          <div className="login-form check-email">
+            <p>We sent a link to <b>{sentTo}</b>. Tap it to finish making your account, then come back and sign in.</p>
+            <p>Can't find it? Look in Spam, Junk, or Promotions. It comes from Village Without Borders.</p>
+            {resendNote && <p className="form-success" role="status">{resendNote}</p>}
+            <button type="button" className="btn btn-outline btn-full" onClick={resendConfirm} disabled={resending}>{resending ? 'Sending...' : 'Send it again'}</button>
+            <button type="button" className="btn btn-primary btn-full" onClick={() => { setSentTo(''); setResendNote('') }}>I tapped the link. Sign in</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // ---- Sign In ----
   if (mode === 'signin') {
@@ -291,6 +324,19 @@ export default function Login() {
             {error && <p className="form-error" role="alert">{error}</p>}
             {!wantAmbassador && <Turnstile resetKey={captchaKey} onToken={setCaptcha} />}
             {!wantAmbassador && captchaHint}
+            {(() => {
+              // Say what is still missing, so nobody is stuck at a grey button.
+              const missing = [
+                !displayName.trim() && 'your name',
+                !email.trim() && 'your email',
+                password.length < 6 && 'a password of 6 or more letters or numbers',
+                !isAdult && 'the 18 or older box',
+                !wantAmbassador && needCaptcha && 'the person check',
+              ].filter(Boolean)
+              return missing.length > 0 && (displayName || email || password) ? (
+                <p className="signup-missing" role="status">Still needed: {missing.join(', ')}.</p>
+              ) : null
+            })()}
             <button type="submit" className="btn btn-primary btn-full" disabled={submitting || (!wantAmbassador && needCaptcha)}>
               {wantAmbassador ? 'Next' : submitting ? 'Creating account...' : 'Create account'}
             </button>
