@@ -136,3 +136,5 @@
 .gs-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .gs-steps .vs-row { width: 100%; text-decoration: none; box-sizing: border-box; }
 @media (prefers-reduced-motion: reduce) { .gg-chip:active { transform: none; } }
+/* Side chats sit inside the general Campfire (OrgPage Campfires sheet). */
+.vs-row.vs-row-sub { margin-left: 1.25rem; width: calc(100% - 1.25rem); }

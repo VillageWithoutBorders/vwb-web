@@ -193,6 +193,8 @@ function FaqItem({ item, index, isOpen, onToggle }) {
 
 export default function Welcome() {
   const [openFaqIndex, setOpenFaqIndex] = useState(null)
+  // Short page first: logo, one line, Sign up, Log in. "Learn more" (or ?more=1) shows the rest.
+  const [more, setMore] = useState(() => new URLSearchParams(window.location.search).get('more') === '1')
 
   return (
     <div style={pageStyle}>
@@ -207,16 +209,19 @@ export default function Welcome() {
       <main>
         {/* Hero */}
         <section style={{ ...sectionStyle, textAlign: 'center', paddingTop: '2rem' }}>
+          <img src="/images/vwb_logo.png" alt="" width="120" height="120" style={{ width: '120px', height: '120px', maxWidth: '40vw', borderRadius: '50%', margin: '0 auto 1rem', display: 'block' }} />
           <h1 style={{ fontSize: '2rem', lineHeight: 1.25, margin: '0 0 0.75rem', color: COLORS.text }}>Neighbors helping neighbors</h1>
-          <p style={{ fontSize: '1.05rem', color: COLORS.textDim, lineHeight: 1.6, margin: '0 auto 1.75rem', maxWidth: '520px' }}>
-            If you need a hand, ask here. If you have a skill to give, offer it here. Village Without Borders matches you with people nearby, the way small towns used to look out for each other.
+          <p style={{ fontSize: '1.1rem', color: COLORS.textDim, lineHeight: 1.6, margin: '0 auto 1.5rem', maxWidth: '520px' }}>
+            Ask for help or offer a hand, with people near you. Free, always.
           </p>
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/login?mode=signup" style={btnPrimary}>Get Started</Link>
-            <Link to="/login" style={btnSecondary}>Log In</Link>
+          <div className="welcome-short-actions">
+            <Link to="/login?mode=signup" style={btnPrimary}>Sign up</Link>
+            <Link to="/login" style={btnSecondary}>Log in</Link>
+            {!more && <button type="button" className="welcome-more" onClick={() => setMore(true)}>Learn more about how it works</button>}
           </div>
-          <p style={{ marginTop: '1rem', color: COLORS.textMuted, fontSize: '0.8rem' }}>Free, always. No income requirement. No application to ask for help.</p>
         </section>
+
+        {more && (<>
 
         {/* How it works */}
         <section style={sectionStyle}>
@@ -323,8 +328,9 @@ export default function Welcome() {
         <section style={{ ...sectionStyle, textAlign: 'center' }}>
           <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>Ready to meet your neighbors?</h2>
           <p style={{ margin: '0 0 1.25rem', color: COLORS.textMuted }}>It takes a couple of minutes to get started.</p>
-          <Link to="/login?mode=signup" style={btnPrimary}>Get Started</Link>
+          <Link to="/login?mode=signup" style={btnPrimary}>Sign up</Link>
         </section>
+        </>)}
       </main>
 
       <footer style={{ borderTop: `1px solid ${COLORS.border}`, marginTop: '1rem' }}>
