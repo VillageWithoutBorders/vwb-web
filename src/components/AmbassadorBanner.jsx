@@ -1,3 +1,4 @@
+import Icon from './Icon'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -36,7 +37,7 @@ export default function AmbassadorBanner() {
   return (
     <div className="push-banner">
       <div className="push-banner-content">
-        <span className="push-banner-icon" aria-hidden="true">&#9733;</span>
+        <span className="push-banner-icon" aria-hidden="true"><Icon name="star" size={28} /></span>
         <div className="push-banner-text">
           <strong>Apply to be a Hope Ambassador</strong>
           <p>Share a skill, an hour, or a ride, and we'll match you with neighbors nearby who need one. An admin looks over each application.</p>

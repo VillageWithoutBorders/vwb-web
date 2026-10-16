@@ -1,3 +1,4 @@
+import Icon from '../components/Icon'
 import { useState, useEffect } from 'react'
 import AdminResourceClaims from '../components/AdminResourceClaims'
 import { BanDialog, BannedAccountsPanel } from '../components/AdminBans'
@@ -836,7 +837,7 @@ export default function Admin() {
   if (!isAdmin) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128274;</p>
+        <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}><Icon name="lock" /></p>
         <p style={{ fontWeight: 700 }}>Admin access only</p>
         <button onClick={() => navigate('/profile')} style={{ marginTop: '1rem', padding: '0.6rem 1.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>Back to Profile</button>
       </div>
