@@ -460,7 +460,7 @@ export default function GroupBoard() {
     ? { outline: '2px solid var(--accent)', background: 'rgba(78,204,163,0.12)', borderRadius: '8px', padding: '0.5rem', margin: '0.35rem 0' }
     : undefined
   const focusLabel = (key) => focusKey === key
-    ? <span style={{ display: 'block', width: '100%', color: 'var(--accent)', fontWeight: 700, fontSize: '0.8rem' }}>&#128073; This is the one you were asked about</span>
+    ? <span style={{ display: 'block', width: '100%', color: 'var(--accent)', fontWeight: 700, fontSize: '0.8rem' }}><Icon name="pushpin" /> This is the one you were asked about</span>
     : null
 
   const DISAPPEAR_CHOICES = [[0, 'Off (posts stay)'], [1440, '1 day'], [10080, '7 days'], [43200, '30 days']]
@@ -653,7 +653,7 @@ export default function GroupBoard() {
         </nav>
       )}
       <div className="convo-messages" ref={containerRef} onScroll={onScroll} role="log" aria-live="polite" aria-label={group.name + ' board'}>
-        <p className="group-lock-note">&#128274; Only members can read this board. Not even VWB can.</p>
+        <p className="group-lock-note"><Icon name="lock" /> Only members can read this board. Not even VWB can.</p>
         {group.steward_offer_to === user.id && (
           <div className="group-offer" role="status">
             <p><strong>{nameOf(group.steward_id)}</strong> asked you to take over as this group's steward.</p>
@@ -691,8 +691,8 @@ export default function GroupBoard() {
       </div>
 
       {sendNote && <p className="convo-send-error" role="status">{sendNote}</p>}
-      {group.disappear_after_mins ? <p className="group-lock-note">&#9201; Posts here disappear after {group.disappear_after_mins / 1440} day{group.disappear_after_mins === 1440 ? '' : 's'}.</p> : null}
-      {readOnly && <p className="group-lock-note">&#128226; {group.is_org_news ? 'Only Heads and organizers post Announcements. You can read and spark them.' : 'Only the steward posts here. You can still read, and message people outside the group.'}</p>}
+      {group.disappear_after_mins ? <p className="group-lock-note"><Icon name="hourglass" /> Posts here disappear after {group.disappear_after_mins / 1440} day{group.disappear_after_mins === 1440 ? '' : 's'}.</p> : null}
+      {readOnly && <p className="group-lock-note"><Icon name="megaphone" /> {group.is_org_news ? 'Only Heads and organizers post Announcements. You can read and spark them.' : 'Only the steward posts here. You can still read, and message people outside the group.'}</p>}
       {!readOnly && (
       <>
       {editingPost && (

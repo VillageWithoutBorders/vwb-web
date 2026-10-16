@@ -561,7 +561,7 @@ export default function Campfire() {
   if (!hasAccess) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
-        <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>&#128227;</p>
+        <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}><Icon name="megaphone" /></p>
         <h2 style={{ color: 'var(--warn)', marginBottom: '0.5rem' }}>Come sit by the fire</h2>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>The Village Square is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Apply to become a Hope Ambassador. An admin looks over each application so this stays a place people can trust, and once you're in, you'll have a seat.</p>
         <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>Apply to be a Hope Ambassador</button>
@@ -591,18 +591,18 @@ export default function Campfire() {
         <button onClick={() => goBack('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span>&#128227;</span> The Village Square
+            <span><Icon name="megaphone" /></span> The Village Square
           </h1>
           <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.75rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.event_id ? 'Response Camp' + (activeBoard.archived ? ', closed' : '') : activeBoard.sister_a ? 'Sister Campfire' + (activeBoard.archived ? ', closed' : '') : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
         </div>
-        <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}>&#128506;</button>
+        <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}><Icon name="compass" /></button>
         {isVillageBoard && inVillage && (
           <button onClick={() => setShowPeople(true)} aria-label={'People in ' + activeBoard.name + (removalRequests.some(r => r.requested_by !== user.id) ? ', a removal request needs a second member' : '')} title="People" style={{ position: 'relative', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }}>
-            &#128101;
+            <Icon name="people" />
             {removalRequests.some(r => r.requested_by !== user.id) && <span aria-hidden="true" style={{ position: 'absolute', top: '6px', right: '6px', width: '10px', height: '10px', borderRadius: '50%', background: 'var(--warn)' }} />}
           </button>
         )}
-        <button onClick={() => setShowSettings(true)} aria-label="Village Square settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'>&#9881;</button>
+        <button onClick={() => setShowSettings(true)} aria-label="Village Square settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'><Icon name="gear" /></button>
       </div>
 
       <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
@@ -698,7 +698,7 @@ export default function Campfire() {
       )}
       {isVillageBoard && inVillage && removalRequests.some(r => r.requested_by !== user.id) && (
         <button type="button" onClick={() => setShowPeople(true)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem 1rem', minHeight: '44px', background: 'var(--warn-bg)', border: 'none', borderBottom: '1px solid var(--warn-bg)', color: 'var(--gold)', fontSize: '0.9rem', cursor: 'pointer' }}>
-          &#9888; A member asked to remove someone. A second member is needed. Tap to look.
+          <Icon name="cat-emergency" /> A member asked to remove someone. A second member is needed. Tap to look.
         </button>
       )}
 
@@ -706,7 +706,7 @@ export default function Campfire() {
         <div style={{ padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--warn-bg)', background: 'var(--warn-bg)' }}>
           {visibleEmergencies.map(ev => (
             <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', border: '2px solid var(--warn)', borderRadius: '12px', padding: '0.65rem 0.85rem', background: 'var(--warn-bg)' }}>
-              <span style={{ fontSize: '1.5rem', lineHeight: 1, color: 'var(--warn)', flexShrink: 0 }}>&#9888;</span>
+              <span style={{ fontSize: '1.5rem', lineHeight: 1, color: 'var(--warn)', flexShrink: 0 }}><Icon name="cat-emergency" /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, color: 'var(--gold)', fontWeight: 700, fontSize: '0.9rem' }}>{ev.title}</p>
                 <p style={{ margin: '0.1rem 0 0', color: 'var(--danger)', fontSize: '0.75rem' }}>{ev.location_name || 'Location not given'} &middot; Active emergency</p>
@@ -726,7 +726,7 @@ export default function Campfire() {
             onClick={() => setShowPinned(p => !p)}
             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'none', border: 'none', color: 'var(--warn)', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}
           >
-            &#128204; {pinnedMessages.length} {isVillageBoard ? 'announcement' : 'pinned message'}{pinnedMessages.length !== 1 ? 's' : ''}
+            <Icon name="pushpin" /> {pinnedMessages.length} {isVillageBoard ? 'announcement' : 'pinned message'}{pinnedMessages.length !== 1 ? 's' : ''}
             <span style={{ marginLeft: 'auto' }}>{showPinned ? '▲' : '▼'}</span>
           </button>
           {showPinned && (
@@ -750,7 +750,7 @@ export default function Campfire() {
 
         {!loading && visibleMessages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-            <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128227;</p>
+            <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}><Icon name="megaphone" /></p>
             {isVillageBoard
               ? <><p>Nothing here yet. Say hello to your neighbors.</p><p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>You see what is said after you joined. People who join later will not see your older messages.</p></>
               : <p>The fire is lit. Be the first to speak.</p>}
@@ -807,7 +807,7 @@ export default function Campfire() {
                 })()}
                 <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.4, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{msg.body}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
-                  {msg.pinned && <span title="Pinned">&#128204;</span>}
+                  {msg.pinned && <span title="Pinned"><Icon name="pushpin" /></span>}
                   <span style={{ fontSize: '0.7rem', opacity: 0.75 }} title={fullTime}>{formatTime(msg.created_at)}{msg.edited_at && !msg.locked ? ' \u00b7 edited' : ''}</span>
                   {msg.locked && msg.edit_count > 0 && (
                     <button type="button" onClick={(e) => { e.stopPropagation(); showHistory(msg) }} style={{ background: 'none', border: 'none', color: 'inherit', opacity: 0.85, textDecoration: 'underline', fontSize: '0.7rem', cursor: 'pointer', padding: '0.5rem 0.35rem', margin: '-0.5rem -0.35rem' }}>{'\u00b7 edited'}</button>
@@ -819,7 +819,7 @@ export default function Campfire() {
                     aria-label={SPARK_NAME + ': ' + SPARK_HINT + (sparks[msg.id]?.n ? '. ' + sparks[msg.id].n + ' so far' : '')}
                     title={SPARK_NAME + ': ' + SPARK_HINT}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', minWidth: '44px', minHeight: '32px', margin: '-0.4rem 0', padding: '0 0.3rem', justifyContent: 'center', borderRadius: '999px', border: 'none', background: sparks[msg.id]?.mine ? 'rgba(255,200,60,0.28)' : 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.8rem', opacity: sparks[msg.id]?.mine || sparks[msg.id]?.n ? 1 : 0.55 }}
-                  ><span aria-hidden="true" style={{ filter: sparks[msg.id]?.mine ? 'none' : 'grayscale(1)' }}>&#10024;</span>{sparks[msg.id]?.n > 0 && <span>{sparks[msg.id].n}</span>}</button>
+                  ><span aria-hidden="true" style={{ filter: sparks[msg.id]?.mine ? 'none' : 'grayscale(1)' }}><Icon name="star" /></span>{sparks[msg.id]?.n > 0 && <span>{sparks[msg.id].n}</span>}</button>
                   {(
                     <button
                       onClick={(e) => {
@@ -964,7 +964,7 @@ export default function Campfire() {
               )}
               {on && !muted && (
                 <>
-                  <button type="button" aria-expanded={muteOpenFor === b.id} onClick={() => setMuteOpenFor(muteOpenFor === b.id ? null : b.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0 0.25rem 0 0', minHeight: '44px', fontSize: '0.8rem' }}>&#128263; Mute &#9656;</button>
+                  <button type="button" aria-expanded={muteOpenFor === b.id} onClick={() => setMuteOpenFor(muteOpenFor === b.id ? null : b.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0 0.25rem 0 0', minHeight: '44px', fontSize: '0.8rem' }}><Icon name="moon" /> Mute &#9656;</button>
                   {muteOpenFor === b.id && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.25rem' }}>
                       {MUTE_OPTIONS.map((opt, k) => (
@@ -980,11 +980,11 @@ export default function Campfire() {
 
         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Actions</div>
         <button onClick={() => navigate('/find-village')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--accent)', padding: '0.6rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
-          &#127969; Find or join a village chat
+          <Icon name="houses" /> Find or join a village chat
         </button>
         {isVillageBoard && inVillage && (
         <button onClick={leaveVillageChat} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', padding: '0.6rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
-          &#128682; Leave {activeBoard.name}
+          <Icon name="door" /> Leave {activeBoard.name}
         </button>
         )}
 

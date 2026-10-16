@@ -1,3 +1,4 @@
+import Icon from '../components/Icon'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -181,7 +182,7 @@ export default function CalendarImport() {
     return (
       <div className="cal-page">
         <div className="cal-empty">
-          <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }} aria-hidden="true">&#127793;</p>
+          <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }} aria-hidden="true"><Icon name="sprout" /></p>
           <p style={{ fontWeight: 700, color: 'var(--text)' }} role="status">Brought in {done} {done === 1 ? 'event' : 'events'}.</p>
           <p>They're on your calendar now. Open any one to add volunteer sign-ups, hide an address, or fix a detail.</p>
           <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} onClick={() => navigate('/calendar')}>See the calendar</button>

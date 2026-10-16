@@ -1,3 +1,4 @@
+import Icon from './Icon'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -168,7 +169,7 @@ export default function VouchButton({ userId, name, size = 'sm', showCount = tru
       )}
       {!isSelf && user?.id && !mine && !eligible && allowPersonal && !pending && !asking && (
         <button type="button" className={`vouch-btn vouch-btn-${size}`} onClick={() => setAsking(true)}>
-          &#129309; I know them
+          <Icon name="handshake" /> I know them
         </button>
       )}
 
