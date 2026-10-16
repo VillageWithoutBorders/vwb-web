@@ -12,7 +12,8 @@ function day(iso) {
   return iso ? new Date(iso).toLocaleDateString([], { month: 'long', day: 'numeric' }) : ''
 }
 
-export default function ResponseCamp({ eventId, verified, closed, refreshKey }) {
+// part: 'chat' (the camp chat only), 'groups' (groups responding and the keeper question), or both.
+export default function ResponseCamp({ eventId, verified, closed, refreshKey, part = 'all' }) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const callFor = searchParams.get('call')
@@ -67,9 +68,9 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey }) 
 
   return (
     <section className="rc-box" aria-labelledby="rc-title">
-      <h2 id="rc-title" className="rc-title"><Icon name="tent" /> Response Camp{campClosed ? ', closed' : ''}</h2>
+      <h2 id="rc-title" className="rc-title"><Icon name="tent" /> {part === 'groups' ? 'Groups responding' : 'Response Camp' + (campClosed ? ', closed' : '')}</h2>
 
-      {camp?.i_am_in && camp.board_id ? (
+      {part !== 'groups' && (camp?.i_am_in && camp.board_id ? (
         <>
           <p className="rc-note">
             {campClosed
@@ -86,10 +87,10 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey }) 
         <p className="rc-note">
           Everyone who taps I can help joins the camp chat{camp?.member_count ? ' (' + camp.member_count + ' so far)' : ''}. Neighbors who need help are not added. They check in on this page.
         </p>
-      )}
+      ))}
 
-      <h3 className="rc-sub">Groups responding</h3>
-      {responding.length === 0
+      {part === 'all' && <h3 className="rc-sub">Groups responding</h3>}
+      {part !== 'chat' && (responding.length === 0
         ? <p className="rc-note">No group has taken this on yet.</p>
         : (
           <ul className="rc-groups">
@@ -99,9 +100,9 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey }) 
               </li>
             ))}
           </ul>
-        )}
+        ))}
 
-      {!campClosed && mine.map((g) => {
+      {part !== 'chat' && !campClosed && mine.map((g) => {
         const asked = g.status === 'asked'
         const highlight = callFor === g.org_id
         return (

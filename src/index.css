@@ -5502,3 +5502,39 @@ button[aria-label^="Back"], button[aria-label^="Close"], button[aria-label^="Can
 .amb-row:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .amb-btn { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .help-switch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Round 1 app flow fixes (Oct 15) */
+.help-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0; }
+.help-cta-btn { min-height: 48px; font-size: 1rem; font-weight: 700; }
+.help-switch-btn { gap: 0.35rem; }
+.help-switch-count { display: inline-flex; align-items: center; justify-content: center; min-width: 1.3rem; height: 1.3rem; padding: 0 0.3rem; border-radius: 999px; background: var(--warn); color: #fff; font-size: 0.75rem; font-weight: 800; }
+.new-here { margin: 0.75rem 0; padding: 0.9rem 1rem; border: 1px solid var(--accent); border-radius: 12px; background: var(--success-bg); color: var(--text-soft); line-height: 1.45; }
+.new-here h2 { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.4rem; font-size: 1.05rem; color: var(--text-strong); }
+.new-here p { margin: 0 0 0.4rem; }
+.new-here p:last-child { margin: 0; }
+.check-email p { margin: 0 0 0.75rem; line-height: 1.5; color: var(--text-soft); }
+.check-email .btn { min-height: 48px; margin-top: 0.5rem; }
+.ev-verify { margin: 0 0 1rem; padding: 0.9rem 1rem; border: 2px solid var(--warn); border-radius: 12px; background: var(--warn-bg); color: var(--text-soft); line-height: 1.45; }
+.ev-verify p { margin: 0 0 0.6rem; }
+.ev-verify .btn { min-height: 48px; }
+.wd-start { min-height: 52px; font-size: 1.05rem; }
+.signup-missing { margin: 0 0 0.75rem; padding: 0.6rem 0.75rem; border-radius: 10px; background: var(--warn-bg); color: var(--text-strong); font-size: 0.95rem; line-height: 1.4; }
+
+/* Emergency event page as a Response Camp (EventDetail.jsx tabs, EventUpdates.jsx) */
+.camp-tabs { display: flex; gap: 0.5rem; overflow-x: auto; margin: 0 0 0.9rem; padding-bottom: 0.25rem; scrollbar-width: thin; }
+.camp-tab { flex: none; min-height: 44px; padding: 0 0.9rem; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-secondary); font: inherit; font-size: 0.95rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.camp-tab.on { background: var(--danger); border-color: var(--danger); color: #fff; }
+.camp-tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.camp-sub { margin: 1rem 0 0.5rem; font-size: 1rem; color: var(--text-strong); }
+.eu { display: flex; flex-direction: column; gap: 0.75rem; }
+.eu-what { margin: 0; padding: 0.75rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-soft); line-height: 1.5; }
+.eu-form { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.eu-label { font-weight: 700; color: var(--text-strong); }
+.eu-form textarea { width: 100%; box-sizing: border-box; min-height: 5rem; padding: 0.65rem 0.75rem; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--surface-sunk); color: var(--text); font: inherit; font-size: 16px; resize: vertical; }
+.eu-form .btn { min-height: 48px; }
+.eu-note { margin: 0; color: var(--text-secondary); }
+.eu-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.eu-item { padding: 0.75rem; border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 10px; background: var(--surface); }
+.eu-body { margin: 0 0 0.35rem; color: var(--text-strong); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.eu-meta { margin: 0; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; color: var(--text-muted); font-size: 0.85rem; }
+.eu-del { margin-left: auto; min-height: 44px; padding: 0 0.75rem; border: 1px solid var(--border-strong); border-radius: 8px; background: none; color: var(--danger); font: inherit; cursor: pointer; }

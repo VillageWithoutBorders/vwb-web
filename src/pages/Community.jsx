@@ -57,7 +57,8 @@ export default function Community() {
   // "Bring your organization" request form
   const emptyOrgForm = { name: '', description: '', email: '', website: '', social: '', hidePublic: false }
   const [pendingOrg, setPendingOrg] = useState(null)
-  const [showOrgForm, setShowOrgForm] = useState(false)
+  // /community?bring=org opens the "Bring your organization" form straight away.
+  const [showOrgForm, setShowOrgForm] = useState(() => new URLSearchParams(window.location.search).get('bring') === 'org')
   const [orgForm, setOrgForm] = useState(emptyOrgForm)
   const [orgSending, setOrgSending] = useState(false)
   const [orgError, setOrgError] = useState('')
@@ -309,7 +310,7 @@ export default function Community() {
           {canPost && (
             <Link className="btn btn-primary btn-full" to="/calendar/new">Post an event</Link>
           )}
-          <Link className="btn btn-outline btn-full" to="/groups">Start a group with neighbors</Link>
+          <Link className="btn btn-outline btn-full" to="/groups">Start a Cottage Chat</Link>
           {managedOrgs.length === 0 && !pendingOrg && !showOrgForm && (
             <button type="button" className="btn btn-outline btn-full" onClick={() => setShowOrgForm(true)}>Bring your organization to VWB</button>
           )}

@@ -282,19 +282,20 @@ export default function World() {
       {villages === null && <p className="wd-sub" role="status">Loading your world...</p>}
       {error && <p className="vs-error" role="alert">{error}</p>}
 
-      <h1 className="wd-hint">{net === 'villages' ? 'Your villages' : net === 'groups' ? 'Your groups' : 'Your organizations'}</h1>
+      <h1 className="wd-hint">{net === 'villages' ? (hasMine || villages === null ? 'Your villages' : 'Start here: find your village') : net === 'groups' ? 'Your groups' : 'Your organizations'}</h1>
       <p className="wd-sub">
         {net === 'villages'
-          ? (hasMine ? 'Villages overlap where they share zip codes. A gold line joins sister villages. Tap your village to step inside.' : 'You have not joined a village yet. Tap a village near you to join, or find yours by zip code.')
+          ? (hasMine ? 'Villages overlap where they share zip codes. A gold line joins sister villages. Tap your village to step inside.' : 'Your village is your neighbors by zip code. Type your zip code to join. It takes a minute.')
           : net === 'groups'
             ? (myGroups.length ? 'Groups are crews that help when an emergency hits. Tap your group to see who is ready and what you bring.' : (orgMap.nodes.length ? 'You are not in a group yet. Groups are crews that help when an emergency hits. Tap one to see what it does.' : 'No groups yet. Groups are crews that help when an emergency hits. You can start one.'))
             : (myRealOrgs.length ? 'Organizations are people working together, not places. A gold line joins two that chose to connect.' : 'You do not belong to an organization yet. Tap one to see what it does.')}
       </p>
 
       <div className="wd-actions">
+        {net === 'villages' && !hasMine && villages !== null && <button type="button" className="btn btn-primary btn-full wd-start" onClick={() => navigate('/find-village')}>Find my village</button>}
         {net === 'villages' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages')}>See every village</button>}
-        {net === 'villages' && !hasMine && <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/find-village')}>Find my village</button>}
         {net === 'orgs' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages?tab=orgs')}>See every organization</button>}
+        {net === 'orgs' && !myRealOrgs.length && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/community?bring=org')}>Bring your organization</button>}
         {net === 'groups' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages?tab=orgs')}>See every group</button>}
         {net === 'groups' && !myGroups.length && <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/start-group')}>Start a group</button>}
       </div>
