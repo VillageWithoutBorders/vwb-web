@@ -37,23 +37,24 @@ export default defineConfig({
         short_name: 'VWB',
         description: 'Mutual aid resources for Northwest Georgia',
         theme_color: '#1a1a1a',
-        background_color: '#173131',
+        background_color: '#0c1717',
         display: 'standalone',
         scope: '/',
         start_url: '/',
         icons: [
+          // New logo (Oct 15). The phone shows icon-512 on background_color while the app opens.
           {
-            src: '/icons/icon-192.png',
+            src: '/icons/icon-192-v2.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-512.png',
+            src: '/icons/icon-512-v2.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-512.png',
+            src: '/icons/icon-maskable-512-v2.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
