@@ -24,7 +24,8 @@ Goal: finished and simple enough that it runs without its founder (Jade Michalsk
 - Data: the client in `src/supabaseClient.js`. Anything touching privacy goes through `security definer` RPCs. Every table has RLS.
 - Icons: `<Icon name="..." />` from `components/Icon.jsx`, art in `public/art/icons`. Picture icons, not emoji. People show as a letter. No photos of people anywhere.
 - Database changes: a `vwb-<topic>.sql` file in the repo root (gitignored). Jade runs it by hand in the Supabase SQL Editor before pushing the app. Every file is safe to run twice, deletes nothing people made, and ends with a CHECK query where every column says true.
-- The full schema is not in the repo. Check the repo SQL files and project docs before assuming a column. If still unknown, make the SQL check for itself and stop with a clear error.
+- After Jade runs a file, it moves to `sql-already-run/` (gitignored) with a stop line at the top so it can't run twice by accident. Read those files for how the database is built; never run them again.
+- The full schema is not in the repo. Check `sql-already-run/`, any new SQL files in the repo root, and project docs before assuming a column. If still unknown, make the SQL check for itself and stop with a clear error.
 
 ## Roles
 - Member. A new account (first 14 days, unless vouched for or finished a task with someone) has limits.
