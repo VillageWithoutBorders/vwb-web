@@ -5,6 +5,7 @@ import { useUnreadCount } from '../context/UnreadCountContext'
 import { supabase } from '../supabaseClient'
 import { saveSimpleView } from '../utils/simpleView'
 import Icon from '../components/Icon'
+import { forTitle } from '../utils/forSomeone'
 import OrgInvites from '../components/OrgInvites'
 import VillageGuestInvites from '../components/VillageGuestInvites'
 
@@ -32,7 +33,7 @@ export default function SimpleHome() {
     if (!user) return
     let alive = true
     supabase.from('help_requests')
-      .select('id, skill_needed, status, created_at')
+      .select('id, skill_needed, status, created_at, for_name')
       .eq('requester_id', user.id)
       .in('status', ['open', 'accepted'])
       .order('created_at', { ascending: false })
@@ -95,7 +96,7 @@ export default function SimpleHome() {
           <button key={r.id} type="button" className="sh-row" onClick={() => navigate('/tasks')}>
             <Icon name="raise-hand" size={32} />
             <span>
-              <b>{r.skill_needed || 'Your request'}</b>
+              <b>{forTitle(r, 'Your request')}</b>
               <small>{STATUS[r.status] || ''}</small>
             </span>
             <span className="sh-arrow" aria-hidden="true">&#8250;</span>
