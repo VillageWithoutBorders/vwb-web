@@ -81,3 +81,6 @@
 @media (prefers-reduced-motion: reduce) {
   .dash-tab:active, .dash-need:active, .dash-stat:active { transform: none; }
 }
+
+/* Needs you now scrolls here. Keep it clear of the top bar. */
+.dash-panel, .dash-panel .hub-section { scroll-margin-top: calc(var(--header-height, 3.75rem) + 12px); }

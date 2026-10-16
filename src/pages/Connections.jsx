@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { useGoBack } from '../components/BackLink'
+import InviteSheet from '../components/InviteSheet'
 
 const WHY = {
   messaged: 'Messaged',
@@ -40,6 +41,7 @@ export default function Connections({ embedded = false }) {
   const [failed, setFailed] = useState(false)
   const [filter, setFilter] = useState('all')
   const [q, setQ] = useState('')
+  const [inviting, setInviting] = useState(null)
 
   useEffect(() => {
     let alive = true
@@ -114,9 +116,14 @@ export default function Connections({ embedded = false }) {
               style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer' }}>
               View profile
             </button>
+            <button type="button" onClick={() => setInviting(r)}
+              style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer' }}>
+              Invite to...
+            </button>
           </div>
         </div>
       ))}
+      {inviting && <InviteSheet person={inviting} onClose={() => setInviting(null)} />}
     </div>
   )
 }
