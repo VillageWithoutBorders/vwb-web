@@ -5,6 +5,7 @@ import { useUnreadCount } from '../context/UnreadCountContext'
 import { supabase } from '../supabaseClient'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import Messages from './Messages'
+import ChatGuide from '../components/ChatGuide'
 
 const Groups = lazy(() => import('./Groups'))
 const Connections = lazy(() => import('./Connections'))
@@ -64,6 +65,7 @@ export default function ConnectHub() {
         <h1 style={{ margin: '0 0 0.25rem' }}>Messages</h1>
         <p className="cal-sub" style={{ marginTop: 0 }}>Chats, villages, and neighbors, all in one place.</p>
         {established === false && <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE}</p>}
+        <ChatGuide />
         <div role="tablist" aria-label="Where to connect" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.75rem 0' }}>
           {tabs.map((t) => (
             <button key={t.key} type="button" role="tab" id={'hub-tab-' + t.key} aria-selected={active === t.key} aria-controls="hub-panel" style={chip(active === t.key)}
