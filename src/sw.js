@@ -21,7 +21,7 @@ self.addEventListener('push', (event) => {
   }
   const options = {
     body: data.body || '',
-    icon: '/icons/icon-192.png',
+    icon: '/icons/icon-192-v2.png',
     badge: '/icons/badge-96.png',
     tag: data.tag || 'vwb-notification',
     data: { url: data.url || '/' },
