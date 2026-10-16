@@ -13,6 +13,7 @@ import { getBlockedUserIds } from '../utils/blockedUsers'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import HelpSwitch from '../components/HelpSwitch'
 import Icon from '../components/Icon'
+import { forLine, helperNote } from '../utils/forSomeone'
 
 // Request statuses that mean "not looking for helpers anymore".
 const NO_LONGER_OPEN = ['in_progress', 'matched', 'completed', 'cancelled', 'closed', 'archived']
@@ -170,16 +171,17 @@ export default function Feed() {
             if (reqIds.length > 0) {
                 const { data: hrData, error: hrErr } = await supabase
                     .from('help_requests')
-                    .select('id, max_helpers, status, audience, opens_to_all_at')
+                    .select('id, max_helpers, status, audience, opens_to_all_at, for_name')
                     .in('id', reqIds)
                 if (hrErr) console.error('Failed to load helper limits:', hrErr)
                 const maxMap = {}
                 const statusMap = {}
                 const audMap = {}
+                const forMap = {}
                 if (hrData) {
-                    for (const hr of hrData) { maxMap[hr.id] = hr.max_helpers; statusMap[hr.id] = hr.status; audMap[hr.id] = { audience: hr.audience, opens_to_all_at: hr.opens_to_all_at } }
+                    for (const hr of hrData) { maxMap[hr.id] = hr.max_helpers; statusMap[hr.id] = hr.status; audMap[hr.id] = { audience: hr.audience, opens_to_all_at: hr.opens_to_all_at }; forMap[hr.id] = hr.for_name || null }
                 }
-                reqs = reqs.map(r => ({ ...r, max_helpers: maxMap[r.id] ?? 1, status: statusMap[r.id] ?? r.status, audience: audMap[r.id]?.audience, opens_to_all_at: audMap[r.id]?.opens_to_all_at }))
+                reqs = reqs.map(r => ({ ...r, max_helpers: maxMap[r.id] ?? 1, status: statusMap[r.id] ?? r.status, audience: audMap[r.id]?.audience, opens_to_all_at: audMap[r.id]?.opens_to_all_at, for_name: forMap[r.id] || null }))
             }
 
             // Once a request has its helpers it is no longer public. The requester
@@ -439,6 +441,13 @@ export default function Feed() {
                                             </span>
                                         )}
                                     </div>
+
+                                    {req.for_name && (
+                                        <span className="for-line">{forLine(req, req.requester_id === user.id ? 'you' : (req.requester_name || 'a neighbor'))}</span>
+                                    )}
+                                    {req.for_name && isExpanded && req.requester_id !== user.id && (
+                                        <span className="for-note">{helperNote(req, req.requester_name)}</span>
+                                    )}
 
                                     {req.requester_id && (
                                         <div className="feed-card-vouch-row">

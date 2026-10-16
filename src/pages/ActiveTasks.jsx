@@ -6,6 +6,7 @@ import HelpSwitch from '../components/HelpSwitch'
 import { acceptHelpOffer, declineHelpOffer } from '../utils/helpOffers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
 import { supabase } from '../supabaseClient'
+import { helperNote } from '../utils/forSomeone'
 import { createNotification } from '../utils/notificationHelpers'
 import VouchButton from '../components/VouchButton'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
@@ -124,7 +125,7 @@ export default function ActiveTasks() {
   async function loadMyRequests() {
     const { data: requests, error: reqErr } = await supabase
       .from('help_requests')
-      .select('id, skill_needed, description, urgency, neighborhood, status, max_helpers, archived_at, created_at, audience, opens_to_all_at')
+      .select('id, skill_needed, description, urgency, neighborhood, status, max_helpers, archived_at, created_at, audience, opens_to_all_at, for_name')
       .eq('requester_id', user.id)
       .order('created_at', { ascending: false })
     if (reqErr) console.error('Failed to load your requests:', reqErr)
@@ -207,7 +208,7 @@ export default function ActiveTasks() {
     const requestIds = matches.map(m => m.request_id)
     const { data: requests, error: reqErr } = await supabase
       .from('help_requests')
-      .select('id, skill_needed, description, urgency, neighborhood, status, requester_id, archived_at, created_at')
+      .select('id, skill_needed, description, urgency, neighborhood, status, requester_id, archived_at, created_at, for_name')
       .in('id', requestIds)
     if (reqErr) console.error('Failed to load requests you are helping with:', reqErr)
 
@@ -749,6 +750,7 @@ export default function ActiveTasks() {
                   </div>
 
                   <div className="task-card-skill">{req.skill_needed}</div>
+                  {req.for_name && <div className="for-line">For {req.for_name}. Helpers talk with you.</div>}
                   {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
                   <p className="task-card-desc">{req.description}</p>
                   {req.audience && req.audience !== 'everyone' && !req.archived_at && (!req.opens_to_all_at || new Date(req.opens_to_all_at) > new Date()) && (
@@ -907,7 +909,7 @@ export default function ActiveTasks() {
                     <button
                       className="btn btn-primary btn-sm"
                       style={{ marginTop: '0.25rem', marginRight: '0.5rem', minHeight: '44px' }}
-                      onClick={() => navigate('/ask', { state: { repost: { skill_needed: req.skill_needed, description: req.description, urgency: req.urgency, neighborhood: req.neighborhood, max_helpers: req.max_helpers } } })}
+                      onClick={() => navigate('/ask', { state: { repost: { skill_needed: req.skill_needed, description: req.description, urgency: req.urgency, neighborhood: req.neighborhood, max_helpers: req.max_helpers, for_name: req.for_name || '' } } })}
                     >
                       Ask again
                     </button>
@@ -959,8 +961,9 @@ export default function ActiveTasks() {
                     <div className="task-card-skill">{req.skill_needed}</div>
                     {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><AvatarDisplay url={null} userId={match.request?.requester_id} size={20} /> Requested by <UserName userId={match.request?.requester_id} name={match.requester_name} /></span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><AvatarDisplay url={null} userId={match.request?.requester_id} size={20} /> {req.for_name ? 'For ' + req.for_name + ', posted by' : 'Requested by'} <UserName userId={match.request?.requester_id} name={match.requester_name} /></span>
                     </div>
+                    {req.for_name && <span className="for-note">{helperNote(req, match.requester_name)}</span>}
                     <p className="task-card-desc">{req.description}</p>
 
                     {!bothDone && (

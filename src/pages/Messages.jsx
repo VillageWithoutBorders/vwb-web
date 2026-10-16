@@ -86,7 +86,7 @@ export default function Messages({ embedded = false }) {
   async function loadPendingOffers(blockedIds = new Set()) {
     const { data: myRequests, error: reqErr } = await supabase
       .from('help_requests')
-      .select('id, skill_needed, description, max_helpers')
+      .select('id, skill_needed, description, max_helpers, for_name')
       .eq('requester_id', user.id)
       .in('status', ['open', 'in_progress'])
     if (reqErr) console.error('Failed to load your requests:', reqErr)
@@ -152,6 +152,7 @@ export default function Messages({ embedded = false }) {
         avatar_url: helperProfile?.avatar_url || null,
         vouch_count: vouchCount || 0,
         skill_needed: request?.skill_needed || '',
+        for_name: request?.for_name || null,
         request_description: request?.description || '',
         max_helpers: request?.max_helpers,
         accepted_count: acceptedCounts[match.request_id] || 0,
@@ -205,7 +206,7 @@ export default function Messages({ embedded = false }) {
     const requestIds = matches.map(m => m.request_id)
     const { data: requests, error: reqErr } = await supabase
       .from('help_requests')
-      .select('id, skill_needed, requester_id')
+      .select('id, skill_needed, requester_id, for_name')
       .in('id', requestIds)
     if (reqErr) console.error('Failed to load requests for outgoing offers:', reqErr)
 
@@ -221,6 +222,7 @@ export default function Messages({ embedded = false }) {
       return {
         ...match,
         skill_needed: req.skill_needed,
+        for_name: req.for_name || null,
         requester_name: p?.display_name || 'A neighbor',
       }
     }))
@@ -453,7 +455,7 @@ export default function Messages({ embedded = false }) {
     // so the list below reflects it.
     await flushOutbox(user.id)
     const waiting = await getQueuedMessages(user.id)
-    const { data, error } = await supabase.from('conversations').select('id, request_id, helper_id, requester_id, created_at, disappear_after_mins, last_read_helper, last_read_requester, help_requests (skill_needed, neighborhood, urgency)').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('conversations').select('id, request_id, helper_id, requester_id, created_at, disappear_after_mins, last_read_helper, last_read_requester, help_requests (skill_needed, neighborhood, urgency, for_name)').order('created_at', { ascending: false })
     if (error) { console.error('Failed to load conversations:', error); return }
     if (data) {
       const visible = data.filter(c => {
@@ -743,7 +745,7 @@ export default function Messages({ embedded = false }) {
           {pendingOffers.map(offer => (
             <div key={offer.id} style={offerCardStyle}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                For your request: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{offer.skill_needed}</span>
+                For your request: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{offer.skill_needed}{offer.for_name ? ' for ' + offer.for_name : ''}</span>
                 {offer.max_helpers !== null && (
                   <span style={{ marginLeft: '0.5rem', color: 'var(--text-muted)' }}>
                     ({offer.accepted_count}/{offer.max_helpers} accepted)
@@ -806,7 +808,7 @@ export default function Messages({ embedded = false }) {
               <div>
                 <div style={{ color: 'var(--text-strong)', fontWeight: 600, fontSize: '0.9rem' }}>{offer.skill_needed}</div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                  For {offer.requester_name} &middot; Waiting for response
+                  {offer.for_name ? 'For ' + offer.for_name + ', posted by ' + offer.requester_name : 'For ' + offer.requester_name} &middot; Waiting for response
                 </div>
               </div>
               <button
@@ -905,7 +907,7 @@ export default function Messages({ embedded = false }) {
               </span>
               <span className="message-card-time" style={{ color: unread ? "var(--accent)" : undefined }}>{formatTime(c.lastMessageAt)}</span>
             </div>
-            {c.help_requests && (<p className="message-card-skill">{c.help_requests.skill_needed} in {c.help_requests.neighborhood}</p>)}
+            {c.help_requests && (<p className="message-card-skill">{c.help_requests.skill_needed}{c.help_requests.for_name ? ' for ' + c.help_requests.for_name : ''}{c.help_requests.neighborhood ? ' in ' + c.help_requests.neighborhood : ''}</p>)}
             {c.lastMessage && (<p className="message-card-preview" style={{ color: unread ? "var(--text)" : undefined, fontWeight: unread ? 600 : 400 }}>{c.lastMessage.length > 80 ? c.lastMessage.slice(0, 80) + '...' : c.lastMessage}</p>)}
             </div>
           </div>

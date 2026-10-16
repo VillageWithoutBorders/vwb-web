@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient'
+import { forTitle } from './forSomeone'
 
 // One overview of your SkillShare and Tasks, for Home and Profile.
 //   requests: help you asked for that nobody has taken yet
@@ -26,7 +27,7 @@ export async function loadMyTaskOverview(userId) {
 
   const [reqRes, helpRes, offRes, fbRes] = await Promise.all([
     supabase.from('help_requests')
-      .select('id, skill_needed, description, urgency, status, archived_at, created_at')
+      .select('id, skill_needed, description, urgency, status, archived_at, created_at, for_name')
       .eq('requester_id', userId).order('created_at', { ascending: false }),
     supabase.from('skill_matches')
       .select('id, request_id, helper_id, accepted, helper_completed, requester_completed, created_at')
@@ -57,7 +58,7 @@ export async function loadMyTaskOverview(userId) {
   let helpReqs = []
   if (helping.length) {
     const { data, error } = await supabase.from('help_requests')
-      .select('id, skill_needed, urgency, status, requester_id, archived_at, created_at')
+      .select('id, skill_needed, urgency, status, requester_id, archived_at, created_at, for_name')
       .in('id', helping.map((m) => m.request_id))
     if (error) console.error('Failed to load requests you are helping with:', error)
     helpReqs = data || []
@@ -105,7 +106,7 @@ export async function loadMyTaskOverview(userId) {
     const taken = ms.filter((m) => m.accepted)
     const waiting = ms.filter((m) => m.accepted === null || m.accepted === undefined)
     const stillNeedsAnswer = taken.some((m) => m.helper_completed && m.requester_completed && !settled(m.id))
-    const base = { key: 'r' + r.id, id: r.id, title: r.skill_needed || 'Help request', urgency: r.urgency, created_at: r.created_at, role: 'asked' }
+    const base = { key: 'r' + r.id, id: r.id, title: forTitle(r), urgency: r.urgency, created_at: r.created_at, role: 'asked' }
 
     if (r.archived_at || (r.status === 'completed' && !stillNeedsAnswer)) {
       archived.push({ ...base, who: taken.map((m) => names[m.helper_id] || 'A neighbor').join(', '), note: r.archived_at && !taken.length ? 'Closed' : 'Finished' })
@@ -121,7 +122,7 @@ export async function loadMyTaskOverview(userId) {
   for (const m of helping) {
     const r = helpReqs.find((x) => x.id === m.request_id)
     if (!r) continue
-    const base = { key: 'h' + m.id, id: r.id, title: r.skill_needed || 'Help request', urgency: r.urgency, created_at: m.created_at || r.created_at, role: 'helping', who: names[r.requester_id] || 'A neighbor' }
+    const base = { key: 'h' + m.id, id: r.id, title: forTitle(r), urgency: r.urgency, created_at: m.created_at || r.created_at, role: 'helping', who: names[r.requester_id] || 'A neighbor' }
     const done = m.helper_completed && m.requester_completed
     if (r.archived_at || (done && settled(m.id))) archived.push({ ...base, note: 'Finished' })
     else {

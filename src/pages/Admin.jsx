@@ -157,7 +157,7 @@ export default function Admin() {
   // and what, not a guess about similar wording, so it only flags real
   // repeats and never two neighbors asking for the same kind of help.
   async function loadContent() {
-    const { data: reqs, error: reqErr } = await supabase.from('help_requests').select('id, requester_id, skill_needed, description, urgency, neighborhood, status, created_at').order('created_at', { ascending: false }).limit(300)
+    const { data: reqs, error: reqErr } = await supabase.from('help_requests').select('id, requester_id, skill_needed, description, urgency, neighborhood, status, created_at, for_name').order('created_at', { ascending: false }).limit(300)
     reportError('loadContent:requests', reqErr)
     const { data: offs, error: offErr } = await supabase.from('offers').select('id, user_id, category, title, description, neighborhood, is_available, created_at').order('created_at', { ascending: false }).limit(300)
     reportError('loadContent:offers', offErr)
@@ -184,7 +184,7 @@ export default function Admin() {
       id: r.id,
       poster_id: r.requester_id,
       poster_name: nameOf[r.requester_id] || 'Unknown',
-      title: r.skill_needed,
+      title: r.for_name ? r.skill_needed + ' (for ' + r.for_name + ')' : r.skill_needed,
       description: r.description,
       tag: r.urgency,
       neighborhood: r.neighborhood,
