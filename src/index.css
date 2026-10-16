@@ -5561,3 +5561,5 @@ button[aria-label^="Back"], button[aria-label^="Close"], button[aria-label^="Can
 .chat-guide-text b { color: var(--text-strong); font-size: 1rem; }
 .chat-guide-label { font-weight: 700; color: var(--text-secondary); }
 .chat-guide-note { margin: 0.6rem 0 0; color: var(--text-secondary); font-size: 0.95rem; }
+/* Mine keeps its floating Ask for help button; leave room so the last card is never under it. */
+.tasks-page { padding-bottom: 5.5rem; }
