@@ -14,6 +14,8 @@
           var light = t === 'light' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
           if (light) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f6efdc');
           // Simple view (bigger words and buttons), saved on the account and on this phone.
+          // The printed setup card's QR code opens /?simple=1: start this phone in Simple view.
+          if (/[?&]simple=1\b/.test(location.search)) localStorage.setItem('vwb_simple', '1');
           if (localStorage.getItem('vwb_simple') === '1') document.documentElement.classList.add('simple');
         } catch (e) {}
       })();
