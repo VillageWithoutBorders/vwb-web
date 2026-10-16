@@ -5538,3 +5538,9 @@ button[aria-label^="Back"], button[aria-label^="Close"], button[aria-label^="Can
 .eu-body { margin: 0 0 0.35rem; color: var(--text-strong); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .eu-meta { margin: 0; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; color: var(--text-muted); font-size: 0.85rem; }
 .eu-del { margin-left: auto; min-height: 44px; padding: 0 0.75rem; border: 1px solid var(--border-strong); border-radius: 8px; background: none; color: var(--danger); font: inherit; cursor: pointer; }
+
+/* Welcome: short page first (Welcome.jsx) */
+.welcome-short-actions { display: flex; flex-direction: column; gap: 0.75rem; align-items: stretch; max-width: 320px; margin: 0 auto; }
+.welcome-short-actions a { text-align: center; min-height: 48px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.welcome-more { min-height: 48px; background: none; border: 0; color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.welcome-more:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }

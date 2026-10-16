@@ -328,13 +328,28 @@ export default function OrgPage() {
       case 'fires':
         return <>{title}
           {chats.length === 0 && <p>{canManage ? 'No Campfires yet. Start the general chat from ' + TOOLS + '.' : 'No Campfires yet. ' + LEADS + ' start the general chat.'}</p>}
-          {chats.map((c) => (
-            <button key={c.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/groups/' + c.id) }}>
-              <span aria-hidden="true"><Icon name={c.is_general || c.shared ? 'campfire' : 'sidechats'} /></span> {c.name}
-              <small>{c.is_general ? 'General chat, every member' : c.shared ? 'Shared Campfire with a connected ' + (isGroup ? 'organization or group' : 'organization') : 'Sidechat'}</small>
+          {/* Sidechats live inside the general Campfire: listed under it, not as chats of their own. */}
+          {chats.filter((c) => c.is_general || c.shared).map((c) => (
+            <div key={c.id}>
+              <button type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/groups/' + c.id) }}>
+                <span aria-hidden="true"><Icon name="campfire" /></span> {c.name}
+                <small>{c.is_general ? 'General chat, every member' : 'Shared Campfire with a connected ' + (isGroup ? 'organization or group' : 'organization')}</small>
+              </button>
+              {c.is_general && chats.filter((x) => !x.is_general && !x.shared).map((x) => (
+                <button key={x.id} type="button" className="vs-row vs-row-sub" onClick={() => { setSheet(null); navigate('/groups/' + x.id) }}>
+                  <span aria-hidden="true">{'\u21B3'}</span> {x.name}
+                  <small>Sidechat inside {c.name}</small>
+                </button>
+              ))}
+            </div>
+          ))}
+          {!general && chats.filter((x) => !x.is_general && !x.shared).map((x) => (
+            <button key={x.id} type="button" className="vs-row vs-row-sub" onClick={() => { setSheet(null); navigate('/groups/' + x.id) }}>
+              <span aria-hidden="true">{'\u21B3'}</span> {x.name}
+              <small>Sidechat</small>
             </button>
           ))}
-          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Start a sidechat</Link>}
+          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Start a sidechat in the general Campfire</Link>}
         </>
       case 'events':
         return <>{title}
