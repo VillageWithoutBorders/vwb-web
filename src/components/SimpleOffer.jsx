@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { saveSimpleView, phoneUsesLargeText } from '../utils/simpleView'
+import { saveSimpleView, phoneUsesLargeText, isSimpleView } from '../utils/simpleView'
 
 // Asked once: Simple view or everything. Shows when the account has never
 // answered (simple_view is empty). The tour waits until this is answered.
@@ -13,9 +13,18 @@ export default function SimpleOffer() {
   const headRef = useRef(null)
   const ask = !!user && !!profile && Object.prototype.hasOwnProperty.call(profile, 'simple_view') && profile.simple_view === null && !closed
 
-  useEffect(() => { if (ask && headRef.current) headRef.current.focus() }, [ask])
+  // Came from the printed card (or chose Simple on this phone already):
+  // save Simple to the account without asking.
+  const already = ask && isSimpleView()
+  useEffect(() => {
+    if (!already) return
+    setClosed(true)
+    saveSimpleView(true).then(() => refreshProfile && refreshProfile())
+  }, [already]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!ask) return null
+  useEffect(() => { if (ask && !already && headRef.current) headRef.current.focus() }, [ask, already])
+
+  if (!ask || already) return null
   const large = phoneUsesLargeText()
 
   async function pick(simple) {
