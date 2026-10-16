@@ -331,7 +331,7 @@ function captureCoverageLocation() {
           <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label="Change avatar" style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
             <AvatarPreview url={profile?.avatar_url} size={80} />
             <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--on-accent)', fontWeight: 700, border: '2px solid #1a1a1a' }}>
-              {'✎'}
+              <Icon name="pencil" />
             </div>
           </button>
           <h1>{name}</h1>
@@ -340,7 +340,7 @@ function captureCoverageLocation() {
           )}
                    <p className="profile-email">{user?.email}</p>
           <button type="button" className="btn btn-outline profile-edit-btn" onClick={startEditing}>
-            <span aria-hidden="true">&#9998;</span> Edit my profile
+            <span aria-hidden="true"><Icon name="pencil" /></span> Edit my profile
           </button>
         </div>
 
@@ -432,7 +432,7 @@ function captureCoverageLocation() {
 
         {!profile?.is_hope_ambassador && !isAdmin && ambApplication?.status !== 'pending' && !showAmbassadorSignup && (
           <button onClick={() => setShowAmbassadorSignup(true)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "0.75rem", padding: "0.75rem", background: "linear-gradient(135deg, var(--warn-bg), var(--warn-bg))", border: "2px solid var(--warn)", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
-            <span style={{ fontSize: "1.5rem" }}>&#128227;</span>
+            <span style={{ fontSize: "1.5rem" }}><Icon name="megaphone" /></span>
             <div>
               <span style={{ display: "block", color: "var(--warn)", fontWeight: 700, fontSize: "0.95rem" }}>Become a Hope Ambassador</span>
               <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Post in Announcements and join the Ambassadors board. Apply above &#8594;</span>
@@ -570,7 +570,7 @@ function captureCoverageLocation() {
         <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label="Change avatar" style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
           <AvatarPreview url={profile?.avatar_url} size={80} />
           <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--on-accent)', fontWeight: 700, border: '2px solid #1a1a1a' }}>
-            {'✎'}
+            <Icon name="pencil" />
           </div>
         </button>
         <h1>Edit profile</h1>

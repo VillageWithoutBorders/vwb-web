@@ -1,3 +1,4 @@
+import Icon from '../components/Icon'
 import { useCallback, useEffect, useState } from 'react'
 import EventShifts from '../components/EventShifts'
 import { useBlockedBy } from '../utils/blockedBy'
@@ -266,7 +267,7 @@ export default function EventPage() {
         {topbar}
         <div className="cal-page">
           <div className="cal-empty">
-            <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }} aria-hidden="true">&#128274;</p>
+            <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }} aria-hidden="true"><Icon name="lock" /></p>
             <p style={{ fontWeight: 700, color: 'var(--text)' }}>This is a private event</p>
             <p>Someone invited you. To see it, create a free Village Without Borders account or log in.</p>
             <div className="cal-actions" style={{ marginTop: '1rem' }}>
@@ -285,7 +286,7 @@ export default function EventPage() {
         {topbar}
         <div className="cal-page">
           <div className="cal-empty">
-            <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }} aria-hidden="true">&#128274;</p>
+            <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }} aria-hidden="true"><Icon name="lock" /></p>
             <p style={{ fontWeight: 700, color: 'var(--text)' }}>This event isn't available</p>
             <p>It may be private, it may have been removed, or the link may be old.</p>
             {!user && <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={goSignIn}>Log in to check</button>}
@@ -311,14 +312,14 @@ export default function EventPage() {
         <h1 style={{ margin: '0.25rem 0 0.75rem', fontSize: '1.6rem', lineHeight: 1.25 }}>{ev.title}</h1>
 
         <div className="cal-detail-row">
-          <span aria-hidden="true">&#128197;</span>
+          <span aria-hidden="true"><Icon name="calendar" /></span>
           {cancelled ? <span>{fullDateTime(ev)}</span> : (
             <span><AddToCalendar ev={ev}>{fullDateTime(ev)}</AddToCalendar></span>
           )}
         </div>
         {ev.is_online ? (
           <div className="cal-detail-row">
-            <span aria-hidden="true">&#127760;</span>
+            <span aria-hidden="true"><Icon name="globe" /></span>
             <span>
               Online event. Anyone can join from anywhere.
               {ev.online_link && /^https?:\/\//i.test(ev.online_link)
@@ -328,7 +329,7 @@ export default function EventPage() {
           </div>
         ) : (
         <div className="cal-detail-row">
-          <span aria-hidden="true">&#128205;</span>
+          <span aria-hidden="true"><Icon name="pin" /></span>
           <span>
             {mapLink(ev) && (ev.location_name || ev.address) ? (
               <a href={mapLink(ev)} {...(mapLink(ev).startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})} style={{ color: 'var(--accent)' }}>
@@ -347,11 +348,11 @@ export default function EventPage() {
         </div>
         )}
         <div className="cal-detail-row">
-          <span aria-hidden="true">&#128106;</span>
+          <span aria-hidden="true"><Icon name="people" /></span>
           <span>{ev.all_ages ? 'All ages welcome.' : 'This event is for adults 18 and over.'}{ev.all_ages && ev.teens_can_help ? ' Teens can help if they come with a parent or guardian.' : ''}</span>
         </div>
         {ev.visibility !== 'public' && (
-          <div className="cal-detail-row"><span aria-hidden="true">&#128274;</span><span>{VISIBILITY[ev.visibility].label}. {VISIBILITY[ev.visibility].desc}</span></div>
+          <div className="cal-detail-row"><span aria-hidden="true"><Icon name="lock" /></span><span>{VISIBILITY[ev.visibility].label}. {VISIBILITY[ev.visibility].desc}</span></div>
         )}
 
         {ev.description && <p className="cal-description"><Linkify text={ev.description} /></p>}

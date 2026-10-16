@@ -378,9 +378,9 @@ export default function CommunityResources() {
                         {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0 0.4rem', lineHeight: 1.4 }}>{r.description}</p>}
                         {r.address && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0' }}><AddressLink address={r.address} /></p>}
                         {r.neighborhood && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0' }}>Area: {r.neighborhood}</p>}
-                        {r.requirements && <p style={{ color: 'var(--warn)', fontSize: '0.78rem', margin: '0.2rem 0', lineHeight: 1.4 }}>&#128203; What to bring: {r.requirements}</p>}
+                        {r.requirements && <p style={{ color: 'var(--warn)', fontSize: '0.78rem', margin: '0.2rem 0', lineHeight: 1.4 }}><Icon name="clipboard" /> What to bring: {r.requirements}</p>}
                         {resourceDistance(r) != null && (
-                          <p style={{ color: 'var(--accent)', fontSize: '0.78rem', fontWeight: 600, margin: '0.2rem 0 0' }}>&#128205; {resourceDistance(r).toFixed(1)} mi away</p>
+                          <p style={{ color: 'var(--accent)', fontSize: '0.78rem', fontWeight: 600, margin: '0.2rem 0 0' }}><Icon name="pin" /> {resourceDistance(r).toFixed(1)} mi away</p>
                         )}
                         {r.organizations && !user && (
                           <p style={{ color: 'var(--accent)', fontSize: '0.78rem', fontWeight: 600, margin: '0.4rem 0 0' }}>Shared by {r.organizations.name}</p>
@@ -399,10 +399,10 @@ export default function CommunityResources() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                           {user && (<>
 <button onClick={() => castVote(r.id, 1)} title="This checked out for me" aria-pressed={myVotes[r.id] === 1} aria-label={'This checked out for me, ' + (voteCounts[r.id]?.upvotes || 0) + ' people agree' + (myVotes[r.id] === 1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === 1 ? 'rgba(78,204,163,0.15)' : 'none', border: '1px solid ' + (myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
-                            &#128077; {voteCounts[r.id]?.upvotes || 0}
+                            <Icon name="check" /> {voteCounts[r.id]?.upvotes || 0}
                           </button>
                           <button onClick={() => castVote(r.id, -1)} title="This didn't work out for me" aria-pressed={myVotes[r.id] === -1} aria-label={"This didn't work out for me, " + (voteCounts[r.id]?.downvotes || 0) + ' people agree' + (myVotes[r.id] === -1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === -1 ? 'rgba(255,90,90,0.12)' : 'none', border: '1px solid ' + (myVotes[r.id] === -1 ? '#ff5a5a' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === -1 ? 'var(--danger)' : 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
-                            &#128078; {voteCounts[r.id]?.downvotes || 0}
+                            <Icon name="cross" /> {voteCounts[r.id]?.downvotes || 0}
                           </button>
 </>)}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: 'auto' }}>
@@ -527,7 +527,7 @@ export default function CommunityResources() {
           {(allOrgs.length > 0 || allRegions.length > 1 || myLocation) && (
             <div className="fh-filterbar">
               <button type="button" className="fh-filter-btn" aria-haspopup="dialog" onClick={() => setShowFilters(true)}>
-                <span aria-hidden="true">&#9881;&#65039;</span> Filters{activeFilters ? ' (' + activeFilters + ')' : ''}
+                <span aria-hidden="true"><Icon name="gear" /></span> Filters{activeFilters ? ' (' + activeFilters + ')' : ''}
               </button>
               {orgFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setOrgFilter('all')} aria-label={'Remove filter: ' + orgName(orgFilter)}>{orgName(orgFilter)} <span aria-hidden="true">&#10005;</span></button>}
               {regionFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRegionFilter('all')} aria-label={'Remove filter: ' + regionFilter}>{regionFilter} <span aria-hidden="true">&#10005;</span></button>}

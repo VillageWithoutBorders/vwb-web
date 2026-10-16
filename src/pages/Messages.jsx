@@ -718,18 +718,18 @@ export default function Messages({ embedded = false }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: embedded ? 'flex-end' : 'space-between', marginBottom: '0.75rem' }}>
         {!embedded && <h1 style={{ margin: 0 }}>Messages</h1>}
         <button type="button" onClick={() => setShowSidebar(true)} className="page-top-btn" aria-label="Message settings">
-          <span aria-hidden="true">&#9881;&#65039;</span> Settings
+          <span aria-hidden="true"><Icon name="gear" /></span> Settings
         </button>
       </div>
 
       {!embedded && (<>
       <button type="button" className="groups-row groups-entry" onClick={() => navigate('/connections')}>
-        <span className="groups-row-name"><span aria-hidden="true">&#129309;</span> Connections</span>
+        <span className="groups-row-name"><span aria-hidden="true"><Icon name="handshake" /></span> Connections</span>
         <span className="groups-row-meta">Everyone you have connected with &#8250;</span>
       </button>
 
       <button type="button" className="groups-row groups-entry" data-tour="cottage-chats" onClick={() => navigate('/groups')}>
-        <span className="groups-row-name"><span aria-hidden="true">&#128101;</span> Cottage Chats &amp; Campfires</span>
+        <span className="groups-row-name"><span aria-hidden="true"><Icon name="people" /></span> Cottage Chats &amp; Campfires</span>
         <span className="groups-row-meta">Members-only boards &#8250;</span>
       </button>
       </>)}
@@ -829,7 +829,7 @@ export default function Messages({ embedded = false }) {
           <button key={f.id} style={{ ...tabStyle(activeFolder === f.id), outline: dropTarget === f.id ? '2px solid var(--accent)' : 'none' }} onClick={() => setActiveFolder(f.id)} onDragOver={(e) => { e.preventDefault(); setDropTarget(f.id) }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), f.id); setDraggingConvo(null) }}>{f.name}</button>
         ))}
         {(followUpCount > 0 || activeFolder === 'followup') && (
-          <button style={tabStyle(activeFolder === 'followup')} onClick={() => setActiveFolder('followup')}>&#128681; Follow up ({followUpCount})</button>
+          <button style={tabStyle(activeFolder === 'followup')} onClick={() => setActiveFolder('followup')}><Icon name="flag" /> Follow up ({followUpCount})</button>
         )}
         {archivedCount > 0 && (
           <button style={tabStyle(activeFolder === 'archived')} onClick={() => setActiveFolder('archived')}>Archived ({archivedCount})</button>
@@ -866,7 +866,7 @@ export default function Messages({ embedded = false }) {
       {!loading && showCampfireCard && (
         <div className="message-card" style={{ position: 'relative', borderLeft: '3px solid #e8833a' }}>
           <div onClick={() => navigate('/campfire')} role="button" tabIndex={0} aria-label={'Open Village Square' + (campfire.unread ? ', new messages' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/campfire') } }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--warn-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}>&#128227;</span>
+            <span aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--warn-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}><Icon name="megaphone" /></span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="message-card-header">
                 <span className="message-card-name" style={{ fontWeight: campfire.unread ? 800 : 600 }}>
@@ -897,9 +897,9 @@ export default function Messages({ embedded = false }) {
             <div style={{ flex: 1, minWidth: 0 }}>
             <div className="message-card-header">
               <span className="message-card-name" style={{ fontWeight: unread ? 800 : 600 }}>
-                {isPinned && <span style={{ marginRight: '4px' }} title="Pinned">&#128204;</span>}
-                {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title="Muted">&#128263;</span>}
-                {followUp && <span style={{ marginRight: '4px' }} title="Follow up">&#128681;</span>}
+                {isPinned && <span style={{ marginRight: '4px' }} title="Pinned"><Icon name="pushpin" /></span>}
+                {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title="Muted"><Icon name="moon" /></span>}
+                {followUp && <span style={{ marginRight: '4px' }} title="Follow up"><Icon name="flag" /></span>}
                 <UserName userId={c.otherId} name={c.otherName} />
                 {unread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "var(--accent)", marginLeft: "6px", flexShrink: 0 }} />}
               </span>
@@ -925,7 +925,7 @@ export default function Messages({ embedded = false }) {
             <div ref={optionsMenuRef} onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: '10px', minWidth: '180px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden', ...optionsMenuStyle }}>
               {unread ? (
                 <button style={menuBtn} onClick={() => markRead(c)}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9993;</span> Mark as read
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="envelope" /></span> Mark as read
                 </button>
               ) : (
                 <button style={menuBtn} onClick={() => markUnread(c.id)}>
@@ -933,21 +933,21 @@ export default function Messages({ embedded = false }) {
                 </button>
               )}
               <button style={menuBtn} onClick={() => toggleFollowUp(c.id)}>
-                <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128681;</span> {followUp ? 'Done following up' : 'Follow up'}
+                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="flag" /></span> {followUp ? 'Done following up' : 'Follow up'}
               </button>
               <button style={menuBtn} onClick={() => togglePin(c.id)}>
-                <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128204;</span> {isPinned ? 'Unpin' : 'Pin to top'}
+                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="pushpin" /></span> {isPinned ? 'Unpin' : 'Pin to top'}
               </button>
               <button style={menuBtn} onClick={() => toggleArchive(c.id)}>
-                <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128230;</span> {isArchived ? 'Unarchive' : 'Archive'}
+                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="box" /></span> {isArchived ? 'Unarchive' : 'Archive'}
               </button>
               {muted ? (
                 <button style={menuBtn} onClick={() => unmuteConvo(c.id)}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128264;</span> Unmute
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="bell" /></span> Unmute
                 </button>
               ) : (
                 <button style={menuBtn} onClick={(e) => { e.stopPropagation(); setShowMuteMenu(showMuteMenu === c.id ? null : c.id) }}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128263;</span> Mute &#9656;
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="moon" /></span> Mute &#9656;
                 </button>
               )}
               {showMuteMenu === c.id && (
@@ -959,17 +959,17 @@ export default function Messages({ embedded = false }) {
               )}
               {folders.length > 0 && (
                 <button style={menuBtn} onClick={() => setAssigningConvo(assigningConvo === c.id ? null : c.id)}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128193;</span> Move to folder
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="folder" /></span> Move to folder
                 </button>
               )}
               <button style={menuBtn} onClick={() => reportConversation(c.id)}>
-                <span style={{ width: '1.2rem', textAlign: 'center', color: 'var(--danger)' }}>&#9873;</span> Report
+                <span style={{ width: '1.2rem', textAlign: 'center', color: 'var(--danger)' }}><Icon name="flag" /></span> Report
               </button>
               <button style={menuBtn} onClick={() => blockUser(c.otherId, c.otherName)}>
-                <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128683;</span> Block user
+                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cross" /></span> Block user
               </button>
               <button style={menuBtn} onClick={() => { setOpenMenu(null); setShowDeleteConfirm(c.id) }}>
-                <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128465;</span> Delete
+                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="trash" /></span> Delete
               </button>
             </div>
           )}

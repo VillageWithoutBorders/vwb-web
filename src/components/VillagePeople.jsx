@@ -1,3 +1,4 @@
+import Icon from './Icon'
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from './AvatarDisplay'
@@ -61,7 +62,7 @@ export function VillageNewMembers({ villageId, myId }) {
 
   return (
     <div role="status" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'var(--success-bg)', borderBottom: '1px solid #234', color: 'var(--accent)', fontSize: '0.9rem' }}>
-      <span aria-hidden="true">&#127793;</span>
+      <span aria-hidden="true"><Icon name="sprout" /></span>
       <span style={{ flex: 1 }}>{text} Say hello.</span>
       <button type="button" onClick={dismiss} aria-label="Dismiss new member notice" style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', minWidth: '44px', minHeight: '44px', fontSize: '1.1rem' }}>&#10005;</button>
     </div>

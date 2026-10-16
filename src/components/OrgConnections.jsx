@@ -154,7 +154,7 @@ export default function OrgConnections({ orgId, orgName }) {
 
       {active.length > 0 && (
         <section className="cal-box" aria-labelledby="oc-chat">
-          <h2 id="oc-chat"><span aria-hidden="true">&#128293;</span> Start a Campfire</h2>
+          <h2 id="oc-chat"><span aria-hidden="true"><Icon name="campfire" /></span> Start a Campfire</h2>
           <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
             A Campfire is a private, encrypted chat for the Heads and organizers of {orgName || 'your group'} and the groups you pick. When someone becomes an organizer they are added, and when they stop, they are removed.
           </p>

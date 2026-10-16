@@ -133,7 +133,7 @@ export default function Groups({ embedded = false }) {
       <div className="groups-head">
         <div>
           {!embedded && <h1>Cottage Chats &amp; Campfires</h1>}
-          <p className="groups-sub">&#127969; Cottage Chat: take a seat, let it out. You're safe here. &#128293; Campfire: gather round and let your voices be heard.</p>
+          <p className="groups-sub"><Icon name="cottage" /> Cottage Chat: take a seat, let it out. You're safe here. <Icon name="campfire" /> Campfire: gather round and let your voices be heard.</p>
         </div>
       </div>
 

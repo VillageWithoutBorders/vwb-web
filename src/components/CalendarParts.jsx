@@ -1,3 +1,4 @@
+import Icon from './Icon'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DISTANCE_OPTIONS, groupByDay, hasEnded, timeRange, VISIBILITY, placeFromZip } from '../utils/calendar'
@@ -130,7 +131,7 @@ export function CalendarEventList({ events, newTab, emptyText }) {
   if (events.length === 0) {
     return (
       <div className="cal-empty">
-        <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }} aria-hidden="true">&#127793;</p>
+        <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }} aria-hidden="true"><Icon name="sprout" /></p>
         <p style={{ margin: 0 }}>{emptyText || 'No events nearby yet.'}</p>
       </div>
     )

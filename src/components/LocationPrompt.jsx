@@ -1,3 +1,4 @@
+import Icon from './Icon'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { lookupZip, saveZip, setVisitZip, shareDeviceLocation, forgetVisitLocation } from '../utils/location'
@@ -78,7 +79,7 @@ export function LocationPrompt({ onDone, onCancel, title = 'Where should we look
       ) : (
         <div className="location-prompt-found">
           <p className="location-prompt-place">
-            <span aria-hidden="true">&#128205;</span> {place.label}
+            <span aria-hidden="true"><Icon name="pin" /></span> {place.label}
             <button type="button" className="link-button" onClick={() => { setPlace(null); setError('') }}>Change</button>
           </p>
           {user && (

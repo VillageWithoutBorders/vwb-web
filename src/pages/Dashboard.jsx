@@ -33,7 +33,7 @@ function VillageAsk() {
 
   return (
     <div className="village-ask" role="region" aria-label="Local village chat">
-      <p className="village-ask-title"><span aria-hidden="true">&#127969;</span> Join a village chat?</p>
+      <p className="village-ask-title"><span aria-hidden="true" style={{ verticalAlign: "middle" }}><Icon name="houses" /></span> Join a village chat?</p>
       <p className="village-ask-text">Village chats are for neighbors in your area. We use your zip code to find them. You can join more than one, and you can leave any time from your Profile.</p>
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="village-ask-buttons">
@@ -69,7 +69,7 @@ export default function Dashboard() {
       )}
       {profile?.is_hope_ambassador && (
         <div style={{ marginBottom: "0.75rem", background: "linear-gradient(135deg, var(--success-bg), var(--border))", border: "2px solid var(--accent)", borderRadius: "16px", padding: "0.6rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
-          <span style={{ fontSize: "1.5rem" }}>&#9733;</span>
+          <span aria-hidden="true" style={{ display: "flex" }}><Icon name="star" size={28} /></span>
           <div>
             <span style={{ display: "block", color: "var(--accent)", fontWeight: 700, fontSize: "0.8rem", lineHeight: 1.2 }}>Hope Ambassador</span>
             <span style={{ color: "var(--accent)", fontSize: "0.65rem" }}>Active and ready to help</span>
@@ -86,10 +86,10 @@ export default function Dashboard() {
           tools sit in a closed fold. The Emergency button stays at the bottom. */}
       <div className="home-primary">
         <button type="button" className="btn btn-primary home-btn" onClick={() => navigate('/ask')}>
-          <span aria-hidden="true">&#127384;</span> Ask for help
+          <Icon name="raise-hand" size={28} /> Ask for help
         </button>
         <button type="button" className="btn btn-outline home-btn" onClick={() => navigate('/skillshare')}>
-          <span aria-hidden="true">&#128154;</span> I can help
+          <Icon name="heart" size={28} /> I can help
         </button>
       </div>
       {established === false && (
@@ -115,17 +115,17 @@ export default function Dashboard() {
           <span className="home-tile-icon" aria-hidden="true"><Icon name="people" /></span>Community
         </button>
         <button type="button" className="home-tile" aria-label="Cottage Chats and Campfires: your private chats, invites, and join links" onClick={() => navigate('/groups')}>
-          <span className="home-tile-icon" aria-hidden="true">&#129309;</span>Chats
+          <span className="home-tile-icon" aria-hidden="true"><Icon name="cottage" /></span>Chats
         </button>
         <button type="button" className="home-tile" aria-label="Village Square: announcements and your village chat" onClick={() => navigate('/campfire')}>
-          <span className="home-tile-icon" aria-hidden="true">&#128227;</span>Square
+          <span className="home-tile-icon" aria-hidden="true"><Icon name="megaphone" /></span>Square
         </button>
         <button type="button" className="home-tile" aria-label="Village Map: see every village and how they connect" onClick={() => navigate('/villages')}>
-          <span className="home-tile-icon" aria-hidden="true">&#128506;</span>Map
+          <span className="home-tile-icon" aria-hidden="true"><Icon name="compass" /></span>Map
         </button>
         {runsAGroup && (
           <button type="button" className="home-tile" aria-label="Organization Dashboard: events, members, needs and offers for your organization" onClick={() => navigate('/org-dashboard')}>
-            <span className="home-tile-icon" aria-hidden="true">&#127968;</span>My organization
+            <span className="home-tile-icon" aria-hidden="true"><Icon name="toolbox" /></span>My organization
           </button>
         )}
       </div>
@@ -134,13 +134,13 @@ export default function Dashboard() {
           <summary>Ambassador and admin tools</summary>
           <div className="quick-actions">
             <button className="action-card" onClick={() => navigate('/campfire')}>
-              <span className="action-icon" aria-hidden="true">&#128227;</span>
+              <span className="action-icon" aria-hidden="true"><Icon name="megaphone" size={28} /></span>
               <span className="action-label">Village Square</span>
               <span className="action-desc">Chat with fellow ambassadors and admins</span>
             </button>
             {isAdmin && (
               <button className="action-card" onClick={() => navigate('/admin')}>
-                <span className="action-icon" aria-hidden="true">&#9881;</span>
+                <span className="action-icon" aria-hidden="true"><Icon name="gear" size={28} /></span>
                 <span className="action-label">Admin Panel</span>
                 <span className="action-desc">Reports, users, villages, and approvals</span>
               </button>
@@ -149,7 +149,7 @@ export default function Dashboard() {
         </details>
       )}
       <button data-tour="emergency" onClick={() => navigate('/emergency')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "1.25rem", padding: "1rem 1.25rem", borderRadius: "12px", border: "2px solid var(--warn)", background: "linear-gradient(135deg, var(--warn-bg), var(--warn-bg))", cursor: "pointer", textAlign: "left" }}>
-        <span style={{ fontSize: "2rem", lineHeight: 1, color: "var(--warn)" }}>&#9888;</span>
+        <span aria-hidden="true" style={{ flexShrink: 0, display: "flex" }}><Icon name="cat-emergency" size={40} /></span>
         <div>
           <span style={{ display: "block", color: "var(--gold)", fontWeight: 700, fontSize: "1rem" }}>Emergency Response</span>
           <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Floods, storms, fires, and outages that hit many neighbors</span>

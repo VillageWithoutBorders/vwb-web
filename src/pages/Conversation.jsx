@@ -1,3 +1,4 @@
+import Icon from '../components/Icon'
 import MessageOptionsMenu from '../components/popup/MessageOptionsMenu'
 import { useBlockedBy } from '../utils/blockedBy'
 import { useState, useEffect, useRef } from 'react'
@@ -378,7 +379,7 @@ export default function Conversation() {
           <h1><UserName userId={otherUserId} name={otherName} /></h1>
           {request && <p className="convo-context">{request.skill_needed}</p>}
         </div>
-        <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'>&#9881;</button>
+        <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'><Icon name="gear" /></button>
 
 
 
@@ -509,7 +510,7 @@ export default function Conversation() {
 
         {!blockedBy.has(otherUserId) && (
         <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-          <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128100;</span> View Profile
+          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="person" /></span> View Profile
         </button>
         )}
         <button onClick={async () => {
@@ -519,10 +520,10 @@ export default function Conversation() {
           if (error) { console.error('Failed to block user:', error); alert('Could not block this user. Try again.'); return }
           alert('User blocked.')
         }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-          <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128683;</span> Block User
+          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cross" /></span> Block User
         </button>
         <button onClick={() => { setShowSettings(false); setReportDialog('report') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-          <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9873;</span> Report User
+          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="flag" /></span> Report User
         </button>
       </div>
 

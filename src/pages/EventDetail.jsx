@@ -433,22 +433,22 @@ export default function EventDetail() {
             {s.user_id === user.id ? (
               <>
                 <button onClick={() => { setEditingNotes(s.id); setEditNotesVal(s.notes || ''); setOpenSignupMenu(null) }} style={menuBtnStyle}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#9998;</span> Edit notes
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="pencil" /></span> Edit notes
                 </button>
                 <button onClick={() => deleteSignup(s.id)} style={{ ...menuBtnStyle, color: 'var(--danger)' }}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128465;</span> Remove me
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="trash" /></span> Remove me
                 </button>
               </>
             ) : (
               <>
                 {s.user_id !== event.created_by && <button onClick={() => messageUser(s.user_id)} style={menuBtnStyle}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128172;</span> Message
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="envelope" /></span> Message
                 </button>}
                 <button onClick={() => reportUser(s.user_id)} style={menuBtnStyle}>
-                  <span style={{ width: '1.2rem', textAlign: 'center', color: 'var(--danger)' }}>&#9873;</span> Report
+                  <span style={{ width: '1.2rem', textAlign: 'center', color: 'var(--danger)' }}><Icon name="flag" /></span> Report
                 </button>
                 <button onClick={() => blockUser(s.user_id)} style={menuBtnStyle}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}>&#128683;</span> Block user
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cross" /></span> Block user
                 </button>
               </>
             )}
@@ -637,7 +637,7 @@ export default function EventDetail() {
         responders.map(s => (
           <div key={s.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={s.avatar_url} userId={s.user_id} size={28} /><span style={{ fontWeight: 700 }}>{s.role === 'coordinator' && <span style={{ color: 'var(--info)', marginRight: '4px' }} title="Coordinator">&#9733;</span>}<UserName userId={s.user_id} name={s.display_name} /></span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={s.avatar_url} userId={s.user_id} size={28} /><span style={{ fontWeight: 700 }}>{s.role === 'coordinator' && <span style={{ color: 'var(--info)', marginRight: '4px' }} title="Coordinator"><Icon name="star" /></span>}<UserName userId={s.user_id} name={s.display_name} /></span></div>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginRight: '1.5rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
             </div>
             {s.skills && s.skills.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.4rem' }}>{s.skills.map(sk => <span key={sk} style={{ background: 'var(--surface-2)', color: 'var(--accent)', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px' }}>{sk}</span>)}</div>}
@@ -732,7 +732,7 @@ export default function EventDetail() {
 
           {filteredResources.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-              <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>&#128230;</p>
+              <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}><Icon name="box" /></p>
               <p>No resources listed yet. Add what you need or can provide.</p>
             </div>
           ) : (

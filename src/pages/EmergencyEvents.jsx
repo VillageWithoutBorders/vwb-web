@@ -1,3 +1,4 @@
+import Icon from '../components/Icon'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -134,7 +135,7 @@ export default function EmergencyEvents() {
       </div>
 
       <button onClick={() => navigate('/emergency/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '1rem', borderRadius: '10px', border: '2px solid var(--warn)', background: 'linear-gradient(135deg, var(--warn-bg), var(--warn-bg))', cursor: 'pointer', textAlign: 'left', marginBottom: '1.25rem' }}>
-        <span style={{ fontSize: '1.75rem' }}>&#9888;</span>
+        <span style={{ fontSize: '1.75rem' }}><Icon name="cat-emergency" /></span>
         <div>
           <span style={{ display: 'block', color: 'var(--gold)', fontWeight: 700, fontSize: '0.95rem' }}>Report an emergency</span>
           <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>When many neighbors are hit at once. Someone in danger? Call 911 first.</span>
@@ -157,7 +158,7 @@ export default function EmergencyEvents() {
         <>
           {events.length === 0 && (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-              <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>&#127783;</p>
+              <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}><Icon name="sun" /></p>
               <p style={{ fontWeight: 700 }}>No active emergencies</p>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>When a disaster or emergency happens, events will appear here.</p>
             </div>
@@ -232,7 +233,7 @@ export default function EmergencyEvents() {
         <>
           {resolvedEvents.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-              <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>&#128203;</p>
+              <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}><Icon name="clipboard" /></p>
               <p style={{ fontWeight: 700 }}>No resolved events</p>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Closed events will be archived here.</p>
             </div>
