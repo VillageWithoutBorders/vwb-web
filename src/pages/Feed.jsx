@@ -570,9 +570,7 @@ export default function Feed() {
                 )
             )}
 
-            <button type="button" className="fab fab-labeled" onClick={() => navigate(view === 'offers' ? '/post-offer' : '/ask')}>
-                <span aria-hidden="true">+</span> {view === 'offers' ? 'Offer something' : 'Ask for help'}
-            </button>
+            {/* No floating button here: Ask for help and Offer something sit at the top of this page. */}
             </div>
         </div>
     )
