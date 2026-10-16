@@ -49,7 +49,7 @@ const ALL_STEPS = [
     target: '.header-nav',
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
-    body: 'These buttons stay at the top of every screen. Tap Next to see what each part does. You can skip any time.',
+    body: 'These buttons stay at the top of every screen. Tap Show me around to see what each part does. You can skip any time.',
   },
   {
     route: '/',

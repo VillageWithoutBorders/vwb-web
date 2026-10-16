@@ -45,15 +45,15 @@ export default function BottomTabs() {
       <nav className="bottom-tabs" aria-label="Main navigation">
         <div className="bottom-tabs-inner">
           <NavLink to="/skillshare" className={({ isActive }) => 'tab-item' + (isActive || helpOn ? ' active' : '')} data-tour="help">
-            <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z" /></svg>
+            <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="heart-hands" size={26} /></span>
             <span className="tab-label">Help</span>
           </NavLink>
           <NavLink to="/village" className={({ isActive }) => 'tab-item' + (isActive || villageOn ? ' active' : '')} data-tour="village">
-            <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2l-5 7h3l-4 6h5v7h2v-7h5l-4-6h3z" /></svg>
+            <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="houses" size={26} /></span>
             <span className="tab-label">Village</span>
           </NavLink>
           <NavLink to="/messages" className="tab-item" data-tour="messages" style={{ position: 'relative' }}>
-            <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
+            <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="envelope" size={26} /></span>
             {unreadCount > 0 && (
               <span aria-label={unreadCount + ' unread'} className="tab-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
             )}
@@ -61,13 +61,13 @@ export default function BottomTabs() {
           </NavLink>
           {fourth.to ? (
             <NavLink to={fourth.to} className={() => 'tab-item' + (fourthOn ? ' active' : '')} data-tour="role-tab" aria-label={fourth.name ? fourth.label + ': ' + fourth.name : undefined}>
-              <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name={fourth.icon} size={24} /></span>
+              <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name={fourth.icon} size={26} /></span>
               <span className="tab-label">{fourth.label}</span>
             </NavLink>
           ) : (
             <button type="button" className={'tab-item tab-item-btn' + (fourthOn ? ' active' : '')} data-tour="role-tab" aria-haspopup="dialog" aria-expanded={sheet}
               onClick={() => { lastFocus.current = document.activeElement; setSheet(true) }}>
-              <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name={fourth.icon} size={24} /></span>
+              <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name={fourth.icon} size={26} /></span>
               <span className="tab-label">{fourth.label}</span>
             </button>
           )}

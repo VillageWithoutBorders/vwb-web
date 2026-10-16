@@ -5563,3 +5563,13 @@ button[aria-label^="Back"], button[aria-label^="Close"], button[aria-label^="Can
 .chat-guide-note { margin: 0.6rem 0 0; color: var(--text-secondary); font-size: 0.95rem; }
 /* Mine keeps its floating Ask for help button; leave room so the last card is never under it. */
 .tasks-page { padding-bottom: 5.5rem; }
+
+/* Matching picture icons in the top and bottom bars. All 26px, same cream badge art. */
+.header-btn-pic { width: 26px; height: 26px; display: block; }
+.tab-item { position: relative; }
+.tab-icon-pic, .tab-icon-pic .vwb-icon { width: 26px; height: 26px; }
+/* The art doesn't change color, so the open tab gets a bar on top and a bold label. */
+.tab-item.active::before { content: ""; position: absolute; top: 0; left: 50%; width: 32px; height: 3px; margin-left: -16px; border-radius: 0 0 3px 3px; background: var(--green); }
+.tab-item.active .tab-label { font-weight: 700; }
+.tab-item:active .tab-icon-pic { transform: scale(0.92); }
+@media (prefers-reduced-motion: reduce) { .tab-item:active .tab-icon-pic { transform: none; } }
