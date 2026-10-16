@@ -327,6 +327,10 @@ export default function Feed() {
             <div className="feed-header">
             <div className="feed-sticky">
                 <h1>Help</h1>
+                <div className="help-cta">
+                    <button type="button" className="btn btn-primary help-cta-btn" onClick={() => navigate('/ask')}>Ask for help</button>
+                    <button type="button" className="btn btn-outline help-cta-btn" onClick={() => navigate('/post-offer')}>Offer something</button>
+                </div>
                 <HelpSwitch />
                 <p className="feed-subtitle">Help requests and free offers from your neighbors</p>
             </div>

@@ -49,7 +49,7 @@ export default function GroupResponse({ orgId, orgName, isKeeper, villageCount, 
   return (
     <div>
       {s === 'approved' && <div className="vs-item gr-ok"><b>Approved to respond</b><small>Since {day(info.decided_at)}. When an emergency is verified in the villages this group covers, its keepers are asked to help.</small></div>}
-      {s === 'asked' && <div className="vs-item"><b>Waiting for approval</b><small>Asked {day(info.asked_at)}. A Hope Ambassador or VWB admin outside the group will decide.</small></div>}
+      {s === 'asked' && <div className="vs-item"><b>Waiting for approval</b><small>Asked {day(info.asked_at)}. A Hope Ambassador or VWB admin outside the group will decide. You get an alert either way. Meanwhile, keep adding members and what you bring.</small></div>}
       {(s === 'none' || s === 'declined') && <div className="vs-item"><b>Not called to emergencies yet</b><small>{orgName} can meet, chat, and plan now. To be called when an emergency is verified nearby, a keeper asks for approval.</small></div>}
       {s === 'declined' && isKeeper && info.note && <p className="vs-note">Note from the reviewer: {info.note}</p>}
 

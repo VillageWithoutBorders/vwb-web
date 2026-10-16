@@ -57,12 +57,9 @@ export default function EmergencyEvents() {
       body: ev.title + ' has been verified by the community.',
       link: '/emergency/' + eventId
     })
-    const { error } = await supabase.from('campfire_messages').insert({
-      user_id: user.id,
-      village_id: ev.village_id || profile?.village_id || null,
-      body: '🚨 Emergency Verified: ' + ev.title + ' (' + (ev.location_name || 'Unknown area') + '). Head to the event page to sign up or add resources.'
-    })
-    if (error) console.error('Failed to post Village Square announcement:', error)
+    // No Village Square post here: the database opens the Response Camp and
+    // calls covering groups (vwb-response-camps.sql), and Village Square shows
+    // active emergencies in its own banner.
   }
 
   async function upvoteEvent(e, eventId) {

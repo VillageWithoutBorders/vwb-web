@@ -13,6 +13,7 @@ import { submitUserReport } from '../utils/submitUserReport'
 import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
 import ResponseCamp from '../components/ResponseCamp'
+import EventUpdates from '../components/EventUpdates'
 
 const STATUS_CONFIG = {
   safe:        { label: 'Safe',         color: 'var(--accent)', bg: 'var(--success-bg)', icon: 'check' },
@@ -37,7 +38,14 @@ export default function EventDetail() {
   const [roleCounts, setRoleCounts] = useState([])
   const [mySignup, setMySignup] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('responders')
+  // The event page is the Response Camp: Updates, Who's helping, Needs and supplies, Check-ins, Camp chat.
+  // ?tab= opens a tab (alerts use it); ?call= (a group asked to take it on) opens Who's helping.
+  const [tab, setTab] = useState(() => {
+    const q = new URLSearchParams(window.location.search)
+    const t = q.get('tab')
+    if (['updates', 'helping', 'needs', 'checkins', 'chat'].includes(t)) return t
+    return q.get('call') ? 'helping' : 'updates'
+  })
   const [showSignupForm, setShowSignupForm] = useState(null)
   const [signupNotes, setSignupNotes] = useState('')
   const [signupAvail, setSignupAvail] = useState('')
@@ -261,6 +269,19 @@ export default function EventDetail() {
     await loadAll()
   }
 
+  // Hope Ambassadors and admins can verify right here, without going back to the list.
+  const [verifying, setVerifying] = useState(false)
+  async function verifyNow() {
+    setVerifying(true)
+    const { error } = await supabase.from('emergency_events').update({ verified: true }).eq('id', id)
+    setVerifying(false)
+    if (error) { console.error('Failed to verify event:', error); alert('Could not verify this event. Try again.'); return }
+    if (event.created_by && event.created_by !== user.id) {
+      await createNotification({ userId: event.created_by, type: 'emergency_verified', title: 'Emergency Verified', body: event.title + ' was verified. A Response Camp is open for everyone helping.', link: '/emergency/' + id })
+    }
+    await loadAll()
+  }
+
   async function loadActiveEvents() {
     const { data, error } = await supabase.from('emergency_events').select('id, title, event_type').eq('status', 'active').neq('id', id).order('created_at', { ascending: false })
     if (error) console.error('Failed to load active events:', error)
@@ -480,8 +501,13 @@ export default function EventDetail() {
         </div>
       </div>
 
+      {!event.verified && event.status === 'active' && (isAdmin || profile?.is_hope_ambassador) && (
+        <div className="ev-verify" role="region" aria-label="Verify this emergency">
+          <p><b>Waiting to be checked.</b> You are a Hope Ambassador or VWB admin. If this is real, verify it to open the Response Camp and call the groups that cover this village.</p>
+          <button type="button" className="btn btn-primary btn-full" onClick={verifyNow} disabled={verifying}>{verifying ? 'Verifying...' : 'Verify this emergency'}</button>
+        </div>
+      )}
       {event.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.5rem' }}>{event.location_name} ({event.radius_miles} mile radius)</p>}
-      {event.description && <p style={{ color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0 0 1rem', padding: '0.75rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>{event.description}</p>}
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <div style={{ flex: 1, textAlign: 'center', padding: '0.6rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
@@ -502,13 +528,12 @@ export default function EventDetail() {
         </div>
       </div>
 
-      <ResponseCamp eventId={id} verified={!!event.verified} closed={event.status === 'closed'} refreshKey={(mySignup?.role || 'none') + ':' + signups.length} />
 
       {event.verified && resources.length === 0 && (isCoordinator || event.created_by === user.id) && (
         <div style={{ background: 'linear-gradient(135deg, var(--success-bg), var(--success-bg))', border: '1px solid var(--accent)', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
           <p style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '1rem', margin: '0 0 0.35rem' }}>Event verified!</p>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Next step: add what resources are needed so responders know how to help.</p>
-          <button onClick={() => { setTab('resources'); setShowResourceForm('need') }} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>+ Add Resources Needed</button>
+          <button onClick={() => { setTab('needs'); setShowResourceForm('need') }} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>+ Add Resources Needed</button>
         </div>
       )}
 
@@ -576,14 +601,26 @@ export default function EventDetail() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', overflowX: 'auto' }}>
-        <button style={tabStyle(tab === 'responders')} onClick={() => setTab('responders')}>Responders ({responderCount})</button>
-        <button style={tabStyle(tab === 'affected')} onClick={() => setTab('affected')}>Affected ({affectedCount})</button>
-        <button style={tabStyle(tab === 'check-ins')} onClick={() => setTab('check-ins')}>Check-ins ({checkIns.length})</button>
-        <button style={tabStyle(tab === 'resources')} onClick={() => setTab('resources')}>Resources ({resources.length})</button>
+      <div className="camp-tabs" role="tablist" aria-label="Response Camp">
+        {[
+          ['updates', 'Updates'],
+          ['helping', "Who's helping (" + responderCount + ')'],
+          ['needs', 'Needs and supplies (' + needsUnfulfilled + ')'],
+          ['checkins', 'Check-ins (' + checkIns.length + ')'],
+          ['chat', 'Camp chat'],
+        ].map(([k, label]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={'camp-tab' + (tab === k ? ' on' : '')} onClick={() => setTab(k)}>{label}</button>
+        ))}
       </div>
 
-      {(tab === 'check-ins' || isCoordinator) && Object.values(latestStatuses).length > 0 && tab !== 'resources' && (
+      {tab === 'updates' && <EventUpdates eventId={id} description={event.description} closed={event.status === 'closed'} />}
+
+      {tab === 'chat' && <ResponseCamp part="chat" eventId={id} verified={!!event.verified} closed={event.status === 'closed'} refreshKey={(mySignup?.role || 'none') + ':' + signups.length} />}
+
+      {tab === 'helping' && <ResponseCamp part="groups" eventId={id} verified={!!event.verified} closed={event.status === 'closed'} refreshKey={(mySignup?.role || 'none') + ':' + signups.length} />}
+      {tab === 'helping' && canSeeRoster && <h3 className="camp-sub">Helpers ({responders.length})</h3>}
+
+      {(tab === 'checkins' || (isCoordinator && tab === 'helping')) && Object.values(latestStatuses).length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.75rem' }}>
           {Object.entries(STATUS_CONFIG).map(([key, conf]) => (
             statusCounts[key] > 0 && <span key={key} style={{ background: conf.bg, color: conf.color, fontSize: '0.75rem', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}><Icon name={conf.icon} /> {conf.label}: {statusCounts[key]}</span>
@@ -591,11 +628,11 @@ export default function EventDetail() {
         </div>
       )}
 
-      {!canSeeRoster && (tab === 'responders' || tab === 'affected' || tab === 'check-ins') && (
+      {!canSeeRoster && (tab === 'helping' || tab === 'checkins') && (
         <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>Names and check-ins are shared with people who sign up for this event. This keeps neighbors in need safe.</p>
       )}
 
-      {canSeeRoster && tab === 'responders' && (
+      {canSeeRoster && tab === 'helping' && (
         responders.length === 0 ? <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No responders yet. Be the first to sign up.</p> :
         responders.map(s => (
           <div key={s.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', position: 'relative' }}>
@@ -611,7 +648,8 @@ export default function EventDetail() {
         ))
       )}
 
-      {canSeeRoster && tab === 'affected' && (
+      {canSeeRoster && tab === 'helping' && <h3 className="camp-sub">Neighbors who need help ({affected.length})</h3>}
+      {canSeeRoster && tab === 'helping' && (
         affected.length === 0 ? <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No affected neighbors signed up yet.</p> :
         affected.map(s => {
           const st = latestStatuses[s.user_id]
@@ -633,7 +671,7 @@ export default function EventDetail() {
         })
       )}
 
-      {tab === 'check-ins' && (
+      {tab === 'checkins' && (
         checkIns.length === 0 ? <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem' }}>No check-ins yet.</p> :
         checkIns.map(c => {
           const conf = STATUS_CONFIG[c.status] || STATUS_CONFIG.safe
@@ -653,7 +691,7 @@ export default function EventDetail() {
         })
       )}
 
-      {tab === 'resources' && (
+      {tab === 'needs' && (
         <>
           <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
             <button onClick={() => setShowResourceForm('need')} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>+ We Need</button>
