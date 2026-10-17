@@ -15,7 +15,8 @@ export function resourceCats(r) {
 export function resourceMatches(r, query) {
   const words = String(query || '').toLowerCase().split(/\s+/).filter(Boolean)
   if (!words.length) return true
-  const hay = [r.name, r.description, r.requirements, r.neighborhood, r.address, r.region, r.organizations?.name, ...resourceCats(r)]
+  const hay = [r.name, r.description, r.requirements, r.neighborhood, r.address, r.region, r.organizations?.name, ...resourceCats(r),
+    r.provider_name, r.crn_category, r.service_type, r.eligibility_summary, r.delivery_method, ...(Array.isArray(r.serves) ? r.serves : [])]
     .filter(Boolean).join(' ').toLowerCase()
   return words.every((w) => hay.includes(w))
 }
