@@ -9,6 +9,8 @@ import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { availabilityDisplayString } from '../components/AvailabilityPicker'
 import { resetAccountToBase } from '../utils/resetAccount'
 import { useGoBack } from '../components/BackLink'
+import AdminCrnImport from '../components/AdminCrnImport'
+import { placesEnabled } from '../utils/places'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also alert the person and let the caller bail out; omit it for
@@ -952,10 +954,13 @@ export default function Admin() {
         <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length}){organizations.some(o => !o.approved) ? ' \u00b7 ' + organizations.filter(o => !o.approved).length + ' waiting' : ''}</button>
         <button style={tabStyle(tab === 'villages')} onClick={() => setTab('villages')}>Villages ({villages.length})</button>
         <button style={tabStyle(tab === 'content')} onClick={() => setTab('content')}>SkillShare {duplicateCount > 0 && <span style={{ marginLeft: '0.3rem', background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{duplicateCount}</span>}</button>
+        {placesEnabled && <button style={tabStyle(tab === 'crn')} onClick={() => setTab('crn')}>CRN Import</button>}
         <button style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports {stats.alerts > 0 && <span style={{ marginLeft: '0.3rem', background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{stats.alerts}</span>}</button>
       </div>
 
       {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Loading...</p>}
+
+      {!loading && placesEnabled && tab === 'crn' && <AdminCrnImport />}
 
       {!loading && tab === 'approvals' && (
         <>

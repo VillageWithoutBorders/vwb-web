@@ -22,6 +22,7 @@ const ActiveTasks = lazyPage(() => import('./pages/ActiveTasks'))
 const Community = lazyPage(() => import('./pages/Community'))
 const CommunityResources = lazyPage(() => import('./pages/CommunityResources'))
 const PublicResources = lazyPage(() => import('./pages/PublicResources'))
+const ResourceReports = lazyPage(() => import('./pages/ResourceReports'))
 const OrgPage = lazyPage(() => import('./pages/OrgPage'))
 const OrgDashboard = lazyPage(() => import('./pages/OrgDashboard'))
 const StartGroup = lazyPage(() => import('./pages/StartGroup'))
@@ -56,6 +57,7 @@ const GroupBoard = lazyPage(() => import('./pages/GroupBoard'))
 const JoinGroup = lazyPage(() => import('./pages/JoinGroup'))
 const VillageMap = lazy(() => import('./pages/VillageMap'))
 import { peekReturnTo } from './utils/returnTo'
+import { placesEnabled } from './utils/places'
 
 // Pages load when first opened, so the first visit downloads less.
 // If a new version went out while a tab was open, the old page file is
@@ -160,6 +162,7 @@ function AppRoutes() {
         <Route path="community" element={<Community />} />
         <Route path="villages" element={<Suspense fallback={<div className="cal-page"><p className="cal-empty">Loading...</p></div>}><VillageMap /></Suspense>} />
         <Route path="community/resources" element={<CommunityResources />} />
+        {placesEnabled && <Route path="resource-reports" element={<ResourceReports />} />}
         <Route path="orgs/:id" element={<OrgPage />} />
         <Route path="orgs/:id/dashboard" element={<OrgDashboard />} />
         <Route path="start-group" element={<StartGroup />} />
