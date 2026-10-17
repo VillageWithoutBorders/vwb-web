@@ -148,8 +148,10 @@ function fieldsOf(r) {
   const kw = Array.isArray(r.keywords) ? r.keywords.join(' ') : (r.keywords || '')
   return {
     strong: [r.name, kw].filter(Boolean).join(' '),
-    medium: cats.join(' '),
-    weak: [r.description, r.requirements, r.neighborhood, r.address, r.organizations && r.organizations.name].filter(Boolean).join(' '),
+    // CRN programs: their own category and type count like a category.
+    medium: [...cats, r.crn_category, r.service_type].filter(Boolean).join(' '),
+    weak: [r.description, r.requirements, r.neighborhood, r.address, r.organizations && r.organizations.name,
+      r.provider_name, r.eligibility_summary, r.delivery_method, ...(Array.isArray(r.serves) ? r.serves : [])].filter(Boolean).join(' '),
   }
 }
 

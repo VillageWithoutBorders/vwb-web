@@ -11,6 +11,11 @@ import AddressLink from '../components/AddressLink'
 import BackLink from '../components/BackLink'
 import HelpSwitch from '../components/HelpSwitch'
 import Icon from '../components/Icon'
+import AreaPicker from '../components/AreaPicker'
+import CrnCardDetails from '../components/CrnCardDetails'
+import ResourceReport from '../components/ResourceReport'
+import { placesEnabled, getMyPlaces, getVisitorArea, setVisitorArea } from '../utils/places'
+import { findHelpForMe, resourcesForPlace, friendlyError, saysNo } from '../utils/resourceReports'
 
 // Keeps Tab/Shift+Tab cycling inside an open dialog instead of leaking focus
 // out to the page behind it.
@@ -87,7 +92,22 @@ export default function CommunityResources() {
   const [submittingEdit, setSubmittingEdit] = useState(false)
   const [revertingId, setRevertingId] = useState(null)
 
-  useEffect(() => { loadResources(); loadOrgs(); loadVoteCounts(); loadReviews(); loadEditHistory() }, [])
+  // CRN preview (test project only): areas, reports, and the new Find Help lists.
+  const [visitorArea, setVisitorAreaState] = useState(() => (placesEnabled ? getVisitorArea() : null))
+  const [myAreaCount, setMyAreaCount] = useState(null) // null = not loaded yet
+  const [reportFor, setReportFor] = useState(null) // the resource the "Something wrong?" sheet is open for
+  const [cardNotice, setCardNotice] = useState(null) // { id, text } shown on one card after an action
+  const [loadError, setLoadError] = useState('')
+  const [accessFilter, setAccessFilter] = useState([]) // 'no_appt' | 'no_referral' | 'how:<delivery method>'
+
+  useEffect(() => { loadOrgs(); loadVoteCounts(); loadReviews(); loadEditHistory() }, [])
+  useEffect(() => { loadResources() }, [user?.id, visitorArea?.id, canVerify])
+  useEffect(() => {
+    if (!placesEnabled || !user) { setMyAreaCount(null); return }
+    let gone = false
+    getMyPlaces().then(({ data, error }) => { if (!gone && !error) setMyAreaCount(data.length) })
+    return () => { gone = true }
+  }, [user?.id])
   useEffect(() => { loadMyVotes() }, [user])
   // Distances only show when we already know the person's area. We never ask
   // the phone on page load, and never guess.
@@ -120,6 +140,7 @@ export default function CommunityResources() {
   }
 
   async function loadResources() {
+    if (placesEnabled) { await loadPreviewResources(); return }
     setLoadingResources(true)
     const { data, error } = await supabase
       .from('community_resources')
@@ -129,6 +150,38 @@ export default function CommunityResources() {
     if (error) console.error('Failed to load community resources:', error)
     if (data) setResources(data)
     setLoadingResources(false)
+  }
+
+  // CRN preview: members get find_help_for_me(), visitors get the list for the
+  // county they chose. Reviewers also see what's waiting for review.
+  async function loadPreviewResources() {
+    setLoadingResources(true); setLoadError('')
+    let list = []
+    if (user) {
+      const { data, error } = await findHelpForMe()
+      if (error) setLoadError("We couldn't load Find Help. Pull down to try again.")
+      list = data.map((r) => ({ ...r, verified: true }))
+      if (profile?.is_hope_ambassador || isAdmin) {
+        const { data: pending, error: pErr } = await supabase
+          .from('community_resources')
+          .select('*, organizations ( id, name, description, website_url, social_links )')
+          .eq('verified', false)
+          .order('name')
+        if (pErr) console.error('Failed to load resources waiting for review:', pErr)
+        list = list.concat(pending || [])
+      }
+    } else if (visitorArea) {
+      const { data, error } = await resourcesForPlace(visitorArea.id)
+      if (error) setLoadError("We couldn't load Find Help. Try again in a moment.")
+      list = data.map((r) => ({ ...r, verified: true }))
+    }
+    setResources(list)
+    setLoadingResources(false)
+  }
+
+  function chooseVisitorArea(area) {
+    setVisitorArea(area)
+    setVisitorAreaState(area)
   }
 
   async function loadVoteCounts() {
@@ -262,10 +315,11 @@ export default function CommunityResources() {
     setSubmittingEdit(false)
     if (error) {
       console.error('Failed to submit resource edit:', error)
-      alert('Could not save your edit. Try again.')
+      alert(placesEnabled ? friendlyError(error, 'Could not send your edit. Try again.') : 'Could not save your edit. Try again.')
       return
     }
     setEditFormFor(null)
+    if (placesEnabled) setCardNotice({ id: r.id, text: 'Thank you. A Hope Ambassador will check your edit. The listing stays the same until then.' })
     await Promise.all([loadResources(), loadEditHistory()])
   }
 
@@ -329,13 +383,28 @@ export default function CommunityResources() {
     window.scrollTo({ top: 0 })
   }
 
-  const verifiedResources = resources.filter(r => r.verified)
-  const pendingResources = resources.filter(r => !r.verified)
+  // The new lists don't carry the organization, so add it from the org list.
+  const orgById = {}
+  allOrgs.forEach((o) => { orgById[o.id] = o })
+  const viewResources = placesEnabled
+    ? resources.map((r) => (r.organizations || !r.organization_id ? r : { ...r, organizations: orgById[r.organization_id] || null }))
+    : resources
+  const verifiedResources = viewResources.filter(r => r.verified)
+  const pendingResources = viewResources.filter(r => !r.verified)
+  // Ways to get help, from the programs' own words (CRN preview).
+  const deliveryMethods = placesEnabled
+    ? [...new Set(verifiedResources.map((r) => (r.delivery_method || '').trim()).filter((v) => v && !/^unknown$/i.test(v)))].sort()
+    : []
+  const hasCrn = placesEnabled && verifiedResources.some((r) => r.source === 'crn')
   const allRegions = [...new Set(verifiedResources.map(r => r.region).filter(Boolean))].sort()
   const filteredVerifiedResources = verifiedResources.filter(r => {
     if (query.trim() && !resourceMatches(r, query) && searchScore(r, query) === 0) return false
     if (orgFilter !== 'all' && r.organization_id !== orgFilter) return false
     if (regionFilter !== 'all' && r.region !== regionFilter) return false
+    if (accessFilter.includes('no_appt') && !saysNo(r.appointment_required)) return false
+    if (accessFilter.includes('no_referral') && !saysNo(r.referral_required)) return false
+    const hows = accessFilter.filter((f) => f.startsWith('how:')).map((f) => f.slice(4))
+    if (hows.length && !hows.includes((r.delivery_method || '').trim())) return false
     if (radiusFilter !== 'all') {
       const d = resourceDistance(r)
       // Resources with no pinned address (many phone-only lines, sober-living
@@ -364,7 +433,11 @@ export default function CommunityResources() {
 
 
   const orderedCats = [...CATEGORIES, ...Object.keys(grouped).filter((c) => !CATEGORIES.includes(c))].filter((c) => grouped[c])
-  const activeFilters = (orgFilter !== 'all' ? 1 : 0) + (regionFilter !== 'all' ? 1 : 0) + (radiusFilter !== 'all' ? 1 : 0)
+  const activeFilters = (orgFilter !== 'all' ? 1 : 0) + (regionFilter !== 'all' ? 1 : 0) + (radiusFilter !== 'all' ? 1 : 0) + accessFilter.length
+  const accessLabel = (f) => f === 'no_appt' ? 'No appointment needed' : f === 'no_referral' ? 'No referral needed' : f.slice(4)
+  const toggleAccess = (f) => setAccessFilter((prev) => prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f])
+  const managesOrg = (oid) => !!oid && (isAdmin || (myOrgs || []).some((o) => o.id === oid && (o.role === 'admin' || o.role === 'organizer')))
+  const visitorNeedsArea = placesEnabled && !user && !visitorArea
   const orgName = (oid) => (allOrgs.find((o) => o.id === oid) || {}).name || 'Organization'
 
   const submitOrgOptions = isAdmin ? allOrgs : (myOrgs || [])
@@ -376,6 +449,7 @@ export default function CommunityResources() {
                       <div key={r.id} className="fh-card">
                         <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text)' }}>{r.name}</span>
                         {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0 0.4rem', lineHeight: 1.4 }}>{r.description}</p>}
+                        {placesEnabled && <CrnCardDetails r={r} />}
                         {r.address && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0' }}><AddressLink address={r.address} /></p>}
                         {r.neighborhood && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0' }}>Area: {r.neighborhood}</p>}
                         {r.requirements && <p style={{ color: 'var(--warn)', fontSize: '0.78rem', margin: '0.2rem 0', lineHeight: 1.4 }}><Icon name="clipboard" /> What to bring: {r.requirements}</p>}
@@ -391,10 +465,23 @@ export default function CommunityResources() {
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
                           {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>Visit &#8599;</a>}
                           {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')} style={{ fontSize: '0.8rem', color: 'var(--info)', textDecoration: 'none', fontWeight: 600 }}>Call {r.phone}</a>}
+                          {!r.phone && r.provider_phone && <a href={'tel:' + r.provider_phone.replace(/[^0-9+]/g, '')} style={{ fontSize: '0.8rem', color: 'var(--info)', textDecoration: 'none', fontWeight: 600 }}>Organization phone: {r.provider_phone}</a>}
                           {Array.isArray(r.links) && r.links.filter((l) => l && /^https?:\/\//i.test(l.url || '')).map((l, i) => (
                             <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>{l.label || 'Link'} &#8599;</a>
                           ))}
                         </div>
+
+                        {placesEnabled && r.has_pending_edit && (
+                          <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.85rem', margin: '0.4rem 0 0' }}><Icon name="hourglass" /> Your edit is waiting for a Hope Ambassador.</p>
+                        )}
+                        {placesEnabled && cardNotice?.id === r.id && (
+                          <p role="status" style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 600, margin: '0.4rem 0 0' }}>{cardNotice.text}</p>
+                        )}
+                        {placesEnabled && user && r.verified && (
+                          <button type="button" onClick={() => setReportFor(r)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', minHeight: 44, marginTop: '0.4rem', padding: '0 0.2rem', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>
+                            <Icon name="flag" /> Something wrong?
+                          </button>
+                        )}
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                           {user && (<>
@@ -524,7 +611,28 @@ export default function CommunityResources() {
         {query && <button type="button" className="btn btn-outline" onClick={() => setQuery('')}>Clear</button>}
       </form>
 
-          {(allOrgs.length > 0 || allRegions.length > 1 || myLocation) && (
+      {visitorNeedsArea && (
+        <AreaPicker mode="visitor" heading="Where are you?" onChange={chooseVisitorArea} />
+      )}
+      {placesEnabled && !user && visitorArea && (
+        <p style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.25rem 0.5rem', margin: '0 0 0.75rem', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+          <span>Showing help for <strong style={{ color: 'var(--text)' }}>{visitorArea.label}</strong>.</span>
+          <button type="button" onClick={() => chooseVisitorArea(null)} style={{ minHeight: 44, padding: '0 0.25rem', background: 'none', border: 'none', color: 'var(--accent)', font: 'inherit', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>Change area</button>
+        </p>
+      )}
+      {placesEnabled && user && myAreaCount === 0 && (
+        <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.95rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem', lineHeight: 1.45 }}>
+          Choose your area to see programs that serve you. <Link to="/settings" style={{ color: 'var(--accent)', fontWeight: 600 }}>Choose your area</Link>
+        </p>
+      )}
+      {placesEnabled && canVerify && (
+        <p style={{ margin: '0 0 0.75rem' }}>
+          <Link to="/resource-reports" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', minHeight: 44, padding: '0 1rem' }}><Icon name="flag" /> Reports to review</Link>
+        </p>
+      )}
+      {loadError && <p role="alert" style={{ color: 'var(--danger)', fontSize: '0.95rem', margin: '0 0 0.75rem' }}>{loadError}</p>}
+
+          {!visitorNeedsArea && (allOrgs.length > 0 || allRegions.length > 1 || myLocation || hasCrn) && (
             <div className="fh-filterbar">
               <button type="button" className="fh-filter-btn" aria-haspopup="dialog" onClick={() => setShowFilters(true)}>
                 <span aria-hidden="true"><Icon name="gear" /></span> Filters{activeFilters ? ' (' + activeFilters + ')' : ''}
@@ -532,6 +640,7 @@ export default function CommunityResources() {
               {orgFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setOrgFilter('all')} aria-label={'Remove filter: ' + orgName(orgFilter)}>{orgName(orgFilter)} <span aria-hidden="true">&#10005;</span></button>}
               {regionFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRegionFilter('all')} aria-label={'Remove filter: ' + regionFilter}>{regionFilter} <span aria-hidden="true">&#10005;</span></button>}
               {radiusFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRadiusFilter('all')} aria-label={'Remove filter: within ' + radiusFilter + ' miles'}>Within {radiusFilter} mi <span aria-hidden="true">&#10005;</span></button>}
+              {accessFilter.map((f) => <button key={f} type="button" className="fh-chip" onClick={() => toggleAccess(f)} aria-label={'Remove filter: ' + accessLabel(f)}>{accessLabel(f)} <span aria-hidden="true">&#10005;</span></button>)}
             </div>
           )}
 
@@ -574,6 +683,16 @@ export default function CommunityResources() {
             </div>
           </>
           )}
+          {hasCrn && (
+            <>
+            <h3 className="fh-sheet-h">How to get it</h3>
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+              {['no_appt', 'no_referral', ...deliveryMethods.map((d) => 'how:' + d)].map((f) => (
+                <button key={f} type="button" onClick={() => toggleAccess(f)} aria-pressed={accessFilter.includes(f)} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: accessFilter.includes(f) ? 'none' : '1px solid var(--border-strong)', background: accessFilter.includes(f) ? 'var(--accent)' : 'none', color: accessFilter.includes(f) ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>{accessLabel(f)}</button>
+              ))}
+            </div>
+            </>
+          )}
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48, marginTop: '0.5rem' }} onClick={() => setShowFilters(false)}>
                   Show {filteredVerifiedResources.length} {filteredVerifiedResources.length === 1 ? 'place' : 'places'}
                 </button>
@@ -582,7 +701,7 @@ export default function CommunityResources() {
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <h2 style={{ fontSize: '1.1rem', color: 'var(--text)', margin: 0 }}>{!query.trim() && !selectedCat ? 'Kinds of help' : ''}</h2>
+            <h2 style={{ fontSize: '1.1rem', color: 'var(--text)', margin: 0 }}>{!query.trim() && !selectedCat && !visitorNeedsArea ? 'Kinds of help' : ''}</h2>
             {canSubmit && <button onClick={() => { setShowSubmit(true); setSubmitted(false) }} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>+ Add Resource</button>}
           </div>
 
@@ -593,7 +712,7 @@ export default function CommunityResources() {
             </p>
           )}
 
-          {user && profile && profile.latitude == null && (
+          {!placesEnabled && user && profile && profile.latitude == null && (
             <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.8rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem' }}>
               Showing national resources. Add your zip code in your profile to see ones near you.
             </p>
@@ -672,7 +791,7 @@ export default function CommunityResources() {
 
           {loadingResources && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Loading...</p>}
 
-          {!loadingResources && !query.trim() && !selectedCat && (
+          {!visitorNeedsArea && !loadingResources && !query.trim() && !selectedCat && (
             <div className="fh-grid">
               {orderedCats.map(cat => (
                 <button key={cat} type="button" className="fh-tile" onClick={() => openCat(cat)}>
@@ -697,10 +816,10 @@ export default function CommunityResources() {
             </section>
           ))}
 
-          {!loadingResources && filteredVerifiedResources.length === 0 && (
+          {!visitorNeedsArea && !loadingResources && filteredVerifiedResources.length === 0 && (
             <>
               <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 1.5rem 0.75rem' }}>
-                {query.trim() ? 'Nothing found for "' + query.trim() + '". Try a shorter word, or ask for help and a neighbor can point you the right way.' : (orgFilter !== 'all' || regionFilter !== 'all' || radiusFilter !== 'all') ? 'No resources match your filters -- try widening them.' : 'No resources yet. Be the first to add one.'}
+                {query.trim() ? 'Nothing found for "' + query.trim() + '". Try a shorter word, or ask for help and a neighbor can point you the right way.' : activeFilters ? 'No resources match your filters. Try removing one.' : placesEnabled ? 'Nothing listed for your area yet.' : 'No resources yet. Be the first to add one.'}
               </p>
               {query.trim() && user && (
                 <div style={{ textAlign: 'center', paddingBottom: '1rem' }}>
@@ -710,6 +829,14 @@ export default function CommunityResources() {
             </>
           )}
 
+      {reportFor && (
+        <ResourceReport
+          resource={reportFor}
+          canChangeAreas={managesOrg(reportFor.organization_id)}
+          onClose={() => setReportFor(null)}
+          onSent={(paused) => { if (paused) loadResources() }}
+        />
+      )}
     </div>
   )
 }
