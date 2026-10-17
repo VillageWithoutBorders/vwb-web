@@ -9,6 +9,8 @@ import RecoveryKeySection from '../components/RecoveryKeySection'
 import { useGoBack } from '../components/BackLink'
 import AppearancePicker from '../components/AppearancePicker'
 import SimpleViewPicker from '../components/SimpleViewPicker'
+import AreaPicker from '../components/AreaPicker'
+import { placesEnabled } from '../utils/places'
 import Icon from '../components/Icon'
 
 // A plain read on how strong a new password is. Length matters most.
@@ -316,6 +318,7 @@ export default function Settings() {
       </button>
 
       <SimpleViewPicker />
+      {placesEnabled && <AreaPicker />}
       <AppearancePicker />
 
       <div className="profile-details">
