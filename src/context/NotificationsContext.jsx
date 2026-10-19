@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from './AuthContext'
+import { isAdminWork } from '../utils/adminWork'
 
 // One shared list of alerts for the whole app, so the badge in the top bar
 // and the Alerts page always agree. (They used to each keep their own
@@ -19,7 +20,7 @@ const POLL_MS = 30000
 function seenKey(userId) { return 'vwb_alerts_seen_' + userId }
 
 export function NotificationsProvider({ children }) {
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [seenAt, setSeenAt] = useState(0)
@@ -42,9 +43,10 @@ export function NotificationsProvider({ children }) {
       .order('created_at', { ascending: false })
       .limit(50)
     if (error) console.error('[NotificationsContext] refresh', error)
-    else setNotifications(data || [])
+    // Admins: admin work lives in the shared Admin inbox (the shield), not here.
+    else setNotifications((data || []).filter(n => !(isAdmin && isAdminWork(n))))
     setLoading(false)
-  }, [user?.id])
+  }, [user?.id, isAdmin])
 
   useEffect(() => {
     refresh()
