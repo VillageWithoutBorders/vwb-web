@@ -11,7 +11,7 @@ const TABS = [
   { key: 'organizations', label: 'Organizations', file: 'Approved Organizations' },
   { key: 'locations', label: 'Locations', file: 'Approved Locations' },
   { key: 'services', label: 'Services', file: 'Approved Services' },
-  { key: 'areas', label: 'Service areas', file: 'Verified Service Areas', hint: 'Area Type can be County, Community or ZIP (blank means County). A community shows to its whole county with a note. A ZIP only shows on the card. It never decides who sees a service.' },
+  { key: 'areas', label: 'Service areas', file: 'Verified Service Areas', hint: 'Area Type can be County, Community or ZIP (blank means County). A community shows to people who search its county (with a note) or who chose that town. Other towns do not see it. A ZIP only shows on the card. It never decides who sees a service.' },
 ]
 const TAB_LABEL = Object.fromEntries(TABS.map((t) => [t.key, t.label]))
 
