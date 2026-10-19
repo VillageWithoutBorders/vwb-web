@@ -159,8 +159,11 @@ export default function CommunityResources() {
     let list = []
     if (user) {
       const { data, error } = await findHelpForMe()
-      if (error) setLoadError("We couldn't load Find Help. Pull down to try again.")
-      list = data.map((r) => ({ ...r, verified: true }))
+      if (error) {
+        console.error('find_help_for_me failed:', error)
+        setLoadError("We couldn't load Find Help. Pull down to try again.")
+      }
+      list = (data || []).map((r) => ({ ...r, verified: true }))
       if (profile?.is_hope_ambassador || isAdmin) {
         const { data: pending, error: pErr } = await supabase
           .from('community_resources')
@@ -172,8 +175,11 @@ export default function CommunityResources() {
       }
     } else if (visitorArea) {
       const { data, error } = await resourcesForPlace(visitorArea.id)
-      if (error) setLoadError("We couldn't load Find Help. Try again in a moment.")
-      list = data.map((r) => ({ ...r, verified: true }))
+      if (error) {
+        console.error('resources_for_place failed:', error)
+        setLoadError("We couldn't load Find Help. Try again in a moment.")
+      }
+      list = (data || []).map((r) => ({ ...r, verified: true }))
     }
     setResources(list)
     setLoadingResources(false)

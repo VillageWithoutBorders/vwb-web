@@ -11,7 +11,7 @@ const TABS = [
   { key: 'organizations', label: 'Organizations', file: 'Approved Organizations' },
   { key: 'locations', label: 'Locations', file: 'Approved Locations' },
   { key: 'services', label: 'Services', file: 'Approved Services' },
-  { key: 'areas', label: 'Service areas', file: 'Verified Service Areas' },
+  { key: 'areas', label: 'Service areas', file: 'Verified Service Areas', hint: 'Area Type can be County, Community or ZIP (blank means County). A community shows to its whole county with a note. A ZIP only shows on the card. It never decides who sees a service.' },
 ]
 const TAB_LABEL = Object.fromEntries(TABS.map((t) => [t.key, t.label]))
 
@@ -262,7 +262,8 @@ export default function AdminCrnImport() {
           {TABS.map((t) => (
             <div key={t.key} style={{ marginBottom: '0.75rem' }}>
               <label htmlFor={'crn-file-' + t.key} style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem' }}>{t.file}</label>
-              <input id={'crn-file-' + t.key} type="file" accept=".csv,text/csv" onChange={(e) => pickFile(t.key, e.target.files?.[0])} style={{ ...input, padding: '0.45rem' }} />
+              {t.hint && <p id={'crn-hint-' + t.key} style={{ ...small, margin: '0 0 0.25rem' }}>{t.hint}</p>}
+              <input id={'crn-file-' + t.key} type="file" accept=".csv,text/csv" aria-describedby={t.hint ? 'crn-hint-' + t.key : undefined} onChange={(e) => pickFile(t.key, e.target.files?.[0])} style={{ ...input, padding: '0.45rem' }} />
               {files[t.key] && <p style={{ ...small, margin: '0.25rem 0 0' }}>{files[t.key].file}: {files[t.key].rows.length} rows</p>}
             </div>
           ))}
