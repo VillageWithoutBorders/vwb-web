@@ -64,6 +64,9 @@ export default function AdminCrnImport() {
   const [values, setValues] = useState([])
   const [newValue, setNewValue] = useState({ field: 'category', value: '', meaning: '' })
   const [teamList, setTeamList] = useState([])
+  // Bulk mapping upload: the CRN team's own mapping table, checked first.
+  const [mapUpload, setMapUpload] = useState(null) // { file, rows, results }
+  const [mapNote, setMapNote] = useState('') // shown under the upload, not at the top of the page
 
   useEffect(() => { loadBatches(); loadValues(); loadTeam() }, [])
 
@@ -169,6 +172,47 @@ export default function AdminCrnImport() {
     setNewValue({ field: v.field, value: '', meaning: '' })
     await loadValues()
     setNote('Saved. Make a new preview to use it.')
+  }
+
+  async function pickMapFile(file) {
+    setMapNote('')
+    if (!file) { setMapUpload(null); return }
+    if (file.size > 2 * 1024 * 1024) { setMapNote('That file is too big. Split it into parts.'); return }
+    let parsed
+    try {
+      parsed = csvToObjects(await file.text())
+    } catch (e) {
+      console.error('Could not read mapping CSV:', e)
+      setMapNote("We couldn't read " + file.name + '. Save it as CSV and try again.'); return
+    }
+    if (!parsed.rows.length) { setMapNote(file.name + ' looks empty.'); return }
+    setBusy(true)
+    const { data, error } = await supabase.rpc('crn_value_map_import', { p_rows: parsed.rows, p_save: false })
+    setBusy(false)
+    if (error) { console.error('crn_value_map_import (check) failed:', error); setMapNote(mapUploadError(error, "We couldn't check that file. Try again.")); return }
+    setMapUpload({ file: file.name, rows: parsed.rows, results: data || [] })
+  }
+
+  async function saveMapUpload() {
+    if (!mapUpload) return
+    setBusy(true); setMapNote('')
+    const { data, error } = await supabase.rpc('crn_value_map_import', { p_rows: mapUpload.rows, p_save: true })
+    setBusy(false)
+    if (error) { console.error('crn_value_map_import (save) failed:', error); setMapNote(mapUploadError(error, "That didn't save. Nothing changed. Try again.")); return }
+    const saved = (data || []).filter((r) => r.outcome === 'saved').length
+    setMapUpload(null)
+    await loadValues()
+    setMapNote(saved + (saved === 1 ? ' mapping saved.' : ' mappings saved.') + ' Make a new preview to use them.')
+  }
+
+  function downloadMapTemplate() {
+    downloadText('crn-mapping-template.csv', toCsv(['Field', 'CRN Value', 'VWB Meaning', 'Mapping Status', 'Notes'], [
+      ['Category', 'Food & Nutrition', 'Food', 'Approved', ''],
+      ['Status', 'Active', 'Active', 'Approved', ''],
+      ['Approval Status', 'Approved', 'Approved', 'Approved', ''],
+      ['Statewide', 'Statewide', 'Whole state', 'Approved', ''],
+      ['Category', 'Financial Assistance', 'Money and Benefits', 'Proposed', 'Some programs fit Bills and Utilities better'],
+    ]))
   }
 
   async function removeValue(v) {
@@ -344,6 +388,17 @@ export default function AdminCrnImport() {
           </select>
           <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => saveValue()}>Save</button>
         </div>
+
+        <div style={{ borderTop: '1px solid var(--border)', marginTop: '1rem', paddingTop: '0.85rem' }}>
+          <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>Or upload the CRN team&rsquo;s mapping file</p>
+          <p style={small}>A CSV with Field, CRN Value, VWB Meaning, Mapping Status and Notes. Only rows marked Approved are saved. You see every row first.</p>
+          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48, marginBottom: '0.5rem' }} onClick={downloadMapTemplate}>Download a blank mapping file</button>
+          <label htmlFor="crn-map-file" style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem' }}>Choose mapping file (CSV)</label>
+          <input id="crn-map-file" type="file" accept=".csv,text/csv" disabled={busy}
+            onChange={(e) => { pickMapFile(e.target.files?.[0]); e.target.value = '' }} style={{ ...input, padding: '0.6rem' }} />
+          {mapNote && <p role="status" style={{ margin: '0.5rem 0 0', color: 'var(--accent)', fontWeight: 600, overflowWrap: 'anywhere' }}>{mapNote}</p>}
+          {mapUpload && <MapUploadPreview upload={mapUpload} busy={busy} onSave={saveMapUpload} onCancel={() => setMapUpload(null)} />}
+        </div>
       </section>
 
       <section style={box} aria-labelledby="crn-team-h">
@@ -378,6 +433,64 @@ export default function AdminCrnImport() {
           ))}
         </ul>
       </section>
+    </div>
+  )
+}
+
+// Plain words for upload errors. PGRST202: the database doesn't have the
+// upload function yet (vwb-crn-mapping-upload.sql not run on this project).
+function mapUploadError(error, fallback) {
+  if (error?.code === 'PGRST202' || /crn_value_map_import/.test(error?.message || '')) {
+    return 'The mapping upload isn\u2019t set up on this project yet. Run vwb-crn-find-help-column.sql, then vwb-crn-mapping-upload.sql, then try again.'
+  }
+  return friendlyError(error, fallback)
+}
+
+// What will happen to each row of an uploaded mapping file.
+const MAP_OUTCOME = {
+  save: 'Will save',
+  change: 'Will change',
+  same: 'Already set',
+  not_saved: 'Not saved',
+  problem: 'Problem',
+}
+
+function MapUploadPreview({ upload, busy, onSave, onCancel }) {
+  const rows = upload.results
+  const n = (k) => rows.filter((r) => r.outcome === k).length
+  const toSave = n('save') + n('change')
+  const problems = n('problem')
+  const label = (r) => {
+    const f = VALUE_FIELDS.find((x) => x.key === r.field)
+    const m = f && (f.meanings.find((x) => x[0] === r.meaning) || [r.meaning, r.meaning])[1]
+    return { field: f ? f.label : 'Unknown field', meaning: m || '' }
+  }
+  return (
+    <div style={{ marginTop: '0.75rem' }} aria-live="polite">
+      <p style={{ margin: '0 0 0.4rem', fontWeight: 600, overflowWrap: 'anywhere' }}>{upload.file}</p>
+      <p style={small}>
+        {toSave} to save &middot; {n('same')} already set &middot; {n('not_saved')} not approved yet &middot; {problems} {problems === 1 ? 'problem' : 'problems'}
+      </p>
+      {problems > 0 && <p style={{ ...small, color: 'var(--danger)', fontWeight: 600 }}>Fix the problem rows in the file and upload it again. Nothing saves until they&rsquo;re fixed.</p>}
+      <ul style={{ listStyle: 'none', margin: '0 0 0.6rem', padding: 0, display: 'grid', gap: '0.35rem', maxHeight: 360, overflowY: 'auto' }}>
+        {rows.map((r) => {
+          const l = label(r)
+          const bad = r.outcome === 'problem'
+          return (
+            <li key={r.line} style={{ padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid ' + (bad ? 'var(--danger)' : 'var(--border)'), fontSize: '0.95rem', overflowWrap: 'anywhere' }}>
+              <strong style={{ color: bad ? 'var(--danger)' : 'var(--text)' }}>{MAP_OUTCOME[r.outcome] || r.outcome}</strong>
+              {' '}&middot; line {r.line} &middot; {l.field}: &ldquo;{r.crn_value || '(blank)'}&rdquo;{l.meaning ? <> means <strong>{l.meaning}</strong></> : null}
+              {r.note && <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{r.note}</span>}
+            </li>
+          )
+        })}
+      </ul>
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <button type="button" className="btn btn-outline" style={{ minHeight: 48, flex: 1 }} disabled={busy} onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn btn-primary" style={{ minHeight: 48, flex: 2 }} disabled={busy || problems > 0 || toSave === 0} onClick={onSave}>
+          {busy ? 'Saving...' : toSave === 0 ? 'Nothing to save' : 'Save ' + toSave + (toSave === 1 ? ' mapping' : ' mappings')}
+        </button>
+      </div>
     </div>
   )
 }
