@@ -508,20 +508,9 @@ function captureCoverageLocation() {
         )}
         {profile?.is_hope_ambassador && !isAdmin && !adminAppStatus && (
           <div style={{ background: 'linear-gradient(135deg, var(--info-bg), var(--info-bg))', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
-            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>Apply to become an Admin</h2>
+            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>Become an admin for your village</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Admins help coordinate responses in their region and keep the community safe.</p>
-            {!showAdminApp ? (
-              <button className="btn btn-outline btn-full" onClick={() => setShowAdminApp(true)} style={{ borderColor: 'var(--info)', color: 'var(--info)' }}>Start Application</button>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <input type="text" placeholder="What area would you cover? (towns or counties)" value={adminAppRegion} onChange={e => setAdminAppRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
-                <textarea placeholder="Why do you want to help coordinate? What experience do you bring?" value={adminAppReason} onChange={e => setAdminAppReason(e.target.value)} rows={3} maxLength={500} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', resize: 'vertical' }} />
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn btn-outline" onClick={() => { setShowAdminApp(false); setAdminAppRegion(''); setAdminAppReason('') }} disabled={adminAppSaving}>Cancel</button>
-                  <button className="btn btn-primary" onClick={submitAdminApplication} disabled={adminAppSaving || !adminAppRegion.trim() || !adminAppReason.trim()} style={{ flex: 1 }}>{adminAppSaving ? 'Submitting...' : 'Submit Application'}</button>
-                </div>
-              </div>
-            )}
+            <Link className="btn btn-outline btn-full" to="/become-admin" style={{ borderColor: 'var(--info)', color: 'var(--info)', minHeight: '44px' }}>See if you're ready</Link>
           </div>
         )}
         {adminAppStatus === 'invited' && (
