@@ -5776,3 +5776,19 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 .admin-role-log li { padding: 0.5rem 0; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
 .admin-role-how { color: var(--text-secondary); }
 .admin-role-log .admin-role-reason, .admin-role-log .admin-role-time { display: block; margin: 0.125rem 0 0; }
+
+/* Admins see people in their villages */
+.admin-scope-note { margin: 0 0 0.75rem; padding: 0.75rem; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); font-size: 1rem; }
+.admin-village-picker { width: 100%; margin-top: 0.5rem; }
+.admin-village-btn { min-height: 44px; padding: 0.4rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-strong); background: none; color: var(--text-strong); font: inherit; font-size: 0.9375rem; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.admin-village-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.admin-village-set { margin: 0.5rem 0 0; padding: 0.75rem; border: 1px solid var(--border); border-radius: 10px; display: grid; gap: 0.25rem; }
+.admin-village-set legend { font-weight: 700; font-size: 1rem; padding: 0 0.25rem; }
+.admin-village-option { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; font-size: 1rem; cursor: pointer; }
+.admin-village-option input { width: 22px; height: 22px; accent-color: var(--accent); }
+
+/* Admin log filters */
+.admin-log-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 0.75rem; }
+.admin-log-chip { min-height: 44px; padding: 0 0.85rem; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-strong); font: inherit; font-size: 0.9375rem; font-weight: 600; cursor: pointer; }
+.admin-log-chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.admin-log-chip:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
