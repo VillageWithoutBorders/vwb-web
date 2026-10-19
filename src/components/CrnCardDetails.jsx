@@ -33,6 +33,7 @@ export default function CrnCardDetails({ r }) {
     <div className="fh-crn" style={{ margin: '0.2rem 0 0.35rem' }}>
       {r.provider_name && <p style={{ color: 'var(--text)', fontWeight: 600 }}>Run by {r.provider_name}</p>}
       {serves.length > 0 && <Row label="Serves" value={serves.join('; ')} />}
+      {r.open_site && <p>Open to anyone, from any county. Located in {r.open_site}.</p>}
       {r.area_note && <Row label={serves.length > 0 ? 'Also serves' : 'Serves'} value={r.area_note} />}
       {zips.length > 0 && <Row label="Also serves these ZIP codes" value={zips.join(', ')} />}
       {fuzzy && <p>Not sure if your address counts? Call and ask before you go.</p>}
