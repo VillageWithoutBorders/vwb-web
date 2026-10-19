@@ -7,12 +7,13 @@ import SimpleOffer from '../components/SimpleOffer'
 import BottomTabs from '../components/BottomTabs'
 import MeButton from '../components/MeButton'
 import AlertsMenu from '../components/AlertsMenu'
+import AdminShield from '../components/AdminShield'
 import AppTour from '../components/AppTour'
 import KeyRestorePrompt from '../components/KeyRestorePrompt'
 
 export default function Layout() {
   const { pathname } = useLocation()
-  const { profile } = useAuth()
+  const { profile, isAdmin } = useAuth()
   const simple = useSimpleView()
   // The account says which view to use. Follow it on this phone too.
   useEffect(() => {
@@ -26,11 +27,14 @@ export default function Layout() {
   const isWorld = (pathname === '/' && !simple) || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
   const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
 
+  // The Admin page gets a wider column on a computer for its side menu.
+  const isAdminPage = pathname === '/admin'
+
   return (
     <div className="app-shell">
       <header className="app-header">
         {/* Always here, left to right: Home (the globe), Calendar, Dashboard (in the middle), Alerts, Your corner. */}
-        <nav className="app-header-inner header-nav" aria-label="Top menu">
+        <nav className={'app-header-inner header-nav' + (isAdmin ? ' header-nav-admin' : '')} aria-label="Top menu">
           {!simple && (<>
           <Link to="/" className={'header-btn' + (pathname === '/' ? ' on' : '')} aria-current={pathname === '/' ? 'page' : undefined} aria-label="Home: your networks on the globe" data-tour="top-home">
             <img className="header-btn-logo" src="/images/vwb_header-v2.png" alt="" width="26" height="26" />
@@ -45,12 +49,14 @@ export default function Layout() {
             <span className="header-btn-label" aria-hidden="true">Dashboard</span>
           </Link>
           </>)}
+          {/* Admins and founders: the shield opens the shared Admin inbox. */}
+          {isAdmin && <AdminShield />}
           {/* Tap for your 5 newest alerts, with "See all alerts" at the bottom. */}
           <AlertsMenu />
           <MeButton />
         </nav>
       </header>
-      <main className={'app-main' + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '')}>
+      <main className={'app-main' + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '')}>
         <Outlet />
       </main>
       <BottomTabs />

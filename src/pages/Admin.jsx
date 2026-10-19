@@ -2,7 +2,7 @@ import Icon from '../components/Icon'
 import { useState, useEffect } from 'react'
 import AdminResourceClaims from '../components/AdminResourceClaims'
 import { BanDialog, BannedAccountsPanel } from '../components/AdminBans'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
@@ -11,6 +11,9 @@ import { resetAccountToBase } from '../utils/resetAccount'
 import { useGoBack } from '../components/BackLink'
 import AdminCrnImport from '../components/AdminCrnImport'
 import { placesEnabled } from '../utils/places'
+import AdminInbox from '../components/AdminInbox'
+import { useAdminInbox, refreshAdminInbox } from '../hooks/useAdminInbox'
+import { useWideScreen } from '../hooks/useWideScreen'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also alert the person and let the caller bail out; omit it for
@@ -54,7 +57,23 @@ export default function Admin() {
   const { user, profile, isAdmin, isFounder } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
-  const [tab, setTab] = useState(() => { try { return new URLSearchParams(window.location.search).get('tab') || 'emergencies' } catch { return 'emergencies' } })
+  const [tab, setTab] = useState(() => { try { return new URLSearchParams(window.location.search).get('tab') || 'inbox' } catch { return 'inbox' } })
+  const location = useLocation()
+  // Phone = the simple build. Computer (1024px and wider) = the full build
+  // with a side menu and every tool.
+  const wide = useWideScreen()
+  const inbox = useAdminInbox()
+  // A phone can still open a computer-only tool from a link, after a heads-up.
+  const [forceTool, setForceTool] = useState(false)
+  // Every section has its own link (/admin?tab=reports), so alerts, the
+  // shield and the back button all land in the right place.
+  useEffect(() => {
+    let t = 'inbox'
+    try { t = new URLSearchParams(location.search).get('tab') || 'inbox' } catch { /* keep inbox */ }
+    setTab(t)
+    setForceTool(false)
+  }, [location.search])
+  useEffect(() => { refreshAdminInbox() }, [tab])
   const [resourceClaims, setResourceClaims] = useState([])
   const [loading, setLoading] = useState(true)
   const [pendingEvents, setPendingEvents] = useState([])
@@ -778,7 +797,7 @@ export default function Admin() {
       const { data: existing, error: existErr } = await supabase.from('admin_applications').select('id, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle()
       if (reportError('promoteUser:checkExisting', existErr, 'Could not check this user. Try again.')) return
       if (existing && existing.status === 'invited') { alert("This user already has an invitation waiting, they haven't responded yet."); return }
-      if (existing && existing.status === 'pending') { alert('This user already accepted an invitation. Go to the Approvals tab to finish granting them access.'); setTab('approvals'); return }
+      if (existing && existing.status === 'pending') { alert('This user already accepted an invitation. Go to the Approvals tab to finish granting them access.'); navigate('/admin?tab=approvals'); return }
       const { error: insErr } = await supabase.from('admin_applications').insert({ user_id: userId, region: 'Invited by admin', reason: 'Admin invitation', status: 'invited', invited_by: user.id })
       if (reportError('promoteUser:insertInvite', insErr, 'Could not send the invitation. Try again.')) return
       const { error: notifErr } = await supabase.from('notifications').insert({ user_id: userId, type: 'admin_invite', title: 'You have been invited to become an Admin', body: 'Check your profile to accept or decline.', link: '/profile', read: false })
@@ -901,25 +920,67 @@ export default function Admin() {
   const falseAlarms = approvals.filter(a => a.type === 'false_alarm_request')
   const duplicates = approvals.filter(a => a.type === 'duplicate_merge_request')
 
+  const goTab = (key) => navigate('/admin?tab=' + key)
+  const approvalsCount = approvals.length + adminApplications.length + ambApplications.length + resourceClaims.length
+  const orgsWaiting = organizations.filter(o => !o.approved).length
+  // The sections. desktopOnly ones need more room and tools, so the phone
+  // build leaves them for a computer.
+  const SECTIONS = [
+    { key: 'inbox', label: 'Needs you', icon: 'inbox', count: inbox.total, urgent: inbox.urgent },
+    { key: 'approvals', label: 'Approvals', icon: 'check', count: approvalsCount },
+    { key: 'reports', label: 'Reports', icon: 'flag', count: stats.alerts || 0, urgent: (stats.alerts || 0) > 0 },
+    { key: 'emergencies', label: 'Emergencies', icon: 'siren', count: pendingEvents.length, urgent: pendingEvents.length > 0 },
+    { key: 'users', label: 'People', icon: 'people' },
+    { key: 'organizations', label: 'Organizations', icon: 'houses', count: orgsWaiting },
+    { key: 'villages', label: 'Villages', icon: 'cottage', desktopOnly: true },
+    { key: 'content', label: 'SkillShare', icon: 'handshake', count: duplicateCount, desktopOnly: true },
+    ...(placesEnabled ? [{ key: 'crn', label: 'CRN Import', icon: 'folder', desktopOnly: true }] : []),
+  ]
+  const current = SECTIONS.find(s => s.key === tab)
+  const toolWaits = !wide && !forceTool && current?.desktopOnly
+  const showTab = toolWaits ? null : tab
+  const navBtn = (s) => (
+    <button key={s.key} type="button" className={'admin-nav-btn' + (tab === s.key ? ' on' : '')} aria-current={tab === s.key ? 'page' : undefined} onClick={() => goTab(s.key)}>
+      <Icon name={s.icon} size={24} />
+      <span className="admin-nav-label">{s.label}</span>
+      {s.count > 0 && <span className={'admin-nav-count' + (s.urgent ? ' urgent' : '')}>{s.count}</span>}
+    </button>
+  )
+
   return (
-    <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => goBack('/profile')} aria-label="Back to Profile" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
-        <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--accent)', flex: 1 }}>Admin Panel</h1>
-        <button onClick={() => navigate('/admin/report')} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem', display: isFounder ? 'inline-block' : 'none' }}>Grant Report</button>
-        <button onClick={() => navigate('/scramble-test')} style={{ padding: '0.4rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem' }}>Scramble test</button>
+    <div className={'admin-shell' + (wide ? ' admin-wide' : '')}>
+      <div className="admin-top">
+        <button type="button" className="admin-back" onClick={() => goBack('/profile')} aria-label="Back">&#8592;</button>
+        <h1 className="admin-title">Admin</h1>
+        {wide && <span className="admin-top-note">Computer view: every tool</span>}
       </div>
 
+      {wide ? (
+        <nav className="admin-side" aria-label="Admin sections">
+          {SECTIONS.map(navBtn)}
+          <div className="admin-side-more">
+            {isFounder && <button type="button" className="admin-nav-btn" onClick={() => navigate('/admin/report')}><Icon name="scroll" size={24} /><span className="admin-nav-label">Grant report</span></button>}
+            <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/scramble-test')}><Icon name="lock" size={24} /><span className="admin-nav-label">Test tools</span></button>
+          </div>
+        </nav>
+      ) : (
+        <nav className="admin-chips" aria-label="Admin sections">
+          {SECTIONS.filter(s => !s.desktopOnly).map(navBtn)}
+        </nav>
+      )}
+
+      <div className="admin-main">
+      {wide && showTab === 'inbox' && (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('all'); setTab('users') }} style={statCardStyle}>
+        <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('all'); goTab('users') }} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{stats.users}</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Users</div>
         </button>
-        <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('ambassadors'); setTab('users') }} style={statCardStyle}>
+        <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('ambassadors'); goTab('users') }} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{stats.ambassadors}</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Ambassadors</div>
         </button>
-        <button type="button" className="admin-stat-card" onClick={() => { setContentFilter('requests'); setTab('content') }} style={statCardStyle}>
+        <button type="button" className="admin-stat-card" onClick={() => { setContentFilter('requests'); goTab('content') }} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{stats.requests}</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Requests</div>
         </button>
@@ -935,34 +996,35 @@ export default function Admin() {
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--info)' }}>{stats.completed}</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Completed</div>
         </div>
-        <button type="button" className="admin-stat-card" onClick={() => setTab('emergencies')} style={{ ...statCardStyle, gridColumn: 'span 3' }}>
+        <button type="button" className="admin-stat-card" onClick={() => goTab('emergencies')} style={{ ...statCardStyle, gridColumn: 'span 3' }}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger)' }}>{stats.events}</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Events</div>
         </button>
-        <button type="button" className="admin-stat-card" onClick={() => setTab('reports')} style={{ ...statCardStyle, gridColumn: 'span 3' }}>
+        <button type="button" className="admin-stat-card" onClick={() => goTab('reports')} style={{ ...statCardStyle, gridColumn: 'span 3' }}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: stats.alerts > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>{stats.alerts}</div>
           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Reports</div>
         </button>
       </div>
+      )}
 
-      {/* Users, Emergencies, and Reports each already have a stat tile above that
-          jumps here on click, so they don't need a second entry point in this row.
-          Wraps instead of scrolling so nothing is ever hidden off-screen as more
-          sections get added. */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button style={tabStyle(tab === 'approvals')} onClick={() => setTab('approvals')}>Approvals {(approvals.length + adminApplications.length + ambApplications.length + resourceClaims.length) > 0 && <span style={{ marginLeft: '0.3rem', background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{approvals.length + adminApplications.length + ambApplications.length + resourceClaims.length}</span>}</button>
-        <button style={tabStyle(tab === 'organizations')} onClick={() => setTab('organizations')}>Organizations ({organizations.length}){organizations.some(o => !o.approved) ? ' \u00b7 ' + organizations.filter(o => !o.approved).length + ' waiting' : ''}</button>
-        <button style={tabStyle(tab === 'villages')} onClick={() => setTab('villages')}>Villages ({villages.length})</button>
-        <button style={tabStyle(tab === 'content')} onClick={() => setTab('content')}>SkillShare {duplicateCount > 0 && <span style={{ marginLeft: '0.3rem', background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{duplicateCount}</span>}</button>
-        {placesEnabled && <button style={tabStyle(tab === 'crn')} onClick={() => setTab('crn')}>CRN Import</button>}
-        <button style={tabStyle(tab === 'reports')} onClick={() => setTab('reports')}>Reports {stats.alerts > 0 && <span style={{ marginLeft: '0.3rem', background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', padding: '1px 5px', borderRadius: '8px' }}>{stats.alerts}</span>}</button>
-      </div>
+      {showTab === 'inbox' && <AdminInbox inbox={inbox} onOpenTab={goTab} />}
+      {!wide && showTab === 'inbox' && (
+        <p className="admin-computer-note">Villages, SkillShare, CRN Import{isFounder ? ', the grant report' : ''} and test tools are in the computer view of this page.</p>
+      )}
 
-      {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Loading...</p>}
+      {toolWaits && (
+        <div className="admin-tool-wait">
+          <p><strong>{current.label} works best on a computer.</strong> It has more tools than fit well on a phone.</p>
+          <button type="button" className="btn btn-outline" onClick={() => setForceTool(true)}>Open it here anyway</button>
+          <button type="button" className="btn btn-primary" onClick={() => goTab('inbox')}>Back to Needs you</button>
+        </div>
+      )}
 
-      {!loading && placesEnabled && tab === 'crn' && <AdminCrnImport />}
+      {loading && tab !== 'inbox' && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Loading...</p>}
 
-      {!loading && tab === 'approvals' && (
+      {!loading && placesEnabled && showTab === 'crn' && <AdminCrnImport />}
+
+      {!loading && showTab === 'approvals' && (
         <>
           <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
           {approvals.length === 0 && adminApplications.length === 0 && ambApplications.length === 0 && resourceClaims.length === 0 ? (
@@ -1092,7 +1154,7 @@ export default function Admin() {
         </>
       )}
 
-      {!loading && tab === 'emergencies' && (
+      {!loading && showTab === 'emergencies' && (
         <>
           {pendingEvents.length === 0 ? (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No pending emergency reports</p>
@@ -1129,7 +1191,7 @@ export default function Admin() {
         />
       )}
 
-      {!loading && tab === 'users' && (
+      {!loading && showTab === 'users' && (
         <>
           <BannedAccountsPanel refreshKey={banRefresh} onChange={loadUsers} />
           <div style={{ marginBottom: '0.75rem' }}>
@@ -1201,7 +1263,7 @@ export default function Admin() {
                   u.admin_app_status === 'invited' ? (
                     <span style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.75rem', fontWeight: 600 }}>Invite Sent</span>
                   ) : u.admin_app_status === 'pending' ? (
-                    <button onClick={() => setTab('approvals')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review in Approvals</button>
+                    <button onClick={() => goTab('approvals')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Review in Approvals</button>
                   ) : (
                     <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--info-bg)', color: 'var(--info)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>{u.admin_app_status === 'declined' ? 'Invite Admin Again' : 'Invite Admin'}</button>
                   )
@@ -1245,7 +1307,7 @@ export default function Admin() {
         </>
       )}
 
-      {!loading && tab === 'reports' && (
+      {!loading && showTab === 'reports' && (
         <>
           {helpMessages.length > 0 && (() => {
             const openMsgs = helpMessages.filter(m => m.status !== 'done')
@@ -1406,7 +1468,7 @@ export default function Admin() {
         </>
       )}
 
-      {!loading && tab === 'organizations' && (
+      {!loading && showTab === 'organizations' && (
         <>
           <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
           <button onClick={() => setShowNewOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewOrgForm ? 'Cancel' : '+ New Organization'}</button>
@@ -1503,7 +1565,7 @@ export default function Admin() {
         </>
       )}
 
-      {!loading && tab === 'villages' && (
+      {!loading && showTab === 'villages' && (
         <>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
             Each village has its own village chat. Anyone whose zip code is on its list can join, after agreeing to a risk warning. People can join more than one, and there is no cap. New members only see messages from after they joined. Two members can remove someone, and admins can too. Any neighbor can start a village (up to 3 each, up to 40 zip codes), and you get an alert. You can edit any village\u2019s zip list here. The Users tab village menu sets a person's main village. It does not add them to a chat.
@@ -1592,7 +1654,7 @@ export default function Admin() {
         </>
       )}
 
-      {!loading && tab === 'content' && (
+      {!loading && showTab === 'content' && (
         <>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
             Deleting here is permanent. It removes the request or offer from SkillShare for good; any chat about it stays.
@@ -1649,6 +1711,7 @@ export default function Admin() {
           })}
         </>
       )}
+      </div>
     </div>
   )
 }

@@ -5655,3 +5655,106 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 .for-chip { display: inline-block; background: var(--info-bg); color: var(--text-strong); font-weight: 600; font-size: 0.8125rem; padding: 2px 8px; border-radius: 999px; margin-right: 0.35rem; }
 .for-line { display: block; font-size: 0.875rem; color: var(--text-strong); font-weight: 600; margin: 0.15rem 0; }
 .for-note { display: block; font-size: 0.8125rem; color: var(--text-secondary); margin: 0.15rem 0 0.35rem; }
+
+/* ---------- Admin: shield entrance and the two builds (Oct 19) ----------
+   Phone: a simple build (Needs you, Approvals, Reports, Emergencies, People,
+   Organizations) with big buttons. Computer (1024px+): a side menu with every
+   tool. */
+
+/* Six top-bar buttons for admins still fit a 320px phone. */
+@media (max-width: 374px) {
+  .header-nav-admin .header-btn { min-width: 46px; padding: 2px 2px; }
+  .header-nav-admin .header-btn-label { font-size: 0.6875rem; }
+}
+.header-btn .bell-badge.admin-badge-calm { background: #ffd98a; color: #1f2d24; }
+
+.admin-shell { display: block; }
+.admin-top { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+.admin-back { min-width: 44px; min-height: 44px; background: none; border: none; color: var(--accent); font-size: 1.5rem; cursor: pointer; border-radius: 10px; }
+.admin-back:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.admin-title { margin: 0; font-size: 1.5rem; color: var(--accent); flex: 1; }
+.admin-top-note { font-size: 0.875rem; color: var(--text-muted); }
+
+.admin-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }
+.admin-nav-btn {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%;
+  min-height: 48px; padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--surface); color: var(--text-strong);
+  font: inherit; font-size: 1rem; font-weight: 600; text-align: left; cursor: pointer;
+}
+.admin-nav-btn .vwb-icon { flex: 0 0 auto; }
+.admin-nav-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.admin-nav-btn.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.admin-nav-btn.quiet { color: var(--text-secondary); font-weight: 500; }
+.admin-nav-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.admin-nav-btn:active { transform: scale(0.98); }
+.admin-nav-count { flex: 0 0 auto; min-width: 26px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-strong); font-size: 0.875rem; font-weight: 700; text-align: center; }
+.admin-nav-count.urgent { background: var(--danger); color: #fff; }
+.admin-nav-btn.on .admin-nav-count { background: rgba(255,255,255,0.25); color: inherit; }
+
+.admin-main { min-width: 0; }
+.admin-section-title { font-size: 1.25rem; margin: 0 0 0.25rem; color: var(--text-strong); }
+.admin-section-note { font-size: 1rem; color: var(--text-secondary); margin: 0 0 0.75rem; }
+.admin-computer-note { font-size: 0.9375rem; color: var(--text-muted); margin: 1.25rem 0 0; }
+
+.admin-inbox-group { font-size: 1rem; font-weight: 700; margin: 1rem 0 0.5rem; color: var(--text-secondary); }
+.admin-inbox-group.urgent { color: var(--danger); }
+.admin-inbox-list, .admin-alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.admin-inbox-row {
+  display: flex; align-items: center; gap: 0.75rem; width: 100%;
+  min-height: 64px; padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 12px;
+  background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.admin-inbox-row.urgent { border-left-color: var(--danger); }
+.admin-inbox-row:focus-visible, .admin-alert-row:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.admin-inbox-row:active, .admin-alert-row:active { transform: scale(0.99); }
+.admin-inbox-icon { flex: 0 0 auto; display: flex; }
+.admin-inbox-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.admin-inbox-label { font-size: 1rem; font-weight: 700; color: var(--text-strong); overflow-wrap: anywhere; }
+.admin-inbox-meta { font-size: 0.9375rem; color: var(--text-secondary); }
+.admin-inbox-open { flex: 0 0 auto; font-weight: 700; color: var(--accent); font-size: 1rem; }
+.admin-inbox-empty { display: flex; align-items: center; gap: 0.5rem; font-size: 1.0625rem; font-weight: 600; padding: 1rem; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+.admin-inbox-problem { padding: 0.75rem; border-radius: 10px; background: var(--danger-bg); color: var(--danger); font-size: 1rem; }
+
+.admin-alert-row {
+  display: flex; flex-direction: column; gap: 2px; width: 100%; min-height: 48px;
+  padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface-sunk, var(--surface)); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.admin-alert-title { font-size: 1rem; font-weight: 600; color: var(--text-strong); overflow-wrap: anywhere; }
+.admin-alert-body { font-size: 0.9375rem; color: var(--text-secondary); overflow-wrap: anywhere; }
+.admin-alert-time { font-size: 0.875rem; color: var(--text-muted); }
+.admin-urgent-tag { display: inline-block; margin-right: 0.4rem; padding: 1px 6px; border-radius: 6px; background: var(--danger); color: #fff; font-size: 0.8125rem; font-weight: 700; vertical-align: 1px; }
+
+.admin-tool-wait { padding: 1rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); display: grid; gap: 0.75rem; font-size: 1rem; }
+.admin-tool-wait p { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-nav-btn:active, .admin-inbox-row:active, .admin-alert-row:active { transform: none; }
+}
+
+/* Computer build */
+@media (min-width: 1024px) {
+  .app-main.app-main-admin { max-width: 1240px; }
+  .admin-shell.admin-wide { display: grid; grid-template-columns: 240px minmax(0, 1fr); grid-template-areas: "top top" "side main"; column-gap: 1.5rem; align-items: start; }
+  .admin-wide .admin-top { grid-area: top; }
+  .admin-wide .admin-side { grid-area: side; position: sticky; top: calc(var(--header-height) + 1rem); display: grid; gap: 0.375rem; }
+  .admin-wide .admin-main { grid-area: main; }
+  .admin-side-more { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: grid; gap: 0.375rem; }
+  .admin-wide .admin-inbox-list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+}
+/* Phone section buttons: whole words only, count as a corner badge. */
+.admin-chips .admin-nav-btn { position: relative; padding-right: 0.5rem; }
+.admin-chips .admin-nav-label { font-size: 0.9375rem; overflow-wrap: normal; word-break: normal; hyphens: manual; }
+.admin-chips .admin-nav-count { position: absolute; top: -6px; right: -4px; min-width: 22px; padding: 1px 6px; font-size: 0.8125rem; border: 2px solid var(--bg, var(--surface)); }
+.admin-chips .admin-nav-count:not(.urgent) { background: var(--accent); color: var(--on-accent); }
+@media (max-width: 359px) {
+  .admin-chips { grid-template-columns: 1fr; gap: 0.375rem; }
+}
+/* Smallest phones (under 360px): six labels don't fit side by side, so the
+   admin top bar shows pictures only. Screen readers still read each name. */
+@media (max-width: 359px) {
+  .header-nav-admin .header-btn-label { display: none; }
+}
