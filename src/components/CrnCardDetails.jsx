@@ -53,7 +53,7 @@ export default function CrnCardDetails({ r }) {
           {isCrn && <Row label="Referral needed" value={known(r.referral_required) || 'not known yet'} />}
           <Row label="Getting in" value={known(r.location_access_notes)} />
           <Row label="Good to know" value={known(r.public_notes)} />
-          {known(r.last_verified) && <p style={{ color: 'var(--text-muted)' }}>Last checked: {known(r.last_verified)}</p>}
+          {known(r.last_verified) && <p style={{ color: 'var(--text-muted)' }}>Last checked: {known(r.last_verified)}{isCrn ? ' (public info)' : ''}</p>}
         </div>
       )}
     </div>
