@@ -83,6 +83,13 @@ export default function Settings() {
   const [deleteError, setDeleteError] = useState('')
   const [signOutAllError, setSignOutAllError] = useState('')
 
+  // The Admin page links here (/settings#two-step) when two-step login is off.
+  useEffect(() => {
+    if (window.location.hash !== '#two-step') return
+    const t = setTimeout(() => document.getElementById('two-step')?.scrollIntoView({ block: 'start' }), 300)
+    return () => clearTimeout(t)
+  }, [])
+
   useEffect(() => {
     if (!user) return
     let alive = true
@@ -387,7 +394,7 @@ export default function Settings() {
         {pwMessage && <p className="form-success" role="status" style={{ padding: '0 1rem 0.75rem' }}>{pwMessage}</p>}
       </div>
 
-      <div className="profile-details" style={{ marginTop: '1rem' }}>
+      <div className="profile-details" id="two-step" style={{ marginTop: '1rem', scrollMarginTop: 'calc(var(--header-height) + 1rem)' }}>
         <div className="detail-section-header">Two-Step Login</div>
         {twoStepLoaded && !enroll && !twoStep && (
           <div className="detail-row">

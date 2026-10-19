@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { useAuth } from '../context/AuthContext'
 
 // Banning, for VWB admins and the founder (see vwb-bans.sql).
 // A ban signs the person out, blocks their login and their email from
@@ -28,6 +29,17 @@ export function BanDialog({ target, onClose, onDone }) {
   const [error, setError] = useState('')
   const firstRef = useRef(null)
   const who = target.name || target.email || 'this person'
+  // Banning a Hope Ambassador, organizer or keeper takes two admins unless
+  // the founder does it (vwb-admin-safety.sql). Then this asks instead.
+  const { isFounder } = useAuth()
+  const [needsSecond, setNeedsSecond] = useState(false)
+  useEffect(() => {
+    if (isFounder || !target.userId) return
+    supabase.rpc('is_trusted_person', { p_user: target.userId }).then(({ data, error }) => {
+      if (error) { console.error('[BanDialog] is_trusted_person', error); return }
+      setNeedsSecond(!!data)
+    })
+  }, [isFounder, target.userId])
 
   useEffect(() => {
     firstRef.current?.focus()
@@ -42,6 +54,13 @@ export function BanDialog({ target, onClose, onDone }) {
     if (!sure) { setError('Check the box to confirm.'); return }
     setBusy(true); setError('')
     const fullReason = reason + (details.trim() ? ': ' + details.trim() : '')
+    if (needsSecond) {
+      const { error: askErr } = await supabase.rpc('ban_request_ask', { p_target: target.userId, p_reason: fullReason.slice(0, 500) })
+      setBusy(false)
+      if (askErr) { console.error('[BanDialog] ban_request_ask', askErr); setError(askErr.message || 'Could not ask. Try again.'); return }
+      onDone({ asked: true })
+      return
+    }
     const { error: err } = await supabase.rpc('ban_account', {
       p_reason: fullReason.slice(0, 500),
       p_user: target.userId || null,
@@ -57,6 +76,9 @@ export function BanDialog({ target, onClose, onDone }) {
       <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={onClose} />
       <div role="dialog" aria-modal="true" aria-labelledby="ban-title" className="app-dialog">
         <h2 id="ban-title">Ban {who}?</h2>
+        {needsSecond && (
+          <p className="groups-note"><strong>{who} is a Hope Ambassador, organizer or keeper.</strong> A second admin has to agree before the ban happens. Your request shows in Reports for the other admins.</p>
+        )}
         <p className="groups-note">
           They'll be signed out and can't log back in. {target.email ? 'This email' : 'Their email'} can't be used to sign up again.
           Their requests, offers, and posts will be hidden from everyone but admins. You can undo this later.
@@ -79,7 +101,7 @@ export function BanDialog({ target, onClose, onDone }) {
         {error && <p className="groups-error" role="alert">{error}</p>}
         <div className="groups-actions">
           <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>
-          <button type="button" className="btn ban-btn-danger" onClick={doBan} disabled={busy}>{busy ? 'Banning...' : 'Ban'}</button>
+          <button type="button" className="btn ban-btn-danger" onClick={doBan} disabled={busy}>{busy ? (needsSecond ? 'Asking...' : 'Banning...') : (needsSecond ? 'Ask to ban' : 'Ban')}</button>
         </div>
       </div>
     </>

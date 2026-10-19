@@ -13,6 +13,8 @@ import AdminCrnImport from '../components/AdminCrnImport'
 import { placesEnabled } from '../utils/places'
 import AdminInbox from '../components/AdminInbox'
 import { AdminRemovalRequests, AdminRoleLog } from '../components/AdminRoleSafety'
+import { useAdminVillages, AdminScopeNote, AdminVillagePicker } from '../components/AdminVillageScope'
+import { useTwoStepOn, TwoStepGate, BanRequests, AdminActionLog } from '../components/AdminSafety'
 import { useAdminInbox, refreshAdminInbox } from '../hooks/useAdminInbox'
 import { useWideScreen } from '../hooks/useWideScreen'
 
@@ -68,6 +70,10 @@ export default function Admin() {
   const [forceTool, setForceTool] = useState(false)
   // Bumped after any change to admin access, so the removal list and log reload.
   const [roleRefresh, setRoleRefresh] = useState(0)
+  // Which villages each admin covers (the founder sets them).
+  const adminVillages = useAdminVillages(roleRefresh)
+  // Admin tools need two-step login on (null while checking).
+  const twoStepOn = useTwoStepOn()
   // Every section has its own link (/admin?tab=reports), so alerts, the
   // shield and the back button all land in the right place.
   useEffect(() => {
@@ -187,7 +193,7 @@ export default function Admin() {
     reportError('loadContent:offers', offErr)
 
     const userIds = [...new Set([...(reqs || []).map(r => r.requester_id), ...(offs || []).map(o => o.user_id)].filter(Boolean))]
-    const { data: nameRows, error: nameErr } = userIds.length > 0 ? await supabase.from('helper_profiles').select('user_id, display_name').in('user_id', userIds) : { data: [], error: null }
+    const { data: nameRows, error: nameErr } = userIds.length > 0 ? await supabase.from('helper_profiles_public').select('user_id, display_name').in('user_id', userIds) : { data: [], error: null }
     reportError('loadContent:names', nameErr)
     const nameOf = {}
     ;(nameRows || []).forEach(n => { nameOf[n.user_id] = n.display_name })
@@ -372,7 +378,7 @@ export default function Admin() {
       reportError('loadAdminApplications:profile', profErr)
       let invitedByName = null
       if (a.invited_by) {
-        const { data: inviter, error: invErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.invited_by).maybeSingle()
+        const { data: inviter, error: invErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', a.invited_by).maybeSingle()
         reportError('loadAdminApplications:inviter', invErr)
         invitedByName = inviter?.display_name || 'an admin'
       }
@@ -508,9 +514,9 @@ export default function Admin() {
   // Adds names and private notes to a list of reports.
   async function enrichReports(data) {
     const withNames = await Promise.all(data.map(async (a) => {
-      const { data: reporter, error: repErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', a.reporter_id).maybeSingle()
+      const { data: reporter, error: repErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', a.reporter_id).maybeSingle()
       reportError('enrichReports:reporter', repErr)
-      const { data: reported, error: repdErr } = a.reported_user_id ? await supabase.from('helper_profiles').select('display_name, role').eq('user_id', a.reported_user_id).maybeSingle() : { data: null, error: null }
+      const { data: reported, error: repdErr } = a.reported_user_id ? await supabase.from('helper_profiles_public').select('display_name, role').eq('user_id', a.reported_user_id).maybeSingle() : { data: null, error: null }
       reportError('enrichReports:reported', repdErr)
       return { ...a, reporter_name: reporter?.display_name || 'Unknown', reported_name: a.reported_user_id ? (reported?.display_name || 'Unknown') : 'a removed account', reported_role: reported?.role || null }
     }))
@@ -558,7 +564,7 @@ export default function Admin() {
     if (issues && issues.length > 0) {
       const userIds = [...new Set(issues.flatMap(i => [i.from_user_id, i.about_user_id]).filter(Boolean))]
       const reqIds = [...new Set(issues.map(i => i.request_id).filter(Boolean))]
-      const { data: nameRows, error: nameErr } = await supabase.from('helper_profiles').select('user_id, display_name').in('user_id', userIds)
+      const { data: nameRows, error: nameErr } = await supabase.from('helper_profiles_public').select('user_id, display_name').in('user_id', userIds)
       reportError('loadAlerts:taskIssueNames', nameErr)
       const { data: reqRows, error: reqErr } = reqIds.length > 0 ? await supabase.from('help_requests').select('id, skill_needed').in('id', reqIds) : { data: [], error: null }
       reportError('loadAlerts:taskIssueRequests', reqErr)
@@ -581,7 +587,7 @@ export default function Admin() {
     reportError('loadAlerts:checkins', checkinErr)
     if (checkins) {
       const withReporter = await Promise.all(checkins.map(async (c) => {
-        const { data: rp, error: rpErr } = await supabase.from('helper_profiles').select('display_name').eq('user_id', c.reporter_id).maybeSingle()
+        const { data: rp, error: rpErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', c.reporter_id).maybeSingle()
         reportError('loadAlerts:checkinReporter', rpErr)
         return { ...c, reporter_name: rp?.display_name || 'Unknown' }
       }))
@@ -944,6 +950,7 @@ export default function Admin() {
     { key: 'reports', label: 'Reports', icon: 'flag', count: stats.alerts || 0, urgent: (stats.alerts || 0) > 0 },
     { key: 'emergencies', label: 'Emergencies', icon: 'siren', count: pendingEvents.length, urgent: pendingEvents.length > 0 },
     { key: 'users', label: 'People', icon: 'people' },
+    { key: 'log', label: 'Admin log', icon: 'scroll' },
     { key: 'organizations', label: 'Organizations', icon: 'houses', count: orgsWaiting },
     { key: 'villages', label: 'Villages', icon: 'cottage', desktopOnly: true },
     { key: 'content', label: 'SkillShare', icon: 'handshake', count: duplicateCount, desktopOnly: true },
@@ -951,7 +958,8 @@ export default function Admin() {
   ]
   const current = SECTIONS.find(s => s.key === tab)
   const toolWaits = !wide && !forceTool && current?.desktopOnly
-  const showTab = toolWaits ? null : tab
+  // Nothing opens until two-step login is on.
+  const showTab = (toolWaits || twoStepOn !== true) ? null : tab
   const navBtn = (s) => (
     <button key={s.key} type="button" className={'admin-nav-btn' + (tab === s.key ? ' on' : '')} aria-current={tab === s.key ? 'page' : undefined} onClick={() => goTab(s.key)}>
       <Icon name={s.icon} size={24} />
@@ -1020,12 +1028,14 @@ export default function Admin() {
       </div>
       )}
 
-      {showTab === 'inbox' && <AdminInbox inbox={inbox} onOpenTab={goTab} />}
+      {twoStepOn === false && <TwoStepGate onSettings={() => navigate('/settings#two-step')} />}
+      {twoStepOn && showTab === 'inbox' && <AdminInbox inbox={inbox} onOpenTab={goTab} />}
+      {twoStepOn && showTab === 'log' && <AdminActionLog />}
       {!wide && showTab === 'inbox' && (
         <p className="admin-computer-note">Villages, SkillShare, CRN Import{isFounder ? ', the grant report' : ''} and test tools are in the computer view of this page.</p>
       )}
 
-      {toolWaits && (
+      {twoStepOn && toolWaits && (
         <div className="admin-tool-wait">
           <p><strong>{current.label} works best on a computer.</strong> It has more tools than fit well on a phone.</p>
           <button type="button" className="btn btn-outline" onClick={() => setForceTool(true)}>Open it here anyway</button>
@@ -1197,9 +1207,11 @@ export default function Admin() {
         <BanDialog
           target={banTarget}
           onClose={() => { setBanTarget(null); setBanReportId(null) }}
-          onDone={() => {
+          onDone={(result) => {
             const reportId = banReportId
             setBanTarget(null); setBanReportId(null); setBanRefresh(n => n + 1); loadUsers()
+            // Asking a second admin doesn't close the report yet.
+            if (result?.asked) { alert('Asked. The ban happens when a second admin agrees in Reports.'); refreshAdminInbox(); return }
             if (reportId) reviewReport(reportId, 'reviewed')
           }}
         />
@@ -1207,6 +1219,7 @@ export default function Admin() {
 
       {!loading && showTab === 'users' && (
         <>
+          {!isFounder && <AdminScopeNote me={user.id} rows={adminVillages.rows} failed={adminVillages.failed} />}
           <BannedAccountsPanel refreshKey={banRefresh} onChange={loadUsers} />
           <div style={{ marginBottom: '0.75rem' }}>
             <label htmlFor="user-search" style={hiddenLabel}>Search people by name</label>
@@ -1285,6 +1298,9 @@ export default function Admin() {
                 {u.role === 'admin' && u.user_id !== user.id && (
                   <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.75rem' }}>{isFounder ? 'Remove Admin' : 'Ask to remove admin'}</button>
                 )}
+                {isFounder && u.role === 'admin' && (
+                  <AdminVillagePicker admin={u} villages={villages} rows={adminVillages.rows} onSaved={() => setRoleRefresh(n => n + 1)} />
+                )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.is_hope_ambassador || u.role === 'admin') && (u.role !== 'admin' || isFounder) && (
                   <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem' }}>Reset to Neighbor</button>
                 )}
@@ -1322,6 +1338,9 @@ export default function Admin() {
         </>
       )}
 
+      {!loading && showTab === 'reports' && (
+        <BanRequests me={user.id} refreshKey={banRefresh} onChanged={() => { setBanRefresh(n => n + 1); loadUsers() }} />
+      )}
       {!loading && showTab === 'reports' && (
         <>
           {helpMessages.length > 0 && (() => {
