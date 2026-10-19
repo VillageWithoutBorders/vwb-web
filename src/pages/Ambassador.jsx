@@ -23,6 +23,16 @@ export default function Ambassador() {
   const [groups, setGroups] = useState(null)
   const [board, setBoard] = useState(null)
   const [error, setError] = useState('')
+  // Villages you belong to that have no admin yet (vwb-admin-recruiting.sql).
+  const [needAdmin, setNeedAdmin] = useState([])
+
+  useEffect(() => {
+    if (!allowed || isAdmin) return
+    supabase.rpc('villages_needing_admin').then(({ data, error: err }) => {
+      if (err) { console.error('Failed to load villages needing an admin:', err); return }
+      setNeedAdmin(data || [])
+    })
+  }, [allowed, isAdmin])
 
   useEffect(() => {
     if (!allowed) return
@@ -86,6 +96,14 @@ export default function Ambassador() {
             </ul>
           )}
       </section>
+
+      {needAdmin.length > 0 && (
+        <section className="amb-box" aria-labelledby="amb-need-admin">
+          <h2 id="amb-need-admin"><Icon name="shield" /> {needAdmin.map((v) => v.village_name).join(', ')} {needAdmin.length === 1 ? 'needs' : 'need'} a local admin</h2>
+          <p className="amb-note">No admin looks after {needAdmin.length === 1 ? 'this village' : 'these villages'} yet. If you know your neighbors and want to help keep things safe, see if you're ready.</p>
+          <Link className="btn btn-primary btn-full amb-btn" to="/become-admin">Want to help?</Link>
+        </section>
+      )}
 
       <NearbyNeedTiles />
 

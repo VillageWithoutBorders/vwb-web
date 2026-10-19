@@ -15,6 +15,7 @@ import AdminInbox from '../components/AdminInbox'
 import { AdminRemovalRequests, AdminRoleLog } from '../components/AdminRoleSafety'
 import { useAdminVillages, AdminScopeNote, AdminVillagePicker } from '../components/AdminVillageScope'
 import { useTwoStepOn, TwoStepGate, BanRequests, AdminActionLog } from '../components/AdminSafety'
+import { AdminApplications, AdminTrials } from '../components/AdminRecruiting'
 import { useAdminInbox, refreshAdminInbox } from '../hooks/useAdminInbox'
 import { useWideScreen } from '../hooks/useWideScreen'
 
@@ -1050,6 +1051,7 @@ export default function Admin() {
       {!loading && showTab === 'approvals' && (
         <>
           <AdminRemovalRequests me={user.id} refreshKey={roleRefresh} onChanged={() => { setRoleRefresh(n => n + 1); loadUsers() }} />
+          <AdminApplications me={user.id} isFounder={isFounder} refreshKey={roleRefresh} onChanged={() => { setRoleRefresh(n => n + 1); loadUsers(); loadAdminApplications() }} />
           <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
           {approvals.length === 0 && adminApplications.length === 0 && ambApplications.length === 0 && resourceClaims.length === 0 ? (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No pending approvals</p>
@@ -1085,38 +1087,7 @@ export default function Admin() {
                   })}
                 </>
               )}
-              {isFounder && adminApplications.length > 0 && (
-                <>
-                  <h3 style={{ fontSize: '0.85rem', color: 'var(--accent)', margin: '0.5rem 0' }}>Admin Access Requests</h3>
-                  {adminApplications.map(a => (
-                    <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid var(--accent)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                          <AvatarDisplay url={a.applicant_avatar} userId={a.user_id} size={32} />
-                          <div>
-                            <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>ADMIN REQUEST</span>
-                            <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: 'var(--text)' }}><UserName userId={a.user_id} name={a.applicant_name} /></h4>
-                          </div>
-                        </div>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(a.created_at)}</span>
-                      </div>
-                      {a.invited_by_name ? (
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0' }}>Accepted the invitation sent by {a.invited_by_name}</p>
-                      ) : (
-                        <>
-                          {a.region && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0' }}>Region: {a.region}</p>}
-                          {a.reason && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.2rem 0' }}>{a.reason}</p>}
-                        </>
-                      )}
-                      {a.user_id !== user.id && <button type="button" onClick={() => messageUser(a.user_id)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, minHeight: '44px', padding: 0 }}>Message applicant</button>}
-                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
-                        <button onClick={() => approveAdminApplication(a)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Grant Admin Access</button>
-                        <button onClick={() => declineAdminApplication(a)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Decline</button>
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
+              {/* Admin requests are in <AdminApplications> above (founder, or two admins). */}
 
               {falseAlarms.length > 0 && (
                 <>
@@ -1220,6 +1191,7 @@ export default function Admin() {
       {!loading && showTab === 'users' && (
         <>
           {!isFounder && <AdminScopeNote me={user.id} rows={adminVillages.rows} failed={adminVillages.failed} />}
+          <AdminTrials me={user.id} isFounder={isFounder} refreshKey={roleRefresh} />
           <BannedAccountsPanel refreshKey={banRefresh} onChange={loadUsers} />
           <div style={{ marginBottom: '0.75rem' }}>
             <label htmlFor="user-search" style={hiddenLabel}>Search people by name</label>
