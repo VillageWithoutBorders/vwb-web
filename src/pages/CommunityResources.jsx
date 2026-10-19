@@ -447,11 +447,11 @@ export default function CommunityResources() {
 
   const resourceCard = (r) => (
                       <div key={r.id} className="fh-card">
-                        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text)' }}>{r.name}</span>
-                        {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0 0.4rem', lineHeight: 1.4 }}>{r.description}</p>}
+                        <span className="fh-card-name">{r.name}</span>
+                        {r.description && <p className="fh-card-desc">{r.description}</p>}
                         {placesEnabled && <CrnCardDetails r={r} />}
-                        {r.address && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0' }}><AddressLink address={r.address} /></p>}
-                        {r.neighborhood && <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.1rem 0' }}>Area: {r.neighborhood}</p>}
+                        {r.address && <p className="fh-card-meta"><AddressLink address={r.address} /></p>}
+                        {r.neighborhood && <p className="fh-card-meta">Area: {r.neighborhood}</p>}
                         {r.requirements && <p style={{ color: 'var(--warn)', fontSize: '0.78rem', margin: '0.2rem 0', lineHeight: 1.4 }}><Icon name="clipboard" /> What to bring: {r.requirements}</p>}
                         {resourceDistance(r) != null && (
                           <p style={{ color: 'var(--accent)', fontSize: '0.78rem', fontWeight: 600, margin: '0.2rem 0 0' }}><Icon name="pin" /> {resourceDistance(r).toFixed(1)} mi away</p>
@@ -462,12 +462,12 @@ export default function CommunityResources() {
                         {r.organizations && user && (
                           <button onClick={() => navigate('/orgs/' + r.organizations.id)} style={{ display: 'block', background: 'none', border: 'none', padding: '0.3rem 0', marginTop: '0.2rem', color: 'var(--accent)', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>Shared by {r.organizations.name}</button>
                         )}
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
-                          {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>Visit &#8599;</a>}
-                          {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')} style={{ fontSize: '0.8rem', color: 'var(--info)', textDecoration: 'none', fontWeight: 600 }}>Call {r.phone}</a>}
-                          {!r.phone && r.provider_phone && <a href={'tel:' + r.provider_phone.replace(/[^0-9+]/g, '')} style={{ fontSize: '0.8rem', color: 'var(--info)', textDecoration: 'none', fontWeight: 600 }}>Organization phone: {r.provider_phone}</a>}
+                        <div className="fh-card-links">
+                          {r.phone && <a className="fh-link" href={'tel:' + r.phone.replace(/[^0-9+]/g, '')} style={{ color: 'var(--info)' }}>Call {r.phone}</a>}
+                          {!r.phone && r.provider_phone && <a className="fh-link" href={'tel:' + r.provider_phone.replace(/[^0-9+]/g, '')} style={{ color: 'var(--info)' }}>Organization phone: {r.provider_phone}</a>}
+                          {r.url && <a className="fh-link" href={r.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>Visit website &#8599;</a>}
                           {Array.isArray(r.links) && r.links.filter((l) => l && /^https?:\/\//i.test(l.url || '')).map((l, i) => (
-                            <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>{l.label || 'Link'} &#8599;</a>
+                            <a key={i} className="fh-link" href={l.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>{l.label || 'Link'} &#8599;</a>
                           ))}
                         </div>
 
@@ -485,18 +485,18 @@ export default function CommunityResources() {
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                           {user && (<>
-<button onClick={() => castVote(r.id, 1)} title="This checked out for me" aria-pressed={myVotes[r.id] === 1} aria-label={'This checked out for me, ' + (voteCounts[r.id]?.upvotes || 0) + ' people agree' + (myVotes[r.id] === 1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === 1 ? 'rgba(78,204,163,0.15)' : 'none', border: '1px solid ' + (myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+<button onClick={() => castVote(r.id, 1)} title="This checked out for me" aria-pressed={myVotes[r.id] === 1} aria-label={'This checked out for me, ' + (voteCounts[r.id]?.upvotes || 0) + ' people agree' + (myVotes[r.id] === 1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '44px', background: myVotes[r.id] === 1 ? 'rgba(78,204,163,0.15)' : 'none', border: '1px solid ' + (myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
                             <Icon name="check" /> {voteCounts[r.id]?.upvotes || 0}
                           </button>
-                          <button onClick={() => castVote(r.id, -1)} title="This didn't work out for me" aria-pressed={myVotes[r.id] === -1} aria-label={"This didn't work out for me, " + (voteCounts[r.id]?.downvotes || 0) + ' people agree' + (myVotes[r.id] === -1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '40px', background: myVotes[r.id] === -1 ? 'rgba(255,90,90,0.12)' : 'none', border: '1px solid ' + (myVotes[r.id] === -1 ? '#ff5a5a' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === -1 ? 'var(--danger)' : 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+                          <button onClick={() => castVote(r.id, -1)} title="This didn't work out for me" aria-pressed={myVotes[r.id] === -1} aria-label={"This didn't work out for me, " + (voteCounts[r.id]?.downvotes || 0) + ' people agree' + (myVotes[r.id] === -1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '44px', background: myVotes[r.id] === -1 ? 'rgba(255,90,90,0.12)' : 'none', border: '1px solid ' + (myVotes[r.id] === -1 ? '#ff5a5a' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === -1 ? 'var(--danger)' : 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
                             <Icon name="cross" /> {voteCounts[r.id]?.downvotes || 0}
                           </button>
 </>)}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: 'auto' }}>
-                            <button onClick={() => toggleHistory(r.id)} aria-expanded={openHistoryFor.includes(r.id)} style={{ background: 'none', border: 'none', color: 'var(--info)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '40px' }}>
+                            <button onClick={() => toggleHistory(r.id)} aria-expanded={openHistoryFor.includes(r.id)} style={{ background: 'none', border: 'none', color: 'var(--info)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '44px' }}>
                               {(editHistoryByResource[r.id] || []).filter(e => !e.reverted).length > 0 ? (editHistoryByResource[r.id].filter(e => !e.reverted).length) + ' edit' + ((editHistoryByResource[r.id].filter(e => !e.reverted).length === 1) ? '' : 's') : 'Edit history'}
                             </button>
-                            <button onClick={() => toggleReviews(r.id)} aria-expanded={openReviewsFor.includes(r.id)} style={{ background: 'none', border: 'none', color: 'var(--info)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '40px' }}>
+                            <button onClick={() => toggleReviews(r.id)} aria-expanded={openReviewsFor.includes(r.id)} style={{ background: 'none', border: 'none', color: 'var(--info)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '44px' }}>
                               {(reviewsByResource[r.id]?.length || 0) > 0 ? reviewsByResource[r.id].length + ' review' + (reviewsByResource[r.id].length === 1 ? '' : 's') : 'Leave a review'}
                             </button>
                           </div>
@@ -527,7 +527,7 @@ export default function CommunityResources() {
                               maxLength={500}
                               style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.8rem', marginBottom: '0.4rem', minHeight: '50px', resize: 'vertical', boxSizing: 'border-box' }}
                             />
-                            <button onClick={() => submitReview(r.id)} disabled={!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id} style={{ padding: '0.55rem 0.9rem', minHeight: '40px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', opacity: (!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id) ? 0.5 : 1 }}>
+                            <button onClick={() => submitReview(r.id)} disabled={!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id} style={{ padding: '0.55rem 0.9rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', opacity: (!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id) ? 0.5 : 1 }}>
                               {submittingReviewFor === r.id ? 'Posting...' : 'Post anonymously'}
                             </button>
 </>) : (
@@ -561,7 +561,7 @@ export default function CommunityResources() {
                             )}
 
                             {user && editFormFor !== r.id && (
-                              <button onClick={() => openEditForm(r)} style={{ padding: '0.5rem 0.8rem', minHeight: '40px', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer' }}>
+                              <button onClick={() => openEditForm(r)} style={{ padding: '0.5rem 0.8rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer' }}>
                                 Suggest an edit
                               </button>
                             )}
@@ -584,8 +584,8 @@ export default function CommunityResources() {
                                 <label htmlFor={`edit-${r.id}-source`} style={{ display: 'block', color: 'var(--accent)', fontSize: '0.75rem', marginBottom: '0.15rem', fontWeight: 600 }}>Where did you confirm this? (required)</label>
                                 <input id={`edit-${r.id}-source`} value={editDraft.source_url} onChange={e => setEditDraft(prev => ({ ...prev, source_url: e.target.value }))} placeholder="The organization's own website or social post" style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box' }} />
                                 <div style={{ display: 'flex', gap: '0.4rem' }}>
-                                  <button onClick={cancelEditForm} style={{ padding: '0.55rem 0.9rem', minHeight: '40px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
-                                  <button onClick={() => submitResourceEdit(r)} disabled={!editDraft.source_url?.trim() || submittingEdit} style={{ padding: '0.55rem 0.9rem', minHeight: '40px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', opacity: (!editDraft.source_url?.trim() || submittingEdit) ? 0.5 : 1 }}>
+                                  <button onClick={cancelEditForm} style={{ padding: '0.55rem 0.9rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
+                                  <button onClick={() => submitResourceEdit(r)} disabled={!editDraft.source_url?.trim() || submittingEdit} style={{ padding: '0.55rem 0.9rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', opacity: (!editDraft.source_url?.trim() || submittingEdit) ? 0.5 : 1 }}>
                                     {submittingEdit ? 'Saving...' : 'Save correction'}
                                   </button>
                                 </div>
@@ -652,9 +652,9 @@ export default function CommunityResources() {
             <>
             <h3 className="fh-sheet-h">Who shares it</h3>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-              <button onClick={() => setOrgFilter('all')} aria-pressed={orgFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: orgFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: orgFilter === 'all' ? 'var(--accent)' : 'none', color: orgFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All orgs</button>
+              <button onClick={() => setOrgFilter('all')} aria-pressed={orgFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: orgFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: orgFilter === 'all' ? 'var(--accent)' : 'none', color: orgFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All orgs</button>
               {allOrgs.map(o => (
-                <button key={o.id} onClick={() => setOrgFilter(o.id)} aria-pressed={orgFilter === o.id} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: orgFilter === o.id ? 'none' : '1px solid var(--border-strong)', background: orgFilter === o.id ? 'var(--accent)' : 'none', color: orgFilter === o.id ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{o.name}</button>
+                <button key={o.id} onClick={() => setOrgFilter(o.id)} aria-pressed={orgFilter === o.id} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: orgFilter === o.id ? 'none' : '1px solid var(--border-strong)', background: orgFilter === o.id ? 'var(--accent)' : 'none', color: orgFilter === o.id ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{o.name}</button>
               ))}
             </div>
             </>
@@ -664,9 +664,9 @@ export default function CommunityResources() {
             <>
             <h3 className="fh-sheet-h">Area</h3>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-              <button onClick={() => setRegionFilter('all')} aria-pressed={regionFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: regionFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: regionFilter === 'all' ? 'var(--accent)' : 'none', color: regionFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All areas</button>
+              <button onClick={() => setRegionFilter('all')} aria-pressed={regionFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: regionFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: regionFilter === 'all' ? 'var(--accent)' : 'none', color: regionFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All areas</button>
               {allRegions.map(reg => (
-                <button key={reg} onClick={() => setRegionFilter(reg)} aria-pressed={regionFilter === reg} style={{ padding: '0.5rem 0.85rem', minHeight: '40px', borderRadius: '16px', border: regionFilter === reg ? 'none' : '1px solid var(--border-strong)', background: regionFilter === reg ? 'var(--accent)' : 'none', color: regionFilter === reg ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{reg}</button>
+                <button key={reg} onClick={() => setRegionFilter(reg)} aria-pressed={regionFilter === reg} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: regionFilter === reg ? 'none' : '1px solid var(--border-strong)', background: regionFilter === reg ? 'var(--accent)' : 'none', color: regionFilter === reg ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{reg}</button>
               ))}
             </div>
             </>
@@ -678,7 +678,7 @@ export default function CommunityResources() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
               
               {[['all', 'All'], [10, '10 mi'], [25, '25 mi'], [50, '50 mi']].map(([val, label]) => (
-                <button key={String(val)} onClick={() => setRadiusFilter(val)} aria-pressed={radiusFilter === val} style={{ padding: '0.5rem 0.8rem', minHeight: '40px', borderRadius: '16px', border: radiusFilter === val ? 'none' : '1px solid var(--border-strong)', background: radiusFilter === val ? 'var(--accent)' : 'none', color: radiusFilter === val ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{label}</button>
+                <button key={String(val)} onClick={() => setRadiusFilter(val)} aria-pressed={radiusFilter === val} style={{ padding: '0.5rem 0.8rem', minHeight: '44px', borderRadius: '16px', border: radiusFilter === val ? 'none' : '1px solid var(--border-strong)', background: radiusFilter === val ? 'var(--accent)' : 'none', color: radiusFilter === val ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{label}</button>
               ))}
             </div>
           </>
@@ -707,7 +707,7 @@ export default function CommunityResources() {
 
           {!canSubmit && (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 0.75rem' }}>
-              Resources are added by verified partner organizations.{user && <>{' '}
+              Listings come from local partner organizations and the Community Resource Network.{user && <>{' '}
               <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline', padding: 0 }}>Want your org involved?</button></>}
             </p>
           )}
@@ -742,7 +742,7 @@ export default function CommunityResources() {
                     <label id="sub-cat-label" style={labelStyle}>Category (required, choose one or more)</label>
                     <div role="group" aria-labelledby="sub-cat-label" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
                       {CATEGORIES.map(c => (
-                        <button key={c} type="button" onClick={() => setSubCats(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])} aria-pressed={subCats.includes(c)} style={{ padding: '0.5rem 0.75rem', minHeight: '40px', borderRadius: '16px', border: subCats.includes(c) ? 'none' : '1px solid var(--border-strong)', background: subCats.includes(c) ? 'var(--accent)' : 'none', color: subCats.includes(c) ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
+                        <button key={c} type="button" onClick={() => setSubCats(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])} aria-pressed={subCats.includes(c)} style={{ padding: '0.5rem 0.75rem', minHeight: '44px', borderRadius: '16px', border: subCats.includes(c) ? 'none' : '1px solid var(--border-strong)', background: subCats.includes(c) ? 'var(--accent)' : 'none', color: subCats.includes(c) ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
                       ))}
                     </div>
                     <label htmlFor="sub-name" style={labelStyle}>Resource name (required)</label>
