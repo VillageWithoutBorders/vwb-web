@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { CATEGORIES } from '../utils/resourceCategories'
+import { CATEGORIES, resourceCats } from '../utils/resourceCategories'
 import OrgClaimResource from './OrgClaimResource'
 import AddressLink from './AddressLink'
 
@@ -39,7 +39,7 @@ export default function OrgResources({ orgId }) {
 
   function open(r) {
     setNote('')
-    setDraft({ name: r.name || '', description: r.description || '', phone: r.phone || '', url: r.url || '', address: r.address || '', requirements: r.requirements || '', categories: r.categories || [], links: Array.isArray(r.links) ? r.links.map((l) => ({ label: l.label || '', url: l.url || '' })) : [] })
+    setDraft({ name: r.name || '', description: r.description || '', phone: r.phone || '', url: r.url || '', address: r.address || '', requirements: r.requirements || '', categories: (r.categories && r.categories.length) ? resourceCats(r) : [], links: Array.isArray(r.links) ? r.links.map((l) => ({ label: l.label || '', url: l.url || '' })) : [] })
     setAdding(false)
     setRemoving(null)
     setEditing(r.id)

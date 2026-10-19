@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import GroupedSkillChips from '../components/GroupedSkillChips'
 import { loadSkillCategories } from '../utils/skillGroups'
+import { skillsForCategory } from '../utils/resourceCategories'
 import { getMyLocation, lookupZip } from '../utils/location'
 import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
@@ -43,6 +44,10 @@ export default function AskForHelp() {
 
     const [skills, setSkills] = useState([])
     const [skillNeeded, setSkillNeeded] = useState(repost?.skill_needed || '')
+    // The kind of help picked on the first screen (Food, Rides, ...). Used once
+    // to pick the matching neighbor skill, so the ask reaches the right helpers.
+    const [fromCat, setFromCat] = useState('')
+    const [autoPicked, setAutoPicked] = useState('')
     // Who sees it first. 'everyone' is the normal request. 'group' and 'network' keep it
     // inside the person's group (or its network) until the time is up.
     const [audience, setAudience] = useState('everyone')
@@ -80,6 +85,13 @@ export default function AskForHelp() {
         }
         loadSkills()
     }, [])
+
+    useEffect(() => {
+        if (!fromCat || skillNeeded || !skills.length) return
+        const match = skillsForCategory(fromCat, skills.map((s) => s.title))[0]
+        if (match) { setSkillNeeded(match); setAutoPicked(match) }
+        setFromCat('')
+    }, [fromCat, skills, skillNeeded])
 
     useEffect(() => {
         if (editId) return
@@ -228,7 +240,7 @@ export default function AskForHelp() {
     }
 
     if (!checkedResources) {
-        return <NearbyResourcesFirst profile={profile} onContinue={() => setCheckedResources(true)} />
+        return <NearbyResourcesFirst profile={profile} onContinue={(cat) => { setFromCat(cat || ''); setCheckedResources(true) }} />
     }
 
     return (
@@ -351,6 +363,9 @@ export default function AskForHelp() {
                             {skill}
                         </button>
                     )} />
+                    {autoPicked && skillNeeded === autoPicked && (
+                        <p style={{ margin: '0.5rem 0 0', fontSize: '0.95rem', color: 'var(--text-soft)' }}>We picked {autoPicked} from what you chose. Tap another if it fits better.</p>
+                    )}
                 </div>
 
                 <div className="form-field">

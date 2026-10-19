@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { getCurrentPosition, distanceMiles } from '../utils/location'
 import { startingOrigin } from '../utils/calendar'
-import { CATEGORIES, CAT_ICON_FILES, resourceCats, resourceMatches } from '../utils/resourceCategories'
+import { CATEGORIES, CAT_ICON_FILES, resourceCats, resourceMatches, currentCategory } from '../utils/resourceCategories'
 import '../find-help.css'
 import { searchScore } from '../utils/resourceSearch'
 import AddressLink from '../components/AddressLink'
@@ -55,7 +55,7 @@ export default function CommunityResources() {
   // Resource Library
   const [resources, setResources] = useState([])
   const [loadingResources, setLoadingResources] = useState(true)
-  const [selectedCat, setSelectedCat] = useState(() => searchParams.get('cat') || null)
+  const [selectedCat, setSelectedCat] = useState(() => (searchParams.get('cat') ? currentCategory(searchParams.get('cat')) : null))
   const [showFilters, setShowFilters] = useState(false)
   const [orgFilter, setOrgFilter] = useState('all')
   const [radiusFilter, setRadiusFilter] = useState('all') // 'all' | 10 | 25 | 50 (miles)

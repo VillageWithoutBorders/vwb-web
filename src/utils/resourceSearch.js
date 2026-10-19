@@ -15,6 +15,8 @@
 // If a resource later gets a `keywords` column (text or array), it is
 // searched automatically and counts as a strong match.
 
+import { OLD_CATEGORY_NAMES } from './resourceCategories'
+
 // Each list is one family. Add words freely. Lowercase, plain words.
 export const WORD_FAMILIES = [
   // Rides and getting around
@@ -34,6 +36,12 @@ export const WORD_FAMILIES = [
 
   // Legal help
   ['legal', 'lawyer', 'attorney', 'court', 'legal aid', 'tenant rights', 'know your rights', 'sue'],
+
+  // Fixing up a home (Home Repair)
+  ['repair', 'home repair', 'fix', 'roof', 'roofing', 'ramp', 'weatherization', 'furnace', 'hvac', 'plumbing', 'handyman'],
+
+  // Benefits and paperwork (Money and Benefits)
+  ['benefits', 'government', 'public assistance', 'paperwork', 'birth certificate', 'social security', 'ssi', 'ssdi', 'tanf', 'medicaid application'],
 
   // Mold, flood, storm damage
   ['mold', 'mildew', 'flood', 'flooding', 'water damage', 'storm', 'leak', 'damp', 'cleanup', 'tornado'],
@@ -145,11 +153,13 @@ function analyzeQuery(query) {
 // The text of a resource, split by how strongly a match should count.
 function fieldsOf(r) {
   const cats = (r.categories && r.categories.length) ? r.categories : (r.category ? [r.category] : [])
+  // Old names (before Oct 19, 2026) still searchable under the new ones.
+  const newCats = cats.map((c) => OLD_CATEGORY_NAMES[c]).filter(Boolean)
   const kw = Array.isArray(r.keywords) ? r.keywords.join(' ') : (r.keywords || '')
   return {
     strong: [r.name, kw].filter(Boolean).join(' '),
     // CRN programs: their own category and type count like a category.
-    medium: [...cats, r.crn_category, r.service_type].filter(Boolean).join(' '),
+    medium: [...cats, ...newCats, r.crn_category, r.service_type].filter(Boolean).join(' '),
     weak: [r.description, r.requirements, r.neighborhood, r.address, r.organizations && r.organizations.name,
       r.provider_name, r.eligibility_summary, r.delivery_method, ...(Array.isArray(r.serves) ? r.serves : [])].filter(Boolean).join(' '),
   }
