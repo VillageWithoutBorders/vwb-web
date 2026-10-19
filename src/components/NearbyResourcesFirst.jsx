@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { getMyLocation, distanceMiles } from '../utils/location'
-import { resourceCats } from '../utils/resourceCategories'
+import { resourceCats, currentCategory } from '../utils/resourceCategories'
 import { searchResources } from '../utils/resourceSearch'
 import AddressLink from './AddressLink'
 import { useGoBack } from './BackLink'
@@ -10,7 +10,9 @@ import { useGoBack } from './BackLink'
 // First screen of Ask for help: look at resources near you before asking a
 // neighbor. The database already limits Find Help to your area plus national
 // resources, so whatever comes back here is local or national.
-const QUICK_PICKS = ['Food', 'Housing', 'Tenant Rights', 'Emergency Help', 'Safety', 'Government', 'Recovery Support']
+// The 12 kinds of help, most asked first (211 data, Oct 2026).
+const QUICK_PICKS = ['Food', 'Housing', 'Bills and Utilities', 'Rides', 'Health', 'Home Repair', 'Legal and Tenant Help',
+  'Money and Benefits', 'Mental Health and Recovery', 'Family and Child Care', 'Emergency Help', 'Safety']
 const SHOW = 5
 
 export default function NearbyResourcesFirst({ profile, onContinue }) {
@@ -94,7 +96,7 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
 
       <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
         <p style={{ margin: '0 0 0.6rem', fontSize: '0.95rem', color: 'var(--text-soft)' }}>Not what you need, or want a neighbor too?</p>
-        <button type="button" onClick={onContinue} style={{ width: '100%', minHeight: '52px', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '1.05rem', cursor: 'pointer' }}>Ask a neighbor for help</button>
+        <button type="button" onClick={() => onContinue(query.trim() ? '' : currentCategory(cat))} style={{ width: '100%', minHeight: '52px', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '1.05rem', cursor: 'pointer' }}>Ask a neighbor for help</button>
         <button type="button" onClick={() => navigate(-1)} style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontSize: '1rem', cursor: 'pointer' }}>I found what I need</button>
       </div>
     </div>
