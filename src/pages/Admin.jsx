@@ -12,6 +12,7 @@ import { useGoBack } from '../components/BackLink'
 import AdminCrnImport from '../components/AdminCrnImport'
 import { placesEnabled } from '../utils/places'
 import AdminInbox from '../components/AdminInbox'
+import { AdminRemovalRequests, AdminRoleLog } from '../components/AdminRoleSafety'
 import { useAdminInbox, refreshAdminInbox } from '../hooks/useAdminInbox'
 import { useWideScreen } from '../hooks/useWideScreen'
 
@@ -65,6 +66,8 @@ export default function Admin() {
   const inbox = useAdminInbox()
   // A phone can still open a computer-only tool from a link, after a heads-up.
   const [forceTool, setForceTool] = useState(false)
+  // Bumped after any change to admin access, so the removal list and log reload.
+  const [roleRefresh, setRoleRefresh] = useState(0)
   // Every section has its own link (/admin?tab=reports), so alerts, the
   // shield and the back button all land in the right place.
   useEffect(() => {
@@ -824,10 +827,20 @@ export default function Admin() {
     reportError('declineAdminApplication:notify', notifErr)
     await loadAdminApplications()
   }
+  // Removing admin access: the founder does it right away; any other admin
+  // asks, and a second admin has to agree (vwb-admin-roles.sql).
   async function demoteUser(userId) {
-    if (!confirm('Remove admin role from this user?')) return
-    const { error } = await supabase.from('helper_profiles').update({ role: 'member' }).eq('user_id', userId)
-    if (reportError('demoteUser', error, 'Could not remove admin access. Try again.')) return
+    const u = users.find(x => x.user_id === userId)
+    const name = u?.display_name || 'this admin'
+    const ok = isFounder
+      ? confirm('Remove admin access from ' + name + '? It goes in the Role changes log that every admin can see.')
+      : confirm('Ask to remove admin access from ' + name + '? A second admin has to agree before it happens. Every admin can see the request.')
+    if (!ok) return
+    const reason = (prompt('Why? (optional, every admin can see this)') || '').trim()
+    const { data, error } = await supabase.rpc('admin_removal_ask', { p_target: userId, p_reason: reason })
+    if (reportError('demoteUser', error, error?.message || 'Could not do that. Try again.')) return
+    if (data === 'asked') alert('Asked. It happens when a second admin agrees in Approvals.')
+    setRoleRefresh(n => n + 1)
     await loadUsers()
   }
   // Resets any non-founder user's account back to a plain Neighbor: clears
@@ -1026,6 +1039,7 @@ export default function Admin() {
 
       {!loading && showTab === 'approvals' && (
         <>
+          <AdminRemovalRequests me={user.id} refreshKey={roleRefresh} onChanged={() => { setRoleRefresh(n => n + 1); loadUsers() }} />
           <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
           {approvals.length === 0 && adminApplications.length === 0 && ambApplications.length === 0 && resourceClaims.length === 0 ? (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No pending approvals</p>
@@ -1268,10 +1282,10 @@ export default function Admin() {
                     <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--info-bg)', color: 'var(--info)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>{u.admin_app_status === 'declined' ? 'Invite Admin Again' : 'Invite Admin'}</button>
                   )
                 )}
-                {(u.role === 'admin' || u.role === 'founder') && u.user_id !== user.id && (
-                  <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.75rem' }}>Remove Admin</button>
+                {u.role === 'admin' && u.user_id !== user.id && (
+                  <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.75rem' }}>{isFounder ? 'Remove Admin' : 'Ask to remove admin'}</button>
                 )}
-                {u.role !== 'founder' && u.user_id !== user.id && (u.is_hope_ambassador || u.role === 'admin') && (
+                {u.role !== 'founder' && u.user_id !== user.id && (u.is_hope_ambassador || u.role === 'admin') && (u.role !== 'admin' || isFounder) && (
                   <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem' }}>Reset to Neighbor</button>
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.role !== 'admin' || isFounder) && (
@@ -1304,6 +1318,7 @@ export default function Admin() {
               {filtersActive && <button type="button" onClick={clearUserFilters} style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }}>Clear filters</button>}
             </div>
           )}
+          <AdminRoleLog refreshKey={roleRefresh} />
         </>
       )}
 
