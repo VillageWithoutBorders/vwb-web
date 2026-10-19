@@ -161,7 +161,8 @@ function fieldsOf(r) {
     // CRN programs: their own category and type count like a category.
     medium: [...cats, ...newCats, r.crn_category, r.service_type].filter(Boolean).join(' '),
     weak: [r.description, r.requirements, r.neighborhood, r.address, r.organizations && r.organizations.name,
-      r.provider_name, r.eligibility_summary, r.delivery_method, ...(Array.isArray(r.serves) ? r.serves : [])].filter(Boolean).join(' '),
+      r.provider_name, r.eligibility_summary, r.delivery_method, ...(Array.isArray(r.serves) ? r.serves : []),
+      r.area_note, ...(Array.isArray(r.zips) ? r.zips : [])].filter(Boolean).join(' '),
   }
 }
 
