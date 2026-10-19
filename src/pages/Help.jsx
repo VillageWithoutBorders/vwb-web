@@ -96,7 +96,7 @@ export default function Help() {
                   role="radio"
                   aria-checked={feedbackKind === k}
                   onClick={() => setFeedbackKind(k)}
-                  style={{ flex: 1, minHeight: '44px', padding: '0.5rem', borderRadius: '8px', border: feedbackKind === k ? '2px solid var(--accent)' : '1px solid var(--border-strong)', background: feedbackKind === k ? '#1d3a31' : 'var(--surface-2)', color: 'var(--text-strong)', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ flex: 1, minHeight: '44px', padding: '0.5rem', borderRadius: '8px', border: feedbackKind === k ? '2px solid var(--accent)' : '1px solid var(--border-strong)', background: feedbackKind === k ? 'var(--accent)' : 'var(--surface-2)', color: feedbackKind === k ? 'var(--on-accent)' : 'var(--text-strong)', fontWeight: 600, cursor: 'pointer' }}
                 >{label}</button>
               ))}
             </div>

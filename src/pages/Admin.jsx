@@ -1319,7 +1319,7 @@ export default function Admin() {
             )
             }
             const segBtn = (key, label) => (
-              <button type="button" onClick={() => { setReportView(key); if (key === 'closed') loadClosedReports(true) }} aria-pressed={reportView === key} style={{ flex: 1, minHeight: '44px', padding: '0.4rem', borderRadius: '8px', border: reportView === key ? '2px solid var(--accent)' : '1px solid var(--border-strong)', background: reportView === key ? '#1d3a31' : 'var(--surface-2)', color: 'var(--text-strong)', fontWeight: 700, cursor: 'pointer' }}>{label}</button>
+              <button type="button" onClick={() => { setReportView(key); if (key === 'closed') loadClosedReports(true) }} aria-pressed={reportView === key} style={{ flex: 1, minHeight: '44px', padding: '0.4rem', borderRadius: '8px', border: reportView === key ? '2px solid var(--accent)' : '1px solid var(--border-strong)', background: reportView === key ? 'var(--accent)' : 'var(--surface-2)', color: reportView === key ? 'var(--on-accent)' : 'var(--text-strong)', fontWeight: 700, cursor: 'pointer' }}>{label}</button>
             )
             const q = closedSearch.trim().toLowerCase()
             const shownClosed = q ? closedReports.filter(a => [a.reporter_name, a.reported_name, a.reason, a.details, a.admin_note].some(v => String(v || '').toLowerCase().includes(q))) : closedReports
