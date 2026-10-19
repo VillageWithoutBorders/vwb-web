@@ -5758,3 +5758,21 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 @media (max-width: 359px) {
   .header-nav-admin .header-btn-label { display: none; }
 }
+
+/* Admin access safety: removal requests and the role change log */
+.admin-role-box { margin: 0 0 1rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.admin-role-title { font-size: 1.0625rem; margin: 0 0 0.25rem; color: var(--text-strong); }
+.admin-role-card { padding: 0.75rem 0; border-top: 1px solid var(--border); }
+.admin-role-line { margin: 0 0 0.25rem; font-size: 1rem; }
+.admin-role-reason { margin: 0 0 0.25rem; font-size: 0.9375rem; color: var(--text-secondary); }
+.admin-role-time { margin: 0 0 0.5rem; font-size: 0.875rem; color: var(--text-muted); }
+.admin-role-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.admin-role-actions .btn { min-height: 44px; }
+.admin-role-note { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 600; }
+.admin-role-toggle { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 44px; padding: 0 0.25rem; background: none; border: none; color: var(--text-strong); font: inherit; font-size: 1.0625rem; font-weight: 700; cursor: pointer; }
+.admin-role-toggle span:last-child { color: var(--accent); font-size: 1rem; }
+.admin-role-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.admin-role-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; font-size: 1rem; }
+.admin-role-log li { padding: 0.5rem 0; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+.admin-role-how { color: var(--text-secondary); }
+.admin-role-log .admin-role-reason, .admin-role-log .admin-role-time { display: block; margin: 0.125rem 0 0; }
