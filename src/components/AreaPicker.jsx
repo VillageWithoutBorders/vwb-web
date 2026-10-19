@@ -113,8 +113,8 @@ export default function AreaPicker({ mode = 'member', onChange, heading = 'Your 
       <div style={{ padding: '0.5rem 1rem 0.75rem' }}>
         <p style={{ margin: '0 0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.45 }}>
           {visitor
-            ? 'Choose your county to see help that serves you. This stays on your phone. We never save it.'
-            : 'Choose the county you live in. Find Help uses it to show programs that serve you. Only you can see this.'}
+            ? 'Choose your county, or your town if it is listed, to see help that serves you. This stays on your phone. We never save it.'
+            : 'Choose the county you live in, or your town if it is listed. Some programs only serve certain towns. Find Help uses it to show programs that serve you. Only you can see this.'}
         </p>
 
         {loaded && areas.length > 0 && (
@@ -135,13 +135,13 @@ export default function AreaPicker({ mode = 'member', onChange, heading = 'Your 
         {loaded && (visitor || areas.length < MAX_AREAS) && (
           <>
             <label htmlFor="area-search" style={{ display: 'block', fontWeight: 600, marginBottom: '0.3rem' }}>
-              {areas.length ? (visitor ? 'Change your county' : 'Add another county') : 'Type your county'}
+              {areas.length ? (visitor ? 'Change your county or town' : 'Add another county or town') : 'Type your county or town'}
             </label>
             <input id="area-search" type="search" inputMode="search" enterKeyHint="search" autoComplete="off" spellCheck={false}
               value={query} onChange={(e) => { setQuery(e.target.value); setNote('') }} placeholder="For example: Catoosa"
               style={{ width: '100%', boxSizing: 'border-box', minHeight: 44, fontSize: '16px', padding: '0.55rem 0.75rem',
                 borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)' }} />
-            {query.trim().length >= 2 && results.length > 0 && (<><span id="area-results" className="sr-only">Matching counties</span>{list(results, 'area-results')}</>)}
+            {query.trim().length >= 2 && results.length > 0 && (<><span id="area-results" className="sr-only">Matching places</span>{list(results, 'area-results')}</>)}
             {query.trim().length >= 2 && results.length === 0 && (
               <p style={{ margin: '0.5rem 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>No matches yet. Keep typing, or check the spelling.</p>
             )}
