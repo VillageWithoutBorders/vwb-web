@@ -21,11 +21,19 @@ export default function EmergencyEvents() {
 
   useEffect(() => { loadEvents() }, [])
 
+  const [checkable, setCheckable] = useState(() => new Set())
   async function loadEvents() {
     setLoading(true)
     const { data: active, error: activeErr } = await supabase.from('emergency_events').select('*').eq('status', 'active').order('created_at', { ascending: false })
     if (activeErr) console.error('Failed to load active events:', activeErr)
     if (active) setEvents(active)
+
+    // Hope Ambassadors check emergencies in their own villages (vwb-admin-round3.sql).
+    if (!isAdmin && profile?.is_hope_ambassador) {
+      const { data: mine, error: mineErr } = await supabase.rpc('emergencies_i_can_check')
+      if (mineErr) console.error('Failed to load emergencies you can check:', mineErr)
+      setCheckable(new Set((mine || []).map(r => r.id)))
+    }
 
     const { data: resolved, error: resolvedErr } = await supabase.from('emergency_events').select('*').eq('status', 'closed').order('resolved_at', { ascending: false })
     if (resolvedErr) console.error('Failed to load resolved events:', resolvedErr)
@@ -101,7 +109,7 @@ export default function EmergencyEvents() {
   async function adminVerify(e, eventId) {
     e.stopPropagation()
     const { error } = await supabase.from('emergency_events').update({ verified: true }).eq('id', eventId)
-    if (error) { console.error('Failed to verify event:', error); alert('Could not verify this event. Try again.'); return }
+    if (error) { console.error('Failed to verify event:', error); alert(error.code === 'P0001' ? error.message : 'Could not verify this event. Try again.'); return }
     await notifyAndPost(eventId)
     await loadEvents()
   }
@@ -114,7 +122,7 @@ export default function EmergencyEvents() {
     return Math.floor(hrs / 24) + 'd ago'
   }
 
-  const canVerify = isAdmin || profile?.is_hope_ambassador
+  const canVerify = (ev) => isAdmin || (profile?.is_hope_ambassador && checkable.has(ev.id))
   const verified = events.filter(ev => ev.verified)
   const pending = events.filter(ev => !ev.verified)
 
@@ -187,7 +195,7 @@ export default function EmergencyEvents() {
                         &#9650; {ev.upvote_count || 0}
                       </button>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{(ev.upvote_count || 0) + ' verified'}</span>
-                      {canVerify && !voted && (
+                      {canVerify(ev) && !voted && (
                         <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Verify</button>
                       )}
                     </div>
