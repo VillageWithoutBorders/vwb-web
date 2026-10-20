@@ -30,7 +30,7 @@ export default function AdminResourceClaims({ claims, onChanged }) {
           {c.held_by && <div style={{ fontSize: '0.85rem', color: 'var(--gold)' }}>Now listed under {c.held_by}. Approving moves it.</div>}
           {c.note && <p style={{ margin: '0.4rem 0', fontSize: '0.85rem', color: 'var(--text)', overflowWrap: 'anywhere' }}>"{c.note}"</p>}
           <input value={notes[c.id] || ''} onChange={(e) => setNotes({ ...notes, [c.id]: e.target.value })} placeholder="Note if turning down (optional)" aria-label="Note if turning down" style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0.4rem 0.6rem', margin: '0.4rem 0', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="admin-decide" style={{ display: 'flex', gap: '0.5rem' }}>
             <button disabled={busy === c.id} onClick={() => decide(c, true)} style={{ flex: 1, minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>Approve</button>
             <button disabled={busy === c.id} onClick={() => decide(c, false)} style={{ flex: 1, minHeight: '44px', borderRadius: '8px', border: '1px solid var(--error)', background: 'none', color: 'var(--danger)', fontWeight: 600, cursor: 'pointer' }}>Turn down</button>
           </div>

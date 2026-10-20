@@ -74,9 +74,6 @@ export default function Profile() {
   }, [user?.id, profile?.is_hope_ambassador])
 
   const [skillOptions, setSkillOptions] = useState([])
-  const [showAdminApp, setShowAdminApp] = useState(false)
-  const [adminAppRegion, setAdminAppRegion] = useState('')
-  const [adminAppReason, setAdminAppReason] = useState('')
   const [adminAppSaving, setAdminAppSaving] = useState(false)
   const [adminAppStatus, setAdminAppStatus] = useState(null)
   const [adminAppId, setAdminAppId] = useState(null)
@@ -262,24 +259,7 @@ export default function Profile() {
     setAdminAppSaving(false)
   }
 
-  async function submitAdminApplication() {
-    if (!adminAppRegion.trim() || !adminAppReason.trim()) return
-    setAdminAppSaving(true); setError(''); setMessage('')
-    const { error: appError } = await supabase.from('admin_applications').insert({ user_id: user.id, region: adminAppRegion.trim(), reason: adminAppReason.trim() })
-    reportError('submitAdminApplication', appError)
-    if (appError) {
-      setError('Could not submit your application. Try again.')
-      setAdminAppSaving(false)
-      return
-    }
-    setAdminAppSaving(false)
-    setShowAdminApp(false)
-    setAdminAppRegion('')
-    setAdminAppReason('')
-    setAdminAppStatus('pending')
-    setMessage('Your admin application has been submitted!')
-  }
-function captureCoverageLocation() {
+  function captureCoverageLocation() {
     setCoverageError('')
     if (!navigator.geolocation) { setCoverageError('Location is not available on this device.'); return }
     setCoverageLocating(true)
