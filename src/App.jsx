@@ -54,6 +54,7 @@ const KeeperDashboard = lazyPage(() => import('./pages/KeeperDashboard'))
 const Ambassador = lazyPage(() => import('./pages/Ambassador'))
 const BecomeAdmin = lazyPage(() => import('./pages/BecomeAdmin'))
 const AdminGuide = lazyPage(() => import('./pages/AdminGuide'))
+const KeeperOffer = lazyPage(() => import('./pages/KeeperOffer'))
 const MyVillage = lazyPage(() => import('./pages/MyVillage'))
 const GroupBoard = lazyPage(() => import('./pages/GroupBoard'))
 const JoinGroup = lazyPage(() => import('./pages/JoinGroup'))
@@ -179,6 +180,7 @@ function AppRoutes() {
         <Route path="ambassador" element={<Ambassador />} />
         <Route path="become-admin" element={<BecomeAdmin />} />
         <Route path="admin-guide" element={<AdminGuide />} />
+        <Route path="keeper-offer/:id" element={<KeeperOffer />} />
         <Route path="admin/report" element={<GrantReport />} />
         <Route path="scramble-test" element={<ScrambleTest />} />
         <Route path="campfire" element={<Campfire />} />

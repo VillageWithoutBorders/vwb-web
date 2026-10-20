@@ -13,7 +13,7 @@ import AdminCrnImport from '../components/AdminCrnImport'
 import { placesEnabled } from '../utils/places'
 import AdminInbox from '../components/AdminInbox'
 import { AdminRemovalRequests, AdminRoleLog } from '../components/AdminRoleSafety'
-import { useAdminVillages, AdminScopeNote, AdminVillagePicker } from '../components/AdminVillageScope'
+import { useAdminVillages, AdminScopeNote, AdminVillagePicker, useKeeperOffers, AdminKeeperAsk } from '../components/AdminVillageScope'
 import { useTwoStepOn, TwoStepGate, BanRequests, AdminActionLog } from '../components/AdminSafety'
 import { AdminApplications, AdminTrials } from '../components/AdminRecruiting'
 import { useAdminInbox, refreshAdminInbox } from '../hooks/useAdminInbox'
@@ -73,6 +73,8 @@ export default function Admin() {
   const [roleRefresh, setRoleRefresh] = useState(0)
   // Which villages each admin covers (the founder sets them).
   const adminVillages = useAdminVillages(roleRefresh)
+  // Founder only: asks for an admin to be Keeper of a village.
+  const keeperOffers = useKeeperOffers(isFounder, roleRefresh)
   // Admin tools need two-step login on (null while checking).
   const twoStepOn = useTwoStepOn()
   // Every section has its own link (/admin?tab=reports), so alerts, the
@@ -1286,6 +1288,11 @@ export default function Admin() {
                 {isFounder && u.role === 'admin' && (
                   <AdminVillagePicker admin={u} villages={villages} rows={adminVillages.rows} onSaved={() => setRoleRefresh(n => n + 1)} />
                 )}
+                {isFounder && u.role === 'admin' && (
+                  <AdminKeeperAsk admin={u} offers={keeperOffers}
+                    choices={villages.filter(v => v.active !== false && v.started_by !== u.user_id).map(v => ({ id: v.id, label: v.name }))}
+                    onChanged={() => setRoleRefresh(n => n + 1)} />
+                )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.is_hope_ambassador || u.role === 'admin') && (u.role !== 'admin' || isFounder) && (
                   <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.75rem' }}>Reset to Neighbor</button>
                 )}
@@ -1680,6 +1687,11 @@ export default function Admin() {
                     ? 'No admin yet. Give an admin this village in People, or point a ready Hope Ambassador to Become an admin.'
                     : 'Admins: ' + villageAdmins[c.id].admin_names + (villageAdmins[c.id].admin_count < 2 ? '. Needs a second admin.' : '')}
                 </p>
+              )}
+              {isFounder && c.active !== false && (
+                <AdminKeeperAsk village={c} offers={keeperOffers}
+                  choices={users.filter(u => u.role === 'admin' && u.user_id !== c.started_by).map(u => ({ id: u.user_id, label: u.display_name || 'Admin' }))}
+                  onChanged={() => setRoleRefresh(n => n + 1)} />
               )}
             </div>
           ))}
