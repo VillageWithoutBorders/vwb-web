@@ -5861,3 +5861,4 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 .admin-note button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 @media (min-width: 1024px) { .admin-dialog-scrim { align-items: center; } .admin-dialog { border-radius: 16px; } .admin-notes { bottom: 1.5rem; } }
 .admin-inbox-onit { display: block; font-size: 0.9rem; color: var(--gold); font-weight: 600; }
+.admin-note-action { min-height: 44px; min-width: 44px; padding: 0 0.9rem; border-radius: 8px; border: 1px solid var(--accent) !important; background: none; color: var(--accent) !important; font: inherit; font-size: 1rem !important; font-weight: 700; cursor: pointer; }

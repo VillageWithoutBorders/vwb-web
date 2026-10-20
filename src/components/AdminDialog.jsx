@@ -9,6 +9,8 @@ import { useEffect, useRef, useState } from 'react'
 //     -> null if cancelled, else { text }
 //   tell('Saved.')            a note that fades after a few seconds
 //   tell('Could not save.', { tone: 'error' })
+//   tell('Report dismissed.', { action: { label: 'Undo', run: () => reopen(id) } })
+//                             a note with a button, shown a little longer
 //
 // <AdminDialogHost /> must be on the page. Without it, the browser pop-ups are used.
 
@@ -33,7 +35,7 @@ export async function askConfirm(message, opts = {}) {
 
 export function tell(message, opts = {}) {
   if (!hostListener) { window.alert(message); return }
-  hostListener({ kind: 'tell', id: nextId++, message, tone: opts.tone || 'ok' })
+  hostListener({ kind: 'tell', id: nextId++, message, tone: opts.tone || 'ok', action: opts.action || null })
 }
 
 export function AdminDialogHost() {
@@ -49,7 +51,7 @@ export function AdminDialogHost() {
     hostListener = (item) => {
       if (item.kind === 'tell') {
         setNotes((n) => [...n.slice(-2), item])
-        setTimeout(() => setNotes((n) => n.filter((x) => x.id !== item.id)), item.tone === 'error' ? 9000 : 5000)
+        setTimeout(() => setNotes((n) => n.filter((x) => x.id !== item.id)), item.action ? 10000 : item.tone === 'error' ? 9000 : 5000)
         return
       }
       if (current.current) { queue.current.push(item); return }
@@ -118,6 +120,9 @@ export function AdminDialogHost() {
         {notes.map((n) => (
           <div key={n.id} className={'admin-note' + (n.tone === 'error' ? ' admin-note-error' : '')} role={n.tone === 'error' ? 'alert' : 'status'}>
             <span>{n.message}</span>
+            {n.action && (
+              <button type="button" className="admin-note-action" onClick={() => { setNotes((x) => x.filter((y) => y.id !== n.id)); n.action.run() }}>{n.action.label}</button>
+            )}
             <button type="button" aria-label="Close" onClick={() => setNotes((x) => x.filter((y) => y.id !== n.id))}>&times;</button>
           </div>
         ))}
