@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 
 // "What we bring" for an emergency response Group.
-// Each member picks the skills and gear they can bring. Keepers see everyone's
+// Each member picks the skills and gear they can bring. Keepers and Helpers see everyone's
 // list. Members see their own list and the group's totals (no names).
 // The database checks all of this too (vwb-groups-emergency.sql).
 
@@ -70,7 +70,7 @@ export default function GroupGear({ orgId, orgName, isKeeper }) {
     const { data, error } = await supabase.rpc('set_my_group_gear', { p_org: orgId, p_skills: skills, p_gear: gear, p_note: note.trim() || null })
     setSaving(false)
     if (error || data !== 'saved') { console.error('Failed to save what you bring:', error || data); setMsg("We couldn't save that. Try again."); return }
-    setMsg('Saved. Your keepers can see what you bring.')
+    setMsg("Saved. Your group's Keepers and Helpers can see what you bring.")
     setEditing(false)
     load()
   }
@@ -85,7 +85,7 @@ export default function GroupGear({ orgId, orgName, isKeeper }) {
     <div className="gg">
       <h3>What you bring</h3>
       {editing ? <>
-        <p className="vs-note">Pick what you could bring when {orgName} is called to help. Only your keepers see your name with it.</p>
+        <p className="vs-note">Pick what you could bring when {orgName} is called to help. Only its Keepers and Helpers see your name with it.</p>
         <Picker label="Skills" options={SKILLS} picked={skills} setPicked={setSkills} idBase="gg-skill" />
         <Picker label="Gear" options={GEAR} picked={gear} setPicked={setGear} idBase="gg-gear" />
         <label htmlFor="gg-note" className="gg-label">Anything else (optional)</label>
@@ -109,7 +109,7 @@ export default function GroupGear({ orgId, orgName, isKeeper }) {
           </>}
 
       {isKeeper && others.length > 0 && <>
-        <h3>Each member (keepers only)</h3>
+        <h3>Each member (Keepers and Helpers only)</h3>
         {others.map((r) => (
           <div key={r.user_id} className="vs-item">
             <b>{r.display_name}</b>

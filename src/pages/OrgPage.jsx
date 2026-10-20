@@ -16,6 +16,7 @@ import GroupGear from '../components/GroupGear'
 import GroupResponse from '../components/GroupResponse'
 import '../village-scene.css'
 import Icon from '../components/Icon'
+import { orgWords } from '../utils/roleWords'
 
 // The Organization page: one organization as a little world, the same way a
 // village page works. Every element on the hills opens its part. Members-only
@@ -23,9 +24,8 @@ import Icon from '../components/Icon'
 // Heads and organizers also get their settings at the bottom.
 // Names follow the VWB Vocabulary sheet. Route: /orgs/:id
 
-const ROLE = { admin: 'Head', organizer: 'Organizer', member: 'Member' }
-// Emergency response Groups (kind 'group') are run by keepers.
-const GROUP_ROLE = { admin: 'Lead keeper', organizer: 'Keeper', member: 'Member' }
+// Role words come from utils/roleWords: groups say Helper and Keeper,
+// organizations say Organizer and Head.
 
 function safeLink(url) {
   if (!url) return null
@@ -211,7 +211,7 @@ export default function OrgPage() {
     const { data, error } = await supabase.rpc('ask_to_join_org', { p_org: id })
     setAsking(false)
     if (error) { console.error('Failed to ask to join:', error); setAskNote("We couldn't send that. Check your connection and try again."); return }
-    const who = org?.kind === 'group' ? 'keepers' : 'organizers'
+    const who = orgWords(org).leadsLower
     if (data === 'asked' || data === 'wait') { setAsked(true); setAskNote(data === 'asked' ? 'Sent. The ' + who + ' will see your name and can add you.' : 'You already asked this week. The ' + who + ' have your name.'); return }
     if (data === 'member') { setAskNote('You are already part of this ' + (org?.kind === 'group' ? 'group' : 'organization') + '.'); return }
     setAskNote("We couldn't send that right now. Try again later.")
@@ -235,9 +235,10 @@ export default function OrgPage() {
 
   const isGroup = org?.kind === 'group'
   const SPOTS = isGroup ? GROUP_SPOTS : ORG_SPOTS
-  const roleName = (r) => (isGroup ? GROUP_ROLE : ROLE)[r] || 'Member'
-  const LEADS = isGroup ? 'Keepers' : 'Heads and organizers'
-  const TOOLS = isGroup ? 'Keeper tools' : 'Organizer tools'
+  const W = orgWords(org)
+  const roleName = (r) => W.roleLabel[r] || 'Member'
+  const LEADS = W.leads
+  const TOOLS = W.tools
   const KIND = isGroup ? 'group' : 'organization'
 
   const locked = (s) => !!s.members && !isMember
@@ -256,7 +257,7 @@ export default function OrgPage() {
       case 'needs': return { sub: isMember ? 'What we need and what we offer' : 'Members only' }
       case 'share': return { sub: resources.length ? resources.length + ' shared resource' + (resources.length === 1 ? '' : 's') : 'Nothing shared yet' }
       case 'members': return { sub: !isMember ? 'Members only' : isGroup ? 'Who is in, and what we bring' : 'Who is part of this organization' }
-      case 'involved': return { sub: isMember ? 'Share this page with a friend' : asked ? 'You asked to join' : 'Ask to join or reach the ' + (isGroup ? 'keepers' : 'organizers') }
+      case 'involved': return { sub: isMember ? 'Share this page with a friend' : asked ? 'You asked to join' : 'Ask to join or reach the ' + W.leadsLower }
       case 'tools': return { sub: 'Members, chats, events, connections' }
       default: return { sub: '' }
     }
@@ -377,7 +378,7 @@ export default function OrgPage() {
         return <>{title}<GroupResponse orgId={id} orgName={org.name} isKeeper={canManage} villageCount={villageCount} onChanged={loadOrg} /></>
       case 'share':
         return <>{title}
-          {resources.length === 0 && <p>{isGroup ? 'No supplies listed yet. Keepers can add the supplies your group keeps ready, like tarps or water, as resources.' : 'Nothing shared yet.'}</p>}
+          {resources.length === 0 && <p>{isGroup ? 'No supplies listed yet. Keepers and Helpers can add the supplies your group keeps ready, like tarps or water, as resources.' : 'Nothing shared yet.'}</p>}
           {resources.map((r) => (
             <div key={r.id} className="vs-item">
               <b>{r.name}</b>
@@ -395,7 +396,7 @@ export default function OrgPage() {
       case 'members':
         return <>{title}
           <OrgMemberNames orgId={id} />
-          <p className="vs-note">{canManage ? 'You can see and add members in ' + TOOLS + '.' : 'If no names show, the ' + (isGroup ? 'lead keeper' : 'Head') + ' keeps the list private.'}</p>
+          <p className="vs-note">{canManage ? 'You can see and add members in ' + TOOLS + '.' : 'If no names show, the ' + W.head + ' keeps the list private.'}</p>
           {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Open {TOOLS}</Link>}
           {isGroup && isMember && <GroupGear orgId={id} orgName={org.name} isKeeper={canManage} />}
         </>
@@ -531,7 +532,7 @@ export default function OrgPage() {
         </div>
 
         {canManage && <>
-          <h2>{isGroup ? 'Keeper settings' : 'Organizer settings'}</h2>
+          <h2>{W.settings}</h2>
           <section className="cal-box" aria-labelledby="org-home">
             <h3 id="org-home">Home area</h3>
             <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>

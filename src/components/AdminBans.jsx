@@ -30,7 +30,7 @@ export function BanDialog({ target, onClose, onDone }) {
   const [error, setError] = useState('')
   const firstRef = useRef(null)
   const who = target.name || target.email || 'this person'
-  // Banning a Hope Ambassador, organizer or keeper takes two admins unless
+  // Banning a Hope Ambassador or anyone who leads a village, group or organization takes two admins unless
   // the founder does it (vwb-admin-safety.sql). Then this asks instead.
   const { isFounder } = useAuth()
   const [needsSecond, setNeedsSecond] = useState(false)
@@ -78,7 +78,7 @@ export function BanDialog({ target, onClose, onDone }) {
       <div role="dialog" aria-modal="true" aria-labelledby="ban-title" className="app-dialog">
         <h2 id="ban-title">Ban {who}?</h2>
         {needsSecond && (
-          <p className="groups-note"><strong>{who} is a Hope Ambassador, organizer or keeper.</strong> A second admin has to agree before the ban happens. Your request shows in Reports for the other admins.</p>
+          <p className="groups-note"><strong>{who} is a Hope Ambassador, or leads a village, group or organization.</strong> A second admin has to agree before the ban happens. Your request shows in Reports for the other admins.</p>
         )}
         <p className="groups-note">
           They'll be signed out and can't log back in. {target.email ? 'This email' : 'Their email'} can't be used to sign up again.
