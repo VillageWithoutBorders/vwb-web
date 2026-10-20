@@ -15,6 +15,7 @@ import { useDashTab, NeedsYou, DashTabs, DashPanel } from '../components/DashShe
 import Icon from '../components/Icon'
 import { askConfirm } from '../components/AdminDialog'
 import { orgWords } from '../utils/roleWords'
+import RoleLog from '../components/RoleLog'
 
 // The organizer's home base for one organization. Needs-you card on top,
 // then four tabs: People, Chats, Events and posts, Settings.
@@ -448,6 +449,7 @@ export default function OrgDashboard() {
             </div>
           </section>
           <OrgRules orgId={id} isHead={isHead} org={orgInfo} onTitles={load} />
+          <RoleLog kind="org" placeId={id} org={orgInfo} />
           {isHead && headCount > 1 && (
             <section className="hub-section" aria-labelledby="od-step">
               <div className="hub-section-head"><h2 id="od-step">Your role</h2></div>
