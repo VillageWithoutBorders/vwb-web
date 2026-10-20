@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { csvToObjects, toCsv, downloadText } from '../utils/csv'
 import { friendlyError } from '../utils/resourceReports'
 import { CATEGORIES } from '../utils/resourceCategories'
+import { askConfirm } from './AdminDialog'
 
 // Admin > CRN Import. VWB admins only (the database checks this too).
 // See vwb-crn-import.sql for the rules.
@@ -154,7 +155,7 @@ export default function AdminCrnImport() {
   }
 
   async function undo(b) {
-    if (!window.confirm('Undo this import? Everything it changed goes back the way it was.')) return
+    if (!(await askConfirm('Undo this import? Everything it changed goes back the way it was.', { yes: 'Undo import', danger: true }))) return
     setBusy(true); setNote('')
     const { error } = await supabase.rpc('crn_import_undo', { p_batch: b.id })
     setBusy(false)
@@ -227,7 +228,7 @@ export default function AdminCrnImport() {
     const headers = ['CRN Source Service ID', 'Resource', 'Kind', 'What changed', 'Approved by', 'Approved on']
     const lines = teamList.map((t) => [t.crn_service_id, t.resource_name, t.kind, JSON.stringify(t.changes), t.approved_by_name || '', new Date(t.created_at).toLocaleDateString()])
     downloadText('vwb-changes-for-crn-' + new Date().toISOString().slice(0, 10) + '.csv', toCsv(headers, lines))
-    if (!window.confirm('Mark these as sent to the CRN team?')) return
+    if (!(await askConfirm('Mark these as sent to the CRN team?', { yes: 'Mark as sent' }))) return
     const { error } = await supabase.rpc('crn_team_mark_exported', { p_ids: teamList.map((t) => t.id) })
     if (error) { console.error('crn_team_mark_exported failed:', error); setNote(friendlyError(error, "We couldn't mark them as sent.")); return }
     loadTeam()

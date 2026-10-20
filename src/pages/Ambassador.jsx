@@ -36,7 +36,8 @@ export default function Ambassador() {
 
   useEffect(() => {
     if (!allowed) return
-    supabase.from('emergency_events').select('id, title, location_name, created_at, upvote_count').eq('status', 'active').eq('verified', false).order('created_at', { ascending: false })
+    // Only the ones you can check: your villages, or no village (vwb-admin-round3.sql). Admins see all.
+    supabase.rpc('emergencies_i_can_check')
       .then(({ data, error: err }) => {
         if (err) { console.error('Failed to load emergencies to check:', err); setError("Some of this didn't load. Try again."); setEvents([]); return }
         setEvents(data || [])
@@ -63,7 +64,7 @@ export default function Ambassador() {
       <section className="amb-box" aria-labelledby="amb-em">
         <h2 id="amb-em"><Icon name="siren" /> Emergencies to check</h2>
         {events === null ? <p role="status">Loading...</p>
-          : events.length === 0 ? <p className="amb-note">Nothing waiting. Reports show here until two neighbors confirm them or you check them.</p>
+          : events.length === 0 ? <p className="amb-note">Nothing waiting in your villages. Reports show here until two neighbors confirm them or you check them.</p>
           : (
             <ul className="amb-list">
               {events.map((e) => (

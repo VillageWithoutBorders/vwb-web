@@ -271,11 +271,21 @@ export default function EventDetail() {
 
   // Hope Ambassadors and admins can verify right here, without going back to the list.
   const [verifying, setVerifying] = useState(false)
+  // Hope Ambassadors check emergencies in their own villages (vwb-admin-round3.sql).
+  const [canCheck, setCanCheck] = useState(false)
+  useEffect(() => {
+    if (!id || !(isAdmin || profile?.is_hope_ambassador)) { setCanCheck(false); return }
+    if (isAdmin) { setCanCheck(true); return }
+    supabase.rpc('can_i_check_emergency', { p_event: Number(id) }).then(({ data, error }) => {
+      if (error) { console.error('Failed to check if you can verify:', error); setCanCheck(false); return }
+      setCanCheck(!!data)
+    })
+  }, [id, isAdmin, profile?.is_hope_ambassador])
   async function verifyNow() {
     setVerifying(true)
     const { error } = await supabase.from('emergency_events').update({ verified: true }).eq('id', id)
     setVerifying(false)
-    if (error) { console.error('Failed to verify event:', error); alert('Could not verify this event. Try again.'); return }
+    if (error) { console.error('Failed to verify event:', error); alert(error.code === 'P0001' ? error.message : 'Could not verify this event. Try again.'); return }
     if (event.created_by && event.created_by !== user.id) {
       await createNotification({ userId: event.created_by, type: 'emergency_verified', title: 'Emergency Verified', body: event.title + ' was verified. A Response Camp is open for everyone helping.', link: '/emergency/' + id })
     }
@@ -501,7 +511,7 @@ export default function EventDetail() {
         </div>
       </div>
 
-      {!event.verified && event.status === 'active' && (isAdmin || profile?.is_hope_ambassador) && (
+      {!event.verified && event.status === 'active' && canCheck && (
         <div className="ev-verify" role="region" aria-label="Verify this emergency">
           <p><b>Waiting to be checked.</b> You are a Hope Ambassador or VWB admin. If this is real, verify it to open the Response Camp and call the groups that cover this village.</p>
           <button type="button" className="btn btn-primary btn-full" onClick={verifyNow} disabled={verifying}>{verifying ? 'Verifying...' : 'Verify this emergency'}</button>

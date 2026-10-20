@@ -5841,3 +5841,23 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
   .admin-decide-side { flex-basis: 100%; }
 }
 
+
+/* Admin in-page confirm panel and notes (components/AdminDialog.jsx) */
+.admin-dialog-scrim { position: fixed; inset: 0; z-index: 2100; background: rgba(0, 0, 0, 0.6); display: flex; align-items: flex-end; justify-content: center; }
+.admin-dialog { width: 100%; max-width: 32rem; max-height: 85vh; overflow-y: auto; box-sizing: border-box; padding: 1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom, 0px)); border-radius: 16px 16px 0 0; background: var(--surface-2, var(--surface)); border: 1px solid var(--border-strong); color: var(--text); outline: none; display: grid; gap: 0.75rem; }
+.admin-dialog:focus-visible { box-shadow: 0 0 0 3px var(--accent); }
+.admin-dialog-title { margin: 0; font-size: 1.15rem; color: var(--text-strong); }
+.admin-dialog-msg { margin: 0; font-size: 1rem; line-height: 1.5; white-space: pre-line; }
+.admin-dialog-label { display: grid; gap: 0.3rem; font-weight: 600; font-size: 1rem; }
+.admin-dialog-label textarea { font: inherit; font-weight: 400; font-size: 1rem; min-height: 4.5rem; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface-sunk, var(--surface)); color: var(--text); }
+.admin-dialog-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.admin-dialog-actions .btn { flex: 1 1 8rem; min-height: 48px; font-size: 1rem; }
+.admin-dialog-danger { background: var(--danger); color: #fff; border: none; }
+.admin-notes { position: fixed; left: 0; right: 0; bottom: calc(var(--tab-height, 64px) + env(safe-area-inset-bottom, 0px) + 0.5rem); z-index: 2050; display: grid; gap: 0.5rem; justify-items: center; padding: 0 1rem; pointer-events: none; }
+.admin-note { pointer-events: auto; width: 100%; max-width: 32rem; box-sizing: border-box; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.5rem 0.6rem 1rem; border-radius: 12px; background: var(--surface-2, var(--surface)); border: 1px solid var(--accent); color: var(--text); font-size: 1rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); }
+.admin-note span { flex: 1; }
+.admin-note-error { border-color: var(--danger); }
+.admin-note button { min-width: 44px; min-height: 44px; background: none; border: none; color: var(--text-soft, var(--text)); font-size: 1.4rem; cursor: pointer; }
+.admin-note button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+@media (min-width: 1024px) { .admin-dialog-scrim { align-items: center; } .admin-dialog { border-radius: 16px; } .admin-notes { bottom: 1.5rem; } }
+.admin-inbox-onit { display: block; font-size: 0.9rem; color: var(--gold); font-weight: 600; }

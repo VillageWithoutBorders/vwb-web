@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { UserName } from './AvatarDisplay'
 import { timeAgo } from '../utils/notificationDisplay'
 import { refreshAdminInbox } from '../hooks/useAdminInbox'
+import { ask } from './AdminDialog'
 
 // New admins (vwb-admin-recruiting.sql):
 //   - A ready Hope Ambassador asks for a village with no admin.
@@ -40,7 +41,11 @@ export function AdminApplications({ me, isFounder, refreshKey, onChanged }) {
 
   async function decide(r, yes) {
     let reason = null
-    if (!yes) reason = (prompt('Anything to tell them? (optional, they will see it)') || '').trim()
+    if (!yes) {
+      const r2 = await ask({ message: 'Say no to ' + (r.name || 'this person') + '?', yes: 'Say no', danger: true, input: { label: 'Anything to tell them? (optional, they will see it)' } })
+      if (r2 === null) return
+      reason = r2.text
+    }
     setBusy(true); setNote('')
     const { data, error } = await supabase.rpc('admin_application_decide', {
       p_app: r.id, p_yes: yes, p_mentor: mentor[r.id] || null, p_note: reason,

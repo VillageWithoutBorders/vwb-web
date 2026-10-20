@@ -37,7 +37,7 @@ export default function GroupResponse({ orgId, orgName, isKeeper, villageCount, 
     setBusy(true); setMsg('')
     const { data, error } = await supabase.rpc('decide_group_response', { p_org: orgId, p_approve: yes, p_note: decideNote.trim() || null })
     setBusy(false)
-    if (error || !['approved', 'declined'].includes(data)) { console.error('Failed to decide:', error || data); setMsg(data === 'inside' ? 'You are in this group, so someone else has to decide.' : "We couldn't save that. Try again."); return }
+    if (error || !['approved', 'declined'].includes(data)) { console.error('Failed to decide:', error || data); setMsg(data === 'inside' ? 'You are in this group, so someone else has to decide.' : data === 'notlocal' ? "This group doesn't cover your villages. A Hope Ambassador there or a VWB admin can decide." : "We couldn't save that. Try again."); return }
     setMsg(yes ? orgName + ' can now be called to emergencies. Its keepers were told.' : 'Saved. The keepers were told it is not approved yet.')
     setDecideNote('')
     load(); onChanged?.()

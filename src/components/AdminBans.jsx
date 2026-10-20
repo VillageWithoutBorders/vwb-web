@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { askConfirm, tell } from './AdminDialog'
 
 // Banning, for VWB admins and the founder (see vwb-bans.sql).
 // A ban signs the person out, blocks their login and their email from
@@ -131,16 +132,16 @@ export function BannedAccountsPanel({ refreshKey, onChange }) {
   }
 
   async function undo(b) {
-    if (!confirm('Undo the ban on ' + (b.display_name || b.email) + '? They can log in again and their posts will show again. (If they were an admin, that role is not given back.)')) return
+    if (!(await askConfirm('Undo the ban on ' + (b.display_name || b.email) + '? They can sign in again and their posts will show again. If they were an admin, that role is not given back.', { yes: 'Undo the ban' }))) return
     const { error } = await supabase.rpc('unban_account_by_id', { p_id: b.id })
-    if (error) { console.error('[BannedAccountsPanel] unban', error); alert('Could not undo the ban. Try again.'); return }
+    if (error) { console.error('[BannedAccountsPanel] unban', error); tell('Could not undo the ban. Try again.', { tone: 'error' }); return }
     load(); onChange?.()
   }
 
   function startEmailBan(e) {
     e.preventDefault()
     const clean = email.trim()
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(clean)) { alert('Enter a full email address.'); return }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(clean)) { tell('Enter a full email address.', { tone: 'error' }); return }
     setEmailTarget({ email: clean })
   }
 
