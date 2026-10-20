@@ -76,7 +76,7 @@ export default function OrgDashboard() {
       supabase.rpc('list_org_members', { p_org: id }),
       supabase.rpc('org_needs_and_offers', { p_org: id }),
       fetchCalendarEvents(),
-      supabase.from('organizations').select('id, name, is_umbrella, affiliate_label, kind').eq('id', id).maybeSingle(),
+      supabase.from('organizations').select('id, name, is_umbrella, affiliate_label, kind, head_title, organizer_title').eq('id', id).maybeSingle(),
       supabase.rpc('org_join_asks_list', { p_org: id }),
       supabase.rpc('my_org_connections', { p_org: id }),
     ])
@@ -181,7 +181,7 @@ export default function OrgDashboard() {
   )
 
   const makeHead = async (u) => {
-    if (!await askConfirm('Make ' + u.display_name + ' ' + W.aHead + ' of ' + orgName + '? ' + W.head + 's can change anyone\'s role and remove members.')) return
+    if (!await askConfirm('Make ' + u.display_name + ' ' + W.aHead + ' of ' + orgName + '? ' + W.heads + ' can change anyone\'s role and remove members.')) return
     run(() => supabase.rpc('make_org_head', { p_org: id, p_user: u.user_id }), u.display_name + ' is now ' + W.aHead + '.')
   }
 
@@ -300,7 +300,7 @@ export default function OrgDashboard() {
               <div key={u.user_id} className="dash-row">
                 <div className="dash-row-main">
                   <strong><UserName userId={u.user_id} name={u.display_name} /></strong>
-                  <small>{W.roleLabel[u.role] || u.role}{u.user_id === user.id ? ' (you)' : ''}</small>
+                  <small>{W.stepLabel[u.role] || u.role}{u.user_id === user.id ? ' (you)' : ''}</small>
                 </div>
                 {u.role === 'admin' && u.user_id === user.id && headCount > 1 && (
                   <div className="dash-btns">
@@ -447,11 +447,11 @@ export default function OrgDashboard() {
               {shortcut('\u{1F4D6}', 'Resource list', '/community/resources')}
             </div>
           </section>
-          <OrgRules orgId={id} isHead={isHead} />
+          <OrgRules orgId={id} isHead={isHead} org={orgInfo} onTitles={load} />
           {isHead && headCount > 1 && (
             <section className="hub-section" aria-labelledby="od-step">
               <div className="hub-section-head"><h2 id="od-step">Your role</h2></div>
-              <p className="hub-org-desc">You are one of {headCount} {W.head}s. You can step down and stay on as {W.anOrganizer}.</p>
+              <p className="hub-org-desc">You are one of {headCount} {headCount === 1 ? W.head : W.heads}. You can step down and stay on as {W.anOrganizer}.</p>
               <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} disabled={busy} onClick={stepDown}>Step down as {W.head}</button>
               {note && <p className="dash-note" role="status">{note}</p>}
             </section>

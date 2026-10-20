@@ -84,7 +84,7 @@ export default function OrgPage() {
   async function loadOrg() {
     const { data, error } = await supabase
       .from('organizations')
-      .select('id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label, kind, response_status')
+      .select('id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label, kind, response_status, head_title, organizer_title')
       .eq('id', id)
       .eq('approved', true)
       .maybeSingle()
@@ -302,7 +302,7 @@ export default function OrgPage() {
     if (spot.soon) return <>{title}<p>This part of the {KIND} is coming soon.</p></>
     switch (k) {
       case 'rules':
-        return <>{title}<OrgRules orgId={id} isHead={isHead} /></>
+        return <>{title}<OrgRules orgId={id} isHead={isHead} org={org} onTitles={loadOrg} /></>
       case 'where':
         return <>{title}<OrgVillages orgId={id} orgName={org.name} canManage={canManage} /></>
       case 'links':
@@ -395,7 +395,7 @@ export default function OrgPage() {
         </>
       case 'members':
         return <>{title}
-          <OrgMemberNames orgId={id} />
+          <OrgMemberNames orgId={id} words={W} />
           <p className="vs-note">{canManage ? 'You can see and add members in ' + TOOLS + '.' : 'If no names show, the ' + W.head + ' keeps the list private.'}</p>
           {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Open {TOOLS}</Link>}
           {isGroup && isMember && <GroupGear orgId={id} orgName={org.name} isKeeper={canManage} />}
