@@ -829,25 +829,6 @@ export default function Admin() {
       await loadUsers()
     }
   }
-  async function approveAdminApplication(app) {
-    if (!confirm('Grant admin access to ' + (app.applicant_name || 'this user') + '?')) return
-    const { error: roleErr } = await supabase.from('helper_profiles').update({ role: 'admin' }).eq('user_id', app.user_id)
-    if (reportError('approveAdminApplication:role', roleErr, 'Could not grant admin access. Try again.')) return
-    const { error: statusErr } = await supabase.from('admin_applications').update({ status: 'approved' }).eq('id', app.id)
-    reportError('approveAdminApplication:status', statusErr)
-    const { error: notifErr } = await supabase.from('notifications').insert({ user_id: app.user_id, type: 'admin_invite_approved', title: 'You are now an Admin', body: 'Your admin access has been confirmed. Find the Admin Panel from your profile.', link: '/admin', read: false })
-    reportError('approveAdminApplication:notify', notifErr)
-    await loadAdminApplications()
-    await loadUsers()
-  }
-  async function declineAdminApplication(app) {
-    if (!confirm('Decline this admin request?')) return
-    const { error } = await supabase.from('admin_applications').update({ status: 'declined' }).eq('id', app.id)
-    if (reportError('declineAdminApplication', error, 'Could not decline this request. Try again.')) return
-    const { error: notifErr } = await supabase.from('notifications').insert({ user_id: app.user_id, type: 'admin_invite_declined', title: 'Your admin request was not approved', body: '', link: '/profile', read: false })
-    reportError('declineAdminApplication:notify', notifErr)
-    await loadAdminApplications()
-  }
   // Removing admin access: the founder does it right away; any other admin
   // asks, and a second admin has to agree (vwb-admin-roles.sql).
   async function demoteUser(userId) {
@@ -927,7 +908,8 @@ export default function Admin() {
   const visibleUsers = users
     .filter(u => userMatches[userFilter](u))
     .filter(u => userVillage === 'all' || (userVillage === 'none' ? !u.village_id : u.village_id === userVillage))
-    .filter(u => !userSearch || (u.display_name || 'unnamed').toLowerCase().includes(userSearch))
+    // Name, village name, or (for sign-ups with no profile) the email hint already shown on the card.
+    .filter(u => !userSearch || [u.display_name || 'unnamed', villages.find(v => v.id === u.village_id)?.name, u.email_hint].filter(Boolean).join(' ').toLowerCase().includes(userSearch))
     .sort((a, b) => {
       if (userSort === 'oldest') return new Date(a.created_at) - new Date(b.created_at)
       if (userSort === 'name') return (a.display_name || 'Unnamed').localeCompare(b.display_name || 'Unnamed', undefined, { sensitivity: 'base' })
@@ -945,7 +927,7 @@ export default function Admin() {
     .filter(c => contentFilter === 'all' || (contentFilter === 'dupes' ? c.is_duplicate : c.kind === contentFilter.slice(0, -1)))
     .filter(c => !contentSearch || [c.title, c.description, c.poster_name, c.neighborhood].filter(Boolean).join(' ').toLowerCase().includes(contentSearch))
   const hiddenLabel = { position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }
-  const filterSelect = { padding: '0.4rem 0.5rem', minHeight: '36px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text-soft)', fontSize: '0.8rem' }
+  const filterSelect = { padding: '0.4rem 0.5rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text-soft)', fontSize: '1rem' }
 
   const tabStyle = (active) => ({ padding: '0.5rem 0.85rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : 'var(--surface-2)', color: active ? 'var(--on-accent)' : 'var(--text-secondary)' })
   const cardStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }
@@ -1093,7 +1075,7 @@ export default function Admin() {
                         {when && <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>Available:</strong> {when}</p>}
                         {typeof a.applicant.interests === 'string' && a.applicant.interests && <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.15rem 0' }}><strong>About:</strong> {a.applicant.interests}</p>}
                         {a.user_id !== user.id && <button type="button" onClick={() => messageUser(a.user_id)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, minHeight: '44px', padding: 0 }}>Message applicant</button>}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
+                        <div className="admin-decide" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
                           <button onClick={() => reviewAmbassadorApplication(a.id, true)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Approve</button>
                           <button onClick={() => reviewAmbassadorApplication(a.id, false)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', fontWeight: 600, cursor: 'pointer', fontSize: '0.8rem' }}>Decline</button>
                         </div>
@@ -1180,7 +1162,7 @@ export default function Admin() {
               {ev.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0' }}>{ev.location_name}</p>}
               {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.2rem 0' }}>{ev.description}</p>}
               <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.4rem 0' }}>Upvotes: {ev.upvote_count || 0} / 2 needed</p>
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <div className="admin-decide" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <button onClick={() => verifyEvent(ev.id)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Approve</button>
                 <button onClick={() => rejectEvent(ev.id)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>Reject</button>
               </div>
@@ -1209,11 +1191,11 @@ export default function Admin() {
           <AdminTrials me={user.id} isFounder={isFounder} refreshKey={roleRefresh} />
           <BannedAccountsPanel refreshKey={banRefresh} onChange={loadUsers} />
           <div style={{ marginBottom: '0.75rem' }}>
-            <label htmlFor="user-search" style={hiddenLabel}>Search people by name</label>
-            <input id="user-search" type="search" value={userQuery} onChange={(e) => { setUserQuery(e.target.value); setUserLimit(USER_PAGE_SIZE) }} placeholder="Search by name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
+            <label htmlFor="user-search" style={hiddenLabel}>Search people by name or village</label>
+            <input id="user-search" type="search" value={userQuery} onChange={(e) => { setUserQuery(e.target.value); setUserLimit(USER_PAGE_SIZE) }} autoComplete="off" enterKeyHint="search" placeholder="Search by name or village" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem', marginBottom: '0.5rem' }} />
             <div role="group" aria-label="Filter people" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
               {USER_FILTERS.map(([key, label]) => (
-                <button key={key} type="button" aria-pressed={userFilter === key} onClick={() => { setUserFilter(key); setUserLimit(USER_PAGE_SIZE) }} style={{ ...tabStyle(userFilter === key), minHeight: '36px' }}>
+                <button key={key} type="button" aria-pressed={userFilter === key} onClick={() => { setUserFilter(key); setUserLimit(USER_PAGE_SIZE) }} style={{ ...tabStyle(userFilter === key), minHeight: '44px' }}>
                   {label} <span style={{ opacity: 0.7 }}>{userCounts[key]}</span>
                 </button>
               ))}
@@ -1232,7 +1214,7 @@ export default function Admin() {
                   <option value="none">No village</option>
                 </select>
               )}
-              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, padding: '0.25rem' }}>Clear filters</button>}
+              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, padding: '0.25rem 0.5rem', minHeight: '44px' }}>Clear filters</button>}
               <span role="status" style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '0.75rem' }}>Showing {Math.min(userLimit, visibleUsers.length)} of {visibleUsers.length}{visibleUsers.length !== users.length ? ' (' + users.length + ' total)' : ''}</span>
             </div>
           </div>
@@ -1551,7 +1533,7 @@ export default function Admin() {
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No organizations yet</p>
           ) : organizations.map(org => (
             <div key={org.id} style={cardStyle}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
                   <span style={{ background: org.approved ? 'var(--success-bg)' : 'var(--warn-bg)', color: org.approved ? 'var(--accent)' : 'var(--warn)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{org.approved ? 'APPROVED' : 'PENDING APPROVAL'}</span>
                   <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: 'var(--text)' }}>{org.name}</h4>
@@ -1559,7 +1541,7 @@ export default function Admin() {
                 {org.approved ? (
                   <button onClick={() => toggleOrgApproved(org)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: 'var(--danger)', border: '1px solid var(--danger)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Unapprove</button>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
+                  <div className="admin-decide admin-decide-side" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
                     <button onClick={() => reviewOrgRequest(org, true)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'var(--accent)', color: 'var(--on-accent)', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>Approve</button>
                     <button onClick={() => reviewOrgRequest(org, false)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'none', color: 'var(--warn)', border: '1px solid var(--warn)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Turn down</button>
                   </div>

@@ -138,3 +138,9 @@
 @media (prefers-reduced-motion: reduce) { .gg-chip:active { transform: none; } }
 /* Side chats sit inside the general Campfire (OrgPage Campfires sheet). */
 .vs-row.vs-row-sub { margin-left: 1.25rem; width: calc(100% - 1.25rem); }
+
+/* A waiting Keeper ask from the founder */
+.vs-ask { display: grid; gap: 0.2rem; margin: 0 0 0.75rem; padding: 0.75rem 1rem; min-height: 44px; border-radius: 12px; border: 2px solid var(--gold); background: var(--surface-2, var(--surface)); color: var(--text); text-decoration: none; font-size: 1rem; }
+.vs-ask small { color: var(--text-secondary, var(--text)); font-size: 0.95rem; }
+.vs-ask:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) { .vs-ask:hover { border-color: var(--accent); } }

@@ -5832,3 +5832,12 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
   /* Two-column tables fit a phone without scrolling. */
   .guide-table { min-width: 0; }
 }
+
+/* Approve / decline rows: on phones, big full-width buttons at the bottom of each card, easy for a thumb. */
+@media (max-width: 1023px) {
+  .admin-decide { display: flex !important; flex-direction: row !important; flex-wrap: wrap; gap: 0.75rem !important; width: 100%; margin-top: 0.75rem !important; }
+  .admin-decide > button { flex: 1 1 8rem; min-height: 48px !important; font-size: 1rem !important; }
+  .admin-decide > p { flex: 1 1 100%; }
+  .admin-decide-side { flex-basis: 100%; }
+}
+
