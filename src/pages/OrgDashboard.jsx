@@ -14,6 +14,7 @@ import BackLink from '../components/BackLink'
 import { useDashTab, NeedsYou, DashTabs, DashPanel } from '../components/DashShell'
 import Icon from '../components/Icon'
 import { askConfirm } from '../components/AdminDialog'
+import { orgWords } from '../utils/roleWords'
 
 // The organizer's home base for one organization. Needs-you card on top,
 // then four tabs: People, Chats, Events and posts, Settings.
@@ -27,9 +28,6 @@ const TABS = [
   { k: 'settings', em: '\u2699\uFE0F', label: 'Settings' },
 ]
 
-const ROLE_LABEL = { admin: 'Head', organizer: 'Organizer', member: 'Member' }
-// Emergency response Groups use keeper words for the same two roles.
-const GROUP_ROLE_LABEL = { admin: 'Lead keeper', organizer: 'Keeper', member: 'Member' }
 
 function when(iso) {
   return new Date(iso).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
@@ -69,9 +67,8 @@ export default function OrgDashboard() {
   const [linkAsks, setLinkAsks] = useState(0)
   const [tab, setTab] = useDashTab(TABS)
   const isGroup = (orgInfo?.kind || mine?.kind) === 'group'
-  const W = isGroup
-    ? { head: 'Lead keeper', aHead: 'a Lead keeper', organizer: 'keeper', anOrganizer: 'a keeper', leads: 'Keepers', tools: 'Keeper tools' }
-    : { head: 'Head', aHead: 'a Head', organizer: 'organizer', anOrganizer: 'an organizer', leads: 'Heads and organizers', tools: 'Organizer tools' }
+  // Role words: groups say Helper and Keeper, organizations say Organizer and Head.
+  const W = orgWords({ ...(mine || {}), ...(orgInfo || {}), kind: orgInfo?.kind || mine?.kind })
 
   const load = useCallback(async () => {
     if (!id || !allowed) return
@@ -303,7 +300,7 @@ export default function OrgDashboard() {
               <div key={u.user_id} className="dash-row">
                 <div className="dash-row-main">
                   <strong><UserName userId={u.user_id} name={u.display_name} /></strong>
-                  <small>{(isGroup ? GROUP_ROLE_LABEL : ROLE_LABEL)[u.role] || u.role}{u.user_id === user.id ? ' (you)' : ''}</small>
+                  <small>{W.roleLabel[u.role] || u.role}{u.user_id === user.id ? ' (you)' : ''}</small>
                 </div>
                 {u.role === 'admin' && u.user_id === user.id && headCount > 1 && (
                   <div className="dash-btns">
@@ -313,7 +310,7 @@ export default function OrgDashboard() {
                 {u.role !== 'admin' && (
                   <div className="dash-btns">
                     {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => makeHead(u)}>Make {W.head}</button>}
-                    {isHead && u.role === 'member' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'organizer')}>Make {W.organizer}</button>}
+                    {isHead && u.role === 'member' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'organizer')}>Make {W.Organizer}</button>}
                     {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'member')}>Make member</button>}
                     {(isHead || u.role === 'member') && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => removeMember(u)}>Remove</button>}
                   </div>

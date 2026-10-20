@@ -92,7 +92,7 @@ export const ADMIN_GUIDE = [
           ['Approve organizations and resource claims', 'Yes', 'No', 'Yes'],
           ['Make someone a Hope Ambassador', 'Yes', 'No', 'Yes'],
           ['Ban a neighbor', 'Yes (not in first 30 days)', 'No', 'Yes'],
-          ['Ban a Hope Ambassador, organizer, Head or keeper', 'No', 'Yes: one asks, another agrees', 'Alone'],
+          ['Ban a Hope Ambassador, Helper, Keeper, organizer or Head', 'No', 'Yes: one asks, another agrees', 'Alone'],
           ["Reset someone's two-step login", 'Neighbors and ambassadors (not in first 30 days)', 'No', 'Anyone but the founder'],
           ['Make someone an admin', 'No', 'Yes: two different yeses', 'Alone, picks the mentor'],
           ['Remove an admin', 'No', 'Yes: one asks, another agrees', 'Alone'],
@@ -122,7 +122,7 @@ export const ADMIN_GUIDE = [
         'Read both sides if you can. Message the reporter to ask what happened.',
         'Add a private note (only admins see it).',
         'Mark it reviewed, or dismissed if nothing was wrong.',
-        'Someone is unsafe: ban them. For a Hope Ambassador, organizer or keeper, tap Ask to ban, and a second admin agrees in Reports.',
+        'Someone is unsafe: ban them. For a Hope Ambassador or anyone who leads a village, group or organization, tap Ask to ban, and a second admin agrees in Reports.',
       ] },
       { h3: 'A safety check-in alert during a task' },
       { ol: [

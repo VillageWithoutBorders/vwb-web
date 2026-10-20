@@ -38,7 +38,7 @@ export default function GroupResponse({ orgId, orgName, isKeeper, villageCount, 
     const { data, error } = await supabase.rpc('decide_group_response', { p_org: orgId, p_approve: yes, p_note: decideNote.trim() || null })
     setBusy(false)
     if (error || !['approved', 'declined'].includes(data)) { console.error('Failed to decide:', error || data); setMsg(data === 'inside' ? 'You are in this group, so someone else has to decide.' : data === 'notlocal' ? "This group doesn't cover your villages. A Hope Ambassador there or a VWB admin can decide." : "We couldn't save that. Try again."); return }
-    setMsg(yes ? orgName + ' can now be called to emergencies. Its keepers were told.' : 'Saved. The keepers were told it is not approved yet.')
+    setMsg(yes ? orgName + ' can now be called to emergencies. The group was told.' : 'Saved. The group was told it is not approved yet.')
     setDecideNote('')
     load(); onChanged?.()
   }
@@ -62,7 +62,7 @@ export default function GroupResponse({ orgId, orgName, isKeeper, villageCount, 
         <section className="cal-box" aria-labelledby="gr-decide">
           <h3 id="gr-decide">{s === 'asked' ? 'You can decide' : 'Take back approval'}</h3>
           <p className="cal-sub">You are a Hope Ambassador or VWB admin and not in this group. Check that it is real and local before saying yes.</p>
-          <label htmlFor="gr-note" className="gg-label">Note to the keepers (optional)</label>
+          <label htmlFor="gr-note" className="gg-label">Note to the group (optional)</label>
           <textarea id="gr-note" rows={2} maxLength={300} value={decideNote} onChange={(e) => setDecideNote(e.target.value)} />
           {s === 'asked' && <button type="button" className="btn btn-primary btn-full" onClick={() => decide(true)} disabled={busy}>Approve to respond</button>}
           <button type="button" className="btn btn-outline btn-full" onClick={() => decide(false)} disabled={busy}>{s === 'asked' ? 'Not yet' : 'Take back approval'}</button>

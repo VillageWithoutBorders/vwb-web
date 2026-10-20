@@ -9,7 +9,7 @@ import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
 // Start an emergency response Group (tent icon). Route: /start-group
 // Optional ?village=<id> picks that village as the first one the group covers.
 // Rules live in the database (vwb-groups-emergency.sql): up to 3 per person,
-// starts private, the starter is the lead keeper.
+// starts private, the starter is its Keeper.
 
 export default function StartGroup() {
   const navigate = useNavigate()
@@ -70,8 +70,8 @@ export default function StartGroup() {
       <section className="cal-box" aria-labelledby="sg-how">
         <h2 id="sg-how" style={{ fontSize: '1.05rem', marginTop: 0 }}>How groups work</h2>
         <ul className="sg-list">
-          <li><b>You are the lead keeper.</b> You add members and can make others keepers.</li>
-          <li><b>It starts private.</b> Only people with a VWB account can see it, and only keepers add people.</li>
+          <li><b>You are its Keeper.</b> You add members, and you can name Helpers to share the work.</li>
+          <li><b>It starts private.</b> Only people with a VWB account can see it, and only its Keepers and Helpers add people.</li>
           <li><b>It gets a Campfire</b> for your crew to talk and plan.</li>
           <li><b>To be called to emergencies,</b> ask for approval from your group page. A Hope Ambassador or VWB admin checks that the group is real and local.</li>
         </ul>
@@ -80,7 +80,7 @@ export default function StartGroup() {
       {established === false ? (
         <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE}</p>
       ) : full ? (
-        <p className="groups-note" role="status">You already started 3 groups, which is the most one person can start. A keeper of one of them can hand it off, or you can join someone else's group.</p>
+        <p className="groups-note" role="status">You already started 3 groups, which is the most one person can start. You can make someone else a Keeper of one of them and step down, or you can join someone else's group.</p>
       ) : (
         <form className="groups-card" onSubmit={submit} noValidate>
           <div className="form-field">
