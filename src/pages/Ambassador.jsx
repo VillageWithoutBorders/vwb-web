@@ -23,7 +23,7 @@ export default function Ambassador() {
   const [groups, setGroups] = useState(null)
   const [board, setBoard] = useState(null)
   const [error, setError] = useState('')
-  // Villages you belong to that have no admin yet (vwb-admin-recruiting.sql).
+  // Villages you belong to with fewer than 2 admins (vwb-two-admins-per-village.sql).
   const [needAdmin, setNeedAdmin] = useState([])
 
   useEffect(() => {
@@ -99,8 +99,12 @@ export default function Ambassador() {
 
       {needAdmin.length > 0 && (
         <section className="amb-box" aria-labelledby="amb-need-admin">
-          <h2 id="amb-need-admin"><Icon name="shield" /> {needAdmin.map((v) => v.village_name).join(', ')} {needAdmin.length === 1 ? 'needs' : 'need'} a local admin</h2>
-          <p className="amb-note">No admin looks after {needAdmin.length === 1 ? 'this village' : 'these villages'} yet. If you know your neighbors and want to help keep things safe, see if you're ready.</p>
+          {needAdmin.map((v) => (
+            <h2 key={v.village_id} id={v.village_id === needAdmin[0].village_id ? 'amb-need-admin' : undefined}>
+              <Icon name="shield" /> {v.village_name} needs {(v.admin_count || 0) >= 1 ? 'a second local admin' : 'a local admin'}
+            </h2>
+          ))}
+          <p className="amb-note">Every village needs two admins, so no one carries it alone. If you know your neighbors and want to help keep things safe, see if you're ready.</p>
           <Link className="btn btn-primary btn-full amb-btn" to="/become-admin">Want to help?</Link>
         </section>
       )}
