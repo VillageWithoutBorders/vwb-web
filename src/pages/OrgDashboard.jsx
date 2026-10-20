@@ -156,14 +156,14 @@ export default function OrgDashboard() {
 
   async function run(fn, okMsg) {
     setBusy(true); setNote('')
-    const { error } = await fn()
+    const { data, error } = await fn()
     setBusy(false)
     if (error) {
       console.error('Member change failed:', error)
       setNote(error.message && error.message.length < 140 ? error.message : "We couldn't save that. Try again.")
       return
     }
-    setNote(okMsg)
+    setNote(typeof okMsg === 'function' ? okMsg(data) : okMsg)
     await load()
   }
 
@@ -171,7 +171,12 @@ export default function OrgDashboard() {
     const r = await supabase.rpc('add_org_member', { p_org: id, p_user: u.user_id })
     if (!r.error) { setFound((f) => f.filter((x) => x.user_id !== u.user_id)); setAsks((l) => l.filter((x) => x.user_id !== u.user_id)) }
     return r
-  }, u.display_name + ' was added.')
+  }, (r) => ({
+    added: u.display_name + ' was added.',
+    invited: u.display_name + ' was invited. They join when they say yes.',
+    already: u.display_name + ' is already a member.',
+    declined: u.display_name + ' said no not long ago. You can invite them again later.',
+  })[r] || u.display_name + ' was invited.')
 
   const setRole = (u, role) => run(
     () => supabase.rpc('set_org_member_role', { p_org: id, p_user: u.user_id, p_role: role }),
@@ -318,7 +323,8 @@ export default function OrgDashboard() {
           </section>
 
           <section className="hub-section" aria-labelledby="od-add">
-            <div className="hub-section-head"><h2 id="od-add">Add someone</h2></div>
+            <div className="hub-section-head"><h2 id="od-add">Invite someone</h2></div>
+            <p className="hub-org-desc">They get an invite and join when they say yes.</p>
             <form className="hub-search" onSubmit={search} noValidate>
               <label htmlFor="od-find" className="sr-only">Find a VWB member by name</label>
               <input id="od-find" type="text" autoComplete="off" placeholder="Find a VWB member by name" value={query} onChange={(e) => { setQuery(e.target.value); setSearched(false) }} />
@@ -328,7 +334,7 @@ export default function OrgDashboard() {
             {found.map((u) => (
               <div key={u.user_id} className="dash-row">
                 <div className="dash-row-main"><strong><UserName userId={u.user_id} name={u.display_name} /></strong></div>
-                <button type="button" className="btn btn-primary group-small-btn" disabled={busy} onClick={() => addMember(u)}>Add</button>
+                <button type="button" className="btn btn-primary group-small-btn" disabled={busy} onClick={() => addMember(u)}>Invite</button>
               </div>
             ))}
           </section>
