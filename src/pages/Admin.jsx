@@ -1686,8 +1686,8 @@ export default function Admin() {
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>last message</div>
                 </div>
                 {isFounder && villageAdmins[c.id] && (
-                  <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: villageAdmins[c.id].admin_count < 2 ? 'var(--warn-bg)' : 'var(--surface)', borderRadius: '8px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: villageAdmins[c.id].admin_count < 2 ? 'var(--warn)' : 'var(--accent)' }}>{villageAdmins[c.id].admin_count} of 2</div>
+                  <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: villageAdmins[c.id].admin_count < 1 ? 'var(--warn-bg)' : 'var(--surface)', borderRadius: '8px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: villageAdmins[c.id].admin_count < 1 ? 'var(--warn)' : 'var(--accent)' }}>{villageAdmins[c.id].admin_count}</div>
                     <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>admins</div>
                   </div>
                 )}
@@ -1696,7 +1696,7 @@ export default function Admin() {
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.4rem 0 0' }}>
                   {villageAdmins[c.id].admin_count === 0
                     ? 'No admin yet. Give an admin this village in People, or point a ready Hope Ambassador to Become an admin.'
-                    : 'Admins: ' + villageAdmins[c.id].admin_names + (villageAdmins[c.id].admin_count < 2 ? '. Needs a second admin.' : '')}
+                    : 'Admins: ' + villageAdmins[c.id].admin_names}
                 </p>
               )}
               {isFounder && c.active !== false && (

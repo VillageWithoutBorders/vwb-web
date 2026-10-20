@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import BackLink from '../components/BackLink'
 
 // Asking to become an admin for your village (vwb-admin-recruiting.sql).
-// Each village needs two admins (vwb-two-admins-per-village.sql).
+// You can ask for a village that has no admin yet (vwb-roles-step5.sql).
 // Shows what is ready and what isn't, then the request form.
 
 const PROMISES = [
@@ -94,7 +94,7 @@ export default function BecomeAdmin() {
       {sent || waiting ? (
         <p className="admin-scope-note" role="status">Your request is waiting. Admins will look at it soon, and you'll get an alert when they decide. Thank you for offering.</p>
       ) : villages === null ? <p role="status">Loading...</p> : villages.length === 0 ? (
-        <p className="admin-scope-note">Every village you belong to already has two admins. Thank you for offering. You can keep helping as a Hope Ambassador.</p>
+        <p className="admin-scope-note">Every village you belong to already has a local admin. Thank you for offering. You can keep helping as a Hope Ambassador.</p>
       ) : ready && (
         <form onSubmit={send} noValidate>
           <label>

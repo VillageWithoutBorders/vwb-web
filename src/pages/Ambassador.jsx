@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import NearbyNeedTiles from '../components/NearbyNeedTiles'
 import Icon from '../components/Icon'
+import FindAKeeper from '../components/FindAKeeper'
 
 // Ambassador tools: what is waiting on a Hope Ambassador (or VWB admin) in one place.
 //   Emergencies waiting to be checked, groups asking to respond to emergencies,
@@ -23,7 +24,7 @@ export default function Ambassador() {
   const [groups, setGroups] = useState(null)
   const [board, setBoard] = useState(null)
   const [error, setError] = useState('')
-  // Villages you belong to with fewer than 2 admins (vwb-two-admins-per-village.sql).
+  // Villages you belong to with no admin yet (vwb-roles-step5.sql).
   const [needAdmin, setNeedAdmin] = useState([])
 
   useEffect(() => {
@@ -98,14 +99,16 @@ export default function Ambassador() {
           )}
       </section>
 
+      <FindAKeeper />
+
       {needAdmin.length > 0 && (
         <section className="amb-box" aria-labelledby="amb-need-admin">
           {needAdmin.map((v) => (
             <h2 key={v.village_id} id={v.village_id === needAdmin[0].village_id ? 'amb-need-admin' : undefined}>
-              <Icon name="shield" /> {v.village_name} needs {(v.admin_count || 0) >= 1 ? 'a second local admin' : 'a local admin'}
+              <Icon name="shield" /> {v.village_name} has no local admin yet
             </h2>
           ))}
-          <p className="amb-note">Every village needs two admins, so no one carries it alone. If you know your neighbors and want to help keep things safe, see if you're ready.</p>
+          <p className="amb-note">Villages are run by their Keepers and Helpers. A local admin steps in when someone breaks the app rules or is unsafe. If you know your neighbors and want to help keep things safe, see if you're ready.</p>
           <Link className="btn btn-primary btn-full amb-btn" to="/become-admin">Want to help?</Link>
         </section>
       )}
