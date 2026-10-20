@@ -16,6 +16,7 @@ import Icon from '../components/Icon'
 import { askConfirm } from '../components/AdminDialog'
 import { orgWords } from '../utils/roleWords'
 import RoleLog from '../components/RoleLog'
+import PlaceReports, { usePlaceReportCount } from '../components/PlaceReports'
 
 // The organizer's home base for one organization. Needs-you card on top,
 // then four tabs: People, Chats, Events and posts, Settings.
@@ -67,6 +68,7 @@ export default function OrgDashboard() {
   const [asks, setAsks] = useState([])
   const [linkAsks, setLinkAsks] = useState(0)
   const [tab, setTab] = useDashTab(TABS)
+  const reportCount = usePlaceReportCount('org', allowed ? id : null)
   const isGroup = (orgInfo?.kind || mine?.kind) === 'group'
   // Role words: groups say Helper and Keeper, organizations say Organizer and Head.
   const W = orgWords({ ...(mine || {}), ...(orgInfo || {}), kind: orgInfo?.kind || mine?.kind })
@@ -248,6 +250,7 @@ export default function OrgDashboard() {
   const soon = events.filter((e) => e.status !== 'cancelled' && new Date(e.starts_at).getTime() < weekOut)
 
   const needs = loading ? null : [
+    reportCount && { k: 'reports', tab: 'people', em: '\u{1F6A9}', text: reportCount === 1 ? 'Someone in your ' + (isGroup ? 'group' : 'organization') + ' was reported' : reportCount + ' reports to look at' },
     asks.length && { k: 'asks', tab: 'people', em: '\u{1F64B}', text: asks.length === 1 ? asks[0].display_name + ' asked to join' : asks.length + ' people asked to join' },
     linkAsks && { k: 'links', tab: 'chats', em: '\u{1F517}', text: linkAsks === 1 ? 'An organization asked to connect' : linkAsks + ' organizations asked to connect' },
     !general && chatsReady && { k: 'general', tab: 'chats', em: '\u{1F525}', text: 'Start your general chat so members have a place to talk' },
@@ -337,6 +340,7 @@ export default function OrgDashboard() {
             ))}
           </section>
           {note && <p className="dash-note" role="status">{note}</p>}
+          <PlaceReports kind="org" placeId={id} />
         </DashPanel>
       )}
 

@@ -158,7 +158,7 @@ export default function GroupBoard() {
   // Group details, members (with names), open removal requests, invites.
   async function loadGroup() {
     const { data: g, error: gErr } = await supabase
-      .from('community_groups').select('id, name, description, join_token, steward_id, steward_offer_to, organization_id, announcement_only, is_org_news, disappear_after_mins').eq('id', id).maybeSingle()
+      .from('community_groups').select('id, name, description, join_token, steward_id, steward_offer_to, organization_id, village_id, announcement_only, is_org_news, disappear_after_mins').eq('id', id).maybeSingle()
     if (gErr) console.error('Failed to load group:', gErr)
     const { data: m, error: mErr } = await supabase
       .from('community_group_members').select('user_id, joined_at, status, added_by').eq('group_id', id)
@@ -589,7 +589,8 @@ export default function GroupBoard() {
     if (includeEvidence && theirs.length > 0) {
       details = (details ? details + '\n\n' : '') + '--- Their recent posts in the group, attached by the reporter ---\n' + theirs.map(p => p.text).join('\n')
     }
-    const { error } = await submitUserReport({ reporterId: user.id, reportedUserId: reportFor.userId, source: 'group', reason: reportReason, details })
+    const { error } = await submitUserReport({ reporterId: user.id, reportedUserId: reportFor.userId, source: 'group', reason: reportReason, details,
+      place: group?.organization_id ? { kind: 'org', id: group.organization_id } : group?.village_id ? { kind: 'village', id: group.village_id } : null })
     setReportState(error ? 'Could not send your report. Try again.' : 'sent')
   }
 
