@@ -302,7 +302,7 @@ export default function KeeperDashboard() {
       {showPeople && (
         <VillagePeople villageId={id} villageName={village.name} myId={user.id} isAdmin={isAdmin}
           requests={removals} onRequestsChange={loadRemovals}
-          onKeeperChange={loadKeepers} onClose={() => setShowPeople(false)} onLeave={null} />
+          onKeeperChange={loadKeepers} onClose={() => setShowPeople(false)} onLeave={null} showRoleLog={false} />
       )}
     </div>
   )
