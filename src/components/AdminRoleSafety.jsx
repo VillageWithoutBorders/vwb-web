@@ -50,7 +50,7 @@ export function AdminRemovalRequests({ me, refreshKey, onChanged }) {
             </p>
             {r.reason && <p className="admin-role-reason">Reason: {r.reason}</p>}
             <p className="admin-role-time">{timeAgo(r.created_at)}</p>
-            <div className="admin-role-actions">
+            <div className="admin-role-actions admin-decide">
               {!mine && !aboutMe && (
                 <>
                   <button type="button" className="btn btn-primary" disabled={busy} onClick={() => act(r, 'agree')}>Agree, remove</button>

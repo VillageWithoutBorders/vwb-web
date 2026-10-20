@@ -90,7 +90,7 @@ export function AdminApplications({ me, isFounder, refreshKey, onChanged }) {
                 </select>
               </label>
             )}
-            <div className="admin-role-actions">
+            <div className="admin-role-actions admin-decide">
               {iSaidYes ? <p className="admin-section-note">You said yes. Waiting for a second admin.</p> : (
                 <>
                   <button type="button" className="btn btn-primary" disabled={busy} onClick={() => decide(r, true)}>{isFounder || r.first_yes_by ? 'Yes, make them an admin' : 'Yes (1 of 2)'}</button>

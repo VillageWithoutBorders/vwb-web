@@ -35,8 +35,21 @@ export default function VillageScene() {
   const [orgs, setOrgs] = useState([])
   const [sheet, setSheet] = useState(null)
   const [bump, setBump] = useState(null)
+  // A waiting ask from the founder to keep this village (vwb-founder-keeper.sql).
+  const [keeperAsk, setKeeperAsk] = useState(null)
   const sheetRef = useRef(null)
   const lastFocus = useRef(null)
+
+  useEffect(() => {
+    if (!user) return
+    let alive = true
+    supabase.rpc('my_keeper_offers').then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('[VillageScene] keeper asks failed:', error); return }
+      setKeeperAsk((data || []).find((o) => o.village_id === id) || null)
+    })
+    return () => { alive = false }
+  }, [user, id])
 
   // The village itself, and the others (for sister names).
   useEffect(() => {
@@ -310,6 +323,13 @@ export default function VillageScene() {
           {village.towns && <span className="vs-chip">{village.towns}</span>}
         </div>
       </div>
+
+      {keeperAsk && (
+        <Link className="vs-ask" to={'/keeper-offer/' + keeperAsk.offer_id}>
+          <b>{keeperAsk.asked_by_name} asked you to be Keeper of {village.name}</b>
+          <small>Tap to say yes or no. Nothing changes until you answer.</small>
+        </Link>
+      )}
 
       <div className="vs-scene">
         <img className="vs-ground" src="/art/village-roads.webp" alt="" width="547" height="868" fetchpriority="high" />
