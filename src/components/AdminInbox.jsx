@@ -29,6 +29,18 @@ export default function AdminInbox({ inbox, onOpenTab }) {
   const [recent, setRecent] = useState([])
   const [recentFailed, setRecentFailed] = useState(false)
   const { items, loaded, failed } = inbox
+  // Who opened which item in the last 30 minutes (vwb-admin-round3.sql).
+  const [claims, setClaims] = useState([])
+
+  useEffect(() => {
+    let alive = true
+    supabase.rpc('admin_inbox_claims_now').then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('[AdminInbox] claims failed:', error); return }
+      setClaims(data || [])
+    })
+    return () => { alive = false }
+  }, [items])
 
   useEffect(() => {
     let alive = true
@@ -43,6 +55,9 @@ export default function AdminInbox({ inbox, onOpenTab }) {
   }, [items])
 
   function open(item) {
+    supabase.rpc('admin_inbox_claim', { p_kind: item.kind }).then(({ error }) => {
+      if (error) console.error('[AdminInbox] claim failed:', error)
+    })
     if (item.link) navigate(item.link)
     else if (item.tab) onOpenTab(item.tab)
   }
@@ -50,6 +65,19 @@ export default function AdminInbox({ inbox, onOpenTab }) {
   function openAlert(a) {
     const link = a.link || '/admin?tab=inbox'
     navigate(link)
+  }
+
+  function minsAgo(ts) {
+    const m = Math.floor((Date.now() - new Date(ts).getTime()) / 60000)
+    return m < 1 ? 'just now' : m === 1 ? '1 minute ago' : m + ' minutes ago'
+  }
+  // "Sam opened this 5 minutes ago" for other admins; your own shows as "You opened this".
+  function onIt(kind) {
+    const c = claims.filter((x) => x.kind === kind)
+    if (c.length === 0) return ''
+    const others = c.filter((x) => !x.mine)
+    if (others.length === 0) return 'You opened this ' + minsAgo(c[0].claimed_at)
+    return others.map((x) => x.admin_name).join(' and ') + ' opened this ' + minsAgo(others[0].claimed_at)
   }
 
   const urgent = items.filter((i) => i.urgent)
@@ -62,6 +90,7 @@ export default function AdminInbox({ inbox, onOpenTab }) {
         <span className="admin-inbox-text">
           <span className="admin-inbox-label">{i.label}</span>
           <span className="admin-inbox-meta">{i.how_many} waiting{i.oldest ? ' · oldest ' + timeAgo(i.oldest) : ''}</span>
+          {onIt(i.kind) && <span className="admin-inbox-onit">{onIt(i.kind)}</span>}
         </span>
         <span className="admin-inbox-open">Open</span>
       </button>

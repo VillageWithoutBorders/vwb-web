@@ -18,14 +18,15 @@ import { useTwoStepOn, TwoStepGate, BanRequests, AdminActionLog } from '../compo
 import { AdminApplications, AdminTrials } from '../components/AdminRecruiting'
 import { useAdminInbox, refreshAdminInbox } from '../hooks/useAdminInbox'
 import { useWideScreen } from '../hooks/useWideScreen'
+import { AdminDialogHost, ask, askConfirm, tell } from '../components/AdminDialog'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
-// Pass a userMessage to also alert the person and let the caller bail out; omit it for
+// Pass a userMessage to also tell the person (an in-page note) and let the caller bail out; omit it for
 // background reads where a console log is enough. Returns true if there was an error.
 function reportError(context, error, userMessage) {
   if (!error) return false
   console.error(`[Admin:${context}]`, error)
-  if (userMessage) alert(userMessage)
+  if (userMessage) tell(userMessage, { tone: 'error' })
   return true
 }
 
@@ -300,23 +301,23 @@ export default function Admin() {
 
   // Zips within a few miles of a center zip, as a starting point to edit.
   async function suggestZips(centerZip, setter) {
-    if (!/^\d{5}$/.test(centerZip.trim())) { alert('Add the 5-digit center zip first.'); return }
+    if (!/^\d{5}$/.test(centerZip.trim())) { tell('Add the 5-digit center zip first.', { tone: 'error' }); return }
     const { data, error } = await supabase.rpc('village_reach', { p_zip: centerZip.trim(), p_miles: 10 })
     if (reportError('suggestZips', error, 'Could not look up nearby zip codes. Try again.')) return
-    if (!data || data.length === 0) { alert('That zip code was not found.'); return }
+    if (!data || data.length === 0) { tell('That zip code was not found.', { tone: 'error' }); return }
     setter(data.map(r => r.zip).join(', '))
   }
 
   async function saveZipList(villageId, text) {
     const { data, error } = await supabase.rpc('set_village_zips', { p_village: villageId, p_zips: parseZips(text) })
     if (reportError('setVillageZips', error, 'Could not save the zip codes. Try again.')) return false
-    if (data !== 'ok') { alert(ZIP_WORDS[data] || 'Could not save the zip codes.'); return false }
+    if (data !== 'ok') { tell(ZIP_WORDS[data] || 'Could not save the zip codes.', { tone: 'error' }); return false }
     return true
   }
 
   async function createVillage() {
-    if (!newVillageName.trim()) { alert('Village name is required.'); return }
-    if (!/^\d{5}$/.test(newVillageZip.trim())) { alert('Add a 5-digit zip code for the center of the village.'); return }
+    if (!newVillageName.trim()) { tell('Village name is required.', { tone: 'error' }); return }
+    if (!/^\d{5}$/.test(newVillageZip.trim())) { tell('Add a 5-digit zip code for the center of the village.', { tone: 'error' }); return }
     const { data: made, error } = await supabase.from('villages').insert({
       name: newVillageName.trim(),
       region_label: newVillageRegion.trim() || null,
@@ -346,9 +347,9 @@ export default function Admin() {
   // so renaming a village never breaks anything that refers to it. The chat's
   // name follows the village's name (the database does that).
   async function saveVillageEdit() {
-    if (!editVillageName.trim()) { alert('Village name is required.'); return }
+    if (!editVillageName.trim()) { tell('Village name is required.', { tone: 'error' }); return }
     const zip = editVillageZip.trim()
-    if (zip && !/^\d{5}$/.test(zip)) { alert('The center zip should be 5 digits.'); return }
+    if (zip && !/^\d{5}$/.test(zip)) { tell('The center zip should be 5 digits.', { tone: 'error' }); return }
     const current = villages.find(v => v.id === editingVillageId)
     const updates = { name: editVillageName.trim(), region_label: editVillageRegion.trim() || null }
     // Only send the zip when it changed, so a neighbor-started village
@@ -358,7 +359,7 @@ export default function Admin() {
     if (reportError('saveVillageEdit', error, /zip/i.test(error?.message || '') ? 'That zip code wasn\u2019t found. Check the center zip and try again.' : 'Could not save these changes. Try again.')) return
     // Supabase can filter an update down to zero rows without raising an error
     // (for example if permissions block it), so check that a row really changed.
-    if (!data || data.length === 0) { alert('Nothing was saved. You may not have permission to edit villages.'); return }
+    if (!data || data.length === 0) { tell('Nothing was saved. You may not have permission to edit villages.', { tone: 'error' }); return }
     const before = (current?.zips || []).join(',')
     const after = parseZips(editVillageZips).sort().join(',')
     if (after !== before) { if (!(await saveZipList(editingVillageId, editVillageZips))) return }
@@ -440,7 +441,7 @@ export default function Admin() {
   }
 
   async function createOrganization() {
-    if (!newOrgName.trim()) { alert('Organization name is required.'); return }
+    if (!newOrgName.trim()) { tell('Organization name is required.', { tone: 'error' }); return }
     const social_links = newOrgSocial.trim() ? { primary: newOrgSocial.trim() } : {}
     const { error } = await supabase.from('organizations').insert({
       name: newOrgName.trim(),
@@ -472,10 +473,11 @@ export default function Admin() {
   async function reviewOrgRequest(org, approve) {
     let note = null
     if (approve) {
-      if (!confirm('Approve ' + org.name + '? It will show to the public, and its members will get an alert.')) return
+      if (!(await askConfirm('Approve ' + org.name + '? It will show to the public, and its members will get an alert.', { yes: 'Approve' }))) return
     } else {
-      note = prompt('Turn down ' + org.name + '? Its members will get a kind alert, and the request will be removed.\n\nAdd a short note for them (optional):', '')
-      if (note === null) return
+      const r = await ask({ message: 'Turn down ' + org.name + '? Its members will get a kind alert, and the request will be removed.', yes: 'Turn down', danger: true, input: { label: 'A short note for them (optional)' } })
+      if (r === null) return
+      note = r.text
     }
     const { error } = await supabase.rpc('review_organization_request', { p_org_id: org.id, p_approve: approve, p_note: note })
     if (reportError('reviewOrgRequest', error, error?.message || 'Could not save that decision. Try again.')) return
@@ -504,7 +506,7 @@ export default function Admin() {
   }
 
   async function revokeOrgInvitation(id) {
-    if (!confirm('Revoke this invite link? It will stop working right away.')) return
+    if (!(await askConfirm('Revoke this invite link? It will stop working right away.', { yes: 'Revoke', danger: true }))) return
     const { error } = await supabase.from('organization_invitations').update({ status: 'revoked' }).eq('id', id)
     if (reportError('revokeOrgInvitation', error, 'Could not revoke this invite. Try again.')) return
     await loadOrgInvitations()
@@ -516,8 +518,8 @@ export default function Admin() {
 
   function copyInviteLink(token) {
     navigator.clipboard.writeText(inviteLink(token))
-      .then(() => alert('Invite link copied.'))
-      .catch(() => alert('Could not copy automatically. Long-press or select the link to copy it.'))
+      .then(() => tell('Invite link copied.'))
+      .catch(() => tell('Could not copy automatically. Long-press or select the link to copy it.', { tone: 'error' }))
   }
 
   async function loadPending() {
@@ -613,14 +615,14 @@ export default function Admin() {
   async function updateHelpMessage(id, changes) {
     const { data, error } = await supabase.from('feedback').update(changes).eq('id', id).select('id')
     if (reportError('updateHelpMessage', error, 'Could not update this message. Try again.')) return
-    if (!data || data.length === 0) { alert('Could not update this message. Try again.'); return }
+    if (!data || data.length === 0) { tell('Could not update this message. Try again.', { tone: 'error' }); return }
     await Promise.all([loadAlerts(), loadStats()])
   }
 
   async function reviewReport(id, status) {
     const { data, error } = await supabase.from('user_reports').update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq('id', id).select('id')
     if (reportError('reviewReport', error, 'Could not update this report. Try again.')) return
-    if (!data || data.length === 0) { alert('Could not update this report. Try again.'); return }
+    if (!data || data.length === 0) { tell('Could not update this report. Try again.', { tone: 'error' }); return }
     await Promise.all([loadAlerts(), loadStats(), reportView === 'closed' ? loadClosedReports(true) : Promise.resolve()])
   }
 
@@ -644,7 +646,7 @@ export default function Admin() {
   async function reviewTaskIssue(id, status) {
     const { data, error } = await supabase.from('task_feedback').update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq('id', id).select('id')
     if (reportError('reviewTaskIssue', error, 'Could not update this. Try again.')) return
-    if (!data || data.length === 0) { alert('Could not update this. Try again.'); return }
+    if (!data || data.length === 0) { tell('Could not update this. Try again.', { tone: 'error' }); return }
     await Promise.all([loadAlerts(), loadStats()])
   }
 
@@ -741,14 +743,14 @@ export default function Admin() {
   }
 
   async function rejectEvent(eventId) {
-    if (!confirm('Reject and close this event report?')) return
+    if (!(await askConfirm('Reject and close this emergency report?', { yes: 'Reject', danger: true }))) return
     const { error } = await supabase.from('emergency_events').update({ status: 'closed' }).eq('id', eventId)
     if (reportError('rejectEvent', error, 'Could not reject this event. Try again.')) return
     await loadPending()
   }
 
   async function approveFalseAlarm(notif) {
-    if (!confirm('Delete this event as a false alarm?')) return
+    if (!(await askConfirm('Delete this emergency as a false alarm? This cannot be undone.', { yes: 'Delete', danger: true }))) return
     const eventId = notif.link?.replace('/emergency/', '')
     if (eventId) {
       const { error: e1 } = await supabase.from('event_signups').delete().eq('event_id', Number(eventId))
@@ -779,8 +781,8 @@ export default function Admin() {
   }
 
   async function approveDuplicateMerge(notif) {
-    if (!notif.duplicateEvent || !notif.targetEvent) { alert('Could not find both events. They may have already been resolved.'); return }
-    if (!confirm('Merge "' + notif.duplicateEvent.title + '" into "' + notif.targetEvent.title + '"?')) return
+    if (!notif.duplicateEvent || !notif.targetEvent) { tell('Could not find both events. They may have already been resolved.', { tone: 'error' }); return }
+    if (!(await askConfirm('Merge "' + notif.duplicateEvent.title + '" into "' + notif.targetEvent.title + '"?', { yes: 'Merge' }))) return
     const dupId = notif.duplicateEvent.id
     const tgtId = notif.targetEvent.id
     const { error: e1 } = await supabase.from('event_signups').update({ event_id: tgtId }).eq('event_id', dupId)
@@ -817,11 +819,11 @@ export default function Admin() {
       reportError('promoteUser:closeApplication', closeErr)
       await Promise.all([loadUsers(), loadAmbassadorApplications()])
     } else if (toRole === 'admin') {
-      if (!confirm('Send admin invitation to this user? They will see it on their profile.')) return
+      if (!(await askConfirm('Send an admin invitation to this person? They will see it on their profile.', { yes: 'Send invitation' }))) return
       const { data: existing, error: existErr } = await supabase.from('admin_applications').select('id, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle()
       if (reportError('promoteUser:checkExisting', existErr, 'Could not check this user. Try again.')) return
-      if (existing && existing.status === 'invited') { alert("This user already has an invitation waiting, they haven't responded yet."); return }
-      if (existing && existing.status === 'pending') { alert('This user already accepted an invitation. Go to the Approvals tab to finish granting them access.'); navigate('/admin?tab=approvals'); return }
+      if (existing && existing.status === 'invited') { tell("This person already has an invitation waiting. They haven't answered yet."); return }
+      if (existing && existing.status === 'pending') { tell('This person already said yes to an invitation. Finish it in Approvals.'); navigate('/admin?tab=approvals'); return }
       const { error: insErr } = await supabase.from('admin_applications').insert({ user_id: userId, region: 'Invited by admin', reason: 'Admin invitation', status: 'invited', invited_by: user.id })
       if (reportError('promoteUser:insertInvite', insErr, 'Could not send the invitation. Try again.')) return
       const { error: notifErr } = await supabase.from('notifications').insert({ user_id: userId, type: 'admin_invite', title: 'You have been invited to become an Admin', body: 'Check your profile to accept or decline.', link: '/profile', read: false })
@@ -834,14 +836,18 @@ export default function Admin() {
   async function demoteUser(userId) {
     const u = users.find(x => x.user_id === userId)
     const name = u?.display_name || 'this admin'
-    const ok = isFounder
-      ? confirm('Remove admin access from ' + name + '? It goes in the Role changes log that every admin can see.')
-      : confirm('Ask to remove admin access from ' + name + '? A second admin has to agree before it happens. Every admin can see the request.')
-    if (!ok) return
-    const reason = (prompt('Why? (optional, every admin can see this)') || '').trim()
+    const r = await ask({
+      message: isFounder
+        ? 'Remove admin access from ' + name + '? It goes in the Role changes log that every admin can see.'
+        : 'Ask to remove admin access from ' + name + '? A second admin has to agree before it happens. Every admin can see the request.',
+      yes: isFounder ? 'Remove admin access' : 'Ask to remove', danger: true,
+      input: { label: 'Why? (optional, every admin can see this)' },
+    })
+    if (r === null) return
+    const reason = r.text
     const { data, error } = await supabase.rpc('admin_removal_ask', { p_target: userId, p_reason: reason })
     if (reportError('demoteUser', error, error?.message || 'Could not do that. Try again.')) return
-    if (data === 'asked') alert('Asked. It happens when a second admin agrees in Approvals.')
+    if (data === 'asked') tell('Asked. It happens when a second admin agrees in Approvals.')
     setRoleRefresh(n => n + 1)
     await loadUsers()
   }
@@ -849,16 +855,16 @@ export default function Admin() {
   // Ambassador status/details and any admin coverage area, and drops their
   // role to member. Shares its logic with Profile's own self-service reset.
   async function resetUserToBase(u) {
-    if (!confirm('Reset ' + (u.display_name || 'this user') + ' back to a plain Neighbor account? This clears their Ambassador status, skills, and admin settings.')) return
+    if (!(await askConfirm('Reset ' + (u.display_name || 'this person') + ' back to a plain Neighbor account? This clears their Ambassador status, skills, and admin settings.', { yes: 'Reset to Neighbor', danger: true }))) return
     const { error } = await resetAccountToBase(u.user_id, { currentRole: u.role })
     if (reportError('resetUserToBase', error, 'Could not reset this user. Try again.')) return
     await loadUsers()
   }
   async function resetTwoStep(u) {
-    if (!confirm('Reset two-step login for ' + (u.display_name || 'this person') + '? Only do this after they asked for help and you are sure it is them. They can turn it back on in Settings.')) return
+    if (!(await askConfirm('Reset two-step login for ' + (u.display_name || 'this person') + '? Only do this after they asked for help and you are sure it is them. They can turn it back on in Settings.', { yes: 'Reset two-step', danger: true }))) return
     const { error } = await supabase.rpc('admin_reset_two_step', { p_user: u.user_id })
     if (reportError('resetTwoStep', error, 'Could not reset two-step login. Try again.')) return
-    alert('Two-step login was reset. They can sign in with just their password now.')
+    tell('Two-step login was reset. They can sign in with just their password now.')
   }
   async function messageUser(userId) {
     const { data: convos, error: convoErr } = await supabase.from('conversations').select('id, helper_id, requester_id').or('helper_id.eq.' + userId + ',requester_id.eq.' + userId)
@@ -967,6 +973,7 @@ export default function Admin() {
 
   return (
     <div className={'admin-shell' + (wide ? ' admin-wide' : '')}>
+      <AdminDialogHost />
       <div className="admin-top">
         <button type="button" className="admin-back" onClick={() => goBack('/profile')} aria-label="Back">&#8592;</button>
         <h1 className="admin-title">Admin</h1>
@@ -1179,7 +1186,7 @@ export default function Admin() {
             const reportId = banReportId
             setBanTarget(null); setBanReportId(null); setBanRefresh(n => n + 1); loadUsers()
             // Asking a second admin doesn't close the report yet.
-            if (result?.asked) { alert('Asked. The ban happens when a second admin agrees in Reports.'); refreshAdminInbox(); return }
+            if (result?.asked) { tell('Asked. The ban happens when a second admin agrees in Reports.'); refreshAdminInbox(); return }
             if (reportId) reviewReport(reportId, 'reviewed')
           }}
         />
