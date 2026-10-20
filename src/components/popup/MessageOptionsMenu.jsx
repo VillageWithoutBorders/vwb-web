@@ -1,4 +1,5 @@
 import { supabase } from '../../supabaseClient'
+import { askConfirm, tell } from '../AdminDialog'
 
 export default function MessageOptionsMenu({ message, onClose, currentUserId, conversationId, canEdit, onEdit }) {
   if (!message) return null
@@ -9,18 +10,18 @@ export default function MessageOptionsMenu({ message, onClose, currentUserId, co
     const { error } = await supabase.from('message_deletions').upsert({ message_id: message.id, user_id: currentUserId }, { onConflict: 'message_id,user_id' })
     if (error) {
       console.error('[MessageOptionsMenu] deleteForMe', error)
-      alert('Could not delete this message. Please try again.')
+      tell('Could not delete this message. Please try again.', { tone: 'error' })
       return
     }
     onClose()
   }
 
   async function deleteForEveryone() {
-    if (!confirm('Delete this message for everyone? This cannot be undone.')) return
+    if (!(await askConfirm('Delete this message for everyone? This cannot be undone.'))) return
     const { data: done, error } = await supabase.rpc('delete_message_for_everyone', { p_message: message.id })
     if (error || done === false) {
       console.error('[MessageOptionsMenu] deleteForEveryone', error || 'nothing was changed')
-      alert('Could not delete this message for everyone. Please try again.')
+      tell('Could not delete this message for everyone. Please try again.', { tone: 'error' })
       return
     }
     onClose()

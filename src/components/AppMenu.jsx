@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
 import { startAppTour } from './AppTour'
 import Icon from './Icon'
+import { tell } from './AdminDialog'
 
 // The one menu in the top bar. It replaces two hidden menus (tapping the logo,
 // and a separate person icon) that people didn't know were there.
@@ -78,7 +79,7 @@ export default function AppMenu({ inline = false }) {
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       console.error('[AppMenu] copy', err)
-      alert(`Could not copy automatically. Here's the link: ${APP_URL}`)
+      tell(`Could not copy automatically. Here's the link: ${APP_URL}`, { tone: 'error' })
     }
   }
 

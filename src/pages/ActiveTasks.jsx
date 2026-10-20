@@ -11,6 +11,7 @@ import { createNotification } from '../utils/notificationHelpers'
 import VouchButton from '../components/VouchButton'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import Icon from '../components/Icon'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 // Reasons for ending a helper's part before the task is finished.
 const END_REASONS = {
@@ -289,7 +290,7 @@ export default function ActiveTasks() {
     setFeedbackBusy(false)
     if (error) {
       console.error('Failed to save task feedback:', error)
-      alert(error.code === '55000' ? error.message : 'Could not save this. Try again.')
+      tell(error.code === '55000' ? error.message : 'Could not save this. Try again.', { tone: 'error' })
       return
     }
     setMyFeedback(prev => ({ ...prev, [matchId]: outcome }))
@@ -322,12 +323,12 @@ export default function ActiveTasks() {
     setEndBusy(false)
     if (error) {
       console.error('Failed to end this helper match:', error)
-      alert(error.code === '55000' ? error.message : 'Could not do that. Try again.')
+      tell(error.code === '55000' ? error.message : 'Could not do that. Try again.', { tone: 'error' })
       return
     }
     const wasRequester = ending.isRequester
     setEnding(null)
-    alert(wasRequester
+    tell(wasRequester
       ? (reopened ? 'Done. Your request is back on the feed.' : 'Done. Their part has been closed out.')
       : 'Done. Thank you for letting them know.')
     await loadTasks()
@@ -347,7 +348,7 @@ export default function ActiveTasks() {
 
     if (updateErr) {
       console.error('Failed to mark your part complete:', updateErr)
-      alert('Could not save this. Try again.')
+      tell('Could not save this. Try again.', { tone: 'error' })
       return
     }
 
@@ -398,19 +399,19 @@ export default function ActiveTasks() {
   // Delete request (soft delete via archived_at)
   // =============================================
   async function deleteRequest(requestId) {
-    if (!confirm('Archive this request? It will move to your Archived tab.')) return
+    if (!(await askConfirm('Archive this request? It will move to your Archived tab.'))) return
     const { error } = await supabase
       .from('help_requests')
       .update({ archived_at: new Date().toISOString() })
       .eq('id', requestId)
-    if (error) { console.error('Failed to archive request:', error); alert('Could not archive this request. Try again.'); return }
+    if (error) { console.error('Failed to archive request:', error); tell('Could not archive this request. Try again.', { tone: 'error' }); return }
     await loadTasks()
   }
 
   // Open a group-only request to everyone nearby right now.
   async function openToEveryone(requestId) {
     const { error } = await supabase.rpc('open_request_to_everyone', { p_request: requestId })
-    if (error) { console.error('Failed to open request:', error); alert('Could not open this request. Try again.'); return }
+    if (error) { console.error('Failed to open request:', error); tell('Could not open this request. Try again.', { tone: 'error' }); return }
     await loadTasks()
   }
 
@@ -459,7 +460,7 @@ export default function ActiveTasks() {
       .select('id')
       .or('and(helper_id.eq.' + helperId + ',requester_id.eq.' + requesterId + '),and(helper_id.eq.' + requesterId + ',requester_id.eq.' + helperId + ')')
       .maybeSingle()
-    if (existingErr) { console.error('Failed to check for an existing conversation:', existingErr); alert('Something went wrong. Try again.'); return }
+    if (existingErr) { console.error('Failed to check for an existing conversation:', existingErr); tell('Something went wrong. Try again.', { tone: 'error' }); return }
 
     if (existing) {
       // Point the conversation at this request so its banner reflects what
@@ -476,7 +477,7 @@ export default function ActiveTasks() {
         .insert({ request_id: requestId, helper_id: helperId, requester_id: requesterId })
         .select()
         .single()
-      if (newErr || !newConvo) { console.error('Failed to start a conversation:', newErr); alert('Could not start a conversation. Try again.'); return }
+      if (newErr || !newConvo) { console.error('Failed to start a conversation:', newErr); tell('Could not start a conversation. Try again.', { tone: 'error' }); return }
       navigate('/conversation/' + newConvo.id)
     }
   }
@@ -506,7 +507,7 @@ export default function ActiveTasks() {
     setOfferBusy(m.id)
     const { ok, convoId } = await acceptHelpOffer({ id: m.id, helper_id: m.helper_id, request_id: req.id, skill_needed: req.skill_needed, max_helpers: req.max_helpers, accepted_count: req.matches.length }, user.id)
     setOfferBusy(null)
-    if (!ok) { alert('Could not say yes just now. Try again.'); return }
+    if (!ok) { tell('Could not say yes just now. Try again.', { tone: 'error' }); return }
     // Open the chat so the two of you can plan.
     if (convoId) { navigate('/conversation/' + convoId); return }
     setNotice(m.helper_name + ' is helping now. Find your chat under Messages in a moment.')
@@ -516,7 +517,7 @@ export default function ActiveTasks() {
     setOfferBusy(m.id)
     const ok = await declineHelpOffer(m)
     setOfferBusy(null)
-    if (!ok) { alert('Could not save that. Try again.'); return }
+    if (!ok) { tell('Could not save that. Try again.', { tone: 'error' }); return }
     loadTasks()
   }
 

@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import Icon from '../components/Icon'
+import { tell } from '../components/AdminDialog'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also alert the person and let the caller bail out.
 function reportError(context, error, userMessage) {
   if (!error) return false
   console.error(`[CommunityGuidelines:${context}]`, error)
-  if (userMessage) alert(userMessage)
+  if (userMessage) tell(userMessage, { tone: 'error' })
   return true
 }
 

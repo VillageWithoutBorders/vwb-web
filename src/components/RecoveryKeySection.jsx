@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { createRecoveryBackup, getRecoveryStatus, restoreFromRecoveryCode } from '../lib/e2ee'
+import { askConfirm } from './AdminDialog'
 
 // Settings section: make or replace the recovery key, or use one to bring
 // old private messages back on this device.
@@ -27,7 +28,7 @@ export default function RecoveryKeySection() {
   }, [])
 
   async function make() {
-    if (status?.exists && !confirm('Make a new recovery key? Your old one will stop working.')) return
+    if (status?.exists && !(await askConfirm('Make a new recovery key? Your old one will stop working.'))) return
     setBusy(true); setError(''); setNote('')
     const result = await createRecoveryBackup(user.id)
     setBusy(false)

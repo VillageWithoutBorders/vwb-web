@@ -14,6 +14,7 @@ import MessageRequests from '../components/MessageRequests'
 import NewMessage from '../components/NewMessage'
 import { decryptFromSender, getDeviceId, flushOutbox, getQueuedMessages } from '../lib/e2ee'
 import Icon from '../components/Icon'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 const DISAPPEAR_STEPS = [
   { label: 'Off', mins: 0 },
@@ -166,7 +167,7 @@ export default function Messages({ embedded = false }) {
     setProcessingOffer(offer.id)
     const { ok, convoId } = await acceptHelpOffer(offer, user.id)
     if (!ok) {
-      alert('Could not accept this offer. Try again.')
+      tell('Could not accept this offer. Try again.', { tone: 'error' })
       setProcessingOffer(null)
       return
     }
@@ -174,14 +175,14 @@ export default function Messages({ embedded = false }) {
     await loadPendingOffers()
     // Open the chat right away so the two of you can plan.
     if (convoId) { navigate('/conversation/' + convoId); return }
-    alert('You accepted this offer, but the chat could not be opened. Find it under Messages in a moment.')
+    tell('You accepted this offer, but the chat could not be opened. Find it under Messages in a moment.', { tone: 'error' })
     await loadConversations()
   }
 
   async function declineOffer(offer) {
     setProcessingOffer(offer.id)
     const ok = await declineHelpOffer(offer)
-    if (!ok) alert('Could not decline this offer. Try again.')
+    if (!ok) tell('Could not decline this offer. Try again.', { tone: 'error' })
     setProcessingOffer(null)
     if (ok) await loadPendingOffers()
   }
@@ -234,7 +235,7 @@ export default function Messages({ embedded = false }) {
     const { error } = await supabase.rpc('withdraw_offer', { p_match_id: matchId })
     if (error) {
       console.error('Failed to withdraw offer:', error)
-      alert(error.code === '55000' || error.code === 'P0002' ? error.message : 'Could not withdraw your offer. Try again.')
+      tell(error.code === '55000' || error.code === 'P0002' ? error.message : 'Could not withdraw your offer. Try again.', { tone: 'error' })
     }
     await loadMyOutgoingOffers()
   }
@@ -265,28 +266,28 @@ export default function Messages({ embedded = false }) {
     const previous = disappearDefault
     setDisappearDefault(mins)
     const ok = await savePref('disappear_default_mins', mins)
-    if (!ok) { setDisappearDefault(previous); alert('Could not save this setting. Try again.') }
+    if (!ok) { setDisappearDefault(previous); tell('Could not save this setting. Try again.', { tone: 'error' }) }
   }
 
   async function toggleReadReceipts() {
     const v = !readReceipts
     setReadReceipts(v)
     const ok = await savePref('read_receipts_enabled', v)
-    if (!ok) { setReadReceipts(!v); alert('Could not save this setting. Try again.') }
+    if (!ok) { setReadReceipts(!v); tell('Could not save this setting. Try again.', { tone: 'error' }) }
   }
 
   async function toggleHidePushDetails() {
     const v = !hidePushDetails
     setHidePushDetails(v)
     const ok = await savePref('hide_push_details', v)
-    if (!ok) { setHidePushDetails(!v); alert('Could not save this setting. Try again.') }
+    if (!ok) { setHidePushDetails(!v); tell('Could not save this setting. Try again.', { tone: 'error' }) }
   }
 
   async function toggleSafetyCheckins() {
     const v = !safetyCheckins
     setSafetyCheckins(v)
     const ok = await savePref('safety_checkins_enabled', v)
-    if (!ok) { setSafetyCheckins(!v); alert('Could not save this setting. Try again.') }
+    if (!ok) { setSafetyCheckins(!v); tell('Could not save this setting. Try again.', { tone: 'error' }) }
   }
 
   async function saveHelpMsg() {
@@ -295,7 +296,7 @@ export default function Messages({ embedded = false }) {
     setDefaultHelpMsg(trimmed)
     setEditingHelpMsg(false)
     const ok = await savePref('default_help_message', trimmed)
-    if (!ok) { setDefaultHelpMsg(previous); setEditingHelpMsg(true); alert('Could not save your message. Try again.') }
+    if (!ok) { setDefaultHelpMsg(previous); setEditingHelpMsg(true); tell('Could not save your message. Try again.', { tone: 'error' }) }
   }
 
   function getSliderIndex() {
@@ -323,7 +324,7 @@ export default function Messages({ embedded = false }) {
     }
     if (error) {
       console.error('Failed to save conversation setting:', error)
-      alert('Could not save that. Try again.')
+      tell('Could not save that. Try again.', { tone: 'error' })
       return false
     }
     await loadConvoSettings()
@@ -393,7 +394,7 @@ export default function Messages({ embedded = false }) {
     setOpenMenu(null)
     const readCol = convo.helper_id === user.id ? 'last_read_helper' : 'last_read_requester'
     const { error } = await supabase.from('conversations').update({ [readCol]: new Date().toISOString() }).eq('id', convo.id)
-    if (error) { console.error('Failed to mark conversation read:', error); alert('Could not mark that as read. Try again.'); return }
+    if (error) { console.error('Failed to mark conversation read:', error); tell('Could not mark that as read. Try again.', { tone: 'error' }); return }
     setConvos(prev => prev.map(cv => cv.id === convo.id ? { ...cv, hasUnread: false } : cv))
     if (convoSettings[convo.id]?.marked_unread) await upsertConvoSetting(convo.id, { marked_unread: false })
     refreshUnread()
@@ -430,7 +431,7 @@ export default function Messages({ embedded = false }) {
 
   async function unblockUser(blockId) {
     const { error } = await supabase.from('blocks').delete().eq('id', blockId)
-    if (error) { console.error('Failed to unblock user:', error); alert('Could not unblock this user. Try again.'); return }
+    if (error) { console.error('Failed to unblock user:', error); tell('Could not unblock this user. Try again.', { tone: 'error' }); return }
     await loadBlocked()
   }
 
@@ -512,7 +513,7 @@ export default function Messages({ embedded = false }) {
     const name = newFolderName.trim()
     if (!name) return
     const { error } = await supabase.from('message_folders').insert({ user_id: user.id, name, sort_order: folders.length })
-    if (error) { console.error('Failed to create folder:', error); alert('Could not create that folder. Try again.'); return }
+    if (error) { console.error('Failed to create folder:', error); tell('Could not create that folder. Try again.', { tone: 'error' }); return }
     setNewFolderName('')
     await loadFolders()
   }
@@ -521,7 +522,7 @@ export default function Messages({ embedded = false }) {
     const { error: assignErr } = await supabase.from('conversation_folder_assignments').delete().eq('folder_id', folderId).eq('user_id', user.id)
     if (assignErr) console.error('Failed to clear folder assignments:', assignErr)
     const { error: folderErr } = await supabase.from('message_folders').delete().eq('id', folderId).eq('user_id', user.id)
-    if (folderErr) { console.error('Failed to delete folder:', folderErr); alert('Could not delete this folder. Try again.'); return }
+    if (folderErr) { console.error('Failed to delete folder:', folderErr); tell('Could not delete this folder. Try again.', { tone: 'error' }); return }
     if (activeFolder === folderId) setActiveFolder('all')
     await loadFolders()
     await loadAssignments()
@@ -530,12 +531,12 @@ export default function Messages({ embedded = false }) {
   async function assignToFolder(convoId, folderId) {
     if (folderId === 'remove') {
       const { error } = await supabase.from('conversation_folder_assignments').delete().eq('conversation_id', convoId).eq('user_id', user.id)
-      if (error) { console.error('Failed to remove folder assignment:', error); alert('Could not update this conversation. Try again.'); return }
+      if (error) { console.error('Failed to remove folder assignment:', error); tell('Could not update this conversation. Try again.', { tone: 'error' }); return }
     } else {
       const { error: delErr } = await supabase.from('conversation_folder_assignments').delete().eq('conversation_id', convoId).eq('user_id', user.id)
       if (delErr) console.error('Failed to clear previous folder assignment:', delErr)
       const { error: insErr } = await supabase.from('conversation_folder_assignments').insert({ user_id: user.id, conversation_id: convoId, folder_id: folderId })
-      if (insErr) { console.error('Failed to assign folder:', insErr); alert('Could not move this conversation. Try again.'); return }
+      if (insErr) { console.error('Failed to assign folder:', insErr); tell('Could not move this conversation. Try again.', { tone: 'error' }); return }
     }
     setAssigningConvo(null)
     setOpenMenu(null)
@@ -545,15 +546,15 @@ export default function Messages({ embedded = false }) {
   async function deleteConversation(convoId) {
     if (deleteMode === 'me') {
       const { data: msgs, error: msgsErr } = await supabase.from('chat_messages').select('id').eq('conversation_id', convoId)
-      if (msgsErr) { console.error('Failed to load messages to delete:', msgsErr); alert('Could not delete this conversation. Try again.'); return }
+      if (msgsErr) { console.error('Failed to load messages to delete:', msgsErr); tell('Could not delete this conversation. Try again.', { tone: 'error' }); return }
       if (msgs && msgs.length > 0) {
         const inserts = msgs.map(m => ({ message_id: m.id, user_id: user.id }))
         const { error: upsertErr } = await supabase.from('message_deletions').upsert(inserts, { onConflict: 'message_id,user_id' })
-        if (upsertErr) { console.error('Failed to delete conversation for you:', upsertErr); alert('Could not delete this conversation. Try again.'); return }
+        if (upsertErr) { console.error('Failed to delete conversation for you:', upsertErr); tell('Could not delete this conversation. Try again.', { tone: 'error' }); return }
       }
     } else {
       const { error: updErr } = await supabase.rpc('delete_conversation_for_everyone', { p_convo: convoId })
-      if (updErr) { console.error('Failed to delete conversation for everyone:', updErr); alert('Could not delete this conversation. Try again.'); return }
+      if (updErr) { console.error('Failed to delete conversation for everyone:', updErr); tell('Could not delete this conversation. Try again.', { tone: 'error' }); return }
     }
     setShowDeleteConfirm(null)
     setOpenMenu(null)
@@ -561,9 +562,9 @@ export default function Messages({ embedded = false }) {
   }
 
   async function blockUser(otherId, otherName) {
-    if (!confirm('Block ' + otherName + '? They will not be able to see your profile or send you messages.')) return
+    if (!(await askConfirm('Block ' + otherName + '? They will not be able to see your profile or send you messages.'))) return
     const { error } = await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: otherId })
-    if (error) { console.error('Failed to block user:', error); alert('Could not block this user. Try again.'); return }
+    if (error) { console.error('Failed to block user:', error); tell('Could not block this user. Try again.', { tone: 'error' }); return }
     setOpenMenu(null)
     await loadBlocked()
   }
@@ -654,7 +655,7 @@ export default function Messages({ embedded = false }) {
         {folders.map(f => (
           <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid var(--border)' }}>
             <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{f.name}</span>
-            <button onClick={() => { if (confirm('Delete folder "' + f.name + '"? Conversations will move back to All.')) deleteFolder(f.id) }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>Delete</button>
+            <button onClick={async () => { if (await askConfirm('Delete folder "' + f.name + '"? Conversations will move back to All.', { yes: 'Delete folder', danger: true })) deleteFolder(f.id) }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>Delete</button>
           </div>
         ))}
 
@@ -812,7 +813,7 @@ export default function Messages({ embedded = false }) {
                 </div>
               </div>
               <button
-                onClick={() => { if (confirm('Withdraw your offer to help?')) withdrawOffer(offer.id) }}
+                onClick={async () => { if (await askConfirm('Take back your offer to help?', { yes: 'Take it back' })) withdrawOffer(offer.id) }}
                 style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
               >
                 Withdraw

@@ -69,9 +69,10 @@ export const ADMIN_GUIDE = [
     blocks: [
       { p: 'Open the shield once a day and clear what is urgent first.' },
       { ol: [
-        '**Turn on two-step login.** Admin tools stay locked until you do. Go to Settings, Two-Step Login, and follow the steps with an authenticator app on your phone.',
+        '**Turn on two-step login.** Admin tools stay locked until you do. Go to Settings, Two-Step Login, and follow the steps with an authenticator app on your phone. After that, always sign in with your code. Admin tools need it.',
         '**Tap the shield in the top bar.** The number shows how many things are waiting. Red means something is urgent. Gold means nothing urgent.',
         '**Start with Needs you.** It is one list shared by every admin. When one of you handles something, it leaves the list for everyone.',
+        '**See who is already on it.** When you tap Open, other admins see "Sam opened this" for 30 minutes, so two of you don\'t work the same thing. If someone opened it a minute ago, pick another item or message them.',
         '**Do the Urgent group first.** Emergency reports to check, member reports, tasks that went wrong, and anything waiting for a second admin.',
         '**Then the Waiting group.** Applications, organizations, claims, Help page messages, and resource reports.',
         "**Glance at Latest admin alerts.** These are the same alerts that buzz admins' phones.",
@@ -97,10 +98,12 @@ export const ADMIN_GUIDE = [
           ['Remove an admin', 'No', 'Yes: one asks, another agrees', 'Alone'],
           ['Ban an admin', 'No', 'No', 'Alone'],
           ['Give admins their villages', 'No', 'No', 'Alone'],
+          ['Name an admin as Keeper of a village', 'No', 'No', 'Asks; the admin says yes first'],
           ['Change the founder role', 'No', 'No', 'Only in the database, on purpose'],
         ],
       } },
       { p: 'The person a decision is about can never answer it. You can always step down yourself, in Settings, with Reset to Neighbor.' },
+      { p: '**Hope Ambassadors work in their own villages.** They check emergencies, decide on groups asking to respond, and post emergency updates only in the villages they belong to. VWB admins can do these anywhere. When an Ambassador can\'t act on something outside their village, an admin or an Ambassador there picks it up.' },
     ],
   },
   {
@@ -150,6 +153,12 @@ export const ADMIN_GUIDE = [
         'Read their readiness list and why they want to help.',
         'Ask people in their village who know them.',
         'Say yes or no. A no sends them a kind note; they can ask again later.',
+      ] },
+      { h3: 'The founder asks you to keep a village' },
+      { ol: [
+        'You get an alert, and a gold card shows on that village page. Nothing changes until you answer.',
+        'Open it to see what changes. If you are not in that village chat yet, saying yes joins it, after the usual warning.',
+        'Say yes, or no thank you. If you say yes, the current keeper becomes a helper and can still post announcements.',
       ] },
     ],
   },

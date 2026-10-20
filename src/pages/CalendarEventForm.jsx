@@ -7,6 +7,7 @@ import { EVENT_TEMPLATES, addMinutes } from '../utils/eventTemplates'
 import { parsePastedEvent } from '../utils/pasteEvent'
 import ShiftsEditor from '../components/ShiftsEditor'
 import Icon from '../components/Icon'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 const VWB_HOST = 'vwb'
 
@@ -177,8 +178,8 @@ export default function CalendarEventForm() {
     setDurationMins(0)
   }
 
-  function changeTemplate() {
-    if ((form.title || form.description) && !confirm('Pick a different kind of event? This replaces the name and description you have now.')) return
+  async function changeTemplate() {
+    if ((form.title || form.description) && !(await askConfirm('Pick a different kind of event? This replaces the name and description you have now.', { yes: 'Pick a different kind' }))) return
     setForm((f) => ({ ...f, title: '', description: '' }))
     setTemplateKey(null)
   }
@@ -310,7 +311,7 @@ export default function CalendarEventForm() {
       if (shiftErr) {
         console.error('set_event_shifts', shiftErr)
         // The event is saved. If we stay here, a second save would post it twice.
-        if (shiftErr.message && shiftErr.message.length < 160) window.alert('The event saved, but the shifts did not: ' + shiftErr.message + ' Open the event and choose Edit to fix the shifts.')
+        if (shiftErr.message && shiftErr.message.length < 160) tell('The event saved, but the shifts did not: ' + shiftErr.message + ' Open the event and choose Edit to fix the shifts.', { tone: 'error' })
       }
     }
     navigate('/events/' + data.id)

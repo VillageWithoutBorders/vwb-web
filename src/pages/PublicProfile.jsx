@@ -8,6 +8,7 @@ import { startConversation } from '../utils/startConversation'
 import ProfileSafetyActions from '../components/ProfileSafetyActions'
 import { useGoBack } from '../components/BackLink'
 import InviteSheet from '../components/InviteSheet'
+import { tell } from '../components/AdminDialog'
 
 export default function PublicProfile() {
   const { userId } = useParams()
@@ -124,8 +125,8 @@ export default function PublicProfile() {
     setMessaging(true)
     const { id, error, notice } = await startConversation(user.id, userId)
     setMessaging(false)
-    if (notice) { alert(notice); setMsgStatus('pending_out'); return }
-    if (error) { alert(error); return }
+    if (notice) { tell(notice); setMsgStatus('pending_out'); return }
+    if (error) { tell(error, { tone: 'error' }); return }
     navigate('/conversation/' + id)
   }
 
@@ -264,4 +265,4 @@ export default function PublicProfile() {
       </>)}
     </div>
   )
-}
+}

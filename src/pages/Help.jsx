@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { startAppTour } from '../components/AppTour'
 import { useGoBack } from '../components/BackLink'
+import { tell } from '../components/AdminDialog'
 
 export default function Help() {
   const { user } = useAuth()
@@ -18,7 +19,7 @@ export default function Help() {
     setSendingFeedback(true)
     const { error } = await supabase.from('feedback').insert({ user_id: user.id, body: (feedbackKind === 'problem' ? '[Problem] ' : '[Idea] ') + feedbackText.trim() })
     setSendingFeedback(false)
-    if (error) { console.error('Failed to submit feedback:', error); alert('Could not submit your feedback. Try again.'); return }
+    if (error) { console.error('Failed to submit feedback:', error); tell('Could not submit your feedback. Try again.', { tone: 'error' }); return }
     setFeedbackSent(true)
     setFeedbackText('')
   }

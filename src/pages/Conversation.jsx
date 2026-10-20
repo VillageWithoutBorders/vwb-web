@@ -14,6 +14,7 @@ import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { submitUserReport } from '../utils/submitUserReport'
 import { sendPrivateMessage, flushOutbox, getQueuedMessages, cancelQueuedMessage, decryptFromSender, getDeviceId, editPrivateMessage, fetchEditHistory } from '../lib/e2ee'
 import { useGoBack } from '../components/BackLink'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar shown once, tighter spacing) instead of repeating the
@@ -235,7 +236,7 @@ export default function Conversation() {
   }
 
   async function cancelWaiting(msg) {
-    if (!confirm('Take back this message? It has not been sent yet.')) return
+    if (!(await askConfirm('Take back this message? It has not been sent yet.'))) return
     await cancelQueuedMessage(msg.localId)
     loadMessages()
   }
@@ -519,11 +520,11 @@ export default function Conversation() {
         </button>
         )}
         <button onClick={async () => {
-          if (!confirm('Block ' + otherName + '?')) return
+          if (!(await askConfirm('Block ' + otherName + '?'))) return
           const { error } = await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: otherUserId })
           setShowSettings(false)
-          if (error) { console.error('Failed to block user:', error); alert('Could not block this user. Try again.'); return }
-          alert('User blocked.')
+          if (error) { console.error('Failed to block user:', error); tell('Could not block this user. Try again.', { tone: 'error' }); return }
+          tell('Blocked.')
         }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cross" /></span> Block User
         </button>

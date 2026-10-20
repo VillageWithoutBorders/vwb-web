@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from './AvatarDisplay'
 import { HOW_LABELS } from '../utils/vouchEligibility'
+import { tell } from './AdminDialog'
 
 // Names and avatars for a list of user ids, in one lookup.
 async function peopleById(ids) {
@@ -34,7 +35,7 @@ export function VouchRequestsForMe({ myId }) {
     setBusy(r.voucher_id)
     const { error } = await supabase.rpc('confirm_personal_vouch', { p_voucher: r.voucher_id })
     setBusy(null)
-    if (error) { console.error('[VouchRequestsForMe] confirm', error); alert('Could not confirm. It may have been taken back.') }
+    if (error) { console.error('[VouchRequestsForMe] confirm', error); tell('Could not confirm. It may have been taken back.', { tone: 'error' }) }
     load()
   }
 
@@ -42,7 +43,7 @@ export function VouchRequestsForMe({ myId }) {
     setBusy(r.voucher_id)
     const { error } = await supabase.from('vouch_requests').delete().eq('voucher_id', r.voucher_id).eq('vouchee_id', myId)
     setBusy(null)
-    if (error) { console.error('[VouchRequestsForMe] decline', error); alert('Could not do that. Try again.') }
+    if (error) { console.error('[VouchRequestsForMe] decline', error); tell('Could not do that. Try again.', { tone: 'error' }) }
     load()
   }
 

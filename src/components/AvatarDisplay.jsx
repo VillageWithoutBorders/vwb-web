@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { canVouch } from '../utils/vouchEligibility'
 import { startConversation } from '../utils/startConversation'
+import { tell } from './AdminDialog'
 
 function reportError(context, error) {
   if (!error) return false
@@ -97,8 +98,8 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
     setMessaging(true)
     const { id, error, notice } = await startConversation(info.myId, userId)
     setMessaging(false)
-    if (notice) { alert(notice); setShowPopup(false); return }
-    if (error) { alert(error); return }
+    if (notice) { tell(notice); setShowPopup(false); return }
+    if (error) { tell(error, { tone: 'error' }); return }
     setShowPopup(false)
     navigate('/conversation/' + id)
   }

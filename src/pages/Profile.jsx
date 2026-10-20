@@ -9,11 +9,12 @@ import { loadSkillCategories } from '../utils/skillGroups'
 import AvatarBuilder, { AvatarPreview } from '../components/AvatarBuilder'
 import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
 import Icon from '../components/Icon'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 function reportError(context, error, userMessage) {
   if (!error) return false
   console.error(`[Profile:${context}]`, error)
-  if (userMessage) alert(userMessage)
+  if (userMessage) tell(userMessage, { tone: 'error' })
   return true
 }
 
@@ -156,7 +157,7 @@ export default function Profile() {
     // Turning it on goes to the list of villages, where you read the warning and join.
     // Turning it off leaves every village chat.
     if (on) { setVillageSaving(false); navigate('/find-village'); return }
-    if (!confirm('Leave all your village chats? You can join again any time.')) { setVillageSaving(false); return }
+    if (!(await askConfirm('Leave all your village chats? You can join again any time.'))) { setVillageSaving(false); return }
     const { error: vErr } = await supabase.rpc('leave_all_villages')
     reportError('toggleVillage', vErr)
     if (!vErr) await refreshProfile()
