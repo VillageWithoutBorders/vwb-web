@@ -81,3 +81,85 @@ export function AdminVillagePicker({ admin, villages, rows, onSaved }) {
     </div>
   )
 }
+
+// Founder only: the keeper asks (vwb-founder-keeper.sql).
+export function useKeeperOffers(isFounder, refreshKey) {
+  const [offers, setOffers] = useState([])
+  useEffect(() => {
+    if (!isFounder) return
+    supabase.rpc('keeper_offer_list').then(({ data, error }) => {
+      if (error) { console.error('[useKeeperOffers] failed:', error); return }
+      setOffers(data || [])
+    })
+  }, [isFounder, refreshKey])
+  return offers
+}
+
+// Founder only: ask an admin to be Keeper of a village.
+// On an admin's row (admin set, pick a village) or on a village (village set, pick an admin).
+export function AdminKeeperAsk({ admin, village, choices, offers, onChanged }) {
+  const [open, setOpen] = useState(false)
+  const [pick, setPick] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
+
+  const waiting = offers.filter((o) => o.status === 'waiting' && (admin ? o.admin_id === admin.user_id : o.village_id === village.id))
+
+  async function ask() {
+    if (!pick) { setNote(admin ? 'Pick a village.' : 'Pick an admin.'); return }
+    setBusy(true); setNote('')
+    const { error } = await supabase.rpc('founder_offer_keeper', admin
+      ? { p_village: pick, p_admin: admin.user_id }
+      : { p_village: village.id, p_admin: pick })
+    setBusy(false)
+    if (error) { console.error('[AdminKeeperAsk] ask failed:', error); setNote(error.message || "That didn't send. Try again."); return }
+    setOpen(false); setPick('')
+    setNote('Asked. They get an alert, and nothing changes until they say yes.')
+    onChanged?.()
+  }
+
+  async function takeBack(o) {
+    setBusy(true); setNote('')
+    const { error } = await supabase.rpc('founder_cancel_keeper_offer', { p_offer: o.offer_id })
+    setBusy(false)
+    if (error) { console.error('[AdminKeeperAsk] take back failed:', error); setNote(error.message || "That didn't save. Try again."); return }
+    setNote('Ask taken back.')
+    onChanged?.()
+  }
+
+  return (
+    <div className="admin-village-picker">
+      {waiting.map((o) => (
+        <p key={o.offer_id} className="admin-section-note">
+          Waiting: {admin ? 'Keeper of ' + o.village_name : o.admin_name + ' to keep it'}.{' '}
+          <button type="button" className="admin-village-btn" disabled={busy} onClick={() => takeBack(o)}>Take back</button>
+        </p>
+      ))}
+      <button type="button" className="admin-village-btn" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        {admin ? 'Name as Keeper of a village' : 'Name an admin as Keeper'}
+      </button>
+      {open && (
+        <fieldset className="admin-village-set">
+          <legend>{admin ? 'Which village should ' + (admin.display_name || 'this admin') + ' keep?' : 'Which admin should keep ' + village.name + '?'}</legend>
+          <p className="admin-section-note">They get an alert and say yes or no. If they say yes, the current keeper becomes a helper and can still post announcements.</p>
+          {choices.length === 0
+            ? <p className="admin-section-note">{admin ? 'No villages yet.' : 'No admins to pick.'}</p>
+            : (
+              <label className="admin-village-option" style={{ display: 'grid', gap: '0.25rem' }}>
+                <span>{admin ? 'Village' : 'Admin'}</span>
+                <select value={pick} onChange={(e) => setPick(e.target.value)} style={{ minHeight: '44px', fontSize: '1rem', padding: '0.4rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk, var(--surface))', color: 'var(--text)' }}>
+                  <option value="">Pick one</option>
+                  {choices.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </label>
+            )}
+          <div className="admin-role-actions">
+            <button type="button" className="btn btn-primary" disabled={busy || choices.length === 0} onClick={ask}>{busy ? 'Sending...' : 'Ask them'}</button>
+            <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setOpen(false)}>Cancel</button>
+          </div>
+        </fieldset>
+      )}
+      {note && <p className="admin-role-note" role="status">{note}</p>}
+    </div>
+  )
+}
