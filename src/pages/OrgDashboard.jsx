@@ -13,6 +13,7 @@ import { UserName } from '../components/AvatarDisplay'
 import BackLink from '../components/BackLink'
 import { useDashTab, NeedsYou, DashTabs, DashPanel } from '../components/DashShell'
 import Icon from '../components/Icon'
+import { askConfirm } from '../components/AdminDialog'
 
 // The organizer's home base for one organization. Needs-you card on top,
 // then four tabs: People, Chats, Events and posts, Settings.
@@ -177,13 +178,13 @@ export default function OrgDashboard() {
     u.display_name + (role === 'organizer' ? ' is now ' + W.anOrganizer + '.' : ' is now a member.'),
   )
 
-  const makeHead = (u) => {
-    if (!confirm('Make ' + u.display_name + ' ' + W.aHead + ' of ' + orgName + '? ' + W.head + 's can change anyone\'s role and remove members.')) return
+  const makeHead = async (u) => {
+    if (!await askConfirm('Make ' + u.display_name + ' ' + W.aHead + ' of ' + orgName + '? ' + W.head + 's can change anyone\'s role and remove members.')) return
     run(() => supabase.rpc('make_org_head', { p_org: id, p_user: u.user_id }), u.display_name + ' is now ' + W.aHead + '.')
   }
 
-  const stepDown = () => {
-    if (!confirm('Step down as ' + W.head + ' of ' + orgName + '? You will stay on as ' + W.anOrganizer + '.')) return
+  const stepDown = async () => {
+    if (!await askConfirm('Step down as ' + W.head + ' of ' + orgName + '? You will stay on as ' + W.anOrganizer + '.')) return
     run(() => supabase.rpc('step_down_org_head', { p_org: id }), 'You are now ' + W.anOrganizer + '.')
   }
 
@@ -194,8 +195,8 @@ export default function OrgDashboard() {
 
   const headCount = members.filter((x) => x.role === 'admin').length
 
-  const removeMember = (u) => {
-    if (!confirm('Remove ' + u.display_name + ' from ' + orgName + '?')) return
+  const removeMember = async (u) => {
+    if (!await askConfirm('Remove ' + u.display_name + ' from ' + orgName + '?')) return
     run(() => supabase.rpc('remove_org_member', { p_org: id, p_user: u.user_id }), u.display_name + ' was removed.')
   }
 

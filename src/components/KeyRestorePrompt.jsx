@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { needsKeyRestore, restoreFromRecoveryCode, startFreshKey } from '../lib/e2ee'
+import { askConfirm } from './AdminDialog'
 
 // Shown when someone signs in on a device that has no message key but has a
 // recovery key on file (a new phone, or cleared browser data). They can
@@ -31,7 +32,7 @@ export default function KeyRestorePrompt() {
   }
 
   async function fresh() {
-    if (!confirm('Start fresh? Messages from before can only be read again if you restore with your recovery key later. New messages will work normally.')) return
+    if (!(await askConfirm('Start fresh? Messages from before can only be read again if you restore with your recovery key later. New messages will work normally.'))) return
     setBusy(true)
     await startFreshKey(user.id)
     setBusy(false)

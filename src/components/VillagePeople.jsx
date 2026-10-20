@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from './AvatarDisplay'
 import VouchButton from './VouchButton'
+import { askConfirm } from './AdminDialog'
 
 // Must match the list inside request_village_member_removal (vwb-village-chats-v2.sql).
 const REMOVE_REASONS = [
@@ -156,7 +157,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
   }
 
   async function handOff(targetId, name) {
-    if (!confirm('Hand this village to ' + (name || 'this person') + '? They will keep it from now on. You stay a member.')) return
+    if (!(await askConfirm('Hand this village to ' + (name || 'this person') + '? They will keep it from now on. You stay a member.'))) return
     setBusy(true); setNote('')
     const { error } = await supabase.rpc('hand_off_village', { p_village: villageId, p_user: targetId })
     setBusy(false)
@@ -186,7 +187,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
   }
 
   async function agree(targetId) {
-    if (!confirm('Agree to remove this person from the village chat? Only agree if you have seen a real reason.')) return
+    if (!(await askConfirm('Agree to remove this person from the village chat? Only agree if you have seen a real reason.'))) return
     setBusy(true); setNote('')
     const { data, error } = await supabase.rpc('request_village_member_removal', { p_village: villageId, p_target: targetId, p_reason: null })
     setBusy(false)

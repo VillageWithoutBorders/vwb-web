@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { submitUserReport } from '../utils/submitUserReport'
+import { tell } from './AdminDialog'
 
 // Block and report buttons for someone else's profile.
 //
@@ -90,7 +91,7 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
     setBusy(false)
     if (err) {
       console.error('[ProfileSafetyActions] unblock failed', err)
-      alert('Could not unblock this person. Try again.')
+      tell('Could not unblock this person. Try again.', { tone: 'error' })
       return
     }
     setBlockedBoth(false)

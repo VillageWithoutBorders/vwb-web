@@ -6,6 +6,7 @@ import { supabase } from '../supabaseClient'
 import { useCampfireIds } from '../hooks/useCampfireIds'
 import { useSidechatParents } from '../hooks/useSidechatParents'
 import Icon from '../components/Icon'
+import { tell } from '../components/AdminDialog'
 
 // Groups: private circles anyone can start. No roles, no one in charge.
 // Every group has its own board (its own Campfire), end-to-end encrypted.
@@ -104,7 +105,7 @@ export default function Groups({ embedded = false }) {
     setBusy(groupId)
     const { error } = await supabase.rpc('accept_community_group_invite', { p_group: groupId })
     setBusy(null)
-    if (error) { console.error('Failed to accept invite:', error); alert('Could not join this group. Try again.'); return }
+    if (error) { console.error('Failed to accept invite:', error); tell('Could not join this group. Try again.', { tone: 'error' }); return }
     navigate('/groups/' + groupId)
   }
 
@@ -112,7 +113,7 @@ export default function Groups({ embedded = false }) {
     setBusy(groupId)
     const { error } = await supabase.from('community_group_invites').delete().eq('group_id', groupId).eq('invitee_id', user.id)
     setBusy(null)
-    if (error) { console.error('Failed to decline invite:', error); alert('Could not decline. Try again.'); return }
+    if (error) { console.error('Failed to decline invite:', error); tell('Could not decline. Try again.', { tone: 'error' }); return }
     setInvites(list => list.filter(i => i.id !== groupId))
   }
 

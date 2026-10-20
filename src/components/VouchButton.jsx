@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import { canVouch, HOW_LABELS } from '../utils/vouchEligibility'
+import { askConfirm, tell } from './AdminDialog'
 
 // Two kinds of vouches (see vwb-personal-vouches.sql):
 //   helped: you finished a task together on VWB. Counts right away.
@@ -71,11 +72,11 @@ export default function VouchButton({ userId, name, size = 'sm', showCount = tru
   }
 
   async function removeVouch() {
-    if (!confirm('Take back your vouch for ' + theirName + '? You can vouch for them again any time.')) return
+    if (!(await askConfirm('Take back your vouch for ' + theirName + '? You can vouch for them again any time.'))) return
     setLoading(true)
     const { error } = await supabase.from('vouches').delete().eq('voucher_id', user.id).eq('vouchee_id', userId)
     setLoading(false)
-    if (error) { console.error('Unvouch error:', error); alert('Could not take back your vouch. Try again.'); return }
+    if (error) { console.error('Unvouch error:', error); tell('Could not take back your vouch. Try again.', { tone: 'error' }); return }
     setMine(null)
     setJustRemoved(true)
     loadVouchData()
@@ -86,7 +87,7 @@ export default function VouchButton({ userId, name, size = 'sm', showCount = tru
     setLoading(true)
     const { error } = await supabase.from('vouches').insert({ voucher_id: user.id, vouchee_id: userId })
     setLoading(false)
-    if (error && error.code !== '23505') { console.error('Vouch error:', error); alert('Could not vouch. Try again.'); return }
+    if (error && error.code !== '23505') { console.error('Vouch error:', error); tell('Could not vouch. Try again.', { tone: 'error' }); return }
     setJustRemoved(false)
     if (!error) {
       createNotification({ userId, type: 'vouch', title: myName() + ' vouched for you!', body: 'You helped each other on Village Without Borders.', link: '/profile' })
@@ -117,7 +118,7 @@ export default function VouchButton({ userId, name, size = 'sm', showCount = tru
     setLoading(true)
     const { error } = await supabase.from('vouch_requests').delete().eq('voucher_id', user.id).eq('vouchee_id', userId)
     setLoading(false)
-    if (error) { console.error('Failed to take back request:', error); alert('Could not take it back. Try again.'); return }
+    if (error) { console.error('Failed to take back request:', error); tell('Could not take it back. Try again.', { tone: 'error' }); return }
     setPending(null)
   }
 

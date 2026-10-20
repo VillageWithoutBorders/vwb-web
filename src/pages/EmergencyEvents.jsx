@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import { useGoBack } from '../components/BackLink'
+import { tell } from '../components/AdminDialog'
 
 const VERIFY_THRESHOLD = 2
 
@@ -82,7 +83,7 @@ export default function EmergencyEvents() {
     const ev = events.find(e2 => e2.id === eventId)
     const wasVerified = !!ev?.verified
     const { error: upErr } = await supabase.from('event_upvotes').insert({ event_id: eventId, user_id: user.id })
-    if (upErr) { console.error('Failed to record upvote:', upErr); alert('Could not record your vote. Try again.'); return }
+    if (upErr) { console.error('Failed to record upvote:', upErr); tell('Could not record your vote. Try again.', { tone: 'error' }); return }
     // Count votes straight from event_upvotes (the source of truth) instead of
     // incrementing the number in local component state. Reading a cached
     // count and writing count+1 is a classic read-then-write race: two people
@@ -109,7 +110,7 @@ export default function EmergencyEvents() {
   async function adminVerify(e, eventId) {
     e.stopPropagation()
     const { error } = await supabase.from('emergency_events').update({ verified: true }).eq('id', eventId)
-    if (error) { console.error('Failed to verify event:', error); alert(error.code === 'P0001' ? error.message : 'Could not verify this event. Try again.'); return }
+    if (error) { console.error('Failed to verify event:', error); tell(error.code === 'P0001' ? error.message : 'Could not verify this event. Try again.', { tone: 'error' }); return }
     await notifyAndPost(eventId)
     await loadEvents()
   }

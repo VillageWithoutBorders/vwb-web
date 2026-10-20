@@ -12,6 +12,7 @@ import { startConversation } from '../utils/startConversation'
 import { UserName } from '../components/AvatarDisplay'
 import Linkify from '../components/Linkify'
 import AddToCalendar from '../components/AddToCalendar'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 // One event. Public route on purpose: this is the page people land on from
 // the website calendar, a shared Facebook post, or a private invite link,
@@ -198,7 +199,7 @@ export default function EventPage() {
   }
 
   async function takeBackInvite(person) {
-    if (!window.confirm('Take back the invite for ' + person.display_name + '? If they signed up, that is cancelled too.')) return
+    if (!(await askConfirm('Take back the invite for ' + person.display_name + '? If they signed up, that is cancelled too.'))) return
     setInviteMsg('')
     const { error } = await supabase.rpc('uninvite_from_calendar_event', { p_event: Number(id), p_user: person.user_id })
     if (error) { setInviteMsg('Could not take that back. Try again.'); return }
@@ -210,10 +211,10 @@ export default function EventPage() {
     if (status === 'cancelled') {
       const n = new Set([...signups.map((x) => x.user_id), ...invited.map((x) => x.user_id)]).size
       const who = n === 0 ? 'People will see that it was cancelled.' : (n === 1 ? '1 person who signed up or was invited will get an alert.' : n + ' people who signed up or were invited will get an alert.')
-      if (!window.confirm('Cancel this event? ' + who)) return
+      if (!(await askConfirm('Cancel this event? ' + who, { yes: 'Cancel the event', no: 'Keep it', danger: true }))) return
     }
     const { error } = await supabase.from('calendar_events').update({ status }).eq('id', ev.id)
-    if (error) { alert('Could not update the event. Try again.'); return }
+    if (error) { tell('Could not update the event. Try again.', { tone: 'error' }); return }
     load()
   }
 
@@ -222,9 +223,9 @@ export default function EventPage() {
     const warn = n === 0
       ? 'Delete this event for good? This cannot be undone.'
       : 'Delete this event for good? It also removes ' + (n === 1 ? '1 person' : n + ' people') + ' who signed up or were invited, and nobody is told. To let them know, cancel the event instead. This cannot be undone.'
-    if (!window.confirm(warn)) return
+    if (!(await askConfirm(warn, { yes: 'Delete for good', no: 'Keep it', danger: true }))) return
     const { error } = await supabase.from('calendar_events').delete().eq('id', ev.id)
-    if (error) { alert('Could not delete the event. Try again.'); return }
+    if (error) { tell('Could not delete the event. Try again.', { tone: 'error' }); return }
     navigate('/calendar')
   }
 

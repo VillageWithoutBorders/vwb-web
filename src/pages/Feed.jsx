@@ -14,6 +14,7 @@ import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import HelpSwitch from '../components/HelpSwitch'
 import Icon from '../components/Icon'
 import { forLine, helperNote } from '../utils/forSomeone'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 // Request statuses that mean "not looking for helpers anymore".
 const NO_LONGER_OPEN = ['in_progress', 'matched', 'completed', 'cancelled', 'closed', 'archived']
@@ -222,12 +223,12 @@ export default function Feed() {
         e.stopPropagation()
 
         // Make sure it was on purpose. The requester is told the moment you offer.
-        if (!confirm('Offer to help with ' + req.skill_needed + '?\n\nThe person is told right away. You can take your offer back until they say yes.')) return
+        if (!(await askConfirm('Offer to help with ' + req.skill_needed + '?\n\nThe person is told right away. You can take your offer back until they say yes.'))) return
 
         // Check if request is already full
         const accepted = acceptedCounts[req.id] || 0
         if (req.max_helpers !== null && accepted >= req.max_helpers) {
-            alert('This request has enough helpers. Thank you for wanting to help!')
+            tell('This request has enough helpers. Thank you for wanting to help!')
             return
         }
 
@@ -238,10 +239,10 @@ export default function Feed() {
 
         if (matchErr) {
             if (matchErr.code === '23505') {
-                alert('You already offered to help with this request.')
+                tell('You already offered to help with this request.')
             } else {
                 console.error('Match error:', matchErr)
-                alert('Something went wrong. Try again.')
+                tell('Something went wrong. Try again.', { tone: 'error' })
             }
             return
         }
@@ -258,13 +259,13 @@ export default function Feed() {
         // Update local state so the card shows "Pending" immediately
         setMyPendingOffers(prev => new Set([...prev, req.id]))
 
-        alert('Your offer has been sent! The requester will review it and get back to you. You can take it back with Withdraw, here or in Messages.')
+        tell('Your offer has been sent! The requester will review it and get back to you. You can take it back with Withdraw, here or in Messages.')
     }
 
     // Take back an offer that has not been answered yet.
     async function handleWithdrawOffer(e, req) {
         e.stopPropagation()
-        if (!confirm('Take back your offer to help with ' + req.skill_needed + '?')) return
+        if (!(await askConfirm('Take back your offer to help with ' + req.skill_needed + '?'))) return
 
         const { data: mine, error: findErr } = await supabase
             .from('skill_matches')
@@ -275,14 +276,14 @@ export default function Feed() {
             .maybeSingle()
         if (findErr || !mine) {
             console.error('Failed to find your offer to withdraw:', findErr)
-            alert('Could not find your offer. It may already have been answered. Refresh to see where it stands.')
+            tell('Could not find your offer. It may already have been answered. Refresh to see where it stands.', { tone: 'error' })
             return
         }
 
         const { error } = await supabase.rpc('withdraw_offer', { p_match_id: mine.id })
         if (error) {
             console.error('Failed to withdraw offer:', error)
-            alert(error.code === '55000' || error.code === 'P0002' ? error.message : 'Could not withdraw your offer. Try again.')
+            tell(error.code === '55000' || error.code === 'P0002' ? error.message : 'Could not withdraw your offer. Try again.', { tone: 'error' })
             return
         }
 
@@ -291,7 +292,7 @@ export default function Feed() {
             next.delete(req.id)
             return next
         })
-        alert('Your offer was withdrawn.')
+        tell('Your offer was withdrawn.')
     }
 
     function getHelperStatus(req) {
@@ -546,20 +547,20 @@ export default function Feed() {
                                                         .maybeSingle()
                                                     if (existingErr) {
                                                         console.error('Failed to check for an existing conversation:', existingErr)
-                                                        alert('Something went wrong. Try again.')
+                                                        tell('Something went wrong. Try again.', { tone: 'error' })
                                                         return
                                                     }
                                                     if (existing) { navigate('/conversation/' + existing.id); return }
-                                                    if (!confirm('Message ' + (offer.poster_name || 'this neighbor') + ' about "' + offer.title + '"?\n\nThis opens a private chat with them.')) return
+                                                    if (!(await askConfirm('Message ' + (offer.poster_name || 'this neighbor') + ' about "' + offer.title + '"?\n\nThis opens a private chat with them.'))) return
                                                     const { data: convo, error: convoErr } = await supabase
                                                         .from('conversations')
                                                         .insert({ helper_id: offer.user_id, requester_id: user.id, offer_id: offer.id })
                                                         .select()
                                                         .single()
                                                     if (convoErr || !convo) {
-                                                        if (isNewAccountBlock(convoErr)) { alert(NEW_ACCOUNT_NOTE); return }
+                                                        if (isNewAccountBlock(convoErr)) { tell(NEW_ACCOUNT_NOTE); return }
                                                         console.error('Failed to start a conversation:', convoErr)
-                                                        alert('Could not start a conversation. Try again.')
+                                                        tell('Could not start a conversation. Try again.', { tone: 'error' })
                                                         return
                                                     }
                                                     // No automatic opening message: it used to be stored as

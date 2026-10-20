@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-// In-page "Are you sure?" panels and short notes for Admin, in place of the
-// browser's pop-ups. The panel sits at the bottom of the screen, where a thumb
+// In-page "Are you sure?" panels and short notes, in place of the browser's
+// pop-ups. Started in Admin; now used across the app (the host is in App.jsx). The panel sits at the bottom of the screen, where a thumb
 // reaches, and works with a keyboard and screen readers.
 //
 //   const ok = await askConfirm('Reject this report?', { yes: 'Reject', danger: true })
