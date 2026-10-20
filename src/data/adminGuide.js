@@ -13,7 +13,7 @@ export const ADMIN_GUIDE = [
     blocks: [
       { p: 'A VWB admin looks after a village so neighbors can help each other safely. You answer reports, welcome new people, check emergencies, and step in when someone needs help or protection.' },
       { p: "You are a neighbor first. Admin tools are there to serve the village, not to run it. Organizations and villages make their own decisions. VWB admins step in only when someone breaks the app rules or is unsafe." },
-      { p: '**Every village needs two admins.** Two people share the work, so no one carries it alone and the village is still covered when one of you is away. If your village has only you, help find a second.' },
+      { p: '**Villages run themselves.** Each village has a Keeper and Helpers, with a Hope Ambassador nearby. You step in when someone breaks the app rules or is unsafe, and you help find a Keeper when a village has none. Your inbox lists villages without a Keeper and a Helper, and villages with no Hope Ambassador.' },
       { h3: 'An admin does' },
       { ul: [
         'Answer what is waiting in the Admin inbox, urgent things first',
@@ -211,7 +211,7 @@ export const ADMIN_GUIDE = [
       { p: 'You can step down any time, with no reason needed. Thank you for the time you gave.' },
       { ol: [
         "**Tell your mentor or the founder first**, so your village isn't left without an admin.",
-        '**Help find someone new.** Each village needs two admins. A Hope Ambassador in your village may be ready. Point them to Become an admin.',
+        '**Help find someone new.** A Hope Ambassador in your village may be ready. Point them to Become an admin.',
         "**Hand off what's open.** Finish or pass on anything you were working on, with a note.",
         '**Step down in Settings** with Reset to Neighbor. You stay a member and keep your friends, chats and history.',
       ] },

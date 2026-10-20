@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { useAuth } from '../context/AuthContext'
 import BackLink from '../components/BackLink'
 import VillageRiskDialog from '../components/VillageRiskDialog'
 
-// The founder asked an admin to be Keeper of a village (vwb-founder-keeper.sql).
-// The admin says yes or no here. Saying yes joins the village chat first if
+// Someone was asked to be Keeper of a village: by the founder, or by a local
+// Hope Ambassador when the village has no active Keeper (vwb-roles-step5.sql).
+// They say yes or no here. Saying yes joins the village chat first if
 // they aren't in it, after the usual community chat warning.
 
 export default function KeeperOffer() {
   const { id } = useParams()
+  const { isAdmin } = useAuth()
   const [offer, setOffer] = useState(undefined)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -84,7 +87,7 @@ export default function KeeperOffer() {
           {offer.keeper_name
             ? <li>{offer.keeper_name} keeps it now. They become a helper and can still post announcements.</li>
             : <li>No one keeps it right now.</li>}
-          <li>You can see the people in this village in Admin.</li>
+          {isAdmin && <li>You can see the people in this village in Admin.</li>}
           <li>You can hand the village to someone else any time.</li>
         </ul>
       </section>
