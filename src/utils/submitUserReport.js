@@ -5,7 +5,10 @@ import { supabase } from '../supabaseClient'
 // success or { error } with a plain sentence that is safe to show.
 //
 // source is one of: profile, conversation, messages, campfire, event.
-export async function submitUserReport({ reporterId, reportedUserId, source, reason = null, details = null }) {
+// place ({ kind: 'village' | 'org', id }) is where it happened, when known.
+// The place's Keepers and Helpers (or Heads and Organizers) see the report
+// too, never who made it. The database checks the reporter is in that place.
+export async function submitUserReport({ reporterId, reportedUserId, source, reason = null, details = null, place = null }) {
   if (!reporterId) return { error: 'Could not submit your report. Try again.' }
   const { error } = await supabase.from('user_reports').insert({
     reporter_id: reporterId,
@@ -13,6 +16,7 @@ export async function submitUserReport({ reporterId, reportedUserId, source, rea
     source,
     reason: reason ? String(reason).slice(0, 200) : null,
     details: details ? String(details).slice(0, 1000) : null,
+    ...(place && place.kind && place.id ? { place_kind: place.kind, place_id: place.id } : {}),
   })
   if (error) {
     console.error('[submitUserReport] failed', error)

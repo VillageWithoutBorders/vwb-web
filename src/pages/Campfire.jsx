@@ -348,10 +348,11 @@ export default function Campfire() {
       reporterId: user.id,
       reportedUserId: msg.user_id,
       source: 'campfire',
-      details: saved
+      details: saved,
+      place: activeBoard?.village_id ? { kind: 'village', id: activeBoard.village_id } : null,
     })
     if (error) { tell(error, { tone: 'error' }); return }
-    tell('Report submitted. An admin will review this message.')
+    tell(activeBoard?.village_id ? 'Report sent. VWB admins and this village\'s keepers will see it, never your name.' : 'Report submitted. An admin will review this message.')
   }
 
   // Pinning: admins/founder only (matches AuthContext's isAdmin, which already

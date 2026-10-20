@@ -10,6 +10,7 @@ import { UserName } from '../components/AvatarDisplay'
 import { useDashTab, NeedsYou, DashTabs, DashPanel } from '../components/DashShell'
 import Icon from '../components/Icon'
 import RoleLog from '../components/RoleLog'
+import PlaceReports, { usePlaceReportCount } from '../components/PlaceReports'
 
 // Keeper tools for one neighborhood village. Same layout as Organizer tools:
 // Needs-you card on top, then four tabs: People, Chats, Sisters, Keeper role.
@@ -29,6 +30,7 @@ export default function KeeperDashboard() {
   const navigate = useNavigate()
   const { user, isAdmin } = useAuth()
   const [tab, setTab] = useDashTab(TABS)
+  const reportCount = usePlaceReportCount('village', id)
 
   const [village, setVillage] = useState(null)
   const [villages, setVillages] = useState([])
@@ -150,6 +152,7 @@ export default function KeeperDashboard() {
   const mySisterCount = sisters.filter((s) => s.village_a === id || s.village_b === id).length
 
   const needs = !ready ? null : [
+    reportCount && { k: 'reports', tab: 'people', target: 'pr-sec', em: '\u{1F6A9}', text: reportCount === 1 ? 'Someone in your village was reported' : reportCount + ' reports in your village' },
     secondNeeded.length && { k: 'remove', tab: 'people', target: 'kd-remove-sec', em: '⚠️', text: secondNeeded.length === 1 ? 'A removal request needs a second member' : secondNeeded.length + ' removal requests need a second member' },
     fireAskCount && { k: 'fires', tab: 'chats', em: '\u{1F525}', text: fireAskCount === 1 ? 'Someone asked to join your Campfire' : fireAskCount + ' people asked to join your Campfires' },
     checkIns.length && { k: 'checkin', tab: 'chats', em: '\u{1F44B}', text: 'A Campfire is asking if you are still taking part' },
@@ -183,6 +186,7 @@ export default function KeeperDashboard() {
 
       {tab === 'people' && (
         <DashPanel k="people">
+          <PlaceReports kind="village" placeId={id} />
           {secondNeeded.length > 0 && (
             <section className="hub-section" id="kd-remove-sec" aria-labelledby="kd-remove">
               <div className="hub-section-head"><h2 id="kd-remove">Removal requests</h2></div>
