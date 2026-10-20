@@ -4,9 +4,10 @@ import { supabase } from '../supabaseClient'
 // Shows the member list to people inside an organization, but only when the
 // organization's Head allows it. The database sends nothing when it is off.
 
-const ROLE_LABEL = { admin: 'Head', organizer: 'Organizer', member: 'Member' }
+import { orgWords } from '../utils/roleWords'
 
-export default function OrgMemberNames({ orgId }) {
+export default function OrgMemberNames({ orgId, words }) {
+  const ROLE_LABEL = (words || orgWords(null)).roleLabel
   const [people, setPeople] = useState([])
 
   useEffect(() => {
