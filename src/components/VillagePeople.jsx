@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from './AvatarDisplay'
 import VouchButton from './VouchButton'
 import { askConfirm } from './AdminDialog'
+import RoleLog from './RoleLog'
 
 // Must match the list inside request_village_member_removal (vwb-village-chats-v2.sql).
 const REMOVE_REASONS = [
@@ -71,7 +72,7 @@ export function VillageNewMembers({ villageId, myId }) {
 }
 
 // The list of people in a village chat, with vouching and the two-member removal.
-export default function VillagePeople({ villageId, villageName, myId, isAdmin, requests, onRequestsChange, onClose, onLeave, onKeeperChange }) {
+export default function VillagePeople({ villageId, villageName, myId, isAdmin, requests, onRequestsChange, onClose, onLeave, onKeeperChange, showRoleLog = true }) {
   const [keepers, setKeepers] = useState({ starter_id: null, i_am_starter: false, helper_ids: [] })
   const [search, setSearch] = useState('')
   const [people, setPeople] = useState([])
@@ -328,6 +329,8 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
           })}
         </div>
         {total > people.length && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', marginTop: '0.6rem' }}>Showing {people.length} of {total}. Search by name to find someone.</p>}
+
+        {showRoleLog && <RoleLog kind="village" placeId={villageId} />}
 
         {onLeave && (
           <button type="button" onClick={onLeave} style={{ ...btn, width: '100%', marginTop: '1.25rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}>Leave this village chat</button>
