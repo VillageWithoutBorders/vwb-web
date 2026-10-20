@@ -981,6 +981,7 @@ export default function Admin() {
         <nav className="admin-side" aria-label="Admin sections">
           {SECTIONS.map(navBtn)}
           <div className="admin-side-more">
+            <button type="button" className="admin-nav-btn" onClick={() => navigate('/admin-guide')}><Icon name="books" size={24} /><span className="admin-nav-label">Admin Guide</span></button>
             {isFounder && <button type="button" className="admin-nav-btn" onClick={() => navigate('/admin/report')}><Icon name="scroll" size={24} /><span className="admin-nav-label">Grant report</span></button>}
             <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/scramble-test')}><Icon name="lock" size={24} /><span className="admin-nav-label">Test tools</span></button>
           </div>
@@ -1033,7 +1034,7 @@ export default function Admin() {
       {twoStepOn && showTab === 'inbox' && <AdminInbox inbox={inbox} onOpenTab={goTab} />}
       {twoStepOn && showTab === 'log' && <AdminActionLog />}
       {!wide && showTab === 'inbox' && (
-        <p className="admin-computer-note">Villages, SkillShare, CRN Import{isFounder ? ', the grant report' : ''} and test tools are in the computer view of this page.</p>
+        <p className="admin-computer-note"><a href="/admin-guide" onClick={(e) => { e.preventDefault(); navigate('/admin-guide') }}>Read the Admin Guide</a>. Villages, SkillShare, CRN Import{isFounder ? ', the grant report' : ''} and test tools are in the computer view of this page.</p>
       )}
 
       {twoStepOn && toolWaits && (

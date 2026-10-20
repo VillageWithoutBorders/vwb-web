@@ -5808,3 +5808,27 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 .become-admin textarea, .become-admin input[type="text"], .become-admin select { font-size: 1rem; min-height: 44px; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface-sunk, var(--surface)); color: var(--text); font-family: inherit; }
 .become-admin .promise { display: flex; gap: 0.6rem; align-items: flex-start; font-weight: 400; min-height: 44px; }
 .become-admin .promise input { width: 22px; height: 22px; margin-top: 2px; flex: 0 0 auto; accent-color: var(--accent); }
+
+/* Admin Guide page */
+.admin-guide { font-size: 1rem; line-height: 1.6; color: var(--text); }
+.admin-guide h1 { margin: 0.25rem 0 0; font-size: 1.6rem; color: var(--accent); }
+.admin-guide h2 { font-size: 1.25rem; margin: 1.75rem 0 0.5rem; color: var(--text-strong); scroll-margin-top: calc(var(--header-height) + 1rem); }
+.admin-guide h3 { font-size: 1.0625rem; margin: 1rem 0 0.25rem; color: var(--text-strong); }
+.admin-guide p { margin: 0 0 0.75rem; }
+.admin-guide ul, .admin-guide ol { margin: 0 0 0.75rem; padding-left: 1.4rem; display: grid; gap: 0.35rem; }
+.admin-guide section { scroll-margin-top: calc(var(--header-height) + 1rem); }
+.admin-guide-updated { color: var(--text-muted); font-size: 0.9375rem; }
+.admin-guide-toc { margin: 1rem 0; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.admin-guide-toc h2 { margin: 0 0 0.25rem; font-size: 1.0625rem; }
+.admin-guide-toc ol { margin: 0; gap: 0; }
+.admin-guide-toc a { display: inline-block; min-height: 44px; line-height: 44px; color: var(--accent); font-weight: 600; }
+.admin-guide-toc a:focus-visible, .guide-table-wrap:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.guide-table-wrap { overflow-x: auto; margin: 0 0 0.75rem; border: 1px solid var(--border); border-radius: 10px; }
+.guide-table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 0.9375rem; }
+.guide-table th, .guide-table td { text-align: left; vertical-align: top; padding: 0.5rem 0.65rem; border-bottom: 1px solid var(--border); }
+.guide-table thead th { background: var(--surface-2); color: var(--text-strong); }
+.guide-table tbody th { font-weight: 600; color: var(--text-strong); }
+@media (max-width: 480px) {
+  /* Two-column tables fit a phone without scrolling. */
+  .guide-table { min-width: 0; }
+}
