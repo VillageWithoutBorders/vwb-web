@@ -6,7 +6,7 @@ import { refreshAdminInbox } from '../hooks/useAdminInbox'
 
 // Admin safety, round 1 (vwb-admin-safety.sql):
 //   - Two-step login is required to open admin tools.
-//   - Bans of Hope Ambassadors, organizers and keepers need a second admin.
+//   - Bans of Hope Ambassadors and anyone who leads a place need a second admin.
 //   - Every admin action is logged where every admin can read it.
 
 // Is two-step login on for this account? null while checking.
@@ -64,7 +64,7 @@ export function BanRequests({ me, refreshKey, onChanged }) {
   return (
     <section className="admin-role-box" aria-labelledby="banReqTitle">
       <h3 id="banReqTitle" className="admin-role-title">Bans waiting for a second admin</h3>
-      <p className="admin-section-note">Banning a Hope Ambassador, organizer or keeper takes two admins. The person being banned can't answer.</p>
+      <p className="admin-section-note">Banning a Hope Ambassador, or anyone who leads a village, group or organization, takes two admins. The person being banned can't answer.</p>
       {note && <p className="admin-role-note" role="status">{note}</p>}
       {rows.map((r) => {
         const mine = r.asked_by === me

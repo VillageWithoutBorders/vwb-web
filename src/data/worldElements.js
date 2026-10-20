@@ -43,7 +43,7 @@ export const ORG_SPOTS = [
 ]
 
 // An emergency response Group's page (OrgPage.jsx with kind 'group'). Same roadmap
-// and lots as ORG_SPOTS. Keepers take the place of Heads and organizers.
+// and lots as ORG_SPOTS. Groups say Keeper and Helper where organizations say Head and Organizer.
 export const GROUP_SPOTS = [
   { k: 'rules', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 14, y: 27, members: true },
   { k: 'where', icon: 'houses', label: 'Where we cover', short: 'Where', em: '\u{1F3D8}', x: 32, y: 17 },
