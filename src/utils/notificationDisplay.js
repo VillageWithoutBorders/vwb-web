@@ -5,6 +5,7 @@ export const TYPE_ICONS = {
   event_signup: '\u{1F4C5}',
   event_signup_cancel: '\u{1F4C5}',
   village: '\u{1F3D8}',
+  role: '\u{1F5DD}\uFE0F',
   security_alert: '\u{1F512}',
   message: '\u{1F4AC}',
   match_request: '\u{1F91D}',
@@ -66,7 +67,8 @@ export const TYPE_COLORS = {
   group_post: '#4ecca3',
   group_setting: '#8a8a8a',
   group_waiting: '#e8833a',
-  group_member: '#4ecca3'
+  group_member: '#4ecca3',
+  role: '#e8b04a'
 }
 
 export function timeAgo(dateStr) {

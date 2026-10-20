@@ -9,6 +9,7 @@ import SisterVillages from '../components/SisterVillages'
 import { UserName } from '../components/AvatarDisplay'
 import { useDashTab, NeedsYou, DashTabs, DashPanel } from '../components/DashShell'
 import Icon from '../components/Icon'
+import RoleLog from '../components/RoleLog'
 
 // Keeper tools for one neighborhood village. Same layout as Organizer tools:
 // Needs-you card on top, then four tabs: People, Chats, Sisters, Keeper role.
@@ -283,12 +284,14 @@ export default function KeeperDashboard() {
               <li>Answer Sister Village asks</li>
               <li>Remove an organization that doesn't belong</li>
             </ul>
+            <p className="hub-org-desc">If a Keeper or Helper doesn't open VWB for 60 days, VWB asks if they are still taking part. With no answer in 14 days, the role passes on, so the village is never left without someone.</p>
             {isStarter && <p className="hub-org-desc">You can name up to 2 helpers or hand the village to another member. Open the people list and tap a name.</p>}
             <div className="dash-shortcuts">
               {isStarter && go('\u{1F5DD}️', 'Helpers and hand off', () => setShowPeople(true))}
               {go('\u{1FAA7}', 'Community Guidelines', () => navigate('/terms'))}
             </div>
           </section>
+          <RoleLog kind="village" placeId={id} />
         </DashPanel>
       )}
 
