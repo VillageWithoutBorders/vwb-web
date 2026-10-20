@@ -12,6 +12,9 @@ import { useEffect, useRef, useState } from 'react'
 //   tell('Report dismissed.', { action: { label: 'Undo', run: () => reopen(id) } })
 //                             a note with a button, shown a little longer
 //
+// Notes can be swiped left or right to close them. While a finger is on a
+// note, its timer waits, so it will not vanish mid-swipe.
+//
 // <AdminDialogHost /> must be on the page. Without it, the browser pop-ups are used.
 
 let hostListener = null
@@ -46,19 +49,34 @@ export function AdminDialogHost() {
   const lastFocus = useRef(null)
   const queue = useRef([])
   const current = useRef(null)
+  const timers = useRef({})
+
+  function closeNote(id) {
+    clearTimeout(timers.current[id])
+    delete timers.current[id]
+    setNotes((n) => n.filter((x) => x.id !== id))
+  }
+  function startTimer(id, ms) {
+    clearTimeout(timers.current[id])
+    timers.current[id] = setTimeout(() => closeNote(id), ms)
+  }
+  function holdNote(id) { clearTimeout(timers.current[id]) }
 
   useEffect(() => {
     hostListener = (item) => {
       if (item.kind === 'tell') {
         setNotes((n) => [...n.slice(-2), item])
-        setTimeout(() => setNotes((n) => n.filter((x) => x.id !== item.id)), item.action ? 10000 : item.tone === 'error' ? 9000 : 5000)
+        startTimer(item.id, item.action ? 10000 : item.tone === 'error' ? 9000 : 5000)
         return
       }
       if (current.current) { queue.current.push(item); return }
       current.current = item
       setPanel(item)
     }
-    return () => { hostListener = null }
+    return () => {
+      hostListener = null
+      Object.values(timers.current).forEach(clearTimeout)
+    }
   }, [])
 
   useEffect(() => {
@@ -118,15 +136,87 @@ export function AdminDialogHost() {
       )}
       <div className="admin-notes" aria-live="polite">
         {notes.map((n) => (
-          <div key={n.id} className={'admin-note' + (n.tone === 'error' ? ' admin-note-error' : '')} role={n.tone === 'error' ? 'alert' : 'status'}>
-            <span>{n.message}</span>
-            {n.action && (
-              <button type="button" className="admin-note-action" onClick={() => { setNotes((x) => x.filter((y) => y.id !== n.id)); n.action.run() }}>{n.action.label}</button>
-            )}
-            <button type="button" aria-label="Close" onClick={() => setNotes((x) => x.filter((y) => y.id !== n.id))}>&times;</button>
-          </div>
+          <SwipeNote
+            key={n.id}
+            note={n}
+            onClose={() => closeNote(n.id)}
+            onHold={() => holdNote(n.id)}
+            onRelease={() => startTimer(n.id, 4000)}
+          />
         ))}
       </div>
     </>
+  )
+}
+
+// One note that follows a finger sideways and closes when swiped far or fast
+// enough. Taps on its buttons work as before. Mouse drags work too.
+function SwipeNote({ note: n, onClose, onHold, onRelease }) {
+  const ref = useRef(null)
+  const drag = useRef(null)
+  const [dx, setDx] = useState(0)
+  const [leaving, setLeaving] = useState(0)
+
+  function reducedMotion() {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  }
+  function dismiss(dir) {
+    if (reducedMotion()) { onClose(); return }
+    setLeaving(dir || 1)
+    setTimeout(onClose, 180)
+  }
+  function down(e) {
+    if (leaving || (e.pointerType === 'mouse' && e.button !== 0)) return
+    if (e.target.closest('button')) return
+    drag.current = { x: e.clientX, t: e.timeStamp }
+    ref.current?.setPointerCapture?.(e.pointerId)
+    onHold()
+  }
+  function move(e) {
+    if (!drag.current) return
+    setDx(e.clientX - drag.current.x)
+  }
+  function up(e) {
+    if (!drag.current) return
+    const d = e.clientX - drag.current.x
+    const speed = Math.abs(d) / Math.max(1, e.timeStamp - drag.current.t)
+    drag.current = null
+    const w = ref.current?.offsetWidth || 300
+    if (Math.abs(d) > w * 0.35 || (Math.abs(d) > 40 && speed > 0.5)) { dismiss(Math.sign(d)); return }
+    setDx(0)
+    onRelease()
+  }
+  function cancel() {
+    if (!drag.current) return
+    drag.current = null
+    setDx(0)
+    onRelease()
+  }
+
+  const dragging = drag.current !== null
+  const w = ref.current?.offsetWidth || 300
+  const style = leaving
+    ? { transform: `translateX(${leaving * 110}%)`, opacity: 0 }
+    : dx
+      ? { transform: `translateX(${dx}px)`, opacity: Math.max(0.3, 1 - Math.abs(dx) / w) }
+      : undefined
+
+  return (
+    <div
+      ref={ref}
+      className={'admin-note' + (n.tone === 'error' ? ' admin-note-error' : '') + (dragging ? ' admin-note-dragging' : '')}
+      role={n.tone === 'error' ? 'alert' : 'status'}
+      style={style}
+      onPointerDown={down}
+      onPointerMove={move}
+      onPointerUp={up}
+      onPointerCancel={cancel}
+    >
+      <span>{n.message}</span>
+      {n.action && (
+        <button type="button" className="admin-note-action" onClick={() => { onClose(); n.action.run() }}>{n.action.label}</button>
+      )}
+      <button type="button" aria-label="Close" onClick={onClose}>&times;</button>
+    </div>
   )
 }

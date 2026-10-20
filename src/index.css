@@ -5857,6 +5857,9 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 .admin-note { pointer-events: auto; width: 100%; max-width: 32rem; box-sizing: border-box; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.5rem 0.6rem 1rem; border-radius: 12px; background: var(--surface-2, var(--surface)); border: 1px solid var(--accent); color: var(--text); font-size: 1rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); }
 .admin-note span { flex: 1; }
 .admin-note-error { border-color: var(--danger); }
+.admin-note { touch-action: pan-y; user-select: none; -webkit-user-select: none; transition: transform 0.18s ease-out, opacity 0.18s ease-out; }
+.admin-note-dragging { transition: none; cursor: grabbing; }
+@media (prefers-reduced-motion: reduce) { .admin-note { transition: none; } }
 .admin-note button { min-width: 44px; min-height: 44px; background: none; border: none; color: var(--text-soft, var(--text)); font-size: 1.4rem; cursor: pointer; }
 .admin-note button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 @media (min-width: 1024px) { .admin-dialog-scrim { align-items: center; } .admin-dialog { border-radius: 16px; } .admin-notes { bottom: 1.5rem; } }
