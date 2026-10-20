@@ -617,6 +617,7 @@ export default function Admin() {
     if (reportError('updateHelpMessage', error, 'Could not update this message. Try again.')) return
     if (!data || data.length === 0) { tell('Could not update this message. Try again.', { tone: 'error' }); return }
     await Promise.all([loadAlerts(), loadStats()])
+    if (changes.status === 'done') tell('Marked done.', { action: { label: 'Undo', run: () => updateHelpMessage(id, { status: 'open' }) } })
   }
 
   async function reviewReport(id, status) {
@@ -624,6 +625,17 @@ export default function Admin() {
     if (reportError('reviewReport', error, 'Could not update this report. Try again.')) return
     if (!data || data.length === 0) { tell('Could not update this report. Try again.', { tone: 'error' }); return }
     await Promise.all([loadAlerts(), loadStats(), reportView === 'closed' ? loadClosedReports(true) : Promise.resolve()])
+    if (status !== 'open') tell(status === 'dismissed' ? 'Report dismissed.' : 'Report marked reviewed.', { action: { label: 'Undo', run: () => reopenReport(id) } })
+  }
+
+  // Undo: put a report back in the open list.
+  async function reopenReport(id) {
+    const { data, error } = await supabase.from('user_reports').update({ status: 'open', reviewed_by: null, reviewed_at: null }).eq('id', id).select('id')
+    if (reportError('reopenReport', error, 'Could not undo. Try again.')) return
+    if (!data || data.length === 0) { tell('Could not undo. Try again.', { tone: 'error' }); return }
+    tell('Back in open reports.')
+    await Promise.all([loadAlerts(), loadStats(), reportView === 'closed' ? loadClosedReports(true) : Promise.resolve()])
+    refreshAdminInbox()
   }
 
   async function saveReportNote(id) {
@@ -648,6 +660,17 @@ export default function Admin() {
     if (reportError('reviewTaskIssue', error, 'Could not update this. Try again.')) return
     if (!data || data.length === 0) { tell('Could not update this. Try again.', { tone: 'error' }); return }
     await Promise.all([loadAlerts(), loadStats()])
+    if (status !== 'open') tell(status === 'dismissed' ? 'Dismissed.' : 'Marked reviewed.', { action: { label: 'Undo', run: () => reopenTaskIssue(id) } })
+  }
+
+  // Undo: put a task issue back in the open list.
+  async function reopenTaskIssue(id) {
+    const { data, error } = await supabase.from('task_feedback').update({ status: 'open', reviewed_by: null, reviewed_at: null }).eq('id', id).select('id')
+    if (reportError('reopenTaskIssue', error, 'Could not undo. Try again.')) return
+    if (!data || data.length === 0) { tell('Could not undo. Try again.', { tone: 'error' }); return }
+    tell('Back in open reports.')
+    await Promise.all([loadAlerts(), loadStats()])
+    refreshAdminInbox()
   }
 
   async function loadUsers() {
