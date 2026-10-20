@@ -76,6 +76,7 @@ export default function BecomeAdmin() {
       <BackLink fallback="/profile" fallbackLabel="Profile" />
       <h1>Become an admin for your village</h1>
       <p>Admins look after their village: they answer reports, welcome new people, and step in when someone needs help or safety. Every new admin starts with 30 days of learning, with a mentor admin beside them.</p>
+      <p><Link to="/admin-guide">Read the Admin Guide</Link> to see what the work is like before you ask.</p>
 
       <section className="admin-role-box" aria-labelledby="readyTitle">
         <h2 id="readyTitle" className="admin-role-title">Are you ready to ask?</h2>
@@ -112,6 +113,7 @@ export default function BecomeAdmin() {
           </label>
           <fieldset className="admin-village-set">
             <legend>Admin promises</legend>
+            <p>These come from the <Link to="/admin-guide#promises">Admin Guide</Link>.</p>
             {PROMISES.map((p, i) => (
               <label key={p} className="promise">
                 <input type="checkbox" checked={agreed[i]} onChange={() => setAgreed((a) => a.map((x, j) => (j === i ? !x : x)))} />
