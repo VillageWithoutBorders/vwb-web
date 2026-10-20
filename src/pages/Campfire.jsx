@@ -12,6 +12,7 @@ import VillagePeople, { VillageNewMembers } from '../components/VillagePeople'
 import { useGoBack } from '../components/BackLink'
 import { sendVillagePost, fetchVillageBodies, editVillagePost, fetchVillageEditHistory } from '../lib/e2ee'
 import Icon from '../components/Icon'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
@@ -295,7 +296,7 @@ export default function Campfire() {
       { user_id: user.id, board_id: boardId, ...updates, updated_at: new Date().toISOString() },
       { onConflict: 'user_id,board_id' }
     )
-    if (error) { console.error('Failed to save alert setting:', error); alert('Could not save that. Try again.') }
+    if (error) { console.error('Failed to save alert setting:', error); tell('Could not save that. Try again.', { tone: 'error' }) }
     else await loadAlertSettings()
     setAlertSaving(false)
   }
@@ -303,9 +304,9 @@ export default function Campfire() {
   // Leave the village chat being viewed. You can join again later, but you will not see what was said while you were away.
   async function leaveVillageChat() {
     if (!activeBoard?.village_id) return
-    if (!confirm('Leave ' + activeBoard.name + '? You can join again later. You will not see what was said while you were away.')) return
+    if (!(await askConfirm('Leave ' + activeBoard.name + '? You can join again later. You will not see what was said while you were away.'))) return
     const { error } = await supabase.rpc('leave_village', { p_village: activeBoard.village_id })
-    if (error) { console.error('Failed to leave the village chat:', error); alert('Could not leave. Try again.'); return }
+    if (error) { console.error('Failed to leave the village chat:', error); tell('Could not leave. Try again.', { tone: 'error' }); return }
     setShowPeople(false); setShowSettings(false)
     setMessages([]); setLoading(true); resetScroll()
     setSearchParams({}, { replace: true })
@@ -331,7 +332,7 @@ export default function Campfire() {
 
   async function reportMessage(msg) {
     setOpenMsgMenu(null)
-    if (!confirm('Report this message to the admins?')) return
+    if (!(await askConfirm('Report this message to the admins?'))) return
     const info = names[msg.user_id] || { name: 'Unknown' }
     // Campfire messages are deleted after 30 days, so the report keeps its own
     // copy of the words: the reported message plus the two before it for context.
@@ -349,8 +350,8 @@ export default function Campfire() {
       source: 'campfire',
       details: saved
     })
-    if (error) { alert(error); return }
-    alert('Report submitted. An admin will review this message.')
+    if (error) { tell(error, { tone: 'error' }); return }
+    tell('Report submitted. An admin will review this message.')
   }
 
   // Pinning: admins/founder only (matches AuthContext's isAdmin, which already
@@ -369,7 +370,7 @@ export default function Campfire() {
         .eq('id', msg.id)
     if (error) {
       console.error('Failed to update pin:', error)
-      alert('Could not update the pin on this message. Try again.')
+      tell('Could not update the pin on this message. Try again.', { tone: 'error' })
       return
     }
     await loadMessages()
@@ -458,7 +459,7 @@ export default function Campfire() {
       const { error } = await supabase.from('campfire_messages').update({ body: newMsg.trim() }).eq('id', editing.id)
       if (error) {
         console.error('Failed to edit Village Square message:', error)
-        alert('Could not save your edit. Try again.')
+        tell('Could not save your edit. Try again.', { tone: 'error' })
         setSending(false)
         return
       }
@@ -472,7 +473,7 @@ export default function Campfire() {
       const text = newMsg.trim()
       const res = await sendVillagePost({ boardId: activeBoardId, senderId: user.id, text, replyTo: replyTo?.id })
       if (res.status !== 'sent') {
-        alert(res.status === 'not-ready' ? 'Your phone is still getting its lock ready. Try again in a moment.' : 'Could not send your message. Try again.')
+        tell(res.status === 'not-ready' ? 'Your phone is still getting its lock ready. Try again in a moment.' : 'Could not send your message. Try again.', { tone: 'error' })
         setSending(false)
         return
       }
@@ -488,7 +489,7 @@ export default function Campfire() {
     const { data, error } = await supabase.from('campfire_messages').insert(row).select('id').single()
     if (error) {
       console.error('Failed to send Village Square message:', error)
-      alert('Could not send your message. Try again.')
+      tell('Could not send your message. Try again.', { tone: 'error' })
       setSending(false)
       return
     }

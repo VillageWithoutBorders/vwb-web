@@ -18,7 +18,7 @@ import { useTwoStepOn, TwoStepGate, BanRequests, AdminActionLog } from '../compo
 import { AdminApplications, AdminTrials } from '../components/AdminRecruiting'
 import { useAdminInbox, refreshAdminInbox } from '../hooks/useAdminInbox'
 import { useWideScreen } from '../hooks/useWideScreen'
-import { AdminDialogHost, ask, askConfirm, tell } from '../components/AdminDialog'
+import { ask, askConfirm, tell } from '../components/AdminDialog'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also tell the person (an in-page note) and let the caller bail out; omit it for
@@ -973,7 +973,6 @@ export default function Admin() {
 
   return (
     <div className={'admin-shell' + (wide ? ' admin-wide' : '')}>
-      <AdminDialogHost />
       <div className="admin-top">
         <button type="button" className="admin-back" onClick={() => goBack('/profile')} aria-label="Back">&#8592;</button>
         <h1 className="admin-title">Admin</h1>

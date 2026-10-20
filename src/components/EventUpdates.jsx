@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { askConfirm } from './AdminDialog'
 
 // The Updates tab on an emergency event: short updates from coordinators.
 // Everyone signed in reads them. Everyone signed up to the event gets an alert.
@@ -39,7 +40,7 @@ export default function EventUpdates({ eventId, description, closed }) {
   }
 
   async function remove(id) {
-    if (!confirm('Delete this update?')) return
+    if (!(await askConfirm('Delete this update?'))) return
     const { data, error } = await supabase.rpc('delete_event_update', { p_id: id })
     if (error || data !== 'deleted') { console.error('Failed to delete update:', error || data); setMsg("We couldn't delete that."); return }
     load()

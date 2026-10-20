@@ -16,6 +16,7 @@ import CrnCardDetails from '../components/CrnCardDetails'
 import ResourceReport from '../components/ResourceReport'
 import { placesEnabled, getMyPlaces, getVisitorArea, setVisitorArea } from '../utils/places'
 import { findHelpForMe, resourcesForPlace, friendlyError, saysNo } from '../utils/resourceReports'
+import { tell } from '../components/AdminDialog'
 
 // Keeps Tab/Shift+Tab cycling inside an open dialog instead of leaking focus
 // out to the page behind it.
@@ -250,7 +251,7 @@ export default function CommunityResources() {
     setSubmittingReviewFor(null)
     if (error) {
       console.error('Failed to post review:', error)
-      alert('Could not post your review. Try again.')
+      tell('Could not post your review. Try again.', { tone: 'error' })
       return
     }
     setReviewDrafts(prev => ({ ...prev, [resourceId]: '' }))
@@ -300,7 +301,7 @@ export default function CommunityResources() {
     if (!user) return
     const sourceUrl = (editDraft.source_url || '').trim()
     if (!sourceUrl) {
-      alert("Add a link to where you found this -- the organization's own website or social post.")
+      tell("Add a link to where you found this: the organization's own website or social post.", { tone: 'error' })
       return
     }
     const payload = { p_resource_id: r.id, p_source_url: sourceUrl }
@@ -313,7 +314,7 @@ export default function CommunityResources() {
     if ((editDraft.address || '').trim() !== (r.address || '')) payload.p_address = editDraft.address.trim()
     if ((editDraft.requirements || '').trim() !== (r.requirements || '')) payload.p_requirements = editDraft.requirements.trim()
     if (Object.keys(payload).length <= 2) {
-      alert('Nothing was changed.')
+      tell('Nothing was changed.')
       return
     }
     setSubmittingEdit(true)
@@ -321,7 +322,7 @@ export default function CommunityResources() {
     setSubmittingEdit(false)
     if (error) {
       console.error('Failed to submit resource edit:', error)
-      alert(placesEnabled ? friendlyError(error, 'Could not send your edit. Try again.') : 'Could not save your edit. Try again.')
+      tell(placesEnabled ? friendlyError(error, 'Could not send your edit. Try again.') : 'Could not save your edit. Try again.', { tone: 'error' })
       return
     }
     setEditFormFor(null)
@@ -336,7 +337,7 @@ export default function CommunityResources() {
     setRevertingId(null)
     if (error) {
       console.error('Failed to undo resource edit:', error)
-      alert('Could not undo this edit. Try again.')
+      tell('Could not undo this edit. Try again.', { tone: 'error' })
       return
     }
     await Promise.all([loadResources(), loadEditHistory()])
@@ -346,7 +347,7 @@ export default function CommunityResources() {
     setCapturingSubLocation(true)
     const loc = await getCurrentPosition()
     setCapturingSubLocation(false)
-    if (!loc) { alert("We couldn't get your phone's location. You can type the address instead."); return }
+    if (!loc) { tell("We couldn't get your phone's location. You can type the address instead.", { tone: 'error' }); return }
     setSubLat(loc.lat)
     setSubLng(loc.lng)
   }
@@ -365,7 +366,7 @@ export default function CommunityResources() {
     setSubmitting(false)
     if (error) {
       console.error('Failed to submit resource:', error)
-      alert('Could not submit this resource. Try again.')
+      tell('Could not submit this resource. Try again.', { tone: 'error' })
       return
     }
     setSubmitted(true)
@@ -376,7 +377,7 @@ export default function CommunityResources() {
 
   async function verifyResource(id) {
     const { error } = await supabase.from('community_resources').update({ verified: true, verified_by: user.id }).eq('id', id)
-    if (error) { console.error('Failed to verify resource:', error); alert('Could not verify this resource. Try again.'); return }
+    if (error) { console.error('Failed to verify resource:', error); tell('Could not verify this resource. Try again.', { tone: 'error' }); return }
     await loadResources()
   }
 

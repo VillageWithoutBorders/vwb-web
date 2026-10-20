@@ -14,6 +14,7 @@ import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
 import ResponseCamp from '../components/ResponseCamp'
 import EventUpdates from '../components/EventUpdates'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 const STATUS_CONFIG = {
   safe:        { label: 'Safe',         color: 'var(--accent)', bg: 'var(--success-bg)', icon: 'check' },
@@ -145,7 +146,7 @@ export default function EventDetail() {
     setSubmitting(true)
     const { error } = await supabase.from('event_check_ins').insert({ event_id: Number(id), user_id: user.id, status, note: statusNote.trim() || null })
     setSubmitting(false)
-    if (error) { console.error('Failed to submit check-in:', error); alert('Could not submit your check-in. Try again.'); return }
+    if (error) { console.error('Failed to submit check-in:', error); tell('Could not submit your check-in. Try again.', { tone: 'error' }); return }
     setShowStatusPicker(false)
     setStatusNote('')
     await loadAll()
@@ -164,7 +165,7 @@ export default function EventDetail() {
       note: resNote.trim() || null,
     })
     setSubmitting(false)
-    if (error) { console.error('Failed to add resource:', error); alert('Could not add this item. Try again.'); return }
+    if (error) { console.error('Failed to add resource:', error); tell('Could not add this item. Try again.', { tone: 'error' }); return }
     setShowResourceForm(null)
     setResCategory('')
     setResItem('')
@@ -175,26 +176,26 @@ export default function EventDetail() {
 
   async function claimResource(resId) {
     const { error } = await supabase.from('event_resources').update({ claimed_by: user.id, status: 'claimed' }).eq('id', resId)
-    if (error) { console.error('Failed to claim resource:', error); alert('Could not claim this item. Try again.'); return }
+    if (error) { console.error('Failed to claim resource:', error); tell('Could not claim this item. Try again.', { tone: 'error' }); return }
     await loadAll()
   }
 
   async function unclaimResource(resId) {
     const { error } = await supabase.from('event_resources').update({ claimed_by: null, status: 'available' }).eq('id', resId)
-    if (error) { console.error('Failed to unclaim resource:', error); alert('Could not unclaim this item. Try again.'); return }
+    if (error) { console.error('Failed to unclaim resource:', error); tell('Could not unclaim this item. Try again.', { tone: 'error' }); return }
     await loadAll()
   }
 
   async function fulfillResource(resId) {
     const { error } = await supabase.from('event_resources').update({ status: 'fulfilled' }).eq('id', resId)
-    if (error) { console.error('Failed to mark resource fulfilled:', error); alert('Could not update this item. Try again.'); return }
+    if (error) { console.error('Failed to mark resource fulfilled:', error); tell('Could not update this item. Try again.', { tone: 'error' }); return }
     await loadAll()
   }
 
   async function deleteResource(resId) {
-    if (!confirm('Remove this item?')) return
+    if (!(await askConfirm('Remove this item?', { yes: 'Remove', danger: true }))) return
     const { error } = await supabase.from('event_resources').delete().eq('id', resId)
-    if (error) { console.error('Failed to remove resource:', error); alert('Could not remove this item. Try again.'); return }
+    if (error) { console.error('Failed to remove resource:', error); tell('Could not remove this item. Try again.', { tone: 'error' }); return }
     await loadAll()
   }
 
@@ -207,7 +208,7 @@ export default function EventDetail() {
       notes: signupNotes.trim() || null,
     })
     setSubmitting(false)
-    if (error) { console.error('Failed to sign up:', error); alert('Could not sign up. Try again.'); return }
+    if (error) { console.error('Failed to sign up:', error); tell('Could not sign up. Try again.', { tone: 'error' }); return }
     setShowSignupForm(null)
     setSignupNotes('')
     setSignupAvail('')
@@ -216,56 +217,56 @@ export default function EventDetail() {
   }
 
   async function cancelSignup() {
-    if (!confirm('Remove yourself from this event?')) return
+    if (!(await askConfirm('Take yourself off this event?', { yes: 'Take me off' }))) return
     const { error } = await supabase.from('event_signups').delete().eq('event_id', id).eq('user_id', user.id)
-    if (error) { console.error('Failed to cancel signup:', error); alert('Could not remove you from this event. Try again.'); return }
+    if (error) { console.error('Failed to cancel signup:', error); tell('Could not remove you from this event. Try again.', { tone: 'error' }); return }
     await loadAll()
   }
 
   async function messageUser(userId) {
     setOpenSignupMenu(null)
     const { data: existing, error: existingErr } = await supabase.from('conversations').select('id').or('and(helper_id.eq.' + userId + ',requester_id.eq.' + user.id + '),and(helper_id.eq.' + user.id + ',requester_id.eq.' + userId + ')').maybeSingle()
-    if (existingErr) { console.error('Failed to check for an existing conversation:', existingErr); alert('Something went wrong. Try again.'); return }
+    if (existingErr) { console.error('Failed to check for an existing conversation:', existingErr); tell('Something went wrong. Try again.', { tone: 'error' }); return }
     if (existing) { navigate('/conversation/' + existing.id); return }
     const { data: convo, error: convoErr } = await supabase.from('conversations').insert({ helper_id: userId, requester_id: user.id }).select().single()
-    if (convoErr || !convo) { if (isNewAccountBlock(convoErr)) { alert(NEW_ACCOUNT_NOTE); return } console.error('Failed to start a conversation:', convoErr); alert('Could not start a conversation. Try again.'); return }
+    if (convoErr || !convo) { if (isNewAccountBlock(convoErr)) { tell(NEW_ACCOUNT_NOTE); return } console.error('Failed to start a conversation:', convoErr); tell('Could not start a conversation. Try again.', { tone: 'error' }); return }
     navigate('/conversation/' + convo.id)
   }
 
   async function reportUser(userId) {
     const { error } = await submitUserReport({ reporterId: user.id, reportedUserId: userId, source: 'event', details: 'Reported from an emergency event' })
     setOpenSignupMenu(null)
-    if (error) { alert(error); return }
-    alert('Report submitted. Thank you for keeping the community safe.')
+    if (error) { tell(error, { tone: 'error' }); return }
+    tell('Report submitted. Thank you for keeping the community safe.')
   }
 
   async function blockUser(userId) {
-    if (!confirm('Block this user?')) return
+    if (!(await askConfirm('Block this person?', { yes: 'Block', danger: true }))) return
     const { error } = await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: userId })
     setOpenSignupMenu(null)
-    if (error) { console.error('Failed to block user:', error); alert('Could not block this user. Try again.'); return }
-    alert('User blocked.')
+    if (error) { console.error('Failed to block user:', error); tell('Could not block this user. Try again.', { tone: 'error' }); return }
+    tell('Blocked.')
   }
 
   async function deleteSignup(signupId) {
-    if (!confirm('Remove this signup?')) return
+    if (!(await askConfirm('Remove this person from the event?', { yes: 'Remove', danger: true }))) return
     const { error } = await supabase.from('event_signups').delete().eq('id', signupId)
     setOpenSignupMenu(null)
-    if (error) { console.error('Failed to remove signup:', error); alert('Could not remove this signup. Try again.'); return }
+    if (error) { console.error('Failed to remove signup:', error); tell('Could not remove this signup. Try again.', { tone: 'error' }); return }
     await loadAll()
   }
 
   async function saveNotes(signupId) {
     const { error } = await supabase.from('event_signups').update({ notes: editNotesVal.trim() || null }).eq('id', signupId)
     setEditingNotes(null)
-    if (error) { console.error('Failed to save notes:', error); alert('Could not save your notes. Try again.'); return }
+    if (error) { console.error('Failed to save notes:', error); tell('Could not save your notes. Try again.', { tone: 'error' }); return }
     await loadAll()
   }
 
   async function switchRole() {
     const newRole = mySignup.role === 'responder' ? 'affected' : 'responder'
     const { error } = await supabase.from('event_signups').update({ role: newRole }).eq('event_id', id).eq('user_id', user.id)
-    if (error) { console.error('Failed to switch role:', error); alert('Could not switch your role. Try again.'); return }
+    if (error) { console.error('Failed to switch role:', error); tell('Could not switch your role. Try again.', { tone: 'error' }); return }
     await loadAll()
   }
 
@@ -285,7 +286,7 @@ export default function EventDetail() {
     setVerifying(true)
     const { error } = await supabase.from('emergency_events').update({ verified: true }).eq('id', id)
     setVerifying(false)
-    if (error) { console.error('Failed to verify event:', error); alert(error.code === 'P0001' ? error.message : 'Could not verify this event. Try again.'); return }
+    if (error) { console.error('Failed to verify event:', error); tell(error.code === 'P0001' ? error.message : 'Could not verify this event. Try again.', { tone: 'error' }); return }
     if (event.created_by && event.created_by !== user.id) {
       await createNotification({ userId: event.created_by, type: 'emergency_verified', title: 'Emergency Verified', body: event.title + ' was verified. A Response Camp is open for everyone helping.', link: '/emergency/' + id })
     }
@@ -308,24 +309,24 @@ export default function EventDetail() {
       if (canCloseAlone) {
         const { error } = await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
         setClosingEvent(false)
-        if (error) { console.error('Failed to close event:', error); alert('Could not close this event. Try again.'); return }
+        if (error) { console.error('Failed to close event:', error); tell('Could not close this event. Try again.', { tone: 'error' }); return }
         navigate('/emergency')
         return
       }
       const { error: voteErr } = await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'resolved' }, { onConflict: 'event_id,voter_id' })
-      if (voteErr) { console.error('Failed to record close vote:', voteErr); alert('Could not record your vote. Try again.'); setClosingEvent(false); return }
+      if (voteErr) { console.error('Failed to record close vote:', voteErr); tell('Could not record your vote. Try again.', { tone: 'error' }); setClosingEvent(false); return }
       const { data: votes, error: votesErr } = await supabase.from('event_close_votes').select('id').eq('event_id', id).eq('close_reason', 'resolved')
       if (votesErr) console.error('Failed to check close votes:', votesErr)
       if (votes && votes.length >= 2) {
         const { error: closeErr } = await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
         setClosingEvent(false)
-        if (closeErr) { console.error('Failed to close event:', closeErr); alert('Could not close this event. Try again.'); return }
+        if (closeErr) { console.error('Failed to close event:', closeErr); tell('Could not close this event. Try again.', { tone: 'error' }); return }
         navigate('/emergency')
         return
       }
       setClosingEvent(false)
       setShowCloseModal(false)
-      alert('Your vote to close has been recorded. One more vote is needed.')
+      tell('Your vote to close has been recorded. One more vote is needed.')
       await loadAll()
       return
     }
@@ -339,7 +340,7 @@ export default function EventDetail() {
         }
         const { error } = await supabase.from('emergency_events').delete().eq('id', id)
         setClosingEvent(false)
-        if (error) { console.error('Failed to remove event:', error); alert('Could not remove this event. Try again.'); return }
+        if (error) { console.error('Failed to remove event:', error); tell('Could not remove this event. Try again.', { tone: 'error' }); return }
         navigate('/emergency')
         return
       }
@@ -354,7 +355,7 @@ export default function EventDetail() {
         }
         setClosingEvent(false)
         setShowCloseModal(false)
-        alert('This verified event requires admin approval to mark as false alarm. Admins have been notified.')
+        tell('This emergency was already checked, so a VWB admin has to approve marking it a false alarm. They were told.')
         return
       }
       // Unverified events used to be deletable, permanently, by ANY
@@ -366,24 +367,24 @@ export default function EventDetail() {
       if (isReporter) {
         const { error } = await supabase.from('emergency_events').delete().eq('id', id)
         setClosingEvent(false)
-        if (error) { console.error('Failed to remove event:', error); alert('Could not remove this event. Try again.'); return }
+        if (error) { console.error('Failed to remove event:', error); tell('Could not remove this event. Try again.', { tone: 'error' }); return }
         navigate('/emergency')
         return
       }
       const { error: voteErr } = await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'false_alarm' }, { onConflict: 'event_id,voter_id' })
-      if (voteErr) { console.error('Failed to record close vote:', voteErr); alert('Could not record your vote. Try again.'); setClosingEvent(false); return }
+      if (voteErr) { console.error('Failed to record close vote:', voteErr); tell('Could not record your vote. Try again.', { tone: 'error' }); setClosingEvent(false); return }
       const { data: faVotes, error: faVotesErr } = await supabase.from('event_close_votes').select('id').eq('event_id', id).eq('close_reason', 'false_alarm')
       if (faVotesErr) console.error('Failed to check close votes:', faVotesErr)
       if (faVotes && faVotes.length >= 2) {
         const { error: delErr } = await supabase.from('emergency_events').delete().eq('id', id)
         setClosingEvent(false)
-        if (delErr) { console.error('Failed to remove event:', delErr); alert('Could not remove this event. Try again.'); return }
+        if (delErr) { console.error('Failed to remove event:', delErr); tell('Could not remove this event. Try again.', { tone: 'error' }); return }
         navigate('/emergency')
         return
       }
       setClosingEvent(false)
       setShowCloseModal(false)
-      alert('Your vote to mark this a false alarm has been recorded. One more vote is needed before the event is removed.')
+      tell('Your vote to mark this a false alarm has been recorded. One more vote is needed before the event is removed.')
       await loadAll()
       return
     }
@@ -392,7 +393,7 @@ export default function EventDetail() {
       if (isAdmin) {
         const { error } = await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'duplicate', duplicate_event_id: selectedDuplicate }, { onConflict: 'event_id,voter_id' })
         setClosingEvent(false)
-        if (error) { console.error('Failed to record duplicate flag:', error); alert('Could not flag this event as a duplicate. Try again.'); return }
+        if (error) { console.error('Failed to record duplicate flag:', error); tell('Could not flag this event as a duplicate. Try again.', { tone: 'error' }); return }
         navigate('/admin')
         return
       }
@@ -406,9 +407,9 @@ export default function EventDetail() {
       }
       const { error: voteErr } = await supabase.from('event_close_votes').upsert({ event_id: Number(id), voter_id: user.id, close_reason: 'duplicate', duplicate_event_id: selectedDuplicate }, { onConflict: 'event_id,voter_id' })
       setClosingEvent(false)
-      if (voteErr) { console.error('Failed to record duplicate vote:', voteErr); alert('Could not flag this event as a duplicate. Try again.'); return }
+      if (voteErr) { console.error('Failed to record duplicate vote:', voteErr); tell('Could not flag this event as a duplicate. Try again.', { tone: 'error' }); return }
       setShowCloseModal(false)
-      alert('Admins have been notified to review and merge this event.')
+      tell('VWB admins were told. They will look and merge it if it is the same emergency.')
       return
     }
 

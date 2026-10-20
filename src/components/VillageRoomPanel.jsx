@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { askConfirm } from './AdminDialog'
 
 // Inside a village Campfire or Sidechat (GroupBoard). Shows:
 // - "Still taking part?" when you have been asked.
@@ -98,7 +99,7 @@ export default function VillageRoomPanel({ groupId, onInfo, onLeave, onChanged }
               <span style={{ flex: 1, minWidth: '8rem' }}><b>{q.display_name}</b> was asked "Still taking part?" on {new Date(q.asked_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}{q.can_remove ? ' and has not answered.' : '. You can remove them after 7 days with no answer.'}</span>
               {q.can_remove && (
                 <button type="button" className="btn btn-outline" style={small} disabled={busy === 'r' + q.user_id}
-                  onClick={() => { if (confirm('Take ' + q.display_name + ' out of this Campfire? They can ask to join again.')) run('r' + q.user_id, () => supabase.rpc('remove_quiet_campfire_member', { p_group: groupId, p_user: q.user_id }), (d) => (d === 'removed' ? q.display_name + ' was taken out.' : 'Not yet.')) }}>Remove</button>
+                  onClick={async () => { if (await askConfirm('Take ' + q.display_name + ' out of this Campfire? They can ask to join again.', { yes: 'Take out', danger: true })) run('r' + q.user_id, () => supabase.rpc('remove_quiet_campfire_member', { p_group: groupId, p_user: q.user_id }), (d) => (d === 'removed' ? q.display_name + ' was taken out.' : 'Not yet.')) }}>Remove</button>
               )}
             </div>
           ))}

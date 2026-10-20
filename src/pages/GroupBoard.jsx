@@ -15,6 +15,7 @@ import VillageRoomPanel from '../components/VillageRoomPanel'
 import SidechatAdd from '../components/SidechatAdd'
 import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 // One group's board: its own private Campfire. Posts are end-to-end
 // encrypted (see e2ee.js sendGroupPost), so only members can read them and
@@ -304,9 +305,9 @@ export default function GroupBoard() {
   }
 
   async function deletePost(post) {
-    if (!confirm('Delete this post for everyone?')) return
+    if (!(await askConfirm('Delete this post for everyone?'))) return
     const { error } = await supabase.from('community_group_posts').update({ deleted_at: new Date().toISOString() }).eq('id', post.id)
-    if (error) { console.error('Failed to delete post:', error); alert('Could not delete this post. Try again.'); return }
+    if (error) { console.error('Failed to delete post:', error); tell('Could not delete this post. Try again.', { tone: 'error' }); return }
     loadPosts()
   }
 
@@ -467,7 +468,7 @@ export default function GroupBoard() {
 
   async function invite(person) {
     const { error } = await supabase.rpc('invite_to_community_group', { p_group: id, p_invitee: person.user_id })
-    if (error) { console.error('Invite failed:', error); alert(error.code === '42501' && error.message ? error.message : error.message?.includes("can't invite") ? "You can't invite this person." : 'Could not send the invite. Try again.'); return }
+    if (error) { console.error('Invite failed:', error); tell(error.code === '42501' && error.message ? error.message : error.message?.includes("can't invite") ? "You can't invite this person." : 'Could not send the invite. Try again.', { tone: 'error' }); return }
     setSearch('')
     setResults([])
     loadGroup()
@@ -475,13 +476,13 @@ export default function GroupBoard() {
 
   async function takeBackInvite(userId) {
     const { error } = await supabase.from('community_group_invites').delete().eq('group_id', id).eq('invitee_id', userId)
-    if (error) { console.error('Failed to take back invite:', error); alert('Could not take back the invite. Try again.'); return }
+    if (error) { console.error('Failed to take back invite:', error); tell('Could not take back the invite. Try again.', { tone: 'error' }); return }
     loadGroup()
   }
 
   async function setLink(on) {
     const { error } = await supabase.rpc('set_community_group_link', { p_group: id, p_on: on })
-    if (error) { console.error('Failed to change the join link:', error); alert('Could not change the link. Try again.'); return }
+    if (error) { console.error('Failed to change the join link:', error); tell('Could not change the link. Try again.', { tone: 'error' }); return }
     setCopied(false)
     loadGroup()
   }
@@ -489,17 +490,17 @@ export default function GroupBoard() {
   const joinUrl = group?.join_token ? window.location.origin + '/groups/join/' + group.join_token : ''
 
   async function copyLink() {
-    try { await navigator.clipboard.writeText(joinUrl); setCopied(true) } catch { setCopied(false); alert('Copy did not work. Press and hold the link to copy it.') }
+    try { await navigator.clipboard.writeText(joinUrl); setCopied(true) } catch { setCopied(false); tell('Copy did not work. Press and hold the link to copy it.', { tone: 'error' }) }
   }
 
   // Opening a removal (or the steward removing alone) needs a reason from the
   // list. Agreeing to someone else's request doesn't: you see their reason.
-  function askRemove(member) {
+  async function askRemove(member) {
     const open = removals.find(r => r.target_id === member.userId)
     if (open && group?.steward_id !== user.id) {
       const why = open.reason ? ' Reason given: ' + open.reason + '.' : ''
-      if (!confirm('Agree to remove ' + member.name + '?' + why + ' They will be removed from the group right away.')) return
-      doRemove(member, null).then(r => { if (r && r.error) alert(r.error.code === '42501' && r.error.message ? r.error.message : 'Could not do that. Try again.') })
+      if (!(await askConfirm('Agree to remove ' + member.name + '?' + why + ' They will be removed from the group right away.', { yes: 'Agree, remove', danger: true }))) return
+      doRemove(member, null).then(r => { if (r && r.error) tell(r.error.code === '42501' && r.error.message ? r.error.message : 'Could not do that. Try again.', { tone: 'error' }) })
       return
     }
     setRemoveFor(member)
@@ -510,7 +511,7 @@ export default function GroupBoard() {
   async function doRemove(member, reason) {
     const { data, error } = await supabase.rpc('request_community_group_removal', { p_group: id, p_target: member.userId, p_reason: reason })
     if (error) { console.error('Removal request failed:', error); return { error } }
-    if (data === 'removed') alert(member.name + ' was removed from the group.')
+    if (data === 'removed') tell(member.name + ' was removed from the group.')
     loadGroup()
     return {}
   }
@@ -527,14 +528,14 @@ export default function GroupBoard() {
 
   async function letIn(person) {
     const { error } = await supabase.rpc('approve_community_group_member', { p_group: id, p_user: person.userId })
-    if (error) { console.error('Approve failed:', error); alert(error.message?.includes('other than') ? 'Someone other than the person who invited them has to let them in.' : 'Could not let them in. Try again.'); return }
+    if (error) { console.error('Approve failed:', error); tell(error.message?.includes('other than') ? 'Someone other than the person who invited them has to let them in.' : 'Could not let them in. Try again.', { tone: 'error' }); return }
     loadGroup()
   }
 
   async function sayNo(person) {
-    if (!confirm('Say no to ' + person.name + "? They won't join the group.")) return
+    if (!(await askConfirm('Say no to ' + person.name + "? They won't join the group."))) return
     const { error } = await supabase.rpc('decline_community_group_member', { p_group: id, p_user: person.userId })
-    if (error) { console.error('Decline failed:', error); alert('Could not do that. Try again.'); return }
+    if (error) { console.error('Decline failed:', error); tell('Could not do that. Try again.', { tone: 'error' }); return }
     loadGroup()
   }
 
@@ -543,27 +544,27 @@ export default function GroupBoard() {
     const msg = member
       ? 'Ask ' + member.name + " to take over as steward? They'll need to say yes. Until then, you're still steward."
       : 'Take back your steward offer?'
-    if (!confirm(msg)) return
+    if (!(await askConfirm(msg))) return
     const { error } = await supabase.rpc('offer_community_group_steward', { p_group: id, p_user: member ? member.userId : null })
-    if (error) { console.error('Steward offer failed:', error); alert('Could not do that. Try again.'); return }
+    if (error) { console.error('Steward offer failed:', error); tell('Could not do that. Try again.', { tone: 'error' }); return }
     loadGroup()
   }
 
   async function answerSteward(accept) {
-    if (accept && !confirm("Become this group's steward? You'll control the join link, you can remove someone on your own for safety, and members can't remove you.")) return
+    if (accept && !(await askConfirm("Become this group's steward? You'll control the join link, you can remove someone on your own for safety, and members can't remove you."))) return
     const { error } = await supabase.rpc('answer_community_group_steward', { p_group: id, p_accept: accept })
     if (error) {
       console.error('Steward answer failed:', error)
-      alert(error.message?.includes('head or one of its organizers')
+      tell(error.message?.includes('head or one of its organizers')
         ? "Only the organization's head or one of its organizers can be steward. Ask the organization to make you an organizer first."
-        : 'Could not do that. The offer may have been taken back.')
+        : 'Could not do that. The offer may have been taken back.', { tone: 'error' })
     }
     loadGroup()
   }
 
   async function withdrawRemoval(member) {
     const { error } = await supabase.from('community_group_removals').delete().eq('group_id', id).eq('target_id', member.userId).eq('requested_by', user.id)
-    if (error) { console.error('Failed to take back removal request:', error); alert('Could not take it back. Try again.'); return }
+    if (error) { console.error('Failed to take back removal request:', error); tell('Could not take it back. Try again.', { tone: 'error' }); return }
     loadGroup()
   }
 
@@ -572,9 +573,9 @@ export default function GroupBoard() {
     const stewardNote = group.steward_id === user.id && !last
       ? "You're the steward. If you leave, the group becomes an everyday group where everyone is equal. To pass the role on instead, use Make steward first (it's offered to the organization's head and organizers in the group). "
       : ''
-    if (!confirm(last ? "You're the last member. Leaving deletes this group and its whole board. Leave?" : stewardNote + 'Leave ' + group.name + '? You can only come back if someone invites you again.')) return
+    if (!(await askConfirm(last ? "You're the last member. Leaving deletes this group and its whole board. Leave?" : stewardNote + 'Leave ' + group.name + '? You can only come back if someone invites you again.'))) return
     const { error } = await supabase.from('community_group_members').delete().eq('group_id', id).eq('user_id', user.id)
-    if (error) { console.error('Failed to leave group:', error); alert('Could not leave the group. Try again.'); return }
+    if (error) { console.error('Failed to leave group:', error); tell('Could not leave the group. Try again.', { tone: 'error' }); return }
     navigate('/groups', { replace: true })
   }
 
@@ -794,9 +795,9 @@ export default function GroupBoard() {
                   <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={async () => { await changeSetting('description', descDraft.trim()); setDescDraft(null) }}>{group.steward_id ? 'Save description' : 'Ask to change description'}</button>
                 )}
                 <label htmlFor="group-disappear" className="groups-note">Posts disappear after</label>
-                <select id="group-disappear" className="group-search" disabled={sharedBusy} value={group.disappear_after_mins || 0} onChange={e => {
+                <select id="group-disappear" className="group-search" disabled={sharedBusy} value={group.disappear_after_mins || 0} onChange={async e => {
                   const mins = Number(e.target.value)
-                  if (mins > 0 && !confirm('Posts older than this will be removed for everyone, for good. Turn it on?')) return
+                  if (mins > 0 && !(await askConfirm('Posts older than this will be removed for everyone, for good. Turn it on?', { yes: 'Turn it on', danger: true }))) return
                   changeSetting('disappear', String(mins))
                 }}>
                   {DISAPPEAR_CHOICES.map(([mins, label]) => <option key={mins} value={mins}>{label}</option>)}

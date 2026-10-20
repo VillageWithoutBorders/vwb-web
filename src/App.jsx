@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
 import { NotificationsProvider } from './context/NotificationsContext'
 import Layout from './pages/Layout'
+import { AdminDialogHost } from './components/AdminDialog'
 import Welcome from './pages/Welcome'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
@@ -214,6 +215,7 @@ export default function App() {
         <UnreadCountProvider>
           <NotificationsProvider>
             <AppRoutes />
+            <AdminDialogHost />
           </NotificationsProvider>
         </UnreadCountProvider>
       </AuthProvider>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import Icon from './Icon'
+import { tell } from './AdminDialog'
 
 const BASE = 'https://api.dicebear.com/7.x/avataaars/svg'
 
@@ -136,7 +137,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
     const { error } = await supabase.from('helper_profiles').update({
       avatar_url: url, avatar_config: saveData,
     }).eq('user_id', user.id)
-    if (error) alert('Could not save avatar. Try again.')
+    if (error) tell('Could not save avatar. Try again.', { tone: 'error' })
     else if (onSave) onSave(url, saveData)
     setSaving(false)
   }

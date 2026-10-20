@@ -12,6 +12,7 @@ import SimpleViewPicker from '../components/SimpleViewPicker'
 import AreaPicker from '../components/AreaPicker'
 import { placesEnabled } from '../utils/places'
 import Icon from '../components/Icon'
+import { askConfirm, tell } from '../components/AdminDialog'
 
 // A plain read on how strong a new password is. Length matters most.
 function passwordStrength(pw) {
@@ -30,7 +31,7 @@ function passwordStrength(pw) {
 function reportError(context, error, userMessage) {
   if (!error) return false
   console.error(`[Settings:${context}]`, error)
-  if (userMessage) alert(userMessage)
+  if (userMessage) tell(userMessage, { tone: 'error' })
   return true
 }
 
@@ -145,7 +146,7 @@ export default function Settings() {
   // Jade's own quick way to reset an account she's testing with. Founder
   // accounts are never affected (resetAccountToBase guards this too).
   async function handleResetToBase() {
-    if (!confirm('Reset your account back to a plain Neighbor? This clears your Ambassador status, skills, availability, and any admin coverage area.')) return
+    if (!(await askConfirm('Reset your account back to a plain Neighbor? This clears your Ambassador status, skills, availability, and any admin coverage area.'))) return
     setResetting(true); setResetErrorMsg(''); setResetMessage('')
     const { error: resetErr } = await resetAccountToBase(user.id, { currentRole: profile?.role })
     reportError('handleResetToBase', resetErr)
@@ -165,24 +166,24 @@ export default function Settings() {
     const v = !readReceipts
     setReadReceipts(v)
     const ok = await savePrivacyPref('read_receipts_enabled', v)
-    if (!ok) { setReadReceipts(!v); alert('Could not save this setting. Try again.') }
+    if (!ok) { setReadReceipts(!v); tell('Could not save this setting. Try again.', { tone: 'error' }) }
   }
 
   async function toggleSafetyCheckins() {
     const v = !safetyCheckins
     setSafetyCheckins(v)
     const ok = await savePrivacyPref('safety_checkins_enabled', v)
-    if (!ok) { setSafetyCheckins(!v); alert('Could not save this setting. Try again.') }
+    if (!ok) { setSafetyCheckins(!v); tell('Could not save this setting. Try again.', { tone: 'error' }) }
   }
 
   async function unblockUser(blockId) {
     const { error } = await supabase.from('blocks').delete().eq('id', blockId)
-    if (error) { console.error('[Settings:unblockUser]', error); alert('Could not unblock this user. Try again.'); return }
+    if (error) { console.error('[Settings:unblockUser]', error); tell('Could not unblock this user. Try again.', { tone: 'error' }); return }
     setBlockedUsers((prev) => prev.filter((b) => b.id !== blockId))
   }
 
   async function removeDevice(d) {
-    if (!confirm('Remove ' + (d.label || 'this device') + '? New private messages will stop being sent to it. Messages already on it stay readable there.')) return
+    if (!(await askConfirm('Remove ' + (d.label || 'this device') + '? New private messages will stop being sent to it. Messages already on it stay readable there.'))) return
     setRemovingDevice(d.deviceId); setDeviceNote('')
     const ok = await removeMyDevice(user.id, d.deviceId)
     setRemovingDevice(null)
@@ -246,7 +247,7 @@ export default function Settings() {
   }
 
   async function turnOffTwoStep() {
-    if (!confirm('Turn off two-step login? Your account will be protected by your password alone.')) return
+    if (!(await askConfirm('Turn off two-step login? Your account will be protected by your password alone.'))) return
     setTwoStepError(''); setTwoStepMessage(''); setTwoStepBusy(true)
     const { error } = await supabase.auth.mfa.unenroll({ factorId: twoStep.id })
     setTwoStepBusy(false)
@@ -302,7 +303,7 @@ export default function Settings() {
   }
 
   async function handleSignOutEverywhere() {
-    if (!confirm('Sign out of every device, including this one? You will need to sign in again on each of them.')) return
+    if (!(await askConfirm('Sign out of every device, including this one? You will need to sign in again on each of them.'))) return
     setSigningOutAll(true); setSignOutAllError('')
     const ok = await signOutEverywhere()
     setSigningOutAll(false)
