@@ -10,6 +10,7 @@ import AvatarBuilder, { AvatarPreview } from '../components/AvatarBuilder'
 import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
+import { ADMIN_REQUESTS_OPEN } from '../data/adminTeam'
 
 function reportError(context, error, userMessage) {
   if (!error) return false
@@ -487,7 +488,7 @@ export default function Profile() {
             </div>
           </div>
         )}
-        {profile?.is_hope_ambassador && !isAdmin && !adminAppStatus && (
+        {ADMIN_REQUESTS_OPEN && profile?.is_hope_ambassador && !isAdmin && !adminAppStatus && (
           <div style={{ background: 'linear-gradient(135deg, var(--info-bg), var(--info-bg))', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
             <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>Become an admin for your village</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Admins help coordinate responses in their region and keep the community safe.</p>
