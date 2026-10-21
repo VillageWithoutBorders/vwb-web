@@ -100,6 +100,7 @@ export default function FindVillage() {
     if (startParam !== '1' || !hasZip || starting) return
     openStart()
     navigate('/find-village', { replace: true })
+    setTimeout(() => document.getElementById('fv-startform')?.scrollIntoView({ block: 'start' }), 120)
   }, [startParam, hasZip]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Zips near mine. All ticked to begin with; the starter unticks what does not fit.

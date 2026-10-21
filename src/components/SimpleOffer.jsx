@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { firstRunPaused } from '../utils/firstVillage'
 import { useAuth } from '../context/AuthContext'
 import { saveSimpleView, phoneUsesLargeText, isSimpleView } from '../utils/simpleView'
 
@@ -8,10 +9,11 @@ import { saveSimpleView, phoneUsesLargeText, isSimpleView } from '../utils/simpl
 export default function SimpleOffer() {
   const { user, profile, refreshProfile } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [busy, setBusy] = useState(false)
   const [closed, setClosed] = useState(false)
   const headRef = useRef(null)
-  const ask = !!user && !!profile && Object.prototype.hasOwnProperty.call(profile, 'simple_view') && profile.simple_view === null && !closed
+  const ask = !!user && !!profile && Object.prototype.hasOwnProperty.call(profile, 'simple_view') && profile.simple_view === null && !closed && !firstRunPaused(pathname)
 
   // Came from the printed card (or chose Simple on this phone already):
   // save Simple to the account without asking.
