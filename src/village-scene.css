@@ -149,10 +149,13 @@
 .vs-cottages { display: flex; gap: 1px; margin: -2px 0 1px; }
 .vs-cot { display: inline-flex; opacity: 0.45; filter: grayscale(0.8) brightness(0.7); }
 .vs-cot-lit { opacity: 1; filter: drop-shadow(0 0 3px rgba(255, 200, 90, 0.95)); }
-.vs-lantern { position: absolute; top: -6px; right: -12px; display: inline-flex; filter: drop-shadow(0 0 5px rgba(255, 196, 80, 0.95)); }
+.vs-lantern { position: absolute; top: -4px; right: -10px; line-height: 0; display: inline-flex; filter: drop-shadow(0 0 5px rgba(255, 196, 80, 0.95)); }
 .vs-fire-0 .vs-em { opacity: 0.6; filter: grayscale(0.5) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
 .vs-fire-2 .vs-em { filter: drop-shadow(0 0 6px rgba(255, 150, 60, 0.7)) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
 .vs-fire-3 .vs-em { filter: drop-shadow(0 0 12px rgba(255, 150, 60, 0.95)) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
 .vs-fire-0.vs-flame .vs-em { animation: none; }
-.vs-lab .vwb-icon { vertical-align: -2px; }
+.vs-lab .vwb-icon { width: 14px; height: 14px; vertical-align: -2px; }
+/* Small pictures inside a spot: fixed sizes, not the spot's big font size. */
+.vs-lantern .vwb-icon { width: 22px; height: 22px; vertical-align: 0; display: block; }
+.vs-cot .vwb-icon { width: 16px; height: 16px; vertical-align: 0; display: block; }
 @media (prefers-reduced-motion: reduce) { .vs-cot-lit, .vs-lantern { filter: none; } }
