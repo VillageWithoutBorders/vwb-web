@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import BackLink from '../components/BackLink'
+import { ADMIN_REQUESTS_OPEN } from '../data/adminTeam'
 
 // Asking to become an admin for your village (vwb-admin-recruiting.sql).
 // You can ask for a village that has no admin yet (vwb-roles-step5.sql).
@@ -60,6 +61,18 @@ export default function BecomeAdmin() {
     setBusy(false)
     if (e2) { console.error('[BecomeAdmin] apply failed:', e2); setError(e2.message || "That didn't send. Try again."); return }
     setSent(true)
+  }
+
+  if (!isAdmin && !ADMIN_REQUESTS_OPEN) {
+    return (
+      <div className="become-admin">
+        <BackLink fallback="/profile" fallbackLabel="Profile" />
+        <h1>Admin is the VWB team for now</h1>
+        <p>VWB isn't adding admins right now. Villages are run by their own Keepers and Helpers, with Hope Ambassadors nearby.</p>
+        <p>If you want to help your village, ask its Keeper about being a Helper, or become a Hope Ambassador.</p>
+        <p><Link to="/admin-guide">Read the Admin Guide</Link> to see what admins do.</p>
+      </div>
+    )
   }
 
   if (isAdmin) {

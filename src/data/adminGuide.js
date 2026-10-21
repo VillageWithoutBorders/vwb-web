@@ -218,7 +218,7 @@ export const ADMIN_GUIDE = [
       { p: 'You can step down any time, with no reason needed. Thank you for the time you gave.' },
       { ol: [
         "**Tell your mentor or the founder first**, so your village isn't left without an admin.",
-        '**Help find someone new.** A Hope Ambassador in your village may be ready. Point them to Become an admin.',
+        '**Make sure your villages are covered.** Check that each one has a Keeper, a Helper and a Hope Ambassador nearby.',
         "**Hand off what's open.** Finish or pass on anything you were working on, with a note.",
         '**Step down in Settings** with Reset to Neighbor. You stay a member and keep your friends, chats and history.',
       ] },

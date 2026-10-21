@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import NearbyNeedTiles from '../components/NearbyNeedTiles'
 import Icon from '../components/Icon'
 import FindAKeeper from '../components/FindAKeeper'
+import { ADMIN_REQUESTS_OPEN } from '../data/adminTeam'
 
 // Ambassador tools: what is waiting on a Hope Ambassador (or VWB admin) in one place.
 //   Emergencies waiting to be checked, groups asking to respond to emergencies,
@@ -28,7 +29,7 @@ export default function Ambassador() {
   const [needAdmin, setNeedAdmin] = useState([])
 
   useEffect(() => {
-    if (!allowed || isAdmin) return
+    if (!allowed || isAdmin || !ADMIN_REQUESTS_OPEN) return
     supabase.rpc('villages_needing_admin').then(({ data, error: err }) => {
       if (err) { console.error('Failed to load villages needing an admin:', err); return }
       setNeedAdmin(data || [])
