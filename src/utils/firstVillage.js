@@ -9,3 +9,10 @@ export function needsFirstVillage(profile) {
   if (!has('village_opt_in') || !has('tour_done_at')) return false
   return profile.village_opt_in === null && !profile.tour_done_at
 }
+
+// While a new member is starting a village or saying hi in their new village
+// chat, the first-run questions (Simple view, the tour) wait. They show up as
+// soon as the person goes anywhere else.
+export function firstRunPaused(pathname) {
+  return pathname === '/find-village' || pathname === '/campfire'
+}
