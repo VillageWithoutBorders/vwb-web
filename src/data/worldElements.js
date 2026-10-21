@@ -57,3 +57,17 @@ export const GROUP_SPOTS = [
   { k: 'involved', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
   { k: 'tools', icon: 'toolbox', label: 'Keeper tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
 ]
+
+// The living village scene (vwb-village-life.sql). Picture names in
+// public/art/icons. These are stand-ins until Jade's own art is ready:
+// save hers as life-cottage-dark.svg (or .png), life-cottage-lit, life-fire,
+// life-lantern, life-sign and change the names here. Nothing else changes.
+export const LIFE_ART = {
+  cottageDark: 'cottage',
+  cottageLit: 'cottage',
+  lantern: 'sun',
+  sign: 'pushpin',
+}
+// How big the campfire burns for each step (0 = embers, 3 = a busy week).
+export const FIRE_SIZE = [0.85, 1, 1.15, 1.3]
+export const FIRE_WORDS = ['Embers. Spark a message to warm it up.', 'A small fire this week', 'A warm fire this week', 'A big, bright fire this week']

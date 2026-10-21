@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient'
 import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
-import { VILLAGE_SPOTS } from '../data/worldElements'
+import { VILLAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS } from '../data/worldElements'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
 import '../village-scene.css'
@@ -98,6 +98,19 @@ export default function VillageScene() {
     loadRooms()
   }, [village, id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The living scene: lit cottages, fire size, Keeper lantern (counts in steps only).
+  const [life, setLife] = useState(null)
+  useEffect(() => {
+    let alive = true
+    supabase.rpc('village_scene_life', { p_village: id }).then(({ data, error }) => {
+      if (!alive) return
+      // Before the SQL file is run, the scene simply looks the way it always has.
+      if (error) { if (error.code !== 'PGRST202') console.error('Failed to load village life:', error); return }
+      setLife((Array.isArray(data) ? data[0] : data) || null)
+    })
+    return () => { alive = false }
+  }, [id])
+
   // Members only: keepers and whether I came in as a guest.
   useEffect(() => {
     if (!village || !village.is_mine) { setKeepers(null); setIsGuest(false); return }
@@ -177,10 +190,10 @@ export default function VillageScene() {
     switch (k) {
       case 'charter': return { sub: 'Our story, what we care about, and house rules' }
       case 'sisters': return { sub: sisters.length ? sisters.length + ' sister village' + (sisters.length === 1 ? '' : 's') : 'No sister villages yet' }
-      case 'keeper': return { sub: keeperNames.length ? 'Looked after by ' + keeperNames.join(', ') : 'The neighbor who looks after this village' }
+      case 'keeper': return { sub: keeperNames.length ? 'Looked after by ' + keeperNames.join(', ') : life && !life.has_keeper ? 'Keeper wanted: this village needs someone to look after it' : 'The neighbor who looks after this village' }
       case 'chat': return { sub: mine ? (chatUnread ? chatUnread + ' new since you last looked' : 'Say hello and share news') : 'Join this village to read its chat', badge: mine ? chatUnread : 0 }
       case 'campfires': {
-        if (!mine) return { sub: 'Join this village to sit at its Campfires' }
+        if (!mine) return { sub: life ? FIRE_WORDS[life.fire_level] || 'Join this village to sit at its Campfires' : 'Join this village to sit at its Campfires' }
         const f = rooms.filter((r) => r.kind === 'campfire'), inF = f.filter((r) => r.i_am_in).length
         const asks = f.reduce((n, r) => n + (r.asks_waiting || 0), 0)
         return { sub: f.length ? f.length + ' here' + (inF ? ', you are in ' + inF : '') + (asks ? ', ' + asks + ' asking to join' : '') : 'Start the first one', badge: asks }
@@ -247,7 +260,9 @@ export default function VillageScene() {
       case 'keeper':
         return <>{title}
           {!mine && <p>Join this village to see who looks after it.</p>}
-          {mine && keeperNames.length === 0 && <p>Loading the keeper...</p>}
+          {mine && keeperNames.length === 0 && (life && !life.has_keeper
+            ? <p>This village has no Keeper right now. If you would like to look after it, tell a Hope Ambassador or a VWB admin. They can ask you to be Keeper.</p>
+            : <p>Loading the keeper...</p>)}
           {mine && keeperNames.map((n) => <div key={n} className="vs-item"><b>{n}</b><small>Keeper</small></div>)}
           {mine && keepers && keepers.i_am_keeper && <>
             <p className="vs-note">You are a keeper here. You post announcements in the village chat and can hand the role to another member.</p>
@@ -331,12 +346,23 @@ export default function VillageScene() {
           const i = info(s.k)
           return (
             <button key={s.k} type="button" data-spot={s.k}
-              className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' : '') + (bump === s.k ? ' vs-bump' : '')}
-              style={{ left: s.x + '%', top: s.y + '%', '--s': s.s || 1 }}
+              className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' + (life ? ' vs-fire-' + life.fire_level : '') : '') + (bump === s.k ? ' vs-bump' : '')}
+              style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1) }}
               aria-label={s.label + '. ' + i.sub}
               onClick={() => tap(s)}>
-              <span className="vs-em" aria-hidden="true"><SpotIcon spot={s} /></span>
-              <span className="vs-lab">{s.short}</span>
+              <span className="vs-em" aria-hidden="true"><SpotIcon spot={s} />
+                {s.k === 'keeper' && life && life.has_keeper && <span className="vs-lantern"><Icon name={LIFE_ART.lantern} size={18} /></span>}
+              </span>
+              {s.k === 'neighbors' && life && (
+                <span className="vs-cottages" aria-hidden="true">
+                  {[0, 1, 2, 3, 4, 5].map((n) => (
+                    <span key={n} className={'vs-cot' + (n < life.lit_cottages ? ' vs-cot-lit' : '')}>
+                      <Icon name={n < life.lit_cottages ? LIFE_ART.cottageLit : LIFE_ART.cottageDark} size={14} />
+                    </span>
+                  ))}
+                </span>
+              )}
+              <span className="vs-lab">{s.k === 'keeper' && life && !life.has_keeper ? <><Icon name={LIFE_ART.sign} size={14} /> Keeper wanted</> : s.short}</span>
               {i.badge > 0 && <span className="vs-badge" aria-hidden="true">{i.badge > 9 ? '9+' : i.badge}</span>}
             </button>
           )

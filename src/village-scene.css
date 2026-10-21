@@ -144,3 +144,15 @@
 .vs-ask small { color: var(--text-secondary, var(--text)); font-size: 0.95rem; }
 .vs-ask:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 @media (hover: hover) { .vs-ask:hover { border-color: var(--accent); } }
+
+/* ---------- Living scene (vwb-village-life.sql) ---------- */
+.vs-cottages { display: flex; gap: 1px; margin: -2px 0 1px; }
+.vs-cot { display: inline-flex; opacity: 0.45; filter: grayscale(0.8) brightness(0.7); }
+.vs-cot-lit { opacity: 1; filter: drop-shadow(0 0 3px rgba(255, 200, 90, 0.95)); }
+.vs-lantern { position: absolute; top: -6px; right: -12px; display: inline-flex; filter: drop-shadow(0 0 5px rgba(255, 196, 80, 0.95)); }
+.vs-fire-0 .vs-em { opacity: 0.6; filter: grayscale(0.5) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
+.vs-fire-2 .vs-em { filter: drop-shadow(0 0 6px rgba(255, 150, 60, 0.7)) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
+.vs-fire-3 .vs-em { filter: drop-shadow(0 0 12px rgba(255, 150, 60, 0.95)) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
+.vs-fire-0.vs-flame .vs-em { animation: none; }
+.vs-lab .vwb-icon { vertical-align: -2px; }
+@media (prefers-reduced-motion: reduce) { .vs-cot-lit, .vs-lantern { filter: none; } }
