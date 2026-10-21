@@ -10,10 +10,12 @@ const WHY = {
   task: 'Helped on a task',
   vouched: 'Vouched',
   group: 'Same group',
+  met: 'Met in person',
 }
 
 const FILTERS = [
   { key: 'all', label: 'Everyone' },
+  { key: 'met', label: 'Met in person' },
   { key: 'messaged', label: 'Messaged' },
   { key: 'task', label: 'Tasks' },
   { key: 'vouched', label: 'Vouches' },
@@ -68,7 +70,8 @@ export default function Connections({ embedded = false }) {
         <h1 style={{ margin: 0 }}>Connections</h1>
       </div>
       )}
-      <p className="cal-sub">Neighbors you have messaged, helped, vouched for, or shared a group with.</p>
+      <p className="cal-sub">Neighbors you have met in person, messaged, helped, vouched for, or shared a group with.</p>
+      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 44, margin: '0.25rem 0 0.5rem' }} onClick={() => navigate('/my-code')}>Show my QR code to connect</button>
 
       <label htmlFor="conn-search" style={{ display: 'block', fontWeight: 600, margin: '0.75rem 0 0.25rem' }}>Find someone</label>
       <input
@@ -86,7 +89,7 @@ export default function Connections({ embedded = false }) {
       {rows === null && <p className="cal-empty">Loading...</p>}
       {failed && <p className="cal-error">We could not load your connections. Check your connection and try again.</p>}
       {rows !== null && !failed && rows.length === 0 && (
-        <p className="cal-empty">No connections yet. When you message, help, or vouch for a neighbor, they will show up here.</p>
+        <p className="cal-empty">No connections yet. Show your QR code to a neighbor you meet, or message, help, or vouch for someone, and they will show up here.</p>
       )}
       {rows !== null && rows.length > 0 && shown.length === 0 && <p className="cal-empty">No one matches.</p>}
 

@@ -178,7 +178,8 @@ export default function VouchButton({ userId, name, size = 'sm', showCount = tru
         <form className="vouch-ask" onSubmit={sendPersonal} noValidate>
           <fieldset>
             <legend>How do you know {theirName}?</legend>
-            {Object.entries(HOW_LABELS).map(([key, label]) => (
+            {/* 'met' comes only from scanning a QR code, never picked here. */}
+            {Object.entries(HOW_LABELS).filter(([key]) => key !== 'met').map(([key, label]) => (
               <label key={key} className="group-radio">
                 <input type="radio" name="vouch-how" value={key} checked={how === key} onChange={() => { setHow(key); setAskError('') }} />
                 {label}
