@@ -41,10 +41,9 @@ export default function Login() {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  // Defaults to true: joining as a Hope Ambassador is the path most neighbors
-  // take, so signup treats it as the expected next step rather than an extra
-  // people have to actively opt into.
-  const [wantAmbassador, setWantAmbassador] = useState(true)
+  // Off by default (Oct 21): sign up stays one step. Neighbors can apply to be
+  // a Hope Ambassador later, inside the app (Profile > Become a Hope Ambassador).
+  const [wantAmbassador, setWantAmbassador] = useState(false)
   // Accounts are for adults (see Terms). We ask for a confirmation, never a
   // birthdate, so nothing about age is stored.
   const [isAdult, setIsAdult] = useState(false)
@@ -319,7 +318,7 @@ export default function Login() {
               <input type="checkbox" checked={wantAmbassador} onChange={(e) => setWantAmbassador(e.target.checked)} />
               <span>
                 <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Apply to be a Hope Ambassador</strong>
-                Share a few skills and hours you can spare. An admin looks over each application so this stays a community people can trust. Uncheck this if you'd rather just look around for now.
+                Share a few skills and hours you can spare. An admin looks over each application so this stays a community people can trust. You can also apply later from your Profile.
               </span>
             </label>
             {error && <p className="form-error" role="alert">{error}</p>}
