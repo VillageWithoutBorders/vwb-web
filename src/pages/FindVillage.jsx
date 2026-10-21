@@ -94,6 +94,14 @@ export default function FindVillage() {
     else if (!v) { setError('We could not open that village. Search for it below.'); navigate('/find-village', { replace: true }) }
   }, [joinParam, loading, villages])
 
+  // Coming from the first-run village screen with ?start=1: open the start form.
+  const startParam = searchParams.get('start')
+  useEffect(() => {
+    if (startParam !== '1' || !hasZip || starting) return
+    openStart()
+    navigate('/find-village', { replace: true })
+  }, [startParam, hasZip]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Zips near mine. All ticked to begin with; the starter unticks what does not fit.
   async function loadReach(miles) {
     if (!profile?.zip_code) return

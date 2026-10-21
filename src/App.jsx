@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
 import { NotificationsProvider } from './context/NotificationsContext'
 import Layout from './pages/Layout'
+import FirstVillage from './components/FirstVillage'
+import { needsFirstVillage } from './utils/firstVillage'
 import { AdminDialogHost } from './components/AdminDialog'
 import Welcome from './pages/Welcome'
 import Login from './pages/Login'
@@ -128,6 +130,8 @@ function ProtectedRoute({ children }) {
   // Never a blank screen: say what's happening, with a way out if it fails.
   if (!profile) return <ProfileWait />
   if (!profile.guidelines_accepted_at) return <CommunityGuidelines onAgree={refreshProfile} />
+  // New members: find your village next (once), before Simple view and the tour.
+  if (needsFirstVillage(profile)) return <FirstVillage />
   return children
 }
 
