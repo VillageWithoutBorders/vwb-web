@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { lookupZip, saveZip } from '../utils/location'
+import { peekReturnTo } from '../utils/returnTo'
 import VillageRiskDialog from './VillageRiskDialog'
 import Icon from './Icon'
 
@@ -103,6 +104,14 @@ export default function FirstVillage() {
     if (optIn !== undefined) {
       const { error: err } = await supabase.from('helper_profiles').update({ village_opt_in: optIn }).eq('user_id', user.id)
       if (err) { console.error('First village: failed to save answer:', err); setError('Could not save that. Try again.'); setBusy(false); return }
+    }
+    // Came from a link (a QR code, an event, a chat link)? Go back there first.
+    // Already on that page (the confirm email can open it straight away)? Stay.
+    if (to === '/' || to.startsWith('/campfire')) {
+      const here = window.location.pathname
+      if (/^\/(connect\/|events\/|groups\/join\/|join-org)/.test(here)) { await refreshProfile(); setBusy(false); return }
+      const back = peekReturnTo()
+      if (back) to = back
     }
     navigate(to, { replace: true })
     await refreshProfile()

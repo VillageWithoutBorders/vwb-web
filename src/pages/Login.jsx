@@ -157,7 +157,12 @@ export default function Login() {
   async function handleSignUp() {
     setError('')
     setSubmitting(true)
-    const { error } = await signUp(email, password, displayName.trim(), wantAmbassador, captcha)
+    const ambassadorPending = wantAmbassador ? {
+      skills: selectedSkills, availability, interests, radius_miles: radiusMiles,
+      how_known: howKnown.trim(),
+      campfire_notifications_enabled: campfireNotify,
+    } : null
+    const { error } = await signUp(email, password, displayName.trim(), wantAmbassador, captcha, ambassadorPending ? { ambassador_pending: ambassadorPending } : {})
     setCaptchaKey((k) => k + 1)
     if (error) {
       // A banned email or a throwaway email service is refused by the
@@ -169,11 +174,7 @@ export default function Login() {
       return
     }
     if (wantAmbassador) {
-      localStorage.setItem('vwb_ambassador_pending', JSON.stringify({
-        skills: selectedSkills, availability, interests, radius_miles: radiusMiles,
-        how_known: howKnown.trim(),
-        campfire_notifications_enabled: campfireNotify,
-      }))
+      try { localStorage.setItem('vwb_ambassador_pending', JSON.stringify(ambassadorPending)) } catch { /* private mode: saved on the account too */ }
     }
     setSentTo(email.trim())
     setMode('signin')
