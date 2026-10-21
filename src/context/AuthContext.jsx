@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { ensureDeviceKeypair, flushOutbox } from '../lib/e2ee'
+import { peekReturnTo } from '../utils/returnTo'
+import { tell } from '../components/AdminDialog'
 
 const AuthContext = createContext({})
 
@@ -35,12 +37,29 @@ async function submitAmbassadorApplication(userId, howKnown) {
 // village signup data above. Applied here once we actually have a signed-in
 // user. Only cleared on success, so a hiccup (or an email-confirm gap) just
 // retries on the next load, same as the ambassador stash.
-async function applyPendingOrgInvite() {
-  const pending = localStorage.getItem('vwb_pending_org_invite')
-  if (!pending) return
-  let invite = null
-  try { invite = JSON.parse(pending) } catch (e) { console.error('Failed to parse pending org invite:', e) }
-  if (!invite || !invite.token) { localStorage.removeItem('vwb_pending_org_invite'); return }
+// Sign-up stashes are also saved on the account itself (user metadata, see
+// signUp below), so they still work when the confirm-email link is opened on
+// a different phone or computer. Cleared from both places once used.
+function readStash(key, metaKey, authUser) {
+  let raw = null
+  try { raw = localStorage.getItem(key) } catch { /* private mode */ }
+  if (raw) { try { return JSON.parse(raw) } catch (e) { console.error('Failed to read ' + key + ':', e) } }
+  const meta = authUser?.user_metadata?.[metaKey]
+  return meta && typeof meta === 'object' ? meta : null
+}
+
+async function clearStash(key, metaKey, authUser) {
+  try { localStorage.removeItem(key) } catch { /* private mode */ }
+  if (authUser?.user_metadata?.[metaKey]) {
+    const { error } = await supabase.auth.updateUser({ data: { [metaKey]: null } })
+    if (error) console.error('[AuthContext] clear ' + metaKey, error)
+  }
+}
+
+async function applyPendingOrgInvite(authUser) {
+  const invite = readStash('vwb_pending_org_invite', 'org_invite_pending', authUser)
+  if (!invite) return
+  if (!invite.token) { await clearStash('vwb_pending_org_invite', 'org_invite_pending', authUser); return }
   const { error } = await supabase.rpc('accept_organization_invitation', {
     p_token: invite.token,
     p_name: invite.name,
@@ -50,7 +69,9 @@ async function applyPendingOrgInvite() {
     p_social_link: invite.social_link || null,
   })
   if (error) { console.error('[AuthContext] applyPendingOrgInvite', error); return }
-  localStorage.removeItem('vwb_pending_org_invite')
+  await clearStash('vwb_pending_org_invite', 'org_invite_pending', authUser)
+  // Say it went through. It happens in the background right after sign up.
+  tell('Thank you! ' + (invite.name || 'Your organization') + ' is saved and waiting for approval. A VWB admin will look at it soon. You can post once it is approved.')
 }
 
 export function AuthProvider({ children }) {
@@ -139,11 +160,7 @@ export function AuthProvider({ children }) {
     // because the profile row doesn't exist yet at signup time (the account
     // needs email confirmation first). Applied here as plain helper_profiles
     // columns, matching how Profile.jsx's own ambassador signup writes them.
-    const pending = localStorage.getItem('vwb_ambassador_pending')
-    let pendingData = null
-    if (pending) {
-      try { pendingData = JSON.parse(pending) } catch (e) { console.error('Failed to parse pending ambassador data:', e) }
-    }
+    const pendingData = readStash('vwb_ambassador_pending', 'ambassador_pending', authUser)
 
     if (data) {
       if (pendingData && !data.is_hope_ambassador) {
@@ -169,14 +186,14 @@ export function AuthProvider({ children }) {
           // admin to approve the application. Keep the stash until the
           // application is really on file, so a hiccup can retry next load.
           const applied = await submitAmbassadorApplication(authUser.id, pendingData.how_known)
-          if (applied) localStorage.removeItem('vwb_ambassador_pending')
+          if (applied) await clearStash('vwb_ambassador_pending', 'ambassador_pending', authUser)
           setProfile(updated)
         }
       } else {
         setProfile(data)
       }
       loadOrganizations(authUser.id)
-      applyPendingOrgInvite()
+      applyPendingOrgInvite(authUser)
       ensureDeviceKeypair(authUser.id).then(() => flushOutbox(authUser.id))
       checkBanned()
       checkEstablished()
@@ -208,12 +225,12 @@ export function AuthProvider({ children }) {
     if (!error) {
       if (pendingData) {
         const applied = await submitAmbassadorApplication(authUser.id, pendingData.how_known)
-        if (applied) localStorage.removeItem('vwb_ambassador_pending')
+        if (applied) await clearStash('vwb_ambassador_pending', 'ambassador_pending', authUser)
       }
       try { localStorage.removeItem('vwb_pending_village_id') } catch {}
       setProfile(newProfile)
       loadOrganizations(authUser.id)
-      applyPendingOrgInvite()
+      applyPendingOrgInvite(authUser)
       ensureDeviceKeypair(authUser.id).then(() => flushOutbox(authUser.id))
       checkEstablished()
     } else if (error.code === '23505') {
@@ -255,15 +272,25 @@ export function AuthProvider({ children }) {
   }
 
   // captchaToken comes from the Turnstile human check (components/Turnstile.jsx).
-  async function signUp(email, password, displayName, isAmbassador = false, captchaToken = undefined) {
+  // extra: more sign-up details saved on the account (ambassador_pending,
+  // org_invite_pending), so they survive opening the email on another device.
+  // The confirm link brings them back to the page they were headed to
+  // (an event, a chat link, a QR code). Supabase only follows it when the
+  // address is on its Redirect URLs list; otherwise it uses the Site URL.
+  async function signUp(email, password, displayName, isAmbassador = false, captchaToken = undefined, extra = {}) {
+    let orgInvite = null
+    try { orgInvite = JSON.parse(localStorage.getItem('vwb_pending_org_invite') || 'null') } catch { /* private mode */ }
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         captchaToken: captchaToken || undefined,
+        emailRedirectTo: window.location.origin + (peekReturnTo() || '/'),
         data: {
           display_name: displayName,
           is_hope_ambassador: isAmbassador,
+          ...(orgInvite ? { org_invite_pending: orgInvite } : {}),
+          ...extra,
         },
       },
     })
