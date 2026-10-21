@@ -10,7 +10,7 @@
 // middle-left small, middle-right, bottom-left (main street),
 // bottom-right small, bottom-right corner.
 export const VILLAGE_SPOTS = [
-  { k: 'guidelines', icon: 'guidelines', label: 'Community Guidelines', short: 'Guidelines', em: '\u{1FAA7}', x: 14, y: 27 },
+  { k: 'charter', icon: 'scroll', label: 'Our charter', short: 'Charter', em: '\u{1F4DC}', x: 14, y: 27 },
   { k: 'chat', icon: 'megaphone', label: 'Village chat', short: 'Village chat', em: '\u{1F4E3}', x: 32, y: 17 },
   { k: 'keeper', icon: 'key', label: "Keeper's house", short: 'Keeper', em: '\u{1F5DD}️', x: 49, y: 27 },
   { k: 'sisters', icon: 'bridge', label: 'Sister villages', short: 'Sisters', em: '\u{1F309}', x: 86, y: 14 },
