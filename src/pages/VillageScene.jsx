@@ -350,19 +350,21 @@ export default function VillageScene() {
               style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1) }}
               aria-label={s.label + '. ' + i.sub}
               onClick={() => tap(s)}>
-              <span className="vs-em" aria-hidden="true"><SpotIcon spot={s} />
-                {s.k === 'keeper' && life && life.has_keeper && <span className="vs-lantern"><Icon name={LIFE_ART.lantern} size={18} /></span>}
+              <span className="vs-em" aria-hidden="true">
+                {s.k === 'campfires' && life
+                  ? <img className="vs-icon vs-life-fire" src={LIFE_ART.fire[life.fire_level] || LIFE_ART.fire[1]} alt="" width="96" height="96" draggable="false" />
+                  : s.k === 'neighbors' && life
+                    // Lit cottages fill the front row first.
+                    ? <span className="vs-hamlet">
+                        {[0, 1, 2, 3, 4, 5].map((n) => (
+                          <img key={n} className={'vs-cot' + (5 - n < life.lit_cottages ? ' vs-cot-lit' : '')} src={5 - n < life.lit_cottages ? LIFE_ART.cottageLit : LIFE_ART.cottageDark} alt="" width="48" height="48" draggable="false" />
+                        ))}
+                      </span>
+                    : <SpotIcon spot={s} />}
+                {s.k === 'keeper' && life && life.has_keeper && <img className="vs-lantern" src={LIFE_ART.lantern} alt="" width="48" height="48" draggable="false" />}
+                {s.k === 'keeper' && life && !life.has_keeper && <img className="vs-wanted" src={LIFE_ART.sign} alt="" width="48" height="48" draggable="false" />}
               </span>
-              {s.k === 'neighbors' && life && (
-                <span className="vs-cottages" aria-hidden="true">
-                  {[0, 1, 2, 3, 4, 5].map((n) => (
-                    <span key={n} className={'vs-cot' + (n < life.lit_cottages ? ' vs-cot-lit' : '')}>
-                      <Icon name={n < life.lit_cottages ? LIFE_ART.cottageLit : LIFE_ART.cottageDark} size={14} />
-                    </span>
-                  ))}
-                </span>
-              )}
-              <span className="vs-lab">{s.k === 'keeper' && life && !life.has_keeper ? <><Icon name={LIFE_ART.sign} size={14} /> Keeper wanted</> : s.short}</span>
+              <span className="vs-lab">{s.k === 'keeper' && life && !life.has_keeper ? 'Keeper wanted' : s.short}</span>
               {i.badge > 0 && <span className="vs-badge" aria-hidden="true">{i.badge > 9 ? '9+' : i.badge}</span>}
             </button>
           )
