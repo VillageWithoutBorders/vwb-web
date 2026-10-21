@@ -134,7 +134,6 @@ export default function Admin() {
   const [memberSearchResults, setMemberSearchResults] = useState({})
   const [villages, setVillages] = useState([])
   // Founder only: admins per village (vwb-two-admins-per-village.sql). Goal is 2 each.
-  const [villageAdmins, setVillageAdmins] = useState({})
   const [showNewVillageForm, setShowNewVillageForm] = useState(false)
   const [newVillageName, setNewVillageName] = useState('')
   const [newVillageRegion, setNewVillageRegion] = useState('')
@@ -166,17 +165,7 @@ export default function Admin() {
     }
   }
 
-  async function loadVillageAdmins() {
-    if (!isFounder) return
-    const { data, error } = await supabase.rpc('admin_village_counts')
-    if (error) { reportError('loadVillageAdmins', error); return }
-    const byId = {}
-    for (const r of data || []) byId[r.village_id] = r
-    setVillageAdmins(byId)
-  }
-
   async function loadVillages() {
-    loadVillageAdmins()
     const { data, error } = await supabase.from('villages').select('*').order('created_at', { ascending: true })
     reportError('loadVillages', error)
     if (!data) { setVillages([]); return }
@@ -1686,20 +1675,7 @@ export default function Admin() {
                   <div style={{ fontWeight: 700, fontSize: '0.8rem', color: c.last_message_at ? 'var(--text)' : 'var(--text-muted)' }}>{c.last_message_at ? timeAgo(c.last_message_at) : 'No activity'}</div>
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>last message</div>
                 </div>
-                {isFounder && villageAdmins[c.id] && (
-                  <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: villageAdmins[c.id].admin_count < 1 ? 'var(--warn-bg)' : 'var(--surface)', borderRadius: '8px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: villageAdmins[c.id].admin_count < 1 ? 'var(--warn)' : 'var(--accent)' }}>{villageAdmins[c.id].admin_count}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>admins</div>
-                  </div>
-                )}
               </div>
-              {isFounder && villageAdmins[c.id] && (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0.4rem 0 0' }}>
-                  {villageAdmins[c.id].admin_count === 0
-                    ? 'No admin yet. Give an admin this village in People, or point a ready Hope Ambassador to Become an admin.'
-                    : 'Admins: ' + villageAdmins[c.id].admin_names}
-                </p>
-              )}
               {isFounder && c.active !== false && (
                 <FounderVillagePeople village={c} offers={keeperOffers} onChanged={() => setRoleRefresh(n => n + 1)} />
               )}
