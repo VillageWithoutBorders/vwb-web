@@ -58,16 +58,18 @@ export const GROUP_SPOTS = [
   { k: 'tools', icon: 'toolbox', label: 'Keeper tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
 ]
 
-// The living village scene (vwb-village-life.sql). Picture names in
-// public/art/icons. These are stand-ins until Jade's own art is ready:
-// save hers as life-cottage-dark.svg (or .png), life-cottage-lit, life-fire,
-// life-lantern, life-sign and change the names here. Nothing else changes.
+// The living village scene (vwb-village-life.sql). Painted art made in
+// Canva (Oct 21), kept in public/art/life as small webp files. The full-size
+// originals are in vwb-art/life-processed. To change a picture, replace the
+// file with the same name.
 export const LIFE_ART = {
-  cottageDark: 'cottage',
-  cottageLit: 'cottage',
-  lantern: 'sun',
-  sign: 'pushpin',
+  cottageDark: '/art/life/life-cottage-dark.webp',
+  cottageLit: '/art/life/life-cottage-lit.webp',
+  lantern: '/art/life/life-lantern.webp',
+  sign: '/art/life/life-sign.webp',
+  // fire_level 0 (embers) and 1 share the small fire; 0 is shown dimmer.
+  fire: ['/art/life/life-fire-1.webp', '/art/life/life-fire-1.webp', '/art/life/life-fire-2.webp', '/art/life/life-fire-3.webp'],
 }
 // How big the campfire burns for each step (0 = embers, 3 = a busy week).
-export const FIRE_SIZE = [0.85, 1, 1.15, 1.3]
+export const FIRE_SIZE = [0.9, 1, 1.1, 1.2]
 export const FIRE_WORDS = ['Embers. Spark a message to warm it up.', 'A small fire this week', 'A warm fire this week', 'A big, bright fire this week']
