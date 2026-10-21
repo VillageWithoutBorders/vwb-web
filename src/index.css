@@ -5900,3 +5900,21 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 .login-card .btn { min-height: 44px; }
 .connect-letter { width: 64px; height: 64px; margin: 0 auto 0.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700; background: var(--accent); color: var(--on-accent, #fff); }
 .connect-name { text-align: center; overflow-wrap: anywhere; }
+
+/* ---------- Village charter (pages/VillageCharter.jsx) ---------- */
+.ch-title { display: flex; align-items: center; gap: 0.5rem; font-size: 1.375rem; color: var(--accent); margin: 0.25rem 0 0.75rem; overflow-wrap: anywhere; }
+.ch-part { margin: 0 0 1rem; }
+.ch-part h2 { font-size: 1.0625rem; margin: 0 0 0.25rem; color: var(--gold); }
+.ch-text { white-space: pre-line; font-size: 1rem; line-height: 1.55; margin: 0; color: var(--text); overflow-wrap: anywhere; }
+.ch-empty, .ch-note, .ch-help, .ch-left { font-size: 0.9375rem; color: var(--text-secondary); margin: 0; }
+.ch-note { margin-top: 0.5rem; }
+.ch-gap { margin-top: 0.625rem; }
+.ch-page .btn { min-height: 44px; }
+.ch-waiting { margin-top: 1rem; }
+.ch-guidelines { margin-top: 1.5rem; }
+.ch-guidelines .btn { margin-top: 0.5rem; }
+.ch-form label { display: block; font-weight: 700; margin: 1rem 0 0.125rem; }
+.ch-form textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; line-height: 1.5; padding: 0.625rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface-sunk, var(--white)); color: var(--text); resize: vertical; margin-top: 0.25rem; }
+.ch-form .ch-left { text-align: right; margin-top: 0.125rem; }
+.ch-form .btn-primary { margin-top: 1rem; }
+.fv1-story { font-size: 1rem; line-height: 1.5; margin: 0 0 1rem; padding: 0.75rem 1rem; border-left: 3px solid var(--gold); background: var(--surface-2, transparent); border-radius: 4px; white-space: pre-line; overflow-wrap: anywhere; }
