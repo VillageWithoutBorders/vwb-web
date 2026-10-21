@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { useSimpleView } from '../utils/simpleView'
 import Icon from './Icon'
+import { firstRunPaused } from '../utils/firstVillage'
 
 // A short walk-through of the app.
 //
@@ -269,7 +270,7 @@ export default function AppTour() {
   // been run yet, the tour never forces itself on anyone.
   // Wait until they've picked Simple or Everything (SimpleOffer asks first).
   const pickedView = !profile || !Object.prototype.hasOwnProperty.call(profile, 'simple_view') || profile.simple_view !== null
-  const needsTour = !!profile && Object.prototype.hasOwnProperty.call(profile, 'tour_done_at') && !profile.tour_done_at && pickedView
+  const needsTour = !!profile && Object.prototype.hasOwnProperty.call(profile, 'tour_done_at') && !profile.tour_done_at && pickedView && !firstRunPaused(pathname)
   const [open, setOpen] = useState(false)
   const [required, setRequired] = useState(false)
   const [index, setIndex] = useState(0)
@@ -281,7 +282,9 @@ export default function AppTour() {
   const sheetRef = useRef(null)
   const startPath = useRef('/')
   const pathRef = useRef(pathname)
+  const openRef = useRef(false)
   pathRef.current = pathname
+  openRef.current = open
   // Which village to show, and whether this person keeps it or runs an organization.
   const [ctx, setCtx] = useState({ ready: false, villageId: null, isKeeper: false })
   useEffect(() => {
@@ -315,7 +318,8 @@ export default function AppTour() {
 
   // First time for a new member: open it, and it has to be finished.
   useEffect(() => {
-    if (needsTour) { startPath.current = pathRef.current; setIndex(0); setRequired(true); setOpen(true) }
+    // Once open, moving through the tour's own screens must not restart it.
+    if (needsTour && !openRef.current) { startPath.current = pathRef.current; setIndex(0); setRequired(true); setOpen(true) }
   }, [needsTour])
 
   // Replays from Menu, Help, or Settings.
