@@ -14,6 +14,7 @@ import { placesEnabled } from '../utils/places'
 import AdminInbox from '../components/AdminInbox'
 import { AdminRemovalRequests, AdminRoleLog } from '../components/AdminRoleSafety'
 import { useAdminVillages, AdminScopeNote, AdminVillagePicker, useKeeperOffers, AdminKeeperAsk } from '../components/AdminVillageScope'
+import FounderVillagePeople from '../components/FounderVillagePeople'
 import { useTwoStepOn, TwoStepGate, BanRequests, AdminActionLog } from '../components/AdminSafety'
 import { AdminApplications, AdminTrials } from '../components/AdminRecruiting'
 import { useAdminInbox, refreshAdminInbox } from '../hooks/useAdminInbox'
@@ -1605,7 +1606,7 @@ export default function Admin() {
       {!loading && showTab === 'villages' && (
         <>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>
-            Each village has its own village chat. Anyone whose zip code is on its list can join, after agreeing to a risk warning. People can join more than one, and there is no cap. New members only see messages from after they joined. Two members can remove someone, and admins can too. Any neighbor can start a village (up to 3 each, up to 40 zip codes), and you get an alert. You can edit any village\u2019s zip list here. The Users tab village menu sets a person's main village. It does not add them to a chat.
+            Each village has its own village chat, run by its Keeper and Helpers. Anyone whose zip code is on its list can join after agreeing to a risk warning, and people outside it can be invited as guests. New members only see messages from after they joined. Two members can remove someone, and admins can too. Any neighbor can start a village (up to 3 each, up to 40 zip codes). You can edit any village{"\u2019"}s zip list here.{isFounder ? ' Open People and leaders on a village to see who is in it, ask someone to be Keeper, or put people in the chat.' : ''}
           </p>
           <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? 'Cancel' : '+ New Village'}</button>
 
@@ -1700,9 +1701,7 @@ export default function Admin() {
                 </p>
               )}
               {isFounder && c.active !== false && (
-                <AdminKeeperAsk village={c} offers={keeperOffers}
-                  choices={users.filter(u => u.role === 'admin' && u.user_id !== c.started_by).map(u => ({ id: u.user_id, label: u.display_name || 'Admin' }))}
-                  onChanged={() => setRoleRefresh(n => n + 1)} />
+                <FounderVillagePeople village={c} offers={keeperOffers} onChanged={() => setRoleRefresh(n => n + 1)} />
               )}
             </div>
           ))}
