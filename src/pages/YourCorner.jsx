@@ -34,6 +34,7 @@ export default function YourCorner() {
 
       <nav aria-label="Your things" className="corner-list">
         <Link to="/profile#past-tasks" className="corner-item"><span aria-hidden="true"><Icon name="box" /></span> Past tasks<span className="corner-arrow" aria-hidden="true">›</span></Link>
+        <Link to="/trail" className="corner-item"><span aria-hidden="true"><Icon name="compass" /></span> My trail<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/my-code" className="corner-item"><span aria-hidden="true"><Icon name="handshake" /></span> My QR code<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/profile" className="corner-item"><span aria-hidden="true"><Icon name="handshake" /></span> Vouches and trust<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/find-village" className="corner-item"><span aria-hidden="true"><Icon name="tree" /></span> My villages<span className="corner-arrow" aria-hidden="true">›</span></Link>

@@ -61,6 +61,8 @@ export default function World() {
   const [sisters, setSisters] = useState([])
   const [orgs, setOrgs] = useState([])
   const [orgLinks, setOrgLinks] = useState([])
+  // Dotted footpaths: neighbors from two villages who met in person (steps only).
+  const [footpaths, setFootpaths] = useState([])
   const [sisterFires, setSisterFires] = useState([])
   const [announceBoard, setAnnounceBoard] = useState(null)
   const [error, setError] = useState('')
@@ -100,6 +102,12 @@ export default function World() {
       if (!alive) return
       if (err) { console.error('Failed to load Sister Campfires:', err); return }
       setSisterFires((data || []).filter((c) => !c.closed_at))
+    })
+    supabase.rpc('village_footpaths').then(({ data, error: err }) => {
+      if (!alive) return
+      // Before the SQL file is run, there are simply no footpaths.
+      if (err) { if (err.code !== 'PGRST202') console.error('Failed to load footpaths:', err); return }
+      setFootpaths(data || [])
     })
     supabase.rpc('org_connection_lines').then(({ data, error: err }) => {
       if (!alive) return
@@ -159,8 +167,16 @@ export default function World() {
       const p = { x: a.gx + (dx / len) * a.gr, y: a.gy + (dy / len) * a.gr }, q = { x: b.gx - (dx / len) * b.gr, y: b.gy - (dy / len) * b.gr }
       return { a, b, mine: a.is_mine || b.is_mine, both: a.is_mine && b.is_mine, ...curve(p, q, 5) }
     })
-    return { nodes: shown.map((v) => byId[v.id]), lines }
-  }, [shown, pointsByVillage, sisters])
+    const sisterKey = new Set(sisters.map((s) => [s.village_a, s.village_b].sort().join('|')))
+    const paths = footpaths
+      .filter((f) => byId[f.village_a] && byId[f.village_b] && !sisterKey.has([f.village_a, f.village_b].sort().join('|')))
+      .map((f) => {
+        const a = byId[f.village_a], b = byId[f.village_b], dx = b.gx - a.gx, dy = b.gy - a.gy, len = Math.hypot(dx, dy) || 1
+        const p = { x: a.gx + (dx / len) * a.gr, y: a.gy + (dy / len) * a.gr }, q = { x: b.gx - (dx / len) * b.gr, y: b.gy - (dy / len) * b.gr }
+        return { a, b, strength: f.strength, ...curve(p, q, -4) }
+      })
+    return { nodes: shown.map((v) => byId[v.id]), lines, paths }
+  }, [shown, pointsByVillage, sisters, footpaths])
 
   // Organizations on the globe: yours first, then the ones connected to
   // yours, then others, placed in a gentle spiral over the land.
@@ -237,6 +253,10 @@ export default function World() {
                   stroke={v.is_mine ? '#f2c763' : '#e8fff7'} strokeOpacity={v.is_mine ? 1 : 0.7}
                   strokeDasharray={v.is_mine ? undefined : '1.6 1.6'} vectorEffect="non-scaling-stroke" style={{ strokeWidth: v.is_mine ? '3px' : '2px' }} />
               ))}
+              {net === 'villages' && villageMap && villageMap.paths.map((l, i) => (
+                <path key={'f' + i} d={l.d} fill="none" stroke="#f6f0e0" strokeOpacity={0.55 + 0.15 * l.strength}
+                  strokeDasharray="0.1 2.4" strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ strokeWidth: (2 + l.strength) + 'px' }} />
+              ))}
               {view && view.lines.map((l, i) => (
                 <path key={i} d={l.d} fill="none" stroke="#f2c763" strokeOpacity={l.both === false && net === 'villages' ? 0.45 : 1}
                   strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ strokeWidth: l.both === false && net === 'villages' ? '3px' : '5px' }} />
@@ -285,7 +305,7 @@ export default function World() {
       <h1 className="wd-hint">{net === 'villages' ? (hasMine || villages === null ? 'Your villages' : 'Start here: find your village') : net === 'groups' ? 'Your groups' : 'Your organizations'}</h1>
       <p className="wd-sub">
         {net === 'villages'
-          ? (hasMine ? 'Villages overlap where they share zip codes. A gold line joins sister villages. Tap your village to step inside.' : 'Your village is your neighbors by zip code. Type your zip code to join. It takes a minute.')
+          ? (hasMine ? 'Villages overlap where they share zip codes. A gold line joins sister villages. A dotted path means neighbors from two villages have met in person. Tap your village to step inside.' : 'Your village is your neighbors by zip code. Type your zip code to join. It takes a minute.')
           : net === 'groups'
             ? (myGroups.length ? 'Groups are crews that help when an emergency hits. Tap your group to see who is ready and what you bring.' : (orgMap.nodes.length ? 'You are not in a group yet. Groups are crews that help when an emergency hits. Tap one to see what it does.' : 'No groups yet. Groups are crews that help when an emergency hits. You can start one.'))
             : (myRealOrgs.length ? 'Organizations are people working together, not places. A gold line joins two that chose to connect.' : 'You do not belong to an organization yet. Tap one to see what it does.')}
