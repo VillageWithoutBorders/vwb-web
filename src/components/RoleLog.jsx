@@ -32,6 +32,7 @@ export default function RoleLog({ kind, placeId, org }) {
 
   function line(r) {
     const name = r.user_name || 'A neighbor'
+    if (r.action === 'charter') return name + ' ' + (r.note || 'changed the charter')
     if (r.new_role && !r.old_role) return name + ' became ' + word(r.new_role)
     if (r.old_role && r.new_role) return name + ' went from ' + word(r.old_role) + ' to ' + word(r.new_role)
     if (r.action === 'left') return name + ' left (was ' + word(r.old_role) + ')'

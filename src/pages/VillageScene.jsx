@@ -175,7 +175,7 @@ export default function VillageScene() {
 
   function info(k) {
     switch (k) {
-      case 'guidelines': return { sub: 'How we look after each other here' }
+      case 'charter': return { sub: 'Our story, what we care about, and house rules' }
       case 'sisters': return { sub: sisters.length ? sisters.length + ' sister village' + (sisters.length === 1 ? '' : 's') : 'No sister villages yet' }
       case 'keeper': return { sub: keeperNames.length ? 'Looked after by ' + keeperNames.join(', ') : 'The neighbor who looks after this village' }
       case 'chat': return { sub: mine ? (chatUnread ? chatUnread + ' new since you last looked' : 'Say hello and share news') : 'Join this village to read its chat', badge: mine ? chatUnread : 0 }
@@ -212,6 +212,7 @@ export default function VillageScene() {
         else if (!mine) navigate('/find-village?join=' + id)
         else openSheet({ k: 'chat' })
         return
+      case 'charter': navigate('/village/' + id + '/charter'); return
       case 'skillshare': navigate('/skillshare'); return
       case 'cottage': navigate('/messages'); return
       case 'messages': navigate('/messages'); return
@@ -227,13 +228,6 @@ export default function VillageScene() {
       return <>{title}<p>This part of the village is coming soon.</p></>
     }
     switch (k) {
-      case 'guidelines':
-        return <>{title}
-          <div className="vs-item"><b>We look after each other.</b><small>Help is given freely, and anyone can ask for it.</small></div>
-          <div className="vs-item"><b>We keep private things private.</b><small>Keep addresses and private details out of the village chat.</small></div>
-          <div className="vs-item"><b>Safety is in your hands.</b><small>You can block, report, and vouch for people.</small></div>
-          <Link className="btn btn-primary btn-full" to="/terms">Read the full Community Guidelines</Link>
-        </>
       case 'sisters':
         return <>{title}
           {sisters.length === 0 && <p>This village has no sister villages yet. The keeper can ask another village from the Village Network map.</p>}

@@ -63,6 +63,7 @@ const GroupBoard = lazyPage(() => import('./pages/GroupBoard'))
 const JoinGroup = lazyPage(() => import('./pages/JoinGroup'))
 const Connect = lazyPage(() => import('./pages/Connect'))
 const MyCode = lazyPage(() => import('./pages/MyCode'))
+const VillageCharter = lazyPage(() => import('./pages/VillageCharter'))
 const VillageMap = lazy(() => import('./pages/VillageMap'))
 import { peekReturnTo } from './utils/returnTo'
 import { placesEnabled } from './utils/places'
@@ -206,6 +207,7 @@ function AppRoutes() {
         <Route path="find-village" element={<FindVillage />} />
         <Route path="village/:id" element={<VillageScene />} />
         <Route path="village/:id/keeper" element={<KeeperDashboard />} />
+        <Route path="village/:id/charter" element={<VillageCharter />} />
         <Route path="world" element={<Navigate to="/" replace />} />
         <Route path="village" element={<MyVillage />} />
         <Route path="conversation/:id" element={<Conversation />} />

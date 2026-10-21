@@ -48,7 +48,7 @@ export default function FirstVillage() {
   const [zip, setZip] = useState('')
   const [place, setPlace] = useState('')
   const [villages, setVillages] = useState([])
-  const [joined, setJoined] = useState(null) // { name, boardId }
+  const [joined, setJoined] = useState(null) // { name, boardId, story }
   const [risk, setRisk] = useState(null)
   const [riskError, setRiskError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -147,8 +147,13 @@ export default function FirstVillage() {
       if (bErr) console.error('First village: failed to find the village chat:', bErr)
       boardId = b?.id || null
     }
+    // The first lines of the village's own charter, if it has one.
+    let story = ''
+    const { data: ch, error: chErr } = await supabase.rpc('village_charter_get', { p_village: v.id })
+    if (chErr) { if (chErr.code !== 'PGRST202') console.error('First village: failed to load the charter:', chErr) }
+    else { const row = Array.isArray(ch) ? ch[0] : ch; story = (row?.story || '').trim() }
     setBusy(false)
-    setJoined({ name: v.name, boardId })
+    setJoined({ name: v.name, boardId, story: story.length > 220 ? story.slice(0, 217).trimEnd() + '...' : story })
     setStep('joined')
   }
 
@@ -260,6 +265,7 @@ export default function FirstVillage() {
         {step === 'joined' && (
           <div className="login-form">
             <h1 className="fv1-h" tabIndex={-1} ref={headRef}>You joined {joined?.name}</h1>
+            {joined?.story && <p className="fv1-story">{joined.story}</p>}
             <p className="fv1-text">Welcome, neighbor. Next, you can say hi in the village chat. We fill in a short hello for you.</p>
             <h2 className="fv1-h2">Get a notification for new messages?</h2>
             <p className="fv1-note">We send one notification after the chat goes quiet, not one for every message. You can change this any time in the chat settings.</p>
