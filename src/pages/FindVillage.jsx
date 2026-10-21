@@ -53,6 +53,9 @@ export default function FindVillage() {
   const [suggested, setSuggested] = useState([])
   const [ticked, setTicked] = useState({})
   const [reachBusy, setReachBusy] = useState(false)
+  // Problems with starting a village show next to its buttons, not at the top of the page.
+  const [startError, setStartError] = useState('')
+  const [checking, setChecking] = useState(false)
 
   const hasZip = !!profile?.zip_code
 
@@ -117,8 +120,23 @@ export default function FindVillage() {
     setTicked(t)
   }
 
-  function openStart() {
-    setError(''); setStarting(true)
+  // Ask the database first, without starting anything (p_agreed = false stops it
+  // before it saves), so a village that already centers on your zip, or the
+  // 3-village limit, is said right away instead of after the warning.
+  async function canStart(zips) {
+    const { data, error: err } = await supabase.rpc('start_my_village', { p_agreed: false, p_name: null, p_zips: zips })
+    if (err) { console.error('Failed to check starting a village:', err); return 'Could not check that. Try again in a moment.' }
+    if (data === 'needagree') return ''
+    if (data === 'exists') return 'A village already centers on your zip code (' + profile.zip_code + '). There can be only one village for each center. Join that one from the list above.'
+    return WORDS[data] || 'Could not start a village. Try again.'
+  }
+
+  async function openStart() {
+    setError(''); setStartError(''); setStarting(true)
+    setChecking(true)
+    const why = await canStart(null)
+    setChecking(false)
+    if (why) { setStartError(why); return }
     loadReach(reach)
   }
 
@@ -167,7 +185,7 @@ export default function FindVillage() {
     if (busy || !r) return
     setBusy(true); setRiskError('')
     const isStart = r.type === 'start'
-    const zips = suggested.filter(r => ticked[r.zip]).map(r => r.zip)
+    const zips = suggested.filter(r => ticked[r.zip] || r.zip === profile?.zip_code).map(r => r.zip)
     const { data, error: err } = isStart
       ? await supabase.rpc('start_my_village', { p_agreed: true, p_name: startName.trim() || null, p_zips: zips })
       : await supabase.rpc('join_village', { p_village: r.village.id, p_agreed: true })
@@ -175,8 +193,9 @@ export default function FindVillage() {
     if (data !== 'ok') {
       setBusy(false)
       setRisk(null)
-      setError(WORDS[data] || 'Could not join. Try again.')
-      if (data === 'exists') { setStarting(false); load('') }
+      if (isStart) setStartError(WORDS[data] || 'Could not start a village. Try again.')
+      else setError(WORDS[data] || 'Could not join. Try again.')
+      if (data === 'exists') load('')
       return
     }
     const villageId = isStart ? null : r.village.id
@@ -188,8 +207,18 @@ export default function FindVillage() {
   }
 
   function join(v) { setRiskError(''); if (firstJoinCovered) { agreeAndGo({ type: 'join', village: v }); return } setRisk({ type: 'join', village: v }) }
-  function startOne() { setRiskError(''); if (firstJoinCovered) { agreeAndGo({ type: 'start' }); return } setRisk({ type: 'start' }) }
-  const tickedCount = suggested.filter(r => ticked[r.zip]).length
+  async function startOne() {
+    if (busy) return
+    setRiskError(''); setStartError('')
+    setBusy(true)
+    const why = await canStart(suggested.filter(r => ticked[r.zip] || r.zip === profile.zip_code).map(r => r.zip))
+    setBusy(false)
+    if (why) { setStartError(why); return }
+    if (firstJoinCovered) { agreeAndGo({ type: 'start' }); return }
+    setRisk({ type: 'start' })
+  }
+  // Your own zip code is always on the list, so it always counts.
+  const tickedCount = suggested.filter(r => ticked[r.zip] || r.zip === profile?.zip_code).length
 
   const searching = searched !== ''
   // With no search, show only villages you can join or already belong to.
@@ -277,6 +306,14 @@ export default function FindVillage() {
         {hasZip && starting && (
           <section className="cal-box" aria-labelledby="fv-startform">
             <h2 id="fv-startform">Start a village</h2>
+            {checking && <p className="cal-empty">Checking...</p>}
+            {!checking && startError && !suggested.length && (
+              <>
+                <p className="form-error" role="alert">{startError}</p>
+                <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => { setStarting(false); setStartError('') }}>Back</button>
+              </>
+            )}
+            {!checking && !(startError && !suggested.length) && (<>
             <label htmlFor="fv-name" style={{ display: 'block', margin: '0.5rem 0 0.25rem' }}>Village name</label>
             <input id="fv-name" type="text" value={startName} onChange={e => setStartName(e.target.value)} maxLength={40} placeholder="Leave blank to use your town" autoComplete="off" style={{ width: '100%', minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
             <p className="cal-sub" style={{ margin: '0.75rem 0 0.25rem' }}>Zip codes near {profile.zip_code}. Tick the ones this village covers. Your own zip code stays on the list.</p>
@@ -293,7 +330,7 @@ export default function FindVillage() {
               </summary>
               <div style={{ display: 'flex', gap: '0.5rem', padding: '0.5rem 0.75rem' }}>
                 <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 1 }} onClick={() => { const t = {}; suggested.forEach(r => { t[r.zip] = true }); setTicked(t) }}>Tick all</button>
-                <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 1 }} onClick={() => setTicked({})}>Untick all</button>
+                <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 1 }} onClick={() => setTicked({})}>Untick all but mine</button>
               </div>
               <div style={{ maxHeight: '45vh', overflowY: 'auto', padding: '0 0.75rem 0.5rem' }}>
                 {suggested.map(r => {
@@ -308,8 +345,10 @@ export default function FindVillage() {
               </div>
             </details>
             <p className="cal-sub">A village can have up to 40 zip codes.</p>
+            {startError && <p className="form-error" role="alert">{startError}</p>}
             <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} disabled={busy || reachBusy || tickedCount === 0 || tickedCount > 40} onClick={startOne}>Continue</button>
-            <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => setStarting(false)}>Cancel</button>
+            <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => { setStarting(false); setStartError('') }}>Cancel</button>
+            </>)}
           </section>
         )}
       </div>
