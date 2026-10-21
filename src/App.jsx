@@ -64,6 +64,7 @@ const JoinGroup = lazyPage(() => import('./pages/JoinGroup'))
 const Connect = lazyPage(() => import('./pages/Connect'))
 const MyCode = lazyPage(() => import('./pages/MyCode'))
 const VillageCharter = lazyPage(() => import('./pages/VillageCharter'))
+const Trail = lazyPage(() => import('./pages/Trail'))
 const VillageMap = lazy(() => import('./pages/VillageMap'))
 import { peekReturnTo } from './utils/returnTo'
 import { placesEnabled } from './utils/places'
@@ -215,6 +216,7 @@ function AppRoutes() {
         <Route path="messages" element={<MessagesPage />} />
         <Route path="connections" element={<Connections />} />
         <Route path="my-code" element={<MyCode />} />
+        <Route path="trail" element={<Trail />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="calendar/new" element={<CalendarEventForm />} />
