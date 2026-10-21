@@ -7,6 +7,7 @@ export const HOW_LABELS = {
   volunteered: 'Volunteered together',
   neighbor: 'Neighbor',
   friend_family: 'Friend or family',
+  met: 'Met in person',
 }
 
 // A "helped together" vouch is only allowed between two people who have actually completed

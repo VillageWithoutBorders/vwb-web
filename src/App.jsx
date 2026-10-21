@@ -61,6 +61,8 @@ const KeeperOffer = lazyPage(() => import('./pages/KeeperOffer'))
 const MyVillage = lazyPage(() => import('./pages/MyVillage'))
 const GroupBoard = lazyPage(() => import('./pages/GroupBoard'))
 const JoinGroup = lazyPage(() => import('./pages/JoinGroup'))
+const Connect = lazyPage(() => import('./pages/Connect'))
+const MyCode = lazyPage(() => import('./pages/MyCode'))
 const VillageMap = lazy(() => import('./pages/VillageMap'))
 import { peekReturnTo } from './utils/returnTo'
 import { placesEnabled } from './utils/places'
@@ -135,6 +137,17 @@ function ProtectedRoute({ children }) {
   return children
 }
 
+// Pages anyone can open from a link (an event, a chat link, an org invite, a
+// member's QR code). Signed out, the page shows its own sign-up prompt.
+// Signed in, the same first steps as the rest of the app come first:
+// two-step code, Community Guidelines, then Find your village.
+function SetupGate({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  if (!user) return children
+  return <ProtectedRoute>{children}</ProtectedRoute>
+}
+
 function PublicRoute({ children }) {
   const { user, loading, mfaRequired } = useAuth()
   if (loading) return null
@@ -151,14 +164,15 @@ function AppRoutes() {
       <Route path="/welcome" element={<PublicRoute><Welcome /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/join-org" element={<JoinOrg />} />
+      <Route path="/join-org" element={<SetupGate><JoinOrg /></SetupGate>} />
       <Route path="/terms" element={<Terms />} />
       {/* Public on purpose: the resource list is read-only and needs no account, so people of any age can use it. */}
       <Route path="/resources" element={<PublicResources />} />
       {/* Public on purpose: the website calendar and shared event links work without an account. */}
       <Route path="/calendar/embed" element={<CalendarEmbed />} />
-      <Route path="/events/:id" element={<EventPage />} />
-      <Route path="/groups/join/:token" element={<JoinGroup />} />
+      <Route path="/events/:id" element={<SetupGate><EventPage /></SetupGate>} />
+      <Route path="/groups/join/:token" element={<SetupGate><JoinGroup /></SetupGate>} />
+      <Route path="/connect/:code" element={<SetupGate><Connect /></SetupGate>} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<HomeIndex />} />
         <Route path="home" element={<Dashboard />} />
@@ -198,6 +212,7 @@ function AppRoutes() {
         <Route path="u/:userId" element={<PublicProfile />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="connections" element={<Connections />} />
+        <Route path="my-code" element={<MyCode />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="calendar/new" element={<CalendarEventForm />} />

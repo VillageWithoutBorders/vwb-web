@@ -5885,3 +5885,18 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
   .login-page:has(.fv1-card) { padding: 0.75rem; }
   .fv1-card { padding: 1.25rem 1rem; }
 }
+
+/* ---------- My QR code (pages/MyCode.jsx) and connecting (pages/Connect.jsx) ---------- */
+.mycode-title { font-size: 1.375rem; color: var(--accent); margin: 0.25rem 0 0.5rem; }
+.mycode-card { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin: 1rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--white); }
+.mycode-img { width: min(256px, 72vw); height: auto; aspect-ratio: 1; background: #fff; padding: 8px; border-radius: 8px; box-sizing: border-box; }
+.mycode-img-wait { display: block; }
+.mycode-name { font-size: 1.125rem; font-weight: 700; margin: 0.25rem 0 0; color: var(--text); text-align: center; overflow-wrap: anywhere; }
+.mycode-hint { font-size: 0.9375rem; color: var(--text-secondary); margin: 0; text-align: center; }
+.mycode-actions { display: flex; flex-direction: column; gap: 0.625rem; }
+.mycode-actions .btn, .mycode-safety .btn { min-height: 44px; }
+.mycode-safety { margin-top: 1.25rem; }
+.connect-gap { margin-top: 0.625rem; }
+.login-card .btn { min-height: 44px; }
+.connect-letter { width: 64px; height: 64px; margin: 0 auto 0.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700; background: var(--accent); color: var(--on-accent, #fff); }
+.connect-name { text-align: center; overflow-wrap: anywhere; }
