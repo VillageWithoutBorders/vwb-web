@@ -14,7 +14,9 @@ import Icon from './Icon'
 // 2. We show the villages that cover your zip, closest first. One tap joins.
 //    Nobody is put in a village without tapping Join.
 //    No village covers it yet? We show the closest ones and offer to start one.
-// 3. After joining: get a notification for new messages? Then on to the app.
+// 3. After joining: get a notification for new messages? Then the village
+//    chat opens with a short hello ready to send (?intro=1). Simple view and
+//    the tour wait until they leave the chat (utils/firstVillage.js).
 //
 // "Not now" is always on screen. Answering is saved in
 // helper_profiles.village_opt_in, so this shows once per account.
@@ -151,7 +153,8 @@ export default function FirstVillage() {
     )
     setBusy(false)
     if (err) { console.error('First village: failed to save alert choice:', err); setError('Could not save that. Try again.'); return }
-    finish()
+    // Open the village chat with a short hello ready to send.
+    finish(undefined, '/campfire?board=' + joined.boardId + '&intro=1')
   }
 
   const canJoin = villages.filter((v) => v.can_join && !v.is_mine)
@@ -248,7 +251,7 @@ export default function FirstVillage() {
         {step === 'joined' && (
           <div className="login-form">
             <h1 className="fv1-h" tabIndex={-1} ref={headRef}>You joined {joined?.name}</h1>
-            <p className="fv1-text">Welcome, neighbor. Say hi in the village chat when you are ready.</p>
+            <p className="fv1-text">Welcome, neighbor. Next, you can say hi in the village chat. We fill in a short hello for you.</p>
             <h2 className="fv1-h2">Get a notification for new messages?</h2>
             <p className="fv1-note">We send one notification after the chat goes quiet, not one for every message. You can change this any time in the chat settings.</p>
             {error && <p className="form-error" role="alert">{error}</p>}
