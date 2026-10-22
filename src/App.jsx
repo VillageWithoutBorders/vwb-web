@@ -65,6 +65,7 @@ const Connect = lazyPage(() => import('./pages/Connect'))
 const MyCode = lazyPage(() => import('./pages/MyCode'))
 const VillageCharter = lazyPage(() => import('./pages/VillageCharter'))
 const Trail = lazyPage(() => import('./pages/Trail'))
+const HelpDoors = lazyPage(() => import('./pages/HelpDoors'))
 const VillageMap = lazy(() => import('./pages/VillageMap'))
 import { peekReturnTo } from './utils/returnTo'
 import { placesEnabled } from './utils/places'
@@ -178,6 +179,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<HomeIndex />} />
         <Route path="home" element={<Dashboard />} />
+        <Route path="help-doors" element={<HelpDoors />} />
         <Route path="skillshare" element={<Feed />} />
         <Route path="tasks" element={<ActiveTasks />} />
         <Route path="profile" element={<Profile />} />

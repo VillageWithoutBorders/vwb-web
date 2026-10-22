@@ -325,3 +325,39 @@
 .vs-names-toggle:hover { background: rgba(20, 44, 43, 0.95); }
 .vs-arranging .vs-names-toggle { display: none; }
 @media (prefers-reduced-motion: reduce) { .vs-scene-path .vs-lab { transition: none; } }
+
+/* ---------- Arrange and build: start button at the top, Add tray tabs (Oct 22) ---------- */
+.vs-build-start {
+  display: flex; align-items: center; gap: 12px; width: calc(100% - 32px); margin: 10px 16px 6px; min-height: 64px;
+  padding: 10px 14px; border-radius: 16px; border: 2px solid var(--vs-gold); background: var(--vs-gold); color: var(--vs-on-gold);
+  font: inherit; text-align: left; cursor: pointer; box-sizing: border-box;
+}
+.vs-build-start:hover { filter: brightness(1.05); }
+.vs-build-start:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 3px; }
+.vs-build-start:active { transform: scale(0.98); }
+.vs-build-start-ic { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 22px; background: rgba(42, 32, 4, 0.12); }
+.vs-build-start-text { display: flex; flex-direction: column; min-width: 0; }
+.vs-build-start-text b { font-size: 1.05rem; line-height: 1.2; }
+.vs-build-start-text small { font-size: 0.9rem; line-height: 1.3; opacity: 0.85; }
+@media (min-width: 1024px) { .vs-page-path > .vs-build-start { width: 100%; margin: 12px 0 8px; } }
+@media (prefers-reduced-motion: reduce) { .vs-build-start:active { transform: none; } }
+
+.vs-tray-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 0 0 8px; padding: 4px; border-radius: 14px; background: var(--vs-bg); border: 1px solid var(--vs-line); }
+.vs-tray-tab {
+  display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border-radius: 10px; border: 0;
+  background: none; color: var(--vs-ink); font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
+}
+.vs-tray-tab.on { background: var(--vs-teal); color: var(--vs-on-teal); }
+.vs-tray-tab:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 1px; }
+.vs-tray-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--vs-gold); color: var(--vs-on-gold); font-size: 0.8rem; }
+.vs-tray-help { margin: 0 0 8px; font-size: 0.95rem; color: var(--vs-muted); }
+
+/* Phones and tablets: a big down arrow at the top of the tool drawer folds the extra part away. */
+.vs-drawer-close {
+  position: sticky; top: -8px; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 48px; margin: -2px 0 8px; border-radius: 12px; border: 2px solid var(--vs-gold);
+  background: rgba(20, 44, 43, 0.98); color: var(--vs-ink); font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
+}
+.vs-drawer-close .vs-tool-ic { width: 28px; height: 28px; color: var(--vs-gold); }
+.vs-drawer-close:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 2px; }
+@media (min-width: 1024px) { .vs-drawer-close { display: none; } }

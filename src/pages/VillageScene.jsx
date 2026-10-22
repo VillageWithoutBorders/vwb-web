@@ -159,6 +159,8 @@ export default function VillageScene() {
   const [arrange, setArrange] = useState(false)
   const [tool, setTool] = useState('move') // move | road | stream
   const [trayOpen, setTrayOpen] = useState(false)
+  // Add tray tabs: Pieces, Ground, More (hidden places and start over).
+  const [trayTab, setTrayTab] = useState('pieces')
   const historyRef = useRef([])
   const [canUndo, setCanUndo] = useState(false)
   const [picked, setPicked] = useState(null) // a place key, or 'd:' + decor id
@@ -336,6 +338,7 @@ export default function VillageScene() {
     }, 60)
     return () => clearTimeout(t)
   }, [arrange, picked])
+  const hiddenCount = VILLAGE_SPOTS.filter((v) => isHidden(v.k)).length
   function closeArrange() { setArrange(false); setPicked(null); setTool('move'); setTrayOpen(false) }
 
   useEffect(() => {
@@ -638,6 +641,16 @@ export default function VillageScene() {
         </Link>
       )}
 
+      {!arrange && (
+        <button type="button" data-tour="village-arrange" className="vs-build-start" onClick={() => { setArrange(true); setTool('move'); setTrayTab('pieces'); setLayoutNote(''); setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50) }}>
+          <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
+          <span className="vs-build-start-text">
+            <b>Arrange and build my village</b>
+            <small>Move places, add trees and bridges, draw roads, pick a ground</small>
+          </span>
+        </button>
+      )}
+
       <div ref={sceneRef} className={'vs-scene vs-scene-path vs-names-' + (world.labels || 'auto') + (arrange ? ' vs-arranging' : '') + (arrange && tool !== 'move' ? ' vs-drawing' : '')} onPointerDown={roadStart} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={dragEnd}>
         <img className="vs-ground" src={(GROUNDS.find((g) => g.k === world.ground) || GROUNDS[0]).src} alt="" width="768" height="1152" fetchpriority="high" />
         {(world.roads.length > 0 || world.streams.length > 0 || drawing) && (
@@ -701,10 +714,15 @@ export default function VillageScene() {
       <p className="vs-hint">{arrange ? 'Arrange and build your village. Your changes are saved as you go.' : 'Tap anything in the village to go there.'}</p>
 
       <div className={'vs-arrange' + (arrange ? ' vs-arrange-on' : '')}>
-        {!arrange && <button type="button" data-tour="village-arrange" className="btn btn-outline btn-full" onClick={() => { setArrange(true); setTool('move'); setLayoutNote(''); setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50) }}>Arrange and build my village</button>}
         {arrange && (
           <div className="vs-toolbar" role="region" aria-label="Arrange and build tools">
+            {(trayOpen || (tool === 'move' && picked)) && (
+              <button type="button" className="vs-drawer-close" onClick={() => { setTrayOpen(false); setPicked(null) }}>
+                <ToolIcon name="down" /><span>{trayOpen ? 'Close Add' : 'Close'}</span>
+              </button>
+            )}
             {layoutNote && <p className="vs-tool-note" role="status">{layoutNote}</p>}
+            {!layoutNote && tool === 'move' && !picked && !trayOpen && <p className="vs-tool-note">Drag a place to move it, or tap it for more choices. Tap <b>Add</b> for trees, ground, and more.</p>}
 
             {tool === 'move' && picked && !trayOpen && (
               <div className="vs-tool-picked">
@@ -744,7 +762,16 @@ export default function VillageScene() {
 
             {trayOpen && (
               <div className="vs-tray">
-                <h3 className="vs-arrange-h">Add to your village</h3>
+                <div className="vs-tray-tabs" role="tablist" aria-label="Add to your village">
+                  <button type="button" role="tab" id="vs-tab-pieces" aria-controls="vs-panel" aria-selected={trayTab === 'pieces'} className={'vs-tray-tab' + (trayTab === 'pieces' ? ' on' : '')} onClick={() => setTrayTab('pieces')}>Pieces</button>
+                  <button type="button" role="tab" id="vs-tab-ground" aria-controls="vs-panel" aria-selected={trayTab === 'ground'} className={'vs-tray-tab' + (trayTab === 'ground' ? ' on' : '')} onClick={() => setTrayTab('ground')}>Ground</button>
+                  <button type="button" role="tab" id="vs-tab-more" aria-controls="vs-panel" aria-selected={trayTab === 'more'} className={'vs-tray-tab' + (trayTab === 'more' ? ' on' : '')} onClick={() => setTrayTab('more')}>
+                    More{hiddenCount > 0 && <span className="vs-tray-count" aria-label={hiddenCount + ' hidden'}>{hiddenCount}</span>}
+                  </button>
+                </div>
+                <div id="vs-panel" role="tabpanel" aria-labelledby={'vs-tab-' + trayTab}>
+                {trayTab === 'pieces' && <>
+                <p className="vs-tray-help">Tap a piece to add it. Then drag it where you want it.</p>
                 <div className="vs-palette">
                   {DECOR_PIECES.map((p) => (
                     <button key={p.k} type="button" className="vs-palette-item" onClick={() => addDecor(p)}>
@@ -753,7 +780,9 @@ export default function VillageScene() {
                     </button>
                   ))}
                 </div>
-                {VILLAGE_SPOTS.some((v) => isHidden(v.k)) && <>
+                </>}
+                {trayTab === 'more' && hiddenCount === 0 && <p className="vs-tray-help">No places are hidden. To hide one, tap Move, tap the place, then Hide.</p>}
+                {trayTab === 'more' && hiddenCount > 0 && <>
                   <h3 className="vs-arrange-h">Hidden places</h3>
                   <div className="vs-chips-row">
                     {VILLAGE_SPOTS.filter((v) => isHidden(v.k)).map((v) => (
@@ -761,7 +790,8 @@ export default function VillageScene() {
                     ))}
                   </div>
                 </>}
-                <h3 className="vs-arrange-h">Ground</h3>
+                {trayTab === 'ground' && <>
+                <p className="vs-tray-help">Pick the land your village sits on.</p>
                 <div className="vs-grounds" role="group" aria-label="Ground">
                   {GROUNDS.map((g) => (
                     <button key={g.k} type="button" className={'vs-ground-card' + (world.ground === g.k ? ' on' : '')} aria-pressed={world.ground === g.k} onClick={() => commit({ ...world, ground: g.k })}>
@@ -770,10 +800,12 @@ export default function VillageScene() {
                     </button>
                   ))}
                 </div>
-                <div className="vs-tray-more">
+                </>}
+                {trayTab === 'more' && <div className="vs-tray-more">
                   <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>Back to the usual village</button>
                   {isFounder && <button type="button" className="btn btn-outline btn-full" onClick={copyLayout}>Copy layout for everyone (founder)</button>}
                   <p className="vs-note">Your village is saved on your account and only you see it. Hidden places are still in the list under the map.</p>
+                </div>}
                 </div>
               </div>
             )}
