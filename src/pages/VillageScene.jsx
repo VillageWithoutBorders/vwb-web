@@ -13,6 +13,7 @@ import VillageRooms from '../components/VillageRooms'
 import '../village-scene.css'
 import Icon from '../components/Icon'
 import YourCorner from './YourCorner'
+import Dashboard from './Dashboard'
 
 // The Village page: one village as a little world. Every element on the
 // hills is a button that goes to its own page. A plain list sits below for
@@ -50,8 +51,9 @@ export default function VillageScene() {
   const { unreadCount } = useUnreadCount()
   // The You button and old /me links open the cottage at Your corner (Oct 22).
   useEffect(() => {
-    if (!cottage || window.location.hash !== '#corner') return
-    const t = setTimeout(() => document.getElementById('corner')?.scrollIntoView({ block: 'start' }), 400)
+    const spot = window.location.hash.slice(1)
+    if (!cottage || (spot !== 'corner' && spot !== 'today')) return
+    const t = setTimeout(() => document.getElementById(spot)?.scrollIntoView({ block: 'start' }), 400)
     return () => clearTimeout(t)
   }, [cottage])
 
@@ -760,10 +762,12 @@ export default function VillageScene() {
       <div className="vs-body">
         {!cottage && !mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>Join {village.name}</button>}
         {!cottage && mine && keepers && keepers.i_am_keeper && <button type="button" data-tour="keeper-tools" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true"><Icon name="toolbox" /></span> Keeper tools</button>}
-        <div className="vs-help">
+        {/* Your cottage: Today (what needs you, shortcuts, coming up) sits right under the map (Oct 22). */}
+        {cottage && <section id="today" className="vs-panel vs-today" aria-label="Today"><Dashboard embedded /></section>}
+        {!cottage && <div className="vs-help">
           <button type="button" className="vs-big vs-ask" onClick={() => navigate('/ask')}>Ask for help</button>
           <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>
-        </div>
+        </div>}
         <h2 className="vs-pick-h">Or pick from the list</h2>
         <div className="vs-list">
           {SPOTS.map((s) => {

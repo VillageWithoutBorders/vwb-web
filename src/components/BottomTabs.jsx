@@ -11,7 +11,9 @@ import { useSimpleView } from '../utils/simpleView'
 //   Neighbor: Emergency.  One role: that role's tools.  More than one: My tools (a short list).
 
 const HELP = ['/help-doors', '/skillshare', '/tasks', '/ask', '/post-offer', '/community/resources']
-const VILLAGE = ['/village', '/cottage', '/find-village', '/village-square', '/orgs', '/start-group']
+// Which action tab lights up. Find resources and the Help doors sit under Ask for help.
+const ASK = ['/ask', '/community/resources', '/help-doors']
+const OFFER = ['/skillshare', '/post-offer', '/tasks']
 const under = (path, list) => list.some((p) => path === p || path.startsWith(p + '/'))
 
 export default function BottomTabs() {
@@ -31,7 +33,8 @@ export default function BottomTabs() {
   const toolPaths = [...tools.map((t) => t.to), '/emergency', '/org-dashboard', '/admin', '/ambassador']
   const fourthOn = toolPaths.some((p) => pathname === p || pathname.startsWith(p + '/')) || /^\/village\/[^/]+\/keeper$/.test(pathname)
   const helpOn = under(pathname, HELP)
-  const villageOn = !fourthOn && !under(pathname, HELP) && under(pathname, VILLAGE)
+  const askOn = !fourthOn && under(pathname, ASK)
+  const offerOn = !fourthOn && under(pathname, OFFER)
 
   useEffect(() => {
     if (!sheet) return
@@ -74,13 +77,14 @@ export default function BottomTabs() {
     <>
       <nav className="bottom-tabs" aria-label="Main navigation">
         <div className="bottom-tabs-inner">
-          <NavLink to="/help-doors" className={({ isActive }) => 'tab-item' + (isActive || helpOn ? ' active' : '')} data-tour="help">
-            <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="heart-hands" size={26} /></span>
-            <span className="tab-label">Help</span>
+          {/* Oct 22 (Jade): the bottom bar is actions. Places live in the top bar. */}
+          <NavLink to="/ask" className={() => 'tab-item' + (askOn ? ' active' : '')} data-tour="ask">
+            <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="raise-hand" size={26} /></span>
+            <span className="tab-label">Ask for help</span>
           </NavLink>
-          <NavLink to="/village" className={({ isActive }) => 'tab-item' + (isActive || villageOn ? ' active' : '')} data-tour="village">
-            <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="houses" size={26} /></span>
-            <span className="tab-label">Village</span>
+          <NavLink to="/skillshare" className={() => 'tab-item' + (offerOn ? ' active' : '')} data-tour="offer">
+            <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="heart" size={26} /></span>
+            <span className="tab-label">I can help</span>
           </NavLink>
           <NavLink to="/messages" className="tab-item" data-tour="messages" style={{ position: 'relative' }}>
             <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="envelope" size={26} /></span>

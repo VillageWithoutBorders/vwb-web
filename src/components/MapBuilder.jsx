@@ -684,7 +684,8 @@ export function MapToolbar({ b, more }) {
 // view on top. You see your own view if you made one, else the shared look, else
 // the usual map. Name tags stay one account-wide choice (helper_profiles.village_layout).
 //   kind: 'org' (organizations and groups). name: shown in the start-over question.
-export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfile, name, base }) {
+// ownAllowed false (visitors on an organization page): always show the default look.
+export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfile, name, base, ownAllowed = true }) {
   const [arrangeFor, setArrangeFor] = useState('me') // me | everyone
   const mapLayouts = useRef({ own: null, shared: null })
   const [mapLoaded, setMapLoaded] = useState(0)
@@ -711,8 +712,8 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
   useEffect(() => {
     if (b.arrange) return
     const { own, shared } = mapLayouts.current
-    b.setWorld({ ...fromSaved(own || shared, base), labels: fromSaved(accountLayout).labels })
-  }, [mapLoaded, b.arrange, accountLayout, base]) // eslint-disable-line react-hooks/exhaustive-deps
+    b.setWorld({ ...fromSaved((ownAllowed && own) || shared, base), labels: fromSaved(accountLayout).labels })
+  }, [mapLoaded, b.arrange, accountLayout, base, ownAllowed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function saveMap(next) {
     const forWho = arrangeFor
@@ -765,5 +766,7 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
     b.commit(fromSaved(null, base)); b.setPicked(null); b.setTrayOpen(false); b.setLayoutNote('Back to the usual map.')
   }
 
-  return { b, arrangeFor, startArrange, resetLayout, saveLabels }
+  // Has this person arranged their own view? Then a new default does not show for them.
+  const hasOwn = mapLoaded > 0 && !!mapLayouts.current.own
+  return { b, arrangeFor, startArrange, resetLayout, saveLabels, hasOwn }
 }
