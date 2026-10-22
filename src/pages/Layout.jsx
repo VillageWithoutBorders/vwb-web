@@ -1,5 +1,5 @@
 import Icon from '../components/Icon'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView'
@@ -33,6 +33,14 @@ export default function Layout() {
   const [ownBacks, setOwnBacks] = useState(0)
   const tellFrame = useCallback((n) => setOwnBacks((c) => c + n), [])
   const showBack = !ownBacks && !isChat && pathname !== '/' && pathname !== '/world'
+
+  // Every page opens at the top (Oct 22, Jade), except chats, which open at the newest
+  // message, and links to a spot on a page (#corner and the like).
+  useEffect(() => { try { window.history.scrollRestoration = 'manual' } catch { /* older browsers */ } }, [])
+  useLayoutEffect(() => {
+    if (isChat || window.location.hash) return
+    window.scrollTo(0, 0)
+  }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // The Admin page gets a wider column on a computer for its side menu.
   const isAdminPage = pathname === '/admin'
