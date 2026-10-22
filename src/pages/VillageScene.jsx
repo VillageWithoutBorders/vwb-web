@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient'
 import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
-import { VILLAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, DECOR_PIECES, GROUNDS } from '../data/worldElements'
+import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, DECOR_PIECES, GROUNDS } from '../data/worldElements'
 import { askConfirm } from '../components/AdminDialog'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
@@ -116,8 +116,13 @@ function ToolIcon({ name }) {
 
 export default function VillageScene() {
   const { id } = useParams()
+  // No village id: this is your cottage (the Village tab, /village). Your own map,
+  // arranged by you, with everything you are part of. A village page (/village/:id)
+  // shows one shared look for everyone, with no builder (Oct 22).
+  const cottage = !id
+  const SPOTS = cottage ? COTTAGE_SPOTS : VILLAGE_SPOTS
   const navigate = useNavigate()
-  const { user, profile, isFounder, refreshProfile } = useAuth()
+  const { user, profile, isFounder, refreshProfile, organizations } = useAuth()
   const { unreadCount } = useUnreadCount()
 
   const [village, setVillage] = useState(null)
@@ -173,6 +178,7 @@ export default function VillageScene() {
     return { spots: v.spots || {}, decor: list(v.decor), roads: list(v.roads), streams: list(v.streams), ground: GROUNDS.some((g) => g.k === v.ground) ? v.ground : 'path', labels: ['show', 'hide'].includes(v.labels) ? v.labels : 'auto' }
   }
   const [world, setWorld] = useState(() => {
+    if (!cottage) return fromSaved(null)
     try { return fromSaved(JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null')) } catch { return fromSaved(null) }
   })
   const worldRef = useRef(world)
@@ -181,12 +187,15 @@ export default function VillageScene() {
   // The account's saved layout wins once the profile has loaded.
   const accountLayout = profile?.village_layout
   useEffect(() => {
-    if (accountLayout && typeof accountLayout === 'object') setWorld(fromSaved(accountLayout))
-  }, [accountLayout]) // eslint-disable-line react-hooks/exhaustive-deps
-  function saveWorld(next) {
-    setWorld(next)
-    worldRef.current = next
-    try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode */ }
+    if (!accountLayout || typeof accountLayout !== 'object') return
+    setWorld(cottage ? fromSaved(accountLayout) : { ...fromSaved(null), labels: fromSaved(accountLayout).labels })
+  }, [accountLayout, cottage]) // eslint-disable-line react-hooks/exhaustive-deps
+  function saveWorld(nextIn) {
+    setWorld(nextIn)
+    worldRef.current = nextIn
+    // On a village page only the name tags choice is yours; your cottage map stays as it is.
+    const next = cottage ? nextIn : { ...fromSaved(accountLayout), labels: nextIn.labels }
+    if (cottage) { try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode */ } }
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
       const empty = Object.keys(next.spots).length === 0 && next.decor.length === 0 && next.roads.length === 0 && next.streams.length === 0 && next.ground === 'path' && next.labels === 'auto'
@@ -283,7 +292,7 @@ export default function VillageScene() {
   }
   function resize(by) {
     if (!picked) return
-    const cur = pickedDecor ? pickedDecor.s || 1 : placed(VILLAGE_SPOTS.find((v) => v.k === picked)).s || 1
+    const cur = pickedDecor ? pickedDecor.s || 1 : placed(SPOTS.find((v) => v.k === picked)).s || 1
     changePicked({ s: Math.min(pickedDecor ? 3 : 1.8, Math.max(0.3, Math.round((cur + by) * 10) / 10)) })
   }
   function flipPicked() {
@@ -307,7 +316,7 @@ export default function VillageScene() {
     setPicked(null)
   }
   async function copyLayout() {
-    const text = 'Village layout:\n' + VILLAGE_SPOTS.map((v) => { const p = placed(v); return v.k + ': x ' + p.x + ', y ' + p.y + ', size ' + (p.s || 1) + (p.flip ? ', flipped' : '') + (isHidden(v.k) ? ', hidden' : '') }).join('\n')
+    const text = 'Village layout:\n' + SPOTS.map((v) => { const p = placed(v); return v.k + ': x ' + p.x + ', y ' + p.y + ', size ' + (p.s || 1) + (p.flip ? ', flipped' : '') + (isHidden(v.k) ? ', hidden' : '') }).join('\n')
       + (world.decor.length || world.roads.length || world.streams.length ? '\nVillage build: ' + JSON.stringify({ decor: world.decor, roads: world.roads, streams: world.streams, ground: world.ground }) : '')
     try { await navigator.clipboard.writeText(text); setLayoutNote('Copied. Paste it to Claude to make it everyone’s starting layout.') }
     catch { setLayoutNote('Could not copy. Here it is to copy by hand:\n' + text) }
@@ -322,7 +331,7 @@ export default function VillageScene() {
   // Nudge: move the picked thing a little, for anyone who finds dragging hard.
   function nudge(dx, dy) {
     if (!picked) return
-    const cur = pickedDecor || placed(VILLAGE_SPOTS.find((v) => v.k === picked))
+    const cur = pickedDecor || placed(SPOTS.find((v) => v.k === picked))
     const lim = pickedDecor ? [1, 99] : [3, 97]
     changePicked({ x: round1(Math.min(lim[1], Math.max(lim[0], cur.x + dx))), y: round1(Math.min(lim[1], Math.max(lim[0], cur.y + dy))) })
   }
@@ -338,11 +347,11 @@ export default function VillageScene() {
     }, 60)
     return () => clearTimeout(t)
   }, [arrange, picked])
-  const hiddenCount = VILLAGE_SPOTS.filter((v) => isHidden(v.k)).length
+  const hiddenCount = SPOTS.filter((v) => isHidden(v.k)).length
   function closeArrange() { setArrange(false); setPicked(null); setTool('move'); setTrayOpen(false) }
 
   useEffect(() => {
-    if (!user) return
+    if (!user || cottage) return
     let alive = true
     supabase.rpc('my_keeper_offers').then(({ data, error }) => {
       if (!alive) return
@@ -361,6 +370,7 @@ export default function VillageScene() {
       if (error) { console.error('Failed to load villages:', error); setLoadError("We couldn't load this village. Check your connection and try again."); return }
       const rows = data || []
       setAllVillages(rows)
+      if (cottage) return
       const v = rows.find((r) => r.id === id)
       if (!v) { setLoadError("We couldn't find this village. It may have closed."); return }
       setVillage(v)
@@ -370,6 +380,7 @@ export default function VillageScene() {
 
   // The village chat and its unread count.
   useEffect(() => {
+    if (cottage) return
     let alive = true
     supabase.from('campfire_boards').select('id, name').eq('village_id', id).eq('archived', false).order('sort_order').limit(1).then(({ data: rows, error }) => {
       if (!alive) return
@@ -402,6 +413,7 @@ export default function VillageScene() {
   // The living scene: lit cottages, fire size, Keeper lantern (counts in steps only).
   const [life, setLife] = useState(null)
   useEffect(() => {
+    if (cottage) return
     let alive = true
     supabase.rpc('village_scene_life', { p_village: id }).then(({ data, error }) => {
       if (!alive) return
@@ -440,6 +452,7 @@ export default function VillageScene() {
 
   // Sister villages and organizations working here.
   useEffect(() => {
+    if (cottage) return
     let alive = true
     supabase.rpc('village_sister_list').then(({ data, error }) => {
       if (!alive) return
@@ -478,6 +491,83 @@ export default function VillageScene() {
     return () => window.removeEventListener('keydown', onKey)
   }, [sheet])
 
+  // Your cottage: your home village and how many village and Campfire messages are new.
+  const [home, setHome] = useState(null)
+  const [chatsNew, setChatsNew] = useState(0)
+  useEffect(() => {
+    if (!cottage || !user) return
+    let alive = true
+    supabase.rpc('my_home_village').then(({ data, error }) => {
+      if (error) { console.error('Failed to load your home village:', error); return }
+      if (alive) setHome((data || [])[0] || { village_id: null })
+    })
+    supabase.rpc('campfire_unread').then(({ data, error }) => {
+      if (error) { console.error('Failed to count new village messages:', error); return }
+      if (alive) setChatsNew((data || []).reduce((n, r) => n + Number(r.unread || 0), 0))
+    })
+    return () => { alive = false }
+  }, [cottage, user?.id, profile?.home_village_id]) // eslint-disable-line react-hooks/exhaustive-deps
+  const myOrgs = (organizations || []).filter((o) => o.kind !== 'group')
+  const myGroups = (organizations || []).filter((o) => o.kind === 'group')
+  const visits = allVillages.filter((v) => v.is_mine && v.id !== home?.village_id)
+  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many)
+
+  function cottageInfo(k) {
+    switch (k) {
+      case 'home': return { sub: home?.village_id ? 'Step into ' + home.name : home ? 'Find or start your home village' : 'Loading...' }
+      case 'visits': return { sub: visits.length ? plural(visits.length, 'village', 'villages') + ' where you are a guest' : 'Villages you visit show up here' }
+      case 'calendar': return { sub: 'Events and sign-ups near you' }
+      case 'orgs': return { sub: myOrgs.length ? plural(myOrgs.length, 'organization', 'organizations') : 'Find an organization near you' }
+      case 'connections': return { sub: 'People you know on VWB' }
+      case 'groups': return { sub: myGroups.length ? plural(myGroups.length, 'emergency group', 'emergency groups') : 'Crews that help when disaster hits' }
+      case 'cottage': return { sub: 'Private chats with people you chose' }
+      case 'campfires': return { sub: 'Team chats in your organizations and villages' }
+      case 'chat': return { sub: chatsNew ? chatsNew + ' new in your villages and Campfires' : 'Your village chats', badge: chatsNew }
+      case 'help': return { sub: 'Find resources, ask for help, or help a neighbor' }
+      case 'me': return { sub: 'Your profile, vouches, and settings' }
+      case 'messages': return { sub: unreadCount ? unreadCount + ' unread' : 'Requests and private messages', badge: unreadCount }
+      default: return { sub: '' }
+    }
+  }
+  function cottageTap(k) {
+    switch (k) {
+      case 'home': navigate(home?.village_id ? '/village/' + home.village_id : '/find-village'); return
+      case 'calendar': navigate('/calendar'); return
+      case 'connections': navigate('/connections'); return
+      case 'cottage': case 'campfires': navigate('/messages?tab=chats'); return
+      case 'chat': navigate('/messages?tab=villages'); return
+      case 'help': navigate('/help-doors'); return
+      case 'me': navigate('/me'); return
+      case 'messages': navigate('/messages'); return
+      default: openSheet({ k })
+    }
+  }
+  function cottageSheet(k, title) {
+    const row = (to, icon, name, small) => (
+      <button key={to} type="button" className="vs-row" onClick={() => { setSheet(null); navigate(to) }}>
+        <span aria-hidden="true"><Icon name={icon} /></span> {name}<small>{small}</small>
+      </button>
+    )
+    switch (k) {
+      case 'visits': return <>{title}
+        {visits.length === 0 && <p>You are not a guest in any other village yet. A neighbor can invite you, or you can visit a sister village.</p>}
+        {visits.map((v) => row('/village/' + v.id, 'houses', v.name, 'Guest'))}
+        <Link className="btn btn-outline btn-full" to="/villages">See every village</Link>
+      </>
+      case 'orgs': return <>{title}
+        {myOrgs.length === 0 && <p>You are not in an organization yet.</p>}
+        {myOrgs.map((o) => row('/orgs/' + o.id, 'people', o.name, 'Organization'))}
+        <Link className="btn btn-outline btn-full" to="/villages?tab=orgs">See every organization</Link>
+      </>
+      case 'groups': return <>{title}
+        {myGroups.length === 0 && <p>You are not in an emergency group yet. Groups are crews that help when disaster hits.</p>}
+        {myGroups.map((o) => row('/orgs/' + o.id, 'tent', o.name, 'Emergency group'))}
+        <Link className="btn btn-outline btn-full" to="/start-group">Start a group</Link>
+      </>
+      default: return title
+    }
+  }
+
   function openSheet(s) { lastFocus.current = document.activeElement; setSheet(s) }
   function closeSheet() {
     setSheet(null)
@@ -488,6 +578,7 @@ export default function VillageScene() {
   const nameOf = (vid) => (allVillages.find((v) => v.id === vid) || {}).name || 'A village'
 
   function info(k) {
+    if (cottage) return cottageInfo(k)
     switch (k) {
       case 'charter': return { sub: 'Our story, what we care about, and house rules' }
       case 'sisters': return { sub: sisters.length ? sisters.length + ' sister village' + (sisters.length === 1 ? '' : 's') : 'No sister villages yet' }
@@ -519,6 +610,7 @@ export default function VillageScene() {
     if (!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setBump(spot.k); setTimeout(() => setBump(null), 450)
     }
+    if (cottage) { cottageTap(spot.k); return }
     if (spot.soon) { openSheet({ k: spot.k }); return }
     switch (spot.k) {
       case 'chat':
@@ -536,8 +628,9 @@ export default function VillageScene() {
   }
 
   function sheetBody(k) {
-    const spot = VILLAGE_SPOTS.find((s) => s.k === k)
+    const spot = SPOTS.find((s) => s.k === k)
     const title = <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><SpotIcon spot={spot} size={36} /></span> {spot.label}</h2>
+    if (cottage) return cottageSheet(k, title)
     if (spot.soon) {
       return <>{title}<p>This part of the village is coming soon.</p></>
     }
@@ -609,13 +702,24 @@ export default function VillageScene() {
   if (loadError) {
     return <div className="vs-page vs-page-path"><div className="vs-top"><Link className="vs-crumb" to="/villages">Village Network</Link></div><p className="vs-error" role="alert">{loadError}</p></div>
   }
-  if (!village) {
+  if (!cottage && !village) {
     return <div className="vs-page vs-page-path"><p className="vs-loading" role="status">Loading the village...</p></div>
   }
 
 
   return (
     <div className="vs-page vs-page-path">
+      {cottage ? (
+        <div className="vs-title">
+          <h1>Your cottage</h1>
+          <p className="vs-cottage-sub">Everything you are part of, in one place. Only you see your map.</p>
+          <div className="vs-chips">
+            {home?.village_id
+              ? <Link className="vs-chip vs-chip-in vs-chip-link" to={'/village/' + home.village_id}>Home: {home.name}</Link>
+              : home && <Link className="vs-chip vs-chip-link" to="/find-village">Find your home village</Link>}
+          </div>
+        </div>
+      ) : (<>
       <nav className="vs-top" aria-label="Where you are">
         <Link className="vs-crumb" to="/villages">Village Network</Link>
         <span className="vs-sep" aria-hidden="true">&#8250;</span>
@@ -634,6 +738,8 @@ export default function VillageScene() {
         </div>
       </div>
 
+      </>)}
+
       {keeperAsk && (
         <Link className="vs-ask" to={'/keeper-offer/' + keeperAsk.offer_id}>
           <b>{keeperAsk.asked_by_name} asked you to be Keeper of {village.name}</b>
@@ -641,7 +747,7 @@ export default function VillageScene() {
         </Link>
       )}
 
-      {!arrange && (
+      {cottage && !arrange && (
         <button type="button" data-tour="village-arrange" className="vs-build-start" onClick={() => { setArrange(true); setTool('move'); setTrayTab('pieces'); setLayoutNote(''); setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50) }}>
           <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
           <span className="vs-build-start-text">
@@ -671,7 +777,7 @@ export default function VillageScene() {
             ? <button key={d.id} type="button" className={'vs-deco vs-deco-edit' + (picked === 'd:' + d.id ? ' vs-picked' : '')} style={style} aria-label={piece.label} onPointerDown={(e) => dragStart(e, 'd:' + d.id)}>{img}</button>
             : <span key={d.id} className="vs-deco" style={style} aria-hidden="true">{img}</span>
         })}
-        {VILLAGE_SPOTS.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
+        {SPOTS.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
           const s = placed(s0)
           const i = info(s.k)
           return (
@@ -711,9 +817,9 @@ export default function VillageScene() {
         <div className="vs-fade" />
       </div>
 
-      <p className="vs-hint">{arrange ? 'Arrange and build your village. Your changes are saved as you go.' : 'Tap anything in the village to go there.'}</p>
+      <p className="vs-hint">{arrange ? 'Arrange and build your cottage map. Your changes are saved as you go.' : cottage ? 'Tap anything on your map to go there.' : 'Tap anything in the village to go there.'}</p>
 
-      <div className={'vs-arrange' + (arrange ? ' vs-arrange-on' : '')}>
+      {cottage && <div className={'vs-arrange' + (arrange ? ' vs-arrange-on' : '')}>
         {arrange && (
           <div className="vs-toolbar" role="region" aria-label="Arrange and build tools">
             {(trayOpen || (tool === 'move' && picked)) && (
@@ -727,7 +833,7 @@ export default function VillageScene() {
             {tool === 'move' && picked && !trayOpen && (
               <div className="vs-tool-picked">
                 <div className="vs-tool-picked-head">
-                  <b>{pickedDecor ? ((DECOR_PIECES.find((p) => p.k === pickedDecor.k) || {}).label || 'Piece') : (VILLAGE_SPOTS.find((v) => v.k === picked) || {}).label}{!pickedDecor && isHidden(picked) ? ' (hidden)' : ''}</b>
+                  <b>{pickedDecor ? ((DECOR_PIECES.find((p) => p.k === pickedDecor.k) || {}).label || 'Piece') : (SPOTS.find((v) => v.k === picked) || {}).label}{!pickedDecor && isHidden(picked) ? ' (hidden)' : ''}</b>
                   <button type="button" className="vs-tool-x" aria-label="Stop changing this" onClick={() => setPicked(null)}><ToolIcon name="close" /></button>
                 </div>
                 <div className="vs-tool-row">
@@ -785,7 +891,7 @@ export default function VillageScene() {
                 {trayTab === 'more' && hiddenCount > 0 && <>
                   <h3 className="vs-arrange-h">Hidden places</h3>
                   <div className="vs-chips-row">
-                    {VILLAGE_SPOTS.filter((v) => isHidden(v.k)).map((v) => (
+                    {SPOTS.filter((v) => isHidden(v.k)).map((v) => (
                       <button key={v.k} type="button" className="vs-chip-btn" onClick={() => { commit({ ...world, spots: { ...layout, [v.k]: { ...(layout[v.k] || {}), hide: false } } }); setLayoutNote(v.label + ' is back on the map.') }}>Show {v.label}</button>
                     ))}
                   </div>
@@ -820,18 +926,18 @@ export default function VillageScene() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
       <div className="vs-body">
-        {!mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>Join {village.name}</button>}
-        {mine && keepers && keepers.i_am_keeper && <button type="button" data-tour="keeper-tools" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true"><Icon name="toolbox" /></span> Keeper tools</button>}
+        {!cottage && !mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>Join {village.name}</button>}
+        {!cottage && mine && keepers && keepers.i_am_keeper && <button type="button" data-tour="keeper-tools" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true"><Icon name="toolbox" /></span> Keeper tools</button>}
         <div className="vs-help">
           <button type="button" className="vs-big vs-ask" onClick={() => navigate('/ask')}>Ask for help</button>
           <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>
         </div>
         <h2>Or pick from the list</h2>
         <div className="vs-list">
-          {VILLAGE_SPOTS.map((s) => {
+          {SPOTS.map((s) => {
             const i = info(s.k)
             return (
               <button key={s.k} type="button" className={'vs-room' + (s.soon ? ' vs-soon' : '')} onClick={() => tap(s)}>

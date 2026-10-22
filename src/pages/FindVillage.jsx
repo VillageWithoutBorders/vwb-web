@@ -274,7 +274,7 @@ export default function FindVillage() {
             <div className="hub-section-head"><h2 id="fv-list">{searching ? 'Villages that match' : 'Villages near you'}</h2></div>
             {shown.map(v => (
               <div key={v.id} className="cal-card" style={{ display: 'block' }}>
-                <span className="cal-card-title">{v.name}{v.is_mine ? ' · joined' : ''}</span>
+                <span className="cal-card-title">{v.name}{profile?.home_village_id === v.id ? ' · your home' : v.is_mine ? ' · joined' : ''}</span>
                 <span className="cal-card-meta" style={{ display: 'block', marginBottom: '0.5rem' }}>
                   {countText(v)}{v.zip_count ? ' · ' + v.zip_count + ' zip codes' : ''}{v.miles_away != null ? ' · about ' + v.miles_away + ' miles away' : ''}
                 </span>
@@ -283,7 +283,10 @@ export default function FindVillage() {
                   <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => openChat(v)}>Open this village chat</button>
                 )}
                 {!v.is_mine && v.can_join && (
-                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => join(v)}>Join this village chat</button>
+                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => join(v)}>{profile?.home_village_id && profile.home_village_id !== v.id ? 'Join as a guest' : 'Join this village chat'}</button>
+                )}
+                {!v.is_mine && v.can_join && profile?.home_village_id && profile.home_village_id !== v.id && (
+                  <p className="cal-sub" style={{ margin: '0.4rem 0 0' }}>You already have a home village. Here you can read and post as a guest. To make this your home instead, change it in your Profile.</p>
                 )}
                 {!v.is_mine && !v.can_join && (
                   <p className="cal-sub" style={{ margin: 0 }}>{hasZip ? 'Your zip code is not on this village\u2019s list.' : 'Add your zip code to join.'}</p>

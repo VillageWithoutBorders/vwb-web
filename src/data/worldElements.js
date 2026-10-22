@@ -30,6 +30,25 @@ export const VILLAGE_SPOTS = [
   { k: 'messages', art: '/art/village-path/spot-messages.webp', icon: 'mailbox', label: 'Messages', short: 'Messages', em: '\u{1F4EE}', x: 74, y: 90, s: 1.1 },
 ]
 
+// Your cottage (Oct 22): your own page, the "My Village" tab. One per person,
+// arranged by you, seen only by you. It holds everything you are part of and
+// works as a dashboard (dots show where something new is waiting).
+// Same painted meadow and clearings as the village page.
+export const COTTAGE_SPOTS = [
+  { k: 'home', art: '/art/village-path/spot-sisters.webp', icon: 'bridge', label: 'Your home village', short: 'Home village', x: 63, y: 6 },
+  { k: 'visits', icon: 'houses', label: 'Villages you visit', short: 'Visits', x: 22, y: 11 },
+  { k: 'calendar', icon: 'calendar', label: 'Calendar', short: 'Calendar', x: 22, y: 28 },
+  { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Your organizations', short: 'Organizations', x: 70, y: 20 },
+  { k: 'connections', icon: 'handshake', label: 'Connections', short: 'Connections', x: 23, y: 44 },
+  { k: 'groups', art: '/art/village-path/spot-groups.webp', icon: 'tent', label: 'Your groups', short: 'Groups', x: 76, y: 36 },
+  { k: 'cottage', art: '/art/village-path/spot-cottage.webp', icon: 'cottage', label: 'Cottage Chats', short: 'Cottage Chats', x: 76, y: 50 },
+  { k: 'campfires', icon: 'campfire', label: 'Your Campfires', short: 'Campfires', x: 36, y: 60 },
+  { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'megaphone', label: 'Village chats', short: 'Village chats', x: 22, y: 72 },
+  { k: 'help', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Help', short: 'Help', x: 73, y: 78 },
+  { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'Your corner', short: 'You', x: 24, y: 89, s: 1.1 },
+  { k: 'messages', art: '/art/village-path/spot-messages.webp', icon: 'mailbox', label: 'Messages', short: 'Messages', x: 74, y: 90, s: 1.1 },
+]
+
 // The Organization page (OrgPage.jsx). Same roadmap.
 // members: only members can open it (others see it faded with a lock).
 // organizers: only Heads and organizers see it at all.
