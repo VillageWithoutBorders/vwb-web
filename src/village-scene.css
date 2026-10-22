@@ -307,3 +307,21 @@
   .vs-toolbar { display: flex; flex-direction: column; }
   .vs-tool-main { order: -1; margin-bottom: 8px; }
 }
+
+/* ---------- Name tags (Oct 22) ----------
+   auto: shown on phones; with a mouse they appear when you point at a place.
+   hide: tucked away (pointing or keyboard focus still shows one).
+   show: always shown. While arranging they always show. */
+.vs-scene-path .vs-lab { transition: opacity 0.15s ease, transform 0.15s ease; }
+.vs-names-hide:not(.vs-arranging) .vs-el .vs-lab { opacity: 0; transform: translateY(-4px); }
+@media (hover: hover) and (pointer: fine) {
+  .vs-names-auto:not(.vs-arranging) .vs-el .vs-lab { opacity: 0; transform: translateY(-4px); }
+}
+.vs-scene-path:not(.vs-arranging) .vs-el:hover .vs-lab,
+.vs-scene-path:not(.vs-arranging) .vs-el:focus-visible .vs-lab { opacity: 1; transform: none; }
+.vs-names-toggle { position: absolute; right: 8px; bottom: 8px; z-index: 6; display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 0 12px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(20, 44, 43, 0.82); color: #fff; font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+.vs-names-toggle:hover { background: rgba(20, 44, 43, 0.95); }
+.vs-arranging .vs-names-toggle { display: none; }
+@media (prefers-reduced-motion: reduce) { .vs-scene-path .vs-lab { transition: none; } }
