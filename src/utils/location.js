@@ -17,10 +17,6 @@ const DEVICE_KEY = 'vwb_device_location'
 const SESSION_ZIP_KEY = 'vwb_session_zip'
 const ZIP_LABEL_KEY = 'vwb_zip_label'
 
-function round2(n) {
-  return Math.round(n * 100) / 100
-}
-
 function readSession(key) {
   try { return JSON.parse(sessionStorage.getItem(key) || 'null') } catch { return null }
 }
@@ -32,34 +28,8 @@ function writeSession(key, value) {
   } catch { /* private mode: fine, it just won't be remembered */ }
 }
 
-/**
- * Asks the phone for its location. Only call this when the person tapped a
- * button asking for it. Returns { lat, lng, source: 'browser' } rounded to
- * about half a mile, or null if they said no or it failed. Never a guess.
- */
-export function getCurrentPosition() {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) { resolve(null); return }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: round2(pos.coords.latitude), lng: round2(pos.coords.longitude), source: 'browser' }),
-      (err) => { console.warn('Location not shared:', err.message); resolve(null) },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
-    )
-  })
-}
-
-/**
- * The tap-to-share version: asks the phone, and if it works, remembers it for
- * this visit only so other pages can use it too.
- */
-export async function shareDeviceLocation() {
-  const loc = await getCurrentPosition()
-  if (loc) {
-    writeSession(SESSION_ZIP_KEY, null)
-    writeSession(DEVICE_KEY, { lat: loc.lat, lng: loc.lng })
-  }
-  return loc ? { ...loc, source: 'device', label: 'your current location' } : null
-}
+// VWB never asks the phone where it is (Oct 22). Places come from zip codes
+// and town names only. Any phone location left over from before is ignored.
 
 /**
  * Use a zip for this visit only, without saving it anywhere.
@@ -78,16 +48,12 @@ export function forgetVisitLocation() {
 
 /**
  * Where to look for this person, without asking the phone.
- * 1. A location they shared this visit (the phone button, or a zip they
- *    chose not to save).
+ * 1. A zip they chose for this visit without saving it.
  * 2. The center of the zip saved on their profile.
  * 3. Otherwise null. The page should show <LocationPrompt />.
  */
 export function getMyLocation(profile) {
-  const device = readSession(DEVICE_KEY)
-  if (device && device.lat != null) {
-    return { lat: device.lat, lng: device.lng, source: 'device', label: 'your current location' }
-  }
+  writeSession(DEVICE_KEY, null)
   const visitZip = readSession(SESSION_ZIP_KEY)
   if (visitZip && visitZip.lat != null) {
     return { lat: visitZip.lat, lng: visitZip.lng, source: 'visit-zip', label: visitZip.label }

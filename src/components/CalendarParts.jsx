@@ -2,7 +2,6 @@ import Icon from './Icon'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DISTANCE_OPTIONS, groupByDay, hasEnded, timeRange, VISIBILITY, placeFromZip } from '../utils/calendar'
-import { getCurrentPosition } from '../utils/location'
 
 // Where to look: a zip code (any US zip), "Use my location" (this visit
 // only), or "Back to my area" (the member's saved area), plus how far.
@@ -29,15 +28,6 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
     setZip('')
     setOpen(false)
     onOriginChange(place)
-  }
-
-  async function useMyLocation() {
-    setBusy('me'); setNote('')
-    const loc = await getCurrentPosition()
-    setBusy('')
-    if (!loc) { setNote("We couldn't get your location. Enter a zip code instead."); return }
-    setOpen(false)
-    onOriginChange({ name: 'your current location', lat: loc.lat, lng: loc.lng, kind: 'me' })
   }
 
   return (
@@ -67,7 +57,6 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
       </form>
       {note && <p id="cal-zip-note" className="cal-error" role="alert">{note}</p>}
       <div className="cal-loc-actions">
-        <button type="button" className="btn btn-outline" onClick={useMyLocation} disabled={busy === 'me'}>{busy === 'me' ? 'Finding you...' : 'Use my location'}</button>
         {homeArea && origin?.kind !== 'area' && (
           <button type="button" className="btn btn-outline" onClick={() => onOriginChange(homeArea)}>Back to my area</button>
         )}

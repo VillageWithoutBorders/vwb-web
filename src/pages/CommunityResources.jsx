@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import { getCurrentPosition, distanceMiles } from '../utils/location'
+import { distanceMiles } from '../utils/location'
 import { startingOrigin } from '../utils/calendar'
 import { CATEGORIES, CAT_ICON_FILES, resourceCats, resourceMatches, currentCategory } from '../utils/resourceCategories'
 import '../find-help.css'
@@ -73,7 +73,6 @@ export default function CommunityResources() {
   const [subOrgId, setSubOrgId] = useState('')
   const [subLat, setSubLat] = useState(null)
   const [subLng, setSubLng] = useState(null)
-  const [capturingSubLocation, setCapturingSubLocation] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
@@ -341,15 +340,6 @@ export default function CommunityResources() {
       return
     }
     await Promise.all([loadResources(), loadEditHistory()])
-  }
-
-  async function captureSubLocation() {
-    setCapturingSubLocation(true)
-    const loc = await getCurrentPosition()
-    setCapturingSubLocation(false)
-    if (!loc) { tell("We couldn't get your phone's location. You can type the address instead.", { tone: 'error' }); return }
-    setSubLat(loc.lat)
-    setSubLng(loc.lng)
   }
 
   async function submitResource() {
@@ -762,11 +752,6 @@ export default function CommunityResources() {
                     <input id="sub-url" style={fieldStyle} placeholder="e.g. https://example.org" value={subUrl} onChange={e => setSubUrl(e.target.value)} />
                     <label htmlFor="sub-address" style={labelStyle}>Address (optional)</label>
                     <input id="sub-address" style={fieldStyle} placeholder="e.g. 123 Main St, Ringgold, GA" value={subAddress} onChange={e => setSubAddress(e.target.value)} />
-                    {subAddress.trim() && (
-                      <button type="button" onClick={captureSubLocation} disabled={capturingSubLocation} style={{ display: 'block', width: '100%', padding: '0.65rem', minHeight: '44px', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>
-                        {capturingSubLocation ? 'Getting your location...' : (subLat != null ? <><Icon name="pin" /> Location captured. Tap to update.</> : <><Icon name="pin" /> Pin this address (optional, helps neighbors see how far away it is)</>)}
-                      </button>
-                    )}
                     <label htmlFor="sub-hood" style={labelStyle}>Neighborhood or area (optional)</label>
                     <input id="sub-hood" style={fieldStyle} placeholder="Town or county" value={subHood} onChange={e => setSubHood(e.target.value)} />
                     <label htmlFor="sub-requirements" style={labelStyle}>What to bring or know before you go (optional)</label>

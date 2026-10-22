@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import { getCurrentPosition, getMyLocation } from '../utils/location'
+import { getMyLocation } from '../utils/location'
 import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
 
@@ -98,10 +98,10 @@ export default function CreateEvent() {
 
   async function createEvent() {
     setSubmitting(true)
-    // The phone's location if they allow it (rounded), otherwise the area they chose. Never a guess.
+    // The center of the reporter's zip code area. VWB never asks the phone where it is.
     let lat = null
     let lng = null
-    const loc = (await getCurrentPosition()) || getMyLocation(profile)
+    const loc = getMyLocation(profile)
     if (loc) { lat = loc.lat; lng = loc.lng }
 
     const { data, error: insertErr } = await supabase.from('emergency_events').insert({
