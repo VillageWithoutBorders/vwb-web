@@ -37,8 +37,8 @@ export const VILLAGE_SPOTS = [
 // Same painted meadow and clearings as the village page.
 export const COTTAGE_SPOTS = [
   { k: 'home', art: '/art/village-path/spot-sisters.webp', icon: 'bridge', label: 'Your home village', short: 'Home village', x: 63, y: 6 },
-  { k: 'visits', art: '/art/life/life-cottage-lit.webp', icon: 'houses', label: 'Villages you visit', short: 'Visits', x: 22, y: 11 },
-  { k: 'calendar', art: '/art/life/life-sign.webp', icon: 'calendar', label: 'Calendar', short: 'Calendar', x: 22, y: 28 },
+  { k: 'visits', art: '/art/village-path/spot-visits.webp', icon: 'houses', label: 'Villages you visit', short: 'Visits', x: 22, y: 11 },
+  { k: 'calendar', art: '/art/village-path/spot-calendar.webp', icon: 'calendar', label: 'Calendar', short: 'Calendar', x: 22, y: 28 },
   { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Your organizations', short: 'Organizations', x: 70, y: 20 },
   { k: 'connections', art: '/art/village-path/spot-sidechats.webp', icon: 'handshake', label: 'Connections', short: 'Connections', x: 23, y: 44 },
   { k: 'groups', art: '/art/village-path/spot-groups.webp', icon: 'tent', label: 'Your groups', short: 'Groups', x: 76, y: 36 },
@@ -55,10 +55,10 @@ export const COTTAGE_SPOTS = [
 // organizers: only Heads and organizers see it at all.
 export const ORG_SPOTS = [
   { k: 'rules', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 14, y: 27, members: true },
-  { k: 'where', art: '/art/life/life-cottage-lit.webp', icon: 'houses', label: 'Where we work', short: 'Where', em: '\u{1F3D8}️', x: 32, y: 17 },
+  { k: 'where', art: '/art/village-path/spot-where.webp', icon: 'houses', label: 'Where we work', short: 'Where', em: '\u{1F3D8}️', x: 32, y: 17 },
   { k: 'links', art: '/art/village-path/spot-sisters.webp', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
-  { k: 'events', art: '/art/village-path/spot-chat.webp', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
-  { k: 'news', art: '/art/life/life-sign.webp', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
+  { k: 'events', art: '/art/village-path/spot-calendar.webp', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
+  { k: 'news', art: '/art/village-path/spot-news.webp', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
   { k: 'fires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52, members: true },
   { k: 'members', art: '/art/village-path/spot-orgs.webp', icon: 'card', label: 'Members', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
   { k: 'needs', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Needs and offers', short: 'Needs', em: '\u{1F91D}', x: 15, y: 74, members: true },
@@ -71,14 +71,14 @@ export const ORG_SPOTS = [
 // and lots as ORG_SPOTS. Groups say Keeper and Helper where organizations say Head and Organizer.
 export const GROUP_SPOTS = [
   { k: 'rules', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 14, y: 27, members: true },
-  { k: 'where', art: '/art/life/life-cottage-lit.webp', icon: 'houses', label: 'Where we cover', short: 'Where', em: '\u{1F3D8}', x: 32, y: 17 },
+  { k: 'where', art: '/art/village-path/spot-where.webp', icon: 'houses', label: 'Where we cover', short: 'Where', em: '\u{1F3D8}', x: 32, y: 17 },
   { k: 'links', art: '/art/village-path/spot-sisters.webp', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
-  { k: 'events', art: '/art/village-path/spot-chat.webp', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
-  { k: 'news', art: '/art/life/life-sign.webp', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
+  { k: 'events', art: '/art/village-path/spot-calendar.webp', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
+  { k: 'news', art: '/art/village-path/spot-news.webp', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
   { k: 'fires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52, members: true },
   { k: 'members', art: '/art/village-path/spot-orgs.webp', icon: 'card', label: 'Members and what we bring', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
   { k: 'ready', art: '/art/village-path/spot-groups.webp', icon: 'siren', label: 'Ready to respond', short: 'Respond', em: '\u{1F6A8}', x: 15, y: 74 },
-  { k: 'share', art: '/art/village-build/deco-well.webp', icon: 'box', label: 'Supplies we keep', short: 'Supplies', em: '\u{1F4E6}', x: 41, y: 74 },
+  { k: 'share', art: '/art/village-path/spot-supplies.webp', icon: 'box', label: 'Supplies we keep', short: 'Supplies', em: '\u{1F4E6}', x: 41, y: 74 },
   { k: 'involved', art: '/art/village-path/spot-cottage.webp', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
   { k: 'tools', art: '/art/village-path/spot-keeper.webp', icon: 'toolbox', label: 'Keeper tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
 ]
