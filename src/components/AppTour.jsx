@@ -97,11 +97,11 @@ const ALL_STEPS = [
   },
   {
     need: 'village',
-    route: VILLAGE,
+    route: '/village',
     target: '[data-tour="village-arrange"]',
     icon: '\u{1F333}',
-    title: 'Make it yours',
-    body: 'Move places, add trees, ponds, and bridges, draw roads and streams, and pick a background. Your map is just for you. Nobody else sees your changes.',
+    title: 'Your cottage',
+    body: 'The Village tab opens your cottage: your own map with your home village, chats, organizations, and more. Tap Arrange and build to move things, add trees and bridges, and draw roads. Only you see it.',
   },
   {
     route: '/home',
@@ -476,8 +476,10 @@ export default function AppTour() {
         <div className="tour-progress" aria-hidden="true"><span style={{ width: pct + '%' }} /></div>
 
         <div className="tour-card" key={step.title}>
-          <div className="tour-icon" aria-hidden="true"><Icon name={step.icon} /></div>
-          <h2 id="tourTitle" className="tour-title" tabIndex={-1} ref={headingRef}>{step.title}</h2>
+          <div className="tour-head">
+            <span className="tour-icon" aria-hidden="true"><Icon name={step.icon} /></span>
+            <h2 id="tourTitle" className="tour-title" tabIndex={-1} ref={headingRef}>{step.title}</h2>
+          </div>
           <p id="tourBody" className="tour-body">{step.body}</p>
           {step.practice && step.practice !== 'intro' && <SampleCard kind={step.practice} />}
           {step.target && rect && <p className="tour-hint">Look for the ringed spot on your screen.</p>}

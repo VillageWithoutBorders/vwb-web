@@ -6142,3 +6142,13 @@ a:not([class]) { color: var(--accent); }
 input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 .dash-panel h2, .dash-panel h3 { scroll-margin-top: calc(var(--header-height, 3.75rem) + 96px); }
 .dash-panel { scroll-margin-top: calc(var(--header-height, 3.75rem) + 96px) !important; }
+
+/* App tour card on phones (Oct 22): picture beside the title, and Back/Next always in view
+   at the bottom of the card, so nobody has to scroll inside it to keep going. */
+.tour-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+.tour-head .tour-icon { margin: 0; flex: none; display: flex; }
+.tour-head .tour-icon .vwb-icon { width: 40px; height: 40px; vertical-align: 0; }
+.tour-head .tour-title { margin: 0; }
+.tour-sheet { padding-bottom: 0; }
+.tour-sheet .tour-buttons { position: sticky; bottom: 0; margin: 0 -1.25rem; padding: 0.75rem 1.25rem 1rem; background: var(--white); border-top: 1px solid var(--border); }
+.tour-hint { margin-bottom: 0.5rem; }
