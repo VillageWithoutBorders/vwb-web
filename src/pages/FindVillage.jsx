@@ -6,9 +6,10 @@ import VillageRiskDialog from '../components/VillageRiskDialog'
 import VillageGuestInvites from '../components/VillageGuestInvites'
 import BackLink from '../components/BackLink'
 
-// Find village chats, join as many as cover your zip code, or start your own.
+// Join or start a village. Oct 22: the list of villages lives on the Village
+// Network page (/villages), the list twin of the globe. This page is the join
+// step (?join=<id>, with the warning) and the start-a-village step.
 // A village is a list of zip codes. You can join when your zip is on the list.
-// Shows village names, towns, and rough sizes only. Never people.
 // Joining or starting always goes through the risk warning first.
 
 const REACH_CHOICES = [5, 10, 15, 25]
@@ -19,7 +20,7 @@ const WORDS = {
   noprofile: 'We could not find your profile. Try again in a moment.',
   needzip: 'Add your zip code on your Profile first, so we can find villages near you.',
   toofar: 'Your zip code is not on that village\u2019s list, so you cannot join it.',
-  exists: 'A village already centers on your zip code. Search for it and join that one.',
+  exists: 'A village already centers on your zip code. Find it on the Village Network and join that one.',
   already: 'You already started 3 villages. Ask an admin if one needs changes.',
   badzip: 'One of those zip codes was not found. Try again.',
   toomany: 'A village can have up to 40 zip codes. Untick a few and try again.',
@@ -27,18 +28,11 @@ const WORDS = {
   removed: 'Members of this village chat asked for you to be removed. If you think this is a mistake, contact VWB.',
 }
 
-function countText(v) {
-  if (v.just_starting || v.member_count == null) return 'Just getting started'
-  return v.member_count + ' neighbors'
-}
-
 export default function FindVillage() {
   const { user, profile, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [welcome, setWelcome] = useState(null)
-  const [text, setText] = useState('')
-  const [searched, setSearched] = useState('')
   const [villages, setVillages] = useState([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -81,7 +75,6 @@ export default function FindVillage() {
       setVillages([]); setLoading(false); return
     }
     setVillages(data || [])
-    setSearched(term || '')
     setLoading(false)
   }
 
@@ -94,7 +87,7 @@ export default function FindVillage() {
     const v = villages.find(x => x.id === joinParam)
     if (v && v.can_join && !v.is_mine) { if (firstJoinCovered) agreeAndGo({ type: 'join', village: v }); else setRisk({ type: 'join', village: v }) }
     else if (v && v.is_mine) navigate(v.board_id ? '/campfire?board=' + v.board_id : '/campfire', { replace: true })
-    else if (!v) { setError('We could not open that village. Search for it below.'); navigate('/find-village', { replace: true }) }
+    else if (!v) { setError('We could not open that village. Find it on the Village Network.'); navigate('/find-village', { replace: true }) }
   }, [joinParam, loading, villages])
 
   // Coming from the first-run village screen with ?start=1: open the start form.
@@ -138,16 +131,6 @@ export default function FindVillage() {
     setChecking(false)
     if (why) { setStartError(why); return }
     loadReach(reach)
-  }
-
-  function search(e) {
-    e.preventDefault()
-    load(text.trim())
-  }
-
-  // Open a village chat you already joined.
-  function openChat(v) {
-    navigate(v.board_id ? '/campfire?board=' + v.board_id : '/campfire')
   }
 
   // After joining, ask once whether they want notifications for that chat, then
@@ -206,7 +189,6 @@ export default function FindVillage() {
     setBusy(false)
   }
 
-  function join(v) { setRiskError(''); if (firstJoinCovered) { agreeAndGo({ type: 'join', village: v }); return } setRisk({ type: 'join', village: v }) }
   async function startOne() {
     if (busy) return
     setRiskError(''); setStartError('')
@@ -220,10 +202,9 @@ export default function FindVillage() {
   // Your own zip code is always on the list, so it always counts.
   const tickedCount = suggested.filter(r => ticked[r.zip] || r.zip === profile?.zip_code).length
 
-  const searching = searched !== ''
-  // With no search, show only villages you can join or already belong to.
-  const shown = searching ? villages : villages.filter(v => v.can_join || v.is_mine)
-  const nothingNear = !loading && !error && !searching && hasZip && shown.length === 0
+  // Villages you can join or already belong to (the full list is on the Village Network).
+  const shown = villages.filter(v => v.can_join || v.is_mine)
+  const nothingNear = !loading && !error && hasZip && shown.length === 0
 
   if (welcome) {
     return (
@@ -243,9 +224,9 @@ export default function FindVillage() {
   return (
     <div className="cal-page hub-page">
       <BackLink fallback="/campfire" fallbackLabel="Village Square" />
-      <h1 className="hub-org-name">Find village chats</h1>
+      <h1 className="hub-org-name">Join or start a village</h1>
       <p className="cal-sub">A village chat is for neighbors in the zip codes it covers. Anyone with an account can join a village that has their zip code. You can join more than one, especially where villages overlap. Any neighbor can start one.</p>
-      <p style={{ margin: '0 0 0.75rem' }}><Link to="/villages">See the village map</Link></p>
+      <Link to="/villages" className="btn btn-primary btn-full" style={{ minHeight: '48px', margin: '0 0 0.75rem' }}>See villages near you</Link>
 
       <VillageGuestInvites />
 
@@ -257,45 +238,10 @@ export default function FindVillage() {
         </section>
       )}
 
-      <form onSubmit={search} style={{ display: 'flex', gap: '0.5rem', margin: '0.75rem 0' }}>
-        <label htmlFor="fv-search" className="sr-only">Search villages by name</label>
-        <input id="fv-search" type="search" value={text} onChange={e => setText(e.target.value)} placeholder="Search by town or village name" autoComplete="off" style={{ flex: 1, minWidth: 0, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
-        <button type="submit" className="btn btn-outline" style={{ minHeight: '44px', flex: 'none' }}>Search</button>
-      </form>
-
       {error && <p className="form-error" role="alert">{error}</p>}
       {loading && <p className="cal-empty">Loading...</p>}
 
       <div aria-live="polite">
-        {!loading && !error && searching && shown.length === 0 && <p className="cal-empty">No villages match &quot;{searched}&quot;.</p>}
-
-        {!loading && shown.length > 0 && (
-          <section className="hub-section" aria-labelledby="fv-list">
-            <div className="hub-section-head"><h2 id="fv-list">{searching ? 'Villages that match' : 'Villages near you'}</h2></div>
-            {shown.map(v => (
-              <div key={v.id} className="cal-card" style={{ display: 'block' }}>
-                <span className="cal-card-title">{v.name}{profile?.home_village_id === v.id ? ' · your home' : v.is_mine ? ' · joined' : ''}</span>
-                <span className="cal-card-meta" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                  {countText(v)}{v.zip_count ? ' · ' + v.zip_count + ' zip codes' : ''}{v.miles_away != null ? ' · about ' + v.miles_away + ' miles away' : ''}
-                </span>
-                {v.towns && <span className="cal-card-meta" style={{ display: 'block', marginBottom: '0.5rem' }}>Covers {v.towns}</span>}
-                {v.is_mine && (
-                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => openChat(v)}>Open this village chat</button>
-                )}
-                {!v.is_mine && v.can_join && (
-                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => join(v)}>{profile?.home_village_id && profile.home_village_id !== v.id ? 'Join as a guest' : 'Join this village chat'}</button>
-                )}
-                {!v.is_mine && v.can_join && profile?.home_village_id && profile.home_village_id !== v.id && (
-                  <p className="cal-sub" style={{ margin: '0.4rem 0 0' }}>You already have a home village. Here you can read and post as a guest. To make this your home instead, change it in your Profile.</p>
-                )}
-                {!v.is_mine && !v.can_join && (
-                  <p className="cal-sub" style={{ margin: 0 }}>{hasZip ? 'Your zip code is not on this village\u2019s list.' : 'Add your zip code to join.'}</p>
-                )}
-              </div>
-            ))}
-          </section>
-        )}
-
         {nothingNear && <p className="cal-sub">No village covers your zip code yet. You can start one below.</p>}
 
         {hasZip && !loading && !starting && (

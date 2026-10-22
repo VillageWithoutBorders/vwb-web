@@ -615,6 +615,7 @@ export default function VillageScene() {
   }
 
   const mine = !!(village && village.is_mine)
+  const isHome = !cottage && !!id && profile?.home_village_id === id
   const nameOf = (vid) => (allVillages.find((v) => v.id === vid) || {}).name || 'A village'
 
   function info(k) {
@@ -637,7 +638,7 @@ export default function VillageScene() {
       }
       case 'skillshare': return { sub: 'Help nearby: requests and offers' }
       case 'neighbors': return { sub: village && village.member_count ? village.member_count + ' neighbors live here' : 'A few neighbors so far' }
-      case 'cottage': return { sub: 'Private chats with people you chose' }
+      case 'cottage': return { sub: isHome ? 'Your house: your own map and private chats' : 'Private chats with people you chose' }
       case 'me': return { sub: 'Your profile, vouches, and settings' }
       case 'messages': return { sub: unreadCount ? unreadCount + ' unread' : 'Requests and private messages', badge: unreadCount }
       case 'orgs': { const n = orgs.filter((o) => o.kind !== 'group').length; return { sub: n ? n + ' working here' : 'None working here yet' } }
@@ -660,7 +661,8 @@ export default function VillageScene() {
         return
       case 'charter': navigate('/village/' + id + '/charter'); return
       case 'skillshare': navigate('/skillshare'); return
-      case 'cottage': navigate('/messages'); return
+      // In your home village, the cottage is your house: your own private map.
+      case 'cottage': navigate(isHome ? '/cottage' : '/messages'); return
       case 'messages': navigate('/messages'); return
       case 'me': navigate('/me'); return
       default: openSheet({ k: spot.k })
@@ -881,10 +883,12 @@ export default function VillageScene() {
 
       {cottage && <div className={'vs-arrange' + (arrange ? ' vs-arrange-on' : '')}>
         {arrange && (
-          <div className="vs-toolbar" role="region" aria-label="Arrange and build tools">
+          <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '')} role="region" aria-label="Arrange and build tools">
+            {/* Oct 22: on phones the tools are a rail on the right side; this panel slides out beside it and scrolls. */}
+            <div className="vs-toolpanel">
             {(trayOpen || (tool === 'move' && picked)) && (
               <button type="button" className="vs-drawer-close" onClick={() => { setTrayOpen(false); setPicked(null) }}>
-                <ToolIcon name="down" /><span>{trayOpen ? 'Close Add' : 'Close'}</span>
+                <ToolIcon name="right" /><span>{trayOpen ? 'Close Add' : 'Close'}</span>
               </button>
             )}
             {layoutNote && <p className="vs-tool-note" role="status">{layoutNote}</p>}
@@ -975,6 +979,7 @@ export default function VillageScene() {
                 </div>
               </div>
             )}
+            </div>
 
             <div className="vs-tool-main" role="group" aria-label="What to do">
               <button type="button" className={'vs-tool' + (tool === 'move' && !trayOpen ? ' on' : '')} aria-pressed={tool === 'move' && !trayOpen} onClick={() => { setTool('move'); setTrayOpen(false) }}><ToolIcon name="move" /><span>Move</span></button>
