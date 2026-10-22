@@ -53,6 +53,7 @@ const CalendarEmbed = lazyPage(() => import('./pages/CalendarEmbed'))
 const EventPage = lazyPage(() => import('./pages/EventPage'))
 const Groups = lazyPage(() => import('./pages/Groups'))
 const VillageScene = lazyPage(() => import('./pages/VillageScene'))
+const VillageHome = lazyPage(() => import('./pages/VillageHome'))
 const KeeperDashboard = lazyPage(() => import('./pages/KeeperDashboard'))
 const Ambassador = lazyPage(() => import('./pages/Ambassador'))
 const BecomeAdmin = lazyPage(() => import('./pages/BecomeAdmin'))
@@ -219,7 +220,8 @@ function AppRoutes() {
         <Route path="village/:id/keeper" element={<KeeperDashboard />} />
         <Route path="village/:id/charter" element={<VillageCharter />} />
         <Route path="world" element={<World />} />
-        <Route path="village" element={<VillageScene />} />
+        <Route path="village" element={<VillageHome />} />
+        <Route path="cottage" element={<VillageScene />} />
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="u/:userId" element={<PublicProfile />} />
         <Route path="messages" element={<MessagesPage />} />

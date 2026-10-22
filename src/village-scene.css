@@ -438,3 +438,33 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 .vs-chip-btn-towns:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 2px; }
 .vs-towns-list { margin: 8px 0 0; color: var(--vs-muted); font-size: 0.95rem; line-height: 1.45; }
 @media (pointer: coarse) { .vs-chip-btn-towns { min-height: 44px; } }
+
+/* ---------- Phones and tablets (Oct 22, Jade): map first, side drawer ----------
+   The map loads at the top of the page, right under the "where you are" line.
+   While arranging, the tools are a rail on the right side of the screen.
+   Add, a picked place, or drawing slides a panel out beside the rail.
+   Both scroll on their own, so nothing is cut off on a small screen. */
+@media (max-width: 1023px) {
+  .vs-page.vs-page-path { display: flex; flex-direction: column; }
+  .vs-page-path > .vs-top { order: -2; }
+  .vs-page-path > .vs-scene-path { order: -1; }
+
+  .vs-page-path:has(.vs-arrange-on) { padding-bottom: 16px; padding-right: 76px; }
+  .vs-toolbar {
+    top: calc(var(--header-height) + 8px); bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px) + 8px);
+    left: auto; right: 0; width: 72px; max-width: none; max-height: none; margin: 0; padding: 0;
+    display: flex; flex-direction: row; align-items: stretch; overflow: hidden;
+    border-top: 0; border-left: 2px solid var(--vs-gold); border-radius: 16px 0 0 16px;
+    box-shadow: -6px 0 20px rgba(0, 0, 0, 0.35);
+  }
+  .vs-toolbar-wide { width: calc(72px + min(250px, 100vw - 120px)); }
+  .vs-toolpanel { display: none; flex: 1 1 auto; min-width: 0; padding: 8px; overflow-y: auto; overscroll-behavior: contain; }
+  .vs-toolbar-wide .vs-toolpanel { display: block; border-right: 1px solid var(--vs-line); }
+  .vs-tool-main { flex: none; width: 72px; box-sizing: border-box; padding: 6px; grid-template-columns: 1fr; align-content: start; gap: 6px; overflow-y: auto; overscroll-behavior: contain; }
+  .vs-drawer-close { top: -8px; }
+  .vs-grounds { grid-template-columns: 1fr 1fr; }
+  .vs-palette { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
+}
+@media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
+  .vs-toolbar { transition: width 0.2s ease; }
+}

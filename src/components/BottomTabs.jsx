@@ -11,7 +11,7 @@ import { useSimpleView } from '../utils/simpleView'
 //   Neighbor: Emergency.  One role: that role's tools.  More than one: My tools (a short list).
 
 const HELP = ['/help-doors', '/skillshare', '/tasks', '/ask', '/post-offer', '/community/resources']
-const VILLAGE = ['/village', '/community', '/villages', '/find-village', '/campfire', '/orgs', '/start-group']
+const VILLAGE = ['/village', '/cottage', '/community', '/villages', '/find-village', '/campfire', '/orgs', '/start-group']
 const under = (path, list) => list.some((p) => path === p || path.startsWith(p + '/'))
 
 export default function BottomTabs() {
