@@ -4305,7 +4305,7 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 
 .ban-row-btn {
   padding: 0.35rem 0.6rem;
-  min-height: 32px;
+  min-height: 44px;
   border: 1px solid var(--danger);
   border-radius: 6px;
   background: none;

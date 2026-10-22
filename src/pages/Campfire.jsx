@@ -737,7 +737,7 @@ export default function Campfire() {
                 <div key={m.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0.5rem 0.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--warn)' }}>{names[m.user_id]?.name || 'Neighbor'}</span>
-                    {canPin && <button onClick={() => togglePin(m)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8125rem', cursor: 'pointer', padding: 0, minHeight: '32px' }}>Unpin</button>}
+                    {canPin && <button onClick={() => togglePin(m)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0 0.25rem', minHeight: '44px', margin: '-0.375rem 0' }}>Unpin</button>}
                   </div>
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.4 }}>{m.body}</p>
                 </div>
@@ -820,7 +820,7 @@ export default function Campfire() {
                     aria-pressed={!!sparks[msg.id]?.mine}
                     aria-label={SPARK_NAME + ': ' + SPARK_HINT + (sparks[msg.id]?.n ? '. ' + sparks[msg.id].n + ' so far' : '')}
                     title={SPARK_NAME + ': ' + SPARK_HINT}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', minWidth: '44px', minHeight: '32px', margin: '-0.4rem 0', padding: '0 0.3rem', justifyContent: 'center', borderRadius: '999px', border: 'none', background: sparks[msg.id]?.mine ? 'rgba(255,200,60,0.28)' : 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.8125rem', opacity: sparks[msg.id]?.mine || sparks[msg.id]?.n ? 1 : 0.55 }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', minWidth: '44px', minHeight: '44px', margin: '-0.775rem 0', padding: '0 0.3rem', justifyContent: 'center', borderRadius: '999px', border: 'none', background: sparks[msg.id]?.mine ? 'rgba(255,200,60,0.28)' : 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.8125rem', opacity: sparks[msg.id]?.mine || sparks[msg.id]?.n ? 1 : 0.55 }}
                   ><span aria-hidden="true" style={{ filter: sparks[msg.id]?.mine ? 'none' : 'grayscale(1)' }}><Icon name="star" /></span>{sparks[msg.id]?.n > 0 && <span>{sparks[msg.id].n}</span>}</button>
                   {(
                     <button
@@ -831,7 +831,7 @@ export default function Campfire() {
                         if (!closing) positionMsgMenu(e, isMe ? 'right' : 'left')
                       }}
                       aria-label="Message options"
-                      style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1rem', padding: 0, marginLeft: 'auto', lineHeight: 1, minWidth: '44px', minHeight: '32px', margin: '-0.4rem -0.5rem -0.4rem auto' }}
+                      style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1rem', padding: 0, marginLeft: 'auto', lineHeight: 1, minWidth: '44px', minHeight: '44px', margin: '-0.775rem -0.5rem -0.775rem auto' }}
                     >&#8943;</button>
                   )}
                 </div>
