@@ -195,16 +195,83 @@ export default function VillageScene() {
   const layout = world.spots
   // The account's saved layout wins once the profile has loaded.
   const accountLayout = profile?.village_layout
+  // Village pages (Oct 22, vwb-map-layouts.sql): the Keeper and Helpers set a shared
+  // look for everyone, and anyone can arrange their own view on top. You see your own
+  // view if you made one, else the shared look, else the usual village.
+  const [arrangeFor, setArrangeFor] = useState('me') // me | everyone
+  const mapLayouts = useRef({ own: null, shared: null })
+  const [mapLoaded, setMapLoaded] = useState(0)
   useEffect(() => {
-    if (!accountLayout || typeof accountLayout !== 'object') return
-    setWorld(cottage ? fromSaved(accountLayout) : { ...fromSaved(null), labels: fromSaved(accountLayout).labels })
-  }, [accountLayout, cottage]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (cottage || !id || !user) return
+    let alive = true
+    mapLayouts.current = { own: null, shared: null }
+    Promise.all([
+      supabase.from('map_layouts').select('layout').eq('map_kind', 'village').eq('map_id', id).maybeSingle(),
+      supabase.from('map_shared_layouts').select('layout').eq('map_kind', 'village').eq('map_id', id).maybeSingle(),
+    ]).then(([own, shared]) => {
+      if (!alive) return
+      // Before vwb-map-layouts.sql is run the tables are missing: show the usual village.
+      ;[own, shared].forEach((r) => { if (r.error && !['42P01', 'PGRST205'].includes(r.error.code)) console.error('Failed to load the village map layout:', r.error) })
+      mapLayouts.current = { own: (own.data && own.data.layout) || null, shared: (shared.data && shared.data.layout) || null }
+      setMapLoaded((n) => n + 1)
+    })
+    return () => { alive = false }
+  }, [cottage, id, user?.id])
+  useEffect(() => {
+    if (cottage) { if (accountLayout && typeof accountLayout === 'object') setWorld(fromSaved(accountLayout)); return }
+    if (arrange) return
+    const { own, shared } = mapLayouts.current
+    setWorld({ ...fromSaved(own || shared), labels: fromSaved(accountLayout).labels })
+  }, [accountLayout, cottage, mapLoaded, arrange]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Name tags are one choice for every map, saved with your account.
+  function saveLabels(labels) {
+    if (cottage) { saveWorld({ ...worldRef.current, labels }); return }
+    const next = { ...worldRef.current, labels }
+    setWorld(next); worldRef.current = next
+    const acct = { ...fromSaved(accountLayout), labels }
+    const empty = Object.keys(acct.spots).length === 0 && acct.decor.length === 0 && acct.roads.length === 0 && acct.streams.length === 0 && acct.ground === 'path' && acct.labels === 'auto'
+    supabase.rpc('set_my_village_layout', { p_layout: empty ? null : acct }).then(({ error }) => {
+      if (error) { console.error('Failed to save name tags choice:', error); return }
+      if (refreshProfile) refreshProfile()
+    })
+  }
+
+  // A village page's own view or shared look.
+  function saveMapLayout(next) {
+    const forWho = arrangeFor
+    const body = { spots: next.spots, decor: next.decor, roads: next.roads, streams: next.streams, ground: next.ground }
+    const empty = Object.keys(body.spots).length === 0 && body.decor.length === 0 && body.roads.length === 0 && body.streams.length === 0 && body.ground === 'path'
+    const shared = forWho === 'everyone'
+    // Keep it here right away, so tapping Done before it saves still shows it.
+    mapLayouts.current = { ...mapLayouts.current, [shared ? 'shared' : 'own']: empty ? null : body }
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(async () => {
+      const { error } = await supabase.rpc(shared ? 'set_map_shared_layout' : 'set_my_map_layout', { p_kind: 'village', p_id: id, p_layout: empty ? null : body })
+      if (error) {
+        console.error('Failed to save the village map:', error)
+        setLayoutNote(error.code === '42501' ? error.message : error.code === 'PGRST202' ? 'This needs a database update first, so your changes are not saved yet.' : 'Could not save. Try again in a moment.')
+        return
+      }
+    }, 800)
+  }
+
+  function startArrange(forWho) {
+    if (!cottage) {
+      const { own, shared } = mapLayouts.current
+      setWorld({ ...fromSaved(forWho === 'everyone' ? shared : (own || shared)), labels: worldRef.current.labels })
+    }
+    historyRef.current = []; setCanUndo(false)
+    setArrangeFor(forWho); setArrange(true); setTool('move'); setTrayTab('pieces'); setLayoutNote(''); setPicked(null)
+    setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }), 120)
+  }
+
   function saveWorld(nextIn) {
     setWorld(nextIn)
     worldRef.current = nextIn
-    // On a village page only the name tags choice is yours; your cottage map stays as it is.
-    const next = cottage ? nextIn : { ...fromSaved(accountLayout), labels: nextIn.labels }
-    if (cottage) { try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode */ } }
+    if (!cottage) { saveMapLayout(nextIn); return }
+    const next = nextIn
+    try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode */ }
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
       const empty = Object.keys(next.spots).length === 0 && next.decor.length === 0 && next.roads.length === 0 && next.streams.length === 0 && next.ground === 'path' && next.labels === 'auto'
@@ -331,7 +398,20 @@ export default function VillageScene() {
     catch { setLayoutNote('Could not copy. Here it is to copy by hand:\n' + text) }
   }
   async function resetLayout() {
-    if (!(await askConfirm('Go back to the usual village? Your pieces, roads and streams will be taken away. You can tap Undo right after if you change your mind.'))) return
+    if (!cottage && arrangeFor === 'me') {
+      if (!(await askConfirm('Go back to how ' + (village ? village.name : 'this village') + ' looks for everyone? Your own view will be taken away.'))) return
+      remember()
+      const back = { ...fromSaved(mapLayouts.current.shared), labels: worldRef.current.labels }
+      setWorld(back); worldRef.current = back; setPicked(null); setTrayOpen(false)
+      clearTimeout(saveTimer.current)
+      const { error } = await supabase.rpc('set_my_map_layout', { p_kind: 'village', p_id: id, p_layout: null })
+      if (error) { console.error('Failed to remove your view:', error); setLayoutNote('Could not do that. Try again in a moment.'); return }
+      mapLayouts.current = { ...mapLayouts.current, own: null }
+      setLayoutNote('Back to the shared look.')
+      return
+    }
+    const msg = !cottage ? 'Go back to the usual village for everyone? The pieces, roads and streams you added will be taken away. You can tap Undo right after.' : 'Go back to the usual village? Your pieces, roads and streams will be taken away. You can tap Undo right after if you change your mind.'
+    if (!(await askConfirm(msg))) return
     commit(fromSaved(null)); setPicked(null); setTrayOpen(false); setLayoutNote('Back to the usual village.')
   }
   // Do the name tags show right now (without pointing at a place)?
@@ -348,11 +428,14 @@ export default function VillageScene() {
     if (!arrange || !picked || !sceneRef.current) return
     const t = setTimeout(() => {
       const el = picked.startsWith('d:') ? sceneRef.current.querySelector('.vs-picked') : sceneRef.current.querySelector('[data-spot="' + picked + '"]')
-      const bar = document.querySelector('.vs-toolbar')
-      if (!el || !bar || window.innerWidth >= 1024) return
-      const r = el.getBoundingClientRect(), top = bar.getBoundingClientRect().top
-      if (r.bottom > top - 8) window.scrollBy({ top: r.bottom - top + 24, behavior: 'smooth' })
-      else if (r.top < 64) window.scrollBy({ top: r.top - 80, behavior: 'smooth' })
+      if (!el || window.innerWidth >= 1024) return
+      // Phones: the tools sit on the right side now, so only scroll if the piece is off screen.
+      const r = el.getBoundingClientRect()
+      const head = (document.querySelector('.app-header, header') || { getBoundingClientRect: () => ({ bottom: 64 }) }).getBoundingClientRect().bottom
+      const foot = window.innerHeight - 80
+      const how = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+      if (r.top < head + 8) window.scrollBy({ top: r.top - head - 24, behavior: how })
+      else if (r.bottom > foot) window.scrollBy({ top: r.bottom - foot + 24, behavior: how })
     }, 60)
     return () => clearTimeout(t)
   }, [arrange, picked])
@@ -800,12 +883,21 @@ export default function VillageScene() {
         </Link>
       )}
 
-      {cottage && !arrange && (
-        <button type="button" data-tour="village-arrange" className="vs-build-start" onClick={() => { setArrange(true); setTool('move'); setTrayTab('pieces'); setLayoutNote(''); setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }), 120) }}>
+      {!arrange && (
+        <button type="button" data-tour="village-arrange" className="vs-build-start" onClick={() => startArrange('me')}>
           <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
           <span className="vs-build-start-text">
-            <b>{cottage ? 'Arrange and build my cottage' : 'Arrange and build my village'}</b>
-            <small>Move places, add trees and bridges, draw roads, pick a ground</small>
+            <b>{cottage ? 'Arrange and build my cottage' : 'Arrange my view of ' + village.name}</b>
+            <small>{cottage ? 'Move places, add trees and bridges, draw roads, pick a ground' : 'Only you see your view. Move places, add trees, draw roads.'}</small>
+          </span>
+        </button>
+      )}
+      {!arrange && !cottage && keepers && keepers.i_am_keeper && (
+        <button type="button" className="vs-build-start vs-build-shared" onClick={() => startArrange('everyone')}>
+          <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
+          <span className="vs-build-start-text">
+            <b>Arrange {village.name} for everyone</b>
+            <small>As Keeper or Helper, you set the look every neighbor starts with.</small>
           </span>
         </button>
       )}
@@ -870,7 +962,7 @@ export default function VillageScene() {
             a place. This button turns them on or off for you (saved with your village). */}
         <button type="button" className="vs-names-toggle" onPointerDown={(e) => e.stopPropagation()}
           aria-pressed={namesShowing}
-          onClick={() => saveWorld({ ...worldRef.current, labels: namesShowing ? 'hide' : 'show' })}>
+          onClick={() => saveLabels(namesShowing ? 'hide' : 'show')}>
           <ToolIcon name={namesShowing ? 'eye' : 'tag'} />
           <span>{namesShowing ? 'Hide names' : 'Show names'}</span>
         </button>
@@ -882,9 +974,9 @@ export default function VillageScene() {
           <Icon name="sprout" size={28} /> Your garden: {GIFTS.filter((g) => g.got).length} of {GIFTS.length} gifts grown
         </button>
       )}
-      <p className="vs-hint">{arrange ? 'Arrange and build your cottage map. Your changes are saved as you go.' : cottage ? 'Tap anything on your map to go there.' : 'Tap anything in the village to go there.'}</p>
+      <p className="vs-hint">{arrange ? (cottage ? 'Arrange and build your cottage map. Your changes are saved as you go.' : arrangeFor === 'everyone' ? 'You are arranging ' + village.name + ' for everyone. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : cottage ? 'Tap anything on your map to go there.' : 'Tap anything in the village to go there.'}</p>
 
-      {cottage && <div className={'vs-arrange' + (arrange ? ' vs-arrange-on' : '')}>
+      {<div className={'vs-arrange' + (arrange ? ' vs-arrange-on' : '')}>
         {arrange && (
           <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '')} role="region" aria-label="Arrange and build tools">
             {/* Oct 22: on phones the tools are a rail on the right side; this panel slides out beside it and scrolls. */}
@@ -975,9 +1067,9 @@ export default function VillageScene() {
                 </div>
                 </>}
                 {trayTab === 'more' && <div className="vs-tray-more">
-                  <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>Back to the usual village</button>
-                  {isFounder && <button type="button" className="btn btn-outline btn-full" onClick={copyLayout}>Copy layout for everyone (founder)</button>}
-                  <p className="vs-note">Your village is saved on your account and only you see it. Hidden places are still in the list under the map.</p>
+                  <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>{cottage ? 'Back to the usual village' : arrangeFor === 'everyone' ? 'Back to the usual village for everyone' : 'Back to the shared look'}</button>
+                  {cottage && isFounder && <button type="button" className="btn btn-outline btn-full" onClick={copyLayout}>Copy layout for everyone (founder)</button>}
+                  <p className="vs-note">{cottage ? 'Your cottage is saved on your account and only you see it.' : arrangeFor === 'everyone' ? 'Every neighbor sees this look, unless they arranged their own view.' : 'Your view is saved on your account and only you see it.'} Hidden places are still in the list under the map.</p>
                 </div>}
                 </div>
               </div>
