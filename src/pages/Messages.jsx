@@ -662,10 +662,10 @@ export default function Messages({ embedded = false }) {
         <div style={sectionTitle}>Disappearing Messages</div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>New conversations will auto-delete messages after the chosen time.</p>
         <div style={{ padding: '0 0.25rem' }}>
-          <input type="range" min={0} max={DISAPPEAR_STEPS.length - 1} step={1} value={getSliderIndex()} onChange={e => saveDisappearPref(DISAPPEAR_STEPS[parseInt(e.target.value)].mins)} style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+          {/* Big buttons instead of a slider: easier to hit on a phone, and the words line up. */}
+          <div className="msg-timer" role="group" aria-label="Auto-delete new conversations after">
             {DISAPPEAR_STEPS.map((s, i) => (
-              <span key={i} style={{ fontSize: '0.8125rem', color: getSliderIndex() === i ? 'var(--accent)' : 'var(--text-muted)', fontWeight: getSliderIndex() === i ? 700 : 400, textAlign: 'center', flex: 1 }}>{s.label}</span>
+              <button key={i} type="button" className={'msg-timer-btn' + (getSliderIndex() === i ? ' on' : '')} aria-pressed={getSliderIndex() === i} onClick={() => saveDisappearPref(s.mins)}>{s.label}</button>
             ))}
           </div>
         </div>
@@ -718,12 +718,14 @@ export default function Messages({ embedded = false }) {
         ))}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: embedded ? 'flex-end' : 'space-between', marginBottom: '0.75rem' }}>
-        {!embedded && <h1 style={{ margin: 0 }}>Messages</h1>}
+      {!embedded && (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+        <h1 style={{ margin: 0 }}>Messages</h1>
         <button type="button" onClick={() => setShowSidebar(true)} className="page-top-btn" aria-label="Message settings">
           <span aria-hidden="true"><Icon name="gear" /></span> Settings
         </button>
       </div>
+      )}
 
       {!embedded && (<>
       <button type="button" className="groups-row groups-entry" onClick={() => navigate('/connections')}>
@@ -823,7 +825,15 @@ export default function Messages({ embedded = false }) {
         </div>
       )}
 
-      <NewMessage />
+      {/* On the Messages hub, Settings sits beside New message so the chats show sooner. */}
+      <div className="msg-new-row">
+        <div className="msg-new-main"><NewMessage /></div>
+        {embedded && (
+          <button type="button" onClick={() => setShowSidebar(true)} className="msg-gear" aria-label="Message settings">
+            <Icon name="gear" size={28} />
+          </button>
+        )}
+      </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
         <button style={tabStyle(activeFolder === 'unread')} onClick={() => setActiveFolder('unread')}>Unread</button>
