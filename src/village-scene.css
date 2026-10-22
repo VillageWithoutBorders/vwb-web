@@ -198,3 +198,25 @@
 
 .vs-hidden { opacity: 0.4; filter: grayscale(0.8); }
 .vs-hidden .vs-lab::after { content: ' (hidden)'; }
+
+/* ---------- Village page on a computer (1024px and wider) ----------
+   Two columns: the painted village on the left, sized to fit the screen
+   and staying in view while you scroll; the name, buttons, list and
+   arrange tools on the right. Phones and tablets keep the single column. */
+@media (min-width: 1024px) {
+  .vs-page.vs-page-path {
+    --vs-map-w: min(600px, calc((100dvh - var(--header-height) - var(--tab-height) - 48px) * 0.6667));
+    max-width: 1200px; padding: 16px 24px 32px; overflow-x: clip;
+    display: grid; grid-template-columns: var(--vs-map-w) minmax(340px, 1fr);
+    grid-template-rows: repeat(6, auto) 1fr; column-gap: 32px; align-items: start;
+  }
+  .vs-page-path > .vs-scene-path {
+    grid-column: 1; grid-row: 1 / 8; width: var(--vs-map-w); margin-top: 0;
+    position: sticky; top: calc(var(--header-height) + 16px); border-radius: 16px; align-self: start;
+  }
+  .vs-page-path > :not(.vs-scene-path):not(.vs-shade) { grid-column: 2; }
+  .vs-page-path > .vs-top, .vs-page-path > .vs-title, .vs-page-path > .vs-body, .vs-page-path > .vs-arrange { padding-left: 0; padding-right: 0; }
+  .vs-page-path > .vs-hint { text-align: left; margin-left: 0; }
+  .vs-page-path .vs-title h1 { font-size: 2.2rem; }
+  .vs-page-path .vs-list { grid-template-columns: 1fr 1fr; }
+}
