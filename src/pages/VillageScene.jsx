@@ -108,6 +108,7 @@ const TOOL_PATHS = {
   trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',
   up: 'M6 15l6-6 6 6', down: 'M6 9l6 6 6-6', left: 'M15 6l-6 6 6 6', right: 'M9 6l6 6-6 6',
   close: 'M6 6l12 12M18 6L6 18',
+  tag: 'M3 12V4h8l10 10-8 8L3 12zM7.5 7.5h.01',
 }
 function ToolIcon({ name }) {
   return <svg className="vs-tool-ic" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d={TOOL_PATHS[name]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -164,10 +165,10 @@ export default function VillageScene() {
   const [layoutNote, setLayoutNote] = useState('')
   const [drawing, setDrawing] = useState(null) // points of the road being drawn
   const fromSaved = (v) => {
-    if (!v || typeof v !== 'object') return { spots: {}, decor: [], roads: [], streams: [], ground: 'path' }
-    if (!v.spots && !v.decor && !v.roads && !v.streams && !v.ground) return { spots: v, decor: [], roads: [], streams: [], ground: 'path' } // older device copy
+    if (!v || typeof v !== 'object') return { spots: {}, decor: [], roads: [], streams: [], ground: 'path', labels: 'auto' }
+    if (!v.spots && !v.decor && !v.roads && !v.streams && !v.ground && !v.labels) return { spots: v, decor: [], roads: [], streams: [], ground: 'path', labels: 'auto' } // older device copy
     const list = (a) => (Array.isArray(a) ? a : [])
-    return { spots: v.spots || {}, decor: list(v.decor), roads: list(v.roads), streams: list(v.streams), ground: GROUNDS.some((g) => g.k === v.ground) ? v.ground : 'path' }
+    return { spots: v.spots || {}, decor: list(v.decor), roads: list(v.roads), streams: list(v.streams), ground: GROUNDS.some((g) => g.k === v.ground) ? v.ground : 'path', labels: ['show', 'hide'].includes(v.labels) ? v.labels : 'auto' }
   }
   const [world, setWorld] = useState(() => {
     try { return fromSaved(JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null')) } catch { return fromSaved(null) }
@@ -186,7 +187,7 @@ export default function VillageScene() {
     try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode */ }
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
-      const empty = Object.keys(next.spots).length === 0 && next.decor.length === 0 && next.roads.length === 0 && next.streams.length === 0 && next.ground === 'path'
+      const empty = Object.keys(next.spots).length === 0 && next.decor.length === 0 && next.roads.length === 0 && next.streams.length === 0 && next.ground === 'path' && next.labels === 'auto'
       const { error } = await supabase.rpc('set_my_village_layout', { p_layout: empty ? null : next })
       if (error) {
         // Before the database step is run, the layout simply stays on this device.
@@ -313,6 +314,9 @@ export default function VillageScene() {
     if (!(await askConfirm('Go back to the usual village? Your pieces, roads and streams will be taken away. You can tap Undo right after if you change your mind.'))) return
     commit(fromSaved(null)); setPicked(null); setTrayOpen(false); setLayoutNote('Back to the usual village.')
   }
+  // Do the name tags show right now (without pointing at a place)?
+  const [canHover] = useState(() => { try { return window.matchMedia('(hover: hover) and (pointer: fine)').matches } catch { return false } })
+  const namesShowing = world.labels === 'show' || (world.labels !== 'hide' && !canHover)
   // Nudge: move the picked thing a little, for anyone who finds dragging hard.
   function nudge(dx, dy) {
     if (!picked) return
@@ -634,7 +638,7 @@ export default function VillageScene() {
         </Link>
       )}
 
-      <div ref={sceneRef} className={'vs-scene vs-scene-path' + (arrange ? ' vs-arranging' : '') + (arrange && tool !== 'move' ? ' vs-drawing' : '')} onPointerDown={roadStart} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={dragEnd}>
+      <div ref={sceneRef} className={'vs-scene vs-scene-path vs-names-' + (world.labels || 'auto') + (arrange ? ' vs-arranging' : '') + (arrange && tool !== 'move' ? ' vs-drawing' : '')} onPointerDown={roadStart} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={dragEnd}>
         <img className="vs-ground" src={(GROUNDS.find((g) => g.k === world.ground) || GROUNDS[0]).src} alt="" width="768" height="1152" fetchpriority="high" />
         {(world.roads.length > 0 || world.streams.length > 0 || drawing) && (
           <svg className="vs-roads" viewBox="0 0 100 150" preserveAspectRatio="none" aria-hidden="true">
@@ -683,6 +687,14 @@ export default function VillageScene() {
             </button>
           )
         })}
+        {/* Name tags: on phones they show; with a mouse they show when you point at
+            a place. This button turns them on or off for you (saved with your village). */}
+        <button type="button" className="vs-names-toggle" onPointerDown={(e) => e.stopPropagation()}
+          aria-pressed={namesShowing}
+          onClick={() => saveWorld({ ...worldRef.current, labels: namesShowing ? 'hide' : 'show' })}>
+          <ToolIcon name={namesShowing ? 'eye' : 'tag'} />
+          <span>{namesShowing ? 'Hide names' : 'Show names'}</span>
+        </button>
         <div className="vs-fade" />
       </div>
 
