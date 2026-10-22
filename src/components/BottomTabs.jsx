@@ -31,7 +31,7 @@ export default function BottomTabs() {
   const toolPaths = [...tools.map((t) => t.to), '/emergency', '/org-dashboard', '/admin', '/ambassador']
   const fourthOn = toolPaths.some((p) => pathname === p || pathname.startsWith(p + '/')) || /^\/village\/[^/]+\/keeper$/.test(pathname)
   const helpOn = under(pathname, HELP)
-  const villageOn = !fourthOn && under(pathname, VILLAGE)
+  const villageOn = !fourthOn && !under(pathname, HELP) && under(pathname, VILLAGE)
 
   useEffect(() => {
     if (!sheet) return
