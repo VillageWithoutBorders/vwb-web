@@ -267,6 +267,12 @@ export default function OrgPage() {
   // Arrange and build (Oct 22, vwb-map-layouts.sql): the Heads and organizers (a
   // group's Keeper and Helpers) set the shared look; anyone signed in can arrange
   // their own view on top. Only they see it.
+  // Long press on the map: ask, then open arranging with that place picked.
+  async function holdToArrange(key) {
+    if (!(await askConfirm('Move things on your view of this map? Only you see your view.', { yes: 'Yes, move things', no: 'Not now' }))) return
+    startArrange('me')
+    if (key) { b.setPicked(key); b.setPickTools(true) }
+  }
   const { b, arrangeFor, startArrange, resetLayout, saveLabels } = usePageMap({
     kind: 'org', id, spots, user, accountLayout: profile?.village_layout, refreshProfile, name: org?.name,
     base: isGroup ? DEFAULT_WORLDS.group : DEFAULT_WORLDS.org,
@@ -357,7 +363,7 @@ export default function OrgPage() {
       case 'fires':
         return <>{title}
           {chats.length === 0 && <p>{canManage ? 'No Campfires yet. Start the general chat from ' + TOOLS + '.' : 'No Campfires yet. ' + LEADS + ' start the general chat.'}</p>}
-          {/* Sidechats live inside the general Campfire: listed under it, not as chats of their own. */}
+          {/* Smaller Campfires (sidechats in the database) live inside the general Campfire: listed under it, not as chats of their own. */}
           {chats.filter((c) => c.is_general || c.shared).map((c) => (
             <div key={c.id}>
               <button type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/groups/' + c.id) }}>
@@ -367,7 +373,7 @@ export default function OrgPage() {
               {c.is_general && chats.filter((x) => !x.is_general && !x.shared).map((x) => (
                 <button key={x.id} type="button" className="vs-row vs-row-sub" onClick={() => { setSheet(null); navigate('/groups/' + x.id) }}>
                   <span aria-hidden="true">{'\u21B3'}</span> {x.name}
-                  <small>Sidechat inside {c.name}</small>
+                  <small>Smaller Campfire inside {c.name}</small>
                 </button>
               ))}
             </div>
@@ -375,10 +381,10 @@ export default function OrgPage() {
           {!general && chats.filter((x) => !x.is_general && !x.shared).map((x) => (
             <button key={x.id} type="button" className="vs-row vs-row-sub" onClick={() => { setSheet(null); navigate('/groups/' + x.id) }}>
               <span aria-hidden="true">{'\u21B3'}</span> {x.name}
-              <small>Sidechat</small>
+              <small>Smaller Campfire</small>
             </button>
           ))}
-          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Start a sidechat in the general Campfire</Link>}
+          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Start a smaller Campfire</Link>}
         </>
       case 'events':
         return <>{title}
@@ -526,7 +532,7 @@ export default function OrgPage() {
         </button>
       )}
 
-      <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
+      <div {...sceneProps(b, 'vs-scene vs-scene-path', user ? holdToArrange : null)}>
         <img className="vs-ground" src={backgroundSrc(b.world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
         {spots.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {

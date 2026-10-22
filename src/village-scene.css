@@ -490,3 +490,10 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 @media (max-width: 1023px) {
   .vs-toolbar-low .vs-toolpanel { align-self: flex-end; }
 }
+
+/* Map art: no save-picture menu or text highlight on a long press. */
+.vs-scene, .vs-scene img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.vs-scene img { -webkit-user-drag: none; }
+/* Long press: the place glows while the finger is held down. */
+.vs-holding { filter: drop-shadow(0 0 10px rgba(255, 233, 168, 0.95)) brightness(1.08); transition: filter 0.5s ease-in; }
+@media (prefers-reduced-motion: reduce) { .vs-holding { transition: none; } }

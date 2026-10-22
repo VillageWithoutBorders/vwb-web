@@ -69,7 +69,7 @@ export default function KeeperDashboard() {
 
   const loadRooms = useCallback(async () => {
     const { data, error } = await supabase.rpc('village_rooms', { p_village: id })
-    if (error) { console.error('Failed to load Campfires and Sidechats:', error); return }
+    if (error) { console.error('Failed to load Campfires:', error); return }
     setRooms(data || [])
   }, [id])
 
@@ -147,8 +147,7 @@ export default function KeeperDashboard() {
   const fireAskCount = fireAsks.reduce((n, r) => n + r.asks_waiting, 0)
   const checkIns = rooms.filter((r) => r.check_in_waiting)
   const sisterAsks = sisterState.filter((s) => s.status === 'asked' && !s.asked_by_us)
-  const campfires = rooms.filter((r) => r.kind === 'campfire')
-  const sidechats = rooms.filter((r) => r.kind === 'sidechat')
+  const campfires = rooms
   const mySisterCount = sisters.filter((s) => s.village_a === id || s.village_b === id).length
 
   const needs = !ready ? null : [
@@ -232,11 +231,7 @@ export default function KeeperDashboard() {
           </section>
           <section className="hub-section" aria-labelledby="kd-fires">
             <div className="hub-section-head"><h2 id="kd-fires"><Icon name="campfire" /> Campfires</h2></div>
-            <VillageRooms villageId={id} kind="campfire" isMember isKeeper onChanged={loadRooms} />
-          </section>
-          <section className="hub-section" aria-labelledby="kd-side">
-            <div className="hub-section-head"><h2 id="kd-side"><Icon name="sidechats" /> Sidechats ({sidechats.length})</h2></div>
-            <VillageRooms villageId={id} kind="sidechat" isMember isKeeper onChanged={loadRooms} />
+            <VillageRooms villageId={id} isMember isKeeper onChanged={loadRooms} />
           </section>
         </DashPanel>
       )}
@@ -284,7 +279,7 @@ export default function KeeperDashboard() {
             <div className="hub-section-head"><h2 id="kd-what">What keepers do</h2></div>
             <ul className="hub-org-desc" style={{ paddingLeft: '1.2rem', lineHeight: 1.6 }}>
               <li>Pin announcements in the village chat</li>
-              <li>Start Sidechats for a few neighbors</li>
+              <li>Start Campfires and pick who is in</li>
               <li>Answer Sister Village asks</li>
               <li>Remove an organization that doesn't belong</li>
             </ul>
