@@ -11,13 +11,13 @@ export const ADMIN_GUIDE = [
   {
     id: 'what', title: 'What a VWB admin is',
     blocks: [
-      { p: 'A VWB admin looks after a village so neighbors can help each other safely. You answer reports, welcome new people, check emergencies, and step in when someone needs help or protection.' },
+      { p: 'A VWB admin is part of the small VWB team that keeps the whole app safe, so neighbors can help each other. You answer reports, approve new organizations and Hope Ambassadors, check emergencies, and step in when someone needs help or protection.' },
       { p: "You are a neighbor first. Admin tools are there to serve the village, not to run it. Organizations and villages make their own decisions. VWB admins step in only when someone breaks the app rules or is unsafe." },
       { p: '**Villages run themselves.** Each village has a Keeper and Helpers, with a Hope Ambassador nearby. You step in when someone breaks the app rules or is unsafe, and you help find a Keeper when a village has none. Your inbox lists villages without a Keeper and a Helper, and villages with no Hope Ambassador.' },
       { h3: 'An admin does' },
       { ul: [
         'Answer what is waiting in the Admin inbox, urgent things first',
-        'Check emergency reports and member reports in their villages',
+        'Check emergency reports and member reports',
         'Approve organizations, Hope Ambassadors and new admins, together with others',
         'Keep a calm, kind voice, even when someone is upset',
       ] },

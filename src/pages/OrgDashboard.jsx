@@ -425,7 +425,7 @@ export default function OrgDashboard() {
 
           <section className="hub-section" aria-labelledby="od-posts">
             <div className="hub-section-head"><h2 id="od-posts">Needs and offers</h2></div>
-            {!loading && posts.length === 0 && <p className="hub-empty">Nothing posted under your group's name yet.</p>}
+            {!loading && posts.length === 0 && <p className="hub-empty">Nothing posted under your organization's name yet.</p>}
             {posts.map((p) => (
               <div key={p.kind + p.id} className="cal-card">
                 <span className="cal-card-title">{p.kind === 'need' ? 'Need' : 'Offer'}: {p.title}</span>

@@ -66,6 +66,7 @@ const ROOMS = [
 
 export default function ChatGuide({ startOpen = false }) {
   const [open, setOpen] = useState(startOpen)
+  const [room, setRoom] = useState(null)
   return (
     <section className="chat-guide" aria-labelledby="chat-guide-h">
       <button type="button" className="chat-guide-toggle" aria-expanded={open} aria-controls="chat-guide-body" onClick={() => setOpen((o) => !o)}>
@@ -80,19 +81,31 @@ export default function ChatGuide({ startOpen = false }) {
           </p>
           <p className="chat-guide-rule"><b>The bigger the room, the less you share.</b> Not sure? Pick the smallest room that fits. You can always share more later, but you can't take back what a crowd has seen.</p>
           <ol className="chat-guide-list">
-            {ROOMS.map((r) => (
-              <li key={r.name} className="chat-guide-room">
-                <span className="chat-guide-ic" aria-hidden="true"><Icon name={r.icon} size={28} /></span>
-                <span className="chat-guide-text">
-                  <b>{r.name}</b>
-                  <span><span className="chat-guide-label">Who:</span> {r.who}</span>
-                  <span><span className="chat-guide-label">Use it for:</span> {r.for}</span>
-                  <span><span className="chat-guide-label">Safety:</span> {r.safe}</span>
-                </span>
-              </li>
-            ))}
+            {ROOMS.map((r) => {
+              // Each room is one short line (name and who). Tap it to see what it is for and how safe it is.
+              const isOpen = room === r.name
+              return (
+                <li key={r.name} className={'chat-guide-room' + (isOpen ? ' open' : '')}>
+                  <button type="button" className="chat-guide-room-btn" aria-expanded={isOpen} onClick={() => setRoom(isOpen ? null : r.name)}>
+                    <span className="chat-guide-ic" aria-hidden="true"><Icon name={r.icon} size={28} /></span>
+                    <span className="chat-guide-text">
+                      <b>{r.name}</b>
+                      <span>{r.who}</span>
+                    </span>
+                    <span className="chat-guide-more" aria-hidden="true">{isOpen ? '\u2212' : '+'}</span>
+                  </button>
+                  {isOpen && (
+                    <span className="chat-guide-text chat-guide-detail">
+                      <span><span className="chat-guide-label">Use it for:</span> {r.for}</span>
+                      <span><span className="chat-guide-label">Safety:</span> {r.safe}</span>
+                    </span>
+                  )}
+                </li>
+              )
+            })}
           </ol>
-          <p className="chat-guide-note">Smallest room at the top, biggest at the bottom. In every chat you can mute, leave, block, or report.</p>
+          <p className="chat-guide-note">Smallest room at the top, biggest at the bottom. Tap a room to learn more. In every chat you can mute, leave, block, or report.</p>
+          <button type="button" className="btn btn-outline btn-full" onClick={() => setOpen(false)}>Close this guide</button>
         </div>
       )}
     </section>
