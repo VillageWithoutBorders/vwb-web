@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { loadMyTaskOverview } from '../utils/myTasks'
 import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
-import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, fromSaved, isPlainWorld, mapBody } from '../components/MapBuilder'
+import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, askGoTo, fromSaved, isPlainWorld, mapBody } from '../components/MapBuilder'
 import { askConfirm } from '../components/AdminDialog'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
@@ -423,18 +423,18 @@ export default function VillageScene() {
   }
   function cottageTap(k) {
     switch (k) {
-      case 'home': navigate(home?.village_id ? '/village/' + home.village_id : '/find-village'); return
-      case 'calendar': navigate('/calendar'); return
-      case 'connections': navigate('/connections'); return
+      case 'home': goTo(home?.village_id ? '/village/' + home.village_id : '/find-village'); return
+      case 'calendar': goTo('/calendar'); return
+      case 'connections': goTo('/connections'); return
       // Each picture opens its own page (Oct 22), not the same Messages page.
-      case 'cottage': navigate('/groups?show=cottage'); return
-      case 'campfires': navigate('/groups?show=campfires'); return
-      case 'chat': navigate('/village-square'); return
+      case 'cottage': goTo('/groups?show=cottage'); return
+      case 'campfires': goTo('/groups?show=campfires'); return
+      case 'chat': goTo('/village-square'); return
       // One place every time (Oct 22). Waiting tasks show as a badge on the spot and on Your tasks.
-      case 'help': navigate('/help-doors'); return
+      case 'help': goTo('/help-doors'); return
       // Your corner sits under the cottage map (Oct 22).
-      case 'me': document.getElementById('corner')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); return
-      case 'messages': navigate('/messages'); return
+      case 'me': goTo('#corner'); return
+      case 'messages': goTo('/messages'); return
       default: openSheet({ k })
     }
   }
@@ -508,7 +508,18 @@ export default function VillageScene() {
     }
   }
 
-  function tap(spot) {
+  // Leaving the page from a map tap asks first (askGoTo). '#corner' scrolls to Your corner.
+  const askRef = useRef(null)
+  async function goTo(to, opts) {
+    const spot = askRef.current
+    askRef.current = null
+    if (spot && !(await askGoTo(spot, info(spot.k).sub))) return
+    if (to === '#corner') { document.getElementById('corner')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); return }
+    navigate(to, opts)
+  }
+  // fromMap: tapped on the map picture (asks first). The list under the map goes straight there.
+  function tap(spot, fromMap) {
+    askRef.current = fromMap ? spot : null
     if (!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setBump(spot.k); setTimeout(() => setBump(null), 450)
     }
@@ -516,16 +527,16 @@ export default function VillageScene() {
     if (spot.soon) { openSheet({ k: spot.k }); return }
     switch (spot.k) {
       case 'chat':
-        if (mine && board) navigate('/village-square?board=' + board.id)
-        else if (!mine) navigate('/find-village?join=' + id)
+        if (mine && board) goTo('/village-square?board=' + board.id)
+        else if (!mine) goTo('/find-village?join=' + id)
         else openSheet({ k: 'chat' })
         return
-      case 'charter': navigate('/village/' + id + '/charter'); return
-      case 'skillshare': navigate('/skillshare'); return
-      case 'cottage': navigate('/messages'); return
-      case 'messages': navigate('/messages'); return
+      case 'charter': goTo('/village/' + id + '/charter'); return
+      case 'skillshare': goTo('/skillshare'); return
+      case 'cottage': goTo('/messages'); return
+      case 'messages': goTo('/messages'); return
       // In your home village, your house is your cottage: your own private map.
-      case 'me': navigate(isHome ? '/cottage' : '/me'); return
+      case 'me': goTo(isHome ? '/cottage' : '/me'); return
       default: openSheet({ k: spot.k })
     }
   }
@@ -699,7 +710,7 @@ export default function VillageScene() {
               style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1) }}
               aria-label={s.label + '. ' + i.sub}
               onPointerDown={(e) => dragStart(e, s.k)}
-              onClick={(e) => { if (!arrange) tap(s); else if (e.detail === 0) pickByKey(s.k) }}>
+              onClick={(e) => { if (!arrange) tap(s, true); else if (e.detail === 0) pickByKey(s.k) }}>
               <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true">
                 {s.k === 'campfires' && life
                   ? <img className="vs-icon vs-life-fire" src={LIFE_ART.fire[life.fire_level] || LIFE_ART.fire[1]} alt="" width="96" height="96" draggable="false" />
