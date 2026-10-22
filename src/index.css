@@ -6179,3 +6179,12 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 .feed-empty-icon .vwb-icon { width: 64px; height: 64px; vertical-align: 0; }
 .vm-tap { color: var(--accent); font-weight: 600; }
 .sh-village { margin: 0 0 1rem; }
+
+/* Back button on every page, from the app frame (Oct 22). A dark pill, so it reads on light pages and on the maps. */
+.app-back-row { padding: 8px 12px 0; }
+.app-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px 0 12px; border-radius: 22px;
+  background: #1f4a47; color: #fff; font-weight: 600; text-decoration: none; }
+.app-back:hover { background: #163936; }
+.app-back:active { transform: scale(0.97); }
+.app-back:focus-visible { outline: 3px solid #e8b84a; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .app-back:active { transform: none; } }

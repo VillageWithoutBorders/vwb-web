@@ -450,7 +450,7 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
   .vs-page.vs-page-path { display: flex; flex-direction: column; }
   .vs-page-path > .vs-top { order: -3; }
   .vs-page-path > .vs-scene-path { order: -2; scroll-margin-top: calc(var(--header-height) + 8px); }
-  .vs-page-path > .vs-names-toggle { order: -2; }
+  .vs-page-path > .vs-map-under { order: -2; }
   .vs-page-path > .vs-build-start { order: -1; }
 
   .vs-page-path:has(.vs-arrange-on) { padding-bottom: 16px; padding-right: 76px; }
@@ -509,3 +509,16 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
   /* While arranging, the map is a little narrower, so the name tags shrink a little too. */
   .vs-arranging .vs-lab { font-size: 0.7rem; padding: 3px 7px; }
 }
+
+/* Pinch zoom (Oct 22). The zoom layer holds everything on the map. */
+.vs-zoom { position: absolute; inset: 0; transform-origin: 0 0; }
+.vs-scene-path { touch-action: pan-y; }
+.vs-scene-path.vs-zoomed, .vs-scene-path.vs-zoomed .vs-el { touch-action: none; }
+.vs-zoomed { cursor: grab; }
+.vs-map-under { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin: 10px auto 0; }
+.vs-map-under .vs-names-toggle { margin: 0; }
+.vs-zoom-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0 10px;
+  border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(20, 44, 43, 0.82); color: #fff;
+  font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+.vs-zoom-btn:disabled { opacity: 0.4; cursor: default; }
+.vs-zoom-btn:focus-visible, .vs-names-toggle:focus-visible { outline: 3px solid var(--vs-gold); outline-offset: 2px; }

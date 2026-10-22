@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { loadMyTaskOverview } from '../utils/myTasks'
 import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
-import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, fromSaved, isPlainWorld, mapBody } from '../components/MapBuilder'
+import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, fromSaved, isPlainWorld, mapBody } from '../components/MapBuilder'
 import { askConfirm } from '../components/AdminDialog'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
@@ -656,6 +656,7 @@ export default function VillageScene() {
       )}
 
       <div {...sceneProps(b, 'vs-scene vs-scene-path', holdToArrange)}>
+       <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
         {cottage && GIFTS.filter((g) => g.got).map((g) => (
@@ -693,12 +694,13 @@ export default function VillageScene() {
             </button>
           )
         })}
+       </div>
         <div className="vs-fade" />
       </div>
       {/* Name tags: on phones they show; with a mouse they show when you point at
           a place. This button turns them on or off for you, on every map.
           It sits under the map so it never covers a place. */}
-      {!arrange && <NamesToggle b={b} onChange={saveLabels} />}
+      <NamesToggle b={b} onChange={saveLabels} />
 
       {cottage && !arrange && (
         <button type="button" className="vs-gifts-btn" onClick={() => openSheet({ k: 'gifts' })}>
