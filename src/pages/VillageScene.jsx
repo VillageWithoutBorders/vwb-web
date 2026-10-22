@@ -306,15 +306,15 @@ export default function VillageScene() {
   }
 
   if (loadError) {
-    return <div className="vs-page"><div className="vs-top"><Link className="vs-crumb" to="/villages">Village Network</Link></div><p className="vs-error" role="alert">{loadError}</p></div>
+    return <div className="vs-page vs-page-path"><div className="vs-top"><Link className="vs-crumb" to="/villages">Village Network</Link></div><p className="vs-error" role="alert">{loadError}</p></div>
   }
   if (!village) {
-    return <div className="vs-page"><p className="vs-loading" role="status">Loading the village...</p></div>
+    return <div className="vs-page vs-page-path"><p className="vs-loading" role="status">Loading the village...</p></div>
   }
 
 
   return (
-    <div className="vs-page">
+    <div className="vs-page vs-page-path">
       <nav className="vs-top" aria-label="Where you are">
         <Link className="vs-crumb" to="/villages">Village Network</Link>
         <span className="vs-sep" aria-hidden="true">&#8250;</span>
@@ -340,8 +340,8 @@ export default function VillageScene() {
         </Link>
       )}
 
-      <div className="vs-scene">
-        <img className="vs-ground" src="/art/village-roads.webp" alt="" width="547" height="868" fetchpriority="high" />
+      <div className="vs-scene vs-scene-path">
+        <img className="vs-ground" src="/art/village-path/village-path.webp" alt="" width="768" height="1152" fetchpriority="high" />
         {VILLAGE_SPOTS.map((s) => {
           const i = info(s.k)
           return (
@@ -360,7 +360,7 @@ export default function VillageScene() {
                           <img key={n} className={'vs-cot' + (5 - n < life.lit_cottages ? ' vs-cot-lit' : '')} src={5 - n < life.lit_cottages ? LIFE_ART.cottageLit : LIFE_ART.cottageDark} alt="" width="48" height="48" draggable="false" />
                         ))}
                       </span>
-                    : <SpotIcon spot={s} />}
+                    : <SpotIcon spot={s} painted />}
                 {s.k === 'keeper' && life && life.has_keeper && <img className="vs-lantern" src={LIFE_ART.lantern} alt="" width="48" height="48" draggable="false" />}
                 {s.k === 'keeper' && life && !life.has_keeper && <img className="vs-wanted" src={LIFE_ART.sign} alt="" width="48" height="48" draggable="false" />}
               </span>
