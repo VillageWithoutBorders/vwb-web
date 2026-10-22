@@ -490,6 +490,3 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 @media (max-width: 1023px) {
   .vs-toolbar-low .vs-toolpanel { align-self: flex-end; }
 }
-
-/* Spin left or right (Oct 22): depth so a spun piece looks turned, not just squeezed. */
-.vs-el, .vs-deco { perspective: 420px; }
