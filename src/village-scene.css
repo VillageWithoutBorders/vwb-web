@@ -171,7 +171,7 @@
    painted path with a building on each clearing. */
 .vs-page-path { position: relative; isolation: isolate; background: transparent; }
 .vs-page-path::before { content: ''; position: fixed; inset: -24px; z-index: -1; pointer-events: none;
-  background: #1b3838 url(/art/village-path/village-meadow.webp) center / cover no-repeat;
+  background: #1b3838 url(/art/village-build/meadow-open.webp) center / cover no-repeat;
   filter: blur(16px) brightness(0.42) saturate(0.9); }
 .vs-scene-path { aspect-ratio: 2 / 3; background: #a0a161; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); }
 @media (min-width: 561px) { .vs-scene-path { border-radius: 16px; } }

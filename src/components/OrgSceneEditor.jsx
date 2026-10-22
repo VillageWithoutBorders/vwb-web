@@ -1,33 +1,31 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 import Icon from './Icon'
-import { GROUNDS } from '../data/worldElements'
 
 // "How our page looks" (Oct 22). Leaders of an organization or emergency group
-// choose the ground, a sign (a picture that stands for them), which places show,
-// and their own names for places. Everyone else sees the result.
+// choose a sign (a picture that stands for them), which places show, and their
+// own names for places. Everyone else sees the result. Every map sits on a simple
+// field (Oct 22); where places sit is arranged on the map itself (Arrange for everyone).
 // Saved in organizations.scene by set_org_scene (vwb-org-scene.sql).
 const SIGNS = ['people', 'tent', 'heart-hands', 'handshake', 'houses', 'cottage', 'tree', 'leaf', 'sprout', 'basket', 'bread', 'toolbox', 'medical', 'books', 'star', 'sun', 'water', 'flag', 'gift', 'campfire']
 
 export default function OrgSceneEditor({ org, spots, isGroup, onSaved }) {
   const start = org.scene || {}
-  const [ground, setGround] = useState(start.ground || '')
   const [sign, setSign] = useState(start.sign || '')
   const [hide, setHide] = useState(Array.isArray(start.hide) ? start.hide : [])
   const [names, setNames] = useState(start.names && typeof start.names === 'object' ? start.names : {})
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState('')
 
-  const defaultGround = isGroup ? 'clearings' : 'roads'
   const kind = isGroup ? 'group' : 'organization'
 
   async function save(reset) {
     setSaving(true); setNote('')
-    const scene = reset ? null : { ground: ground || null, sign: sign || null, hide, names }
+    const scene = reset ? null : { sign: sign || null, hide, names }
     const { data, error } = await supabase.rpc('set_org_scene', { p_org: org.id, p_scene: scene })
     setSaving(false)
     if (error || data !== 'ok') { console.error('Failed to save the page look:', error || data); setNote("We couldn't save that. Try again."); return }
-    if (reset) { setGround(''); setSign(''); setHide([]); setNames({}) }
+    if (reset) { setSign(''); setHide([]); setNames({}) }
     setNote(reset ? 'Back to the usual look.' : 'Saved. Everyone sees the new look now.')
     if (onSaved) onSaved()
   }
@@ -36,19 +34,6 @@ export default function OrgSceneEditor({ org, spots, isGroup, onSaved }) {
     <section className="cal-box ose" aria-labelledby="ose-h">
       <h3 id="ose-h">How our page looks</h3>
       <p className="cal-sub">Make this {kind} page feel like yours. Everyone who opens it sees your choices.</p>
-
-      <h4 className="ose-h">Ground</h4>
-      <div className="vs-grounds ose-grounds" role="group" aria-label="Ground">
-        {GROUNDS.map((g) => {
-          const on = (ground || defaultGround) === g.k
-          return (
-            <button key={g.k} type="button" className={'vs-ground-card' + (on ? ' on' : '')} aria-pressed={on} onClick={() => setGround(g.k)}>
-              <img src={g.src} alt="" width="72" height="108" loading="lazy" />
-              <span>{g.label}</span>
-            </button>
-          )
-        })}
-      </div>
 
       <h4 className="ose-h">Our sign</h4>
       <p className="cal-sub">A picture that stands for you. It shows by your name.</p>
