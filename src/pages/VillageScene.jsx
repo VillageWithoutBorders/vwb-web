@@ -119,7 +119,7 @@ export default function VillageScene() {
     changePicked({ s: Math.min(1.8, Math.max(0.6, Math.round(((s0.s || 1) + by) * 10) / 10)) })
   }
   async function copyLayout() {
-    const text = 'Village layout:\n' + VILLAGE_SPOTS.map((v) => { const p = placed(v); return v.k + ': x ' + p.x + ', y ' + p.y + ', size ' + (p.s || 1) + (isHidden(v.k) ? ', hidden' : '') }).join('\n')
+    const text = 'Village layout:\n' + VILLAGE_SPOTS.map((v) => { const p = placed(v); return v.k + ': x ' + p.x + ', y ' + p.y + ', size ' + (p.s || 1) + (p.flip ? ', flipped' : '') + (isHidden(v.k) ? ', hidden' : '') }).join('\n')
     try { await navigator.clipboard.writeText(text); setLayoutNote('Copied. Paste it to Claude to make it everyone’s starting layout.') }
     catch { setLayoutNote('Could not copy. Here it is to copy by hand:\n' + text) }
   }
@@ -439,7 +439,7 @@ export default function VillageScene() {
               aria-label={s.label + '. ' + i.sub}
               onPointerDown={(e) => dragStart(e, s)}
               onClick={() => { if (!arrange) tap(s) }}>
-              <span className="vs-em" aria-hidden="true">
+              <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true">
                 {s.k === 'campfires' && life
                   ? <img className="vs-icon vs-life-fire" src={LIFE_ART.fire[life.fire_level] || LIFE_ART.fire[1]} alt="" width="96" height="96" draggable="false" />
                   : s.k === 'neighbors' && life
@@ -466,11 +466,12 @@ export default function VillageScene() {
       <div className="vs-arrange">
         {!arrange && <button type="button" className="btn btn-outline btn-full" onClick={() => { setArrange(true); setLayoutNote('') }}>Arrange my village</button>}
         {arrange && <>
-          <p className="vs-note">Drag a building to move it. Tap one to pick it, then make it smaller or bigger, or hide it. Hidden places are still in the list below. Your layout is saved on your account and shows in every village.</p>
+          <p className="vs-note">Drag a building to move it. Tap one to pick it, then make it smaller or bigger, flip it to face the other way, or hide it. Hidden places are still in the list below. Your layout is saved on your account and shows in every village.</p>
           <p className="vs-arrange-picked" role="status">{picked ? 'Picked: ' + (VILLAGE_SPOTS.find((v) => v.k === picked) || {}).label + (isHidden(picked) ? ' (hidden)' : '') : 'Tap a building to pick it.'}</p>
           <div className="vs-arrange-row">
             <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(-0.1)}>Smaller</button>
             <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(0.1)}>Bigger</button>
+            <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => changePicked({ flip: !(layout[picked] && layout[picked].flip) })}>Flip it</button>
             <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => changePicked({ hide: !isHidden(picked) })}>{picked && isHidden(picked) ? 'Show it' : 'Hide it'}</button>
           </div>
           <div className="vs-arrange-row">
