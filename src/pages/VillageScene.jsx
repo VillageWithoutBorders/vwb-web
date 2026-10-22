@@ -178,6 +178,8 @@ export default function VillageScene() {
   const historyRef = useRef([])
   const [canUndo, setCanUndo] = useState(false)
   const [picked, setPicked] = useState(null) // a place key, or 'd:' + decor id
+  // Phones: when the picked piece is high on the screen, the tool panel drops to the bottom so it does not cover it.
+  const [panelLow, setPanelLow] = useState(false)
   const [layoutNote, setLayoutNote] = useState('')
   const [drawing, setDrawing] = useState(null) // points of the road being drawn
   const fromSaved = (v) => {
@@ -434,8 +436,10 @@ export default function VillageScene() {
       const head = (document.querySelector('.app-header, header') || { getBoundingClientRect: () => ({ bottom: 64 }) }).getBoundingClientRect().bottom
       const foot = window.innerHeight - 80
       const how = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-      if (r.top < head + 8) window.scrollBy({ top: r.top - head - 24, behavior: how })
-      else if (r.bottom > foot) window.scrollBy({ top: r.bottom - foot + 24, behavior: how })
+      let mid = (r.top + r.bottom) / 2
+      if (r.top < head + 8) { window.scrollBy({ top: r.top - head - 24, behavior: how }); mid -= r.top - head - 24 }
+      else if (r.bottom > foot) { window.scrollBy({ top: r.bottom - foot + 24, behavior: how }); mid -= r.bottom - foot + 24 }
+      setPanelLow(mid < (head + foot) / 2)
     }, 60)
     return () => clearTimeout(t)
   }, [arrange, picked])
@@ -978,12 +982,12 @@ export default function VillageScene() {
 
       {<div className={'vs-arrange' + (arrange ? ' vs-arrange-on' : '')}>
         {arrange && (
-          <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '')} role="region" aria-label="Arrange and build tools">
+          <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + (panelLow && picked && !trayOpen ? ' vs-toolbar-low' : '')} role="region" aria-label="Arrange and build tools">
             {/* Oct 22: on phones the tools are a rail on the right side; this panel slides out beside it and scrolls. */}
             <div className="vs-toolpanel">
-            {(trayOpen || (tool === 'move' && picked)) && (
+            {trayOpen && (
               <button type="button" className="vs-drawer-close" onClick={() => { setTrayOpen(false); setPicked(null) }}>
-                <ToolIcon name="right" /><span>{trayOpen ? 'Close Add' : 'Close'}</span>
+                <ToolIcon name="right" /><span>Close Add</span>
               </button>
             )}
             {layoutNote && <p className="vs-tool-note" role="status">{layoutNote}</p>}
