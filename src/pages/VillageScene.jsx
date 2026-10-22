@@ -18,7 +18,7 @@ import Icon from '../components/Icon'
 export default function VillageScene() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user, isFounder } = useAuth()
+  const { user, profile, isFounder, refreshProfile } = useAuth()
   const { unreadCount } = useUnreadCount()
 
   const [village, setVillage] = useState(null)
@@ -40,29 +40,55 @@ export default function VillageScene() {
   const sheetRef = useRef(null)
   const lastFocus = useRef(null)
 
-  // Founder only: drag the buildings to line them up with the painted map.
-  // The new places are kept on this device only (a draft) until Jade sends
-  // the copied layout to be saved in the app for everyone.
-  const LAYOUT_KEY = 'vwb_village_layout_draft'
+  // Arrange my village (everyone): move the buildings, make them bigger or
+  // smaller, hide the ones you don't use. Saved on your account
+  // (helper_profiles.village_layout, vwb-village-layout.sql) so it follows you
+  // to any device, and kept on this device too in case saving fails.
+  // Hidden places stay in the list under the map.
+  // The founder can also copy a layout to make it everyone's starting layout.
+  const LAYOUT_KEY = 'vwb_village_layout'
   const sceneRef = useRef(null)
   const dragRef = useRef(null)
+  const saveTimer = useRef(null)
   const [arrange, setArrange] = useState(false)
   const [picked, setPicked] = useState(null)
   const [layoutNote, setLayoutNote] = useState('')
-  const [draft, setDraft] = useState(() => {
+  const [layout, setLayout] = useState(() => {
     try { return JSON.parse(localStorage.getItem(LAYOUT_KEY) || '{}') || {} } catch { return {} }
   })
-  function saveDraft(next) {
-    setDraft(next)
-    try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode: still works this visit */ }
+  const layoutRef = useRef(layout)
+  layoutRef.current = layout
+  // The account's saved layout wins once the profile has loaded.
+  const accountLayout = profile?.village_layout
+  useEffect(() => {
+    if (accountLayout && typeof accountLayout === 'object' && accountLayout.spots) setLayout(accountLayout.spots)
+  }, [accountLayout])
+  function keepLocal(next) {
+    try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode */ }
   }
-  const placed = (s) => (isFounder && draft[s.k] ? { ...s, ...draft[s.k] } : s)
+  function saveLayout(next) {
+    setLayout(next)
+    keepLocal(next)
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(async () => {
+      const empty = !next || Object.keys(next).length === 0
+      const { error } = await supabase.rpc('set_my_village_layout', { p_layout: empty ? null : { spots: next } })
+      if (error) {
+        // Before the database step is run, the layout simply stays on this device.
+        if (error.code !== 'PGRST202') { console.error('Failed to save village layout:', error); setLayoutNote('Saved on this device only. It will try again next time you change something.') }
+        return
+      }
+      if (refreshProfile) refreshProfile()
+    }, 700)
+  }
+  const placed = (s) => (layout[s.k] ? { ...s, ...layout[s.k] } : s)
+  const isHidden = (k) => !!(layout[k] && layout[k].hide)
   const round1 = (n) => Math.round(n * 2) / 2
   function dragStart(e, s) {
     if (!arrange) return
     e.preventDefault()
     setPicked(s.k); setLayoutNote('')
-    dragRef.current = { k: s.k }
+    dragRef.current = { k: s.k, moved: false }
     try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* older browsers */ }
   }
   function dragMove(e) {
@@ -71,27 +97,34 @@ export default function VillageScene() {
     const x = Math.min(97, Math.max(3, ((e.clientX - r.left) / r.width) * 100))
     const y = Math.min(97, Math.max(3, ((e.clientY - r.top) / r.height) * 100))
     const k = dragRef.current.k
-    const s0 = placed(VILLAGE_SPOTS.find((v) => v.k === k))
-    setDraft((d) => ({ ...d, [k]: { x: round1(x), y: round1(y), s: s0.s || 1 } }))
+    dragRef.current.moved = true
+    const d = layoutRef.current
+    const next = { ...d, [k]: { ...(d[k] || {}), x: round1(x), y: round1(y) } }
+    layoutRef.current = next
+    setLayout(next)
   }
   function dragEnd() {
     if (!dragRef.current) return
+    const moved = dragRef.current.moved
     dragRef.current = null
-    setDraft((d) => { try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(d)) } catch { /* private mode */ } return d })
+    if (moved) saveLayout(layoutRef.current)
+  }
+  function changePicked(change) {
+    if (!picked) return
+    saveLayout({ ...layout, [picked]: { ...(layout[picked] || {}), ...change } })
   }
   function resize(by) {
     if (!picked) return
     const s0 = placed(VILLAGE_SPOTS.find((v) => v.k === picked))
-    const size = Math.min(1.8, Math.max(0.6, Math.round(((s0.s || 1) + by) * 10) / 10))
-    saveDraft({ ...draft, [picked]: { x: s0.x, y: s0.y, s: size } })
+    changePicked({ s: Math.min(1.8, Math.max(0.6, Math.round(((s0.s || 1) + by) * 10) / 10)) })
   }
   async function copyLayout() {
-    const text = 'Village layout:\n' + VILLAGE_SPOTS.map((v) => { const p = placed(v); return v.k + ': x ' + p.x + ', y ' + p.y + ', size ' + (p.s || 1) }).join('\n')
-    try { await navigator.clipboard.writeText(text); setLayoutNote('Copied. Paste it to Claude to save it for everyone.') }
+    const text = 'Village layout:\n' + VILLAGE_SPOTS.map((v) => { const p = placed(v); return v.k + ': x ' + p.x + ', y ' + p.y + ', size ' + (p.s || 1) + (isHidden(v.k) ? ', hidden' : '') }).join('\n')
+    try { await navigator.clipboard.writeText(text); setLayoutNote('Copied. Paste it to Claude to make it everyone’s starting layout.') }
     catch { setLayoutNote('Could not copy. Here it is to copy by hand:\n' + text) }
   }
   function resetLayout() {
-    saveDraft({}); setPicked(null); setLayoutNote('Back to the saved layout.')
+    saveLayout({}); setPicked(null); setLayoutNote('Back to the usual village layout.')
   }
 
   useEffect(() => {
@@ -396,12 +429,12 @@ export default function VillageScene() {
 
       <div ref={sceneRef} className={'vs-scene vs-scene-path' + (arrange ? ' vs-arranging' : '')} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={dragEnd}>
         <img className="vs-ground" src="/art/village-path/village-meadow.webp" alt="" width="768" height="1152" fetchpriority="high" />
-        {VILLAGE_SPOTS.map((s0) => {
+        {VILLAGE_SPOTS.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
           const s = placed(s0)
           const i = info(s.k)
           return (
             <button key={s.k} type="button" data-spot={s.k}
-              className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' + (life ? ' vs-fire-' + life.fire_level : '') : '') + (bump === s.k ? ' vs-bump' : '') + (arrange && picked === s.k ? ' vs-picked' : '')}
+              className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' + (life ? ' vs-fire-' + life.fire_level : '') : '') + (bump === s.k ? ' vs-bump' : '') + (arrange && picked === s.k ? ' vs-picked' : '') + (arrange && isHidden(s.k) ? ' vs-hidden' : '')}
               style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1) }}
               aria-label={s.label + '. ' + i.sub}
               onPointerDown={(e) => dragStart(e, s)}
@@ -430,25 +463,24 @@ export default function VillageScene() {
 
       <p className="vs-hint">{arrange ? 'Drag each building onto its place on the map.' : 'Tap anything in the village to go there.'}</p>
 
-      {isFounder && (
-        <div className="vs-arrange">
-          {!arrange && <button type="button" className="btn btn-outline btn-full" onClick={() => { setArrange(true); setLayoutNote('') }}>Arrange the village (founder)</button>}
-          {arrange && <>
-            <p className="vs-note">Drag a building to move it. Tap one, then use Smaller or Bigger. Your changes show only on this device until you copy them and send them to Claude.</p>
-            <p className="vs-arrange-picked">{picked ? 'Picked: ' + (VILLAGE_SPOTS.find((v) => v.k === picked) || {}).label + ' (size ' + (placed(VILLAGE_SPOTS.find((v) => v.k === picked)).s || 1) + ')' : 'Nothing picked yet.'}</p>
-            <div className="vs-arrange-row">
-              <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(-0.1)}>Smaller</button>
-              <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(0.1)}>Bigger</button>
-            </div>
-            <div className="vs-arrange-row">
-              <button type="button" className="btn btn-primary" onClick={copyLayout}>Copy layout</button>
-              <button type="button" className="btn btn-outline" onClick={resetLayout}>Start over</button>
-              <button type="button" className="btn btn-outline" onClick={() => { setArrange(false); setPicked(null) }}>Done</button>
-            </div>
-            {layoutNote && <p className="vs-note vs-arrange-note" role="status">{layoutNote}</p>}
-          </>}
-        </div>
-      )}
+      <div className="vs-arrange">
+        {!arrange && <button type="button" className="btn btn-outline btn-full" onClick={() => { setArrange(true); setLayoutNote('') }}>Arrange my village</button>}
+        {arrange && <>
+          <p className="vs-note">Drag a building to move it. Tap one to pick it, then make it smaller or bigger, or hide it. Hidden places are still in the list below. Your layout is saved on your account and shows in every village.</p>
+          <p className="vs-arrange-picked" role="status">{picked ? 'Picked: ' + (VILLAGE_SPOTS.find((v) => v.k === picked) || {}).label + (isHidden(picked) ? ' (hidden)' : '') : 'Tap a building to pick it.'}</p>
+          <div className="vs-arrange-row">
+            <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(-0.1)}>Smaller</button>
+            <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(0.1)}>Bigger</button>
+            <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => changePicked({ hide: !isHidden(picked) })}>{picked && isHidden(picked) ? 'Show it' : 'Hide it'}</button>
+          </div>
+          <div className="vs-arrange-row">
+            <button type="button" className="btn btn-primary" onClick={() => { setArrange(false); setPicked(null) }}>Done</button>
+            <button type="button" className="btn btn-outline" onClick={resetLayout}>Back to the usual layout</button>
+          </div>
+          {isFounder && <button type="button" className="btn btn-outline btn-full" onClick={copyLayout}>Copy layout for everyone (founder)</button>}
+          {layoutNote && <p className="vs-note vs-arrange-note" role="status">{layoutNote}</p>}
+        </>}
+      </div>
 
       <div className="vs-body">
         {!mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>Join {village.name}</button>}

@@ -195,3 +195,6 @@
 .vs-arrange-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
 .vs-arrange-row .btn { flex: 1 1 auto; }
 .vs-arrange-note { white-space: pre-line; }
+
+.vs-hidden { opacity: 0.4; filter: grayscale(0.8); }
+.vs-hidden .vs-lab::after { content: ' (hidden)'; }
