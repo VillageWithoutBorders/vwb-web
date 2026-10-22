@@ -6049,3 +6049,17 @@ a.btn { text-decoration: none; }
 .cal-phone-link { margin: -0.5rem 0 0.25rem; }
 #cal-place-form { width: 100%; }
 .cal-zip-row input { border-radius: 10px; border: 2px solid var(--border); background: var(--white); color: var(--text); padding: 0 0.75rem; }
+
+/* Messages hub on phones (Oct 22): tabs in an even two-column grid, Settings beside New message, timer as big buttons. */
+.hub-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin: 0.75rem 0; }
+.hub-tabs > button { width: 100%; }
+@media (min-width: 600px) { .hub-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.msg-new-row { display: flex; align-items: flex-start; gap: 0.5rem; }
+.msg-new-main { flex: 1; min-width: 0; }
+.msg-gear { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 10px; border: 2px solid var(--border); background: var(--white); cursor: pointer; }
+.msg-gear .vwb-icon { width: 28px; height: 28px; vertical-align: 0; }
+.msg-gear:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.msg-timer { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 0.4rem; }
+.msg-timer-btn { min-height: 44px; padding: 0 0.25rem; border-radius: 10px; border: 2px solid var(--border); background: var(--white); color: var(--text); font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+.msg-timer-btn.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.msg-timer-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }

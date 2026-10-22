@@ -61,7 +61,7 @@ export default function ConnectHub() {
   }, [user?.id])
 
   const chip = (on) => ({
-    flex: '1 1 auto', minHeight: '44px', padding: '0.4rem 0.9rem', borderRadius: '22px', border: 'none', cursor: 'pointer',
+    minHeight: '48px', padding: '0.35rem 0.6rem', borderRadius: '12px', lineHeight: 1.2, border: 'none', cursor: 'pointer',
     fontSize: '0.9rem', fontWeight: 600, background: on ? 'var(--accent)' : 'var(--surface-2)', color: on ? 'var(--on-accent)' : 'var(--text-soft)',
   })
 
@@ -72,7 +72,7 @@ export default function ConnectHub() {
         <p className="cal-sub" style={{ marginTop: 0 }}>{simple ? 'Talk with one neighbor, or with a few people you chose.' : 'Chats, villages, and neighbors, all in one place.'}</p>
         {established === false && <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE}</p>}
         {!simple && <ChatGuide />}
-        <div role="tablist" aria-label="Where to connect" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.75rem 0' }}>
+        <div role="tablist" aria-label="Where to connect" className="hub-tabs">
           {tabs.map((t) => (
             <button key={t.key} type="button" role="tab" id={'hub-tab-' + t.key} aria-selected={active === t.key} aria-controls="hub-panel" style={chip(active === t.key)}
               onClick={() => setParams(t.key === 'messages' ? {} : { tab: t.key }, { replace: true })}>
