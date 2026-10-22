@@ -266,7 +266,7 @@ export default function FirstVillage() {
           <div className="login-form">
             <h1 className="fv1-h" tabIndex={-1} ref={headRef}>You joined {joined?.name}</h1>
             {joined?.story && <p className="fv1-story">{joined.story}</p>}
-            <p className="fv1-text">Welcome, neighbor. Next, you can say hi in the village chat. We fill in a short hello for you.</p>
+            <p className="fv1-text">Welcome, neighbor. Your village has its own page: a little map where each picture is a place. The tour will show you around it. First, you can say hi in the village chat. We fill in a short hello for you.</p>
             <h2 className="fv1-h2">Get a notification for new messages?</h2>
             <p className="fv1-note">We send one notification after the chat goes quiet, not one for every message. You can change this any time in the chat settings.</p>
             {error && <p className="form-error" role="alert">{error}</p>}

@@ -701,7 +701,7 @@ export default function VillageScene() {
       <p className="vs-hint">{arrange ? 'Arrange and build your village. Your changes are saved as you go.' : 'Tap anything in the village to go there.'}</p>
 
       <div className={'vs-arrange' + (arrange ? ' vs-arrange-on' : '')}>
-        {!arrange && <button type="button" className="btn btn-outline btn-full" onClick={() => { setArrange(true); setTool('move'); setLayoutNote(''); setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50) }}>Arrange and build my village</button>}
+        {!arrange && <button type="button" data-tour="village-arrange" className="btn btn-outline btn-full" onClick={() => { setArrange(true); setTool('move'); setLayoutNote(''); setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50) }}>Arrange and build my village</button>}
         {arrange && (
           <div className="vs-toolbar" role="region" aria-label="Arrange and build tools">
             {layoutNote && <p className="vs-tool-note" role="status">{layoutNote}</p>}
