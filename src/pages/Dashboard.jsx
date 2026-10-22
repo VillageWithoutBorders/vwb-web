@@ -13,6 +13,7 @@ import Icon from '../components/Icon'
 import NearbyNeedTiles from '../components/NearbyNeedTiles'
 import OrgInvites from '../components/OrgInvites'
 import VillageGuestInvites from '../components/VillageGuestInvites'
+import QuickActions from '../components/QuickActions'
 
 function VillageAsk() {
   const { profile, refreshProfile } = useAuth()
@@ -82,18 +83,10 @@ export default function Dashboard() {
         <h1>Welcome back, {displayName}</h1>
         <p className="welcome-sub">What do you need today?</p>
       </div>
-      {/* Community, SkillShare, and Messages already live in the bottom tab
-          bar, so they're deliberately left out here rather than repeated.
-          Home keeps two big buttons and a short More row. Ambassador and admin
+      {/* Quick Actions: four big buttons each person picks (QuickActions.jsx).
+          Community and Messages also live in the bottom bar. Ambassador and admin
           tools sit in a closed fold. The Emergency button stays at the bottom. */}
-      <div className="home-primary">
-        <button type="button" className="btn btn-primary home-btn" onClick={() => navigate('/ask')}>
-          <Icon name="raise-hand" size={28} /> Ask for help
-        </button>
-        <button type="button" className="btn btn-outline home-btn" onClick={() => navigate('/skillshare')}>
-          <Icon name="heart" size={28} /> I can help
-        </button>
-      </div>
+      <QuickActions />
       {established === false && (
         <section className="new-here" aria-labelledby="new-here-h">
           <h2 id="new-here-h"><Icon name="sprout" /> You're new here</h2>
