@@ -84,7 +84,6 @@ export default function Profile() {
   const [coverageRegion, setCoverageRegion] = useState('')
   const [coverageLat, setCoverageLat] = useState(null)
   const [coverageLng, setCoverageLng] = useState(null)
-  const [coverageLocating, setCoverageLocating] = useState(false)
   const [coverageSaving, setCoverageSaving] = useState(false)
   const [coverageError, setCoverageError] = useState('')
 
@@ -261,20 +260,16 @@ export default function Profile() {
     setAdminAppSaving(false)
   }
 
+  // Coverage uses the center of the admin's home zip code area. VWB never asks the phone where it is.
   function captureCoverageLocation() {
     setCoverageError('')
-    if (!navigator.geolocation) { setCoverageError('Location is not available on this device.'); return }
-    setCoverageLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setCoverageLat(pos.coords.latitude); setCoverageLng(pos.coords.longitude); setCoverageLocating(false) },
-      () => { setCoverageError('Could not get your location. Check your browser permissions and try again.'); setCoverageLocating(false) },
-      { enableHighAccuracy: false, timeout: 10000 }
-    )
+    if (profile?.latitude == null || profile?.longitude == null) { setCoverageError('Add your zip code to your profile first.'); return }
+    setCoverageLat(Number(profile.latitude)); setCoverageLng(Number(profile.longitude))
   }
 
   async function saveCoverageArea() {
     if (!coverageRegion.trim()) { setCoverageError('Add a region name first.'); return }
-    if (coverageLat == null || coverageLng == null) { setCoverageError('Share your location first.'); return }
+    if (coverageLat == null || coverageLng == null) { setCoverageError('Tap Use my zip code area first.'); return }
     setCoverageSaving(true); setCoverageError('')
     const { error: covErr } = await supabase.from('helper_profiles').update({
       admin_region_name: coverageRegion.trim(),
@@ -475,11 +470,11 @@ export default function Profile() {
         {isAdmin && !profile?.admin_latitude && (
           <div style={{ background: 'linear-gradient(135deg, var(--info-bg), var(--info-bg))', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
             <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>Set up your coverage area</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Emergency dispute reviews (a false alarm or duplicate flag) route to the nearest admin, so add your area and share your location to catch the ones near you. Reports about a person or message go to every admin right away, wherever they're located.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Emergency dispute reviews (a false alarm or duplicate flag) route to the nearest admin, so add your area and use your zip code area to catch the ones near you. Reports about a person or message go to every admin right away, wherever they're located.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <input type="text" placeholder="What area do you cover? (towns or counties)" value={coverageRegion} onChange={e => setCoverageRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
-              <button type="button" className="btn btn-outline" onClick={captureCoverageLocation} disabled={coverageLocating} style={{ borderColor: 'var(--info)', color: 'var(--info)' }}>
-                {coverageLocating ? 'Getting your location...' : coverageLat != null ? '✓ Location captured' : 'Share my location'}
+              <button type="button" className="btn btn-outline" onClick={captureCoverageLocation} style={{ borderColor: 'var(--info)', color: 'var(--info)' }}>
+                {coverageLat != null ? '✓ Using your zip code area' : 'Use my zip code area'}
               </button>
               {coverageError && <p className="form-error" role="alert">{coverageError}</p>}
               <button type="button" className="btn btn-primary" onClick={saveCoverageArea} disabled={coverageSaving || !coverageRegion.trim() || coverageLat == null} style={{ marginTop: '0.25rem' }}>

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { getCurrentPosition } from '../utils/location'
-import { searchPlaces, nearestPlaces, getMyPlaces, saveMyPlaces, getVisitorArea, setVisitorArea } from '../utils/places'
+import { searchPlaces, getMyPlaces, saveMyPlaces, getVisitorArea, setVisitorArea } from '../utils/places'
 
 const MAX_AREAS = 5
 
@@ -86,17 +85,6 @@ export default function AreaPicker({ mode = 'member', onChange, heading = 'Your 
     await commit(areas.filter((a) => a.id !== id))
   }
 
-  async function useMyLocation() {
-    setNote(''); setBusy(true)
-    const pos = await getCurrentPosition()
-    if (!pos) { setBusy(false); setNote("We couldn't get your location. You can type your county instead."); return }
-    const { data, error } = await nearestPlaces(pos.lat, pos.lng)
-    setBusy(false)
-    if (error) { setNote("That didn't work. You can type your county instead."); return }
-    if (!data.length) { setNote("We don't have areas listed near you yet. You can type your county instead."); return }
-    setNearby(data)
-  }
-
   const list = (items, labelId) => (
     <ul aria-labelledby={labelId} style={{ listStyle: 'none', margin: '0.5rem 0 0', padding: 0, display: 'grid', gap: '0.5rem' }}>
       {items.map((p) => (
@@ -146,9 +134,6 @@ export default function AreaPicker({ mode = 'member', onChange, heading = 'Your 
               <p style={{ margin: '0.5rem 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>No matches yet. Keep typing, or check the spelling.</p>
             )}
 
-            <button type="button" className="btn btn-outline btn-full" onClick={useMyLocation} disabled={busy} style={{ minHeight: 44, marginTop: '0.75rem' }}>
-              Use my location
-            </button>
             {nearby && (
               <>
                 <p id="area-nearby" style={{ margin: '0.75rem 0 0', fontWeight: 600 }}>Is it one of these?</p>
