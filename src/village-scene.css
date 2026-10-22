@@ -376,3 +376,7 @@
 }
 .vs-sheet-close .vs-tool-ic { width: 28px; height: 28px; color: var(--vs-gold); }
 .vs-sheet-close:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 2px; }
+
+/* Your cottage (Oct 22). */
+.vs-cottage-sub { margin: 4px 0 0; color: var(--vs-muted); font-size: 1rem; }
+.vs-chip-link { text-decoration: none; min-height: 36px; }
