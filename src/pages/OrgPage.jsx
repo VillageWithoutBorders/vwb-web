@@ -83,12 +83,12 @@ export default function OrgPage() {
   const isHead = !!mine && mine.role === 'admin'
 
   async function loadOrg() {
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label, kind, response_status, head_title, organizer_title, scene')
-      .eq('id', id)
-      .eq('approved', true)
-      .maybeSingle()
+    const cols = 'id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label, kind, response_status, head_title, organizer_title'
+    let { data, error } = await supabase.from('organizations').select(cols + ', scene').eq('id', id).eq('approved', true).maybeSingle()
+    // Before vwb-org-scene.sql is run, the page look column isn't there yet: load without it.
+    if (error && (error.code === '42703' || /scene/.test(error.message || ''))) {
+      ({ data, error } = await supabase.from('organizations').select(cols).eq('id', id).eq('approved', true).maybeSingle())
+    }
     if (error) console.error('Failed to load organization:', error)
     if (!data) { setMissing(true); return null }
     setOrg(data)
