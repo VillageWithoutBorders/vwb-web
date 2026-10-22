@@ -243,3 +243,10 @@
 @media (prefers-reduced-motion: reduce) { .vs-palette-item:active { transform: none; } }
 .vs-arrange-tools-3 { grid-template-columns: 1fr 1fr 1fr; }
 .vs-arrange-tools-3 .btn { padding-left: 6px; padding-right: 6px; font-size: 0.95rem; }
+
+/* Drawn streams: glints drift slowly downstream (still for reduced motion). */
+.vs-ripple { animation: vs-flow 6s linear infinite; }
+.vs-ripple-2 { animation-duration: 9s; }
+.vs-ripple-3 { animation-duration: 12s; }
+@keyframes vs-flow { to { stroke-dashoffset: -24.6; } }
+@media (prefers-reduced-motion: reduce) { .vs-ripple { animation: none; } }
