@@ -13,6 +13,10 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
   const [zip, setZip] = useState('')
   const [busy, setBusy] = useState('')
   const [note, setNote] = useState('')
+  // Once a place is set, the zip box, location button and distance fold away
+  // behind "Change place" so the events show sooner on a phone.
+  const [open, setOpen] = useState(false)
+  const showForm = !origin || open
 
   async function useZip(e) {
     e.preventDefault()
@@ -23,6 +27,7 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
     setBusy('')
     if (!place) { setNote("We couldn't find that zip code. Check it and try again."); return }
     setZip('')
+    setOpen(false)
     onOriginChange(place)
   }
 
@@ -31,6 +36,7 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
     const loc = await getCurrentPosition()
     setBusy('')
     if (!loc) { setNote("We couldn't get your location. Enter a zip code instead."); return }
+    setOpen(false)
     onOriginChange({ name: 'your current location', lat: loc.lat, lng: loc.lng, kind: 'me' })
   }
 
@@ -45,7 +51,13 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
         {origin && origin.kind === 'zip' && !homeArea && (
           <button type="button" className="link-button" style={{ minHeight: '44px', marginLeft: '0.5rem' }} onClick={() => onOriginChange(null)}>Clear</button>
         )}
+        {origin && busy !== 'zip' && (
+          <button type="button" className="cal-change" aria-expanded={open} aria-controls="cal-place-form" onClick={() => setOpen((v) => !v)}>
+            {open ? 'Done' : 'Change place or distance'}
+          </button>
+        )}
       </div>
+      {showForm && <div id="cal-place-form">
       <form className="cal-zip-form" onSubmit={useZip} noValidate>
         <label htmlFor="cal-zip">{origin ? 'Look somewhere else (zip code)' : 'Your zip code'}</label>
         <div className="cal-zip-row">
@@ -68,6 +80,7 @@ export function CalendarLocationBar({ origin, onOriginChange, miles, onMilesChan
           </select>
         </label>
       )}
+      </div>}
     </div>
   )
 }

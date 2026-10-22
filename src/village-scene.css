@@ -361,3 +361,6 @@
 .vs-drawer-close .vs-tool-ic { width: 28px; height: 28px; color: var(--vs-gold); }
 .vs-drawer-close:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 2px; }
 @media (min-width: 1024px) { .vs-drawer-close { display: none; } }
+
+/* The list of towns wraps onto more lines instead of running off the screen (Oct 22). */
+.vs-chip.vs-chip-towns { white-space: normal; border-radius: 14px; line-height: 1.35; padding: 5px 12px; overflow: visible; }
