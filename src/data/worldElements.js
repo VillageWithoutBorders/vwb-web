@@ -118,9 +118,6 @@ export const DECOR_PIECES = [
 export const OPEN_MEADOW = '/art/village-build/meadow-open.webp'
 
 // Grounds people can choose under their village (Arrange and build).
-export const GROUNDS = [
-  { k: 'path', label: 'Meadow path', src: '/art/village-path/village-meadow.webp' },
-  { k: 'open', label: 'Open meadow', src: '/art/village-build/meadow-open.webp' },
-  { k: 'clearings', label: 'Sunny clearings', src: '/art/village-build/ground-clearings.webp' },
-  { k: 'roads', label: 'Village roads', src: '/art/village-roads.webp' },
-]
+// Every map sits on a simple field (Jade, Oct 22). Seasons can change it later:
+// pick a different field picture here by the time of year.
+export const FIELD_SRC = '/art/village-build/meadow-open.webp'
