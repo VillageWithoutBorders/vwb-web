@@ -551,9 +551,9 @@ export default function OrgPage() {
             </button>
           )
         })}
-        {user && <NamesToggle b={b} onChange={saveLabels} />}
         <div className="vs-fade" />
       </div>
+      {user && !b.arrange && <NamesToggle b={b} onChange={saveLabels} />}
 
       <p className="vs-hint">{arrange ? (arrangeFor === 'everyone' ? 'You are arranging ' + org.name + ' for everyone. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : 'Tap anything to go there.'}</p>
 
