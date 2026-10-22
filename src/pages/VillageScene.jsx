@@ -848,6 +848,7 @@ export default function VillageScene() {
       {sheet && (
         <div className="vs-shade" onClick={(e) => { if (e.target === e.currentTarget) closeSheet() }}>
           <div className="vs-sheet" role="dialog" aria-modal="true" aria-labelledby="vs-sheet-title" ref={sheetRef}>
+            <button type="button" className="vs-sheet-close" onClick={closeSheet}><ToolIcon name="down" /><span>Close</span></button>
             {sheetBody(sheet.k)}
             <button type="button" className="btn btn-outline btn-full" onClick={closeSheet}>Back to the village</button>
           </div>
