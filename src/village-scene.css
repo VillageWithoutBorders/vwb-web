@@ -319,7 +319,7 @@
 }
 .vs-scene-path:not(.vs-arranging) .vs-el:hover .vs-lab,
 .vs-scene-path:not(.vs-arranging) .vs-el:focus-visible .vs-lab { opacity: 1; transform: none; }
-.vs-names-toggle { position: absolute; right: 8px; bottom: 8px; z-index: 6; display: inline-flex; align-items: center; gap: 6px;
+.vs-names-toggle { position: relative; display: flex; margin: 10px auto 0; width: fit-content; align-items: center; gap: 6px;
   min-height: 44px; padding: 0 12px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.35);
   background: rgba(20, 44, 43, 0.82); color: #fff; font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
 .vs-names-toggle:hover { background: rgba(20, 44, 43, 0.95); }
@@ -402,8 +402,8 @@
 .ose-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .ose-buttons .btn { flex: 1 1 10rem; min-height: 48px; }
 @media (max-width: 360px) { .ose-place { grid-template-columns: 1fr; } }
-/* The Show/Hide names button sits bottom center, between Your corner and Messages, so it never covers a place (Oct 22). */
-.vs-names-toggle { right: auto; left: 50%; transform: translateX(-50%); bottom: 6px; white-space: nowrap; }
+/* The Show/Hide names button sits under the map, centered, so it never covers a place (Oct 22). */
+.vs-names-toggle { white-space: nowrap; }
 
 /* Gamify starters (Oct 22). Lanterns name what is waiting on your cottage map. */
 .vs-lantern-lit { top: -30%; left: 70%; animation: vs-glow 2.4s ease-in-out infinite alternate; }
@@ -450,6 +450,7 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
   .vs-page.vs-page-path { display: flex; flex-direction: column; }
   .vs-page-path > .vs-top { order: -3; }
   .vs-page-path > .vs-scene-path { order: -2; scroll-margin-top: calc(var(--header-height) + 8px); }
+  .vs-page-path > .vs-names-toggle { order: -2; }
   .vs-page-path > .vs-build-start { order: -1; }
 
   .vs-page-path:has(.vs-arrange-on) { padding-bottom: 16px; padding-right: 76px; }

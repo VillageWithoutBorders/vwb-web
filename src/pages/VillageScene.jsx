@@ -693,11 +693,12 @@ export default function VillageScene() {
             </button>
           )
         })}
-        {/* Name tags: on phones they show; with a mouse they show when you point at
-            a place. This button turns them on or off for you, on every map. */}
-        <NamesToggle b={b} onChange={saveLabels} />
         <div className="vs-fade" />
       </div>
+      {/* Name tags: on phones they show; with a mouse they show when you point at
+          a place. This button turns them on or off for you, on every map.
+          It sits under the map so it never covers a place. */}
+      {!arrange && <NamesToggle b={b} onChange={saveLabels} />}
 
       {cottage && !arrange && (
         <button type="button" className="vs-gifts-btn" onClick={() => openSheet({ k: 'gifts' })}>
