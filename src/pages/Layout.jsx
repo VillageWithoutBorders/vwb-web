@@ -26,7 +26,7 @@ export default function Layout() {
   // World pages (the globe, a village, an organization) fill the whole screen
   // with their own teal background, edge to edge.
   const isWorld = (pathname === '/' && !simple) || pathname === '/world' || pathname === '/cottage' || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
-  const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
+  const isChat = pathname === '/village-square' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
 
   // Back button on every page (Oct 22, Jade). Not on Home (the globe), and not on chats,
   // which have their own back arrow. Pages with their own BackLink hide this one.
@@ -40,18 +40,18 @@ export default function Layout() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        {/* Always here, left to right: Home (the globe), Calendar, Dashboard (in the middle), Alerts, Your corner. */}
+        {/* Always here, left to right: World (the globe), Calendar, Today (in the middle), Alerts, your cottage. */}
         <nav className={'app-header-inner header-nav' + (isAdmin ? ' header-nav-admin' : '')} aria-label="Top menu">
           {!simple && (<>
-          <Link to="/world" className={'header-btn' + (pathname === '/world' ? ' on' : '')} aria-current={pathname === '/world' ? 'page' : undefined} aria-label="Home: your networks on the globe" data-tour="top-home">
+          <Link to="/world" className={'header-btn' + (pathname === '/world' ? ' on' : '')} aria-current={pathname === '/world' ? 'page' : undefined} aria-label="World: your networks on the globe" data-tour="top-home">
             <img className="header-btn-logo" src="/images/vwb_header-v2.png" alt="" width="26" height="26" />
-            <span className="header-btn-label" aria-hidden="true">Home</span>
+            <span className="header-btn-label" aria-hidden="true">World</span>
           </Link>
           <Link to="/calendar" className={'header-btn' + (pathname.startsWith('/calendar') ? ' on' : '')} aria-current={pathname === '/calendar' ? 'page' : undefined} aria-label="Calendar" data-tour="top-calendar">
             <Icon name="calendar" size={26} className="header-btn-pic" />
             <span className="header-btn-label" aria-hidden="true">Calendar</span>
           </Link>
-          <Link to="/home" className={'header-btn' + (pathname === '/home' ? ' on' : '')} aria-current={pathname === '/home' ? 'page' : undefined} aria-label="Today: what needs you, your shortcuts and places" data-tour="top-dashboard">
+          <Link to="/today" className={'header-btn' + (pathname === '/today' ? ' on' : '')} aria-current={pathname === '/today' ? 'page' : undefined} aria-label="Today: what needs you, your shortcuts and places" data-tour="top-dashboard">
             <Icon name="clipboard" size={26} className="header-btn-pic" />
             <span className="header-btn-label" aria-hidden="true">Today</span>
           </Link>

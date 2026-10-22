@@ -122,9 +122,9 @@ export default function AppMenu({ inline = false }) {
               </button>
             )}
 
-            <p className="app-menu-heading">Help</p>
+            <p className="app-menu-heading">About the app</p>
             <button type="button" className="app-menu-item" onClick={() => go('/help')}>
-              <span aria-hidden="true"><Icon name="question" /></span> Help and feedback
+              <span aria-hidden="true"><Icon name="question" /></span> App guide and feedback
             </button>
             <button type="button" className="app-menu-item" onClick={() => { setOpen(false); startAppTour() }}>
               <span aria-hidden="true"><Icon name="compass" /></span> Take the tour

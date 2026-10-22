@@ -28,7 +28,7 @@ export default function Help() {
     <div className="help-page">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
-        <h1 style={{ margin: 0 }}>Help &amp; Feedback</h1>
+        <h1 style={{ margin: 0 }}>App guide and feedback</h1>
       </div>
 
       <div className="help-section help-tour-card">

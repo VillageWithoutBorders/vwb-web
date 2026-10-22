@@ -77,7 +77,7 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey, pa
               ? 'This emergency is closed. You can read the camp chat until ' + day(camp.deletes_at) + '. Then it is deleted for good.'
               : (camp.member_count === 1 ? 'You are the first one here.' : camp.member_count + ' people helping are in the camp chat.') + ' Members only, not scrambled. Messages delete after 30 days.'}
           </p>
-          <button type="button" className="btn btn-primary btn-full rc-btn" onClick={() => navigate('/campfire?board=' + camp.board_id)}>
+          <button type="button" className="btn btn-primary btn-full rc-btn" onClick={() => navigate('/village-square?board=' + camp.board_id)}>
             <Icon name="campfire" /> {campClosed ? 'Read the camp chat' : 'Open the camp chat'}
           </button>
         </>

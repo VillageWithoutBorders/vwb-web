@@ -597,7 +597,7 @@ export default function Campfire() {
           </h1>
           <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.event_id ? 'Response Camp' + (activeBoard.archived ? ', closed' : '') : activeBoard.sister_a ? 'Sister Campfire' + (activeBoard.archived ? ', closed' : '') : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
         </div>
-        <button onClick={() => navigate('/villages')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}><Icon name="compass" /></button>
+        <button onClick={() => navigate('/world')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}><Icon name="compass" /></button>
         {isVillageBoard && inVillage && (
           <button onClick={() => setShowPeople(true)} aria-label={'People in ' + activeBoard.name + (removalRequests.some(r => r.requested_by !== user.id) ? ', a removal request needs a second member' : '')} title="People" style={{ position: 'relative', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }}>
             <Icon name="people" />

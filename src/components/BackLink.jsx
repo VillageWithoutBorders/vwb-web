@@ -30,9 +30,26 @@ export default function BackLink({ fallback = '/', fallbackLabel = 'Home', class
 
 // For back arrows: go to the previous page in the app, or to the fallback
 // when the page was opened directly.
+// A page part that draws its own way back (like "All help") tells the frame too.
+export function useOwnBack() {
+  const tellFrame = useContext(PageBackContext)
+  useEffect(() => {
+    if (!tellFrame) return
+    tellFrame(1)
+    return () => tellFrame(-1)
+  }, [tellFrame])
+}
+
+// A page that uses this draws its own back arrow, so the frame's Back button hides.
 export function useGoBack() {
   const navigate = useNavigate()
   const location = useLocation()
+  const tellFrame = useContext(PageBackContext)
+  useEffect(() => {
+    if (!tellFrame) return
+    tellFrame(1)
+    return () => tellFrame(-1)
+  }, [tellFrame])
   return (fallback = '/') => {
     if (location.key !== 'default') navigate(-1)
     else navigate(fallback)

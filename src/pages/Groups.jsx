@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { useCampfireIds } from '../hooks/useCampfireIds'
@@ -11,7 +11,12 @@ import { tell } from '../components/AdminDialog'
 // Groups: private circles anyone can start. No roles, no one in charge.
 // Every group has its own board (its own Campfire), end-to-end encrypted.
 // See vwb-groups.sql for the rules the database enforces.
-export default function Groups({ embedded = false }) {
+// show: 'all' (the /groups page), 'cottage' or 'campfires' (the Messages tabs, Oct 22).
+export default function Groups({ embedded = false, show: showProp = 'all' }) {
+  // On its own page, /groups?show=cottage or ?show=campfires picks the list (the cottage map uses these).
+  const [params] = useSearchParams()
+  const asked = params.get('show')
+  const show = embedded ? showProp : asked === 'cottage' || asked === 'campfires' ? asked : 'all'
   const { user, organizations, established } = useAuth()
   // Organizations this person heads or is an organizer (trusted liaison)
   // for. They can start a group for one of them and be its steward.
@@ -117,7 +122,10 @@ export default function Groups({ embedded = false }) {
     setInvites(list => list.filter(i => i.id !== groupId))
   }
 
-  // Sidechats sit directly under the chat they belong to.
+  // Is this chat a Campfire (organization, village, or picked by a keeper)? Else a Cottage Chat.
+  const isFire = (g) => campfires.has(g.id) || g.village_kind === 'sidechat'
+  const fits = (g) => show === 'all' || (show === 'campfires') === isFire(g)
+  // Smaller Campfires sit directly under the chat they belong to.
   const activeGroups = groups.filter(g => !g.archived)
   const activeIds = new Set(activeGroups.map(g => g.id))
   const kidsOf = {}
@@ -127,18 +135,21 @@ export default function Groups({ embedded = false }) {
     if (parent && activeIds.has(parent)) (kidsOf[parent] = kidsOf[parent] || []).push(g)
     else rootGroups.push(g)
   }
-  const orderedGroups = rootGroups.flatMap(g => [{ g, nested: false }, ...(kidsOf[g.id] || []).map(k => ({ g: k, nested: true }))])
+  const orderedGroups = rootGroups.flatMap(g => [{ g, nested: false }, ...(kidsOf[g.id] || []).map(k => ({ g: k, nested: true }))]).filter(({ g }) => fits(g))
+  const archivedGroups = groups.filter(g => g.archived && fits(g))
 
   return (
     <div className="groups-page">
       <div className="groups-head">
         <div>
-          {!embedded && <h1>Cottage Chats &amp; Campfires</h1>}
+          {!embedded && <h1>{show === 'campfires' ? 'Your Campfires' : show === 'cottage' ? 'Your Cottage Chats' : 'Your group chats'}</h1>}
           <p className="groups-sub"><Icon name="cottage" /> Cottage Chat: take a seat, let it out. You're safe here. <Icon name="campfire" /> Campfire: gather round and let your voices be heard.</p>
         </div>
       </div>
 
-      {!showStart ? (
+      {show === 'campfires' ? (
+        <p className="groups-sub">Campfires start in a village or an organization. Open your village map and tap Campfires.</p>
+      ) : !showStart ? (
         established === false ? (
           <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE} A member can still invite you to their group.</p>
         ) : <button type="button" className="btn btn-primary btn-full groups-start-btn" onClick={() => setShowStart(true)}>
@@ -208,20 +219,20 @@ export default function Groups({ embedded = false }) {
 
       {!loading && (
         <section aria-labelledby="mygroups-heading">
-          <h2 id="mygroups-heading" className="groups-section">Your chats</h2>
-          {groups.length === 0 && <p className="groups-empty">You're not in any chats yet. Start a Cottage Chat, or ask a friend to invite you.</p>}
+          <h2 id="mygroups-heading" className="groups-section">{show === 'campfires' ? 'Your Campfires' : show === 'cottage' ? 'Your Cottage Chats' : 'Your chats'}</h2>
+          {orderedGroups.length === 0 && <p className="groups-empty">{show === 'campfires' ? "You're not at any Campfires yet." : "You're not in any chats yet. Start a Cottage Chat, or ask a friend to invite you."}</p>}
           {orderedGroups.map(({ g, nested }) => (
             <button key={g.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + g.id)}>
               <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? <><Icon name="pushpin" />{' '}</> : ''}{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="campfire" />{' '}</> : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
               <span className="groups-row-meta">{g.village_kind === 'sidechat' ? 'Picked by the keeper \u00b7 ' : ''}{g.quiet ? 'Quiet \u00b7 ' : ''}{g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}</span>
             </button>
           ))}
-          {groups.some(g => g.archived) && (
+          {archivedGroups.length > 0 && (
             <>
               <button type="button" className="btn btn-outline" aria-expanded={showArchived} onClick={() => setShowArchived(v => !v)}>
-                {showArchived ? 'Hide archived chats' : 'Archived chats (' + groups.filter(g => g.archived).length + ')'}
+                {showArchived ? 'Hide archived chats' : 'Archived chats (' + archivedGroups.length + ')'}
               </button>
-              {showArchived && groups.filter(g => g.archived).map(g => (
+              {showArchived && archivedGroups.map(g => (
                 <button key={g.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + g.id)}>
                   <span className="groups-row-name">{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="campfire" />{' '}</> : ''}{g.name}</span>
                   <span className="groups-row-meta">Archived</span>

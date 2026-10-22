@@ -9,7 +9,7 @@ export const EMOJI_ICONS = {
   '📤': 'share', '📥': 'inbox', '📲': 'phone-add', '📱': 'phone',
   '🌐': 'globe', '🌍': 'globe', '🚪': 'door',
   '🏡': 'cottage', '🏠': 'house', '🏘': 'houses', '⛺': 'tent', '🏗': 'tent',
-  '📣': 'megaphone', '🔥': 'campfire', '💬': 'sidechats', '📮': 'mailbox', '✉': 'envelope',
+  '📣': 'megaphone', '🔥': 'campfire', '💬': 'chat-bubble', '📮': 'mailbox', '✉': 'envelope',
   '🧰': 'toolbox', '🔧': 'toolbox', '🛠': 'toolbox',
   '🤝': 'handshake', '🙏': 'heart-hands', '💚': 'heart', '🎁': 'gift', '📦': 'box', '🧺': 'basket',
   '📋': 'clipboard', '📅': 'calendar', '🗓': 'calendar', '📂': 'folder', '📇': 'card',

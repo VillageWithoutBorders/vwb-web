@@ -63,7 +63,7 @@ export default function StartGroup() {
 
   return (
     <div className="cal-page hub-page">
-      <BackLink fallback={villageId ? '/village/' + villageId : '/villages?tab=orgs'} fallbackLabel={villageId ? 'Village' : 'Village Network'} />
+      <BackLink fallback={villageId ? '/village/' + villageId : '/world?tab=orgs'} fallbackLabel={villageId ? 'Village' : 'World'} />
       <h1><Icon name="tent" /> Start a group</h1>
       <p className="cal-sub">A group is a crew that shows up when disaster hits: flooding, storms, mold, a house fire. You plan together now, so you are ready when it counts.</p>
 

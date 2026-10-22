@@ -487,7 +487,7 @@ export default function OrgPage() {
   if (loading) return <div className="vs-page"><p className="vs-loading" role="status">Loading...</p></div>
   if (missing || !org) {
     return <div className="vs-page">
-      <div className="vs-top"><Link className="vs-crumb" to="/villages?tab=orgs">Village Network</Link></div>
+      <div className="vs-top"><Link className="vs-crumb" to="/world?tab=orgs">World</Link></div>
       <p className="vs-error" role="alert">We couldn't find this organization. It may not be on VWB anymore.</p>
     </div>
   }
@@ -496,7 +496,7 @@ export default function OrgPage() {
   return (
     <div className="vs-page vs-page-path">
       <nav className="vs-top" aria-label="Where you are">
-        <Link className="vs-crumb" to="/villages?tab=orgs">Village Network</Link>
+        <Link className="vs-crumb" to="/world?tab=orgs">World</Link>
         <span className="vs-sep" aria-hidden="true">&#8250;</span>
         <span className="vs-here" aria-current="page">{org.name}</span>
       </nav>

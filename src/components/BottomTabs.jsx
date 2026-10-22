@@ -11,7 +11,7 @@ import { useSimpleView } from '../utils/simpleView'
 //   Neighbor: Emergency.  One role: that role's tools.  More than one: My tools (a short list).
 
 const HELP = ['/help-doors', '/skillshare', '/tasks', '/ask', '/post-offer', '/community/resources']
-const VILLAGE = ['/village', '/cottage', '/community', '/villages', '/find-village', '/campfire', '/orgs', '/start-group']
+const VILLAGE = ['/village', '/cottage', '/find-village', '/village-square', '/orgs', '/start-group']
 const under = (path, list) => list.some((p) => path === p || path.startsWith(p + '/'))
 
 export default function BottomTabs() {
@@ -47,7 +47,7 @@ export default function BottomTabs() {
     return (
       <nav className="bottom-tabs" aria-label="Main navigation">
         <div className="bottom-tabs-inner">
-          <NavLink to="/" end className={({ isActive }) => 'tab-item' + (isActive || pathname === '/home' ? ' active' : '')} data-tour="home">
+          <NavLink to="/" end className={({ isActive }) => 'tab-item' + (isActive || pathname === '/today' ? ' active' : '')} data-tour="home">
             <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="house" size={26} /></span>
             <span className="tab-label">Home</span>
           </NavLink>

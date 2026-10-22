@@ -214,7 +214,7 @@ export default function OrgDashboard() {
         <BackLink fallback="/" fallbackLabel="Home" />
         <h1 className="hub-org-name">Organization dashboard</h1>
         {choices.length === 0 && (
-          <p className="cal-empty">You don't run a group on VWB yet. You can ask to add yours from the Community page.</p>
+          <p className="cal-empty">You don't run a group on VWB yet. You can ask to add yours from the Calendar page.</p>
         )}
         {choices.map((o) => (
           <Link key={o.id} to={'/orgs/' + o.id + '/dashboard'} className="btn btn-outline btn-full" style={{ marginBottom: '0.5rem', minHeight: '44px' }}>{o.name}</Link>

@@ -60,8 +60,8 @@ const ALL_STEPS = [
     route: '/world',
     target: '.wd-switch',
     icon: '\u{1F30D}',
-    title: 'Home: your world',
-    body: 'Home opens the globe. Gold circles are your villages. Use these tabs to see your Villages, Organizations, or Groups.',
+    title: 'World',
+    body: 'World opens the globe. Gold circles are your villages. Use these tabs to see your Villages, Organizations, or Groups.',
   },
   {
     need: 'noVillage',
@@ -104,7 +104,7 @@ const ALL_STEPS = [
     body: 'The Village tab opens your home village. Your cottage is your house there: your own map with your chats, organizations, and more. Tap Arrange and build to move things, add trees and bridges, and draw roads. Only you see it.',
   },
   {
-    route: '/home',
+    route: '/today',
     target: '[data-tour="top-dashboard"]',
     icon: '\u2600\uFE0F',
     title: 'Today',
@@ -156,7 +156,7 @@ const ALL_STEPS = [
     body: 'All your chats live here. Each kind is a room of a different size: the bigger the room, the less you share. Tap "Why so many kinds of chat?" at the top to learn which one to use.',
   },
   {
-    route: '/home',
+    route: '/today',
     target: '[data-tour="emergency"]',
     icon: '\u26A0\uFE0F',
     title: 'Emergencies',
@@ -193,11 +193,11 @@ const ALL_STEPS = [
     body: 'This button changes with your role. Most people see Emergency. If you keep a village, run an organization, or are an Ambassador, your tools are here.',
   },
   {
-    route: '/me',
+    route: '/cottage',
     target: '[data-tour="me"]',
     icon: '\u{1F331}',
-    title: 'You',
-    body: 'Tap your picture for your profile, settings, and help. New here? Once a neighbor vouches for you, or you finish a task together, you can message people first and post offers.',
+    title: 'Your cottage',
+    body: 'Tap your picture for your cottage: your own map, with your profile, settings, and help under it. New here? Once a neighbor vouches for you, or you finish a task together, you can message people first and post offers.',
     last: 'Take this tour again any time from Settings or Help.',
   },
 ]
@@ -222,7 +222,7 @@ const SIMPLE_STEPS = [
     route: '/',
     target: '[data-tour="me"]',
     icon: '\u{1F331}',
-    title: 'You',
+    title: 'Your corner',
     body: 'Tap your picture for your profile and settings. Want the full app? Tap Show me everything at the bottom of Home.',
     last: 'Take this tour again any time from Settings or Help.',
   },

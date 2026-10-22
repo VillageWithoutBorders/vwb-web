@@ -118,7 +118,7 @@ export default function Ambassador() {
 
       <section className="amb-box" aria-labelledby="amb-talk">
         <h2 id="amb-talk"><Icon name="megaphone" /> Talk with other Ambassadors</h2>
-        <Link className="btn btn-primary btn-full amb-btn" to={'/campfire' + (board ? '?board=' + board.id : '')}>{board ? 'Open ' + board.name : 'Open Village Square'}</Link>
+        <Link className="btn btn-primary btn-full amb-btn" to={'/village-square' + (board ? '?board=' + board.id : '')}>{board ? 'Open ' + board.name : 'Open Village Square'}</Link>
         {isAdmin && <Link className="btn btn-outline btn-full amb-btn" to="/admin">Admin page</Link>}
       </section>
     </div>

@@ -35,16 +35,18 @@ export default function ConnectHub() {
   // Simple view: just private messages and Cottage Chats.
   const tabs = simple ? [
     { key: 'messages', label: 'Private messages', badge: unreadCount },
-    { key: 'chats', label: 'Cottage Chats' },
+    { key: 'cottage', label: 'Cottage Chats' },
   ] : [
     { key: 'messages', label: 'Messages', badge: unreadCount },
-    { key: 'villages', label: 'Villages', badge: villageUnread },
-    { key: 'chats', label: 'Cottage Chats & Campfires' },
+    { key: 'villages', label: 'Village Square', badge: villageUnread },
+    { key: 'cottage', label: 'Cottage Chats' },
+    { key: 'campfires', label: 'Campfires' },
     { key: 'connections', label: 'Connections' },
     ...((organizations || []).length > 0 ? [{ key: 'orgs', label: 'Organizations' }] : []),
     ...(isAdmin ? [{ key: 'admin', label: 'Admin' }] : []),
   ]
-  const asked = params.get('tab')
+  // Older links said tab=chats: that is the Cottage Chats tab now.
+  const asked = params.get('tab') === 'chats' ? 'cottage' : params.get('tab')
   const active = tabs.some((t) => t.key === asked) ? asked : 'messages'
 
   useEffect(() => {
@@ -86,7 +88,8 @@ export default function ConnectHub() {
         {active === 'messages' && <Messages embedded />}
         <Suspense fallback={<p className="cal-empty" style={{ padding: '1rem' }}>Loading...</p>}>
           {active === 'villages' && <HubVillages />}
-          {active === 'chats' && <Groups embedded />}
+          {active === 'cottage' && <Groups embedded show={simple ? 'all' : 'cottage'} />}
+          {active === 'campfires' && <Groups embedded show="campfires" />}
           {active === 'connections' && <Connections embedded />}
           {active === 'orgs' && <HubOrganizations />}
         </Suspense>

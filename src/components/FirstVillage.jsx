@@ -107,7 +107,7 @@ export default function FirstVillage() {
     }
     // Came from a link (a QR code, an event, a chat link)? Go back there first.
     // Already on that page (the confirm email can open it straight away)? Stay.
-    if (to === '/' || to.startsWith('/campfire')) {
+    if (to === '/' || to.startsWith('/village-square')) {
       const here = window.location.pathname
       if (/^\/(connect\/|events\/|groups\/join\/|join-org)/.test(here)) { await refreshProfile(); setBusy(false); return }
       const back = peekReturnTo()
@@ -168,7 +168,7 @@ export default function FirstVillage() {
     setBusy(false)
     if (err) { console.error('First village: failed to save alert choice:', err); setError('Could not save that. Try again.'); return }
     // Open the village chat with a short hello ready to send.
-    finish(undefined, '/campfire?board=' + joined.boardId + '&intro=1')
+    finish(undefined, '/village-square?board=' + joined.boardId + '&intro=1')
   }
 
   const canJoin = villages.filter((v) => v.can_join && !v.is_mine)

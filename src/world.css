@@ -63,3 +63,7 @@
 .wd-empty-globe { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; width: 70%; padding: 12px 14px; border-radius: 16px; background: rgba(246, 240, 224, 0.92); color: #0b3b38; font-weight: 700; font-size: 1rem; line-height: 1.35; text-align: center; pointer-events: none; }
 /* Organization names on the globe: room for two full lines, and no third line peeking out. */
 .wd-org-tag { max-width: min(13rem, 52vw); max-height: calc(2.4em + 10px); }
+
+/* The Village Network under the globe (Oct 22). Light panel, left-aligned, full width. */
+.wd-network-wrap { width: 100%; max-width: 760px; margin: 16px auto 0; text-align: left; scroll-margin-top: calc(var(--header-height) + 8px); }
+.wd-network { background: var(--bg); color: var(--text); border-radius: 16px; padding: 16px; margin: 0 0 12px; max-width: none; }
