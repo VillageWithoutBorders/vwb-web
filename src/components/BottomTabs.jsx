@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { useMyTools } from '../hooks/useMyTools'
+import { useAdminInbox } from '../hooks/useAdminInbox'
 import Icon from './Icon'
 import { useSimpleView } from '../utils/simpleView'
 
@@ -18,6 +19,8 @@ export default function BottomTabs() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const tools = useMyTools()
+  // VWB admins: the admin inbox count shows on My tools (the top bar shield is hidden on phones).
+  const { total: adminWaiting } = useAdminInbox()
   const simple = useSimpleView()
   const [sheet, setSheet] = useState(false)
   const sheetRef = useRef(null)
@@ -95,6 +98,7 @@ export default function BottomTabs() {
             <button type="button" className={'tab-item tab-item-btn' + (fourthOn ? ' active' : '')} data-tour="role-tab" aria-haspopup="dialog" aria-expanded={sheet}
               onClick={() => { lastFocus.current = document.activeElement; setSheet(true) }}>
               <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name={fourth.icon} size={26} /></span>
+              {adminWaiting > 0 && <span aria-label={adminWaiting + ' waiting in the admin inbox'} className="tab-badge tab-badge-admin">{adminWaiting > 9 ? '9+' : adminWaiting}</span>}
               <span className="tab-label">{fourth.label}</span>
             </button>
           )}
@@ -110,7 +114,7 @@ export default function BottomTabs() {
                 <li key={t.key}>
                   <button type="button" className="tools-row" onClick={() => go(t.to)}>
                     <Icon name={t.icon} size={28} />
-                    <span><b>{t.label}</b>{t.name && <small>{t.name}</small>}</span>
+                    <span><b>{t.label}</b>{t.name && <small>{t.name}</small>}{t.key === 'admin' && adminWaiting > 0 && <small>{adminWaiting} waiting in the inbox</small>}</span>
                     <span className="tools-arrow" aria-hidden="true">›</span>
                   </button>
                 </li>
