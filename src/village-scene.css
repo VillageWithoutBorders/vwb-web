@@ -481,3 +481,7 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 @media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
   .vs-toolbar { transition: width 0.2s ease; }
 }
+
+/* Keeper and Helper button: arrange the village for everyone (Oct 22). */
+.vs-build-shared { background: var(--vs-teal); color: var(--vs-on-teal); }
+@media (max-width: 1023px) { .vs-page-path > .vs-build-shared { order: -1; } }
