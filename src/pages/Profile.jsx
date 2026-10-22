@@ -312,7 +312,7 @@ export default function Profile() {
         <div className="profile-header-section">
           <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label="Change avatar" style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
             <AvatarPreview url={profile?.avatar_url} size={80} />
-            <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--on-accent)', fontWeight: 700, border: '2px solid #1a1a1a' }}>
+            <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8125rem', color: 'var(--on-accent)', fontWeight: 700, border: '2px solid #1a1a1a' }}>
               <Icon name="pencil" />
             </div>
           </button>
@@ -417,7 +417,7 @@ export default function Profile() {
             <span style={{ fontSize: "1.5rem" }}><Icon name="megaphone" /></span>
             <div>
               <span style={{ display: "block", color: "var(--warn)", fontWeight: 700, fontSize: "0.95rem" }}>Become a Hope Ambassador</span>
-              <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>Post in Announcements and join the Ambassadors board. Apply above &#8594;</span>
+              <span style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>Post in Announcements and join the Ambassadors board. Apply above &#8594;</span>
             </div>
           </button>
         )}
@@ -520,7 +520,7 @@ export default function Profile() {
           <img src="/images/vwb_header-v2.png" alt="VWB" style={{ height: '40px', borderRadius: '50%' }} />
           <div>
             <span style={{ display: 'block', color: 'var(--accent)', fontWeight: 700, fontSize: '0.95rem' }}>Village Without Borders</span>
-            <span style={{ color: 'var(--accent)', fontSize: '0.75rem' }}>Visit our website &#8599;</span>
+            <span style={{ color: 'var(--accent)', fontSize: '0.8125rem' }}>Visit our website &#8599;</span>
           </div>
         </a>
 
@@ -540,7 +540,7 @@ export default function Profile() {
       <div className="profile-header-section">
         <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label="Change avatar" style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
           <AvatarPreview url={profile?.avatar_url} size={80} />
-          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--on-accent)', fontWeight: 700, border: '2px solid #1a1a1a' }}>
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8125rem', color: 'var(--on-accent)', fontWeight: 700, border: '2px solid #1a1a1a' }}>
             <Icon name="pencil" />
           </div>
         </button>

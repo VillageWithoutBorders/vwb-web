@@ -30,7 +30,7 @@
   font: inherit; color: var(--text); text-align: left; cursor: pointer; min-height: 44px;
 }
 .dash-stat b { display: block; font-size: 1.4rem; color: var(--green); line-height: 1.1; }
-.dash-stat small { display: block; font-size: 0.8rem; color: var(--text-secondary); }
+.dash-stat small { display: block; font-size: 0.8125rem; color: var(--text-secondary); }
 
 .dash-tabs {
   position: sticky; top: var(--header-height, 52px); z-index: 5;
@@ -75,7 +75,7 @@
   .dash-shortcuts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 359px) {
-  .dash-tab-label { font-size: 0.72rem; }
+  .dash-tab-label { font-size: 0.8125rem; }
   .dash-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {

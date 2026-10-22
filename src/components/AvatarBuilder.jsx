@@ -145,7 +145,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
   const previewUrl = getPreviewUrl()
   const canSave = mode === 'pick' ? !!selected : Object.keys(config).length > 0
   const sectionKeys = [...Object.keys(OPTIONS), ...Object.keys(COLOR_OPTIONS)]
-  const tabStyle = (active) => ({ padding: '0.4rem 0.65rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600, background: active ? '#4ecca3' : '#2a2a2a', color: active ? '#1a1a1a' : '#aaa', whiteSpace: 'nowrap' })
+  const tabStyle = (active) => ({ padding: '0.4rem 0.65rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, background: active ? '#4ecca3' : '#2a2a2a', color: active ? '#1a1a1a' : '#aaa', whiteSpace: 'nowrap' })
 
   return (
     <div style={{ padding: '1rem', maxWidth: '500px', margin: '0 auto' }}>
@@ -183,7 +183,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
             <div style={{ width: '120px', height: '120px', margin: '0 auto', borderRadius: '50%', overflow: 'hidden', background: '#2a2a2a', border: '3px solid #4ecca3' }}>
               {previewUrl && <img src={previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
-            <button onClick={randomizeCustom} style={{ marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.8rem' }}><Icon name="dice" /> Randomize</button>
+            <button onClick={randomizeCustom} style={{ marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.8125rem' }}><Icon name="dice" /> Randomize</button>
           </div>
 
           <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.75rem', justifyContent: 'center' }}>
@@ -204,7 +204,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
                       padding: '0.3rem 0.6rem', borderRadius: '8px',
                       border: isActive ? '2px solid #4ecca3' : '1px solid #444',
                       background: isActive ? '#1a3a2a' : '#2a2a2a', color: isActive ? '#4ecca3' : '#ccc',
-                      cursor: 'pointer', fontSize: '0.78rem', fontWeight: isActive ? 700 : 400,
+                      cursor: 'pointer', fontSize: '0.8125rem', fontWeight: isActive ? 700 : 400,
                     }}>
                       <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#' + hex, border: '1px solid #555', flexShrink: 0 }} />
                       {colorName}
@@ -219,7 +219,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
                       border: !config[activeSection] ? '2px solid #4ecca3' : '1px solid #444',
                       background: !config[activeSection] ? '#1a3a2a' : '#2a2a2a',
                       color: !config[activeSection] ? '#4ecca3' : '#ccc',
-                      cursor: 'pointer', fontSize: '0.78rem', fontWeight: !config[activeSection] ? 700 : 400,
+                      cursor: 'pointer', fontSize: '0.8125rem', fontWeight: !config[activeSection] ? 700 : 400,
                     }}>None</button>
                   )}
                   {OPTIONS[activeSection].map(val => {
@@ -230,7 +230,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
                         padding: '0.35rem 0.6rem', borderRadius: '8px',
                         border: isActive ? '2px solid #4ecca3' : '1px solid #444',
                         background: isActive ? '#1a3a2a' : '#2a2a2a', color: isActive ? '#4ecca3' : '#ccc',
-                        cursor: 'pointer', fontSize: '0.78rem', fontWeight: isActive ? 700 : 400,
+                        cursor: 'pointer', fontSize: '0.8125rem', fontWeight: isActive ? 700 : 400,
                       }}>{label}</button>
                     )
                   })}

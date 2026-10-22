@@ -252,7 +252,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                     <button type="button" style={btn} disabled={busy} onClick={() => inviteGuest(p)}>Invite</button>
                   </div>
                 ))}
-                {inviteQ.trim().length >= 2 && inviteResults.length === 0 && <p style={{ margin: '0.25rem 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No one you know matches. To reach someone new, send them a message request from their name first.</p>}
+                {inviteQ.trim().length >= 2 && inviteResults.length === 0 && <p style={{ margin: '0.25rem 0', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>No one you know matches. To reach someone new, send them a message request from their name first.</p>}
                 {inviteNote && <p role="status" style={{ margin: '0.4rem 0 0', color: 'var(--gold)', fontSize: '0.85rem' }}>{inviteNote}</p>}
                 <button type="button" style={{ ...btn, marginTop: '0.5rem' }} onClick={() => { setInviteOpen(false); setInviteQ(''); setInviteResults([]) }}>Done</button>
               </div>
@@ -279,15 +279,15 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
                       <UserName userId={p.user_id} name={p.display_name || 'Neighbor'} style={{ color: 'var(--text-strong)', fontSize: '0.9rem', fontWeight: 600 }} />
-                      {me && <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>(you)</span>}
-                      {p.role === 'founder' && <span style={{ fontSize: '0.6rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
-                      {p.role === 'admin' && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
-                      {p.is_hope_ambassador && <span style={{ fontSize: '0.6rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
-                      {p.user_id === keepers.starter_id && <span style={{ fontSize: '0.6rem', background: 'var(--warn-bg)', color: 'var(--gold)', padding: '0 4px', borderRadius: '3px' }}>Keeper</span>}
-                      {keepers.helper_ids.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: 'var(--warn-bg)', color: 'var(--gold)', padding: '0 4px', borderRadius: '3px' }}>Helper</span>}
-                      {guestIds.includes(p.user_id) && <span style={{ fontSize: '0.6rem', background: 'var(--danger-bg)', color: 'var(--danger)', padding: '0 4px', borderRadius: '3px' }}>Guest</span>}
+                      {me && <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>(you)</span>}
+                      {p.role === 'founder' && <span style={{ fontSize: '0.8125rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
+                      {p.role === 'admin' && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
+                      {p.is_hope_ambassador && <span style={{ fontSize: '0.8125rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
+                      {p.user_id === keepers.starter_id && <span style={{ fontSize: '0.8125rem', background: 'var(--warn-bg)', color: 'var(--gold)', padding: '0 4px', borderRadius: '3px' }}>Keeper</span>}
+                      {keepers.helper_ids.includes(p.user_id) && <span style={{ fontSize: '0.8125rem', background: 'var(--warn-bg)', color: 'var(--gold)', padding: '0 4px', borderRadius: '3px' }}>Helper</span>}
+                      {guestIds.includes(p.user_id) && <span style={{ fontSize: '0.8125rem', background: 'var(--danger-bg)', color: 'var(--danger)', padding: '0 4px', borderRadius: '3px' }}>Guest</span>}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Joined {new Date(p.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Joined {new Date(p.joined_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                   </div>
                   {!me && (
                     <button type="button" aria-expanded={open} aria-label={'Options for ' + (p.display_name || 'this neighbor')} onClick={() => { setOpenId(open ? null : p.user_id); setReasonFor(null); setReason(''); setNote('') }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', minWidth: '44px', minHeight: '44px', fontSize: '1rem' }}>{open ? '\u25B2' : '\u25BC'}</button>
@@ -307,7 +307,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                     {!protectedRole && !pending && reasonFor !== p.user_id && (
                       <button type="button" onClick={() => { setReasonFor(p.user_id); setReason(''); setNote('') }} style={{ ...btn, marginTop: '0.5rem', borderColor: 'var(--warn)', color: 'var(--warn)' }}>{isAdmin ? 'Remove from this chat' : 'Ask to remove'}</button>
                     )}
-                    {pending && <p style={{ margin: '0.5rem 0 0', color: 'var(--gold)', fontSize: '0.8rem' }}>A removal request is open. It needs a second member.</p>}
+                    {pending && <p style={{ margin: '0.5rem 0 0', color: 'var(--gold)', fontSize: '0.8125rem' }}>A removal request is open. It needs a second member.</p>}
                     {reasonFor === p.user_id && (
                       <div style={{ marginTop: '0.5rem' }}>
                         <label htmlFor={'vp-reason-' + p.user_id} style={{ display: 'block', color: 'var(--text)', fontSize: '0.85rem', marginBottom: '0.3rem' }}>Why? Pick one.</label>
@@ -315,7 +315,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                           <option value="">Choose a reason</option>
                           {REMOVE_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
-                        <p style={{ margin: '0.4rem 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{isAdmin ? 'You can remove them right away.' : 'A second member must agree before they are removed. They are not shown this request.'}</p>
+                        <p style={{ margin: '0.4rem 0', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{isAdmin ? 'You can remove them right away.' : 'A second member must agree before they are removed. They are not shown this request.'}</p>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <button type="button" style={btn} onClick={() => { setReasonFor(null); setReason('') }}>Cancel</button>
                           <button type="button" style={{ ...btn, background: 'var(--danger-bg)', borderColor: 'var(--danger)' }} disabled={busy || !reason} onClick={() => ask(p.user_id)}>{isAdmin ? 'Remove' : 'Ask'}</button>
@@ -328,7 +328,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
             )
           })}
         </div>
-        {total > people.length && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', marginTop: '0.6rem' }}>Showing {people.length} of {total}. Search by name to find someone.</p>}
+        {total > people.length && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', textAlign: 'center', marginTop: '0.6rem' }}>Showing {people.length} of {total}. Search by name to find someone.</p>}
 
         {showRoleLog && <RoleLog kind="village" placeId={villageId} />}
 

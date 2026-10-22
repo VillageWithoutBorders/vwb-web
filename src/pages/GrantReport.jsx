@@ -297,11 +297,11 @@ export default function GrantReport() {
       <div style={cardStyle}>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '120px' }}>
-            <label style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>From</label>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', display: 'block', marginBottom: '0.25rem' }}>From</label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', boxSizing: 'border-box' }} />
           </div>
           <div style={{ flex: 1, minWidth: '120px' }}>
-            <label style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>To</label>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', display: 'block', marginBottom: '0.25rem' }}>To</label>
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', boxSizing: 'border-box' }} />
           </div>
           <button onClick={generateReport} disabled={loading} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', opacity: loading ? 0.6 : 1, whiteSpace: 'nowrap' }}>
@@ -323,7 +323,7 @@ export default function GrantReport() {
                 setEndDate(today)
                 setStartDate(q.days ? new Date(Date.now() - q.days * 86400000).toISOString().split('T')[0] : '2024-01-01')
               }}
-              style={{ padding: '0.3rem 0.6rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
+              style={{ padding: '0.3rem 0.6rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
             >
               {q.label}
             </button>
@@ -334,7 +334,7 @@ export default function GrantReport() {
       {!report && !loading && (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
           <p style={{ fontSize: '0.95rem' }}>Pick a date range and hit Generate to build your report.</p>
-          <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>Data exports as CSV or PDF for grant applications.</p>
+          <p style={{ fontSize: '0.8125rem', marginTop: '0.5rem' }}>Data exports as CSV or PDF for grant applications.</p>
         </div>
       )}
 
@@ -358,7 +358,7 @@ export default function GrantReport() {
               Download PDF
             </button>
           </div>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>
             PDF opens your browser's print dialog. Choose "Save as PDF" as the destination.
           </p>
 
@@ -382,7 +382,7 @@ export default function GrantReport() {
             ].map(s => (
               <div key={s.label} style={{ textAlign: 'center', padding: '0.6rem', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                 <div style={{ fontSize: '1.4rem', fontWeight: 700, color: s.color }}>{s.value}</div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{s.label}</div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{s.label}</div>
               </div>
             ))}
           </div>

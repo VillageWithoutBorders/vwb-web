@@ -36,7 +36,7 @@ export default function MyOffers() {
 
   return (
     <section aria-labelledby="my-offers-h" style={{ marginBottom: '1rem' }}>
-      <div id="my-offers-h" style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>My offers</div>
+      <div id="my-offers-h" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>My offers</div>
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {rows.map((o) => (
           <li key={o.id} style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px' }}>

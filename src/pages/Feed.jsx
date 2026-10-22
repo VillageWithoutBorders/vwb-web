@@ -432,12 +432,12 @@ export default function Feed() {
                                         <UserName userId={req.requester_id} name={req.requester_name || 'A neighbor'} className="feed-card-name" />
                                         {req.neighborhood && <span className="feed-card-hood"> in {req.neighborhood}</span>}
                                         {req.is_ambassador && (
-                                            <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>
+                                            <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>
                                                 Hope Ambassador
                                             </span>
                                         )}
                                         {req.member_since && (
-                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginLeft: '0.35rem' }}>
+                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', marginLeft: '0.35rem' }}>
                                                 Member since {new Date(req.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                                             </span>
                                         )}
@@ -457,7 +457,7 @@ export default function Feed() {
                                     )}
 
                                     {/* Helper count status */}
-                                    <div style={{ fontSize: '0.75rem', color: isFull ? '#2d6a4f' : 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                    <div style={{ fontSize: '0.8125rem', color: isFull ? '#2d6a4f' : 'var(--text-muted)', marginTop: '0.25rem' }}>
                                         <Icon name={isFull ? 'check' : 'handshake'} />{' '}{helperStatus}
                                     </div>
 
@@ -472,7 +472,7 @@ export default function Feed() {
                                             )}
                                             {req.requester_id !== user.id && isPending && (
                                                 <>
-                                                    <span style={{ fontSize: '0.8rem', color: 'var(--gold)', fontWeight: 600 }}>
+                                                    <span style={{ fontSize: '0.8125rem', color: 'var(--gold)', fontWeight: 600 }}>
                                                         <Icon name="hourglass" /> Pending
                                                     </span>
                                                     <button className="btn btn-outline btn-sm" onClick={(e) => handleWithdrawOffer(e, req)}>
@@ -481,7 +481,7 @@ export default function Feed() {
                                                 </>
                                             )}
                                             {req.requester_id !== user.id && isFull && !isPending && (
-                                                <span style={{ fontSize: '0.8rem', color: '#2d6a4f', fontWeight: 600 }}>
+                                                <span style={{ fontSize: '0.8125rem', color: '#2d6a4f', fontWeight: 600 }}>
                                                     <Icon name="check" /> Full
                                                 </span>
                                             )}
@@ -518,12 +518,12 @@ export default function Feed() {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                                             <UserName userId={offer.user_id} name={offer.poster_name} className="feed-card-name" />
                                             {offer.is_ambassador && (
-                                                <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
+                                                <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
                                                     Hope Ambassador
                                                 </span>
                                             )}
                                             {offer.member_since && (
-                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
+                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
                                                     Member since {new Date(offer.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                                                 </span>
                                             )}

@@ -461,7 +461,7 @@ export default function GroupBoard() {
     ? { outline: '2px solid var(--accent)', background: 'rgba(78,204,163,0.12)', borderRadius: '8px', padding: '0.5rem', margin: '0.35rem 0' }
     : undefined
   const focusLabel = (key) => focusKey === key
-    ? <span style={{ display: 'block', width: '100%', color: 'var(--accent)', fontWeight: 700, fontSize: '0.8rem' }}><Icon name="pushpin" /> This is the one you were asked about</span>
+    ? <span style={{ display: 'block', width: '100%', color: 'var(--accent)', fontWeight: 700, fontSize: '0.8125rem' }}><Icon name="pushpin" /> This is the one you were asked about</span>
     : null
 
   const DISAPPEAR_CHOICES = [[0, 'Off (posts stay)'], [1440, '1 day'], [10080, '7 days'], [43200, '30 days']]

@@ -67,7 +67,7 @@ const btnSecondary = {
 }
 
 const eyebrow = {
-  fontSize: '0.75rem',
+  fontSize: '0.8125rem',
   fontWeight: 700,
   color: COLORS.green,
   textTransform: 'uppercase',
@@ -338,7 +338,7 @@ export default function Welcome() {
           <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.green, fontSize: '0.85rem', textDecoration: 'none' }}>
             villagewithoutborders.org &#8599;
           </a>
-          <p style={{ margin: '0.5rem 0 0', color: COLORS.textMuted, fontSize: '0.75rem' }}>A project of neighbors, for neighbors.</p>
+          <p style={{ margin: '0.5rem 0 0', color: COLORS.textMuted, fontSize: '0.8125rem' }}>A project of neighbors, for neighbors.</p>
         </div>
       </footer>
     </div>

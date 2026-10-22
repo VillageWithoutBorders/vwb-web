@@ -468,8 +468,8 @@ export default function EventDetail() {
         {editingNotes === s.id && (
           <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.35rem' }}>
             <input type="text" value={editNotesVal} onChange={(e) => setEditNotesVal(e.target.value)} style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
-            <button onClick={() => saveNotes(s.id)} style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Save</button>
-            <button onClick={() => setEditingNotes(null)} style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8rem' }}>Cancel</button>
+            <button onClick={() => saveNotes(s.id)} style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Save</button>
+            <button onClick={() => setEditingNotes(null)} style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8125rem' }}>Cancel</button>
           </div>
         )}
       </>
@@ -498,7 +498,7 @@ export default function EventDetail() {
   const needsUnfulfilled = needs.filter(r => r.status !== 'fulfilled').length
   const offersAvailable = offers.filter(r => r.status === 'available').length
 
-  const tabStyle = (active) => ({ padding: '0.5rem 0.75rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, background: active ? 'var(--danger)' : 'var(--surface-2)', color: active ? 'var(--text-strong)' : 'var(--text-secondary)' })
+  const tabStyle = (active) => ({ padding: '0.5rem 0.75rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, background: active ? 'var(--danger)' : 'var(--surface-2)', color: active ? 'var(--text-strong)' : 'var(--text-secondary)' })
   const fieldStyle = { display: 'block', width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', boxSizing: 'border-box', marginBottom: '0.5rem' }
   const resCatIcon = { 'Water': '💧', 'Food': '🍞', 'Shelter': '🏠', 'Tools': '🔧', 'Transportation': '🚗', 'Medical': '⚕', 'Clothing': '🧥', 'Power/Fuel': '⚡', 'Tarps/Building': '🏗', 'Hygiene': '🧼', 'Other': '📦' }
 
@@ -507,7 +507,7 @@ export default function EventDetail() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
         <button onClick={() => goBack('/emergency')} aria-label="Back to emergency events" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
         <div style={{ flex: 1 }}>
-          <span style={{ background: 'var(--danger)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{event.event_type}</span>
+          <span style={{ background: 'var(--danger)', color: '#fff', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{event.event_type}</span>
           <h1 style={{ margin: '0.25rem 0 0', fontSize: '1.3rem' }}>{event.title}</h1>
         </div>
       </div>
@@ -523,19 +523,19 @@ export default function EventDetail() {
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <div style={{ flex: 1, textAlign: 'center', padding: '0.6rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
           <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--accent)' }}>{responderCount}</div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Responders</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Responders</div>
         </div>
         <div style={{ flex: 1, textAlign: 'center', padding: '0.6rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
           <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--warn)' }}>{affectedCount}</div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Affected</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Affected</div>
         </div>
         <div style={{ flex: 1, textAlign: 'center', padding: '0.6rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
           <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--info)' }}>{checkIns.length}</div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Check-ins</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Check-ins</div>
         </div>
         <div style={{ flex: 1, textAlign: 'center', padding: '0.6rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
           <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--danger)' }}>{needsUnfulfilled}</div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Needs</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Needs</div>
         </div>
       </div>
 
@@ -551,13 +551,13 @@ export default function EventDetail() {
       {mySignup && (
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem', marginBottom: '1rem' }}>
           <div style={{ marginBottom: '0.5rem' }}>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Your status: </span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>Your status: </span>
             {myStatusConf ? (
-              <span style={{ background: myStatusConf.bg, color: myStatusConf.color, fontSize: '0.8rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
+              <span style={{ background: myStatusConf.bg, color: myStatusConf.color, fontSize: '0.8125rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
                 <Icon name={myStatusConf.icon} /> {myStatusConf.label}
               </span>
             ) : (
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No check-in yet</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>No check-in yet</span>
             )}
           </div>
           {showStatusPicker && (
@@ -573,11 +573,11 @@ export default function EventDetail() {
             </div>
           )}
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
-            <button onClick={() => { if (showStatusPicker && selectedStatus) { submitCheckIn(selectedStatus) } else { setShowStatusPicker(!showStatusPicker); setSelectedStatus(null) } }} disabled={showStatusPicker && !selectedStatus} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: 'none', background: showStatusPicker && !selectedStatus ? '#666' : 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>
+            <button onClick={() => { if (showStatusPicker && selectedStatus) { submitCheckIn(selectedStatus) } else { setShowStatusPicker(!showStatusPicker); setSelectedStatus(null) } }} disabled={showStatusPicker && !selectedStatus} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: 'none', background: showStatusPicker && !selectedStatus ? '#666' : 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>
               {myStatusConf ? 'Update' : 'Check in'}
             </button>
-            {mySignup.role !== 'coordinator' && <button onClick={switchRole} style={{ background: 'none', border: 'none', color: 'var(--info)', cursor: 'pointer', fontSize: '0.8rem' }}>{mySignup.role === 'responder' ? 'Switch to affected' : 'Switch to responder'}</button>}
-            <button onClick={cancelSignup} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8rem' }}>Leave</button>
+            {mySignup.role !== 'coordinator' && <button onClick={switchRole} style={{ background: 'none', border: 'none', color: 'var(--info)', cursor: 'pointer', fontSize: '0.8125rem' }}>{mySignup.role === 'responder' ? 'Switch to affected' : 'Switch to responder'}</button>}
+            <button onClick={cancelSignup} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8125rem' }}>Leave</button>
           </div>
         </div>
       )}
@@ -634,7 +634,7 @@ export default function EventDetail() {
       {(tab === 'checkins' || (isCoordinator && tab === 'helping')) && Object.values(latestStatuses).length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.75rem' }}>
           {Object.entries(STATUS_CONFIG).map(([key, conf]) => (
-            statusCounts[key] > 0 && <span key={key} style={{ background: conf.bg, color: conf.color, fontSize: '0.75rem', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}><Icon name={conf.icon} /> {conf.label}: {statusCounts[key]}</span>
+            statusCounts[key] > 0 && <span key={key} style={{ background: conf.bg, color: conf.color, fontSize: '0.8125rem', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}><Icon name={conf.icon} /> {conf.label}: {statusCounts[key]}</span>
           ))}
         </div>
       )}
@@ -649,11 +649,11 @@ export default function EventDetail() {
           <div key={s.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={s.avatar_url} userId={s.user_id} size={28} /><span style={{ fontWeight: 700 }}>{s.role === 'coordinator' && <span style={{ color: 'var(--info)', marginRight: '4px' }} title="Coordinator"><Icon name="star" /></span>}<UserName userId={s.user_id} name={s.display_name} /></span></div>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginRight: '1.5rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', marginRight: '1.5rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
             </div>
-            {s.skills && s.skills.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.4rem' }}>{s.skills.map(sk => <span key={sk} style={{ background: 'var(--surface-2)', color: 'var(--accent)', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px' }}>{sk}</span>)}</div>}
-            {s.availability && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>Available: {s.availability}</p>}
-            {s.notes && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>{s.notes}</p>}
+            {s.skills && s.skills.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.4rem' }}>{s.skills.map(sk => <span key={sk} style={{ background: 'var(--surface-2)', color: 'var(--accent)', fontSize: '0.8125rem', padding: '2px 6px', borderRadius: '4px' }}>{sk}</span>)}</div>}
+            {s.availability && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.3rem 0 0' }}>Available: {s.availability}</p>}
+            {s.notes && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0 0' }}>{s.notes}</p>}
             {renderSignupMenu(s)}
           </div>
         ))
@@ -670,12 +670,12 @@ export default function EventDetail() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <UserName userId={s.user_id} name={s.display_name} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1.5rem' }}>
-                  {sc && <span style={{ background: sc.bg, color: sc.color, fontSize: '0.7rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}><Icon name={sc.icon} /> {sc.label}</span>}
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
+                  {sc && <span style={{ background: sc.bg, color: sc.color, fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}><Icon name={sc.icon} /> {sc.label}</span>}
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{new Date(s.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
-              {s.notes && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>{s.notes}</p>}
-              {st && st.note && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.3rem 0 0', fontStyle: 'italic' }}>"{st.note}"</p>}
+              {s.notes && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0 0' }}>{s.notes}</p>}
+              {st && st.note && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.3rem 0 0', fontStyle: 'italic' }}>"{st.note}"</p>}
               {renderSignupMenu(s)}
             </div>
           )
@@ -692,10 +692,10 @@ export default function EventDetail() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><AvatarDisplay url={c.avatar_url} userId={c.user_id} size={22} /><UserName userId={c.user_id} name={c.display_name} style={{ fontWeight: 600, fontSize: '0.9rem' }} /></div>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{timeAgo(c.created_at)}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{timeAgo(c.created_at)}</span>
                 </div>
-                <span style={{ color: conf.color, fontSize: '0.8rem', fontWeight: 600 }}>{conf.label}</span>
-                {c.note && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{c.note}</p>}
+                <span style={{ color: conf.color, fontSize: '0.8125rem', fontWeight: 600 }}>{conf.label}</span>
+                {c.note && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.2rem 0 0' }}>{c.note}</p>}
               </div>
             </div>
           )
@@ -721,7 +721,7 @@ export default function EventDetail() {
               <input type="text" placeholder="Item name (e.g. 5-gallon jugs, tarps, hot meals)" value={resItem} onChange={e => setResItem(e.target.value)} maxLength={120} style={fieldStyle} />
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Quantity</label>
+                  <label style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>Quantity</label>
                   <input type="number" min={1} max={9999} value={resQty} onChange={e => setResQty(parseInt(e.target.value) || 1)} style={fieldStyle} />
                 </div>
               </div>
@@ -737,7 +737,7 @@ export default function EventDetail() {
 
           <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '0.75rem', overflowX: 'auto' }}>
             {[['all','All'],['needs','Needs'],['offers','Offers'],['available','Open'],['fulfilled','Fulfilled']].map(([k,l]) => (
-              <button key={k} onClick={() => setResFilter(k)} style={{ padding: '0.35rem 0.65rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, background: resFilter === k ? '#444' : 'var(--surface-2)', color: resFilter === k ? 'var(--text-strong)' : 'var(--text-muted)' }}>{l}</button>
+              <button key={k} onClick={() => setResFilter(k)} style={{ padding: '0.35rem 0.65rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, background: resFilter === k ? '#444' : 'var(--surface-2)', color: resFilter === k ? 'var(--text-strong)' : 'var(--text-muted)' }}>{l}</button>
             ))}
           </div>
 
@@ -761,34 +761,34 @@ export default function EventDetail() {
                       <span style={{ fontSize: '1.3rem' }}><Icon name={catIcon} /></span>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                          <span style={{ background: isNeed ? 'var(--danger-bg)' : 'var(--success-bg)', color: isNeed ? 'var(--danger)' : 'var(--accent)', fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', textTransform: 'uppercase' }}>{isNeed ? 'Need' : 'Offer'}</span>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{r.category}</span>
-                          {isFulfilled && <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '3px' }}>Fulfilled</span>}
-                          {isClaimed && !isFulfilled && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '3px' }}>Claimed</span>}
+                          <span style={{ background: isNeed ? 'var(--danger-bg)' : 'var(--success-bg)', color: isNeed ? 'var(--danger)' : 'var(--accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '1px 5px', borderRadius: '3px', textTransform: 'uppercase' }}>{isNeed ? 'Need' : 'Offer'}</span>
+                          <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{r.category}</span>
+                          {isFulfilled && <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 5px', borderRadius: '3px' }}>Fulfilled</span>}
+                          {isClaimed && !isFulfilled && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 5px', borderRadius: '3px' }}>Claimed</span>}
                         </div>
                         <p style={{ margin: '0.2rem 0 0', fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-strong)' }}>{r.item_name} {r.quantity > 1 && <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>x{r.quantity}</span>}</p>
                       </div>
                     </div>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{timeAgo(r.created_at)}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{timeAgo(r.created_at)}</span>
                   </div>
-                  {r.note && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.35rem 0 0 1.8rem' }}>{r.note}</p>}
-                  <div style={{ margin: '0.35rem 0 0 1.8rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {r.note && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.35rem 0 0 1.8rem' }}>{r.note}</p>}
+                  <div style={{ margin: '0.35rem 0 0 1.8rem', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
                     {isNeed ? 'Requested by' : 'Offered by'} {r.offered_by_name}
                     {isClaimed && r.claimed_by_name && <span> &middot; Claimed by {r.claimed_by_name}</span>}
                   </div>
                   {!isFulfilled && (
                     <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.5rem', marginLeft: '1.8rem', flexWrap: 'wrap' }}>
                       {isNeed && !isClaimed && !claimedByMe && !isMine && (
-                        <button onClick={() => claimResource(r.id)} style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>I have this</button>
+                        <button onClick={() => claimResource(r.id)} style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>I have this</button>
                       )}
                       {claimedByMe && (
-                        <button onClick={() => unclaimResource(r.id)} style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8rem' }}>Unclaim</button>
+                        <button onClick={() => unclaimResource(r.id)} style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8125rem' }}>Unclaim</button>
                       )}
                       {(isCoordinator || isMine) && isClaimed && (
-                        <button onClick={() => fulfillResource(r.id)} style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: 'none', background: 'var(--info)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Mark fulfilled</button>
+                        <button onClick={() => fulfillResource(r.id)} style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: 'none', background: 'var(--info)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Mark fulfilled</button>
                       )}
                       {(isCoordinator || isMine) && (
-                        <button onClick={() => deleteResource(r.id)} style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8rem' }}>Remove</button>
+                        <button onClick={() => deleteResource(r.id)} style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8125rem' }}>Remove</button>
                       )}
                     </div>
                   )}
@@ -819,29 +819,29 @@ export default function EventDetail() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
               <button onClick={() => setCloseReason('resolved')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'resolved' ? '2px solid var(--accent)' : '1px solid var(--border-strong)', background: closeReason === 'resolved' ? 'var(--success-bg)' : 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--accent)' }}>Event Resolved</div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.15rem' }}>The emergency is over. Close response and archive.</div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginTop: '0.15rem' }}>The emergency is over. Close response and archive.</div>
               </button>
               <button onClick={() => setCloseReason('false_alarm')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'false_alarm' ? '2px solid var(--warn)' : '1px solid var(--border-strong)', background: closeReason === 'false_alarm' ? 'var(--warn-bg)' : 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--warn)' }}>False Alarm</div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.15rem' }}>{event.verified ? 'Verified events require admin approval.' : (event.created_by === user.id ? 'This will permanently remove your report. This can\'t be undone.' : 'This will permanently remove the event once one other participant agrees. This can\'t be undone.')}</div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginTop: '0.15rem' }}>{event.verified ? 'Verified events require admin approval.' : (event.created_by === user.id ? 'This will permanently remove your report. This can\'t be undone.' : 'This will permanently remove the event once one other participant agrees. This can\'t be undone.')}</div>
               </button>
               <button onClick={() => setCloseReason('duplicate')} style={{ padding: '0.75rem', borderRadius: '10px', border: closeReason === 'duplicate' ? '2px solid var(--info)' : '1px solid var(--border-strong)', background: closeReason === 'duplicate' ? 'var(--info-bg)' : 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--info)' }}>Duplicate Event</div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.15rem' }}>This is the same as another event. Admin will merge.</div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginTop: '0.15rem' }}>This is the same as another event. Admin will merge.</div>
               </button>
             </div>
 
             {closeReason === 'duplicate' && (
               <div style={{ marginBottom: '1rem' }}>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Select the original event:</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.5rem' }}>Select the original event:</p>
                 {activeEvents.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No other active events found.</p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>No other active events found.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '200px', overflowY: 'auto' }}>
                     {activeEvents.map(ae => (
                       <button key={ae.id} onClick={() => setSelectedDuplicate(ae.id)} style={{ padding: '0.6rem', borderRadius: '8px', border: selectedDuplicate === ae.id ? '2px solid var(--info)' : '1px solid var(--border-strong)', background: selectedDuplicate === ae.id ? 'var(--info-bg)' : 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', textAlign: 'left', fontSize: '0.85rem' }}>
                         <span style={{ fontWeight: 600 }}>{ae.title}</span>
-                        {ae.event_type && <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem', fontSize: '0.75rem' }}>{ae.event_type}</span>}
+                        {ae.event_type && <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem', fontSize: '0.8125rem' }}>{ae.event_type}</span>}
                       </button>
                     ))}
                   </div>

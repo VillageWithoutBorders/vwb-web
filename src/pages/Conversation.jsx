@@ -439,7 +439,7 @@ export default function Conversation() {
           </p>
         )}
         {showNew && (
-          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
+          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
         )}
       </div>
 
@@ -508,11 +508,11 @@ export default function Conversation() {
           <AvatarDisplay url={otherAvatar} userId={otherUserId} size={44} />
           <div>
             <div style={{ fontWeight: 700, color: 'var(--text-strong)' }}>{otherName}</div>
-            {!blockedBy.has(otherUserId) && <div style={{ color: 'var(--accent)', fontSize: '0.8rem' }}>View profile</div>}
+            {!blockedBy.has(otherUserId) && <div style={{ color: 'var(--accent)', fontSize: '0.8125rem' }}>View profile</div>}
           </div>
         </button>
 
-        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Actions</div>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Actions</div>
 
         {!blockedBy.has(otherUserId) && (
         <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
@@ -544,7 +544,7 @@ export default function Conversation() {
                 <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
                   <legend style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>What happened?</legend>
                   {REASONS.map((r) => (
-                    <label key={r} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0', minHeight: '40px', color: 'var(--text)', fontSize: '0.9rem', cursor: 'pointer' }}>
+                    <label key={r} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0', minHeight: '44px', color: 'var(--text)', fontSize: '0.9rem', cursor: 'pointer' }}>
                       <input type="radio" name="report-reason" value={r} checked={reportReason === r} onChange={() => { setReportReason(r); setReportError('') }} style={{ width: '18px', height: '18px', accentColor: 'var(--accent)' }} />
                       {r}
                     </label>
