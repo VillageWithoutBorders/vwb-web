@@ -424,7 +424,7 @@ export function MapToolbar({ b, more }) {
   if (!b.arrange) return <div className="vs-arrange" />
   return (
     <div className="vs-arrange vs-arrange-on">
-      <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked && pickTools) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + (panelLow && picked && !trayOpen ? ' vs-toolbar-low' : '')} role="region" aria-label="Arrange and build tools">
+      <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked && pickTools) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + ((panelLow && picked && !trayOpen) || tool !== 'move' ? ' vs-toolbar-low' : '') + (tool !== 'move' ? ' vs-toolbar-draw' : '')} role="region" aria-label="Arrange and build tools">
         <div className="vs-toolpanel">
         {trayOpen && (
           <button type="button" className="vs-drawer-close" onClick={() => { setTrayOpen(false); setPicked(null) }}>
@@ -459,7 +459,7 @@ export function MapToolbar({ b, more }) {
 
             {tool !== 'move' && (
               <div className="vs-draw-banner" role="status">
-                <span>{tool === 'road' ? 'Drawing roads.' : 'Drawing streams.'} Drag your finger on the map.</span>
+                <span>{tool === 'road' ? 'Draw a road' : 'Draw a stream'} with your finger.</span>
                 <button type="button" onClick={() => setTool('move')}>Stop</button>
               </div>
             )}
