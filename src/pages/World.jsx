@@ -179,6 +179,7 @@ export default function World() {
     // together the campfire can land on a name; slide it sideways until it is clear.
     const nodes = shown.map((v) => byId[v.id])
     lines.forEach((l) => {
+      l.ox = l.x; l.oy = l.y
       for (let tries = 0; tries < 3; tries++) {
         const hit = nodes.find((n) => {
           const tx = n.gx, ty = n.gy + (n.is_mine ? 7 : 0), half = Math.min(23, 3 + (n.name || '').length * 1.1)
@@ -271,6 +272,11 @@ export default function World() {
                 <path key={'f' + i} d={l.d} fill="none" stroke="#f6f0e0" strokeOpacity={0.55 + 0.15 * l.strength}
                   strokeDasharray="0.1 2.4" strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ strokeWidth: (2 + l.strength) + 'px' }} />
               ))}
+              {/* A campfire slid aside to keep names clear stays tied to its line by a short gold tether. */}
+              {net === 'villages' && view && view.lines.filter((l) => l.ox != null && (Math.abs(l.ox - l.x) > 1 || Math.abs(l.oy - l.y) > 1)).map((l, i) => (
+                <path key={'tether' + i} d={'M' + l.ox.toFixed(1) + ' ' + l.oy.toFixed(1) + ' L' + l.x.toFixed(1) + ' ' + l.y.toFixed(1)} fill="none" stroke="#f2c763"
+                  strokeDasharray="1 1.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ strokeWidth: '3px' }} />
+              ))}
               {view && view.lines.map((l, i) => (
                 <path key={i} d={l.d} fill="none" stroke="#f2c763" strokeOpacity={l.both === false && net === 'villages' ? 0.45 : 1}
                   strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ strokeWidth: l.both === false && net === 'villages' ? '3px' : '5px' }} />
@@ -309,6 +315,9 @@ export default function World() {
                 <Icon name="campfire" />
               </button>
             ))}
+            {net === 'groups' && orgMap.nodes.length === 0 && (
+              <p className="wd-empty-globe">No emergency groups yet.<br />Start the first one below.</p>
+            )}
           </div>
         </div>
       </div>
