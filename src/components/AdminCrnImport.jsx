@@ -4,6 +4,7 @@ import { csvToObjects, toCsv, downloadText } from '../utils/csv'
 import { friendlyError } from '../utils/resourceReports'
 import { CATEGORIES } from '../utils/resourceCategories'
 import { askConfirm } from './AdminDialog'
+import AdminCrnResearch from './AdminCrnResearch'
 
 // Admin > CRN Import. VWB admins only (the database checks this too).
 // See vwb-crn-import.sql for the rules.
@@ -15,6 +16,7 @@ const TABS = [
   { key: 'areas', label: 'Service areas', file: 'Verified Service Areas', hint: 'Area Type can be County, Community, ZIP or Open to anyone (blank means County). Open to anyone shows to people within 50 miles of the location. A community shows to people who search its county (with a note) or who chose that town. Other towns do not see it. A ZIP only shows on the card. It never decides who sees a service.' },
 ]
 const TAB_LABEL = Object.fromEntries(TABS.map((t) => [t.key, t.label]))
+const TAB_WORD = { organizations: ['organization', 'organizations'], locations: ['location', 'locations'], services: ['service', 'services'], areas: ['service area', 'service areas'] }
 
 const GROUPS = [
   { key: 'possible_match', label: 'Possible match', hint: 'Looks like a resource already in VWB. Needs a person to decide.' },
@@ -23,15 +25,21 @@ const GROUPS = [
   { key: 'will_hide', label: 'Will hide', hint: 'Marked closed or revoked. Hidden, not deleted.' },
   { key: 'new', label: 'New', hint: '' },
   { key: 'updated', label: 'Updated', hint: '' },
-  { key: 'skipped', label: 'Skipped', hint: 'Not active, and not in VWB yet.' },
+  { key: 'research_new', label: 'Research new', hint: 'Private research. Saved in VWB, never shown in Find Help.' },
+  { key: 'research_updated', label: 'Research updated', hint: 'Private research. Saved in VWB, never shown in Find Help.' },
+  { key: 'skipped', label: 'Skipped', hint: 'Not saved this time. The reason is listed.' },
   { key: 'no_change', label: 'No change', hint: '' },
+  { key: 'research_same', label: 'Research, no change', hint: '' },
   { key: 'missing', label: 'Missing from this export', hint: 'Listed only. Nothing happens to it.' },
 ]
 const GROUP_LABEL = Object.fromEntries(GROUPS.map((g) => [g.key, g.label]))
+// Rows where nothing happens. Folded away so a small batch stays easy to read.
+const QUIET = ['missing', 'no_change', 'research_same']
+const PAGE = 100
 
 const VALUE_FIELDS = [
   { key: 'category', label: 'Category', meanings: CATEGORIES.map((c) => [c, c]) },
-  { key: 'status', label: 'Status', meanings: [['active', 'Active (show it)'], ['closed', 'Closed (hide it)'], ['revoked', 'Revoked (hide it)']] },
+  { key: 'status', label: 'Status', meanings: [['active', 'Active (show it)'], ['closed', 'Closed (hide it)'], ['revoked', 'Revoked (hide it)'], ['research', 'Research only (private, never shown)']] },
   { key: 'approval_status', label: 'Approval Status (service areas)', meanings: [['approved', 'Approved'], ['revoked', 'Revoked (stop serving)'], ['unverified', 'Not checked yet']] },
   { key: 'statewide', label: 'County value that means the whole state', meanings: [['statewide', 'Whole state']] },
 ]
@@ -54,6 +62,7 @@ function heldValue(reason) {
 }
 
 export default function AdminCrnImport() {
+  const [view, setView] = useState('import') // 'import' or 'research'
   const [files, setFiles] = useState({}) // { tab: { file, rows, headers } }
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
@@ -61,6 +70,7 @@ export default function AdminCrnImport() {
   const [openBatch, setOpenBatch] = useState(null)
   const [rows, setRows] = useState([])
   const [groupFilter, setGroupFilter] = useState('all')
+  const [visible, setVisible] = useState(PAGE)
   const [confirming, setConfirming] = useState(false)
   const [values, setValues] = useState([])
   const [newValue, setNewValue] = useState({ field: 'category', value: '', meaning: '' })
@@ -81,7 +91,7 @@ export default function AdminCrnImport() {
   }
 
   async function openBatchRows(b) {
-    setOpenBatch(b); setConfirming(false); setGroupFilter('all')
+    setOpenBatch(b); setConfirming(false); setGroupFilter('all'); setVisible(PAGE)
     const { data, error } = await supabase.rpc('crn_import_rows_for', { p_batch: b.id })
     if (error) { console.error('crn_import_rows_for failed:', error); setNote(friendlyError(error, "We couldn't load that import.")); return }
     setRows(data || [])
@@ -241,19 +251,28 @@ export default function AdminCrnImport() {
     updated: svc.filter((r) => r.grp === 'updated' || r.grp === 'conflict').length,
     linked: svc.filter((r) => r.grp === 'possible_match' && r.decision === 'link').length,
     waiting: svc.filter((r) => r.grp === 'possible_match' && !r.decision).length,
+    research: svc.filter((r) => r.grp === 'research_new' || r.grp === 'research_updated').length,
     held: rows.filter((r) => r.grp === 'held' || r.grp === 'skipped').length,
     hiding: svc.filter((r) => r.grp === 'will_hide').length,
     flagged: svc.filter((r) => r.flags?.includes('coverage') && !['held', 'skipped', 'missing'].includes(r.grp)).length,
   }
   const counts = {}
   rows.forEach((r) => { counts[r.grp] = (counts[r.grp] || 0) + 1 })
-  const shown = rows.filter((r) => groupFilter === 'all' || r.grp === groupFilter || (groupFilter === 'coverage' && r.flags?.includes('coverage')))
+  const shown = rows.filter((r) => (groupFilter === 'all' ? !QUIET.includes(r.grp) : r.grp === groupFilter || (groupFilter === 'coverage' && r.flags?.includes('coverage'))))
+  const quiet = QUIET.filter((g) => counts[g]).map((g) => ({ key: g, n: counts[g] }))
+  const quietByTab = (g) => TABS.map((t) => [t.key, rows.filter((r) => r.grp === g && r.tab === t.key).length]).filter(([, n]) => n).map(([k, n]) => n + ' ' + TAB_WORD[k][n === 1 ? 0 : 1]).join(', ')
+  function pickGroup(g) { setGroupFilter(g); setVisible(PAGE) }
   const ignored = openBatch ? Object.entries(openBatch.ignored_columns || {}).flatMap(([tab, cols]) => (cols || []).map((c) => TAB_LABEL[tab] + ': ' + c)) : []
   const latestApplied = batches.filter((b) => b.status === 'applied').sort((a, b) => new Date(b.decided_at) - new Date(a.decided_at))[0]
   const fieldMeanings = (VALUE_FIELDS.find((f) => f.key === newValue.field) || VALUE_FIELDS[0]).meanings
 
   return (
     <div>
+      <div role="group" aria-label="CRN view" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+        <button type="button" style={chip(view === 'import')} aria-pressed={view === 'import'} onClick={() => setView('import')}>Imports</button>
+        <button type="button" style={chip(view === 'research')} aria-pressed={view === 'research'} onClick={() => setView('research')}>Research records</button>
+      </div>
+      {view === 'research' ? <AdminCrnResearch /> : <>
       <p role="status" style={{ minHeight: '1.2em', margin: '0 0 0.5rem', color: 'var(--accent)', fontWeight: 600 }}>{note}</p>
 
       {!inPreview && (
@@ -285,15 +304,33 @@ export default function AdminCrnImport() {
           )}
 
           <div role="group" aria-label="Show" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', margin: '0.5rem 0 0.75rem' }}>
-            <button type="button" style={chip(groupFilter === 'all')} aria-pressed={groupFilter === 'all'} onClick={() => setGroupFilter('all')}>All ({rows.length})</button>
-            {GROUPS.filter((g) => counts[g.key]).map((g) => (
-              <button key={g.key} type="button" style={chip(groupFilter === g.key)} aria-pressed={groupFilter === g.key} onClick={() => setGroupFilter(g.key)}>{g.label} ({counts[g.key]})</button>
+            <button type="button" style={chip(groupFilter === 'all')} aria-pressed={groupFilter === 'all'} onClick={() => pickGroup('all')}>Changes ({rows.filter((r) => !QUIET.includes(r.grp)).length})</button>
+            {GROUPS.filter((g) => counts[g.key] && !QUIET.includes(g.key)).map((g) => (
+              <button key={g.key} type="button" style={chip(groupFilter === g.key)} aria-pressed={groupFilter === g.key} onClick={() => pickGroup(g.key)}>{g.label} ({counts[g.key]})</button>
             ))}
-            {summary.flagged > 0 && <button type="button" style={chip(groupFilter === 'coverage')} aria-pressed={groupFilter === 'coverage'} onClick={() => setGroupFilter('coverage')}>Coverage flagged ({summary.flagged})</button>}
+            {summary.flagged > 0 && <button type="button" style={chip(groupFilter === 'coverage')} aria-pressed={groupFilter === 'coverage'} onClick={() => pickGroup('coverage')}>Coverage flagged ({summary.flagged})</button>}
           </div>
 
+          {quiet.length > 0 && (
+            <div style={{ border: '1px dashed var(--border-strong)', borderRadius: 10, padding: '0.6rem', marginBottom: '0.75rem' }}>
+              <p style={{ ...small, margin: '0 0 0.4rem' }}>Folded away. Nothing changes for these:</p>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.4rem' }}>
+                {quiet.map((q) => (
+                  <li key={q.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span><strong>{GROUP_LABEL[q.key]}</strong>: {quietByTab(q.key)}</span>
+                    <button type="button" style={chip(groupFilter === q.key)} aria-pressed={groupFilter === q.key}
+                      onClick={() => pickGroup(groupFilter === q.key ? 'all' : q.key)}>
+                      {groupFilter === q.key ? 'Fold away' : 'Show them'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {shown.length === 0 && <p style={small}>Nothing to show here.</p>}
+
           <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.5rem' }}>
-            {shown.map((r) => {
+            {shown.slice(0, visible).map((r) => {
               const teach = (r.reasons || []).map(heldValue).find(Boolean)
               return (
                 <li key={r.id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '0.6rem', background: 'var(--surface-2)' }}>
@@ -332,6 +369,11 @@ export default function AdminCrnImport() {
               )
             })}
           </ul>
+          {shown.length > visible && (
+            <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48, marginTop: '0.5rem' }} onClick={() => setVisible((v) => v + PAGE)}>
+              Show {Math.min(PAGE, shown.length - visible)} more (of {shown.length - visible} left)
+            </button>
+          )}
 
           {inPreview && !confirming && (
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
@@ -343,7 +385,7 @@ export default function AdminCrnImport() {
             <div role="alertdialog" aria-labelledby="crn-confirm-h" style={{ marginTop: '1rem', padding: '0.75rem', borderRadius: 10, border: '2px solid var(--accent)', background: 'var(--surface)' }}>
               <p id="crn-confirm-h" style={{ margin: '0 0 0.5rem', fontWeight: 700 }}>Import these?</p>
               <p style={small}>
-                {summary.added} new, {summary.updated} updated, {summary.linked} linked, {summary.hiding} hidden, {summary.held} held or skipped, {summary.flagged} flagged for coverage.
+                {summary.added} new in Find Help, {summary.updated} updated, {summary.linked} linked, {summary.hiding} hidden, {summary.research} saved as private research, {summary.held} held or skipped, {summary.flagged} flagged for coverage.
                 {summary.waiting > 0 && <> {summary.waiting} possible {summary.waiting === 1 ? 'match is' : 'matches are'} not decided yet and will wait for next time.</>}
               </p>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -435,6 +477,7 @@ export default function AdminCrnImport() {
           ))}
         </ul>
       </section>
+      </>}
     </div>
   )
 }
