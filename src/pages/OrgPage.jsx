@@ -12,7 +12,7 @@ import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import OrgMemberNames from '../components/OrgMemberNames'
 import { ORG_SPOTS, GROUP_SPOTS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
-import { usePageMap, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps } from '../components/MapBuilder'
+import { usePageMap, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer } from '../components/MapBuilder'
 import OrgSceneEditor from '../components/OrgSceneEditor'
 import GroupGear from '../components/GroupGear'
 import GroupResponse from '../components/GroupResponse'
@@ -533,6 +533,7 @@ export default function OrgPage() {
       )}
 
       <div {...sceneProps(b, 'vs-scene vs-scene-path', user ? holdToArrange : null)}>
+       <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(b.world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
         {spots.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
@@ -551,9 +552,10 @@ export default function OrgPage() {
             </button>
           )
         })}
+       </div>
         <div className="vs-fade" />
       </div>
-      {user && !b.arrange && <NamesToggle b={b} onChange={saveLabels} />}
+      <NamesToggle b={b} onChange={user ? saveLabels : null} />
 
       <p className="vs-hint">{arrange ? (arrangeFor === 'everyone' ? 'You are arranging ' + org.name + ' for everyone. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : 'Tap anything to go there.'}</p>
 
