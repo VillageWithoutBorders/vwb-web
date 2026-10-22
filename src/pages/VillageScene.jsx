@@ -5,7 +5,7 @@ import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { loadMyTaskOverview } from '../utils/myTasks'
-import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, backgroundSrc } from '../data/worldElements'
+import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
 import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, fromSaved, isPlainWorld, mapBody } from '../components/MapBuilder'
 import { askConfirm } from '../components/AdminDialog'
 import SisterCampfireButton from '../components/SisterCampfireButton'
@@ -32,9 +32,10 @@ export default function VillageScene() {
   const { user, profile, isFounder, refreshProfile, organizations } = useAuth()
   // In your home village, your house (the 'me' spot) is your cottage.
   const isHome = !cottage && !!id && profile?.home_village_id === id
+  // Your cottage shows only in your home village (Oct 22).
   const SPOTS = cottage ? COTTAGE_SPOTS
     : isHome ? VILLAGE_SPOTS.map((v) => (v.k === 'me' ? { ...v, label: 'Your cottage', short: 'Your cottage' } : v))
-    : VILLAGE_SPOTS
+    : VILLAGE_SPOTS.filter((v) => v.k !== 'me')
   const { unreadCount } = useUnreadCount()
 
   const [village, setVillage] = useState(null)
@@ -65,8 +66,12 @@ export default function VillageScene() {
   const LAYOUT_KEY = 'vwb_village_layout'
   const saveTimer = useRef(null)
   const [showTowns, setShowTowns] = useState(false)
+  // The usual look: roads, streams and a few trees for this kind of map.
+  const BASE = cottage ? DEFAULT_WORLDS.cottage : DEFAULT_WORLDS.village
+  const CBASE = DEFAULT_WORLDS.cottage
   const b = useMapBuilder({
     spots: SPOTS,
+    base: BASE,
     initial: (() => { if (!cottage) return null; try { return JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null') } catch { return null } })(),
     onSave: (next) => (cottage ? saveCottage(next) : saveMapLayout(next)),
   })
@@ -98,21 +103,21 @@ export default function VillageScene() {
   // Your cottage: the account's saved layout wins once the profile has loaded.
   useEffect(() => {
     if (!cottage || arrange || !accountLayout || typeof accountLayout !== 'object') return
-    setWorld(fromSaved(accountLayout))
+    setWorld(fromSaved(accountLayout, CBASE))
   }, [accountLayout, cottage]) // eslint-disable-line react-hooks/exhaustive-deps
   // A village page: your view, else the shared look (and back to it after Done).
   useEffect(() => {
     if (cottage || arrange) return
     const { own, shared } = mapLayouts.current
-    setWorld({ ...fromSaved(own || shared), labels: fromSaved(accountLayout).labels })
+    setWorld({ ...fromSaved(own || shared, BASE), labels: fromSaved(accountLayout).labels })
   }, [accountLayout, cottage, mapLoaded, arrange]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Name tags are one choice for every map, saved with your account.
   function saveLabels(labels) {
     if (cottage) { b.saveWorld({ ...worldRef.current, labels }); return }
     setWorld({ ...worldRef.current, labels })
-    const acct = { ...fromSaved(accountLayout), labels }
-    const empty = isPlainWorld(acct) && acct.labels === 'auto'
+    const acct = { ...fromSaved(accountLayout, CBASE), labels }
+    const empty = isPlainWorld(acct, CBASE) && acct.labels === 'auto'
     supabase.rpc('set_my_village_layout', { p_layout: empty ? null : acct }).then(({ error }) => {
       if (error) { console.error('Failed to save name tags choice:', error); return }
       if (refreshProfile) refreshProfile()
@@ -123,7 +128,7 @@ export default function VillageScene() {
   function saveMapLayout(next) {
     const forWho = arrangeFor
     const body = mapBody(next)
-    const empty = isPlainWorld(next)
+    const empty = isPlainWorld(next, BASE)
     const shared = forWho === 'everyone'
     // Keep it here right away, so tapping Done before it saves still shows it.
     mapLayouts.current = { ...mapLayouts.current, [shared ? 'shared' : 'own']: empty ? null : body }
@@ -142,7 +147,7 @@ export default function VillageScene() {
     let start = null
     if (!cottage) {
       const { own, shared } = mapLayouts.current
-      start = { ...fromSaved(forWho === 'everyone' ? shared : (own || shared)), labels: worldRef.current.labels }
+      start = { ...fromSaved(forWho === 'everyone' ? shared : (own || shared), BASE), labels: worldRef.current.labels }
     }
     setArrangeFor(forWho)
     b.openArrange(start)
@@ -153,7 +158,7 @@ export default function VillageScene() {
     try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode */ }
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
-      const empty = isPlainWorld(next) && next.labels === 'auto'
+      const empty = isPlainWorld(next, CBASE) && next.labels === 'auto'
       const { error } = await supabase.rpc('set_my_village_layout', { p_layout: empty ? null : next })
       if (error) {
         // Before the database step is run, the layout simply stays on this device.
@@ -173,7 +178,7 @@ export default function VillageScene() {
     if (!cottage && arrangeFor === 'me') {
       if (!(await askConfirm('Go back to how ' + (village ? village.name : 'this village') + ' looks for everyone? Your own view will be taken away.'))) return
       remember()
-      const back = { ...fromSaved(mapLayouts.current.shared), labels: worldRef.current.labels }
+      const back = { ...fromSaved(mapLayouts.current.shared, BASE), labels: worldRef.current.labels }
       setWorld(back); setPicked(null); setTrayOpen(false)
       clearTimeout(saveTimer.current)
       const { error } = await supabase.rpc('set_my_map_layout', { p_kind: 'village', p_id: id, p_layout: null })
@@ -184,7 +189,7 @@ export default function VillageScene() {
     }
     const msg = !cottage ? 'Go back to the usual village for everyone? The pieces, roads and streams you added will be taken away. You can tap Undo right after.' : 'Go back to the usual village? Your pieces, roads and streams will be taken away. You can tap Undo right after if you change your mind.'
     if (!(await askConfirm(msg))) return
-    commit(fromSaved(null)); setPicked(null); setTrayOpen(false); setLayoutNote('Back to the usual village.')
+    commit(fromSaved(null, BASE)); setPicked(null); setTrayOpen(false); setLayoutNote('Back to the usual village.')
   }
 
   useEffect(() => {
