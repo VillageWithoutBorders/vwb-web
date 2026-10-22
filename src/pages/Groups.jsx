@@ -219,7 +219,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
 
       {!loading && (
         <section aria-labelledby="mygroups-heading">
-          <h2 id="mygroups-heading" className="groups-section">{show === 'campfires' ? 'Your Campfires' : show === 'cottage' ? 'Your Cottage Chats' : 'Your chats'}</h2>
+          <h2 id="mygroups-heading" className="groups-section">{!embedded ? 'Your chats' : show === 'campfires' ? 'Your Campfires' : show === 'cottage' ? 'Your Cottage Chats' : 'Your chats'}</h2>
           {orderedGroups.length === 0 && <p className="groups-empty">{show === 'campfires' ? "You're not at any Campfires yet." : "You're not in any chats yet. Start a Cottage Chat, or ask a friend to invite you."}</p>}
           {orderedGroups.map(({ g, nested }) => (
             <button key={g.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + g.id)}>

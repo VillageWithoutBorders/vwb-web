@@ -395,13 +395,23 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     // A second finger: stop any drag, drawing or long press, and start pinching.
     e.stopPropagation(); e.preventDefault()
     holdStop()
+    const held = dragRef.current ? dragRef.current.key : null
     if (dragRef.current) { if (dragRef.current.moved) setWorld(dragRef.current.before); dragRef.current = null }
     if (drawRef.current) { drawRef.current = null; setDrawing(null) }
     panRef.current = null
     panMovedRef.current = true
     if (n === 2) {
       const { m, d } = pinchNow()
-      pinchRef.current = { m, d, from: { ...zoomRef.current } }
+      // Arranging (Oct 22, Jade): pinching the piece you hold, or the piece you picked,
+      // makes just that piece bigger or smaller. Pinching open ground zooms the map.
+      const piece = arrange && tool === 'move' ? held || picked : null
+      if (piece) {
+        const w = worldRef.current
+        const dec = piece.startsWith('d:') ? w.decor.find((x) => x.id === piece.slice(2)) : null
+        const s0 = dec ? dec.s || 1 : placed(spots.find((v) => v.k === piece) || { k: piece }).s || 1
+        pinchRef.current = { m, d, piece, s0, max: dec ? 3 : 1.8, before: w }
+        setPicked(piece); setPickTools(true)
+      } else pinchRef.current = { m, d, from: { ...zoomRef.current } }
       try { for (const id of ptrsRef.current.keys()) outerRef.current.setPointerCapture(id) } catch { /* older browsers */ }
     }
   }
@@ -411,6 +421,14 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     if (pinchRef.current && ptrsRef.current.size >= 2) {
       e.stopPropagation()
       const p = pinchRef.current, now = pinchNow()
+      if (p.piece) {
+        const size = Math.round(Math.min(p.max, Math.max(0.3, p.s0 * (now.d / p.d))) * 20) / 20
+        const w = worldRef.current
+        setWorld(p.piece.startsWith('d:')
+          ? { ...w, decor: w.decor.map((x) => (x.id === p.piece.slice(2) ? { ...x, s: size } : x)) }
+          : { ...w, spots: { ...w.spots, [p.piece]: { ...(w.spots[p.piece] || {}), s: size } } })
+        return
+      }
       const z = Math.min(3, Math.max(1, p.from.z * (now.d / p.d)))
       const px = (p.m[0] - p.from.x) / p.from.z, py = (p.m[1] - p.from.y) / p.from.z
       setZoom(fitZoom(z, now.m[0] - px * z, now.m[1] - py * z))
@@ -431,7 +449,14 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     ptrsRef.current.delete(e.pointerId)
     const n = ptrsRef.current.size
     if (pinchRef.current && n < 2) {
+      const done = pinchRef.current
       pinchRef.current = null
+      // A piece was resized: save it once, with one Undo step.
+      if (done.piece) {
+        if (worldRef.current !== done.before) { remember(done.before); saveWorld(worldRef.current) }
+        if (n === 0) panRef.current = null
+        return
+      }
       // One finger still down: keep moving the map from where it is now.
       if (n === 1 && zoomRef.current.z > 1) {
         const [id, p] = [...ptrsRef.current.entries()][0]
