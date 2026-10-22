@@ -9,7 +9,7 @@ import { useSimpleView } from '../utils/simpleView'
 // that depends on who you are. Home, Calendar, Dashboard, Alerts and You live in the top bar.
 //   Neighbor: Emergency.  One role: that role's tools.  More than one: My tools (a short list).
 
-const HELP = ['/skillshare', '/tasks', '/ask', '/post-offer', '/community/resources']
+const HELP = ['/help-doors', '/skillshare', '/tasks', '/ask', '/post-offer', '/community/resources']
 const VILLAGE = ['/village', '/community', '/villages', '/find-village', '/campfire', '/orgs', '/start-group']
 const under = (path, list) => list.some((p) => path === p || path.startsWith(p + '/'))
 
@@ -48,7 +48,7 @@ export default function BottomTabs() {
             <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="house" size={26} /></span>
             <span className="tab-label">Home</span>
           </NavLink>
-          <NavLink to="/skillshare" className={({ isActive }) => 'tab-item' + (isActive || helpOn ? ' active' : '')} data-tour="help">
+          <NavLink to="/help-doors" className={({ isActive }) => 'tab-item' + (isActive || helpOn ? ' active' : '')} data-tour="help">
             <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="heart-hands" size={26} /></span>
             <span className="tab-label">Help</span>
           </NavLink>
@@ -71,7 +71,7 @@ export default function BottomTabs() {
     <>
       <nav className="bottom-tabs" aria-label="Main navigation">
         <div className="bottom-tabs-inner">
-          <NavLink to="/skillshare" className={({ isActive }) => 'tab-item' + (isActive || helpOn ? ' active' : '')} data-tour="help">
+          <NavLink to="/help-doors" className={({ isActive }) => 'tab-item' + (isActive || helpOn ? ' active' : '')} data-tour="help">
             <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="heart-hands" size={26} /></span>
             <span className="tab-label">Help</span>
           </NavLink>

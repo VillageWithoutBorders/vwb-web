@@ -118,11 +118,11 @@ const ALL_STEPS = [
     body: 'Events and volunteer sign-ups near you. Tap one to sign up or add it to your phone.',
   },
   {
-    route: '/skillshare',
-    target: '.help-cta',
+    route: '/help-doors',
+    target: '.doors',
     icon: '\u{1F91D}',
     title: 'Help',
-    body: 'Need a hand? Tap Ask for help. Have something to share? Tap Offer something. Below, see what neighbors need.',
+    body: 'Find resources near you, ask neighbors for a hand, or see who you can help. Your own requests are at the bottom.',
   },
   {
     practice: 'intro',
