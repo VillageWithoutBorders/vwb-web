@@ -846,7 +846,7 @@ export default function ActiveTasks() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={match.helper_avatar} userId={match.helper_id} size={28} /><UserName userId={match.helper_id} name={match.helper_name} style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }} /></div>
                                 {match.is_ambassador && (
-                                  <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>HA</span>
+                                  <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>Hope Ambassador</span>
                                 )}
                               </div>
                               {bothDone ? (
@@ -854,10 +854,10 @@ export default function ActiveTasks() {
                               ) : (
                                 <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
                                   <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
-                                  <span>{match.helper_completed ? 'Helper done' : 'Helper working'}</span>
+                                  <span>{match.helper_completed ? 'Helper marked it done' : 'Helper is still working'}</span>
                                   <span style={{ margin: '0 0.15rem' }}>&middot;</span>
                                   <span className={'task-confirm-dot' + (match.requester_completed ? ' confirmed' : '')} />
-                                  <span>{match.requester_completed ? 'You confirmed' : 'You pending'}</span>
+                                  <span>{match.requester_completed ? 'You marked it done' : 'You have not marked it done'}</span>
                                 </div>
                               )}
                             </div>
@@ -974,10 +974,10 @@ export default function ActiveTasks() {
                     {!bothDone && (
                       <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0.5rem 0' }}>
                         <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
-                        <span>{match.helper_completed ? 'You confirmed' : 'You pending'}</span>
+                        <span>{match.helper_completed ? 'You marked it done' : 'You have not marked it done'}</span>
                         <span style={{ margin: '0 0.15rem' }}>&middot;</span>
                         <span className={'task-confirm-dot' + (match.requester_completed ? ' confirmed' : '')} />
-                        <span>{match.requester_completed ? 'Requester done' : 'Requester pending'}</span>
+                        <span>{match.requester_completed ? 'They marked it done' : 'They have not marked it done'}</span>
                       </div>
                     )}
 
