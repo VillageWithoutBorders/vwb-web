@@ -693,6 +693,10 @@ export default function ActiveTasks() {
     <div className="tasks-page">
       <div className="tasks-header"><h1>Help</h1></div>
       <HelpSwitch />
+      {/* Was a floating button that covered task buttons on phones (Oct 22); now it sits in the page. */}
+      <button type="button" className="btn btn-primary btn-full mine-new" onClick={() => navigate(tab === 'offers' ? '/post-offer' : '/ask')}>
+        <span aria-hidden="true">+</span> {tab === 'offers' ? 'Offer something' : 'Ask for help'}
+      </button>
 
       <div className="home-tasks-tabs mine-tabs" role="tablist" aria-label="My help">
         {MINE_TABS.map((t) => (
@@ -1012,9 +1016,6 @@ export default function ActiveTasks() {
         </div>
       )}
 
-      <button type="button" className="fab fab-labeled" onClick={() => navigate(tab === 'offers' ? '/post-offer' : '/ask')}>
-        <span aria-hidden="true">+</span> {tab === 'offers' ? 'Offer something' : 'Ask for help'}
-      </button>
     </div>
   )
 }

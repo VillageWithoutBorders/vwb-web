@@ -751,7 +751,7 @@ export default function VillageScene() {
         <button type="button" data-tour="village-arrange" className="vs-build-start" onClick={() => { setArrange(true); setTool('move'); setTrayTab('pieces'); setLayoutNote(''); setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50) }}>
           <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
           <span className="vs-build-start-text">
-            <b>Arrange and build my village</b>
+            <b>{cottage ? 'Arrange and build my cottage' : 'Arrange and build my village'}</b>
             <small>Move places, add trees and bridges, draw roads, pick a ground</small>
           </span>
         </button>
@@ -956,7 +956,7 @@ export default function VillageScene() {
           <div className="vs-sheet" role="dialog" aria-modal="true" aria-labelledby="vs-sheet-title" ref={sheetRef}>
             <button type="button" className="vs-sheet-close" onClick={closeSheet}><ToolIcon name="down" /><span>Close</span></button>
             {sheetBody(sheet.k)}
-            <button type="button" className="btn btn-outline btn-full" onClick={closeSheet}>Back to the village</button>
+            <button type="button" className="btn btn-outline btn-full" onClick={closeSheet}>{cottage ? 'Back to my cottage' : 'Back to the village'}</button>
           </div>
         </div>
       )}

@@ -1212,7 +1212,7 @@ export default function Admin() {
           <div style={{ marginBottom: '0.75rem' }}>
             <label htmlFor="user-search" style={hiddenLabel}>Search people by name or village</label>
             <input id="user-search" type="search" value={userQuery} onChange={(e) => { setUserQuery(e.target.value); setUserLimit(USER_PAGE_SIZE) }} autoComplete="off" enterKeyHint="search" placeholder="Search by name or village" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem', marginBottom: '0.5rem' }} />
-            <div role="group" aria-label="Filter people" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+            <div role="group" aria-label="Filter people" style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', paddingBottom: '0.25rem' }}>
               {USER_FILTERS.map(([key, label]) => (
                 <button key={key} type="button" aria-pressed={userFilter === key} onClick={() => { setUserFilter(key); setUserLimit(USER_PAGE_SIZE) }} style={{ ...tabStyle(userFilter === key), minHeight: '44px' }}>
                   {label} <span style={{ opacity: 0.7 }}>{userCounts[key]}</span>
@@ -1620,7 +1620,7 @@ export default function Admin() {
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No villages yet</p>
           ) : villages.map(c => (
             <div key={c.id} style={cardStyle}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {editingVillageId === c.id ? (
                   <div style={{ flex: 1 }}>
                     <input value={editVillageName} onChange={(e) => setEditVillageName(e.target.value)} placeholder="Village name *" aria-label="Village name" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
@@ -1640,8 +1640,8 @@ export default function Admin() {
                     </div>
                   </div>
                 ) : (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div style={{ flex: '1 1 14rem', minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                     <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text)' }}>{c.name}</h4>
                     {c.is_default && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Default</span>}
                     {!c.active && <span style={{ fontSize: '0.8125rem', background: 'var(--warn-bg)', color: 'var(--warn)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Inactive</span>}
@@ -1692,7 +1692,7 @@ export default function Admin() {
           <div style={{ marginBottom: '0.75rem' }}>
             <label htmlFor="content-search" style={hiddenLabel}>Search SkillShare posts</label>
             <input id="content-search" type="search" value={contentQuery} onChange={(e) => setContentQuery(e.target.value)} placeholder="Search by skill, title, or name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
-            <div role="group" aria-label="Filter SkillShare posts" style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+            <div role="group" aria-label="Filter SkillShare posts" style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', paddingBottom: '0.25rem' }}>
               {CONTENT_FILTERS.map(([key, label]) => (
                 <button key={key} type="button" aria-pressed={contentFilter === key} onClick={() => setContentFilter(key)} style={{ ...tabStyle(contentFilter === key), minHeight: '36px' }}>
                   {label} <span style={{ opacity: 0.7 }}>{contentCounts[key]}</span>

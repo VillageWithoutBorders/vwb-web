@@ -6152,3 +6152,18 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 .tour-sheet { padding-bottom: 0; }
 .tour-sheet .tour-buttons { position: sticky; bottom: 0; margin: 0 -1.25rem; padding: 0.75rem 1.25rem 1rem; background: var(--white); border-top: 1px solid var(--border); }
 .tour-hint { margin-bottom: 0.5rem; }
+
+/* Help > Mine: the Ask for help / Offer button sits in the page instead of floating over task buttons (Oct 22). */
+.mine-new { min-height: 48px; margin: 0 0 0.75rem; gap: 0.4rem; font-weight: 700; }
+.mine-new span { font-size: 1.3rem; line-height: 1; }
+
+/* Alerts on phones (Oct 22): title on its own line with the buttons under it, and each
+   alert uses the full width, with its flag and remove buttons in a row underneath. */
+@media (max-width: 520px) {
+  .notifications-header { flex-wrap: wrap; }
+  .notifications-actions { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+  .notifications-actions .btn-mark-all-read { flex: 1 1 8rem; min-height: 44px; }
+  .notification-card { flex-wrap: wrap; }
+  .notification-card .notification-content { flex: 1 1 calc(100% - 72px); min-width: 0; }
+  .notification-card .notification-actions { width: 100%; justify-content: flex-end; gap: 12px; margin-top: -4px; }
+}
