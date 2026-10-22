@@ -535,7 +535,7 @@ export default function OrgPage() {
       <div className="vs-body">
         {!isMember && <div className="vs-help-one">{askButton()}</div>}
         {isMember && general && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/groups/' + general.id)}><Icon name="campfire" /> Open the general chat</button>}
-        <h2>Or pick from the list</h2>
+        <h2 className="vs-pick-h">Or pick from the list</h2>
         <div className="vs-list">
           {spots.map((s) => {
             const i = info(s.k)

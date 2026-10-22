@@ -24,7 +24,7 @@ export default function Layout() {
   // instead of sitting inside the padded page column.
   // World pages (the globe, a village, an organization) fill the whole screen
   // with their own teal background, edge to edge.
-  const isWorld = (pathname === '/' && !simple) || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
+  const isWorld = (pathname === '/' && !simple) || pathname === '/world' || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
   const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
 
   // The Admin page gets a wider column on a computer for its side menu.
@@ -36,7 +36,7 @@ export default function Layout() {
         {/* Always here, left to right: Home (the globe), Calendar, Dashboard (in the middle), Alerts, Your corner. */}
         <nav className={'app-header-inner header-nav' + (isAdmin ? ' header-nav-admin' : '')} aria-label="Top menu">
           {!simple && (<>
-          <Link to="/" className={'header-btn' + (pathname === '/' ? ' on' : '')} aria-current={pathname === '/' ? 'page' : undefined} aria-label="Home: your networks on the globe" data-tour="top-home">
+          <Link to="/world" className={'header-btn' + (pathname === '/world' ? ' on' : '')} aria-current={pathname === '/world' ? 'page' : undefined} aria-label="Home: your networks on the globe" data-tour="top-home">
             <img className="header-btn-logo" src="/images/vwb_header-v2.png" alt="" width="26" height="26" />
             <span className="header-btn-label" aria-hidden="true">Home</span>
           </Link>
