@@ -53,3 +53,6 @@
 /* Picture icons fill the round markers (the marker keeps its gold ring). */
 .wd-mid .vwb-icon, .wd-org .wd-em .vwb-icon, .wd-news .vwb-icon { width: 100%; height: 100%; vertical-align: 0; display: block; }
 .wd-em .vwb-icon { width: 1.3em; height: 1.3em; }
+
+/* Buttons under the globe: a clear gold edge so they read as buttons in dark mode (Oct 22). */
+.wd-actions .btn-outline { border: 2px solid var(--vs-gold); color: var(--vs-ink); background: rgba(246, 240, 224, 0.06); }

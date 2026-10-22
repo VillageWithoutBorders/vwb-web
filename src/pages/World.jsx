@@ -175,7 +175,21 @@ export default function World() {
         const p = { x: a.gx + (dx / len) * a.gr, y: a.gy + (dy / len) * a.gr }, q = { x: b.gx - (dx / len) * b.gr, y: b.gy - (dy / len) * b.gr }
         return { a, b, strength: f.strength, ...curve(p, q, -4) }
       })
-    return { nodes: shown.map((v) => byId[v.id]), lines, paths }
+    // Keep each Sister Campfire off the village name tags. When villages sit close
+    // together the campfire can land on a name; slide it sideways until it is clear.
+    const nodes = shown.map((v) => byId[v.id])
+    lines.forEach((l) => {
+      for (let tries = 0; tries < 3; tries++) {
+        const hit = nodes.find((n) => {
+          const tx = n.gx, ty = n.gy + (n.is_mine ? 7 : 0), half = Math.min(23, 3 + (n.name || '').length * 1.1)
+          return Math.abs(l.x - tx) < half + 6 && Math.abs(l.y - ty) < 7
+        })
+        if (!hit) break
+        const half = Math.min(23, 3 + (hit.name || '').length * 1.1)
+        l.x = l.x >= hit.gx && hit.gx + half + 7 < 94 ? hit.gx + half + 7 : Math.max(6, hit.gx - half - 7)
+      }
+    })
+    return { nodes, lines, paths }
   }, [shown, pointsByVillage, sisters, footpaths])
 
   // Organizations on the globe: yours first, then the ones connected to
