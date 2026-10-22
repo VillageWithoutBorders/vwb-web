@@ -15,7 +15,7 @@ import { askConfirm } from './AdminDialog'
 //   roads:   paths you draw with your finger
 //   streams: water you draw with your finger (under the roads, so a road can cross it)
 //   labels:  name tags: 'auto', 'show' or 'hide' (one choice for every map)
-//   bg:      the background: 'field' (usual), another BACKGROUNDS key, or 'seasons'
+//   bg:      the background: 'seasons' (usual: the field for this time of year) or a BACKGROUNDS key
 
 // Roads you draw: fewer points (so the saved layout stays small), then a
 // smooth curve through them. Points are percent of the map (x, y), and the
@@ -119,19 +119,19 @@ export { Road, Stream, StreamDefs, simplify }
 
 // A saved layout, cleaned up. Unknown or missing parts become empty.
 export function fromSaved(v) {
-  if (!v || typeof v !== 'object') return { spots: {}, decor: [], roads: [], streams: [], labels: 'auto', bg: 'field' }
-  if (!v.spots && !v.decor && !v.roads && !v.streams && !v.ground && !v.labels && !v.bg) return { spots: v, decor: [], roads: [], streams: [], labels: 'auto', bg: 'field' } // older device copy
+  if (!v || typeof v !== 'object') return { spots: {}, decor: [], roads: [], streams: [], labels: 'auto', bg: 'seasons' }
+  if (!v.spots && !v.decor && !v.roads && !v.streams && !v.ground && !v.labels && !v.bg) return { spots: v, decor: [], roads: [], streams: [], labels: 'auto', bg: 'seasons' } // older device copy
   const list = (a) => (Array.isArray(a) ? a : [])
-  const bg = v.bg === 'seasons' || BACKGROUNDS.some((b) => b.k === v.bg) ? v.bg : 'field'
+  const bg = v.bg === 'seasons' || BACKGROUNDS.some((b) => b.k === v.bg) ? v.bg : 'seasons'
   return { spots: v.spots || {}, decor: list(v.decor), roads: list(v.roads), streams: list(v.streams), labels: ['show', 'hide'].includes(v.labels) ? v.labels : 'auto', bg }
 }
 // Nothing changed from the usual map (name tags aside)?
 export function isPlainWorld(w) {
-  return Object.keys(w.spots).length === 0 && w.decor.length === 0 && w.roads.length === 0 && w.streams.length === 0 && (w.bg || 'field') === 'field'
+  return Object.keys(w.spots).length === 0 && w.decor.length === 0 && w.roads.length === 0 && w.streams.length === 0 && (w.bg || 'seasons') === 'seasons'
 }
 // Only the map, without the name tags choice: what gets saved for a page.
 export function mapBody(w) {
-  return { spots: w.spots, decor: w.decor, roads: w.roads, streams: w.streams, bg: w.bg || 'field' }
+  return { spots: w.spots, decor: w.decor, roads: w.roads, streams: w.streams, bg: w.bg || 'seasons' }
 }
 
 const stillMotion = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false } }
@@ -460,7 +460,7 @@ export function MapToolbar({ b, more }) {
                     </button>
                   )}
                   {BACKGROUNDS.map((g) => (
-                    <button key={g.k} type="button" className={'vs-ground-card' + ((world.bg || 'field') === g.k ? ' on' : '')} aria-pressed={(world.bg || 'field') === g.k} onClick={() => commit({ ...world, bg: g.k })}>
+                    <button key={g.k} type="button" className={'vs-ground-card' + ((world.bg || 'seasons') === g.k ? ' on' : '')} aria-pressed={(world.bg || 'seasons') === g.k} onClick={() => commit({ ...world, bg: g.k })}>
                       <img src={g.src} alt="" width="72" height="108" loading="lazy" />
                       <span>{g.label}</span>
                     </button>
