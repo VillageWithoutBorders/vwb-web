@@ -404,3 +404,31 @@
 @media (max-width: 360px) { .ose-place { grid-template-columns: 1fr; } }
 /* The Show/Hide names button sits bottom center, between Your corner and Messages, so it never covers a place (Oct 22). */
 .vs-names-toggle { right: auto; left: 50%; transform: translateX(-50%); bottom: 6px; white-space: nowrap; }
+
+/* Gamify starters (Oct 22). Lanterns name what is waiting on your cottage map. */
+.vs-lantern-lit { top: -30%; left: 70%; animation: vs-glow 2.4s ease-in-out infinite alternate; }
+@keyframes vs-glow { from { filter: drop-shadow(0 0 4px rgba(255, 190, 80, 0.6)); } to { filter: drop-shadow(0 0 12px rgba(255, 200, 90, 1)); } }
+.vs-lantern-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); z-index: 3; white-space: nowrap;
+  padding: 3px 10px; border-radius: 999px; background: #f2c763; color: #2a2004; font-size: 0.85rem; font-weight: 800; border: 2px solid #2a2004; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25); }
+/* Doors and gates: places only members can open show a small lock and look a little faded. */
+.vs-gate { position: absolute; right: -6px; bottom: -2px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 15px; background: #f6f0e0; border: 2px solid #2a2004; }
+.vs-gate .vwb-icon { width: 20px; height: 20px; vertical-align: 0; }
+/* Garden gifts: small painted pieces that grow on your cottage map for first steps. */
+.vs-gift { position: absolute; transform: translate(-50%, -60%); width: clamp(44px, 13vw, 70px); height: auto; pointer-events: none; filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.18)); }
+.vs-gifts-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 32px); margin: 10px 16px 0; min-height: 48px; padding: 6px 12px;
+  border-radius: 14px; border: 2px solid var(--vs-gold); background: var(--vs-card); color: var(--vs-ink); font: inherit; font-weight: 700; cursor: pointer; }
+.vs-gifts-btn .vwb-icon { width: 28px; height: 28px; vertical-align: 0; }
+.vs-gifts-btn:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 2px; }
+.vs-gift-row { display: flex; align-items: center; gap: 12px; }
+.vs-gift-row img { flex: none; width: 48px; height: 48px; object-fit: contain; }
+.vs-gift-row span { display: flex; flex-direction: column; }
+.vs-gift-next img { opacity: 0.4; filter: grayscale(0.7); }
+@media (min-width: 1024px) { .vs-page-path > .vs-gifts-btn { width: 100%; margin: 10px 0 0; } }
+@media (prefers-reduced-motion: reduce) { .vs-lantern-lit { animation: none; } }
+
+/* Simple view (Oct 22): village, cottage, organization and group pages show only their plain
+   list, big and calm. No painted map, no builder, no name tags to manage. */
+html.simple .vs-scene, html.simple .vs-build-start, html.simple .vs-arrange, html.simple .vs-hint,
+html.simple .vs-gifts-btn, html.simple .vs-pick-h, html.simple .vs-top { display: none !important; }
+html.simple .vs-room { min-height: 72px; }
+html.simple .vs-room-text b { font-size: 1.15rem; }

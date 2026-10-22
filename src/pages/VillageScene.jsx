@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
+import { loadMyTaskOverview } from '../utils/myTasks'
 import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, DECOR_PIECES, GROUNDS } from '../data/worldElements'
 import { askConfirm } from '../components/AdminDialog'
 import SisterCampfireButton from '../components/SisterCampfireButton'
@@ -94,6 +95,9 @@ function Stream({ pts, drawing }) {
 }
 
 // Small line pictures for the arrange tools (drawn here so they stay crisp).
+// Village places only members can open. Visitors see a closed gate on them (Oct 22).
+const GATED = ['chat', 'campfires', 'sidechats', 'keeper', 'neighbors']
+
 const TOOL_PATHS = {
   move: 'M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3',
   add: 'M12 5v14M5 12h14',
@@ -507,6 +511,28 @@ export default function VillageScene() {
     })
     return () => { alive = false }
   }, [cottage, user?.id, profile?.home_village_id]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Lanterns and garden gifts (Oct 22, gamify starters): what is waiting on you, and
+  // small gifts for first steps. Private to you; nothing is ever taken away.
+  const [tasks, setTasks] = useState(null)
+  const [vouched, setVouched] = useState(false)
+  useEffect(() => {
+    if (!cottage || !user) return
+    let alive = true
+    loadMyTaskOverview(user.id).then((d) => { if (alive) setTasks(d) }).catch((err) => console.error('Failed to load your tasks:', err))
+    supabase.from('vouches').select('id').or('voucher_id.eq.' + user.id + ',vouchee_id.eq.' + user.id).limit(1).then(({ data, error }) => {
+      if (error) { console.error('Failed to check vouches:', error); return }
+      if (alive) setVouched((data || []).length > 0)
+    })
+    return () => { alive = false }
+  }, [cottage, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  const offersWaiting = tasks ? tasks.requests.filter((r) => r.needsYou).length : 0
+  const yourTurn = tasks ? tasks.active.filter((t) => t.needsYou).length : 0
+  const GIFTS = [
+    { k: 'home', got: !!home?.village_id, src: '/art/village-build/deco-well.webp', label: 'A well', why: 'for finding your home village', next: 'Find your home village', x: 12, y: 80 },
+    { k: 'task', got: !!(tasks && tasks.archived.length), src: '/art/village-build/deco-flowers.webp', label: 'Flowers', why: 'for finishing your first task with a neighbor', next: 'Finish a task with a neighbor', x: 40, y: 93 },
+    { k: 'vouch', got: vouched, src: '/art/village-build/deco-lamp.webp', label: 'A garden lamp', why: 'for your first vouch', next: 'Vouch for someone you know, or be vouched for', x: 10, y: 95 },
+    { k: 'org', got: (organizations || []).length > 0, src: '/art/village-build/deco-garden.webp', label: 'A vegetable garden', why: 'for joining an organization or group', next: 'Join an organization or a group', x: 58, y: 70 },
+  ]
   const myOrgs = (organizations || []).filter((o) => o.kind !== 'group')
   const myGroups = (organizations || []).filter((o) => o.kind === 'group')
   const visits = allVillages.filter((v) => v.is_mine && v.id !== home?.village_id)
@@ -522,10 +548,12 @@ export default function VillageScene() {
       case 'groups': return { sub: myGroups.length ? plural(myGroups.length, 'emergency group', 'emergency groups') : 'Crews that help when disaster hits' }
       case 'cottage': return { sub: 'Private chats with people you chose' }
       case 'campfires': return { sub: 'Team chats in your organizations and villages' }
-      case 'chat': return { sub: chatsNew ? chatsNew + ' new in your villages and Campfires' : 'Your village chats', badge: chatsNew }
-      case 'help': return { sub: 'Find resources, ask for help, or help a neighbor' }
+      case 'chat': return { sub: chatsNew ? chatsNew + ' new in your villages and Campfires' : 'Your village chats', badge: chatsNew, lantern: chatsNew ? chatsNew + ' new' : '' }
+      case 'help': return offersWaiting || yourTurn
+        ? { sub: (offersWaiting ? plural(offersWaiting, 'neighbor offered', 'neighbors offered') + ' to help. ' : '') + (yourTurn ? plural(yourTurn, 'task is', 'tasks are') + ' waiting on you.' : ''), badge: offersWaiting + yourTurn, lantern: offersWaiting ? 'Say yes?' : 'Your turn' }
+        : { sub: 'Find resources, ask for help, or help a neighbor' }
       case 'me': return { sub: 'Your profile, vouches, and settings' }
-      case 'messages': return { sub: unreadCount ? unreadCount + ' unread' : 'Requests and private messages', badge: unreadCount }
+      case 'messages': return { sub: unreadCount ? unreadCount + ' unread' : 'Requests and private messages', badge: unreadCount, lantern: unreadCount ? unreadCount + ' new' : '' }
       default: return { sub: '' }
     }
   }
@@ -536,7 +564,7 @@ export default function VillageScene() {
       case 'connections': navigate('/connections'); return
       case 'cottage': case 'campfires': navigate('/messages?tab=chats'); return
       case 'chat': navigate('/messages?tab=villages'); return
-      case 'help': navigate('/help-doors'); return
+      case 'help': navigate(offersWaiting ? '/tasks?tab=requests' : yourTurn ? '/tasks?tab=active' : '/help-doors'); return
       case 'me': navigate('/me'); return
       case 'messages': navigate('/messages'); return
       default: openSheet({ k })
@@ -566,6 +594,17 @@ export default function VillageScene() {
       </>
       default: return title
     }
+  }
+
+  function giftsSheet() {
+    const got = GIFTS.filter((g) => g.got)
+    return <>
+      <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><Icon name="sprout" size={36} /></span> Your garden</h2>
+      <p>Small gifts grow in your garden as you take first steps with your neighbors. Only you see them, and they never go away.</p>
+      {got.map((g) => <div key={g.k} className="vs-item vs-gift-row"><img src={g.src} alt="" width="48" height="48" /><span><b>{g.label}</b><small>{g.why}</small></span></div>)}
+      {got.length < GIFTS.length && <h3 className="vs-arrange-h">Still to grow</h3>}
+      {GIFTS.filter((g) => !g.got).map((g) => <div key={g.k} className="vs-item vs-gift-row vs-gift-next"><img src={g.src} alt="" width="48" height="48" /><span><b>{g.next}</b><small>A gift will grow when you do</small></span></div>)}
+    </>
   }
 
   function openSheet(s) { lastFocus.current = document.activeElement; setSheet(s) }
@@ -628,6 +667,7 @@ export default function VillageScene() {
   }
 
   function sheetBody(k) {
+    if (cottage && k === 'gifts') return giftsSheet()
     const spot = SPOTS.find((s) => s.k === k)
     const title = <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><SpotIcon spot={spot} size={36} /></span> {spot.label}</h2>
     if (cottage) return cottageSheet(k, title)
@@ -777,12 +817,15 @@ export default function VillageScene() {
             ? <button key={d.id} type="button" className={'vs-deco vs-deco-edit' + (picked === 'd:' + d.id ? ' vs-picked' : '')} style={style} aria-label={piece.label} onPointerDown={(e) => dragStart(e, 'd:' + d.id)}>{img}</button>
             : <span key={d.id} className="vs-deco" style={style} aria-hidden="true">{img}</span>
         })}
+        {cottage && GIFTS.filter((g) => g.got).map((g) => (
+          <img key={'gift-' + g.k} className="vs-gift" src={g.src} alt="" width="64" height="64" draggable="false" style={{ left: g.x + '%', top: g.y + '%' }} />
+        ))}
         {SPOTS.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
           const s = placed(s0)
           const i = info(s.k)
           return (
             <button key={s.k} type="button" data-spot={s.k}
-              className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' + (life ? ' vs-fire-' + life.fire_level : '') : '') + (bump === s.k ? ' vs-bump' : '') + (arrange && picked === s.k ? ' vs-picked' : '') + (arrange && isHidden(s.k) ? ' vs-hidden' : '')}
+              className={'vs-el' + (s.soon || (!cottage && !mine && GATED.includes(s.k)) ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' + (life ? ' vs-fire-' + life.fire_level : '') : '') + (bump === s.k ? ' vs-bump' : '') + (arrange && picked === s.k ? ' vs-picked' : '') + (arrange && isHidden(s.k) ? ' vs-hidden' : '')}
               style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1) }}
               aria-label={s.label + '. ' + i.sub}
               onPointerDown={(e) => dragStart(e, s.k)}
@@ -798,11 +841,15 @@ export default function VillageScene() {
                         ))}
                       </span>
                     : <SpotIcon spot={s} painted />}
+                {cottage && i.lantern && <img className="vs-lantern vs-lantern-lit" src={LIFE_ART.lantern} alt="" width="48" height="48" draggable="false" />}
+                {!cottage && !mine && GATED.includes(s.k) && <span className="vs-gate"><Icon name="lock" size={22} /></span>}
                 {s.k === 'keeper' && life && life.has_keeper && <img className="vs-lantern" src={LIFE_ART.lantern} alt="" width="48" height="48" draggable="false" />}
                 {s.k === 'keeper' && life && !life.has_keeper && <img className="vs-wanted" src={LIFE_ART.sign} alt="" width="48" height="48" draggable="false" />}
               </span>
               <span className="vs-lab">{s.k === 'keeper' && life && !life.has_keeper ? 'Keeper wanted' : s.short}</span>
-              {i.badge > 0 && <span className="vs-badge" aria-hidden="true">{i.badge > 9 ? '9+' : i.badge}</span>}
+              {cottage && i.lantern
+                ? <span className="vs-lantern-tag" aria-hidden="true">{i.lantern}</span>
+                : i.badge > 0 && <span className="vs-badge" aria-hidden="true">{i.badge > 9 ? '9+' : i.badge}</span>}
             </button>
           )
         })}
@@ -817,6 +864,11 @@ export default function VillageScene() {
         <div className="vs-fade" />
       </div>
 
+      {cottage && !arrange && (
+        <button type="button" className="vs-gifts-btn" onClick={() => openSheet({ k: 'gifts' })}>
+          <Icon name="sprout" size={28} /> Your garden: {GIFTS.filter((g) => g.got).length} of {GIFTS.length} gifts grown
+        </button>
+      )}
       <p className="vs-hint">{arrange ? 'Arrange and build your cottage map. Your changes are saved as you go.' : cottage ? 'Tap anything on your map to go there.' : 'Tap anything in the village to go there.'}</p>
 
       {cottage && <div className={'vs-arrange' + (arrange ? ' vs-arrange-on' : '')}>
@@ -935,7 +987,7 @@ export default function VillageScene() {
           <button type="button" className="vs-big vs-ask" onClick={() => navigate('/ask')}>Ask for help</button>
           <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>
         </div>
-        <h2>Or pick from the list</h2>
+        <h2 className="vs-pick-h">Or pick from the list</h2>
         <div className="vs-list">
           {SPOTS.map((s) => {
             const i = info(s.k)

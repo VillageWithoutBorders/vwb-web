@@ -68,8 +68,12 @@ export default function SimpleHome() {
           <Icon name="raise-hand" size={44} />
           <span><b>Ask for help</b><small>Tell neighbors what you need</small></span>
         </button>
-        <button type="button" className="sh-big" onClick={() => navigate('/skillshare')}>
+        <button type="button" className="sh-big" onClick={() => navigate('/community/resources')}>
           <Icon name="heart-hands" size={44} />
+          <span><b>Find food, rides, and more</b><small>Places near you that can help today</small></span>
+        </button>
+        <button type="button" className="sh-big" onClick={() => navigate('/skillshare')}>
+          <Icon name="heart" size={44} />
           <span><b>I can help</b><small>See who needs a hand</small></span>
         </button>
         <button type="button" className="sh-big" onClick={() => navigate('/messages')}>
@@ -77,6 +81,13 @@ export default function SimpleHome() {
           <span><b>My messages</b><small>{unreadCount > 0 ? unreadCount + ' new' : 'Talk with neighbors'}</small></span>
         </button>
       </div>
+
+      {/* Your home village (Oct 22): one plain button straight to it. */}
+      <button type="button" className="sh-row sh-village" onClick={() => navigate(profile?.home_village_id ? '/village/' + profile.home_village_id : '/find-village')}>
+        <Icon name="houses" size={32} />
+        <span><b>{profile?.home_village_id ? 'My village' : 'Find my village'}</b><small>{profile?.home_village_id ? 'Your neighbors and your village chat' : 'Neighbors near your zip code'}</small></span>
+        <span className="sh-arrow" aria-hidden="true">&#8250;</span>
+      </button>
 
       <OrgInvites />
       <VillageGuestInvites />
