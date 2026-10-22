@@ -252,7 +252,7 @@ export default function AskForHelp() {
             <p className="ask-intro">
                 {forOther
                     ? 'Tell us what ' + theirName + ' needs. Helpers will talk with you, and you pass things along. Never share their address here.'
-                    : 'Tell us what you need. Only Hope Ambassadors in your area will see this. No personal details are shared until you say so.'}
+                    : 'Tell us what you need. Neighbors and Hope Ambassadors near you will see it, with your name and town. Never your address.'}
             </p>
 
             {editId && editForName && (
@@ -446,7 +446,7 @@ export default function AskForHelp() {
                             <option value="">Myself</option>
                             {managedOrgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
-                        <span className="field-hint">Posting as your group lists it on your organization dashboard.</span>
+                        <span className="field-hint">Posting as your organization lists it on your organization dashboard.</span>
                     </div>
                 )}
 
@@ -459,11 +459,11 @@ export default function AskForHelp() {
                         </label>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'group'} onChange={() => setAudience('group')} style={{ marginTop: '0.3rem' }} />
-                            <span>Only {groupName} first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>Members of your group can see it right away. Neighbors and Hope Ambassadors do not, until it opens.</small></span>
+                            <span>Only {groupName} first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>Members of your organization see it right away. Neighbors and Hope Ambassadors see it once it opens to everyone.</small></span>
                         </label>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'network'} onChange={() => setAudience('network')} style={{ marginTop: '0.3rem' }} />
-                            <span>{groupName} and its network first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>If your group is linked to a council, the council and its other groups can see it too.</small></span>
+                            <span>{groupName} and its network first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>Organizations connected to {groupName} can see it too.</small></span>
                         </label>
                         {audience !== 'everyone' && (
                             <>

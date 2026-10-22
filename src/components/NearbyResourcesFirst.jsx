@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { getMyLocation, distanceMiles } from '../utils/location'
-import { resourceCats, currentCategory } from '../utils/resourceCategories'
+import { resourceCats, currentCategory, CAT_ICON_FILES } from '../utils/resourceCategories'
 import { searchResources } from '../utils/resourceSearch'
 import AddressLink from './AddressLink'
 import { useGoBack } from './BackLink'
@@ -50,7 +50,6 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
   }, [rows, cat, query, loc])
 
   const picked = Boolean(cat || query.trim())
-  const chip = (on) => ({ minHeight: '44px', padding: '0 0.9rem', borderRadius: '22px', border: '1px solid ' + (on ? 'var(--accent)' : 'var(--border-strong)'), background: on ? 'var(--accent)' : 'none', color: on ? 'var(--on-accent)' : 'var(--text)', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer' })
   const link = { minHeight: '44px', display: 'inline-flex', alignItems: 'center', fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none' }
 
   return (
@@ -62,14 +61,20 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       <p className="ask-intro">Start here. Many needs can be met today by a pantry, a hotline, or a local group. Pick what you need and see what is near you.</p>
       <p style={{ margin: '0 0 0.75rem', fontSize: '0.95rem', color: 'var(--gold)' }}>In danger right now? Call 911.</p>
 
-      <div role="group" aria-label="What do you need?" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+      <a href="#nr-ask" className="nr-skip">Skip to asking a neighbor</a>
+
+      <label htmlFor="nr-q" style={{ display: 'block', fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>Search by word</label>
+      <input id="nr-q" type="search" inputMode="search" enterKeyHint="search" autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="rent, diapers, ride, mold" style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.75rem', borderRadius: '10px', border: '2px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', fontFamily: 'inherit' }} />
+
+      <p style={{ margin: '0 0 0.4rem', fontSize: '1rem', fontWeight: 600 }}>Or pick what you need</p>
+      <div role="group" aria-label="What do you need?" className="hub-tiles nr-tiles">
         {QUICK_PICKS.map((c) => (
-          <button key={c} type="button" aria-pressed={cat === c && !query.trim()} onClick={() => { setQuery(''); setCat(cat === c ? '' : c) }} style={chip(cat === c && !query.trim())}>{c}</button>
+          <button key={c} type="button" className={'hub-tile nr-tile' + (cat === c && !query.trim() ? ' on' : '')} aria-pressed={cat === c && !query.trim()} onClick={() => { setQuery(''); setCat(cat === c ? '' : c) }}>
+            <img className="hub-tile-icon" src={'/art/icons/' + (CAT_ICON_FILES[c] || 'cat-other') + '.svg'} alt="" width="40" height="40" />
+            <span>{c}</span>
+          </button>
         ))}
       </div>
-
-      <label htmlFor="nr-q" style={{ display: 'block', fontSize: '0.95rem', marginBottom: '0.25rem' }}>Or search by word</label>
-      <input id="nr-q" type="search" autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="rent, diapers, ride, mold" style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', fontFamily: 'inherit' }} />
 
       {!loc && <p style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>Add your zip code in your profile to see distances and ones near you. Until then you see national resources.</p>}
       {rows === null && <p>Loading...</p>}
@@ -94,7 +99,7 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
         <Link to={cat && !query.trim() ? '/community/resources?cat=' + encodeURIComponent(cat) : '/community/resources'} style={{ ...link, color: 'var(--accent)', marginBottom: '0.5rem' }}>See all {results.length} in Find Help</Link>
       )}
 
-      <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+      <div id="nr-ask" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
         <p style={{ margin: '0 0 0.6rem', fontSize: '0.95rem', color: 'var(--text-soft)' }}>Not what you need, or want a neighbor too?</p>
         <button type="button" onClick={() => onContinue(query.trim() ? '' : currentCategory(cat))} style={{ width: '100%', minHeight: '52px', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '1.05rem', cursor: 'pointer' }}>Ask a neighbor for help</button>
         <button type="button" onClick={() => navigate(-1)} style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontSize: '1rem', cursor: 'pointer' }}>I found what I need</button>
