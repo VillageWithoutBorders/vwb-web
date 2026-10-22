@@ -341,7 +341,7 @@ export default function VillageScene() {
       )}
 
       <div className="vs-scene vs-scene-path">
-        <img className="vs-ground" src="/art/village-path/village-path.webp" alt="" width="768" height="1152" fetchpriority="high" />
+        <img className="vs-ground" src="/art/village-path/village-meadow.webp" alt="" width="768" height="1152" fetchpriority="high" />
         {VILLAGE_SPOTS.map((s) => {
           const i = info(s.k)
           return (

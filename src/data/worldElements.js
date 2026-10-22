@@ -9,7 +9,7 @@
 // Lots: top-left (town square), top-right (beyond the village),
 // middle-left small, middle-right, bottom-left (main street),
 // bottom-right small, bottom-right corner.
-// Layout (Oct 22): the painted village path (public/art/village-path/village-path.webp).
+// Layout (Oct 22): the painted village path (public/art/village-path/village-meadow.webp).
 // Each spot sits on a clearing beside the path; x, y = percent of the picture.
 // Everyday spots sit low, by your thumb. Sisters sits on the painted footbridge.
 // art: the painted building for this spot (public/art/village-path). Until the
