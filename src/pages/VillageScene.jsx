@@ -202,7 +202,7 @@ export default function VillageScene() {
   }
   async function resetLayout() {
     if (!cottage && arrangeFor === 'me') {
-      if (!(await askConfirm('Go back to how ' + (village ? village.name : 'this village') + ' looks for everyone? Your own view will be taken away.'))) return
+      if (!(await askConfirm('Go back to how ' + (village ? village.name : 'this village') + ' looks by default? Your own view will be taken away.'))) return
       remember()
       const back = { ...fromSaved(mapLayouts.current.shared, BASE), labels: worldRef.current.labels }
       setWorld(back); setPicked(null); setTrayOpen(false)
@@ -210,10 +210,10 @@ export default function VillageScene() {
       const { error } = await supabase.rpc('set_my_map_layout', { p_kind: 'village', p_id: id, p_layout: null })
       if (error) { console.error('Failed to remove your view:', error); setLayoutNote('Could not do that. Try again in a moment.'); return }
       mapLayouts.current = { ...mapLayouts.current, own: null }
-      setLayoutNote('Back to the shared look.')
+      setLayoutNote('Back to the default look.')
       return
     }
-    const msg = !cottage ? 'Go back to the usual village for everyone? The pieces, roads and streams you added will be taken away. You can tap Undo right after.' : 'Go back to the usual village? Your pieces, roads and streams will be taken away. You can tap Undo right after if you change your mind.'
+    const msg = !cottage ? 'Set the default back to the starting village? Personal views stay as they are. You can tap Undo right after.' : 'Go back to the usual village? Your pieces, roads and streams will be taken away. You can tap Undo right after if you change your mind.'
     if (!(await askConfirm(msg))) return
     commit(fromSaved(null, BASE)); setPicked(null); setTrayOpen(false); setLayoutNote('Back to the usual village.')
   }
@@ -681,10 +681,13 @@ export default function VillageScene() {
         <button type="button" className="vs-build-start vs-build-shared" onClick={() => startArrange('everyone')}>
           <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
           <span className="vs-build-start-text">
-            <b>Arrange {village.name} for everyone</b>
-            <small>As Keeper or Helper, you set the look every neighbor starts with.</small>
+            <b>Set the default look for {village.name}</b>
+            <small>New neighbors start with this. Anyone who arranged their own view keeps it.</small>
           </span>
         </button>
+      )}
+      {!arrange && !cottage && keepers && keepers.i_am_keeper && mapLoaded > 0 && mapLayouts.current.own && (
+        <p className="vs-note">You are seeing your own view, so a new default will not show for you. To see the default, open Arrange my view and tap Back to the default look.</p>
       )}
 
       <div {...sceneProps(b, 'vs-scene vs-scene-path', holdToArrange)}>
@@ -746,12 +749,12 @@ export default function VillageScene() {
           <Icon name="sprout" size={28} /> Your garden: {GIFTS.filter((g) => g.got).length} of {GIFTS.length} gifts grown
         </button>
       )}
-      <p className="vs-hint">{arrange ? (cottage ? 'Arrange and build your cottage map. Your changes are saved as you go.' : arrangeFor === 'everyone' ? 'You are arranging ' + village.name + ' for everyone. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : cottage ? 'Tap anything on your map to go there.' : 'Tap anything in the village to go there.'}</p>
+      <p className="vs-hint">{arrange ? (cottage ? 'Arrange and build your cottage map. Your changes are saved as you go.' : arrangeFor === 'everyone' ? 'You are setting the default look for ' + village.name + '. Personal views stay as they are. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : cottage ? 'Tap anything on your map to go there.' : 'Tap anything in the village to go there.'}</p>
 
       <MapToolbar b={b} more={<>
-        <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>{cottage ? 'Back to the usual cottage' : arrangeFor === 'everyone' ? 'Back to the usual village for everyone' : 'Back to the shared look'}</button>
+        <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>{cottage ? 'Back to the usual cottage' : arrangeFor === 'everyone' ? 'Default back to the starting village' : 'Back to the default look'}</button>
         {cottage && isFounder && <button type="button" className="btn btn-outline btn-full" onClick={copyLayout}>Copy layout for everyone (founder)</button>}
-        <p className="vs-note">{cottage ? 'Your cottage is saved on your account and only you see it.' : arrangeFor === 'everyone' ? 'Every neighbor sees this look, unless they arranged their own view.' : 'Your view is saved on your account and only you see it.'} Hidden places are still in the list under the map.</p>
+        <p className="vs-note">{cottage ? 'Your cottage is saved on your account and only you see it.' : arrangeFor === 'everyone' ? 'This is the default look. Anyone who arranged their own view keeps theirs.' : 'Your view is saved on your account and only you see it.'} Hidden places are still in the list under the map.</p>
       </>} />
 
       <div className="vs-body">

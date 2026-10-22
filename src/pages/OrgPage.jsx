@@ -528,8 +528,8 @@ export default function OrgPage() {
         <button type="button" className="vs-build-start vs-build-shared" onClick={() => startArrange('everyone')}>
           <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
           <span className="vs-build-start-text">
-            <b>Arrange {org.name} for everyone</b>
-            <small>As one of its {W.leadsLower}, you set the look everyone starts with.</small>
+            <b>Set the default look for {org.name}</b>
+            <small>Everyone starts with this. Anyone who arranged their own view keeps it.</small>
           </span>
         </button>
       )}
@@ -559,11 +559,11 @@ export default function OrgPage() {
       </div>
       <NamesToggle b={b} onChange={user ? saveLabels : null} />
 
-      <p className="vs-hint">{arrange ? (arrangeFor === 'everyone' ? 'You are arranging ' + org.name + ' for everyone. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : 'Tap anything to go there.'}</p>
+      <p className="vs-hint">{arrange ? (arrangeFor === 'everyone' ? 'You are setting the default look for ' + org.name + '. Personal views stay as they are. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : 'Tap anything to go there.'}</p>
 
       <MapToolbar b={b} more={<>
-        <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>{arrangeFor === 'everyone' ? 'Back to the usual map for everyone' : 'Back to the shared look'}</button>
-        <p className="vs-note">{arrangeFor === 'everyone' ? 'Everyone sees this look, unless they arranged their own view.' : 'Your view is saved on your account and only you see it.'} Hidden places are still in the list under the map.</p>
+        <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>{arrangeFor === 'everyone' ? 'Default back to the starting map' : 'Back to the default look'}</button>
+        <p className="vs-note">{arrangeFor === 'everyone' ? 'This is the default look. Anyone who arranged their own view keeps theirs.' : 'Your view is saved on your account and only you see it.'} Hidden places are still in the list under the map.</p>
       </>} />
 
       {isNew && isGroup && canManage && (

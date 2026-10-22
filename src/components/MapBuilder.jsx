@@ -750,7 +750,7 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
 
   async function resetLayout() {
     if (arrangeFor === 'me') {
-      if (!(await askConfirm('Go back to how ' + (name || 'this page') + ' looks for everyone? Your own view will be taken away.'))) return
+      if (!(await askConfirm('Go back to how ' + (name || 'this page') + ' looks by default? Your own view will be taken away.'))) return
       b.remember()
       b.setWorld({ ...fromSaved(mapLayouts.current.shared, base), labels: b.worldRef.current.labels })
       b.setPicked(null); b.setTrayOpen(false)
@@ -758,10 +758,10 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
       const { error } = await supabase.rpc('set_my_map_layout', { p_kind: kind, p_id: id, p_layout: null })
       if (error) { console.error('Failed to remove your view:', error); b.setLayoutNote('Could not do that. Try again in a moment.'); return }
       mapLayouts.current = { ...mapLayouts.current, own: null }
-      b.setLayoutNote('Back to the shared look.')
+      b.setLayoutNote('Back to the default look.')
       return
     }
-    if (!(await askConfirm('Go back to the usual map for everyone? The pieces, roads and streams you added will be taken away. You can tap Undo right after.'))) return
+    if (!(await askConfirm('Set the default back to the starting map? Personal views stay as they are. You can tap Undo right after.'))) return
     b.commit(fromSaved(null, base)); b.setPicked(null); b.setTrayOpen(false); b.setLayoutNote('Back to the usual map.')
   }
 
