@@ -61,3 +61,5 @@
 .wd-org-tag { white-space: normal; max-width: min(11rem, 44vw); text-align: center; line-height: 1.2; overflow: visible; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; border-radius: 14px; }
 /* An empty Groups globe says so, right on the globe. */
 .wd-empty-globe { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; width: 70%; padding: 12px 14px; border-radius: 16px; background: rgba(246, 240, 224, 0.92); color: #0b3b38; font-weight: 700; font-size: 1rem; line-height: 1.35; text-align: center; pointer-events: none; }
+/* Organization names on the globe: room for two full lines, and no third line peeking out. */
+.wd-org-tag { max-width: min(13rem, 52vw); max-height: calc(2.4em + 10px); }
