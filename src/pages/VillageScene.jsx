@@ -801,7 +801,7 @@ export default function VillageScene() {
       )}
 
       {cottage && !arrange && (
-        <button type="button" data-tour="village-arrange" className="vs-build-start" onClick={() => { setArrange(true); setTool('move'); setTrayTab('pieces'); setLayoutNote(''); setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50) }}>
+        <button type="button" data-tour="village-arrange" className="vs-build-start" onClick={() => { setArrange(true); setTool('move'); setTrayTab('pieces'); setLayoutNote(''); setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }), 120) }}>
           <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
           <span className="vs-build-start-text">
             <b>{cottage ? 'Arrange and build my cottage' : 'Arrange and build my village'}</b>
