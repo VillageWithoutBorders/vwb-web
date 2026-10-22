@@ -58,6 +58,10 @@ export default function ActiveTasks() {
   const [notice, setNotice] = useState('')
   // Taking an open request back to the group
   const [narrowing, setNarrowing] = useState(null)
+  // "Still need help?" alert opens /tasks?tab=requests&still=ID
+  const stillId = searchParams.get('still')
+  const [stillBusy, setStillBusy] = useState(false)
+  const [stillNote, setStillNote] = useState('')
   const [narrowOrg, setNarrowOrg] = useState('')
   const [narrowNetwork, setNarrowNetwork] = useState(false)
   const [narrowHours, setNarrowHours] = useState('24')
@@ -126,7 +130,7 @@ export default function ActiveTasks() {
   async function loadMyRequests() {
     const { data: requests, error: reqErr } = await supabase
       .from('help_requests')
-      .select('id, skill_needed, description, urgency, neighborhood, status, max_helpers, archived_at, created_at, audience, opens_to_all_at, for_name')
+      .select('id, skill_needed, description, urgency, neighborhood, status, max_helpers, archived_at, created_at, audience, opens_to_all_at, for_name, expires_at')
       .eq('requester_id', user.id)
       .order('created_at', { ascending: false })
     if (reqErr) console.error('Failed to load your requests:', reqErr)
@@ -408,6 +412,41 @@ export default function ActiveTasks() {
     await loadTasks()
   }
 
+  // "Still need help?" answers. The database checks it is your request.
+  function clearStill() {
+    const next = new URLSearchParams(searchParams)
+    next.delete('still')
+    setSearchParams(next, { replace: true })
+  }
+  async function keepOpen(requestId) {
+    if (stillBusy) return
+    setStillBusy(true); setStillNote('')
+    const { data, error } = await supabase.rpc('keep_my_help_request_open', { p_id: requestId })
+    setStillBusy(false)
+    if (error) {
+      console.error('Failed to keep request open:', error)
+      setStillNote(error.message && error.message.length < 140 ? error.message : 'Could not keep it open. Try again.')
+      return
+    }
+    clearStill()
+    setNotice('Your request stays open until ' + shortWhen(data) + '.')
+    await loadTasks(true)
+  }
+  async function closeIt(requestId) {
+    if (stillBusy) return
+    setStillBusy(true); setStillNote('')
+    const { error } = await supabase.rpc('close_my_help_request', { p_id: requestId })
+    setStillBusy(false)
+    if (error) {
+      console.error('Failed to close request:', error)
+      setStillNote(error.message && error.message.length < 140 ? error.message : 'Could not close it. Try again.')
+      return
+    }
+    clearStill()
+    setNotice('Closed. It is in your Archived tab.')
+    await loadTasks(true)
+  }
+
   // Open a group-only request to everyone nearby right now.
   async function openToEveryone(requestId) {
     const { error } = await supabase.rpc('open_request_to_everyone', { p_request: requestId })
@@ -480,6 +519,11 @@ export default function ActiveTasks() {
       if (newErr || !newConvo) { console.error('Failed to start a conversation:', newErr); tell('Could not start a conversation. Try again.', { tone: 'error' }); return }
       navigate('/conversation/' + newConvo.id)
     }
+  }
+
+  // "Thu 4:30 PM", for closing times.
+  function shortWhen(ts) {
+    return ts ? new Date(ts).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : ''
   }
 
   function timeAgo(dateStr) {
@@ -716,6 +760,39 @@ export default function ActiveTasks() {
         ))}
       </div>
 
+      {tab !== 'offers' && stillId && !loading && (() => {
+        const sr = myRequests.find((r) => String(r.id) === stillId)
+        if (!sr) return null
+        const done = sr.archived_at || sr.status !== 'open'
+        return (
+          <div role="region" aria-label="Still need help?" style={{ margin: '0 0 1rem', padding: '0.85rem', border: '2px solid var(--accent)', borderRadius: '8px', background: 'var(--surface)' }}>
+            {done ? (
+              <>
+                <p style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Your request for {sr.skill_needed} is already closed.</p>
+                <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} onClick={clearStill}>OK</button>
+              </>
+            ) : (
+              <>
+                <p style={{ margin: '0 0 0.25rem', fontSize: '1.0625rem', fontWeight: 700 }}>Still need help?</p>
+                <p style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>
+                  Your request for {sr.skill_needed}{sr.for_name ? ' (for ' + sr.for_name + ')' : ''}
+                  {sr.expires_at ? ' closes ' + shortWhen(sr.expires_at) + '.' : ' is still open.'}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} disabled={stillBusy} onClick={() => keepOpen(sr.id)}>
+                    {stillBusy ? 'Saving...' : 'Keep it open'}
+                  </button>
+                  <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} disabled={stillBusy} onClick={() => closeIt(sr.id)}>
+                    Close it
+                  </button>
+                </div>
+                {stillNote && <p role="alert" style={{ margin: '0.5rem 0 0', color: 'var(--danger)' }}>{stillNote}</p>}
+              </>
+            )}
+          </div>
+        )
+      })()}
+
       {notice && (
         <p role="status" style={{ margin: '0 0 1rem', padding: '0.75rem', background: 'var(--success-bg)', border: '1px solid #2d6a4f', borderRadius: '8px', color: 'var(--accent)' }}>
           {notice} <button type="button" onClick={() => setNotice('')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', textDecoration: 'underline', minHeight: 44, cursor: 'pointer', font: 'inherit' }}>Dismiss</button>
@@ -756,6 +833,11 @@ export default function ActiveTasks() {
 
                   <div className="task-card-skill">{req.skill_needed}</div>
                   {req.for_name && <div className="for-line">For {req.for_name}. Helpers talk with you.</div>}
+                  {req.expires_at && req.matches.length === 0 && (
+                    req.archived_at
+                      ? (new Date(req.archived_at) >= new Date(req.expires_at) && <div className="task-card-hood">Closed on its own. No one answered in time.</div>)
+                      : req.status === 'open' && <div className="task-card-hood">Open until {shortWhen(req.expires_at)}</div>
+                  )}
                   {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
                   <p className="task-card-desc">{req.description}</p>
                   {req.audience && req.audience !== 'everyone' && !req.archived_at && (!req.opens_to_all_at || new Date(req.opens_to_all_at) > new Date()) && (
