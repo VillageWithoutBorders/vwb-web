@@ -346,7 +346,7 @@ export default function Profile() {
             <span className="detail-label">Neighborhood</span>
             <span className="detail-value">{profile?.neighborhood || 'Not set'}</span>
           </div>
-          <div className="detail-row">
+          <div className="detail-row detail-row-stack">
             <span className="detail-label">Skills</span>
             <span className="detail-value">
               {profile?.skills?.length > 0 ? profile.skills.join(', ') : 'None yet'}
