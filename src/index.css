@@ -6111,3 +6111,7 @@ a:not([class]) { color: var(--accent); }
 
 /* Category badge on offers and requests: app colors, normal case. */
 .offer-badge { background: var(--success-bg) !important; color: var(--accent) !important; text-transform: none !important; letter-spacing: 0 !important; font-size: 0.8125rem !important; }
+
+/* Admin alerts look tappable: an arrow on the right of each row (Oct 22). */
+.admin-alert-row { position: relative; padding-right: 2.5rem !important; }
+.admin-alert-row::after { content: '\203A'; position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.6rem; line-height: 1; color: var(--accent); }
