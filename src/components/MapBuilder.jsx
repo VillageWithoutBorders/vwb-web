@@ -122,9 +122,10 @@ export { Road, Stream, StreamDefs, simplify }
 export function fromSaved(v, base) {
   if (!v || typeof v !== 'object') return { spots: {}, decor: base ? base.decor : [], roads: base ? base.roads : [], streams: base ? base.streams : [], labels: 'auto', bg: 'seasons' }
   if (!v.spots && !v.decor && !v.roads && !v.streams && !v.ground && !v.labels && !v.bg) return { spots: v, decor: [], roads: [], streams: [], labels: 'auto', bg: 'seasons' } // older device copy
-  const list = (a) => (Array.isArray(a) ? a : [])
+  // A list that was never saved (for example only the name tags choice is saved) starts as the usual map.
+  const list = (a, k) => (Array.isArray(a) ? a : base ? base[k] : [])
   const bg = v.bg === 'seasons' || BACKGROUNDS.some((b) => b.k === v.bg) ? v.bg : 'seasons'
-  return { spots: v.spots || {}, decor: list(v.decor), roads: list(v.roads), streams: list(v.streams), labels: ['show', 'hide'].includes(v.labels) ? v.labels : 'auto', bg }
+  return { spots: v.spots || {}, decor: list(v.decor, 'decor'), roads: list(v.roads, 'roads'), streams: list(v.streams, 'streams'), labels: ['show', 'hide'].includes(v.labels) ? v.labels : 'auto', bg }
 }
 // Nothing changed from the usual map (name tags aside)?
 export function isPlainWorld(w, base) {
