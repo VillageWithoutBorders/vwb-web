@@ -2,16 +2,9 @@
 // sheet (project doc claude/VWB-Vocabulary.md). x and y are percent positions
 // on the village scene. "soon" marks things decided but not built yet.
 
-// Layout: roadmap (Jade's art, Oct 14). Spots sit on the green lots
-// beside the roads in public/art/village-roads.webp. x, y = percent.
-// icon = picture in public/art/icons (same name .svg); em stays as a text fallback.
-// s = size (1 is normal). Everyday spots sit low, by your thumb.
-// Lots: top-left (town square), top-right (beyond the village),
-// middle-left small, middle-right, bottom-left (main street),
-// bottom-right small, bottom-right corner.
-// Layout (Oct 22): the painted village path (public/art/village-path/village-meadow.webp).
-// Each spot sits on a clearing beside the path; x, y = percent of the picture.
-// Everyday spots sit low, by your thumb. Sisters sits on the painted footbridge.
+// Layout: every map sits on a field background (see BACKGROUNDS below).
+// x, y = percent of the map. s = size (1 is normal). Everyday spots sit low, by your thumb.
+// icon = round badge in public/art/icons (same name .svg), used in lists; em is a text fallback.
 // art: the painted picture for this spot (public/art/village-path, life, village-build).
 // Every map place has one (Oct 22), so maps don't mix paintings and round badges.
 // The round badge (icon) still shows in the list under the map, and if a painting fails to load.
@@ -116,7 +109,6 @@ export const DECOR_PIECES = [
   { k: 'garden', label: 'Garden bed', s: 0.8 },
   { k: 'rocks', label: 'Rocks', s: 0.5 },
 ].map((p) => ({ ...p, src: '/art/village-build/deco-' + p.k + '.webp' }))
-export const OPEN_MEADOW = '/art/village-build/meadow-open.webp'
 
 // Grounds people can choose under their village (Arrange and build).
 // Every map sits on a simple field (Jade, Oct 22). Seasons can change it later:
