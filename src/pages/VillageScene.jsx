@@ -120,13 +120,17 @@ function ToolIcon({ name }) {
 
 export default function VillageScene() {
   const { id } = useParams()
-  // No village id: this is your cottage (the Village tab, /village). Your own map,
-  // arranged by you, with everything you are part of. A village page (/village/:id)
-  // shows one shared look for everyone, with no builder (Oct 22).
+  // No village id: this is your cottage (/cottage). Your own map, arranged by you,
+  // with everything you are part of. A village page (/village/:id) shows one shared
+  // look for everyone, with no builder (Oct 22). The Village tab opens your home village.
   const cottage = !id
-  const SPOTS = cottage ? COTTAGE_SPOTS : VILLAGE_SPOTS
   const navigate = useNavigate()
   const { user, profile, isFounder, refreshProfile, organizations } = useAuth()
+  // In your home village, your house (the 'me' spot) is your cottage.
+  const isHome = !cottage && !!id && profile?.home_village_id === id
+  const SPOTS = cottage ? COTTAGE_SPOTS
+    : isHome ? VILLAGE_SPOTS.map((v) => (v.k === 'me' ? { ...v, label: 'Your cottage', short: 'Your cottage' } : v))
+    : VILLAGE_SPOTS
   const { unreadCount } = useUnreadCount()
 
   const [village, setVillage] = useState(null)
@@ -615,7 +619,6 @@ export default function VillageScene() {
   }
 
   const mine = !!(village && village.is_mine)
-  const isHome = !cottage && !!id && profile?.home_village_id === id
   const nameOf = (vid) => (allVillages.find((v) => v.id === vid) || {}).name || 'A village'
 
   function info(k) {
@@ -638,8 +641,8 @@ export default function VillageScene() {
       }
       case 'skillshare': return { sub: 'Help nearby: requests and offers' }
       case 'neighbors': return { sub: village && village.member_count ? village.member_count + ' neighbors live here' : 'A few neighbors so far' }
-      case 'cottage': return { sub: isHome ? 'Your house: your own map and private chats' : 'Private chats with people you chose' }
-      case 'me': return { sub: 'Your profile, vouches, and settings' }
+      case 'cottage': return { sub: 'Private chats with people you chose' }
+      case 'me': return { sub: isHome ? 'Your house: your own map of everything you are part of' : 'Your profile, vouches, and settings' }
       case 'messages': return { sub: unreadCount ? unreadCount + ' unread' : 'Requests and private messages', badge: unreadCount }
       case 'orgs': { const n = orgs.filter((o) => o.kind !== 'group').length; return { sub: n ? n + ' working here' : 'None working here yet' } }
       case 'groups': { const n = orgs.filter((o) => o.kind === 'group').length; return { sub: n ? n + ' emergency response group' + (n === 1 ? '' : 's') : 'Start a crew for when disaster hits' } }
@@ -661,10 +664,10 @@ export default function VillageScene() {
         return
       case 'charter': navigate('/village/' + id + '/charter'); return
       case 'skillshare': navigate('/skillshare'); return
-      // In your home village, the cottage is your house: your own private map.
-      case 'cottage': navigate(isHome ? '/cottage' : '/messages'); return
+      case 'cottage': navigate('/messages'); return
       case 'messages': navigate('/messages'); return
-      case 'me': navigate('/me'); return
+      // In your home village, your house is your cottage: your own private map.
+      case 'me': navigate(isHome ? '/cottage' : '/me'); return
       default: openSheet({ k: spot.k })
     }
   }

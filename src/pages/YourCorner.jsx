@@ -37,7 +37,9 @@ export default function YourCorner() {
         <Link to="/trail" className="corner-item"><span aria-hidden="true"><Icon name="compass" /></span> My trail<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/my-code" className="corner-item"><span aria-hidden="true"><Icon name="phone-add" /></span> My QR code<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/profile" className="corner-item"><span aria-hidden="true"><Icon name="handshake" /></span> Vouches and trust<span className="corner-arrow" aria-hidden="true">›</span></Link>
-        <Link to="/find-village" className="corner-item"><span aria-hidden="true"><Icon name="tree" /></span> My villages<span className="corner-arrow" aria-hidden="true">›</span></Link>
+        {/* Oct 22: your cottage is your house in your home village: your own private map. */}
+        <Link to="/cottage" className="corner-item"><span aria-hidden="true"><Icon name="cottage" /></span> My cottage<span className="corner-arrow" aria-hidden="true">›</span></Link>
+        <Link to="/villages" className="corner-item"><span aria-hidden="true"><Icon name="tree" /></span> My villages<span className="corner-arrow" aria-hidden="true">›</span></Link>
         {!organizations.some((o) => o.kind !== 'group') && (
           <Link to="/community?bring=org" className="corner-item"><span aria-hidden="true"><Icon name="people" /></span> Bring your organization<span className="corner-arrow" aria-hidden="true">›</span></Link>
         )}
