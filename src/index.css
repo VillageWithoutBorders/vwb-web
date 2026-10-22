@@ -6021,3 +6021,17 @@ a.tr-link:focus-visible, a.tr-link:hover { background: var(--surface-2, transpar
   .btn-sm, .vouch-btn-sm, .vouch-btn-md, .group-post-delete, .ban-row-btn { min-height: 44px; }
   .group-post-delete { min-width: 44px; }
 }
+
+/* ---------- Phone fixes from Jade's screenshots (Oct 22) ---------- */
+/* Picture icons in the Help doors and Quick Actions show at their full size. */
+.door-icon .vwb-icon { width: 44px; height: 44px; vertical-align: 0; }
+.door-head .door-icon .vwb-icon { width: 36px; height: 36px; }
+.qa-btn-icon .vwb-icon { width: 40px; height: 40px; vertical-align: 0; }
+.qa-simple .qa-btn-icon .vwb-icon { width: 48px; height: 48px; }
+/* "See all resources" looks like a button, not a link in a box. */
+.door-all { text-decoration: none; border: 2px solid var(--accent); color: var(--accent); font-weight: 700; display: flex; align-items: center; justify-content: center; }
+/* Kind-of-help tiles: on phones the picture sits above the words, so long words like "Emergency" fit. */
+.hub-tile span { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 420px) {
+  .hub-tile { flex-direction: column; justify-content: center; text-align: center; gap: 0.35rem; min-height: 96px; padding: 0.6rem 0.4rem; }
+}
