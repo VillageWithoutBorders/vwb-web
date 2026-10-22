@@ -57,7 +57,7 @@ const ALL_STEPS = [
     body: 'These buttons stay at the top of every screen. Tap Show me around to see what each part does. You can skip any time.',
   },
   {
-    route: '/',
+    route: '/world',
     target: '.wd-switch',
     icon: '\u{1F30D}',
     title: 'Home: your world',

@@ -73,8 +73,16 @@ import { placesEnabled } from './utils/places'
 // If a new version went out while a tab was open, the old page file is
 // gone: reload once to pick up the new version.
 // The first screen: the globe, or the Simple home when Simple view is on.
+// Opening the app (Oct 22): the very first time, the globe, so new people see the
+// network they joined. Every time after that, Today (what needs you). The globe
+// lives at /world and the Home button in the top bar opens it.
 function HomeIndex() {
-  return useSimpleView() ? <SimpleHome /> : <World />
+  const simple = useSimpleView()
+  const [seenGlobe] = useState(() => { try { return localStorage.getItem('vwb_seen_globe') === '1' } catch { return false } })
+  useEffect(() => { try { localStorage.setItem('vwb_seen_globe', '1') } catch { /* private window */ } }, [])
+  if (simple) return <SimpleHome />
+  if (seenGlobe) return <Navigate to="/home" replace />
+  return <World />
 }
 
 function lazyPage(load) {
@@ -210,7 +218,7 @@ function AppRoutes() {
         <Route path="village/:id" element={<VillageScene />} />
         <Route path="village/:id/keeper" element={<KeeperDashboard />} />
         <Route path="village/:id/charter" element={<VillageCharter />} />
-        <Route path="world" element={<Navigate to="/" replace />} />
+        <Route path="world" element={<World />} />
         <Route path="village" element={<VillageScene />} />
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="u/:userId" element={<PublicProfile />} />
