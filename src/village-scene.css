@@ -224,3 +224,20 @@
 
 /* Arrange my village: a flipped building faces the other way (the name tag stays readable). */
 .vs-flip { transform: scaleX(-1); }
+
+/* ---------- Build my village (Oct 22): roads, pieces, palette ---------- */
+.vs-roads { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.vs-road-live { opacity: 0.85; }
+.vs-deco { position: absolute; transform: translate(-50%, -60%); display: block; line-height: 0; pointer-events: none; }
+.vs-deco-img { display: block; width: calc(clamp(50px, 14.5vw, 78px) * var(--s, 1)); height: auto; filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.18)); }
+.vs-deco-edit { pointer-events: auto; background: none; border: 0; padding: 0; cursor: grab; touch-action: none; min-width: 44px; min-height: 44px; }
+.vs-deco-edit.vs-picked { outline: 3px solid var(--vs-gold); outline-offset: 2px; border-radius: 8px; }
+.vs-drawing { touch-action: none; cursor: crosshair; }
+.vs-drawing .vs-el { pointer-events: none; }
+.vs-arrange-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 8px; }
+.vs-arrange-h { font-size: 1rem; margin: 14px 0 6px; }
+.vs-palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.vs-palette-item { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 44px; padding: 6px 4px; border-radius: 10px; border: 1px solid var(--vs-line); background: var(--vs-card); color: var(--vs-ink); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.vs-palette-item img { width: 56px; height: 56px; object-fit: contain; }
+.vs-palette-item:active { transform: scale(0.96); }
+@media (prefers-reduced-motion: reduce) { .vs-palette-item:active { transform: none; } }

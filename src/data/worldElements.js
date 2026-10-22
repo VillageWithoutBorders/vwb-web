@@ -78,3 +78,22 @@ export const LIFE_ART = {
 // How big the campfire burns for each step (0 = embers, 3 = a busy week).
 export const FIRE_SIZE = [0.9, 1, 1.1, 1.2]
 export const FIRE_WORDS = ['Embers. Spark a message to warm it up.', 'A small fire this week', 'A warm fire this week', 'A big, bright fire this week']
+
+// Build my village (Oct 22): pieces anyone can add to their own village map.
+// Painted in Canva to match the buildings. Pictures in public/art/village-build.
+// s = starting size (1 is about one building).
+export const DECOR_PIECES = [
+  { k: 'tree', label: 'Round tree', s: 0.9 },
+  { k: 'pine', label: 'Pine tree', s: 0.9 },
+  { k: 'bush', label: 'Flowering bush', s: 0.6 },
+  { k: 'flowers', label: 'Wildflowers', s: 0.5 },
+  { k: 'pond', label: 'Pond', s: 1 },
+  { k: 'stream', label: 'Stream', s: 1.2 },
+  { k: 'bridge', label: 'Footbridge', s: 0.9 },
+  { k: 'fence', label: 'Fence', s: 0.7 },
+  { k: 'well', label: 'Well', s: 0.8 },
+  { k: 'lamp', label: 'Lamp post', s: 0.6 },
+  { k: 'garden', label: 'Garden bed', s: 0.8 },
+  { k: 'rocks', label: 'Rocks', s: 0.5 },
+].map((p) => ({ ...p, src: '/art/village-build/deco-' + p.k + '.webp' }))
+export const OPEN_MEADOW = '/art/village-build/meadow-open.webp'
