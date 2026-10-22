@@ -52,6 +52,18 @@ function Road({ pts, drawing }) {
   )
 }
 
+function Stream({ pts, drawing }) {
+  const dd = roadPath(pts)
+  return (
+    <g className={drawing ? 'vs-road-live' : undefined}>
+      <path d={dd} fill="none" stroke="#6f8f5a" strokeOpacity="0.55" strokeWidth="7.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={dd} fill="none" stroke="#5f9e98" strokeWidth="5.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={dd} fill="none" stroke="#7fc0b6" strokeOpacity="0.8" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={dd} fill="none" stroke="#e9f6ef" strokeOpacity="0.55" strokeWidth="0.7" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1.6 4.2" />
+    </g>
+  )
+}
+
 export default function VillageScene() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -84,6 +96,7 @@ export default function VillageScene() {
   //   spots:  where each working place sits (move, size, flip, hide)
   //   decor:  pieces you add (trees, pond, fence, bridge...)
   //   roads:  paths you draw with your finger
+  //   streams: water you draw with your finger (under the roads, so a road can cross it)
   //   ground: 'path' (the painted path) or 'open' (an open meadow)
   // Hidden places stay in the list under the map.
   // The founder can also copy the place layout to make it everyone's starting layout.
@@ -91,6 +104,7 @@ export default function VillageScene() {
   const sceneRef = useRef(null)
   const dragRef = useRef(null)
   const drawRef = useRef(null)
+  const drawKindRef = useRef('road')
   const saveTimer = useRef(null)
   const [arrange, setArrange] = useState(false)
   const [tool, setTool] = useState('move') // move | road
@@ -98,9 +112,10 @@ export default function VillageScene() {
   const [layoutNote, setLayoutNote] = useState('')
   const [drawing, setDrawing] = useState(null) // points of the road being drawn
   const fromSaved = (v) => {
-    if (!v || typeof v !== 'object') return { spots: {}, decor: [], roads: [], ground: 'path' }
-    if (!v.spots && !v.decor && !v.roads && !v.ground) return { spots: v, decor: [], roads: [], ground: 'path' } // older device copy
-    return { spots: v.spots || {}, decor: Array.isArray(v.decor) ? v.decor : [], roads: Array.isArray(v.roads) ? v.roads : [], ground: v.ground === 'open' ? 'open' : 'path' }
+    if (!v || typeof v !== 'object') return { spots: {}, decor: [], roads: [], streams: [], ground: 'path' }
+    if (!v.spots && !v.decor && !v.roads && !v.streams && !v.ground) return { spots: v, decor: [], roads: [], streams: [], ground: 'path' } // older device copy
+    const list = (a) => (Array.isArray(a) ? a : [])
+    return { spots: v.spots || {}, decor: list(v.decor), roads: list(v.roads), streams: list(v.streams), ground: v.ground === 'open' ? 'open' : 'path' }
   }
   const [world, setWorld] = useState(() => {
     try { return fromSaved(JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null')) } catch { return fromSaved(null) }
@@ -119,7 +134,7 @@ export default function VillageScene() {
     try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode */ }
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
-      const empty = Object.keys(next.spots).length === 0 && next.decor.length === 0 && next.roads.length === 0 && next.ground === 'path'
+      const empty = Object.keys(next.spots).length === 0 && next.decor.length === 0 && next.roads.length === 0 && next.streams.length === 0 && next.ground === 'path'
       const { error } = await supabase.rpc('set_my_village_layout', { p_layout: empty ? null : next })
       if (error) {
         // Before the database step is run, the layout simply stays on this device.
@@ -172,8 +187,9 @@ export default function VillageScene() {
       setDrawing(null)
       if (pts.length >= 2) {
         const w = worldRef.current
-        if (w.roads.length >= 30) { setLayoutNote('That is a lot of roads. Take one away to draw another.'); return }
-        saveWorld({ ...w, roads: [...w.roads, pts] })
+        const kind = drawKindRef.current === 'stream' ? 'streams' : 'roads'
+        if (w[kind].length >= 30) { setLayoutNote(kind === 'streams' ? 'That is a lot of streams. Take one away to draw another.' : 'That is a lot of roads. Take one away to draw another.'); return }
+        saveWorld({ ...w, [kind]: [...w[kind], pts] })
       }
       return
     }
@@ -183,7 +199,8 @@ export default function VillageScene() {
     if (moved) saveWorld(worldRef.current)
   }
   function roadStart(e) {
-    if (!arrange || tool !== 'road' || !sceneRef.current) return
+    if (!arrange || (tool !== 'road' && tool !== 'stream') || !sceneRef.current) return
+    drawKindRef.current = tool
     e.preventDefault()
     const [x, y] = scenePoint(e)
     drawRef.current = [[round1(x), round1(y)]]
@@ -218,7 +235,7 @@ export default function VillageScene() {
   }
   async function copyLayout() {
     const text = 'Village layout:\n' + VILLAGE_SPOTS.map((v) => { const p = placed(v); return v.k + ': x ' + p.x + ', y ' + p.y + ', size ' + (p.s || 1) + (p.flip ? ', flipped' : '') + (isHidden(v.k) ? ', hidden' : '') }).join('\n')
-      + (world.decor.length || world.roads.length ? '\nVillage build: ' + JSON.stringify({ decor: world.decor, roads: world.roads, ground: world.ground }) : '')
+      + (world.decor.length || world.roads.length || world.streams.length ? '\nVillage build: ' + JSON.stringify({ decor: world.decor, roads: world.roads, streams: world.streams, ground: world.ground }) : '')
     try { await navigator.clipboard.writeText(text); setLayoutNote('Copied. Paste it to Claude to make it everyone’s starting layout.') }
     catch { setLayoutNote('Could not copy. Here it is to copy by hand:\n' + text) }
   }
@@ -526,12 +543,14 @@ export default function VillageScene() {
         </Link>
       )}
 
-      <div ref={sceneRef} className={'vs-scene vs-scene-path' + (arrange ? ' vs-arranging' : '') + (arrange && tool === 'road' ? ' vs-drawing' : '')} onPointerDown={roadStart} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={dragEnd}>
+      <div ref={sceneRef} className={'vs-scene vs-scene-path' + (arrange ? ' vs-arranging' : '') + (arrange && tool !== 'move' ? ' vs-drawing' : '')} onPointerDown={roadStart} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={dragEnd}>
         <img className="vs-ground" src={world.ground === 'open' ? OPEN_MEADOW : '/art/village-path/village-meadow.webp'} alt="" width="768" height="1152" fetchpriority="high" />
-        {(world.roads.length > 0 || drawing) && (
+        {(world.roads.length > 0 || world.streams.length > 0 || drawing) && (
           <svg className="vs-roads" viewBox="0 0 100 150" preserveAspectRatio="none" aria-hidden="true">
+            {world.streams.map((r, i) => <Stream key={'s' + i} pts={r} />)}
+            {drawing && drawing.length > 1 && tool === 'stream' && <Stream pts={drawing} drawing />}
             {world.roads.map((r, i) => <Road key={i} pts={r} />)}
-            {drawing && drawing.length > 1 && <Road pts={drawing} drawing />}
+            {drawing && drawing.length > 1 && tool === 'road' && <Road pts={drawing} drawing />}
           </svg>
         )}
         {world.decor.slice().sort((a, b) => a.y - b.y).map((d) => {
@@ -580,9 +599,10 @@ export default function VillageScene() {
       <div className="vs-arrange">
         {!arrange && <button type="button" className="btn btn-outline btn-full" onClick={() => { setArrange(true); setTool('move'); setLayoutNote('') }}>Arrange and build my village</button>}
         {arrange && <>
-          <div className="vs-arrange-tools" role="group" aria-label="What to do">
+          <div className="vs-arrange-tools vs-arrange-tools-3" role="group" aria-label="What to do">
             <button type="button" className={'btn ' + (tool === 'move' ? 'btn-primary' : 'btn-outline')} aria-pressed={tool === 'move'} onClick={() => setTool('move')}>Move and pick</button>
             <button type="button" className={'btn ' + (tool === 'road' ? 'btn-primary' : 'btn-outline')} aria-pressed={tool === 'road'} onClick={() => { setTool('road'); setPicked(null) }}>Draw roads</button>
+            <button type="button" className={'btn ' + (tool === 'stream' ? 'btn-primary' : 'btn-outline')} aria-pressed={tool === 'stream'} onClick={() => { setTool('stream'); setPicked(null) }}>Draw streams</button>
           </div>
 
           {tool === 'move' && <>
@@ -612,6 +632,14 @@ export default function VillageScene() {
             <div className="vs-arrange-row">
               <button type="button" className="btn btn-outline" disabled={!world.roads.length} onClick={() => saveWorld({ ...world, roads: world.roads.slice(0, -1) })}>Undo last road</button>
               <button type="button" className="btn btn-outline" disabled={!world.roads.length} onClick={() => saveWorld({ ...world, roads: [] })}>Take away all roads</button>
+            </div>
+          </>}
+
+          {tool === 'stream' && <>
+            <p className="vs-note">Draw a stream with your finger or mouse on the map. Lift to finish it. Roads you draw go over streams, and you can add a footbridge from the tray. While drawing, the map won't scroll, so switch back to Move and pick to scroll.</p>
+            <div className="vs-arrange-row">
+              <button type="button" className="btn btn-outline" disabled={!world.streams.length} onClick={() => saveWorld({ ...world, streams: world.streams.slice(0, -1) })}>Undo last stream</button>
+              <button type="button" className="btn btn-outline" disabled={!world.streams.length} onClick={() => saveWorld({ ...world, streams: [] })}>Take away all streams</button>
             </div>
           </>}
 

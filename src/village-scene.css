@@ -241,3 +241,5 @@
 .vs-palette-item img { width: 56px; height: 56px; object-fit: contain; }
 .vs-palette-item:active { transform: scale(0.96); }
 @media (prefers-reduced-motion: reduce) { .vs-palette-item:active { transform: none; } }
+.vs-arrange-tools-3 { grid-template-columns: 1fr 1fr 1fr; }
+.vs-arrange-tools-3 .btn { padding-left: 6px; padding-right: 6px; font-size: 0.95rem; }
