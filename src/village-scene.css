@@ -380,3 +380,25 @@
 /* Your cottage (Oct 22). */
 .vs-cottage-sub { margin: 4px 0 0; color: var(--vs-muted); font-size: 1rem; }
 .vs-chip-link { text-decoration: none; min-height: 36px; }
+
+/* Organization and group pages (Oct 22): their sign by the name, and the "How our page looks" editor. */
+.org-title { display: flex; align-items: center; gap: 10px; }
+.org-sign { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 26px; background: #f6f0e0; border: 2px solid var(--vs-gold); }
+.org-sign .vwb-icon { width: 40px; height: 40px; vertical-align: 0; }
+.ose-h { margin: 16px 0 6px; font-size: 1rem; }
+.ose-grounds { margin-bottom: 4px; }
+.ose-signs { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
+.ose-sign { display: grid; place-items: center; min-height: 52px; border-radius: 12px; border: 2px solid var(--border, var(--vs-line)); background: var(--white, var(--vs-card)); cursor: pointer; }
+.ose-sign.on { border-color: var(--accent); background: var(--success-bg); }
+.ose-sign .vwb-icon { width: 36px; height: 36px; vertical-align: 0; }
+.ose-sign:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.ose-places { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ose-place { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: center; }
+.ose-show { display: flex; align-items: center; gap: 6px; min-height: 44px; font-size: 0.95rem; cursor: pointer; min-width: 7.5rem; }
+.ose-show input { width: 22px; height: 22px; }
+.ose-ic .vwb-icon { width: 28px; height: 28px; vertical-align: 0; }
+.ose-name input { width: 100%; box-sizing: border-box; min-height: 44px; font-size: 16px; padding: 0 10px; border-radius: 10px; border: 2px solid var(--border, var(--vs-line)); background: var(--white, var(--vs-card)); color: var(--text, var(--vs-ink)); }
+.ose-name input:disabled { opacity: 0.5; }
+.ose-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ose-buttons .btn { flex: 1 1 10rem; min-height: 48px; }
+@media (max-width: 360px) { .ose-place { grid-template-columns: 1fr; } }
