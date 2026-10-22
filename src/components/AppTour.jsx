@@ -54,7 +54,7 @@ const ALL_STEPS = [
     target: '.header-nav',
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
-    body: 'These buttons stay at the top of every screen. Tap Show me around to see what each part does. You can skip any time.',
+    body: 'The top buttons are places: World, your Village, your Cottage, and the Calendar. The bottom buttons are things to do: ask for help, help a neighbor, and send messages. Tap Show me around to see each part. You can skip any time.',
   },
   {
     route: '/world',
@@ -101,14 +101,14 @@ const ALL_STEPS = [
     target: '[data-tour="village-arrange"]',
     icon: '\u{1F333}',
     title: 'Your cottage',
-    body: 'The Village tab opens your home village. Your cottage is your house there: your own map with your chats, organizations, and more. Tap Arrange and build to move things, add trees and bridges, and draw roads. Only you see it.',
+    body: 'Village, at the top, opens your home village. Your cottage is your house there: your own map with your chats, organizations, and more. Tap Arrange and build to move things, add trees and bridges, and draw roads. Only you see it.',
   },
   {
-    route: '/today',
-    target: '[data-tour="top-dashboard"]',
+    route: '/cottage',
+    target: '#today',
     icon: '\u2600\uFE0F',
     title: 'Today',
-    body: 'Your day at a glance: what needs you, your shortcuts, your places, and what is coming up. Tap Today at the top to come back here.',
+    body: 'Your day at a glance, right under your cottage map: what needs you, your shortcuts, and what is coming up. Tap your picture at the top to come back here.',
   },
   {
     route: '/calendar',
@@ -156,7 +156,7 @@ const ALL_STEPS = [
     body: 'All your chats live here. Each kind is a room of a different size: the bigger the room, the less you share. Tap "Why so many kinds of chat?" at the top to learn which one to use.',
   },
   {
-    route: '/today',
+    route: '/cottage',
     target: '[data-tour="emergency"]',
     icon: '\u26A0\uFE0F',
     title: 'Emergencies',

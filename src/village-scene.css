@@ -531,3 +531,7 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 /* Your corner under the cottage map (Oct 22). */
 .vs-corner { margin-top: 24px; scroll-margin-top: calc(var(--header-height) + 12px); }
 .vs-page .vs-corner .corner-title { color: var(--vs-ink); font-size: 1.5rem; }
+
+/* Today under the cottage map (Oct 22): a light panel so its cards read like the rest of the app. */
+.vs-panel { background: var(--bg); color: var(--text); border-radius: 16px; padding: 16px; margin: 0 0 16px; text-align: left; scroll-margin-top: calc(var(--header-height) + 12px); }
+.vs-panel h2 { color: var(--text); }

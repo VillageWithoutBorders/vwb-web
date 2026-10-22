@@ -10,7 +10,6 @@ import { AdminDialogHost } from './components/AdminDialog'
 import Welcome from './pages/Welcome'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
-const Dashboard = lazyPage(() => import('./pages/Dashboard'))
 import World from './pages/World'
 import SimpleHome from './pages/SimpleHome'
 import { useSimpleView } from './utils/simpleView'
@@ -80,7 +79,7 @@ function HomeIndex() {
   const [seenGlobe] = useState(() => { try { return localStorage.getItem('vwb_seen_globe') === '1' } catch { return false } })
   useEffect(() => { try { localStorage.setItem('vwb_seen_globe', '1') } catch { /* private window */ } }, [])
   if (simple) return <SimpleHome />
-  if (seenGlobe) return <Navigate to="/today" replace />
+  if (seenGlobe) return <Navigate to="/cottage" replace />
   return <World />
 }
 
@@ -190,8 +189,8 @@ function AppRoutes() {
       <Route path="/connect/:code" element={<SetupGate><Connect /></SetupGate>} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<HomeIndex />} />
-        <Route path="today" element={<Dashboard />} />
-        <Route path="home" element={<Moved to="/today" />} />
+        <Route path="today" element={<Moved to="/cottage#today" />} />
+        <Route path="home" element={<Moved to="/cottage#today" />} />
         <Route path="help-doors" element={<HelpDoors />} />
         <Route path="skillshare" element={<Feed />} />
         <Route path="tasks" element={<ActiveTasks />} />
