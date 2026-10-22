@@ -37,9 +37,9 @@ const ROOMS = [
   {
     icon: 'megaphone',
     name: 'Village chat',
-    who: 'Neighbors near you who joined your village.',
+    who: 'Neighbors whose home village it is, plus guests.',
     for: 'Lost pets, road closures, saying hello, local news.',
-    safe: 'Members only, but anyone nearby can join. Keep private details out. Messages delete after 30 days.',
+    safe: 'Members only. Neighbors in its zip codes can join, and others come as guests. Keep private details out. Messages delete after 30 days.',
   },
   {
     icon: 'bridge',
