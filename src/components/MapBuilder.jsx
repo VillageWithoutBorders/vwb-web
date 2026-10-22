@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { DECOR_PIECES, BACKGROUNDS, HAS_SEASONS, backgroundSrc } from '../data/worldElements'
+import { DECOR_PIECES, BACKGROUNDS, HAS_SEASONS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
 import { supabase } from '../supabaseClient'
 import { askConfirm } from './AdminDialog'
 
@@ -118,16 +118,18 @@ export function ToolIcon({ name }) {
 export { Road, Stream, StreamDefs, simplify }
 
 // A saved layout, cleaned up. Unknown or missing parts become empty.
-export function fromSaved(v) {
-  if (!v || typeof v !== 'object') return { spots: {}, decor: [], roads: [], streams: [], labels: 'auto', bg: 'seasons' }
+// base: the usual look for this kind of map (DEFAULT_WORLDS), used when nothing is saved.
+export function fromSaved(v, base) {
+  if (!v || typeof v !== 'object') return { spots: {}, decor: base ? base.decor : [], roads: base ? base.roads : [], streams: base ? base.streams : [], labels: 'auto', bg: 'seasons' }
   if (!v.spots && !v.decor && !v.roads && !v.streams && !v.ground && !v.labels && !v.bg) return { spots: v, decor: [], roads: [], streams: [], labels: 'auto', bg: 'seasons' } // older device copy
   const list = (a) => (Array.isArray(a) ? a : [])
   const bg = v.bg === 'seasons' || BACKGROUNDS.some((b) => b.k === v.bg) ? v.bg : 'seasons'
   return { spots: v.spots || {}, decor: list(v.decor), roads: list(v.roads), streams: list(v.streams), labels: ['show', 'hide'].includes(v.labels) ? v.labels : 'auto', bg }
 }
 // Nothing changed from the usual map (name tags aside)?
-export function isPlainWorld(w) {
-  return Object.keys(w.spots).length === 0 && w.decor.length === 0 && w.roads.length === 0 && w.streams.length === 0 && (w.bg || 'seasons') === 'seasons'
+export function isPlainWorld(w, base) {
+  const same = (a, c) => JSON.stringify(a || []) === JSON.stringify(c || [])
+  return Object.keys(w.spots).length === 0 && same(w.decor, base && base.decor) && same(w.roads, base && base.roads) && same(w.streams, base && base.streams) && (w.bg || 'seasons') === 'seasons'
 }
 // Only the map, without the name tags choice: what gets saved for a page.
 export function mapBody(w) {
@@ -136,7 +138,7 @@ export function mapBody(w) {
 
 const stillMotion = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false } }
 
-export function useMapBuilder({ spots, initial, onSave }) {
+export function useMapBuilder({ spots, initial, onSave, base }) {
   const sceneRef = useRef(null)
   const dragRef = useRef(null)
   const drawRef = useRef(null)
@@ -144,7 +146,7 @@ export function useMapBuilder({ spots, initial, onSave }) {
   const historyRef = useRef([])
   const onSaveRef = useRef(onSave)
   onSaveRef.current = onSave
-  const [world, setWorldState] = useState(() => fromSaved(initial))
+  const [world, setWorldState] = useState(() => fromSaved(initial, base))
   const worldRef = useRef(world)
   worldRef.current = world
   const [arrange, setArrange] = useState(false)
@@ -491,12 +493,12 @@ export function MapToolbar({ b, more }) {
 // view on top. You see your own view if you made one, else the shared look, else
 // the usual map. Name tags stay one account-wide choice (helper_profiles.village_layout).
 //   kind: 'org' (organizations and groups). name: shown in the start-over question.
-export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfile, name }) {
+export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfile, name, base }) {
   const [arrangeFor, setArrangeFor] = useState('me') // me | everyone
   const mapLayouts = useRef({ own: null, shared: null })
   const [mapLoaded, setMapLoaded] = useState(0)
   const saveTimer = useRef(null)
-  const b = useMapBuilder({ spots, initial: null, onSave: (next) => saveMap(next) })
+  const b = useMapBuilder({ spots, initial: null, base, onSave: (next) => saveMap(next) })
 
   useEffect(() => {
     if (!id || !user) return
@@ -518,13 +520,13 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
   useEffect(() => {
     if (b.arrange) return
     const { own, shared } = mapLayouts.current
-    b.setWorld({ ...fromSaved(own || shared), labels: fromSaved(accountLayout).labels })
-  }, [mapLoaded, b.arrange, accountLayout]) // eslint-disable-line react-hooks/exhaustive-deps
+    b.setWorld({ ...fromSaved(own || shared, base), labels: fromSaved(accountLayout).labels })
+  }, [mapLoaded, b.arrange, accountLayout, base]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function saveMap(next) {
     const forWho = arrangeFor
     const body = mapBody(next)
-    const empty = isPlainWorld(next)
+    const empty = isPlainWorld(next, base)
     const shared = forWho === 'everyone'
     // Keep it here right away, so tapping Done before it saves still shows it.
     mapLayouts.current = { ...mapLayouts.current, [shared ? 'shared' : 'own']: empty ? null : body }
@@ -541,8 +543,8 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
   // Name tags are one choice for every map, saved with your account.
   function saveLabels(labels) {
     b.setWorld({ ...b.worldRef.current, labels })
-    const acct = { ...fromSaved(accountLayout), labels }
-    const empty = isPlainWorld(acct) && acct.labels === 'auto'
+    const acct = { ...fromSaved(accountLayout, DEFAULT_WORLDS.cottage), labels }
+    const empty = isPlainWorld(acct, DEFAULT_WORLDS.cottage) && acct.labels === 'auto'
     supabase.rpc('set_my_village_layout', { p_layout: empty ? null : acct }).then(({ error }) => {
       if (error) { console.error('Failed to save name tags choice:', error); return }
       if (refreshProfile) refreshProfile()
@@ -552,14 +554,14 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
   function startArrange(forWho) {
     const { own, shared } = mapLayouts.current
     setArrangeFor(forWho)
-    b.openArrange({ ...fromSaved(forWho === 'everyone' ? shared : (own || shared)), labels: b.worldRef.current.labels })
+    b.openArrange({ ...fromSaved(forWho === 'everyone' ? shared : (own || shared), base), labels: b.worldRef.current.labels })
   }
 
   async function resetLayout() {
     if (arrangeFor === 'me') {
       if (!(await askConfirm('Go back to how ' + (name || 'this page') + ' looks for everyone? Your own view will be taken away.'))) return
       b.remember()
-      b.setWorld({ ...fromSaved(mapLayouts.current.shared), labels: b.worldRef.current.labels })
+      b.setWorld({ ...fromSaved(mapLayouts.current.shared, base), labels: b.worldRef.current.labels })
       b.setPicked(null); b.setTrayOpen(false)
       clearTimeout(saveTimer.current)
       const { error } = await supabase.rpc('set_my_map_layout', { p_kind: kind, p_id: id, p_layout: null })
@@ -569,7 +571,7 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
       return
     }
     if (!(await askConfirm('Go back to the usual map for everyone? The pieces, roads and streams you added will be taken away. You can tap Undo right after.'))) return
-    b.commit(fromSaved(null)); b.setPicked(null); b.setTrayOpen(false); b.setLayoutNote('Back to the usual map.')
+    b.commit(fromSaved(null, base)); b.setPicked(null); b.setTrayOpen(false); b.setLayoutNote('Back to the usual map.')
   }
 
   return { b, arrangeFor, startArrange, resetLayout, saveLabels }

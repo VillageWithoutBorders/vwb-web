@@ -11,7 +11,7 @@ import CalendarSubscribe from '../components/CalendarSubscribe'
 import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import OrgMemberNames from '../components/OrgMemberNames'
-import { ORG_SPOTS, GROUP_SPOTS, backgroundSrc } from '../data/worldElements'
+import { ORG_SPOTS, GROUP_SPOTS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
 import { usePageMap, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps } from '../components/MapBuilder'
 import OrgSceneEditor from '../components/OrgSceneEditor'
 import GroupGear from '../components/GroupGear'
@@ -261,7 +261,7 @@ export default function OrgPage() {
   const sign = scene.sign || (isGroup ? 'tent' : 'people')
   const named = (s) => (ownNames[s.k] ? { ...s, label: ownNames[s.k], short: ownNames[s.k] } : s)
   const spots = SPOTS.filter((s) => !s.organizers || canManage).filter((s) => s.k === 'tools' || !hiddenKeys.includes(s.k))
-    .map((s) => (s.k === 'involved' && !canManage ? { ...s, x: 50 } : s)).map(named)
+    .map(named)
   const general = chats.find((c) => c.is_general)
 
   // Arrange and build (Oct 22, vwb-map-layouts.sql): the Heads and organizers (a
@@ -269,6 +269,7 @@ export default function OrgPage() {
   // their own view on top. Only they see it.
   const { b, arrangeFor, startArrange, resetLayout, saveLabels } = usePageMap({
     kind: 'org', id, spots, user, accountLayout: profile?.village_layout, refreshProfile, name: org?.name,
+    base: isGroup ? DEFAULT_WORLDS.group : DEFAULT_WORLDS.org,
   })
   const { arrange, picked, placed, isHidden, dragStart, pickByKey } = b
 
