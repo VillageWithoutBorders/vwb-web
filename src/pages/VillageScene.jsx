@@ -12,6 +12,7 @@ import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
 import '../village-scene.css'
 import Icon from '../components/Icon'
+import YourCorner from './YourCorner'
 
 // The Village page: one village as a little world. Every element on the
 // hills is a button that goes to its own page. A plain list sits below for
@@ -21,6 +22,16 @@ import Icon from '../components/Icon'
 // Village places only members can open. Visitors see a closed gate on them (Oct 22).
 const GATED = ['chat', 'campfires', 'keeper', 'neighbors']
 
+
+// Garden gifts on your cottage map (Oct 22). They can be moved, sized, flipped and hidden
+// like any place, once you have grown them. Saved in your layout as 'gift-<name>'.
+const GIFT_SPOTS = [
+  { k: 'gift-home', label: 'Well (garden gift)', src: '/art/village-build/deco-well.webp', x: 12, y: 80 },
+  { k: 'gift-task', label: 'Flowers (garden gift)', src: '/art/village-build/deco-flowers.webp', x: 40, y: 93 },
+  { k: 'gift-vouch', label: 'Garden lamp (garden gift)', src: '/art/village-build/deco-lamp.webp', x: 10, y: 95 },
+  { k: 'gift-org', label: 'Vegetable garden (garden gift)', src: '/art/village-build/deco-garden.webp', x: 58, y: 70 },
+]
+const COTTAGE_BUILD_SPOTS = [...COTTAGE_SPOTS, ...GIFT_SPOTS]
 
 export default function VillageScene() {
   const { id } = useParams()
@@ -37,6 +48,12 @@ export default function VillageScene() {
     : isHome ? VILLAGE_SPOTS.map((v) => (v.k === 'me' ? { ...v, label: 'Your cottage', short: 'Your cottage' } : v))
     : VILLAGE_SPOTS.filter((v) => v.k !== 'me')
   const { unreadCount } = useUnreadCount()
+  // The You button and old /me links open the cottage at Your corner (Oct 22).
+  useEffect(() => {
+    if (!cottage || window.location.hash !== '#corner') return
+    const t = setTimeout(() => document.getElementById('corner')?.scrollIntoView({ block: 'start' }), 400)
+    return () => clearTimeout(t)
+  }, [cottage])
 
   const [village, setVillage] = useState(null)
   const [allVillages, setAllVillages] = useState([])
@@ -71,7 +88,7 @@ export default function VillageScene() {
   const BASE = cottage ? DEFAULT_WORLDS.cottage : DEFAULT_WORLDS.village
   const CBASE = DEFAULT_WORLDS.cottage
   const b = useMapBuilder({
-    spots: SPOTS,
+    spots: cottage ? COTTAGE_BUILD_SPOTS : SPOTS,
     base: BASE,
     initial: (() => { if (!cottage) return null; try { return JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null') } catch { return null } })(),
     onSave: (next) => (cottage ? saveCottage(next) : saveMapLayout(next)),
@@ -409,10 +426,14 @@ export default function VillageScene() {
       case 'home': navigate(home?.village_id ? '/village/' + home.village_id : '/find-village'); return
       case 'calendar': navigate('/calendar'); return
       case 'connections': navigate('/connections'); return
-      case 'cottage': case 'campfires': navigate('/messages?tab=chats'); return
-      case 'chat': navigate('/messages?tab=villages'); return
-      case 'help': navigate(offersWaiting ? '/tasks?tab=requests' : yourTurn ? '/tasks?tab=active' : '/help-doors'); return
-      case 'me': navigate('/me'); return
+      // Each picture opens its own page (Oct 22), not the same Messages page.
+      case 'cottage': navigate('/groups?show=cottage'); return
+      case 'campfires': navigate('/groups?show=campfires'); return
+      case 'chat': navigate('/village-square'); return
+      // One place every time (Oct 22). Waiting tasks show as a badge on the spot and on Your tasks.
+      case 'help': navigate('/help-doors'); return
+      // Your corner sits under the cottage map (Oct 22).
+      case 'me': document.getElementById('corner')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); return
       case 'messages': navigate('/messages'); return
       default: openSheet({ k })
     }
@@ -427,12 +448,12 @@ export default function VillageScene() {
       case 'visits': return <>{title}
         {visits.length === 0 && <p>You are not a guest in any other village yet. A neighbor can invite you, or you can visit a sister village.</p>}
         {visits.map((v) => row('/village/' + v.id, 'houses', v.name, 'Guest'))}
-        <Link className="btn btn-outline btn-full" to="/villages">See every village</Link>
+        <Link className="btn btn-outline btn-full" to="/world">See every village</Link>
       </>
       case 'orgs': return <>{title}
         {myOrgs.length === 0 && <p>You are not in an organization yet.</p>}
         {myOrgs.map((o) => row('/orgs/' + o.id, 'people', o.name, 'Organization'))}
-        <Link className="btn btn-outline btn-full" to="/villages?tab=orgs">See every organization</Link>
+        <Link className="btn btn-outline btn-full" to="/world?tab=orgs">See every organization</Link>
       </>
       case 'groups': return <>{title}
         {myGroups.length === 0 && <p>You are not in an emergency group yet. Groups are crews that help when disaster hits.</p>}
@@ -495,7 +516,7 @@ export default function VillageScene() {
     if (spot.soon) { openSheet({ k: spot.k }); return }
     switch (spot.k) {
       case 'chat':
-        if (mine && board) navigate('/campfire?board=' + board.id)
+        if (mine && board) navigate('/village-square?board=' + board.id)
         else if (!mine) navigate('/find-village?join=' + id)
         else openSheet({ k: 'chat' })
         return
@@ -520,7 +541,7 @@ export default function VillageScene() {
     switch (k) {
       case 'sisters':
         return <>{title}
-          {sisters.length === 0 && <p>This village has no sister villages yet. The keeper can ask another village from the Village Network map.</p>}
+          {sisters.length === 0 && <p>This village has no sister villages yet. The keeper can ask another village from the World map.</p>}
           {sisters.map((sid) => (
             <div key={sid} className="vs-sister">
               <button type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/village/' + sid) }}>
@@ -552,7 +573,7 @@ export default function VillageScene() {
           <p>{info('neighbors').sub}.</p>
           {mine && board
             ? <><p className="vs-note">See who is here, vouch, or send a message request from the People button in the village chat.</p>
-                <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/campfire?board=' + board.id)}>Open the village chat</button></>
+                <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/village-square?board=' + board.id)}>Open the village chat</button></>
             : <p className="vs-note">Join this village to see who lives here.</p>}
         </>
       case 'orgs':
@@ -582,7 +603,7 @@ export default function VillageScene() {
   }
 
   if (loadError) {
-    return <div className="vs-page vs-page-path"><div className="vs-top"><Link className="vs-crumb" to="/villages">Village Network</Link></div><p className="vs-error" role="alert">{loadError}</p></div>
+    return <div className="vs-page vs-page-path"><div className="vs-top"><Link className="vs-crumb" to="/world">World</Link></div><p className="vs-error" role="alert">{loadError}</p></div>
   }
   if (!cottage && !village) {
     return <div className="vs-page vs-page-path"><p className="vs-loading" role="status">Loading the village...</p></div>
@@ -603,7 +624,7 @@ export default function VillageScene() {
         </div>
       ) : (<>
       <nav className="vs-top" aria-label="Where you are">
-        <Link className="vs-crumb" to="/villages">Village Network</Link>
+        <Link className="vs-crumb" to="/world">World</Link>
         <span className="vs-sep" aria-hidden="true">&#8250;</span>
         <span className="vs-here" aria-current="page">{village.name}</span>
       </nav>
@@ -659,9 +680,16 @@ export default function VillageScene() {
        <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
-        {cottage && GIFTS.filter((g) => g.got).map((g) => (
-          <img key={'gift-' + g.k} className="vs-gift" src={g.src} alt="" width="64" height="64" draggable="false" style={{ left: g.x + '%', top: g.y + '%' }} />
-        ))}
+        {cottage && GIFTS.filter((g) => g.got).map((g) => {
+          const gs = placed(GIFT_SPOTS.find((x) => x.k === 'gift-' + g.k))
+          if (!arrange && isHidden(gs.k)) return null
+          const img = <img className={'vs-gift-img' + (gs.flip ? ' vs-flip' : '')} src={g.src} alt="" width="64" height="64" draggable="false" />
+          const style = { left: gs.x + '%', top: gs.y + '%', '--s': gs.s || 1 }
+          return arrange
+            ? <button key={gs.k} type="button" data-spot={gs.k} className={'vs-gift vs-gift-edit' + (picked === gs.k ? ' vs-picked' : '') + (isHidden(gs.k) ? ' vs-hidden' : '')} style={style}
+                aria-label={gs.label} onPointerDown={(e) => dragStart(e, gs.k)} onClick={(e) => { if (e.detail === 0) pickByKey(gs.k) }}>{img}</button>
+            : <span key={gs.k} className="vs-gift" style={style}>{img}</span>
+        })}
         {SPOTS.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
           const s = placed(s0)
           const i = info(s.k)
@@ -735,7 +763,8 @@ export default function VillageScene() {
             )
           })}
         </div>
-        <Link className="btn btn-outline btn-full vs-big" to="/community">Local help, events, and calendar</Link>
+        <Link className="btn btn-outline btn-full vs-big" to="/calendar">Events near you</Link>
+        {cottage && <section id="corner" className="vs-corner" aria-label="Your corner"><YourCorner embedded /></section>}
       </div>
 
       {sheet && (

@@ -20,7 +20,7 @@ const WORDS = {
   noprofile: 'We could not find your profile. Try again in a moment.',
   needzip: 'Add your zip code on your Profile first, so we can find villages near you.',
   toofar: 'Your zip code is not on that village\u2019s list, so you cannot join it.',
-  exists: 'A village already centers on your zip code. Find it on the Village Network and join that one.',
+  exists: 'A village already centers on your zip code. Find it on the World map and join that one.',
   already: 'You already started 3 villages. Ask an admin if one needs changes.',
   badzip: 'One of those zip codes was not found. Try again.',
   toomany: 'A village can have up to 40 zip codes. Untick a few and try again.',
@@ -86,8 +86,8 @@ export default function FindVillage() {
     if (!joinParam || loading || risk) return
     const v = villages.find(x => x.id === joinParam)
     if (v && v.can_join && !v.is_mine) { if (firstJoinCovered) agreeAndGo({ type: 'join', village: v }); else setRisk({ type: 'join', village: v }) }
-    else if (v && v.is_mine) navigate(v.board_id ? '/campfire?board=' + v.board_id : '/campfire', { replace: true })
-    else if (!v) { setError('We could not open that village. Find it on the Village Network.'); navigate('/find-village', { replace: true }) }
+    else if (v && v.is_mine) navigate(v.board_id ? '/village-square?board=' + v.board_id : '/village-square', { replace: true })
+    else if (!v) { setError('We could not open that village. Find it on the World map.'); navigate('/find-village', { replace: true }) }
   }, [joinParam, loading, villages])
 
   // Coming from the first-run village screen with ?start=1: open the start form.
@@ -143,11 +143,11 @@ export default function FindVillage() {
       const { data: mine } = await supabase.from('village_members').select('village_id').eq('user_id', user.id).order('joined_at', { ascending: false }).limit(1)
       vid = mine?.[0]?.village_id
     }
-    if (!vid) { navigate('/campfire'); return }
+    if (!vid) { navigate('/village-square'); return }
     const { data: b } = await supabase.from('campfire_boards').select('id, name').eq('village_id', vid).maybeSingle()
-    if (!b) { navigate('/campfire'); return }
+    if (!b) { navigate('/village-square'); return }
     const { data: saved } = await supabase.from('campfire_board_user_settings').select('alerts').eq('user_id', user.id).eq('board_id', b.id).maybeSingle()
-    if (saved) { navigate('/campfire?board=' + b.id + '&intro=1'); return }
+    if (saved) { navigate('/village-square?board=' + b.id + '&intro=1'); return }
     setWelcome(b)
   }
 
@@ -159,7 +159,7 @@ export default function FindVillage() {
       { onConflict: 'user_id,board_id' }
     )
     if (err) { console.error('Failed to save alert choice:', err); setError('Could not save that. Try again.'); setBusy(false); return }
-    navigate('/campfire?board=' + welcome.id + '&intro=1')
+    navigate('/village-square?board=' + welcome.id + '&intro=1')
   }
 
   // The warning's "I agree" button. The agreement is sent to the database, which checks it.
@@ -202,7 +202,7 @@ export default function FindVillage() {
   // Your own zip code is always on the list, so it always counts.
   const tickedCount = suggested.filter(r => ticked[r.zip] || r.zip === profile?.zip_code).length
 
-  // Villages you can join or already belong to (the full list is on the Village Network).
+  // Villages you can join or already belong to (the full list is on the World map).
   const shown = villages.filter(v => v.can_join || v.is_mine)
   const nothingNear = !loading && !error && hasZip && shown.length === 0
 
@@ -223,10 +223,10 @@ export default function FindVillage() {
 
   return (
     <div className="cal-page hub-page">
-      <BackLink fallback="/campfire" fallbackLabel="Village Square" />
+      <BackLink fallback="/village-square" fallbackLabel="Village Square" />
       <h1 className="hub-org-name">Join or start a village</h1>
       <p className="cal-sub">A village chat is for neighbors in the zip codes it covers. Anyone with an account can join a village that has their zip code. You can join more than one, especially where villages overlap. Any neighbor can start one.</p>
-      <Link to="/villages" className="btn btn-primary btn-full" style={{ minHeight: '48px', margin: '0 0 0.75rem' }}>See villages near you</Link>
+      <Link to="/world" className="btn btn-primary btn-full" style={{ minHeight: '48px', margin: '0 0 0.75rem' }}>See villages near you</Link>
 
       <VillageGuestInvites />
 
@@ -308,7 +308,7 @@ export default function FindVillage() {
           busy={busy}
           error={riskError}
           onAgree={() => agreeAndGo()}
-          onCancel={() => { setRisk(null); setRiskError(''); if (joinParam) navigate('/villages', { replace: true }) }}
+          onCancel={() => { setRisk(null); setRiskError(''); if (joinParam) navigate('/world', { replace: true }) }}
         />
       )}
     </div>

@@ -735,7 +735,7 @@ export default function ActiveTasks() {
   // =============================================
   return (
     <div className="tasks-page">
-      <div className="tasks-header"><h1>Help</h1></div>
+      <div className="tasks-header"><h1>Your tasks</h1></div>
       <HelpSwitch />
       {/* Was a floating button that covered task buttons on phones (Oct 22); now it sits in the page. */}
       <button type="button" className="btn btn-primary btn-full mine-new" onClick={() => navigate(tab === 'offers' ? '/post-offer' : '/ask')}>

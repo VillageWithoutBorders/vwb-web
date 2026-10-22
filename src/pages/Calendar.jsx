@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { fetchCalendarEvents, filterByDistance, savePlace, startingOrigin, memberArea } from '../utils/calendar'
 import CalendarSubscribe from '../components/CalendarSubscribe'
 import { CalendarLocationBar, CalendarView, CalendarEventList, AllAgesFilter } from '../components/CalendarParts'
+import NearbyOrganizers from '../components/NearbyOrganizers'
+import BringOrg from '../components/BringOrg'
 
 export default function Calendar() {
   const { isAdmin, organizations, profile } = useAuth()
@@ -76,7 +78,7 @@ export default function Calendar() {
       <div className="cal-head">
         <div>
           <h1>Calendar</h1>
-          <p className="cal-sub">Gatherings, drives, and volunteer shifts near you</p>
+          <p className="cal-sub">Gatherings, drives, volunteer shifts, and who is organizing near you</p>
         </div>
         {canPost && (
           <div className="cal-post-row">
@@ -115,6 +117,10 @@ export default function Calendar() {
           emptyText={canPost ? 'No events nearby yet. Tap "New event" to post the first one.' : 'No events nearby yet. Check back soon, or try a wider distance.'}
         />
       )}
+
+      {/* Oct 22: the old Around you page folded in here (events and organizers) and into Find resources. */}
+      <NearbyOrganizers origin={origin} miles={miles} />
+      <BringOrg />
 
       <CalendarSubscribe choices={subscribeChoices} anchorId="cal-subscribe" />
     </div>

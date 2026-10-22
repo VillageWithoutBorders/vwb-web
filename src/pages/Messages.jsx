@@ -878,7 +878,7 @@ export default function Messages({ embedded = false }) {
 
       {!loading && showCampfireCard && (
         <div className="message-card" style={{ position: 'relative', borderLeft: '3px solid #e8833a' }}>
-          <div onClick={() => navigate('/campfire')} role="button" tabIndex={0} aria-label={'Open Village Square' + (campfire.unread ? ', new messages' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/campfire') } }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div onClick={() => navigate('/village-square')} role="button" tabIndex={0} aria-label={'Open Village Square' + (campfire.unread ? ', new messages' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/village-square') } }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <span aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--warn-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}><Icon name="megaphone" /></span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="message-card-header">

@@ -77,7 +77,7 @@ export default function SisterVillages({ village, villages, sisters, isKeeper, j
     if (bErr) console.error('Failed to find the village chat:', bErr)
     setRisk(false)
     const b = boards && boards[0]
-    navigate(b ? '/campfire?board=' + b.id + '&intro=1' : '/find-village')
+    navigate(b ? '/village-square?board=' + b.id + '&intro=1' : '/find-village')
   }
 
   if (!mySisters.length && !isKeeper && !joinVia) return null

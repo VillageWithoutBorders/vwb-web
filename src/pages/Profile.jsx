@@ -526,7 +526,7 @@ export default function Profile() {
         </button>
 
         <button onClick={() => navigate('/help')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid var(--border-strong)', borderRadius: '10px', padding: '0.6rem', marginTop: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', cursor: 'pointer' }}>
-          Help &amp; Feedback
+          App guide and feedback
         </button>
       </div>
     )

@@ -69,13 +69,13 @@ export default function HelpDoors() {
         <span aria-hidden="true" className="door-icon"><Icon name="heart" size={36} /></span>
         <span className="door-text">
           <span className="door-link-title">I can help</span>
-          <span className="door-desc">See what neighbors near you need.</span>
+          <span className="door-desc">Opens SkillShare: see what neighbors near you need.</span>
         </span>
         <span aria-hidden="true" className="door-arrow">&#8250;</span>
       </Link>
 
       <Link to={waiting ? '/tasks?tab=requests' : '/tasks'} className="doors-mine">
-        My requests and tasks
+        Your tasks: your requests and offers
         {waiting > 0 && <span className="help-switch-count" aria-label={waiting === 1 ? '1 neighbor offered to help' : waiting + ' neighbors offered to help'}>{waiting > 9 ? '9+' : waiting}</span>}
       </Link>
     </div>

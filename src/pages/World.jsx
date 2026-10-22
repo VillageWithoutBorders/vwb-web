@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { peekReturnTo } from '../utils/returnTo'
@@ -8,6 +8,11 @@ import SisterCampfireButton from '../components/SisterCampfireButton'
 import '../village-scene.css'
 import '../world.css'
 import Icon from '../components/Icon'
+import BringOrg from '../components/BringOrg'
+
+// Oct 22: the Village Network (search, street map, every village and organization)
+// lives under the globe now. /villages opens this page.
+const VillageMap = lazy(() => import('./VillageMap'))
 
 // The World: the VWB globe with your connections on it, in two networks.
 // Villages: circles that overlap where they share zip codes, and gold lines
@@ -55,7 +60,14 @@ function curve(p, q, bend) {
 export default function World() {
   const navigate = useNavigate()
   const { profile, organizations } = useAuth()
-  const [net, setNet] = useState('villages')
+  const [params, setParams] = useSearchParams()
+  const asked = params.get('tab')
+  const net = asked === 'orgs' || asked === 'groups' ? asked : 'villages'
+  const setNet = (n) => setParams(n === 'villages' ? {} : { tab: n }, { replace: true })
+  const networkRef = useRef(null)
+  function seeAll() {
+    if (networkRef.current) networkRef.current.scrollIntoView({ behavior: stillMotion() ? 'auto' : 'smooth', block: 'start' })
+  }
   const [villages, setVillages] = useState(null)
   const [points, setPoints] = useState([])
   const [sisters, setSisters] = useState([])
@@ -253,12 +265,12 @@ export default function World() {
 
       <div className="wd-globe-wrap">
         {announceBoard && (
-          <button type="button" className="wd-news" aria-label="Announcements" onClick={() => navigate('/campfire?board=' + announceBoard)}><Icon name="megaphone" /></button>
+          <button type="button" className="wd-news" aria-label="Announcements" onClick={() => navigate('/village-square?board=' + announceBoard)}><Icon name="megaphone" /></button>
         )}
         <div className={'wd-float' + (leaving ? ' wd-leaving' : '')}>
           <div ref={globeRef} className={'wd-globe' + (leaving ? (leaving.spin ? ' wd-spin' : ' wd-zoom') : '')}
             style={leaving ? { transformOrigin: leaving.x + '% ' + leaving.y + '%' } : undefined}>
-            <button type="button" className="wd-sea" aria-label="Spin the globe to see every village" onClick={() => zoomTo(50, 50, '/villages', true)}>
+            <button type="button" className="wd-sea" aria-label="See every village, below the globe" onClick={seeAll}>
               <img src="/art/globe.webp" alt="" width="720" height="720" fetchpriority="high" />
             </button>
             <svg className="wd-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -336,12 +348,17 @@ export default function World() {
 
       <div className="wd-actions">
         {net === 'villages' && !hasMine && villages !== null && <button type="button" className="btn btn-primary btn-full wd-start" onClick={() => navigate('/find-village')}>Find my village</button>}
-        {net === 'villages' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages')}>See every village</button>}
-        {net === 'orgs' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages?tab=orgs')}>See every organization</button>}
-        {net === 'orgs' && !myRealOrgs.length && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/community?bring=org')}>Bring your organization</button>}
-        {net === 'groups' && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/villages?tab=orgs')}>See every group</button>}
         {net === 'groups' && !myGroups.length && <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/start-group')}>Start a group</button>}
+        <button type="button" className="btn btn-outline btn-full" onClick={seeAll}>{net === 'villages' ? 'Find a village by zip code or town' : net === 'groups' ? 'See every group' : 'See every organization'}</button>
       </div>
+
+      {/* The Village Network: search, street map and full lists for the network picked above. */}
+      <section ref={networkRef} className="wd-network-wrap" aria-label={net === 'villages' ? 'Every village' : net === 'groups' ? 'Every group' : 'Every organization'}>
+        <Suspense fallback={<p className="cal-empty">Loading...</p>}>
+          <VillageMap embedded net={net} />
+        </Suspense>
+        {net === 'orgs' && <div className="cal-page wd-network"><BringOrg /></div>}
+      </section>
 
       {sheet && (
         <div className="vs-shade" onClick={(e) => { if (e.target === e.currentTarget) closeSheet() }}>
