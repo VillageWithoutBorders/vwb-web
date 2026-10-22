@@ -100,14 +100,14 @@ export default function Connections({ embedded = false }) {
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.4rem' }}>
                 <UserName userId={r.user_id} name={r.display_name} style={{ fontWeight: 700 }} />
-                {r.is_ambassador && <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.7rem', fontWeight: 600, padding: '1px 6px', borderRadius: 4 }}>Ambassador</span>}
+                {r.is_ambassador && <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: 4 }}>Ambassador</span>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.3rem' }}>
                 {(r.reasons || []).map((k) => (
-                  <span key={k} style={{ background: 'var(--surface-2)', color: 'var(--text)', fontSize: '0.75rem', padding: '2px 8px', borderRadius: 10 }}>{WHY[k] || k}</span>
+                  <span key={k} style={{ background: 'var(--surface-2)', color: 'var(--text)', fontSize: '0.8125rem', padding: '2px 8px', borderRadius: 10 }}>{WHY[k] || k}</span>
                 ))}
               </div>
-              {r.last_at && <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.3rem' }}>{sinceText(r.last_at)}</div>}
+              {r.last_at && <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginTop: '0.3rem' }}>{sinceText(r.last_at)}</div>}
             </div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>

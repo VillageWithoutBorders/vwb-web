@@ -10,7 +10,7 @@ import { UserName } from './AvatarDisplay'
 // (vwb-founder-village-people.sql, vwb-roles-step5.sql).
 
 const btn = { minHeight: 44, padding: '0 0.8rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text)', fontSize: '0.9rem', cursor: 'pointer' }
-const badge = (bg, fg) => ({ fontSize: '0.7rem', background: bg, color: fg, padding: '1px 6px', borderRadius: 4, fontWeight: 600, marginLeft: 6 })
+const badge = (bg, fg) => ({ fontSize: '0.8125rem', background: bg, color: fg, padding: '1px 6px', borderRadius: 4, fontWeight: 600, marginLeft: 6 })
 
 const PLACED = {
   added: 'is in the village chat now. They got an alert.',

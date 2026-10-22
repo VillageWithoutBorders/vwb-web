@@ -268,7 +268,7 @@
 .vs-tool-main { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
 .vs-tool { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 52px; min-width: 44px;
   padding: 4px 2px; border-radius: 12px; border: 1px solid var(--vs-line); background: var(--vs-card); color: var(--vs-ink);
-  font: inherit; font-size: 0.78rem; font-weight: 600; line-height: 1.1; cursor: pointer; }
+  font: inherit; font-size: 0.8125rem; font-weight: 600; line-height: 1.1; cursor: pointer; }
 .vs-tool:disabled { opacity: 0.4; cursor: default; }
 .vs-tool.on { background: var(--vs-teal); border-color: var(--vs-teal); color: var(--vs-on-teal); }
 .vs-tool-done { background: var(--vs-gold); border-color: var(--vs-gold); color: var(--vs-on-gold); }
@@ -287,7 +287,7 @@
 .vs-chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .vs-chip-btn { min-height: 44px; padding: 0 12px; border-radius: 22px; border: 1px solid var(--vs-gold); background: none; color: var(--vs-ink); font: inherit; font-size: 0.9rem; cursor: pointer; }
 .vs-grounds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.vs-ground-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; border-radius: 10px; border: 2px solid var(--vs-line); background: var(--vs-card); color: var(--vs-ink); font: inherit; font-size: 0.78rem; cursor: pointer; }
+.vs-ground-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; border-radius: 10px; border: 2px solid var(--vs-line); background: var(--vs-card); color: var(--vs-ink); font: inherit; font-size: 0.8125rem; cursor: pointer; }
 .vs-ground-card img { width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 6px; }
 .vs-ground-card.on { border-color: var(--vs-gold); }
 .vs-tray-more { display: grid; gap: 8px; margin-top: 12px; }

@@ -150,9 +150,9 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
               <div>
                 <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-strong)' }}>{info?.name || 'Loading...'}</div>
                 <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
-                  {info?.role === 'founder' && <span style={{ fontSize: '0.6rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Founder</span>}
-                  {info?.role === 'admin' && <span style={{ fontSize: '0.6rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Admin</span>}
-                  {info?.ambassador && <span style={{ fontSize: '0.6rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Hope Ambassador</span>}
+                  {info?.role === 'founder' && <span style={{ fontSize: '0.8125rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Founder</span>}
+                  {info?.role === 'admin' && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Admin</span>}
+                  {info?.ambassador && <span style={{ fontSize: '0.8125rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Hope Ambassador</span>}
                 </div>
               </div>
             </div>
@@ -161,18 +161,18 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
                 {(info.eligible || info.hasVouched) ? (
                   <button type="button" onClick={toggleVouch} aria-label={info.hasVouched ? 'Remove your vouch' : 'Vouch for this neighbor'} style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: info.hasVouched ? '#1a4a3a' : '#222', borderRadius: '8px', cursor: 'pointer', border: info.hasVouched ? '1px solid #4ecca3' : '1px solid transparent', transition: 'all 0.2s' }}>
                     <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent)' }}>{info.vouches}</div>
-                    <div style={{ fontSize: '0.65rem', color: info.hasVouched ? '#4ecca3' : '#888' }}>{info.hasVouched ? 'Vouched' : 'Vouch'}</div>
+                    <div style={{ fontSize: '0.8125rem', color: info.hasVouched ? '#4ecca3' : '#888' }}>{info.hasVouched ? 'Vouched' : 'Vouch'}</div>
                   </button>
                 ) : (
                   <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: 'var(--surface-2)', borderRadius: '8px' }}>
                     <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent)' }}>{info.vouches}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Vouches</div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Vouches</div>
                   </div>
                 )}
                 {info.joined && (
                   <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: 'var(--surface-2)', borderRadius: '8px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--text-strong)' }}>{new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Joined</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.8125rem', color: 'var(--text-strong)' }}>{new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Joined</div>
                   </div>
                 )}
               </div>

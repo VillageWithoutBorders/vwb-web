@@ -564,7 +564,7 @@ export default function ActiveTasks() {
         <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.35rem' }}>
           {isRequester ? 'End ' + otherName + "'s help?" : 'Step back from this task?'}
         </div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0 0 0.5rem' }}>
           {isRequester
             ? 'Your request goes back on the feed if it still needs helpers. They are told you closed it out, but not why.'
             : 'The request goes back on the feed so someone else can offer. They are told you can no longer help, but not why.'}
@@ -578,7 +578,7 @@ export default function ActiveTasks() {
           ))}
         </div>
         {ADMIN_SEES.includes(endReason) && (
-          <p style={{ color: 'var(--warn)', fontSize: '0.78rem', margin: '0.5rem 0 0' }}>An admin will be told, so they can look into it.</p>
+          <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', margin: '0.5rem 0 0' }}>An admin will be told, so they can look into it.</p>
         )}
         <textarea
           value={endNote}
@@ -606,7 +606,7 @@ export default function ActiveTasks() {
     const answer = myFeedback[matchId]
     const box = { marginTop: '0.6rem', padding: '0.75rem', background: 'var(--success-bg)', border: '1px solid #2d6a4f', borderRadius: '8px' }
     const title = { color: 'var(--text)', fontWeight: 600, fontSize: '0.9rem' }
-    const small = { color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.25rem 0 0.5rem' }
+    const small = { color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.25rem 0 0.5rem' }
     const waiting = ratedReady && !bothRated[matchId]
       ? <p style={{ ...small, marginBottom: 0, fontStyle: 'italic' }}>Waiting for {otherName} to answer. This task moves to Archived once you have both answered.</p>
       : null
@@ -740,7 +740,7 @@ export default function ActiveTasks() {
           {/* ========== Requests I Made ========== */}
           {currentRequests.length > 0 && (
             <>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: '0.25rem' }}>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: '0.25rem' }}>
                 Your Requests
               </div>
               {currentRequests.map(req => (
@@ -821,7 +821,7 @@ export default function ActiveTasks() {
                       ))}
                     </div>
                   )}
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.5rem 0' }}>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.5rem 0' }}>
                     {req.matches.length === 0
                       ? ((req.pending || []).length > 0 ? '' : 'Waiting for a neighbor to offer')
                       : `${req.matches.length} helper${req.matches.length !== 1 ? 's' : ''} accepted`
@@ -842,13 +842,13 @@ export default function ActiveTasks() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={match.helper_avatar} userId={match.helper_id} size={28} /><UserName userId={match.helper_id} name={match.helper_name} style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }} /></div>
                                 {match.is_ambassador && (
-                                  <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.6rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>HA</span>
+                                  <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>HA</span>
                                 )}
                               </div>
                               {bothDone ? (
-                                <span style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 600 }}><Icon name="check" /> Complete</span>
+                                <span style={{ fontSize: '0.8125rem', color: 'var(--accent)', fontWeight: 600 }}><Icon name="check" /> Complete</span>
                               ) : (
-                                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
                                   <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
                                   <span>{match.helper_completed ? 'Helper done' : 'Helper working'}</span>
                                   <span style={{ margin: '0 0.15rem' }}>&middot;</span>
@@ -946,7 +946,7 @@ export default function ActiveTasks() {
           {/* ========== Requests I'm Helping With ========== */}
           {currentHelping.length > 0 && (
             <>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: currentRequests.length > 0 ? '1.25rem' : '0.25rem' }}>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: currentRequests.length > 0 ? '1.25rem' : '0.25rem' }}>
                 Helping Others
               </div>
               {currentHelping.map(match => {
@@ -961,14 +961,14 @@ export default function ActiveTasks() {
 
                     <div className="task-card-skill">{req.skill_needed}</div>
                     {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><AvatarDisplay url={null} userId={match.request?.requester_id} size={20} /> {req.for_name ? 'For ' + req.for_name + ', posted by' : 'Requested by'} <UserName userId={match.request?.requester_id} name={match.requester_name} /></span>
                     </div>
                     {req.for_name && <span className="for-note">{helperNote(req, match.requester_name)}</span>}
                     <p className="task-card-desc">{req.description}</p>
 
                     {!bothDone && (
-                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.5rem 0' }}>
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0.5rem 0' }}>
                         <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
                         <span>{match.helper_completed ? 'You confirmed' : 'You pending'}</span>
                         <span style={{ margin: '0 0.15rem' }}>&middot;</span>
@@ -978,7 +978,7 @@ export default function ActiveTasks() {
                     )}
 
                     {bothDone && (
-                      <div style={{ fontSize: '0.8rem', color: 'var(--accent)', fontWeight: 600, margin: '0.5rem 0' }}>
+                      <div style={{ fontSize: '0.8125rem', color: 'var(--accent)', fontWeight: 600, margin: '0.5rem 0' }}>
                         <Icon name="check" /> Complete
                       </div>
                     )}

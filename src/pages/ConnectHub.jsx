@@ -76,7 +76,7 @@ export default function ConnectHub() {
           {tabs.map((t) => (
             <button key={t.key} type="button" role="tab" id={'hub-tab-' + t.key} aria-selected={active === t.key} aria-controls="hub-panel" style={chip(active === t.key)}
               onClick={() => setParams(t.key === 'messages' ? {} : { tab: t.key }, { replace: true })}>
-              {t.label}{t.badge > 0 && <span style={{ marginLeft: '0.4rem', background: 'var(--danger)', color: '#fff', borderRadius: '9px', padding: '0 6px', fontSize: '0.75rem' }}>{t.badge > 9 ? '9+' : t.badge}</span>}
+              {t.label}{t.badge > 0 && <span style={{ marginLeft: '0.4rem', background: 'var(--danger)', color: '#fff', borderRadius: '9px', padding: '0 6px', fontSize: '0.8125rem' }}>{t.badge > 9 ? '9+' : t.badge}</span>}
             </button>
           ))}
         </div>

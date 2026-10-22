@@ -147,16 +147,16 @@ export default function EmergencyEvents() {
         <span style={{ fontSize: '1.75rem' }}><Icon name="cat-emergency" /></span>
         <div>
           <span style={{ display: 'block', color: 'var(--gold)', fontWeight: 700, fontSize: '0.95rem' }}>Report an emergency</span>
-          <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>When many neighbors are hit at once. Someone in danger? Call 911 first.</span>
+          <span style={{ color: 'var(--danger)', fontSize: '0.8125rem' }}>When many neighbors are hit at once. Someone in danger? Call 911 first.</span>
         </div>
       </button>
 
       <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
         <button className={'tasks-tab' + (tab === 'active' ? ' tasks-tab-active' : '')} onClick={() => setTab('active')}>
-          Active {events.length > 0 && <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>({events.length})</span>}
+          Active {events.length > 0 && <span style={{ fontSize: '0.8125rem', opacity: 0.7 }}>({events.length})</span>}
         </button>
         <button className={'tasks-tab' + (tab === 'resolved' ? ' tasks-tab-active' : '')} onClick={() => setTab('resolved')}>
-          Resolved {resolvedEvents.length > 0 && <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>({resolvedEvents.length})</span>}
+          Resolved {resolvedEvents.length > 0 && <span style={{ fontSize: '0.8125rem', opacity: 0.7 }}>({resolvedEvents.length})</span>}
         </button>
       </div>
 
@@ -175,7 +175,7 @@ export default function EmergencyEvents() {
 
           {pending.length > 0 && (
             <>
-              <p style={{ color: 'var(--warn)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Pending verification ({pending.length})</p>
+              <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Pending verification ({pending.length})</p>
               {pending.map(ev => {
                 const myRole = mySignups[ev.id]
                 const voted = myUpvotes[ev.id]
@@ -183,11 +183,11 @@ export default function EmergencyEvents() {
                   <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--warn)', opacity: 0.9 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <span style={{ background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>Unverified</span>
-                        {ev.created_by === user.id && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
+                        <span style={{ background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>Unverified</span>
+                        {ev.created_by === user.id && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
                         <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.05rem' }}>{ev.title}</h3>
                       </div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
                     </div>
                     {ev.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
                     {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
@@ -195,9 +195,9 @@ export default function EmergencyEvents() {
                       <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid var(--accent)' : '1px solid var(--border-strong)', background: voted ? 'var(--success-bg)' : 'none', color: voted ? 'var(--accent)' : 'var(--text-secondary)', cursor: voted ? 'default' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
                         &#9650; {ev.upvote_count || 0}
                       </button>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{(ev.upvote_count || 0) + ' verified'}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{(ev.upvote_count || 0) + ' verified'}</span>
                       {canVerify(ev) && !voted && (
-                        <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}>Verify</button>
+                        <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Verify</button>
                       )}
                     </div>
                   </div>
@@ -208,24 +208,24 @@ export default function EmergencyEvents() {
 
           {verified.length > 0 && (
             <>
-              {pending.length > 0 && <p style={{ color: 'var(--gold)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Verified emergencies ({verified.length})</p>}
+              {pending.length > 0 && <p style={{ color: 'var(--gold)', fontSize: '0.8125rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Verified emergencies ({verified.length})</p>}
               {verified.map(ev => {
                 const myRole = mySignups[ev.id]
                 return (
                   <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--gold)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <span style={{ background: 'var(--gold)', color: 'var(--on-accent)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type || 'Emergency'}</span>
-                        <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>&#10003; Verified</span>
-                        {ev.created_by === user.id && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
+                        <span style={{ background: 'var(--gold)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type || 'Emergency'}</span>
+                        <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>&#10003; Verified</span>
+                        {ev.created_by === user.id && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
                         <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.1rem' }}>{ev.title}</h3>
                       </div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
                     </div>
                     {ev.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
                     {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
                     {myRole && (
-                      <span style={{ display: 'inline-block', marginTop: '0.5rem', background: myRole === 'responder' ? 'var(--success-bg)' : myRole === 'coordinator' ? 'var(--info-bg)' : 'var(--warn-bg)', color: myRole === 'responder' ? 'var(--accent)' : myRole === 'coordinator' ? 'var(--info)' : 'var(--warn)', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
+                      <span style={{ display: 'inline-block', marginTop: '0.5rem', background: myRole === 'responder' ? 'var(--success-bg)' : myRole === 'coordinator' ? 'var(--info-bg)' : 'var(--warn-bg)', color: myRole === 'responder' ? 'var(--accent)' : myRole === 'coordinator' ? 'var(--info)' : 'var(--warn)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
                         {myRole === 'responder' ? 'Signed up to help' : myRole === 'coordinator' ? 'Coordinator' : 'Signed up as affected'}
                       </span>
                     )}
@@ -253,19 +253,19 @@ export default function EmergencyEvents() {
                 <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2d6a4f', opacity: 0.8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                      <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
                         {CLOSE_REASON_LABELS[ev.close_reason] || 'Closed'}
                       </span>
-                      {ev.event_type && <span style={{ color: 'var(--text-muted)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>{ev.event_type}</span>}
+                      {ev.event_type && <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>{ev.event_type}</span>}
                       <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.05rem', color: 'var(--text-soft)' }}>{ev.title}</h3>
                     </div>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
                       {ev.resolved_at ? timeAgo(ev.resolved_at) : timeAgo(ev.created_at)}
                     </span>
                   </div>
                   {ev.location_name && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
                   {myRole && (
-                    <span style={{ display: 'inline-block', marginTop: '0.5rem', background: 'var(--surface-2)', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
+                    <span style={{ display: 'inline-block', marginTop: '0.5rem', background: 'var(--surface-2)', color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
                       {myRole === 'responder' ? 'You helped' : myRole === 'coordinator' ? 'You coordinated' : 'You were affected'}
                     </span>
                   )}

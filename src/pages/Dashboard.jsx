@@ -74,8 +74,8 @@ export default function Dashboard() {
         <div style={{ marginBottom: "0.75rem", background: "linear-gradient(135deg, var(--success-bg), var(--border))", border: "2px solid var(--accent)", borderRadius: "16px", padding: "0.6rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
           <span aria-hidden="true" style={{ display: "flex" }}><Icon name="star" size={28} /></span>
           <div>
-            <span style={{ display: "block", color: "var(--accent)", fontWeight: 700, fontSize: "0.8rem", lineHeight: 1.2 }}>Hope Ambassador</span>
-            <span style={{ color: "var(--accent)", fontSize: "0.65rem" }}>Active and ready to help</span>
+            <span style={{ display: "block", color: "var(--accent)", fontWeight: 700, fontSize: "0.8125rem", lineHeight: 1.2 }}>Hope Ambassador</span>
+            <span style={{ color: "var(--accent)", fontSize: "0.8125rem" }}>Active and ready to help</span>
           </div>
         </div>
       )}
@@ -149,7 +149,7 @@ export default function Dashboard() {
         <span aria-hidden="true" style={{ flexShrink: 0, display: "flex" }}><Icon name="cat-emergency" size={40} /></span>
         <div>
           <span style={{ display: "block", color: "var(--gold)", fontWeight: 700, fontSize: "1rem" }}>Emergency Response</span>
-          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Floods, storms, fires, and outages that hit many neighbors</span>
+          <span style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>Floods, storms, fires, and outages that hit many neighbors</span>
         </div>
       </button>
     </div>

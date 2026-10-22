@@ -165,7 +165,7 @@ export default function PublicProfile() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <h1 style={{ margin: 0, fontSize: '1.4rem' }}>{profile.display_name || 'Neighbor'}</h1>
             {profile.is_hope_ambassador && (
-              <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
+              <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
                 Hope Ambassador
               </span>
             )}
@@ -174,7 +174,7 @@ export default function PublicProfile() {
             Member since {formatDate(profile.created_at)}
           </div>
           {profile.show_location && profile.neighborhood && (
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{profile.neighborhood}</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{profile.neighborhood}</div>
           )}
           {user && user.id !== userId && !blockedThem && (
             <button type="button" onClick={msgStatus === 'pending_in' ? () => navigate('/messages') : messageThem} disabled={messaging || msgStatus === 'pending_out'} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Sending...' : msgStatus === 'open' ? 'Message' : msgStatus === 'pending_out' ? 'Request sent' : msgStatus === 'pending_in' ? 'They asked to message you' : 'Ask to message'}</button>
@@ -202,7 +202,7 @@ export default function PublicProfile() {
       {/* Tabs */}
       <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
         <button className={'tasks-tab' + (tab === 'requests' ? ' tasks-tab-active' : '')} onClick={() => setTab('requests')}>
-          Requests {completedCount > 0 && <span style={{ marginLeft: "0.3rem", background: "var(--success-bg)", color: "var(--accent)", fontSize: "0.65rem", fontWeight: 700, padding: "1px 6px", borderRadius: "8px" }}>{completedCount} completed</span>}
+          Requests {completedCount > 0 && <span style={{ marginLeft: "0.3rem", background: "var(--success-bg)", color: "var(--accent)", fontSize: "0.8125rem", fontWeight: 700, padding: "1px 6px", borderRadius: "8px" }}>{completedCount} completed</span>}
         </button>
         <button className={'tasks-tab' + (tab === 'events' ? ' tasks-tab-active' : '')} onClick={() => setTab('events')}>
           Events
@@ -219,12 +219,12 @@ export default function PublicProfile() {
               <div key={r.id + '-' + r.role + '-' + i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }}>{r.skill_needed}</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
                     {r.role === 'helper' ? 'Helped' : 'Requested'} &middot; {formatDate(r.created_at)}
                   </div>
                 </div>
                 <span style={{
-                  fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
+                  fontSize: '0.8125rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
                   background: r.status === 'completed' ? 'var(--success-bg)' : 'var(--warn-bg)',
                   color: r.status === 'completed' ? 'var(--accent)' : 'var(--gold)',
                 }}>
@@ -246,12 +246,12 @@ export default function PublicProfile() {
               <div key={e.id + '-' + i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }}>{e.title}</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
                     {e.event_type} &middot; {formatDate(e.created_at)}
                   </div>
                 </div>
                 <span style={{
-                  fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
+                  fontSize: '0.8125rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
                   background: e.status === 'closed' ? 'var(--success-bg)' : 'var(--warn-bg)',
                   color: e.status === 'closed' ? 'var(--accent)' : 'var(--gold)',
                 }}>
