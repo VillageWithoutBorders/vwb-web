@@ -85,6 +85,8 @@ export default function VillageMap() {
   const [orgsError, setOrgsError] = useState('')
   const [openOrgs, setOpenOrgs] = useState({})
   const [zipText, setZipText] = useState('')
+  // Oct 22: the box takes a zip code or a town or village name (folded in from Find Village).
+  const [nameSearch, setNameSearch] = useState('')
   const [searchPoint, setSearchPoint] = useState(null)
   const [zipError, setZipError] = useState('')
   const [zipBusy, setZipBusy] = useState(false)
@@ -238,7 +240,15 @@ export default function VillageMap() {
   async function searchZip(e) {
     e.preventDefault()
     const z = zipText.trim()
-    if (!/^\d{5}$/.test(z)) { setZipError('Enter a 5 digit zip code.'); return }
+    if (!z) { setZipError('Type a zip code or a town name.'); return }
+    if (!/^\d+$/.test(z)) {
+      // A town or village name: look through the list.
+      setSearchPoint(null); setZipError('')
+      setNameSearch(z)
+      return
+    }
+    setNameSearch('')
+    if (!/^\d{5}$/.test(z)) { setZipError('A zip code has 5 numbers.'); return }
     setZipBusy(true); setZipError('')
     const { data, error: err } = await supabase.from('zip_codes').select('zip, city, state, latitude, longitude').eq('zip', z).maybeSingle()
     setZipBusy(false)
@@ -247,7 +257,15 @@ export default function VillageMap() {
     setSearchPoint({ zip: data.zip, city: data.city, state: data.state, latitude: Number(data.latitude), longitude: Number(data.longitude) })
   }
 
-  function clearSearch() { setSearchPoint(null); setZipText(''); setZipError('') }
+  function clearSearch() { setSearchPoint(null); setNameSearch(''); setZipText(''); setZipError('') }
+  // Villages whose name, area or towns include the words typed.
+  const nameMatches = useMemo(() => {
+    const t = nameSearch.trim().toLowerCase()
+    if (!t) return []
+    return villages.filter((v) => [v.name, v.region_label, v.towns].some((x) => (x || '').toLowerCase().includes(t)))
+  }, [nameSearch, villages])
+  // The list: your villages first, then ones you can join, then the rest.
+  const listOrder = (v) => (v.is_mine ? 0 : covers(v, myZip) ? 1 : 2)
   const boardFor = (v) => boards.find((b) => b.village_id === v.id)
 
   // Tapping a village in the list at the bottom: open the chat if you are in it,
@@ -407,15 +425,28 @@ export default function VillageMap() {
       {tab === 'hoods' && (
       <div id="panel-hoods" role="tabpanel" aria-labelledby="tab-hoods">
       <section className="cal-box" aria-labelledby="zip-find" style={{ marginBottom: '0.75rem' }}>
-        <h2 id="zip-find" style={{ marginTop: 0 }}>Find your village by zip code</h2>
+        <h2 id="zip-find" style={{ marginTop: 0 }}>Find a village by zip code or town</h2>
         <form onSubmit={searchZip} style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0' }}>
-          <label htmlFor="map-zip" className="sr-only">Zip code</label>
-          <input id="map-zip" type="text" inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" value={zipText} onChange={(e) => setZipText(e.target.value.replace(/\D/g, ''))} placeholder="Example: 30736" style={{ flex: 1, minWidth: 0, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
+          <label htmlFor="map-zip" className="sr-only">Zip code or town</label>
+          <input id="map-zip" type="search" maxLength={60} autoComplete="off" value={zipText} onChange={(e) => setZipText(e.target.value)} placeholder="Example: 30736 or Ringgold" style={{ flex: 1, minWidth: 0, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
           <button type="submit" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={zipBusy}>{zipBusy ? 'Looking...' : 'Find'}</button>
         </form>
         <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>Start a village for my area</button>
       </section>
       {zipError && <p className="form-error" role="alert">{zipError}</p>}
+
+      {nameSearch && (
+        <section className="cal-box" aria-live="polite" aria-labelledby="name-result">
+          <h2 id="name-result">Villages that match &quot;{nameSearch}&quot;</h2>
+          {nameMatches.length > 0 ? nameMatches.map((v) => (
+            <button key={v.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} onClick={() => setSelectedId(v.id)}>
+              <span className="cal-card-title">{v.name}{profile?.home_village_id === v.id ? ' \u00B7 your home' : v.is_mine ? ' \u00B7 you visit' : ''}</span>
+              <span className="cal-card-meta">{v.region_label ? v.region_label + ' \u00B7 ' : ''}{countText(v)}</span>
+            </button>
+          )) : <p className="cal-sub">No villages match. Try a zip code instead.</p>}
+          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginTop: '0.5rem' }} onClick={clearSearch}>Clear search</button>
+        </section>
+      )}
 
       {searchPoint && (
         <section className="cal-box" aria-live="polite" aria-labelledby="zip-result">
@@ -516,7 +547,7 @@ export default function VillageMap() {
 
           <section className="hub-section" aria-labelledby="village-list">
             <div className="hub-section-head"><h2 id="village-list">All villages ({villages.length})</h2></div>
-            {[...placed, ...unplaced].map((v) => (
+            {[...placed, ...unplaced].sort((a, b) => listOrder(a) - listOrder(b)).map((v) => (
               <div key={v.id}>
                 <button type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} aria-pressed={v.id === selectedId} onClick={() => openVillage(v)}>
                   <span className="cal-card-title">{v.name}{profile?.home_village_id === v.id ? ' \u00B7 your home' : v.is_mine ? ' \u00B7 you visit' : ''}</span>
