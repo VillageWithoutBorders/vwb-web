@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { askConfirm } from './AdminDialog'
 
-// Inside a village Campfire or Sidechat (GroupBoard). Shows:
+// Inside a village Campfire (GroupBoard). Picked Campfires are 'sidechat' in the database. Shows:
 // - "Still taking part?" when you have been asked.
 // - For the person who started it: who is asking to join, Shown or Hidden,
 //   and quiet members (removable 7 days after they were asked).
-// - Add a neighbor from this village (Campfire: active members; Sidechat: its starter).
+// - Add a neighbor from this village (Campfire: active members; Picked: its starter).
 // Renders nothing for chats that are not tied to a village.
 export default function VillageRoomPanel({ groupId, onInfo, onLeave, onChanged }) {
   const [room, setRoom] = useState(null)

@@ -19,7 +19,7 @@ import Icon from '../components/Icon'
 // Route: /village/:id
 
 // Village places only members can open. Visitors see a closed gate on them (Oct 22).
-const GATED = ['chat', 'campfires', 'sidechats', 'keeper', 'neighbors']
+const GATED = ['chat', 'campfires', 'keeper', 'neighbors']
 
 
 export default function VillageScene() {
@@ -153,6 +153,14 @@ export default function VillageScene() {
     b.openArrange(start)
   }
 
+  // Long press on the map: ask, then open arranging with that place picked.
+  async function holdToArrange(key) {
+    const msg = cottage ? 'Move things in your cottage?' : 'Move things on your view of this map? Only you see your view.'
+    if (!(await askConfirm(msg, { yes: 'Yes, move things', no: 'Not now' }))) return
+    startArrange('me')
+    if (key) { b.setPicked(key); b.setPickTools(true) }
+  }
+
   // Your cottage: kept on this device right away, then saved on your account.
   function saveCottage(next) {
     try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode */ }
@@ -240,10 +248,10 @@ export default function VillageScene() {
     return () => { alive = false }
   }, [id])
 
-  // Members only: this village's Campfires and Sidechats I can see.
+  // Members only: this village's Campfires I can see.
   function loadRooms() {
     supabase.rpc('village_rooms', { p_village: id }).then(({ data, error }) => {
-      if (error) { console.error('Failed to load Campfires and Sidechats:', error); return }
+      if (error) { console.error('Failed to load Campfires:', error); return }
       setRooms(data || [])
     })
   }
@@ -463,14 +471,9 @@ export default function VillageScene() {
       case 'chat': return { sub: mine ? (chatUnread ? chatUnread + ' new since you last looked' : 'Say hello and share news') : 'Join this village to read its chat', badge: mine ? chatUnread : 0 }
       case 'campfires': {
         if (!mine) return { sub: life ? FIRE_WORDS[life.fire_level] || 'Join this village to sit at its Campfires' : 'Join this village to sit at its Campfires' }
-        const f = rooms.filter((r) => r.kind === 'campfire'), inF = f.filter((r) => r.i_am_in).length
+        const f = rooms, inF = f.filter((r) => r.i_am_in).length
         const asks = f.reduce((n, r) => n + (r.asks_waiting || 0), 0)
         return { sub: f.length ? f.length + ' here' + (inF ? ', you are in ' + inF : '') + (asks ? ', ' + asks + ' asking to join' : '') : 'Start the first one', badge: asks }
-      }
-      case 'sidechats': {
-        if (!mine) return { sub: 'Join this village first' }
-        const s = rooms.filter((r) => r.kind === 'sidechat').length
-        return { sub: s ? 'You are in ' + s : (keepers && keepers.i_am_keeper ? 'Start one for a few neighbors' : 'Small chats a keeper starts') }
       }
       case 'skillshare': return { sub: 'Help nearby: requests and offers' }
       case 'neighbors': return { sub: village && village.member_count ? village.member_count + ' neighbors live here' : 'A few neighbors so far' }
@@ -528,8 +531,7 @@ export default function VillageScene() {
           <p className="vs-note">Members of a sister village can join this one as a guest.</p>
         </>
       case 'campfires':
-      case 'sidechats':
-        return <>{title}<VillageRooms villageId={id} kind={k === 'sidechats' ? 'sidechat' : 'campfire'} isMember={mine} isKeeper={!!(keepers && keepers.i_am_keeper)} onChanged={loadRooms} /></>
+        return <>{title}<VillageRooms villageId={id} isMember={mine} isKeeper={!!(keepers && keepers.i_am_keeper)} onChanged={loadRooms} /></>
       case 'keeper':
         return <>{title}
           {!mine && <p>Join this village to see who looks after it.</p>}
@@ -652,7 +654,7 @@ export default function VillageScene() {
         </button>
       )}
 
-      <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
+      <div {...sceneProps(b, 'vs-scene vs-scene-path', holdToArrange)}>
         <img className="vs-ground" src={backgroundSrc(world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
         {cottage && GIFTS.filter((g) => g.got).map((g) => (

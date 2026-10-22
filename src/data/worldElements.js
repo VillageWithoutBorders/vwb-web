@@ -14,7 +14,6 @@ export const VILLAGE_SPOTS = [
   { k: 'keeper', art: '/art/village-path/spot-keeper.webp', icon: 'key', label: "Keeper's house", short: 'Keeper', em: '\u{1F5DD}️', x: 83, y: 39 },
   { k: 'sisters', art: '/art/village-path/spot-sisters.webp', icon: 'bridge', label: 'Sister villages', short: 'Sisters', em: '\u{1F309}', x: 50, y: 8 },
   { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Organizations here', short: 'Organizations', em: '\u{1F465}', x: 17, y: 19 },
-  { k: 'sidechats', art: '/art/village-path/spot-sidechats.webp', icon: 'sidechats', label: 'Sidechats', short: 'Sidechats', em: '\u{1F4AC}', x: 83, y: 60 },
   { k: 'campfires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 50, y: 42, s: 1.05 },
   { k: 'skillshare', art: '/art/village-path/spot-skillshare.webp', icon: 'basket', label: 'SkillShare', short: 'SkillShare', em: '\u{1F9FA}', x: 79, y: 82, s: 1.1 },
   { k: 'neighbors', art: '/art/life/life-cottage-lit.webp', icon: 'wave', label: 'Neighbors', short: 'Neighbors', em: '\u{1F44B}', x: 17, y: 60 },

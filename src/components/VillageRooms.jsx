@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import Icon from './Icon'
 
-// A village's Campfires or Sidechats, for the Village page sheet.
-// kind: 'campfire' or 'sidechat'. The database decides who sees and does what.
-// Campfire: anyone in the village starts one, Shown or Hidden. Shown ones can be asked to join.
-// Sidechat: only keepers start one and pick who is in.
-export default function VillageRooms({ villageId, kind, isMember, isKeeper, onChanged }) {
+// A village's Campfires, for the Village page sheet and keeper tools.
+// Every small group chat in a village is a Campfire. Three ways to start one:
+// Shown (neighbors can ask to join), Hidden (only people in it see it),
+// and Picked (keepers only: the keeper chooses who is in).
+// Picked ones are stored as kind 'sidechat' in the database. People only see the word Campfire.
+// The database decides who sees and does what.
+export default function VillageRooms({ villageId, isMember, isKeeper, onChanged }) {
   const navigate = useNavigate()
   const [rooms, setRooms] = useState(null)
   const [error, setError] = useState('')
@@ -15,7 +17,7 @@ export default function VillageRooms({ villageId, kind, isMember, isKeeper, onCh
   const [note, setNote] = useState('')
   const [starting, setStarting] = useState(false)
   const [name, setName] = useState('')
-  const [shown, setShown] = useState(true)
+  const [mode, setMode] = useState('shown')
   const [people, setPeople] = useState([])
   const [picked, setPicked] = useState([])
   const [search, setSearch] = useState('')
@@ -24,13 +26,13 @@ export default function VillageRooms({ villageId, kind, isMember, isKeeper, onCh
     const { data, error: err } = await supabase.rpc('village_rooms', { p_village: villageId })
     if (err) { console.error('Failed to load village rooms:', err); setError("We couldn't load these. Check your connection and try again."); setRooms([]); return }
     setError('')
-    setRooms((data || []).filter((r) => r.kind === kind))
+    setRooms(data || [])
   }
-  useEffect(() => { if (isMember) load(); else setRooms([]) }, [villageId, kind, isMember]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (isMember) load(); else setRooms([]) }, [villageId, isMember]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sidechat: pick neighbors from this village.
+  // Picked: the keeper chooses neighbors from this village.
   useEffect(() => {
-    if (!starting || kind !== 'sidechat') return
+    if (!starting || mode !== 'picked') return
     let alive = true
     const t = setTimeout(() => {
       supabase.rpc('village_people', { p_village: villageId, p_search: search.trim() || null, p_limit: 50 }).then(({ data, error: err }) => {
@@ -40,7 +42,7 @@ export default function VillageRooms({ villageId, kind, isMember, isKeeper, onCh
       })
     }, 250)
     return () => { alive = false; clearTimeout(t) }
-  }, [starting, kind, villageId, search])
+  }, [starting, mode, villageId, search])
 
   async function ask(r) {
     setBusy(r.id); setNote('')
@@ -54,11 +56,11 @@ export default function VillageRooms({ villageId, kind, isMember, isKeeper, onCh
   async function start(e) {
     e.preventDefault()
     const n = name.trim()
-    if (!n) { setNote(kind === 'sidechat' ? 'Give the sidechat a name.' : 'Give the Campfire a name.'); return }
+    if (!n) { setNote('Give the Campfire a name.'); return }
     setBusy('start'); setNote('')
-    const { data: newId, error: err } = kind === 'sidechat'
+    const { data: newId, error: err } = mode === 'picked'
       ? await supabase.rpc('start_village_sidechat', { p_village: villageId, p_name: n, p_members: picked })
-      : await supabase.rpc('start_village_campfire', { p_village: villageId, p_name: n, p_shown: shown })
+      : await supabase.rpc('start_village_campfire', { p_village: villageId, p_name: n, p_shown: mode === 'shown' })
     setBusy('')
     if (err || !newId) {
       console.error('Failed to start:', err)
@@ -69,27 +71,26 @@ export default function VillageRooms({ villageId, kind, isMember, isKeeper, onCh
     navigate('/groups/' + newId, { state: { justStarted: true } })
   }
 
-  if (!isMember) return <p>Join this village to see its {kind === 'sidechat' ? 'sidechats' : 'Campfires'}.</p>
+  if (!isMember) return <p>Join this village to see its Campfires.</p>
 
-  const icon = kind === 'sidechat' ? '\u{1F4AC}' : '\u{1F525}'
-  const canStart = kind === 'campfire' || isKeeper
+  const icon = '\u{1F525}'
+  const whoCanFind = (r) => (r.kind === 'sidechat' ? ' · Picked by the keeper' : r.shown ? ' · Shown' : ' · Hidden')
 
   return <>
     <p className="vs-note">
-      {kind === 'sidechat'
-        ? 'Sidechats are small scrambled chats a keeper starts for a few neighbors. Only the people in one can see it.'
-        : 'Campfires are scrambled chats anyone here can start. Shown ones can be found and asked to join. Hidden ones only show to the people in them.'}
+      Campfires are small scrambled chats anyone here can start. Shown ones can be found and asked to join. Hidden ones only show to the people in them.
+      {isKeeper ? ' As a keeper, you can also start one and pick who is in.' : ''}
     </p>
     {rooms === null && <p role="status">Loading...</p>}
     {error && <p className="vs-note" role="alert">{error}</p>}
-    {rooms && rooms.length === 0 && !error && <p>{kind === 'sidechat' ? 'You are not in a sidechat here yet.' : 'No Campfires here yet. Start the first one.'}</p>}
+    {rooms && rooms.length === 0 && !error && <p>No Campfires here yet. Start the first one.</p>}
     {rooms && rooms.map((r) => (
       r.i_am_in
         ? <button key={r.id} type="button" className="vs-row" onClick={() => navigate('/groups/' + r.id)}>
             <span aria-hidden="true"><Icon name={icon} /></span> {r.name}
             <small>
               {r.member_count === 1 ? '1 person' : r.member_count + ' people'}
-              {kind === 'campfire' ? (r.shown ? ' · Shown' : ' · Hidden') : ''}
+              {whoCanFind(r)}
               {r.i_started ? ' · You started it' : ''}
               {r.asks_waiting > 0 ? ' · ' + r.asks_waiting + ' asking to join' : ''}
               {r.check_in_waiting ? ' · Still taking part?' : ''}
@@ -104,32 +105,37 @@ export default function VillageRooms({ villageId, kind, isMember, isKeeper, onCh
     ))}
     {note && <p className="vs-note" role="status">{note}</p>}
 
-    {canStart && !starting && (
+    {!starting && (
       <button type="button" className="btn btn-primary btn-full" onClick={() => { setStarting(true); setNote('') }}>
-        {kind === 'sidechat' ? 'Start a sidechat' : 'Start a Campfire'}
+        Start a Campfire
       </button>
     )}
-    {kind === 'sidechat' && !isKeeper && <p className="vs-note">Only a keeper of this village can start a sidechat.</p>}
     {starting && (
       <form onSubmit={start} noValidate style={{ display: 'grid', gap: 10 }}>
         <label htmlFor="vr-name"><b>Name</b></label>
         <input id="vr-name" type="text" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} autoComplete="off"
-          placeholder={kind === 'sidechat' ? 'Garden crew' : 'Porch talk'}
+          placeholder={mode === 'picked' ? 'Garden crew' : 'Porch talk'}
           style={{ minHeight: 48, fontSize: '1rem', padding: '0 12px', borderRadius: 12, border: '2px solid var(--vs-line)', background: 'var(--vs-card2)', color: 'var(--vs-ink)' }} />
-        {kind === 'campfire' && (
+        {(
           <fieldset style={{ border: 0, padding: 0, margin: 0, display: 'grid', gap: 6 }}>
             <legend className="vs-note">Who can find it</legend>
             <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', minHeight: 44 }}>
-              <input type="radio" name="vr-shown" checked={shown} onChange={() => setShown(true)} style={{ width: 22, height: 22 }} />
+              <input type="radio" name="vr-shown" checked={mode === 'shown'} onChange={() => setMode('shown')} style={{ width: 22, height: 22 }} />
               <span><b>Shown</b><br /><small>Neighbors here can see it and ask to join. You say yes or no.</small></span>
             </label>
             <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', minHeight: 44 }}>
-              <input type="radio" name="vr-shown" checked={!shown} onChange={() => setShown(false)} style={{ width: 22, height: 22 }} />
+              <input type="radio" name="vr-shown" checked={mode === 'hidden'} onChange={() => setMode('hidden')} style={{ width: 22, height: 22 }} />
               <span><b>Hidden</b><br /><small>Only people in it can see it. You add people from inside.</small></span>
             </label>
+            {isKeeper && (
+              <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', minHeight: 44 }}>
+                <input type="radio" name="vr-shown" checked={mode === 'picked'} onChange={() => setMode('picked')} style={{ width: 22, height: 22 }} />
+                <span><b>Picked</b><br /><small>Keepers only. You choose who is in. Only they can see it.</small></span>
+              </label>
+            )}
           </fieldset>
         )}
-        {kind === 'sidechat' && <>
+        {mode === 'picked' && <>
           <label htmlFor="vr-search"><b>Who is in it</b></label>
           <input id="vr-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search neighbors here" autoComplete="off"
             style={{ minHeight: 48, fontSize: '1rem', padding: '0 12px', borderRadius: 12, border: '2px solid var(--vs-line)', background: 'var(--vs-card2)', color: 'var(--vs-ink)' }} />

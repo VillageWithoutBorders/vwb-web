@@ -26,7 +26,7 @@ export default function SidechatAdd({ groupId, orgId, memberIds, isSteward, onAd
     return (
       <>
         <h3 className="groups-section">Add people</h3>
-        <p className="groups-note">Only the person who started this sidechat adds people to it. Everyone added is a member of the group.</p>
+        <p className="groups-note">Only the person who started this Campfire adds people to it. Everyone added is a member of the group.</p>
       </>
     )
   }
@@ -52,7 +52,7 @@ export default function SidechatAdd({ groupId, orgId, memberIds, isSteward, onAd
   return (
     <>
       <h3 className="groups-section">Add people</h3>
-      <p className="groups-note">You started this sidechat, so you can add anyone in the group. They are added right away.</p>
+      <p className="groups-note">You started this Campfire, so you can add anyone in the group. They are added right away.</p>
       <label htmlFor="sidechat-add-search" className="sr-only">Search the group by name</label>
       <input id="sidechat-add-search" type="search" className="group-search" placeholder="Type a name" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" />
       {options.slice(0, 12).map((p) => (

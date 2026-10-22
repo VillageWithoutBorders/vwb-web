@@ -635,14 +635,14 @@ export default function GroupBoard() {
           <h1>{campfires.has(group.id) ? <><Icon name="campfire" />{' '}</> : ''}{group.name}</h1>
           <p className="convo-context">{villageRoom
             ? (villageRoom.kind === 'sidechat' ? 'Sidechat in ' : 'Campfire in ') + villageRoom.village_name + ' · ' + members.length + ' ' + (members.length === 1 ? 'member' : 'members')
-            : <>{isSidechat ? 'Sidechat' + (parentName ? ' of ' + parentName : '') + ' · ' : (orgName ? 'For ' + orgName + ' · ' : '')}{members.length} {members.length === 1 ? 'member' : 'members'} · {campfires.has(group.id) ? 'Campfire' : 'Cottage Chat'}</>}</p>
+            : <>{isSidechat ? 'Smaller Campfire' + (parentName ? ' inside ' + parentName : '') + ' · ' : (orgName ? 'For ' + orgName + ' · ' : '')}{members.length} {members.length === 1 ? 'member' : 'members'} · {campfires.has(group.id) ? 'Campfire' : 'Cottage Chat'}</>}</p>
         </div>
         <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">Settings{waiting.length > 0 ? ' (' + waiting.length + ' waiting)' : ''}</button>
       </div>
 
       {sidechats.length > 0 && (
-        <nav aria-label="Sidechats" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
-          <span className="cal-sub" style={{ alignSelf: 'center' }}>Sidechats:</span>
+        <nav aria-label="Smaller Campfires" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
+          <span className="cal-sub" style={{ alignSelf: 'center' }}>Smaller Campfires:</span>
           {sidechats.map((s) => (
             <button key={s.id} type="button" className="btn btn-outline group-small-btn" onClick={() => navigate('/groups/' + s.id)}>{'\u21B3 '}{s.name}</button>
           ))}

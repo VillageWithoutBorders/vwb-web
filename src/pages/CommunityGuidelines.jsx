@@ -71,7 +71,7 @@ const CARDS = [
     points: [
       'Private message: you and one other person. Only the two of you can read it',
       'Cottage Chat: a few people you choose, like family or close friends. Only the people in it can read it',
-      'Campfire: a team inside a village, organization, or group, working together. Members only. A sidechat is a smaller chat inside a Campfire for one job',
+      'Campfire: a team inside a village, organization, or group, working together. Members only. A smaller Campfire can branch off for one job',
       'Village chat: for neighbors in your area. Anyone nearby can join, and you can join more than one. Only people who joined can read it, so keep sensitive details out. Vouch for neighbors you trust. Two members can ask to remove someone who is not safe',
       'Announcements: everyone can read. Only Ambassadors and admins can post',
       'Any community chat comes with risk. Not everyone is who they say they are. Keep your address, your schedule, and money details out',

@@ -123,7 +123,7 @@ export default function OrgDashboard() {
     e.preventDefault()
     const general = chats.find((c) => c.is_general)
     const name = (chatName || (!general ? orgName + ' general chat' : '')).trim()
-    if (!name) { setChatNote('Give the sidechat a name.'); return }
+    if (!name) { setChatNote('Give the Campfire a name.'); return }
     setChatBusy(true); setChatNote('')
     const { data: newId, error } = !general
       ? await supabase.rpc('start_org_general_chat', { p_org: id, p_name: name.slice(0, 80) })
@@ -361,13 +361,13 @@ export default function OrgDashboard() {
 
           <section className="hub-section" aria-labelledby="od-chats">
             <div className="hub-section-head"><h2 id="od-chats">Campfires</h2></div>
-            <p className="hub-org-desc">{general ? 'The general chat has everyone in ' + (orgName || 'your organization') + '. Start a sidechat under it for one task or topic, and pick who joins. Only the people you pick see it.' : 'Private chats for ' + (orgName || 'your organization') + '. The general chat adds everyone in your organization automatically.'}</p>
+            <p className="hub-org-desc">{general ? 'The general chat has everyone in ' + (orgName || 'your organization') + '. Start a smaller Campfire under it for one task or topic, and pick who joins. Only the people you pick see it.' : 'Private chats for ' + (orgName || 'your organization') + '. The general chat adds everyone in your organization automatically.'}</p>
             {chatsReady && chats.length === 0 && <p className="hub-empty">No chats yet. Start your general chat below.</p>}
             {general && chatRow(general, false)}
             {sidechats.map((c) => chatRow(c, true))}
             {otherChats.map((c) => chatRow(c, false))}
             <form onSubmit={startChat} noValidate style={{ marginTop: '0.75rem' }}>
-              <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{!general ? 'Name for your general chat' : 'Start a sidechat under ' + general.name}</label>
+              <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{!general ? 'Name for your general chat' : 'Start a smaller Campfire under ' + general.name}</label>
               <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={!general ? (orgName || 'Organization') + ' general chat' : 'For example, Volunteers or Food drive'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
               {general && (
                 <fieldset style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
@@ -390,7 +390,7 @@ export default function OrgDashboard() {
                 </fieldset>
               )}
               {chatNote && <p role="alert" className="groups-error">{chatNote}</p>}
-              <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : !general ? 'Start the general chat' : 'Start sidechat'}</button>
+              <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : !general ? 'Start the general chat' : 'Start the Campfire'}</button>
             </form>
           </section>
 
