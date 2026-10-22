@@ -6063,3 +6063,33 @@ a.btn { text-decoration: none; }
 .msg-timer-btn { min-height: 44px; padding: 0 0.25rem; border-radius: 10px; border: 2px solid var(--border); background: var(--white); color: var(--text); font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
 .msg-timer-btn.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .msg-timer-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Dashboard as a "today" page (Oct 22) ---------- */
+.today-h { margin: 1.25rem 0 0.5rem; font-size: 1.15rem; color: var(--text-strong); }
+.today-role { display: inline-flex; align-items: center; gap: 0.35rem; margin: 0.4rem 0 0; padding: 0.2rem 0.7rem; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 0.9rem; }
+.today-role .vwb-icon { width: 20px; height: 20px; vertical-align: 0; }
+.today-needs { margin-bottom: 0.5rem; }
+.today-needs .today-h { margin-top: 0.5rem; }
+.today-need {
+  display: flex; align-items: center; gap: 0.75rem; min-height: 64px; margin-bottom: 0.5rem; padding: 0.6rem 0.85rem;
+  border: 2px solid var(--accent); border-radius: 14px; background: var(--success-bg); color: var(--text); text-decoration: none;
+}
+.today-need:focus-visible, .today-place:focus-visible, .today-more:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.today-need-ic, .today-place-ic { display: flex; flex: none; }
+.today-need-ic .vwb-icon, .today-place-ic .vwb-icon { width: 32px; height: 32px; vertical-align: 0; }
+.today-need-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.today-need-text b { font-size: 1rem; color: var(--text-strong); }
+.today-need-text small { font-size: 0.9rem; color: var(--text-secondary); overflow-wrap: anywhere; }
+.today-go { font-size: 1.6rem; color: var(--accent); flex: none; }
+.today-empty { margin: 0 0 0.5rem; color: var(--text-secondary); font-size: 1rem; }
+.today-places { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+.today-place {
+  position: relative; display: flex; align-items: center; gap: 0.6rem; min-height: 60px; padding: 0.5rem 0.75rem;
+  border: 2px solid var(--border); border-radius: 14px; background: var(--white); color: var(--text); text-decoration: none; font-weight: 700; font-size: 1rem;
+}
+.today-place-label { min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
+.today-badge { position: absolute; top: 6px; right: 8px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--danger); color: #fff; font-size: 0.8rem; display: grid; place-items: center; }
+.today-more { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); font-weight: 700; }
+.today-setup { margin-top: 1rem; }
+.today-setup > :not(:first-child) { display: none; }
+@media (max-width: 340px) { .today-places { grid-template-columns: 1fr; } }
