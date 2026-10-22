@@ -273,9 +273,10 @@ export default function OrgPage() {
     startArrange('me')
     if (key) { b.setPicked(key); b.setPickTools(true) }
   }
-  const { b, arrangeFor, startArrange, resetLayout, saveLabels } = usePageMap({
+  const { b, arrangeFor, startArrange, resetLayout, saveLabels, hasOwn } = usePageMap({
     kind: 'org', id, spots, user, accountLayout: profile?.village_layout, refreshProfile, name: org?.name,
     base: isGroup ? DEFAULT_WORLDS.group : DEFAULT_WORLDS.org,
+    ownAllowed: isMember,
   })
   const { arrange, picked, placed, isHidden, dragStart, pickByKey } = b
 
@@ -515,7 +516,8 @@ export default function OrgPage() {
         {org.description && <p className="vs-note" style={{ marginTop: 10 }}>{org.description}</p>}
       </div>
 
-      {user && !arrange && (
+      {/* Only members arrange their own view (Oct 22). Visitors see the default look. */}
+      {user && isMember && !arrange && (
         <button type="button" className="vs-build-start" onClick={() => startArrange('me')}>
           <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
           <span className="vs-build-start-text">
@@ -533,8 +535,11 @@ export default function OrgPage() {
           </span>
         </button>
       )}
+      {!arrange && canManage && hasOwn && (
+        <p className="vs-note">You are seeing your own view, so a new default will not show for you. To see the default, open Arrange my view and tap Back to the default look.</p>
+      )}
 
-      <div {...sceneProps(b, 'vs-scene vs-scene-path', user ? holdToArrange : null)}>
+      <div {...sceneProps(b, 'vs-scene vs-scene-path', user && isMember ? holdToArrange : null)}>
        <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(b.world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />

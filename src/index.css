@@ -6188,3 +6188,6 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 .app-back:active { transform: scale(0.97); }
 .app-back:focus-visible { outline: 3px solid #e8b84a; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .app-back:active { transform: none; } }
+
+/* Longer action names in the bottom bar ("Ask for help", "I can help") may take two lines on small phones (Oct 22). */
+@media (max-width: 380px) { .tab-label { white-space: normal; text-align: center; line-height: 1.1; } }

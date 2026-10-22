@@ -46,7 +46,8 @@ function VillageAsk() {
   )
 }
 
-export default function Dashboard() {
+// Oct 22: Today lives under your cottage map (embedded). /today opens /cottage#today.
+export default function Dashboard({ embedded = false }) {
   const { profile, isAdmin, established } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -75,7 +76,7 @@ export default function Dashboard() {
         </p>
       )}
       <div className="welcome-section">
-        <h1>{hello}, {displayName}</h1>
+        {embedded ? <h2>{hello}, {displayName}</h2> : <h1>{hello}, {displayName}</h1>}
         <p className="welcome-sub" role="status">
           {waiting === null ? 'Here is your day.' : waiting === 0 ? "You're all caught up." : waiting + (waiting === 1 ? ' thing needs' : ' things need') + ' you today.'}
         </p>
