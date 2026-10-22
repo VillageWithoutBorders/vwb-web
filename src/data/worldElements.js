@@ -40,7 +40,7 @@ export const COTTAGE_SPOTS = [
   { k: 'visits', art: '/art/village-path/spot-visits.webp', icon: 'houses', label: 'Villages you visit', short: 'Visits', x: 22, y: 11 },
   { k: 'calendar', art: '/art/village-path/spot-calendar.webp', icon: 'calendar', label: 'Calendar', short: 'Calendar', x: 22, y: 28 },
   { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Your organizations', short: 'Organizations', x: 70, y: 20 },
-  { k: 'connections', art: '/art/village-path/spot-sidechats.webp', icon: 'handshake', label: 'Connections', short: 'Connections', x: 23, y: 44 },
+  { k: 'connections', art: '/art/village-path/spot-connections.webp', icon: 'handshake', label: 'Connections', short: 'Connections', x: 23, y: 44 },
   { k: 'groups', art: '/art/village-path/spot-groups.webp', icon: 'tent', label: 'Your groups', short: 'Groups', x: 76, y: 36 },
   { k: 'cottage', art: '/art/village-path/spot-cottage.webp', icon: 'cottage', label: 'Cottage Chats', short: 'Cottage Chats', x: 76, y: 50 },
   { k: 'campfires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Your Campfires', short: 'Campfires', x: 36, y: 60 },
@@ -56,15 +56,15 @@ export const COTTAGE_SPOTS = [
 export const ORG_SPOTS = [
   { k: 'rules', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 14, y: 27, members: true },
   { k: 'where', art: '/art/village-path/spot-where.webp', icon: 'houses', label: 'Where we work', short: 'Where', em: '\u{1F3D8}️', x: 32, y: 17 },
-  { k: 'links', art: '/art/village-path/spot-sisters.webp', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
+  { k: 'links', art: '/art/village-path/spot-links.webp', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
   { k: 'events', art: '/art/village-path/spot-calendar.webp', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
   { k: 'news', art: '/art/village-path/spot-news.webp', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
   { k: 'fires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52, members: true },
-  { k: 'members', art: '/art/village-path/spot-orgs.webp', icon: 'card', label: 'Members', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
+  { k: 'members', art: '/art/village-path/spot-members.webp', icon: 'card', label: 'Members', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
   { k: 'needs', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Needs and offers', short: 'Needs', em: '\u{1F91D}', x: 15, y: 74, members: true },
-  { k: 'share', art: '/art/village-build/deco-garden.webp', icon: 'box', label: 'What we share', short: 'Share', em: '\u{1F4E6}', x: 41, y: 74 },
-  { k: 'involved', art: '/art/village-path/spot-cottage.webp', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
-  { k: 'tools', art: '/art/village-path/spot-keeper.webp', icon: 'toolbox', label: 'Organizer tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
+  { k: 'share', art: '/art/village-path/spot-share.webp', icon: 'box', label: 'What we share', short: 'Share', em: '\u{1F4E6}', x: 41, y: 74 },
+  { k: 'involved', art: '/art/village-path/spot-involved.webp', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
+  { k: 'tools', art: '/art/village-path/spot-tools.webp', icon: 'toolbox', label: 'Organizer tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
 ]
 
 // An emergency response Group's page (OrgPage.jsx with kind 'group'). Same roadmap
@@ -72,15 +72,15 @@ export const ORG_SPOTS = [
 export const GROUP_SPOTS = [
   { k: 'rules', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 14, y: 27, members: true },
   { k: 'where', art: '/art/village-path/spot-where.webp', icon: 'houses', label: 'Where we cover', short: 'Where', em: '\u{1F3D8}', x: 32, y: 17 },
-  { k: 'links', art: '/art/village-path/spot-sisters.webp', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
+  { k: 'links', art: '/art/village-path/spot-links.webp', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
   { k: 'events', art: '/art/village-path/spot-calendar.webp', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
   { k: 'news', art: '/art/village-path/spot-news.webp', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
   { k: 'fires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52, members: true },
-  { k: 'members', art: '/art/village-path/spot-orgs.webp', icon: 'card', label: 'Members and what we bring', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
+  { k: 'members', art: '/art/village-path/spot-members.webp', icon: 'card', label: 'Members and what we bring', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
   { k: 'ready', art: '/art/village-path/spot-groups.webp', icon: 'siren', label: 'Ready to respond', short: 'Respond', em: '\u{1F6A8}', x: 15, y: 74 },
   { k: 'share', art: '/art/village-path/spot-supplies.webp', icon: 'box', label: 'Supplies we keep', short: 'Supplies', em: '\u{1F4E6}', x: 41, y: 74 },
-  { k: 'involved', art: '/art/village-path/spot-cottage.webp', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
-  { k: 'tools', art: '/art/village-path/spot-keeper.webp', icon: 'toolbox', label: 'Keeper tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
+  { k: 'involved', art: '/art/village-path/spot-involved.webp', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
+  { k: 'tools', art: '/art/village-path/spot-tools.webp', icon: 'toolbox', label: 'Keeper tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
 ]
 
 // The living village scene (vwb-village-life.sql). Painted art made in
@@ -122,3 +122,32 @@ export const OPEN_MEADOW = '/art/village-build/meadow-open.webp'
 // Every map sits on a simple field (Jade, Oct 22). Seasons can change it later:
 // pick a different field picture here by the time of year.
 export const FIELD_SRC = '/art/village-build/meadow-open.webp'
+
+// Backgrounds people can pick in Arrange (Oct 22). Add a picture here and it shows in
+// the Backgrounds tab (the tab appears once there is more than one).
+// group: backgrounds of the same place in different seasons share a group.
+// season: spring | summer | fall | winter.
+export const BACKGROUNDS = [
+  { k: 'field', label: 'Summer field', group: 'field', season: 'summer', src: FIELD_SRC },
+  { k: 'field-spring', label: 'Spring field', group: 'field', season: 'spring', src: '/art/village-build/ground-field-spring.webp' },
+  { k: 'field-fall', label: 'Fall field', group: 'field', season: 'fall', src: '/art/village-build/ground-field-fall.webp' },
+  { k: 'field-winter', label: 'Winter field', group: 'field', season: 'winter', src: '/art/village-build/ground-field-winter.webp' },
+  { k: 'forest', label: 'Forest', group: 'forest', season: 'summer', src: '/art/village-build/ground-forest-summer.webp' },
+  { k: 'park', label: 'Park', group: 'park', season: 'summer', src: '/art/village-build/ground-park-summer.webp' },
+]
+// "Change with the seasons": the field picture for this time of year (Northern Hemisphere).
+// Falls back to the summer field when a season's picture isn't there yet.
+export function seasonNow(date = new Date()) {
+  const m = date.getMonth() // 0 = January
+  return m >= 2 && m <= 4 ? 'spring' : m >= 5 && m <= 7 ? 'summer' : m >= 8 && m <= 10 ? 'fall' : 'winter'
+}
+export function backgroundSrc(key) {
+  if (key === 'seasons') {
+    const s = seasonNow()
+    const hit = BACKGROUNDS.find((b) => b.group === 'field' && b.season === s)
+    return (hit || BACKGROUNDS[0]).src
+  }
+  return (BACKGROUNDS.find((b) => b.k === key) || BACKGROUNDS[0]).src
+}
+// Is the seasons choice worth showing (the field has more than one season)?
+export const HAS_SEASONS = BACKGROUNDS.filter((b) => b.group === 'field').length > 1

@@ -11,7 +11,7 @@ import CalendarSubscribe from '../components/CalendarSubscribe'
 import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import OrgMemberNames from '../components/OrgMemberNames'
-import { ORG_SPOTS, GROUP_SPOTS, FIELD_SRC } from '../data/worldElements'
+import { ORG_SPOTS, GROUP_SPOTS, backgroundSrc } from '../data/worldElements'
 import { usePageMap, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps } from '../components/MapBuilder'
 import OrgSceneEditor from '../components/OrgSceneEditor'
 import GroupGear from '../components/GroupGear'
@@ -526,7 +526,7 @@ export default function OrgPage() {
       )}
 
       <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
-        <img className="vs-ground" src={FIELD_SRC} alt="" width="720" height="1080" fetchpriority="high" />
+        <img className="vs-ground" src={backgroundSrc(b.world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
         {spots.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
           const s = placed(s0)
