@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient'
 import 'leaflet/dist/leaflet.css'
 import BackLink from '../components/BackLink'
 import SisterVillages from '../components/SisterVillages'
-import { circleLayout, labelWidth } from '../utils/circleLayout'
+
 import Icon from '../components/Icon'
 
 // The Village Network, in two tabs.
@@ -69,7 +69,6 @@ function networkLinks(list, pointsByVillage) {
   return edges
 }
 
-const LABEL_FONT = 12
 function nodeRadius(v) { return v.member_count ? Math.min(24, 13 + Math.sqrt(v.member_count) * 0.9) : 13 }
 
 export default function VillageMap() {
@@ -94,8 +93,9 @@ export default function VillageMap() {
   const [points, setPoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  // The circle map is the main view. The street map is there for people who want roads.
-  const [view, setView] = useState('circles')
+  // Oct 22: the globe on Home is the picture of the network; this page is its plain list twin.
+  // The street map is an extra for people who think in roads and towns.
+  const [view, setView] = useState('list')
   const [selectedId, setSelectedId] = useState(null)
   // The line someone tapped, so the card can say what the two villages share.
   const [linkInfo, setLinkInfo] = useState(null)
@@ -117,18 +117,6 @@ export default function VillageMap() {
   const selectedRef = useRef(null)
   selectedRef.current = selectedId
   const cardRef = useRef(null)
-  // Your own village: step straight in. Any other: show its card and bring it into view.
-  function tapCircle(v) {
-    setLinkInfo(null)
-    if (v.is_mine) { navigate('/village/' + v.id); return }
-    setSelectedId(v.id)
-    setTimeout(() => {
-      const el = cardRef.current
-      if (!el) return
-      const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
-    }, 50)
-  }
 
   useEffect(() => {
     let alive = true
@@ -365,8 +353,6 @@ export default function VillageMap() {
     })
   }, [selectedId, villages, tab, view, placed])
 
-  // The circle map, built from real villages and the zip codes they share.
-  const circles = useMemo(() => (placed.length ? circleLayout(placed, pointsByVillage) : null), [placed, pointsByVillage])
 
   // After a zip search, pick the closest village that covers it.
   useEffect(() => { if (nearSearch.length) setSelectedId(nearSearch[0].v.id) }, [nearSearch])
@@ -374,7 +360,7 @@ export default function VillageMap() {
   if (loading) return <div className="cal-page"><p className="cal-empty">Loading...</p></div>
 
   return (
-    <div className="cal-page hub-page">
+    <div className="cal-page hub-page" style={{ overflowX: 'clip' }}>
       <BackLink fallback="/" fallbackLabel="Home" />
       <style>{'.vwb-map-label{background:#f6f0e0;color:#0b3b38;border:1.5px solid #0b3b38;border-radius:10px;padding:2px 8px;font-weight:600;font-size:12px;box-shadow:none}.vwb-map-label:before{display:none}'}</style>
       <h1 className="hub-org-name">The Village Network</h1>
@@ -427,7 +413,7 @@ export default function VillageMap() {
           <input id="map-zip" type="text" inputMode="numeric" pattern="[0-9]{5}" maxLength={5} autoComplete="postal-code" value={zipText} onChange={(e) => setZipText(e.target.value.replace(/\D/g, ''))} placeholder="Example: 30736" style={{ flex: 1, minWidth: 0, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
           <button type="submit" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={zipBusy}>{zipBusy ? 'Looking...' : 'Find'}</button>
         </form>
-        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>Join or start a village chat</button>
+        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>Start a village for my area</button>
       </section>
       {zipError && <p className="form-error" role="alert">{zipError}</p>}
 
@@ -459,67 +445,15 @@ export default function VillageMap() {
         <>
           {placed.length === 0 && <p className="cal-empty">These villages don't have a location yet, so there's nothing to draw. They're listed below.</p>}
 
-          {placed.length > 0 && <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>{view === 'circles' ? 'Tap your village to step inside. Tap any other village to see what it has. Tap the dot where two circles overlap to see the zip codes they share.' : 'Tap a village to see what it has. Tap the dot on a line to see more.'}</p>}
-
-          {view === 'circles' && circles && (
-            // A big map keeps its names readable and scrolls sideways inside its own box.
-            <div style={{ overflowX: 'auto', borderRadius: '20px', marginBottom: '0.5rem', background: 'radial-gradient(ellipse at 50% 42%, #169a88 0%, #0f847a 60%, #0a6a68 90%, #004849 100%)', border: '2px solid #004849' }}>
-            <svg className="village-web" viewBox={circles.vb.join(' ')} width="100%" style={{ display: 'block', margin: '0 auto', background: 'transparent', border: 'none', borderRadius: 0, minWidth: Math.round(circles.vb[2] * 0.7) + 'px', maxWidth: Math.round(circles.vb[2] * 1.5) + 'px', height: 'auto', maxHeight: '480px' }} role="group" aria-label="Map of neighborhood villages and the zip codes they share. The same villages are listed below.">
-              <defs>
-                <radialGradient id="vwbHood" cx=".42" cy=".38" r=".7"><stop offset="0" stopColor="#7fdcc0" /><stop offset=".7" stopColor="#55c8a8" /><stop offset="1" stopColor="#3fb594" /></radialGradient>
-              </defs>
-              {placed.map((v, i) => {
-                const c = circles.nodes[i], on = v.id === selectedId
-                return (
-                  <g key={v.id} tabIndex={0} role="button" aria-label={v.name + ', ' + countText(v)} aria-pressed={on} onClick={() => tapCircle(v)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tapCircle(v) } }} style={{ cursor: 'pointer' }}>
-                    <circle cx={c.x} cy={c.y} r={c.r} fill="url(#vwbHood)" fillOpacity="0.82" stroke={v.is_mine ? '#ffcc66' : '#8fe6cd'} strokeWidth={v.is_mine ? 2.5 : 1.5} />
-                  </g>
-                )
-              })}
-              {placed.map((v, i) => {
-                const c = circles.nodes[i]
-                return v.id === selectedId ? <circle key={'s' + v.id} cx={c.x} cy={c.y} r={c.r + 3} fill="none" stroke="#ffd27a" strokeWidth="4" pointerEvents="none" /> : null
-              })}
-              {circles.links.map((l, i) => {
-                const a = circles.nodes[l.i], b = circles.nodes[l.j]
-                return <line key={'l' + i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#f4dca4" strokeWidth="3" strokeLinecap="round" strokeDasharray="1 8" pointerEvents="none" />
-              })}
-              {sisters.map((sp) => {
-                const i = placed.findIndex((v) => v.id === sp.village_a), j = placed.findIndex((v) => v.id === sp.village_b)
-                if (i < 0 || j < 0) return null
-                const a = circles.nodes[i], b = circles.nodes[j]
-                return <line key={'sis' + sp.village_a + sp.village_b} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#ffd27a" strokeWidth="3" strokeLinecap="round" strokeOpacity="0.9" pointerEvents="none" />
-              })}
-              {circles.links.map((l, i) => {
-                const label = placed[l.i].name + ' and ' + placed[l.j].name + ' share ' + l.shared + ' zip code' + (l.shared === 1 ? '' : 's')
-                const pick = () => setLinkInfo({ a: placed[l.i].name, b: placed[l.j].name, shared: l.shared, miles: 0 })
-                return (
-                  <g key={'d' + i} tabIndex={0} role="button" aria-label={label} onClick={pick} onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick() } }} style={{ cursor: 'pointer' }}>
-                    <circle cx={l.mx} cy={l.my} r="22" fill="transparent" />
-                    <circle cx={l.mx} cy={l.my} r="7" fill="#f6f0e0" stroke="#0b3b38" strokeWidth="2" />
-                  </g>
-                )
-              })}
-              {placed.map((v, i) => {
-                const lb = circles.labels[i], c = circles.nodes[i], w = lb.right - lb.left
-                return (
-                  <g key={'n' + v.id} pointerEvents="none">
-                    <rect x={lb.left} y={lb.top} width={w} height="21" rx="10.5" fill="#f6f0e0" stroke="#0b3b38" strokeWidth="1.5" />
-                    <text x={lb.tx} y={lb.ty + 1} fill="#0b3b38" fontSize={LABEL_FONT} fontWeight="600" textAnchor="middle">{v.name}</text>
-                  </g>
-                )
-              })}
-            </svg>
-            </div>
-          )}
+          {placed.length > 0 && view === 'street' && <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>Tap a village to see what it has. Tap the dot on a line to see more.</p>}
 
           {view === 'street' && placed.length > 0 && (
             <div ref={mapEl} className="village-map" role="application" aria-label="Street map of villages. The same villages are listed below." />
           )}
 
           {placed.length > 0 && (
-            <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.75rem' }} onClick={() => { setView(view === 'circles' ? 'street' : 'circles'); setLinkInfo(null) }}>
-              {view === 'circles' ? 'Show the street map' : 'Back to the circle map'}
+            <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.75rem' }} onClick={() => { setView(view === 'street' ? 'list' : 'street'); setLinkInfo(null) }}>
+              {view === 'street' ? 'Hide the street map' : 'Show on a street map'}
             </button>
           )}
 
@@ -532,7 +466,7 @@ export default function VillageMap() {
 
           {selected && (
             <section ref={cardRef} className="cal-box" aria-live="polite" aria-labelledby="village-sel" style={{ scrollMarginTop: 'calc(var(--header-height) + 12px)' }}>
-              <h2 id="village-sel">{selected.name}{selected.is_mine ? ' (you joined)' : ''}</h2>
+              <h2 id="village-sel">{selected.name}{profile?.home_village_id === selected.id ? ' (your home)' : selected.is_mine ? ' (you visit)' : ''}</h2>
               {selected.region_label && <p className="cal-sub">{selected.region_label}</p>}
               <p className="cal-sub">{countText(selected)}{selected.zip_count ? ' \u00B7 covers ' + selected.zip_count + ' zip codes' : ''}</p>
               {selected.towns && <p className="cal-sub">Towns: {selected.towns}</p>}
@@ -574,22 +508,20 @@ export default function VillageMap() {
               {!selected.is_mine && !covers(selected, myZip) && (
                 <p className="cal-sub">{myZip ? 'Your zip code is not on this village\u2019s list.' : 'Add your zip code on your Profile to join.'}</p>
               )}
-              {!selected.is_mine && <p className="cal-sub" style={{ marginTop: '0.4rem' }}>Anyone with an account near this village can join. You will read a short warning first.</p>}
+              {!selected.is_mine && <p className="cal-sub" style={{ marginTop: '0.4rem' }}>{profile?.home_village_id ? 'You already have a home village, so you would join this one as a guest. You will read a short warning first.' : 'Neighbors whose zip code is on its list can join. You will read a short warning first.'}</p>}
             </section>
           )}
 
-          <p className="cal-sub" style={{ margin: '0.5rem 0' }}>{view === 'circles'
-            ? 'Each circle is a neighborhood. Bigger circles cover more zip codes. Circles overlap where they share zip codes. A solid gold line joins Sister Villages. Only places are shown, never people.'
-            : 'Dotted lines join villages that share zip codes. Dashed lines join villages that share none, by distance. Small dots are zip code areas, never people.'}</p>
+          {view === 'street' && <p className="cal-sub" style={{ margin: '0.5rem 0' }}>Dotted lines join villages that share zip codes. Small dots are zip code areas, never people.</p>}
 
           <section className="hub-section" aria-labelledby="village-list">
             <div className="hub-section-head"><h2 id="village-list">All villages ({villages.length})</h2></div>
             {[...placed, ...unplaced].map((v) => (
               <div key={v.id}>
                 <button type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} aria-pressed={v.id === selectedId} onClick={() => openVillage(v)}>
-                  <span className="cal-card-title">{v.name}{v.is_mine ? ' \u00B7 joined' : ''}</span>
+                  <span className="cal-card-title">{v.name}{profile?.home_village_id === v.id ? ' \u00B7 your home' : v.is_mine ? ' \u00B7 you visit' : ''}</span>
                   <span className="cal-card-meta">{v.region_label ? v.region_label + ' \u00B7 ' : ''}{countText(v)}</span>
-                  {(v.is_mine || covers(v, myZip)) && <span className="cal-card-meta" style={{ color: '#7fe0bf', fontWeight: 600 }}>{v.is_mine ? 'Tap to open the chat' : 'Tap to join'}</span>}
+                  {(v.is_mine || covers(v, myZip)) && <span className="cal-card-meta vm-tap">{v.is_mine ? 'Tap to open the chat' : profile?.home_village_id ? 'Tap to join as a guest' : 'Tap to join'}</span>}
                 </button>
                 {listNote && listNote.id === v.id && <p className="cal-sub" role="status" style={{ margin: '0.25rem 0 0.5rem' }}>{listNote.text}</p>}
               </div>
