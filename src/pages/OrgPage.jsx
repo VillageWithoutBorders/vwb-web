@@ -11,7 +11,8 @@ import CalendarSubscribe from '../components/CalendarSubscribe'
 import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import OrgMemberNames from '../components/OrgMemberNames'
-import { ORG_SPOTS, GROUP_SPOTS, GROUNDS } from '../data/worldElements'
+import { ORG_SPOTS, GROUP_SPOTS, FIELD_SRC } from '../data/worldElements'
+import { usePageMap, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps } from '../components/MapBuilder'
 import OrgSceneEditor from '../components/OrgSceneEditor'
 import GroupGear from '../components/GroupGear'
 import GroupResponse from '../components/GroupResponse'
@@ -42,7 +43,7 @@ export default function OrgPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const isNew = params.get('new') === '1'
-  const { user, organizations } = useAuth()
+  const { user, profile, refreshProfile, organizations } = useAuth()
 
   const [org, setOrg] = useState(null)
   const [place, setPlace] = useState('')
@@ -252,17 +253,24 @@ export default function OrgPage() {
   const KIND = isGroup ? 'group' : 'organization'
 
   const locked = (s) => !!s.members && !isMember
-  // The look its leaders chose (vwb-org-scene.sql): ground, sign, hidden places, own names.
+  // The look its leaders chose (vwb-org-scene.sql): sign, hidden places, own names.
+  // Every map sits on a simple field (Oct 22).
   const scene = (org && org.scene) || {}
   const hiddenKeys = Array.isArray(scene.hide) ? scene.hide : []
   const ownNames = scene.names && typeof scene.names === 'object' ? scene.names : {}
-  const groundKey = scene.ground || (isGroup ? 'clearings' : 'roads')
-  const groundSrc = (GROUNDS.find((g) => g.k === groundKey) || GROUNDS[0]).src
   const sign = scene.sign || (isGroup ? 'tent' : 'people')
   const named = (s) => (ownNames[s.k] ? { ...s, label: ownNames[s.k], short: ownNames[s.k] } : s)
   const spots = SPOTS.filter((s) => !s.organizers || canManage).filter((s) => s.k === 'tools' || !hiddenKeys.includes(s.k))
     .map((s) => (s.k === 'involved' && !canManage ? { ...s, x: 50 } : s)).map(named)
   const general = chats.find((c) => c.is_general)
+
+  // Arrange and build (Oct 22, vwb-map-layouts.sql): the Heads and organizers (a
+  // group's Keeper and Helpers) set the shared look; anyone signed in can arrange
+  // their own view on top. Only they see it.
+  const { b, arrangeFor, startArrange, resetLayout, saveLabels } = usePageMap({
+    kind: 'org', id, spots, user, accountLayout: profile?.village_layout, refreshProfile, name: org?.name,
+  })
+  const { arrange, picked, placed, isHidden, dragStart, pickByKey } = b
 
   function info(k) {
     switch (k) {
@@ -479,7 +487,7 @@ export default function OrgPage() {
 
 
   return (
-    <div className="vs-page">
+    <div className="vs-page vs-page-path">
       <nav className="vs-top" aria-label="Where you are">
         <Link className="vs-crumb" to="/villages?tab=orgs">Village Network</Link>
         <span className="vs-sep" aria-hidden="true">&#8250;</span>
@@ -498,26 +506,54 @@ export default function OrgPage() {
         {org.description && <p className="vs-note" style={{ marginTop: 10 }}>{org.description}</p>}
       </div>
 
-      <div className="vs-scene">
-        <img className="vs-ground" src={groundSrc} alt="" width="547" height="868" fetchpriority="high" />
-        {spots.map((s) => {
+      {user && !arrange && (
+        <button type="button" className="vs-build-start" onClick={() => startArrange('me')}>
+          <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
+          <span className="vs-build-start-text">
+            <b>Arrange my view of {org.name}</b>
+            <small>Only you see your view. Move places, add trees, draw roads.</small>
+          </span>
+        </button>
+      )}
+      {user && !arrange && canManage && (
+        <button type="button" className="vs-build-start vs-build-shared" onClick={() => startArrange('everyone')}>
+          <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
+          <span className="vs-build-start-text">
+            <b>Arrange {org.name} for everyone</b>
+            <small>As one of its {W.leadsLower}, you set the look everyone starts with.</small>
+          </span>
+        </button>
+      )}
+
+      <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
+        <img className="vs-ground" src={FIELD_SRC} alt="" width="720" height="1080" fetchpriority="high" />
+        <MapLayers b={b} />
+        {spots.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
+          const s = placed(s0)
           const i = info(s.k)
           const lock = locked(s)
           return (
             <button key={s.k} type="button" data-spot={s.k}
-              className={'vs-el' + (s.soon || lock ? ' vs-soon' : '') + (s.k === 'fires' && !lock ? ' vs-flame' : '') + (bump === s.k ? ' vs-bump' : '')}
+              className={'vs-el' + (s.soon || lock ? ' vs-soon' : '') + (s.k === 'fires' && !lock ? ' vs-flame' : '') + (bump === s.k ? ' vs-bump' : '') + (arrange && picked === s.k ? ' vs-picked' : '') + (arrange && isHidden(s.k) ? ' vs-hidden' : '')}
               style={{ left: s.x + '%', top: s.y + '%', '--s': s.s || 1 }}
               aria-label={s.label + '. ' + i.sub}
-              onClick={() => tap(s)}>
-              <span className="vs-em" aria-hidden="true"><SpotIcon spot={s} />{lock && <span className="vs-lock"><Icon name="lock" /></span>}</span>
+              onPointerDown={(e) => dragStart(e, s.k)}
+              onClick={(e) => { if (!arrange) tap(s); else if (e.detail === 0) pickByKey(s.k) }}>
+              <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true"><SpotIcon spot={s} />{lock && <span className="vs-lock"><Icon name="lock" /></span>}</span>
               <span className="vs-lab">{s.short}</span>
             </button>
           )
         })}
+        {user && <NamesToggle b={b} onChange={saveLabels} />}
         <div className="vs-fade" />
       </div>
 
-      <p className="vs-hint">Tap anything to go there.</p>
+      <p className="vs-hint">{arrange ? (arrangeFor === 'everyone' ? 'You are arranging ' + org.name + ' for everyone. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : 'Tap anything to go there.'}</p>
+
+      <MapToolbar b={b} more={<>
+        <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>{arrangeFor === 'everyone' ? 'Back to the usual map for everyone' : 'Back to the shared look'}</button>
+        <p className="vs-note">{arrangeFor === 'everyone' ? 'Everyone sees this look, unless they arranged their own view.' : 'Your view is saved on your account and only you see it.'} Hidden places are still in the list under the map.</p>
+      </>} />
 
       {isNew && isGroup && canManage && (
         <section className="vs-body gs-new" aria-labelledby="gs-new-h">
