@@ -140,7 +140,8 @@ export function mapBody(w) {
 const stillMotion = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false } }
 
 export function useMapBuilder({ spots, initial, onSave, base }) {
-  const sceneRef = useRef(null)
+  const sceneRef = useRef(null) // the zoom layer: everything on the map, moved and scaled together
+  const outerRef = useRef(null) // the map's frame on the page
   const dragRef = useRef(null)
   const drawRef = useRef(null)
   const drawKindRef = useRef('road')
@@ -341,10 +342,103 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
   }
   // The finger lifting after a long press should not also count as a tap.
   function holdClick(e) {
-    if (!holdFiredRef.current) return
-    holdFiredRef.current = false
+    if (!holdFiredRef.current && !panMovedRef.current) return
+    holdFiredRef.current = false; panMovedRef.current = false
     e.preventDefault(); e.stopPropagation()
   }
+  // Pinch zoom (Oct 22). Two fingers zoom from 1x to 3x around the spot between them.
+  // Zoomed in, one finger on the open map moves it around. The + and - buttons
+  // under the map do the same for anyone who cannot pinch.
+  const [zoom, setZoomState] = useState({ z: 1, x: 0, y: 0 })
+  const zoomRef = useRef(zoom)
+  const ptrsRef = useRef(new Map())
+  const pinchRef = useRef(null)
+  const panRef = useRef(null)
+  const panMovedRef = useRef(false)
+  function setZoom(v) { zoomRef.current = v; setZoomState(v) }
+  function fitZoom(z, x, y) {
+    const el = outerRef.current
+    if (!el) return { z: 1, x: 0, y: 0 }
+    const W = el.clientWidth, H = el.clientHeight
+    z = Math.min(3, Math.max(1, z))
+    if (z < 1.03) return { z: 1, x: 0, y: 0 }
+    return { z, x: Math.min(0, Math.max(W - W * z, x)), y: Math.min(0, Math.max(H - H * z, y)) }
+  }
+  function zoomAt(z, mx, my, from) {
+    const c = from || zoomRef.current
+    const px = (mx - c.x) / c.z, py = (my - c.y) / c.z
+    setZoom(fitZoom(z, mx - px * z, my - py * z))
+  }
+  function zoomBy(f) { const el = outerRef.current; if (el) zoomAt(zoomRef.current.z * f, el.clientWidth / 2, el.clientHeight / 2) }
+  function zoomReset() { setZoom({ z: 1, x: 0, y: 0 }) }
+  useEffect(() => {
+    const onResize = () => setZoom({ z: 1, x: 0, y: 0 })
+    window.addEventListener('orientationchange', onResize)
+    return () => window.removeEventListener('orientationchange', onResize)
+  }, [])
+  function localPt(e) { const r = outerRef.current.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top] }
+  function pinchNow() {
+    const [a, c] = [...ptrsRef.current.values()]
+    return { m: [(a[0] + c[0]) / 2, (a[1] + c[1]) / 2], d: Math.hypot(a[0] - c[0], a[1] - c[1]) || 1 }
+  }
+  function zoomDown(e) {
+    if (!outerRef.current) return
+    ptrsRef.current.set(e.pointerId, localPt(e))
+    const n = ptrsRef.current.size
+    if (n === 1) {
+      panMovedRef.current = false
+      panRef.current = zoomRef.current.z > 1 ? { p: localPt(e), x: zoomRef.current.x, y: zoomRef.current.y, moved: false, id: e.pointerId } : null
+      return
+    }
+    // A second finger: stop any drag, drawing or long press, and start pinching.
+    e.stopPropagation(); e.preventDefault()
+    holdStop()
+    if (dragRef.current) { if (dragRef.current.moved) setWorld(dragRef.current.before); dragRef.current = null }
+    if (drawRef.current) { drawRef.current = null; setDrawing(null) }
+    panRef.current = null
+    panMovedRef.current = true
+    if (n === 2) {
+      const { m, d } = pinchNow()
+      pinchRef.current = { m, d, from: { ...zoomRef.current } }
+      try { for (const id of ptrsRef.current.keys()) outerRef.current.setPointerCapture(id) } catch { /* older browsers */ }
+    }
+  }
+  function zoomMove(e) {
+    if (!ptrsRef.current.has(e.pointerId)) return
+    ptrsRef.current.set(e.pointerId, localPt(e))
+    if (pinchRef.current && ptrsRef.current.size >= 2) {
+      e.stopPropagation()
+      const p = pinchRef.current, now = pinchNow()
+      const z = Math.min(3, Math.max(1, p.from.z * (now.d / p.d)))
+      const px = (p.m[0] - p.from.x) / p.from.z, py = (p.m[1] - p.from.y) / p.from.z
+      setZoom(fitZoom(z, now.m[0] - px * z, now.m[1] - py * z))
+      return
+    }
+    const pan = panRef.current
+    if (!pan || dragRef.current || drawRef.current) return
+    const [x, y] = localPt(e)
+    if (!pan.moved) {
+      if (Math.hypot(x - pan.p[0], y - pan.p[1]) < 8) return
+      pan.moved = true; panMovedRef.current = true; holdStop()
+      try { outerRef.current.setPointerCapture(e.pointerId) } catch { /* older browsers */ }
+    }
+    e.stopPropagation()
+    setZoom(fitZoom(zoomRef.current.z, pan.x + x - pan.p[0], pan.y + y - pan.p[1]))
+  }
+  function zoomUp(e) {
+    ptrsRef.current.delete(e.pointerId)
+    const n = ptrsRef.current.size
+    if (pinchRef.current && n < 2) {
+      pinchRef.current = null
+      // One finger still down: keep moving the map from where it is now.
+      if (n === 1 && zoomRef.current.z > 1) {
+        const [id, p] = [...ptrsRef.current.entries()][0]
+        panRef.current = { p, x: zoomRef.current.x, y: zoomRef.current.y, moved: true, id }
+      }
+    }
+    if (n === 0) panRef.current = null
+  }
+
   function closeArrange() { setArrange(false); setPicked(null); setTool('move'); setTrayOpen(false) }
   // Do the name tags show right now (without pointing at a place)?
   const [canHover] = useState(() => { try { return window.matchMedia('(hover: hover) and (pointer: fine)').matches } catch { return false } })
@@ -357,6 +451,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     placed, isHidden, hiddenCount, pickedDecor, dragStart, dragMove, dragEnd, roadStart,
     changePicked, resize, flipPicked, addDecor, removePicked, nudge, pickByKey, namesShowing,
     holdStart, holdMove, holdStop, holdClick,
+    outerRef, zoom, zoomBy, zoomReset, zoomDown, zoomMove, zoomUp,
   }
 }
 
@@ -364,8 +459,9 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
 // onHold(key): called after a long press while not arranging. key is the place held, or null.
 export function sceneProps(b, extraClass, onHold) {
   return {
-    ref: b.sceneRef,
-    className: extraClass + ' vs-names-' + (b.world.labels || 'auto') + (b.arrange ? ' vs-arranging' : '') + (b.arrange && b.tool !== 'move' ? ' vs-drawing' : ''),
+    ref: b.outerRef,
+    className: extraClass + ' vs-names-' + (b.world.labels || 'auto') + (b.arrange ? ' vs-arranging' : '') + (b.arrange && b.tool !== 'move' ? ' vs-drawing' : '') + (b.zoom.z > 1 ? ' vs-zoomed' : ''),
+    onPointerDownCapture: b.zoomDown, onPointerMoveCapture: b.zoomMove, onPointerUpCapture: b.zoomUp, onPointerCancelCapture: b.zoomUp,
     onPointerDown: (e) => { b.roadStart(e); b.holdStart(e, onHold) },
     onPointerMove: (e) => { b.holdMove(e); b.dragMove(e) },
     onPointerUp: () => { b.holdStop(); b.dragEnd() },
@@ -403,14 +499,28 @@ export function MapLayers({ b }) {
 }
 
 // The Show names / Hide names button on the map.
+// The layer inside the map frame that zooms and moves. Everything on the map goes in it.
+export function zoomLayer(b) {
+  const { z, x, y } = b.zoom
+  return { ref: b.sceneRef, className: 'vs-zoom', style: { transform: 'translate(' + x + 'px, ' + y + 'px) scale(' + z + ')' } }
+}
+
+// Under the map: zoom out, show or hide names, back to the whole map, zoom in.
 export function NamesToggle({ b, onChange }) {
+  const z = b.zoom.z
   return (
-    <button type="button" className="vs-names-toggle" onPointerDown={(e) => e.stopPropagation()}
-      aria-pressed={b.namesShowing}
-      onClick={() => onChange(b.namesShowing ? 'hide' : 'show')}>
-      <ToolIcon name={b.namesShowing ? 'eye' : 'tag'} />
-      <span>{b.namesShowing ? 'Hide names' : 'Show names'}</span>
-    </button>
+    <div className="vs-map-under">
+      <button type="button" className="vs-zoom-btn" aria-label="Zoom out" disabled={z <= 1} onClick={() => b.zoomBy(1 / 1.5)}><ToolIcon name="minus" /></button>
+      {onChange && !b.arrange && (
+        <button type="button" className="vs-names-toggle" aria-pressed={b.namesShowing}
+          onClick={() => onChange(b.namesShowing ? 'hide' : 'show')}>
+          <ToolIcon name={b.namesShowing ? 'eye' : 'tag'} />
+          <span>{b.namesShowing ? 'Hide names' : 'Show names'}</span>
+        </button>
+      )}
+      {z > 1 && <button type="button" className="vs-zoom-btn vs-zoom-fit" onClick={b.zoomReset}>Whole map</button>}
+      <button type="button" className="vs-zoom-btn" aria-label="Zoom in" disabled={z >= 3} onClick={() => b.zoomBy(1.5)}><ToolIcon name="plus" /></button>
+    </div>
   )
 }
 

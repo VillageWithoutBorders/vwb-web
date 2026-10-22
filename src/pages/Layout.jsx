@@ -1,5 +1,5 @@
 import Icon from '../components/Icon'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView'
@@ -10,6 +10,7 @@ import AlertsMenu from '../components/AlertsMenu'
 import AdminShield from '../components/AdminShield'
 import AppTour from '../components/AppTour'
 import KeyRestorePrompt from '../components/KeyRestorePrompt'
+import { PageBackContext, FrameBack } from '../components/BackLink'
 
 export default function Layout() {
   const { pathname } = useLocation()
@@ -26,6 +27,12 @@ export default function Layout() {
   // with their own teal background, edge to edge.
   const isWorld = (pathname === '/' && !simple) || pathname === '/world' || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
   const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
+
+  // Back button on every page (Oct 22, Jade). Not on Home (the globe), and not on chats,
+  // which have their own back arrow. Pages with their own BackLink hide this one.
+  const [ownBacks, setOwnBacks] = useState(0)
+  const tellFrame = useCallback((n) => setOwnBacks((c) => c + n), [])
+  const showBack = !ownBacks && !isChat && pathname !== '/' && pathname !== '/world'
 
   // The Admin page gets a wider column on a computer for its side menu.
   const isAdminPage = pathname === '/admin'
@@ -58,7 +65,10 @@ export default function Layout() {
         </nav>
       </header>
       <main className={'app-main' + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '')}>
-        <Outlet />
+        {showBack && <FrameBack world={isWorld} />}
+        <PageBackContext.Provider value={tellFrame}>
+          <Outlet />
+        </PageBackContext.Provider>
       </main>
       <BottomTabs />
       <SimpleOffer />
