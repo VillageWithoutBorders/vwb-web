@@ -182,3 +182,16 @@
 .vs-el:active .vs-art { transform: scale(0.96); }
 .vs-scene-path .vs-lab { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25); }
 @media (prefers-reduced-motion: reduce) { .vs-el .vs-art { transition: none; transform: none !important; } }
+
+/* Founder: arrange the village by dragging (VillageScene.jsx). */
+.vs-arranging { touch-action: none; outline: 3px dashed var(--vs-gold); outline-offset: -3px; }
+.vs-arranging .vs-el { cursor: grab; touch-action: none; }
+.vs-arranging .vs-el:active { cursor: grabbing; }
+.vs-arranging .vs-el .vs-lab { background: #fff4d6; }
+.vs-picked .vs-lab { background: var(--vs-gold) !important; outline: 2px solid #2a2004; }
+.vs-arrange { padding: 0 16px; margin: 4px 0 12px; }
+.vs-arrange .btn { min-height: 44px; }
+.vs-arrange-picked { font-weight: 700; margin: 6px 0; }
+.vs-arrange-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.vs-arrange-row .btn { flex: 1 1 auto; }
+.vs-arrange-note { white-space: pre-line; }

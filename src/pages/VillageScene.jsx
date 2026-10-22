@@ -18,7 +18,7 @@ import Icon from '../components/Icon'
 export default function VillageScene() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, isFounder } = useAuth()
   const { unreadCount } = useUnreadCount()
 
   const [village, setVillage] = useState(null)
@@ -39,6 +39,60 @@ export default function VillageScene() {
   const [keeperAsk, setKeeperAsk] = useState(null)
   const sheetRef = useRef(null)
   const lastFocus = useRef(null)
+
+  // Founder only: drag the buildings to line them up with the painted map.
+  // The new places are kept on this device only (a draft) until Jade sends
+  // the copied layout to be saved in the app for everyone.
+  const LAYOUT_KEY = 'vwb_village_layout_draft'
+  const sceneRef = useRef(null)
+  const dragRef = useRef(null)
+  const [arrange, setArrange] = useState(false)
+  const [picked, setPicked] = useState(null)
+  const [layoutNote, setLayoutNote] = useState('')
+  const [draft, setDraft] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(LAYOUT_KEY) || '{}') || {} } catch { return {} }
+  })
+  function saveDraft(next) {
+    setDraft(next)
+    try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode: still works this visit */ }
+  }
+  const placed = (s) => (isFounder && draft[s.k] ? { ...s, ...draft[s.k] } : s)
+  const round1 = (n) => Math.round(n * 2) / 2
+  function dragStart(e, s) {
+    if (!arrange) return
+    e.preventDefault()
+    setPicked(s.k); setLayoutNote('')
+    dragRef.current = { k: s.k }
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* older browsers */ }
+  }
+  function dragMove(e) {
+    if (!arrange || !dragRef.current || !sceneRef.current) return
+    const r = sceneRef.current.getBoundingClientRect()
+    const x = Math.min(97, Math.max(3, ((e.clientX - r.left) / r.width) * 100))
+    const y = Math.min(97, Math.max(3, ((e.clientY - r.top) / r.height) * 100))
+    const k = dragRef.current.k
+    const s0 = placed(VILLAGE_SPOTS.find((v) => v.k === k))
+    setDraft((d) => ({ ...d, [k]: { x: round1(x), y: round1(y), s: s0.s || 1 } }))
+  }
+  function dragEnd() {
+    if (!dragRef.current) return
+    dragRef.current = null
+    setDraft((d) => { try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(d)) } catch { /* private mode */ } return d })
+  }
+  function resize(by) {
+    if (!picked) return
+    const s0 = placed(VILLAGE_SPOTS.find((v) => v.k === picked))
+    const size = Math.min(1.8, Math.max(0.6, Math.round(((s0.s || 1) + by) * 10) / 10))
+    saveDraft({ ...draft, [picked]: { x: s0.x, y: s0.y, s: size } })
+  }
+  async function copyLayout() {
+    const text = 'Village layout:\n' + VILLAGE_SPOTS.map((v) => { const p = placed(v); return v.k + ': x ' + p.x + ', y ' + p.y + ', size ' + (p.s || 1) }).join('\n')
+    try { await navigator.clipboard.writeText(text); setLayoutNote('Copied. Paste it to Claude to save it for everyone.') }
+    catch { setLayoutNote('Could not copy. Here it is to copy by hand:\n' + text) }
+  }
+  function resetLayout() {
+    saveDraft({}); setPicked(null); setLayoutNote('Back to the saved layout.')
+  }
 
   useEffect(() => {
     if (!user) return
@@ -340,16 +394,18 @@ export default function VillageScene() {
         </Link>
       )}
 
-      <div className="vs-scene vs-scene-path">
+      <div ref={sceneRef} className={'vs-scene vs-scene-path' + (arrange ? ' vs-arranging' : '')} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={dragEnd}>
         <img className="vs-ground" src="/art/village-path/village-meadow.webp" alt="" width="768" height="1152" fetchpriority="high" />
-        {VILLAGE_SPOTS.map((s) => {
+        {VILLAGE_SPOTS.map((s0) => {
+          const s = placed(s0)
           const i = info(s.k)
           return (
             <button key={s.k} type="button" data-spot={s.k}
-              className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' + (life ? ' vs-fire-' + life.fire_level : '') : '') + (bump === s.k ? ' vs-bump' : '')}
+              className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' + (life ? ' vs-fire-' + life.fire_level : '') : '') + (bump === s.k ? ' vs-bump' : '') + (arrange && picked === s.k ? ' vs-picked' : '')}
               style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1) }}
               aria-label={s.label + '. ' + i.sub}
-              onClick={() => tap(s)}>
+              onPointerDown={(e) => dragStart(e, s)}
+              onClick={() => { if (!arrange) tap(s) }}>
               <span className="vs-em" aria-hidden="true">
                 {s.k === 'campfires' && life
                   ? <img className="vs-icon vs-life-fire" src={LIFE_ART.fire[life.fire_level] || LIFE_ART.fire[1]} alt="" width="96" height="96" draggable="false" />
@@ -372,7 +428,27 @@ export default function VillageScene() {
         <div className="vs-fade" />
       </div>
 
-      <p className="vs-hint">Tap anything in the village to go there.</p>
+      <p className="vs-hint">{arrange ? 'Drag each building onto its place on the map.' : 'Tap anything in the village to go there.'}</p>
+
+      {isFounder && (
+        <div className="vs-arrange">
+          {!arrange && <button type="button" className="btn btn-outline btn-full" onClick={() => { setArrange(true); setLayoutNote('') }}>Arrange the village (founder)</button>}
+          {arrange && <>
+            <p className="vs-note">Drag a building to move it. Tap one, then use Smaller or Bigger. Your changes show only on this device until you copy them and send them to Claude.</p>
+            <p className="vs-arrange-picked">{picked ? 'Picked: ' + (VILLAGE_SPOTS.find((v) => v.k === picked) || {}).label + ' (size ' + (placed(VILLAGE_SPOTS.find((v) => v.k === picked)).s || 1) + ')' : 'Nothing picked yet.'}</p>
+            <div className="vs-arrange-row">
+              <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(-0.1)}>Smaller</button>
+              <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(0.1)}>Bigger</button>
+            </div>
+            <div className="vs-arrange-row">
+              <button type="button" className="btn btn-primary" onClick={copyLayout}>Copy layout</button>
+              <button type="button" className="btn btn-outline" onClick={resetLayout}>Start over</button>
+              <button type="button" className="btn btn-outline" onClick={() => { setArrange(false); setPicked(null) }}>Done</button>
+            </div>
+            {layoutNote && <p className="vs-note vs-arrange-note" role="status">{layoutNote}</p>}
+          </>}
+        </div>
+      )}
 
       <div className="vs-body">
         {!mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>Join {village.name}</button>}
