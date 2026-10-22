@@ -5,7 +5,7 @@ import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { loadMyTaskOverview } from '../utils/myTasks'
-import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, FIELD_SRC } from '../data/worldElements'
+import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, backgroundSrc } from '../data/worldElements'
 import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, fromSaved, isPlainWorld, mapBody } from '../components/MapBuilder'
 import { askConfirm } from '../components/AdminDialog'
 import SisterCampfireButton from '../components/SisterCampfireButton'
@@ -648,7 +648,7 @@ export default function VillageScene() {
       )}
 
       <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
-        <img className="vs-ground" src={FIELD_SRC} alt="" width="720" height="1080" fetchpriority="high" />
+        <img className="vs-ground" src={backgroundSrc(world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
         {cottage && GIFTS.filter((g) => g.got).map((g) => (
           <img key={'gift-' + g.k} className="vs-gift" src={g.src} alt="" width="64" height="64" draggable="false" style={{ left: g.x + '%', top: g.y + '%' }} />
