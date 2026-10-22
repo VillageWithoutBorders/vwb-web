@@ -402,3 +402,5 @@
 .ose-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .ose-buttons .btn { flex: 1 1 10rem; min-height: 48px; }
 @media (max-width: 360px) { .ose-place { grid-template-columns: 1fr; } }
+/* The Show/Hide names button sits bottom center, between Your corner and Messages, so it never covers a place (Oct 22). */
+.vs-names-toggle { right: auto; left: 50%; transform: translateX(-50%); bottom: 6px; white-space: nowrap; }
