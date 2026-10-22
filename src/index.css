@@ -5934,3 +5934,50 @@ a.tr-link:focus-visible, a.tr-link:hover { background: var(--surface-2, transpar
 .tr-text b { font-size: 1rem; }
 .tr-text small { font-size: 0.875rem; color: var(--text-secondary); }
 .tr-next .tr-dot { border-style: dashed; }
+
+/* ---------- Quick Actions (Home) ---------- */
+.qa { margin-bottom: 1.25rem; }
+.qa-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.qa-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem;
+  min-height: 96px; padding: 0.75rem 0.5rem;
+  background: var(--white); color: var(--text);
+  border: 2px solid var(--border); border-radius: 14px;
+  font-family: inherit; font-size: 1rem; font-weight: 700; line-height: 1.2; text-align: center;
+  cursor: pointer; transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.qa-btn-main { background: var(--btn-bg); color: var(--btn-ink); border-color: var(--btn-bg); }
+.qa-btn:hover, .qa-btn:focus-visible { border-color: var(--accent); }
+.qa-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.qa-btn:active { transform: scale(0.97); }
+.qa-btn-icon { display: flex; }
+.qa-btn-label { overflow-wrap: anywhere; }
+.qa-simple .qa-btn { min-height: 120px; font-size: 1.15rem; }
+.qa-link {
+  display: block; margin: 0.5rem auto 0; min-height: 44px; padding: 0 0.75rem;
+  background: none; border: none; color: var(--accent);
+  font-family: inherit; font-size: 1rem; text-decoration: underline; cursor: pointer;
+}
+.qa-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.qa-nudge { margin-top: 0.75rem; padding: 0.9rem 1rem; border: 1px solid var(--accent); border-radius: 12px; background: var(--success-bg); color: var(--text-soft); line-height: 1.45; }
+.qa-nudge p { margin: 0 0 0.6rem; }
+.qa-edit { margin-bottom: 1.25rem; padding: 1rem; border: 2px solid var(--accent); border-radius: 14px; background: var(--white); }
+.qa-edit-title { margin: 0 0 0.25rem; font-size: 1.15rem; color: var(--text-strong); }
+.qa-edit-sub { margin: 0 0 0.75rem; color: var(--text-secondary); font-size: 1rem; }
+.qa-edit-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.qa-edit-row {
+  display: flex; align-items: center; gap: 0.75rem; min-height: 56px; padding: 0.5rem 0.75rem;
+  border: 2px solid var(--border); border-radius: 12px; cursor: pointer;
+}
+.qa-edit-row.on { border-color: var(--accent); background: var(--success-bg); }
+.qa-edit-row input { width: 24px; height: 24px; flex-shrink: 0; accent-color: var(--accent); }
+.qa-edit-row:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.qa-edit-icon { display: flex; flex-shrink: 0; }
+.qa-edit-text { display: flex; flex-direction: column; min-width: 0; }
+.qa-edit-label { font-weight: 700; font-size: 1rem; color: var(--text); }
+.qa-edit-desc { font-size: 0.9rem; color: var(--text-secondary); }
+.qa-edit-count { margin: 0.6rem 0 0.4rem; font-size: 0.95rem; color: var(--text-secondary); }
+.qa-edit-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.qa-edit-buttons .btn { flex: 1 1 8rem; min-height: 48px; }
+@media (max-width: 340px) { .qa-grid { gap: 0.5rem; } .qa-btn { font-size: 0.95rem; } }
+@media (prefers-reduced-motion: reduce) { .qa-btn { transition: none; } .qa-btn:active { transform: none; } }
