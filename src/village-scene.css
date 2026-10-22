@@ -184,7 +184,8 @@
 @media (prefers-reduced-motion: reduce) { .vs-el .vs-art { transition: none; transform: none !important; } }
 
 /* Founder: arrange the village by dragging (VillageScene.jsx). */
-.vs-arranging { touch-action: none; outline: 3px dashed var(--vs-gold); outline-offset: -3px; }
+.vs-arranging { outline: 3px dashed var(--vs-gold); outline-offset: -3px; }
+/* Only the buildings catch your finger; the meadow around them still scrolls the page. */
 .vs-arranging .vs-el { cursor: grab; touch-action: none; }
 .vs-arranging .vs-el:active { cursor: grabbing; }
 .vs-arranging .vs-el .vs-lab { background: #fff4d6; }
