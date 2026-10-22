@@ -25,6 +25,9 @@ import { firstRunPaused } from '../utils/firstVillage'
 // shows and the tour keeps going. Plain words on purpose: short sentences,
 // one idea per card.
 //
+// Village intro: four short stops on the village map (the chat, the living
+// village, the Show/Hide names button, and Arrange and build my village).
+//
 // Practice round (optional): after SkillShare, a sample request, offer, and
 // event let people try the buttons. Nothing is saved, nobody is notified, and
 // "Skip practice" jumps past it at any time, even on the first-time tour.
@@ -74,7 +77,31 @@ const ALL_STEPS = [
     target: SPOT('chat'),
     icon: '\u{1F3D8}\uFE0F',
     title: 'Your village',
-    body: 'Your village is a little map. Each picture is a place. This one is the village chat, where neighbors talk.',
+    body: 'Your village is a little map. Each picture is a place. Tap one to go in. This one is the village chat, where neighbors talk.',
+  },
+  {
+    need: 'village',
+    route: VILLAGE,
+    target: SPOT('neighbors'),
+    icon: '\u{1F3E0}',
+    title: 'A living village',
+    body: 'More cottages light up as more neighbors join. The campfire grows when the chats are busy. A lantern means a keeper looks after the village.',
+  },
+  {
+    need: 'village',
+    route: VILLAGE,
+    target: '.vs-names-toggle',
+    icon: '\u{1F3F7}\uFE0F',
+    title: 'Names on the map',
+    body: 'Tap here to show or hide the names. On a computer, point at a place to see its name.',
+  },
+  {
+    need: 'village',
+    route: VILLAGE,
+    target: '[data-tour="village-arrange"]',
+    icon: '\u{1F333}',
+    title: 'Make it yours',
+    body: 'Move places, add trees, ponds, and bridges, draw roads and streams, and pick a background. Your map is just for you. Nobody else sees your changes.',
   },
   {
     route: '/home',
