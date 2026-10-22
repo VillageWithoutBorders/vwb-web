@@ -402,7 +402,7 @@ export default function VillageMap() {
                     <span className="cal-card-title" style={{ display: 'block' }}>{o.name}</span>
                     <span className="cal-card-meta">{o.kind === 'group' ? 'Emergency response group' : 'Organization'}</span>
                   </span>
-                  <span aria-hidden="true" style={{ flex: 'none', transform: open ? 'rotate(180deg)' : 'none' }}>{'\u25BE'}</span>
+                  <span aria-hidden="true" style={{ flex: 'none', display: 'grid', placeItems: 'center', width: '44px', height: '44px', fontSize: '1.6rem', lineHeight: 1, color: 'var(--accent)', transform: open ? 'rotate(180deg)' : 'none' }}>{'\u25BE'}</span>
                 </button>
                 {open && (
                   <div id={'org-' + o.id} style={{ padding: '0 0.75rem 0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.12)' }}>

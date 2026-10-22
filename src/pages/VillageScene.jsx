@@ -630,7 +630,7 @@ export default function VillageScene() {
           {mine && keepers && keepers.i_am_keeper && <span className="vs-chip vs-chip-in">Keeper</span>}
           {!mine && <span className="vs-chip">Not joined yet</span>}
           <span className="vs-chip">{village.member_count ? village.member_count + ' neighbors' : 'Just starting'}</span>
-          {village.towns && <span className="vs-chip">{village.towns}</span>}
+          {village.towns && <span className="vs-chip vs-chip-towns">{village.towns}</span>}
         </div>
       </div>
 

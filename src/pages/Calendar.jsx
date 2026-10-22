@@ -79,19 +79,19 @@ export default function Calendar() {
           <p className="cal-sub">Gatherings, drives, and volunteer shifts near you</p>
         </div>
         {canPost && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} onClick={() => navigate('/calendar/new')}>
+          <div className="cal-post-row">
+            <button type="button" className="btn btn-primary" onClick={() => navigate('/calendar/new')}>
               + New event
             </button>
-            <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/calendar/import')}>
+            <button type="button" className="btn btn-outline" onClick={() => navigate('/calendar/import')}>
               Bring in events
             </button>
           </div>
         )}
       </div>
 
-      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', margin: '0 0 0.75rem' }} onClick={jumpToSubscribe}>
-        Add to my phone calendar
+      <button type="button" className="cal-change cal-phone-link" onClick={jumpToSubscribe}>
+        Add these events to my phone calendar
       </button>
 
       <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
