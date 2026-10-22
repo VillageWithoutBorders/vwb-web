@@ -10,11 +10,13 @@ import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
 import { useGoBack } from '../components/BackLink'
 
+// Each choice also sets when the request closes on its own (set by the database):
+// now = 6 hours, today = midnight Eastern, this_week = 7 days.
+// 'flexible' still exists in the database for old requests, but is not offered.
 const URGENCY_OPTIONS = [
-    { value: 'now', label: 'Right now', desc: 'Emergency or same-day need' },
-    { value: 'today', label: 'Today', desc: 'Within the next few hours' },
-    { value: 'this_week', label: 'This week', desc: 'Can wait a day or two' },
-    { value: 'flexible', label: 'Flexible', desc: 'No rush, whenever someone is free' },
+    { value: 'now', label: 'Right now', desc: 'Stays open 6 hours' },
+    { value: 'today', label: 'Today', desc: 'Stays open until midnight' },
+    { value: 'this_week', label: 'This week', desc: 'Stays open 7 days' },
 ]
 
 const HELPER_COUNT_OPTIONS = [
@@ -54,7 +56,8 @@ export default function AskForHelp() {
     const [audienceOrg, setAudienceOrg] = useState('')
     const [openHours, setOpenHours] = useState('24')
     const [description, setDescription] = useState(repost?.description || '')
-    const [urgency, setUrgency] = useState(repost?.urgency || 'today')
+    // An old 'flexible' request asked again becomes 'this_week', since Flexible is no longer a choice.
+    const [urgency, setUrgency] = useState(repost?.urgency === 'flexible' ? 'this_week' : (repost?.urgency || 'today'))
     const [maxHelpers, setMaxHelpers] = useState(repost && repost.max_helpers !== undefined ? repost.max_helpers : 1)
     const [neighborhood, setNeighborhood] = useState(repost?.neighborhood || '')
 
@@ -386,7 +389,7 @@ export default function AskForHelp() {
                         {URGENCY_OPTIONS.map((opt) => (
                             <label
                                 key={opt.value}
-                                className={`urgency-option ${urgency === opt.value ? 'active' : ''}`}
+                                className={`urgency-option urgency-time ${urgency === opt.value ? 'active' : ''}`}
                             >
                                 <input
                                     type="radio"
@@ -401,6 +404,7 @@ export default function AskForHelp() {
                             </label>
                         ))}
                     </div>
+                    <span className="field-hint">An hour before it closes, we ask if you still need help.</span>
                 </div>
 
                 <div className="form-field">
