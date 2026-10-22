@@ -40,7 +40,7 @@ export default function HelpDoors() {
         <p className="door-desc">Food, housing, bills, rides, and more near you.</p>
         <form className="hub-search" role="search" onSubmit={runSearch}>
           <label htmlFor="doors-search" className="sr-only">Search resources</label>
-          <input id="doors-search" type="search" inputMode="search" enterKeyHint="search" autoComplete="off" placeholder="What do you need? (food, rent, rides...)" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input id="doors-search" type="search" inputMode="search" enterKeyHint="search" autoComplete="off" placeholder="Food, rent, rides..." value={search} onChange={(e) => setSearch(e.target.value)} />
           <button type="submit" className="btn btn-primary">Search</button>
         </form>
         <div className="hub-tiles">
