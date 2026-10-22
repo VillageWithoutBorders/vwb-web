@@ -364,3 +364,15 @@
 
 /* The list of towns wraps onto more lines instead of running off the screen (Oct 22). */
 .vs-chip.vs-chip-towns { white-space: normal; border-radius: 14px; line-height: 1.35; padding: 5px 12px; overflow: visible; }
+
+/* Village page pop-up sheets (Oct 22): a down arrow at the top to close, and the sheet stops
+   above the bottom bar so its last button is never hidden behind it. */
+.vs-shade { bottom: calc(var(--tab-height, 64px) + env(safe-area-inset-bottom, 0px)); }
+.vs-sheet { max-height: calc(100% - 12px); padding-top: 8px; }
+.vs-sheet-close {
+  position: sticky; top: -8px; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 48px; margin: 0 0 2px; border-radius: 12px; border: 2px solid var(--vs-gold);
+  background: var(--vs-card); color: var(--vs-ink); font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
+}
+.vs-sheet-close .vs-tool-ic { width: 28px; height: 28px; color: var(--vs-gold); }
+.vs-sheet-close:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 2px; }
