@@ -63,7 +63,8 @@ export default function VillageScene() {
   // A village page: the Keeper and Helpers set a shared look for everyone, and anyone
   // can arrange their own view on top (vwb-map-layouts.sql).
   // Hidden places stay in the list under the map.
-  const LAYOUT_KEY = 'vwb_village_layout'
+  // v2 (Oct 22): every map was reset to the new art, so older copies on a device are skipped.
+  const LAYOUT_KEY = 'vwb_village_layout_v2'
   const saveTimer = useRef(null)
   const [showTowns, setShowTowns] = useState(false)
   // The usual look: roads, streams and a few trees for this kind of map.
