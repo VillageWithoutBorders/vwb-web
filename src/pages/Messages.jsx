@@ -604,7 +604,7 @@ export default function Messages({ embedded = false }) {
   const tabStyle = (active) => ({ padding: '0.5rem 1rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : 'var(--surface-2)', color: active ? 'var(--on-accent)' : 'var(--text-secondary)' })
   const sidebarStyle = { position: 'fixed', top: 0, right: showSidebar ? 0 : '-320px', width: '300px', height: '100%', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }
   const overlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: showSidebar ? 'block' : 'none' }
-  const sectionTitle = { fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1.5rem', marginBottom: '0.5rem' }
+  const sectionTitle = { fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1.5rem', marginBottom: '0.5rem' }
   const menuBtn = { display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }
   const toggleRow = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid var(--border)' }
   const toggleDot = (on) => ({ width: '40px', height: '22px', borderRadius: '11px', background: on ? 'var(--accent)' : '#444', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', border: 'none', padding: 0, flexShrink: 0 })
@@ -660,12 +660,12 @@ export default function Messages({ embedded = false }) {
         ))}
 
         <div style={sectionTitle}>Disappearing Messages</div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>New conversations will auto-delete messages after the chosen time.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>New conversations will auto-delete messages after the chosen time.</p>
         <div style={{ padding: '0 0.25rem' }}>
           <input type="range" min={0} max={DISAPPEAR_STEPS.length - 1} step={1} value={getSliderIndex()} onChange={e => saveDisappearPref(DISAPPEAR_STEPS[parseInt(e.target.value)].mins)} style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
             {DISAPPEAR_STEPS.map((s, i) => (
-              <span key={i} style={{ fontSize: '0.65rem', color: getSliderIndex() === i ? 'var(--accent)' : 'var(--text-muted)', fontWeight: getSliderIndex() === i ? 700 : 400, textAlign: 'center', flex: 1 }}>{s.label}</span>
+              <span key={i} style={{ fontSize: '0.8125rem', color: getSliderIndex() === i ? 'var(--accent)' : 'var(--text-muted)', fontWeight: getSliderIndex() === i ? 700 : 400, textAlign: 'center', flex: 1 }}>{s.label}</span>
             ))}
           </div>
         </div>
@@ -675,20 +675,20 @@ export default function Messages({ embedded = false }) {
           <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>Read receipts</span>
           <button role="switch" aria-checked={readReceipts} aria-label="Read receipts" style={toggleDot(readReceipts)} onClick={toggleReadReceipts}><span style={toggleKnob(readReceipts)} /></button>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Show when you have read a message. If you turn this off, you won't see when others read yours either.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>Show when you have read a message. If you turn this off, you won't see when others read yours either.</p>
 
         <div style={sectionTitle}>Safety</div>
         <div style={toggleRow}>
           <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>Safety check-ins</span>
           <button role="switch" aria-checked={safetyCheckins} aria-label="Safety check-ins" style={toggleDot(safetyCheckins)} onClick={toggleSafetyCheckins}><span style={toggleKnob(safetyCheckins)} /></button>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Receive periodic check-in prompts during active help sessions</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>Receive periodic check-in prompts during active help sessions</p>
 
         <div style={toggleRow}>
           <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>Hide details on my lock screen</span>
           <button role="switch" aria-checked={hidePushDetails} aria-label="Hide details on my lock screen" style={toggleDot(hidePushDetails)} onClick={toggleHidePushDetails}><span style={toggleKnob(hidePushDetails)} /></button>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>When on, phone alerts only say you have an update. Names and group titles stay inside the app, so nobody glancing at your phone can see them.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>When on, phone alerts only say you have an update. Names and group titles stay inside the app, so nobody glancing at your phone can see them.</p>
 
         <div style={sectionTitle}>Default greeting</div>
         {editingHelpMsg ? (
@@ -702,7 +702,7 @@ export default function Messages({ embedded = false }) {
             <button onClick={() => setEditingHelpMsg(true)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem' }}>Edit</button>
           </div>
         )}
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.15rem 0 0' }}>Auto-sent when you tap "I can help" on a request</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>Auto-sent when you tap "I can help" on a request</p>
 
         <div style={sectionTitle}>Blocked Users</div>
         {blockedUsers.length === 0 ? (
@@ -740,12 +740,12 @@ export default function Messages({ embedded = false }) {
       {/* ========== Help Offers for Requesters (Accept/Decline) ========== */}
       {pendingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
             <Icon name="handshake" /> Help Offers ({pendingOffers.length})
           </div>
           {pendingOffers.map(offer => (
             <div key={offer.id} style={offerCardStyle}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                 For your request: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{offer.skill_needed}{offer.for_name ? ' for ' + offer.for_name : ''}</span>
                 {offer.max_helpers !== null && (
                   <span style={{ marginLeft: '0.5rem', color: 'var(--text-muted)' }}>
@@ -757,13 +757,13 @@ export default function Messages({ embedded = false }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={offer.avatar_url} userId={offer.helper_id} size={32} /><UserName userId={offer.helper_id} name={offer.helper_name} style={{ fontWeight: 700, color: 'var(--text-strong)', fontSize: '0.95rem' }} /></div>
                 {offer.is_ambassador && (
-                  <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.65rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
+                  <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
                     Hope Ambassador
                   </span>
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                 {offer.vouch_count > 0 && (
                   <span>&#x1F91D; {offer.vouch_count} vouch{offer.vouch_count !== 1 ? 'es' : ''}</span>
                 )}
@@ -801,20 +801,20 @@ export default function Messages({ embedded = false }) {
       {/* ========== Your Pending Offers (helper side) ========== */}
       {myOutgoingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
             <Icon name="hourglass" /> Your Pending Offers ({myOutgoingOffers.length})
           </div>
           {myOutgoingOffers.map(offer => (
             <div key={offer.id} style={{ background: 'var(--warn-bg)', border: '1px solid #5a4a2a', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div>
                 <div style={{ color: 'var(--text-strong)', fontWeight: 600, fontSize: '0.9rem' }}>{offer.skill_needed}</div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
                   {offer.for_name ? 'For ' + offer.for_name + ', posted by ' + offer.requester_name : 'For ' + offer.requester_name} &middot; Waiting for response
                 </div>
               </div>
               <button
                 onClick={async () => { if (await askConfirm('Take back your offer to help?', { yes: 'Take it back' })) withdrawOffer(offer.id) }}
-                style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
+                style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '0.8125rem', cursor: 'pointer' }}
               >
                 Withdraw
               </button>
@@ -956,7 +956,7 @@ export default function Messages({ embedded = false }) {
               {showMuteMenu === c.id && (
                 <div style={{ borderTop: '1px solid var(--border-strong)', background: 'var(--surface-3)' }}>
                   {MUTE_OPTIONS.map((opt, i) => (
-                    <button key={i} style={{ ...menuBtn, paddingLeft: '2.5rem', fontSize: '0.8rem' }} onClick={() => muteConvo(c.id, opt.ms)}>{opt.label}</button>
+                    <button key={i} style={{ ...menuBtn, paddingLeft: '2.5rem', fontSize: '0.8125rem' }} onClick={() => muteConvo(c.id, opt.ms)}>{opt.label}</button>
                   ))}
                 </div>
               )}
@@ -979,8 +979,8 @@ export default function Messages({ embedded = false }) {
 
           {assigningConvo === c.id && (
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', padding: '0.5rem 0 0.25rem', borderTop: '1px solid var(--border)', marginTop: '0.5rem' }}>
-              {folders.map(f => (<button key={f.id} onClick={() => assignToFolder(c.id, f.id)} style={{ ...tabStyle((assignments[c.id] || []).includes(f.id)), fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}>{f.name}</button>))}
-              {assignments[c.id] && assignments[c.id].length > 0 && (<button onClick={() => assignToFolder(c.id, 'remove')} style={{ ...tabStyle(false), fontSize: '0.8rem', padding: '0.35rem 0.75rem', color: 'var(--danger)' }}>Remove</button>)}
+              {folders.map(f => (<button key={f.id} onClick={() => assignToFolder(c.id, f.id)} style={{ ...tabStyle((assignments[c.id] || []).includes(f.id)), fontSize: '0.8125rem', padding: '0.35rem 0.75rem' }}>{f.name}</button>))}
+              {assignments[c.id] && assignments[c.id].length > 0 && (<button onClick={() => assignToFolder(c.id, 'remove')} style={{ ...tabStyle(false), fontSize: '0.8125rem', padding: '0.35rem 0.75rem', color: 'var(--danger)' }}>Remove</button>)}
             </div>
           )}
         </div>

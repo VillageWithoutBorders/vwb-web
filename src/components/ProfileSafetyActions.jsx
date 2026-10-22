@@ -17,7 +17,7 @@ const REASONS = [
   'Something else',
 ]
 
-const ghost = { padding: '0.5rem 1rem', minHeight: '40px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }
+const ghost = { padding: '0.5rem 1rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }
 
 export default function ProfileSafetyActions({ userId, name, myId, onBlockChange, openWith, onOpened }) {
   const [blocked, setBlocked] = useState(null)
@@ -122,7 +122,7 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
   return (
     <>
       {blocked && (
-        <p style={{ margin: '0.6rem 0 0', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>You blocked {who}. You will not see each other in messages or offers.</p>
+        <p style={{ margin: '0.6rem 0 0', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>You blocked {who}. You will not see each other in messages or offers.</p>
       )}
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.6rem' }}>
         {blocked
@@ -154,7 +154,7 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
                 <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
                   <legend style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>What happened?</legend>
                   {REASONS.map((r, i) => (
-                    <label key={r} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0', minHeight: '40px', color: 'var(--text)', fontSize: '0.9rem', cursor: 'pointer' }}>
+                    <label key={r} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0', minHeight: '44px', color: 'var(--text)', fontSize: '0.9rem', cursor: 'pointer' }}>
                       <input ref={i === 0 ? firstRef : null} type="radio" name="report-reason" value={r} checked={reason === r} onChange={() => { setReason(r); setError('') }} style={{ width: '18px', height: '18px', accentColor: 'var(--accent)' }} />
                       {r}
                     </label>

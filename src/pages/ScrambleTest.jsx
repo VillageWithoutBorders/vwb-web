@@ -122,13 +122,13 @@ export default function ScrambleTest() {
       <button type="button" onClick={showReal} style={{ minHeight: 48, padding: '0.6rem 1.2rem', fontSize: '1rem', marginLeft: '0.5rem' }}>Show real timings</button>
       {real && (
         <>
-          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem', marginTop: '1rem' }}>{real}</pre>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8125rem', marginTop: '1rem' }}>{real}</pre>
           <button type="button" onClick={() => navigator.clipboard?.writeText(real)} style={{ minHeight: 48, padding: '0.6rem 1.2rem', fontSize: '1rem' }}>Copy real timings</button>
         </>
       )}
       {report && (
         <>
-          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem', marginTop: '1rem' }}>{report}</pre>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8125rem', marginTop: '1rem' }}>{report}</pre>
           <button type="button" onClick={() => navigator.clipboard?.writeText(report)} style={{ minHeight: 48, padding: '0.6rem 1.2rem', fontSize: '1rem' }}>Copy result</button>
         </>
       )}

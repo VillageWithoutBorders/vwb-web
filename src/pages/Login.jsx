@@ -406,7 +406,7 @@ export default function Login() {
             <label htmlFor="howKnown">How do you know this community, or who can vouch for you?</label>
             <textarea id="howKnown" value={howKnown} onChange={(e) => setHowKnown(e.target.value)} placeholder="A neighbor, a group, an event, or a name an admin can reach out to" rows={2} />
           </div>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 0.75rem' }}>An admin reads every application before anyone becomes an Ambassador. Until then you can still ask for help, offer help, and look around.</p>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0 0 0.75rem' }}>An admin reads every application before anyone becomes an Ambassador. Until then you can still ask for help, offer help, and look around.</p>
           <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
             <input type="checkbox" checked={campfireNotify} onChange={(e) => setCampfireNotify(e.target.checked)} />
             <span>
