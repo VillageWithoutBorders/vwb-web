@@ -9,6 +9,7 @@ import '../village-scene.css'
 import '../world.css'
 import Icon from '../components/Icon'
 import BringOrg from '../components/BringOrg'
+import { askConfirm } from '../components/AdminDialog'
 
 // Oct 22: the Village Network (search, street map, every village and organization)
 // lives under the globe now. /villages opens this page.
@@ -242,11 +243,13 @@ export default function World() {
     setTimeout(() => navigate(to), spin ? 1100 : 600)
   }
 
-  function tapVillage(v) {
-    if (v.is_mine) { zoomTo(v.gx, v.gy, '/village/' + v.id); return }
+  // Leaving the globe asks first (Oct 22), like every map.
+  const askGo = (name) => askConfirm('Go to ' + name + '?', { yes: 'Go there', no: 'Stay here' })
+  async function tapVillage(v) {
+    if (v.is_mine) { if (await askGo(v.name)) zoomTo(v.gx, v.gy, '/village/' + v.id); return }
     openSheet({ kind: 'village', v })
   }
-  function tapOrg(o) { zoomTo(o.gx, o.gy, '/orgs/' + o.id) }
+  async function tapOrg(o) { if (await askGo(o.name)) zoomTo(o.gx, o.gy, '/orgs/' + o.id) }
 
   const view = net === 'villages' ? villageMap : orgMap
   const myGroups = myOrgs.filter((o) => o.kind === 'group')
