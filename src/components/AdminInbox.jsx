@@ -28,6 +28,8 @@ export default function AdminInbox({ inbox, onOpenTab }) {
   const navigate = useNavigate()
   const [recent, setRecent] = useState([])
   const [recentFailed, setRecentFailed] = useState(false)
+  // On a phone the alert list gets long: show the newest 5, the rest on request.
+  const [showAll, setShowAll] = useState(false)
   const { items, loaded, failed } = inbox
   // Who opened which item in the last 30 minutes (vwb-admin-round3.sql).
   const [claims, setClaims] = useState([])
@@ -130,7 +132,7 @@ export default function AdminInbox({ inbox, onOpenTab }) {
         <p className="admin-section-note">No admin alerts yet. New ones also go to every admin's phone.</p>
       ) : (
         <ul className="admin-alert-list">
-          {recent.map((a) => (
+          {(showAll ? recent : recent.slice(0, 5)).map((a) => (
             <li key={a.id}>
               <button type="button" className="admin-alert-row" onClick={() => openAlert(a)}>
                 <span className="admin-alert-title">
@@ -143,6 +145,11 @@ export default function AdminInbox({ inbox, onOpenTab }) {
             </li>
           ))}
         </ul>
+      )}
+      {!recentFailed && recent.length > 5 && (
+        <button type="button" className="btn btn-outline btn-full" onClick={() => setShowAll((v) => !v)}>
+          {showAll ? 'Show fewer alerts' : 'Show ' + (recent.length - 5) + ' older alerts'}
+        </button>
       )}
     </section>
   )
