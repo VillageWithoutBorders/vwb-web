@@ -168,6 +168,7 @@ export default function VillageScene() {
   const [arrange, setArrange] = useState(false)
   const [tool, setTool] = useState('move') // move | road | stream
   const [trayOpen, setTrayOpen] = useState(false)
+  const [showTowns, setShowTowns] = useState(false)
   // Add tray tabs: Pieces, Ground, More (hidden places and start over).
   const [trayTab, setTrayTab] = useState('pieces')
   const historyRef = useRef([])
@@ -774,8 +775,15 @@ export default function VillageScene() {
           {mine && keepers && keepers.i_am_keeper && <span className="vs-chip vs-chip-in">Keeper</span>}
           {!mine && <span className="vs-chip">Not joined yet</span>}
           <span className="vs-chip">{village.member_count ? village.member_count + ' neighbors' : 'Just starting'}</span>
-          {village.towns && <span className="vs-chip vs-chip-towns">{village.towns}</span>}
+          {village.towns && (() => {
+            // Oct 22: the town list folds into one chip so the map starts sooner. Tap to see them all.
+            const n = village.towns.split(',').filter((t) => t.trim()).length
+            return n > 1
+              ? <button type="button" className="vs-chip vs-chip-btn-towns" aria-expanded={showTowns} onClick={() => setShowTowns((v) => !v)}>{n} towns {showTowns ? '\u25B4' : '\u25BE'}</button>
+              : <span className="vs-chip">{village.towns}</span>
+          })()}
         </div>
+        {village.towns && showTowns && <p className="vs-towns-list">{village.towns}</p>}
       </div>
 
       </>)}
