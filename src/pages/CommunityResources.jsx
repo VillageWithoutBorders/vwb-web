@@ -598,7 +598,7 @@ export default function CommunityResources() {
       {user ? <HelpSwitch /> : <BackLink fallback="/welcome" fallbackLabel="Welcome" />}
       <div className="fh-head">
         <img src="/art/icons/heart-hands.svg" alt="" width="48" height="48" />
-        <h1>Find help</h1>
+        <h1>Find resources</h1>
       </div>
       <p className="feed-subtitle" style={{ marginBottom: '1rem' }}>Food, housing, safety, and more, shared by neighbors and local groups.</p>
 

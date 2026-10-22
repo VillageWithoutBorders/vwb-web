@@ -71,11 +71,13 @@ function networkLinks(list, pointsByVillage) {
 
 function nodeRadius(v) { return v.member_count ? Math.min(24, 13 + Math.sqrt(v.member_count) * 0.9) : 13 }
 
-export default function VillageMap() {
+// Oct 22: the World page (/world) shows this under the globe (embedded), with the
+// globe's Villages / Organizations / Groups switch choosing what shows here.
+export default function VillageMap({ embedded = false, net = null }) {
   const { profile } = useAuth()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab = searchParams.get('tab') === 'orgs' ? 'orgs' : 'hoods'
+  const tab = net ? (net === 'villages' ? 'hoods' : 'orgs') : searchParams.get('tab') === 'orgs' ? 'orgs' : 'hoods'
   function setTab(t) {
     const next = new URLSearchParams(searchParams)
     if (t === 'orgs') next.set('tab', 'orgs'); else next.delete('tab')
@@ -275,7 +277,7 @@ export default function VillageMap() {
     setListNote(null)
     if (v.is_mine) {
       const b = boardFor(v)
-      navigate(b ? '/campfire?board=' + b.id : '/find-village?join=' + v.id)
+      navigate(b ? '/village-square?board=' + b.id : '/find-village?join=' + v.id)
       return
     }
     if (covers(v, myZip)) { navigate('/find-village?join=' + v.id); return }
@@ -375,27 +377,31 @@ export default function VillageMap() {
   // After a zip search, pick the closest village that covers it.
   useEffect(() => { if (nearSearch.length) setSelectedId(nearSearch[0].v.id) }, [nearSearch])
 
+  const shownOrgs = orgs && (net === 'groups' ? orgs.filter((o) => o.kind === 'group') : net === 'orgs' ? orgs.filter((o) => o.kind !== 'group') : orgs)
+
   if (loading) return <div className="cal-page"><p className="cal-empty">Loading...</p></div>
 
   return (
-    <div className="cal-page hub-page" style={{ overflowX: 'clip' }}>
-      <BackLink fallback="/" fallbackLabel="Home" />
+    <div className={'cal-page hub-page' + (embedded ? ' wd-network' : '')} style={{ overflowX: 'clip' }}>
       <style>{'.vwb-map-label{background:#f6f0e0;color:#0b3b38;border:1.5px solid #0b3b38;border-radius:10px;padding:2px 8px;font-weight:600;font-size:12px;box-shadow:none}.vwb-map-label:before{display:none}'}</style>
+      {!embedded && <>
+      <BackLink fallback="/" fallbackLabel="Home" />
       <h1 className="hub-org-name">The Village Network</h1>
 
       <div role="tablist" aria-label="Village Network" style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0 0.75rem' }}>
         <button type="button" role="tab" id="tab-hoods" aria-selected={tab === 'hoods'} aria-controls="panel-hoods" className={'btn ' + (tab === 'hoods' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('hoods')}><Icon name="tree" /> Neighborhoods</button>
         <button type="button" role="tab" id="tab-orgs" aria-selected={tab === 'orgs'} aria-controls="panel-orgs" className={'btn ' + (tab === 'orgs' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('orgs')}><Icon name="people" /> Organizations</button>
       </div>
+      </>}
 
       {tab === 'orgs' && (
         <section id="panel-orgs" role="tabpanel" aria-labelledby="tab-orgs">
           <p className="cal-sub">Organizations working with Village Without Borders, and groups <Icon name="tent" /> that respond to emergencies. Tap a name to see more.</p>
-          <Link className="btn btn-outline btn-full" style={{ minHeight: '48px', marginBottom: '0.75rem' }} to="/start-group"><Icon name="tent" /> Start an emergency response group</Link>
+          {net !== 'orgs' && <Link className="btn btn-outline btn-full" style={{ minHeight: '48px', marginBottom: '0.75rem' }} to="/start-group"><Icon name="tent" /> Start an emergency response group</Link>}
           {orgs === null && <p className="cal-empty">Loading...</p>}
           {orgsError && <p className="form-error" role="alert">{orgsError}</p>}
-          {orgs && !orgsError && orgs.length === 0 && <p className="cal-empty">No organizations yet.</p>}
-          {orgs && orgs.map((o) => {
+          {shownOrgs && !orgsError && shownOrgs.length === 0 && <p className="cal-empty">{net === 'groups' ? 'No groups yet.' : 'No organizations yet.'}</p>}
+          {shownOrgs && shownOrgs.map((o) => {
             const open = !!openOrgs[o.id]
             const site = safeUrl(o.website_url)
             return (
@@ -531,7 +537,7 @@ export default function VillageMap() {
               />
               <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={() => navigate('/village/' + selected.id)}><Icon name="houses" /> Step into {selected.name}</button>
               {selected.is_mine && boardFor(selected) && (
-                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/campfire?board=' + boardFor(selected).id)}>Open this village chat</button>
+                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/village-square?board=' + boardFor(selected).id)}>Open this village chat</button>
               )}
               {!selected.is_mine && covers(selected, myZip) && (
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village?join=' + selected.id)}>Join this village chat</button>

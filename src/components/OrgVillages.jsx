@@ -74,7 +74,7 @@ export default function OrgVillages({ orgId, orgName, canManage }) {
           {links.length > 0
             ? <p style={{ margin: '0 0 0.5rem' }}>{links.map((r) => r.village_name).join(', ')}</p>
             : <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>No neighborhoods picked yet. Pick the ones you serve so neighbors there can find you.</p>}
-          {!canManage && <Link to="/villages" className="hub-more">See them on the Village Network</Link>}
+          {!canManage && <Link to="/world" className="hub-more">See them on the World map</Link>}
           {canManage && <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={startEditing}>{links.length ? 'Change neighborhoods' : 'Pick neighborhoods'}</button>}
         </>
       )}

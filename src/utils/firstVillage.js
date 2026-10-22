@@ -14,5 +14,5 @@ export function needsFirstVillage(profile) {
 // chat, the first-run questions (Simple view, the tour) wait. They show up as
 // soon as the person goes anywhere else.
 export function firstRunPaused(pathname) {
-  return pathname === '/find-village' || pathname === '/campfire'
+  return pathname === '/find-village' || pathname === '/village-square'
 }

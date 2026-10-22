@@ -12,7 +12,7 @@ export default function SisterCampfireButton({ campfire, onJoined }) {
   const [error, setError] = useState('')
 
   if (!campfire) return <p className="vs-note">Join either village to sit at their Sister Campfire.</p>
-  const go = () => navigate('/campfire?board=' + campfire.board_id)
+  const go = () => navigate('/village-square?board=' + campfire.board_id)
   const people = campfire.member_count === 1 ? '1 person' : (campfire.member_count || 0) + ' people'
 
   async function join() {

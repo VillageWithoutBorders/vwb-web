@@ -47,7 +47,7 @@ export default function HubVillages() {
     const n = unread[b.id] || 0
     return (
       <button key={b.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px', marginBottom: '0.6rem' }}
-        aria-label={b.name + (n ? ', ' + n + ' new' : '')} onClick={() => navigate('/campfire?board=' + b.id)}>
+        aria-label={b.name + (n ? ', ' + n + ' new' : '')} onClick={() => navigate('/village-square?board=' + b.id)}>
         <span className="cal-card-title"><Icon name={icon} /> {b.name}{n > 0 && <span style={{ marginLeft: '0.5rem', color: 'var(--accent)', fontWeight: 700 }}>{n > 9 ? '9+' : n} new</span>}</span>
         <span className="cal-card-meta">{note}</span>
       </button>
@@ -70,7 +70,7 @@ export default function HubVillages() {
           <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/profile')}>Go to my Profile</button>
         )}
         <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>Find, join, or start a village chat</button>
-        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/villages')}>See the village map</button>
+        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/world')}>See the village map</button>
       </div>
     </div>
   )

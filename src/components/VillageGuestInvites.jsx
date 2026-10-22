@@ -45,7 +45,7 @@ export default function VillageGuestInvites() {
     if (bErr) console.error('Failed to find the village chat:', bErr)
     const b = boards && boards[0]
     setRisk(null)
-    navigate(b ? '/campfire?board=' + b.id + '&intro=1' : '/villages')
+    navigate(b ? '/village-square?board=' + b.id + '&intro=1' : '/world')
   }
 
   if (invites.length === 0 && !note) return null

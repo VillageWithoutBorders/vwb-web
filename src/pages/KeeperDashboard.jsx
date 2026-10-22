@@ -125,7 +125,7 @@ export default function KeeperDashboard() {
   }
 
   if (loadError) {
-    return <div className="cal-page hub-page dash-page"><BackLink fallback="/villages" fallbackLabel="Village Network" /><p className="cal-empty" role="alert">{loadError}</p></div>
+    return <div className="cal-page hub-page dash-page"><BackLink fallback="/world" fallbackLabel="World" /><p className="cal-empty" role="alert">{loadError}</p></div>
   }
   if (!village || !keepers) {
     return <div className="cal-page hub-page dash-page"><p className="cal-empty" role="status">Loading keeper tools...</p></div>
@@ -156,7 +156,7 @@ export default function KeeperDashboard() {
     fireAskCount && { k: 'fires', tab: 'chats', em: '\u{1F525}', text: fireAskCount === 1 ? 'Someone asked to join your Campfire' : fireAskCount + ' people asked to join your Campfires' },
     checkIns.length && { k: 'checkin', tab: 'chats', em: '\u{1F44B}', text: 'A Campfire is asking if you are still taking part' },
     isStarter && sisterAsks.length && { k: 'sisters', tab: 'sisters', em: '\u{1F309}', text: sisterAsks.length === 1 ? sisterAsks[0].other_name + ' asked to be Sister Villages' : sisterAsks.length + ' villages asked to be sisters' },
-    newMembers.length && { k: 'new', tab: 'people', target: 'kd-new-sec', to: board ? '/campfire?board=' + board.id : undefined, em: '\u{1F331}', text: newMembers.length === 1 ? (newMembers[0].display_name || 'A neighbor') + ' just joined. Say hello?' : newMembers.length + ' neighbors just joined. Say hello?' },
+    newMembers.length && { k: 'new', tab: 'people', target: 'kd-new-sec', to: board ? '/village-square?board=' + board.id : undefined, em: '\u{1F331}', text: newMembers.length === 1 ? (newMembers[0].display_name || 'A neighbor') + ' just joined. Say hello?' : newMembers.length + ' neighbors just joined. Say hello?' },
   ].filter(Boolean)
 
   const go = (em, label, onClick) => (
@@ -208,7 +208,7 @@ export default function KeeperDashboard() {
             ))}
             {newMembers.length > 0 && board && (<>
               <p className="hub-org-desc">A short hello in the village chat goes a long way.</p>
-              <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} onClick={() => navigate('/campfire?board=' + board.id)}>Say hello in the village chat</button>
+              <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} onClick={() => navigate('/village-square?board=' + board.id)}>Say hello in the village chat</button>
             </>)}
           </section>
 
@@ -226,7 +226,7 @@ export default function KeeperDashboard() {
             <div className="hub-section-head"><h2 id="kd-chat"><Icon name="megaphone" /> Village chat</h2></div>
             <p className="hub-org-desc">Everyone in the village. As a keeper you can pin announcements here.</p>
             <div className="dash-shortcuts">
-              {go('\u{1F4E3}', 'Open the village chat', () => navigate(board ? '/campfire?board=' + board.id : '/village/' + id))}
+              {go('\u{1F4E3}', 'Open the village chat', () => navigate(board ? '/village-square?board=' + board.id : '/village/' + id))}
             </div>
           </section>
           <section className="hub-section" aria-labelledby="kd-fires">

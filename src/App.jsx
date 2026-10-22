@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
 import { NotificationsProvider } from './context/NotificationsContext'
@@ -22,7 +22,6 @@ const Help = lazyPage(() => import('./pages/Help'))
 const AskForHelp = lazyPage(() => import('./pages/AskForHelp'))
 const PostOffer = lazyPage(() => import('./pages/PostOffer'))
 const ActiveTasks = lazyPage(() => import('./pages/ActiveTasks'))
-const Community = lazyPage(() => import('./pages/Community'))
 const CommunityResources = lazyPage(() => import('./pages/CommunityResources'))
 const PublicResources = lazyPage(() => import('./pages/PublicResources'))
 const ResourceReports = lazyPage(() => import('./pages/ResourceReports'))
@@ -66,7 +65,6 @@ const MyCode = lazyPage(() => import('./pages/MyCode'))
 const VillageCharter = lazyPage(() => import('./pages/VillageCharter'))
 const Trail = lazyPage(() => import('./pages/Trail'))
 const HelpDoors = lazyPage(() => import('./pages/HelpDoors'))
-const VillageMap = lazy(() => import('./pages/VillageMap'))
 import { peekReturnTo } from './utils/returnTo'
 import { placesEnabled } from './utils/places'
 
@@ -82,8 +80,14 @@ function HomeIndex() {
   const [seenGlobe] = useState(() => { try { return localStorage.getItem('vwb_seen_globe') === '1' } catch { return false } })
   useEffect(() => { try { localStorage.setItem('vwb_seen_globe', '1') } catch { /* private window */ } }, [])
   if (simple) return <SimpleHome />
-  if (seenGlobe) return <Navigate to="/home" replace />
+  if (seenGlobe) return <Navigate to="/today" replace />
   return <World />
+}
+
+// Old addresses keep working (alerts, bookmarks, links already sent). Oct 22.
+function Moved({ to }) {
+  const { search, hash } = useLocation()
+  return <Navigate to={to + search + hash} replace />
 }
 
 function lazyPage(load) {
@@ -186,15 +190,16 @@ function AppRoutes() {
       <Route path="/connect/:code" element={<SetupGate><Connect /></SetupGate>} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<HomeIndex />} />
-        <Route path="home" element={<Dashboard />} />
+        <Route path="today" element={<Dashboard />} />
+        <Route path="home" element={<Moved to="/today" />} />
         <Route path="help-doors" element={<HelpDoors />} />
         <Route path="skillshare" element={<Feed />} />
         <Route path="tasks" element={<ActiveTasks />} />
         <Route path="profile" element={<Profile />} />
         <Route path="me" element={<YourCorner />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="community" element={<Community />} />
-        <Route path="villages" element={<Suspense fallback={<div className="cal-page"><p className="cal-empty">Loading...</p></div>}><VillageMap /></Suspense>} />
+        <Route path="community" element={<Moved to="/calendar" />} />
+        <Route path="villages" element={<Moved to="/world" />} />
         <Route path="community/resources" element={<CommunityResources />} />
         {placesEnabled && <Route path="resource-reports" element={<ResourceReports />} />}
         <Route path="orgs/:id" element={<OrgPage />} />
@@ -214,7 +219,8 @@ function AppRoutes() {
         <Route path="keeper-offer/:id" element={<KeeperOffer />} />
         <Route path="admin/report" element={<GrantReport />} />
         <Route path="scramble-test" element={<ScrambleTest />} />
-        <Route path="campfire" element={<Campfire />} />
+        <Route path="village-square" element={<Campfire />} />
+        <Route path="campfire" element={<Moved to="/village-square" />} />
         <Route path="find-village" element={<FindVillage />} />
         <Route path="village/:id" element={<VillageScene />} />
         <Route path="village/:id/keeper" element={<KeeperDashboard />} />
