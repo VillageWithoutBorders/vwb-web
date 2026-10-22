@@ -197,7 +197,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     if (!arrange || tool !== 'move') return
     e.preventDefault(); e.stopPropagation()
     setPicked(key); setLayoutNote(''); setPickTools(false)
-    dragRef.current = { key, moved: false, before: worldRef.current }
+    dragRef.current = { key, moved: false, before: worldRef.current, sx: e.clientX, sy: e.clientY }
     try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* older browsers */ }
   }
   function dragMove(e) {
@@ -210,6 +210,8 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
       return
     }
     if (!dragRef.current) return
+    // A finger always wobbles a little. Under 8 pixels it is a tap (opens the tools), not a drag.
+    if (!dragRef.current.moved && Math.hypot(e.clientX - dragRef.current.sx, e.clientY - dragRef.current.sy) < 8) return
     const [x, y] = scenePoint(e)
     const key = dragRef.current.key
     dragRef.current.moved = true
@@ -457,6 +459,12 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
 
 // Classes and pointer handlers for the map's scene box.
 // onHold(key): called after a long press while not arranging. key is the place held, or null.
+// Tapping a place on a map asks first (Oct 22, Jade): "Go to Calendar?" Go there / Stay here.
+// Places that open a box on the same page do not ask: the box is the popup.
+export function askGoTo(spot, sub) {
+  return askConfirm('Go to ' + spot.label + '?' + (sub ? ' ' + sub + '.' : ''), { yes: 'Go there', no: 'Stay here' })
+}
+
 export function sceneProps(b, extraClass, onHold) {
   return {
     ref: b.outerRef,

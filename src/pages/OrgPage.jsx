@@ -12,7 +12,7 @@ import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import OrgMemberNames from '../components/OrgMemberNames'
 import { ORG_SPOTS, GROUP_SPOTS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
-import { usePageMap, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer } from '../components/MapBuilder'
+import { usePageMap, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, askGoTo } from '../components/MapBuilder'
 import OrgSceneEditor from '../components/OrgSceneEditor'
 import GroupGear from '../components/GroupGear'
 import GroupResponse from '../components/GroupResponse'
@@ -297,11 +297,13 @@ export default function OrgPage() {
     }
   }
 
-  function tap(s) {
+  // fromMap: tapped on the map picture, so leaving the page asks first (Oct 22).
+  async function tap(s, fromMap) {
     if (!stillMotion()) { setBump(s.k); setTimeout(() => setBump(null), 450) }
-    if (s.k === 'tools') { navigate('/orgs/' + id + '/dashboard'); return }
-    if (s.k === 'news' && isMember && news) { navigate('/groups/' + news.id); return }
-    if (s.k === 'fires' && isMember && chats.length === 1) { navigate('/groups/' + chats[0].id); return }
+    const go = async (to) => { if (fromMap && !(await askGoTo(s))) return; navigate(to) }
+    if (s.k === 'tools') { go('/orgs/' + id + '/dashboard'); return }
+    if (s.k === 'news' && isMember && news) { go('/groups/' + news.id); return }
+    if (s.k === 'fires' && isMember && chats.length === 1) { go('/groups/' + chats[0].id); return }
     if (s.k === 'needs' && isMember && posts === null) loadPosts()
     openSheet({ k: s.k })
   }
@@ -546,7 +548,7 @@ export default function OrgPage() {
               style={{ left: s.x + '%', top: s.y + '%', '--s': s.s || 1 }}
               aria-label={s.label + '. ' + i.sub}
               onPointerDown={(e) => dragStart(e, s.k)}
-              onClick={(e) => { if (!arrange) tap(s); else if (e.detail === 0) pickByKey(s.k) }}>
+              onClick={(e) => { if (!arrange) tap(s, true); else if (e.detail === 0) pickByKey(s.k) }}>
               <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true"><SpotIcon spot={s} painted />{lock && <span className="vs-lock"><Icon name="lock" /></span>}</span>
               <span className="vs-lab">{s.short}</span>
             </button>

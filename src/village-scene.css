@@ -517,6 +517,8 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 .vs-zoom { position: absolute; inset: 0; transform-origin: 0 0; }
 .vs-scene-path { touch-action: pan-y; }
 .vs-scene-path.vs-zoomed, .vs-scene-path.vs-zoomed .vs-el { touch-action: none; }
+/* Drawing a road or stream: the finger draws, the page never scrolls (Oct 22). */
+.vs-scene-path.vs-drawing, .vs-scene-path.vs-drawing * { touch-action: none; }
 .vs-zoomed { cursor: grab; }
 .vs-map-under { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin: 10px auto 0; }
 .vs-map-under .vs-names-toggle { margin: 0; }
