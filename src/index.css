@@ -6167,3 +6167,10 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
   .notification-card .notification-content { flex: 1 1 calc(100% - 72px); min-width: 0; }
   .notification-card .notification-actions { width: 100%; justify-content: flex-end; gap: 12px; margin-top: -4px; }
 }
+
+/* Top bar on phones (Oct 22): five calm buttons. Admins reach Admin from My tools,
+   which shows the inbox count. On wider screens the Admin shield stays in the top bar. */
+.header-admin-wide { display: contents; }
+@media (max-width: 767px) { .header-admin-wide { display: none; } }
+.tab-item-btn { position: relative; }
+.tab-badge-admin { background: var(--gold, #f2c763); color: #2a2004; }

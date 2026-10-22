@@ -44,13 +44,14 @@ export default function Layout() {
             <Icon name="calendar" size={26} className="header-btn-pic" />
             <span className="header-btn-label" aria-hidden="true">Calendar</span>
           </Link>
-          <Link to="/home" className={'header-btn' + (pathname === '/home' ? ' on' : '')} aria-current={pathname === '/home' ? 'page' : undefined} aria-label="Dashboard: your tasks and what is near you" data-tour="top-dashboard">
+          <Link to="/home" className={'header-btn' + (pathname === '/home' ? ' on' : '')} aria-current={pathname === '/home' ? 'page' : undefined} aria-label="Today: what needs you, your shortcuts and places" data-tour="top-dashboard">
             <Icon name="clipboard" size={26} className="header-btn-pic" />
-            <span className="header-btn-label" aria-hidden="true">Dashboard</span>
+            <span className="header-btn-label" aria-hidden="true">Today</span>
           </Link>
           </>)}
           {/* Admins and founders: the shield opens the shared Admin inbox. */}
-          {isAdmin && <AdminShield />}
+          {/* On phones the shield moves to My tools in the bottom bar, so the top bar stays calm (Oct 22). */}
+          {isAdmin && <span className="header-admin-wide"><AdminShield /></span>}
           {/* Tap for your 5 newest alerts, with "See all alerts" at the bottom. */}
           <AlertsMenu />
           <MeButton />
