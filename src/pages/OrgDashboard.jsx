@@ -449,6 +449,7 @@ export default function OrgDashboard() {
             <p className="hub-org-desc">Home area, who can see your organization, and your contact email are set at the bottom of your organization page.</p>
             <div className="dash-shortcuts">
               {shortcut('\u{1F3E1}', 'Open our page', '/orgs/' + id)}
+              {shortcut('pencil', 'Change how our page looks', '/orgs/' + id + '?look=1')}
               {shortcut('\u{1F4D6}', 'Resource list', '/community/resources')}
             </div>
           </section>

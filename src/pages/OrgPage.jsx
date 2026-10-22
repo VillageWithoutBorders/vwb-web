@@ -11,7 +11,8 @@ import CalendarSubscribe from '../components/CalendarSubscribe'
 import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import OrgMemberNames from '../components/OrgMemberNames'
-import { ORG_SPOTS, GROUP_SPOTS } from '../data/worldElements'
+import { ORG_SPOTS, GROUP_SPOTS, GROUNDS } from '../data/worldElements'
+import OrgSceneEditor from '../components/OrgSceneEditor'
 import GroupGear from '../components/GroupGear'
 import GroupResponse from '../components/GroupResponse'
 import '../village-scene.css'
@@ -84,7 +85,7 @@ export default function OrgPage() {
   async function loadOrg() {
     const { data, error } = await supabase
       .from('organizations')
-      .select('id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label, kind, response_status, head_title, organizer_title')
+      .select('id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label, kind, response_status, head_title, organizer_title, scene')
       .eq('id', id)
       .eq('approved', true)
       .maybeSingle()
@@ -233,6 +234,15 @@ export default function OrgPage() {
     if (lastFocus.current && lastFocus.current.focus) lastFocus.current.focus()
   }
 
+  // From Organizer tools: "Change how our page looks" opens the page at the editor.
+  const [lookParams] = useSearchParams()
+  const wantsLook = lookParams.get('look') === '1'
+  useEffect(() => {
+    if (!wantsLook || !org || !canManage) return
+    const t = setTimeout(() => { const el = document.getElementById('ose-h'); if (el) el.scrollIntoView({ block: 'start' }) }, 150)
+    return () => clearTimeout(t)
+  }, [wantsLook, org, canManage])
+
   const isGroup = org?.kind === 'group'
   const SPOTS = isGroup ? GROUP_SPOTS : ORG_SPOTS
   const W = orgWords(org)
@@ -242,7 +252,16 @@ export default function OrgPage() {
   const KIND = isGroup ? 'group' : 'organization'
 
   const locked = (s) => !!s.members && !isMember
-  const spots = SPOTS.filter((s) => !s.organizers || canManage).map((s) => (s.k === 'involved' && !canManage ? { ...s, x: 50 } : s))
+  // The look its leaders chose (vwb-org-scene.sql): ground, sign, hidden places, own names.
+  const scene = (org && org.scene) || {}
+  const hiddenKeys = Array.isArray(scene.hide) ? scene.hide : []
+  const ownNames = scene.names && typeof scene.names === 'object' ? scene.names : {}
+  const groundKey = scene.ground || (isGroup ? 'clearings' : 'roads')
+  const groundSrc = (GROUNDS.find((g) => g.k === groundKey) || GROUNDS[0]).src
+  const sign = scene.sign || (isGroup ? 'tent' : 'people')
+  const named = (s) => (ownNames[s.k] ? { ...s, label: ownNames[s.k], short: ownNames[s.k] } : s)
+  const spots = SPOTS.filter((s) => !s.organizers || canManage).filter((s) => s.k === 'tools' || !hiddenKeys.includes(s.k))
+    .map((s) => (s.k === 'involved' && !canManage ? { ...s, x: 50 } : s)).map(named)
   const general = chats.find((c) => c.is_general)
 
   function info(k) {
@@ -426,7 +445,7 @@ export default function OrgPage() {
     if (error) { console.error('Failed to set home zip:', error); setZipNote("We couldn't save that. Try again."); return }
     if (data === 'not_found') { setZipNote("We couldn't find that zip code. Check it and try again."); return }
     setZip('')
-    setZipNote(data === 'cleared' ? 'Home area removed.' : 'Saved. Neighbors nearby will see your group.')
+    setZipNote(data === 'cleared' ? 'Home area removed.' : 'Saved. Neighbors nearby will see your ' + KIND + '.')
     await loadOrg()
   }
 
@@ -436,7 +455,7 @@ export default function OrgPage() {
     const { error } = await supabase.rpc('set_org_hide_from_public', { p_org: id, p_hide: next })
     setSavingPrivacy(false)
     if (error) { console.error('Failed to change group privacy:', error); setPrivacyNote("We couldn't save that. Try again."); return }
-    setPrivacyNote(next ? 'Saved. Your group is now hidden from the public.' : 'Saved. Your group can now be seen by anyone.')
+    setPrivacyNote(next ? 'Saved. Your ' + KIND + ' is now hidden from the public.' : 'Saved. Your ' + KIND + ' can now be seen by anyone.')
     await loadOrg()
   }
 
@@ -468,7 +487,7 @@ export default function OrgPage() {
       </nav>
 
       <div className="vs-title">
-        <h1>{org.name}</h1>
+        <h1 className="org-title"><span className="org-sign" aria-hidden="true"><Icon name={sign} size={40} /></span>{org.name}</h1>
         <div className="vs-chips">
           {isMember ? <span className="vs-chip vs-chip-in">{roleName(mine.role)}</span> : <span className="vs-chip">Public view</span>}
           {isGroup ? <span className="vs-chip"><Icon name="tent" /> Emergency response group</span> : <span className="vs-chip"><Icon name="people" /> Organization</span>}
@@ -480,7 +499,7 @@ export default function OrgPage() {
       </div>
 
       <div className="vs-scene">
-        <img className="vs-ground" src="/art/village-roads.webp" alt="" width="547" height="868" fetchpriority="high" />
+        <img className="vs-ground" src={groundSrc} alt="" width="547" height="868" fetchpriority="high" />
         {spots.map((s) => {
           const i = info(s.k)
           const lock = locked(s)
@@ -532,13 +551,14 @@ export default function OrgPage() {
         </div>
 
         {canManage && <>
+          <OrgSceneEditor org={org} spots={SPOTS.filter((s) => !s.organizers)} isGroup={isGroup} onSaved={loadOrg} />
           <h2>{W.settings}</h2>
           <section className="cal-box" aria-labelledby="org-home">
             <h3 id="org-home">Home area</h3>
             <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
               {org.home_zip
-                ? 'Your group shows up for neighbors near ' + (place || org.home_zip) + '. Only the zip code is saved, never an address.'
-                : 'Add the zip code where your group serves, so neighbors can find you even before you post. Only the zip code is saved, never an address.'}
+                ? 'Your ' + KIND + ' shows up for neighbors near ' + (place || org.home_zip) + '. Only the zip code is saved, never an address.'
+                : 'Add the zip code where your ' + KIND + ' serves, so neighbors can find you even before you post. Only the zip code is saved, never an address.'}
             </p>
             <form className="hub-search" onSubmit={(e) => saveZip(e)} noValidate>
               <label htmlFor="org-zip" className="sr-only">Home zip code</label>
@@ -552,14 +572,14 @@ export default function OrgPage() {
           </section>
 
           <section className="cal-box" aria-labelledby="org-privacy">
-            <h3 id="org-privacy">Who can see your group</h3>
+            <h3 id="org-privacy">Who can see your {KIND}</h3>
             <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
               {org.hide_from_public
-                ? 'Only people with a VWB account can see your group, its resources and its events. Nothing shows to the public or on the website.'
-                : 'Your group, its resources and its public events can be seen by anyone, including on the website.'}
+                ? 'Only people with a VWB account can see your ' + KIND + ', its resources and its events. Nothing shows to the public or on the website.'
+                : 'Your ' + KIND + ', its resources and its public events can be seen by anyone, including on the website.'}
             </p>
             <button type="button" className="btn btn-outline btn-full" onClick={togglePrivacy} disabled={savingPrivacy} style={{ minHeight: '44px' }}>
-              {savingPrivacy ? 'Saving...' : org.hide_from_public ? 'Show my group to the public' : 'Only show my group to people with an account'}
+              {savingPrivacy ? 'Saving...' : org.hide_from_public ? 'Show my ' + KIND + ' to the public' : 'Only show my ' + KIND + ' to people with an account'}
             </button>
             {privacyNote && <p className="hub-note" role="status">{privacyNote}</p>}
           </section>
@@ -569,7 +589,7 @@ export default function OrgPage() {
               <h3 id="org-email">Your contact email</h3>
               <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
                 {org.show_contact_email
-                  ? 'Your email button shows on this page for anyone who can see your group.'
+                  ? 'Your email button shows on this page for anyone who can see your ' + KIND + '.'
                   : 'Your email is private. Nobody can see it, not even VWB admins. You can choose to show an Email button.'}
               </p>
               <button type="button" className="btn btn-outline btn-full" onClick={toggleContactEmail} disabled={savingEmail} style={{ minHeight: '44px' }}>
