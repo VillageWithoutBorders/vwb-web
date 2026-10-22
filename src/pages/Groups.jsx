@@ -212,8 +212,8 @@ export default function Groups({ embedded = false }) {
           {groups.length === 0 && <p className="groups-empty">You're not in any chats yet. Start a Cottage Chat, or ask a friend to invite you.</p>}
           {orderedGroups.map(({ g, nested }) => (
             <button key={g.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + g.id)}>
-              <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? <><Icon name="pushpin" />{' '}</> : ''}{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="sidechats" />{' '}</> : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
-              <span className="groups-row-meta">{g.village_kind === 'sidechat' ? 'Sidechat \u00b7 ' : ''}{g.quiet ? 'Quiet \u00b7 ' : ''}{g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}</span>
+              <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? <><Icon name="pushpin" />{' '}</> : ''}{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="campfire" />{' '}</> : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
+              <span className="groups-row-meta">{g.village_kind === 'sidechat' ? 'Picked by the keeper \u00b7 ' : ''}{g.quiet ? 'Quiet \u00b7 ' : ''}{g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}</span>
             </button>
           ))}
           {groups.some(g => g.archived) && (
@@ -223,7 +223,7 @@ export default function Groups({ embedded = false }) {
               </button>
               {showArchived && groups.filter(g => g.archived).map(g => (
                 <button key={g.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + g.id)}>
-                  <span className="groups-row-name">{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="sidechats" />{' '}</> : ''}{g.name}</span>
+                  <span className="groups-row-name">{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="campfire" />{' '}</> : ''}{g.name}</span>
                   <span className="groups-row-meta">Archived</span>
                 </button>
               ))}

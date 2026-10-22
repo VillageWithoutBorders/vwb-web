@@ -143,6 +143,8 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
   const dragRef = useRef(null)
   const drawRef = useRef(null)
   const drawKindRef = useRef('road')
+  const holdRef = useRef(null) // a finger held down on the map, not arranging yet
+  const holdFiredRef = useRef(false)
   const historyRef = useRef([])
   const onSaveRef = useRef(onSave)
   onSaveRef.current = onSave
@@ -306,6 +308,42 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     setArrange(true); setTool('move'); setTrayTab('pieces'); setLayoutNote(''); setPicked(null); setTrayOpen(false)
     setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: stillMotion() ? 'auto' : 'smooth' }), 120)
   }
+  // Long press (about half a second) on the map asks to start arranging.
+  // Moving the finger first (scrolling) or lifting it early cancels it.
+  function holdStop() {
+    const h = holdRef.current
+    if (!h) return
+    clearTimeout(h.timer)
+    if (h.el) h.el.classList.remove('vs-holding')
+    holdRef.current = null
+  }
+  function holdStart(e, onHold) {
+    holdStop()
+    if (arrange || !onHold || (e.pointerType === 'mouse' && e.button !== 0)) return
+    const el = e.target.closest ? e.target.closest('[data-spot]') : null
+    const key = el ? el.getAttribute('data-spot') : null
+    if (el) el.classList.add('vs-holding')
+    holdFiredRef.current = false
+    holdRef.current = {
+      x: e.clientX, y: e.clientY, el,
+      timer: setTimeout(() => {
+        holdStop()
+        holdFiredRef.current = true
+        try { if (navigator.vibrate) navigator.vibrate(15) } catch { /* no buzz */ }
+        onHold(key)
+      }, 550),
+    }
+  }
+  function holdMove(e) {
+    const h = holdRef.current
+    if (h && Math.hypot(e.clientX - h.x, e.clientY - h.y) > 10) holdStop()
+  }
+  // The finger lifting after a long press should not also count as a tap.
+  function holdClick(e) {
+    if (!holdFiredRef.current) return
+    holdFiredRef.current = false
+    e.preventDefault(); e.stopPropagation()
+  }
   function closeArrange() { setArrange(false); setPicked(null); setTool('move'); setTrayOpen(false) }
   // Do the name tags show right now (without pointing at a place)?
   const [canHover] = useState(() => { try { return window.matchMedia('(hover: hover) and (pointer: fine)').matches } catch { return false } })
@@ -317,15 +355,24 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     picked, setPicked, pickTools, setPickTools, panelLow, layoutNote, setLayoutNote, drawing,
     placed, isHidden, hiddenCount, pickedDecor, dragStart, dragMove, dragEnd, roadStart,
     changePicked, resize, flipPicked, addDecor, removePicked, nudge, pickByKey, namesShowing,
+    holdStart, holdMove, holdStop, holdClick,
   }
 }
 
 // Classes and pointer handlers for the map's scene box.
-export function sceneProps(b, extraClass) {
+// onHold(key): called after a long press while not arranging. key is the place held, or null.
+export function sceneProps(b, extraClass, onHold) {
   return {
     ref: b.sceneRef,
     className: extraClass + ' vs-names-' + (b.world.labels || 'auto') + (b.arrange ? ' vs-arranging' : '') + (b.arrange && b.tool !== 'move' ? ' vs-drawing' : ''),
-    onPointerDown: b.roadStart, onPointerMove: b.dragMove, onPointerUp: b.dragEnd, onPointerCancel: b.dragEnd,
+    onPointerDown: (e) => { b.roadStart(e); b.holdStart(e, onHold) },
+    onPointerMove: (e) => { b.holdMove(e); b.dragMove(e) },
+    onPointerUp: () => { b.holdStop(); b.dragEnd() },
+    onPointerCancel: () => { b.holdStop(); b.dragEnd() },
+    onPointerLeave: b.holdStop,
+    onClickCapture: b.holdClick,
+    // A long press on the map art should not open the phone's save-picture menu.
+    onContextMenu: (e) => e.preventDefault(),
   }
 }
 

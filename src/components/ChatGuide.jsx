@@ -24,15 +24,8 @@ const ROOMS = [
     icon: 'campfire',
     name: 'Campfire',
     who: 'A team inside a village, organization, or group.',
-    for: 'Planning and working together: a church, a nonprofit, a cleanup crew.',
+    for: 'Planning and working together: a church, a nonprofit, a cleanup crew. A smaller Campfire can branch off for one job, like "Saturday food drive drivers", so the main one stays calm.',
     safe: 'Members only. You ask to join or someone adds you.',
-  },
-  {
-    icon: 'sidechats',
-    name: 'Sidechat',
-    who: 'A few people from a bigger Campfire.',
-    for: 'One job, like "Saturday food drive drivers", so the main chat stays calm.',
-    safe: 'Only the people added can read it.',
   },
   {
     icon: 'megaphone',
