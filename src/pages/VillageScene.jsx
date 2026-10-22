@@ -113,6 +113,8 @@ const TOOL_PATHS = {
   up: 'M6 15l6-6 6 6', down: 'M6 9l6 6 6-6', left: 'M15 6l-6 6 6 6', right: 'M9 6l6 6-6 6',
   close: 'M6 6l12 12M18 6L6 18',
   tag: 'M3 12V4h8l10 10-8 8L3 12zM7.5 7.5h.01',
+  turnl: 'M4 4v5h5M4.6 9A8 8 0 1 1 6 17',
+  turnr: 'M20 4v5h-5M19.4 9A8 8 0 1 0 18 17',
 }
 function ToolIcon({ name }) {
   return <svg className="vs-tool-ic" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d={TOOL_PATHS[name]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -375,6 +377,14 @@ export default function VillageScene() {
     if (!picked) return
     const cur = pickedDecor ? pickedDecor.s || 1 : placed(SPOTS.find((v) => v.k === picked)).s || 1
     changePicked({ s: Math.min(pickedDecor ? 3 : 1.8, Math.max(0.3, Math.round((cur + by) * 10) / 10)) })
+  }
+  // Turn the picked piece a little (Oct 22). Saved as r, in degrees; straight is 0.
+  function turnPicked(by) {
+    if (!picked) return
+    const cur = pickedDecor ? pickedDecor.r || 0 : (layout[picked] && layout[picked].r) || 0
+    let r = ((cur + by + 540) % 360) - 180
+    if (Math.abs(r) < 1) r = 0
+    changePicked({ r })
   }
   function flipPicked() {
     if (!picked) return
@@ -924,7 +934,7 @@ export default function VillageScene() {
           const piece = DECOR_PIECES.find((p) => p.k === d.k)
           if (!piece) return null
           const style = { left: d.x + '%', top: d.y + '%', '--s': d.s || 1 }
-          const img = <img className={'vs-deco-img' + (d.flip ? ' vs-flip' : '')} src={piece.src} alt="" width="96" height="96" draggable="false" />
+          const img = <img className={'vs-deco-img' + (d.flip ? ' vs-flip' : '')} src={piece.src} alt="" width="96" height="96" draggable="false" style={d.r ? { rotate: d.r + 'deg' } : undefined} />
           return arrange && tool === 'move'
             ? <button key={d.id} type="button" className={'vs-deco vs-deco-edit' + (picked === 'd:' + d.id ? ' vs-picked' : '')} style={style} aria-label={piece.label} onPointerDown={(e) => dragStart(e, 'd:' + d.id)} onClick={(e) => { if (e.detail === 0) { setPicked('d:' + d.id); setPickTools(true) } }}>{img}</button>
             : <span key={d.id} className="vs-deco" style={style} aria-hidden="true">{img}</span>
@@ -942,7 +952,7 @@ export default function VillageScene() {
               aria-label={s.label + '. ' + i.sub}
               onPointerDown={(e) => dragStart(e, s.k)}
               onClick={(e) => { if (!arrange) tap(s); else if (e.detail === 0 && tool === 'move') { setPicked(s.k); setPickTools(true) } }}>
-              <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true">
+              <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true" style={s.r ? { rotate: s.r + 'deg' } : undefined}>
                 {s.k === 'campfires' && life
                   ? <img className="vs-icon vs-life-fire" src={LIFE_ART.fire[life.fire_level] || LIFE_ART.fire[1]} alt="" width="96" height="96" draggable="false" />
                   : s.k === 'neighbors' && life
@@ -1006,6 +1016,8 @@ export default function VillageScene() {
                   <button type="button" className="vs-tool" onClick={() => resize(-0.1)}><ToolIcon name="minus" /><span>Smaller</span></button>
                   <button type="button" className="vs-tool" onClick={() => resize(0.1)}><ToolIcon name="plus" /><span>Bigger</span></button>
                   <button type="button" className="vs-tool" onClick={flipPicked}><ToolIcon name="flip" /><span>Flip</span></button>
+                  <button type="button" className="vs-tool" onClick={() => turnPicked(-15)}><ToolIcon name="turnl" /><span>Turn left</span></button>
+                  <button type="button" className="vs-tool" onClick={() => turnPicked(15)}><ToolIcon name="turnr" /><span>Turn right</span></button>
                   {pickedDecor
                     ? <button type="button" className="vs-tool" onClick={removePicked}><ToolIcon name="trash" /><span>Remove</span></button>
                     : <button type="button" className="vs-tool" onClick={() => changePicked({ hide: !isHidden(picked) })}><ToolIcon name="eye" /><span>{isHidden(picked) ? 'Show' : 'Hide'}</span></button>}
