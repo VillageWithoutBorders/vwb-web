@@ -539,7 +539,7 @@ export default function OrgPage() {
               aria-label={s.label + '. ' + i.sub}
               onPointerDown={(e) => dragStart(e, s.k)}
               onClick={(e) => { if (!arrange) tap(s); else if (e.detail === 0) pickByKey(s.k) }}>
-              <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true"><SpotIcon spot={s} />{lock && <span className="vs-lock"><Icon name="lock" /></span>}</span>
+              <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true"><SpotIcon spot={s} painted />{lock && <span className="vs-lock"><Icon name="lock" /></span>}</span>
               <span className="vs-lab">{s.short}</span>
             </button>
           )

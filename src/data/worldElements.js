@@ -12,8 +12,9 @@
 // Layout (Oct 22): the painted village path (public/art/village-path/village-meadow.webp).
 // Each spot sits on a clearing beside the path; x, y = percent of the picture.
 // Everyday spots sit low, by your thumb. Sisters sits on the painted footbridge.
-// art: the painted building for this spot (public/art/village-path). Until the
-// file is there, the round badge picture shows instead .
+// art: the painted picture for this spot (public/art/village-path, life, village-build).
+// Every map place has one (Oct 22), so maps don't mix paintings and round badges.
+// The round badge (icon) still shows in the list under the map, and if a painting fails to load.
 export const VILLAGE_SPOTS = [
   { k: 'charter', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our charter', short: 'Charter', em: '\u{1F4DC}', x: 22, y: 11 },
   { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'megaphone', label: 'Village chat', short: 'Village chat', em: '\u{1F4E3}', x: 22, y: 72 },
@@ -21,10 +22,10 @@ export const VILLAGE_SPOTS = [
   { k: 'sisters', art: '/art/village-path/spot-sisters.webp', icon: 'bridge', label: 'Sister villages', short: 'Sisters', em: '\u{1F309}', x: 63, y: 6 },
   { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Organizations here', short: 'Organizations', em: '\u{1F465}', x: 70, y: 20 },
   { k: 'sidechats', art: '/art/village-path/spot-sidechats.webp', icon: 'sidechats', label: 'Sidechats', short: 'Sidechats', em: '\u{1F4AC}', x: 23, y: 44 },
-  { k: 'campfires', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 36, y: 60 },
+  { k: 'campfires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 36, y: 60 },
   { k: 'cottage', art: '/art/village-path/spot-cottage.webp', icon: 'cottage', label: 'Cottage Chats', short: 'Cottage Chats', em: '\u{1F3E1}', x: 76, y: 50 },
   { k: 'skillshare', art: '/art/village-path/spot-skillshare.webp', icon: 'basket', label: 'SkillShare', short: 'SkillShare', em: '\u{1F9FA}', x: 73, y: 78 },
-  { k: 'neighbors', icon: 'wave', label: 'Neighbors', short: 'Neighbors', em: '\u{1F44B}', x: 75, y: 65 },
+  { k: 'neighbors', art: '/art/life/life-cottage-lit.webp', icon: 'wave', label: 'Neighbors', short: 'Neighbors', em: '\u{1F44B}', x: 75, y: 65 },
   { k: 'groups', art: '/art/village-path/spot-groups.webp', icon: 'tent', label: 'Groups here', short: 'Groups', em: '⛺', x: 76, y: 36 },
   { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'Your corner', short: 'You', em: '\u{1F3E0}', x: 24, y: 89, s: 1.1 },
   { k: 'messages', art: '/art/village-path/spot-messages.webp', icon: 'mailbox', label: 'Messages', short: 'Messages', em: '\u{1F4EE}', x: 74, y: 90, s: 1.1 },
@@ -36,13 +37,13 @@ export const VILLAGE_SPOTS = [
 // Same painted meadow and clearings as the village page.
 export const COTTAGE_SPOTS = [
   { k: 'home', art: '/art/village-path/spot-sisters.webp', icon: 'bridge', label: 'Your home village', short: 'Home village', x: 63, y: 6 },
-  { k: 'visits', icon: 'houses', label: 'Villages you visit', short: 'Visits', x: 22, y: 11 },
-  { k: 'calendar', icon: 'calendar', label: 'Calendar', short: 'Calendar', x: 22, y: 28 },
+  { k: 'visits', art: '/art/life/life-cottage-lit.webp', icon: 'houses', label: 'Villages you visit', short: 'Visits', x: 22, y: 11 },
+  { k: 'calendar', art: '/art/life/life-sign.webp', icon: 'calendar', label: 'Calendar', short: 'Calendar', x: 22, y: 28 },
   { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Your organizations', short: 'Organizations', x: 70, y: 20 },
-  { k: 'connections', icon: 'handshake', label: 'Connections', short: 'Connections', x: 23, y: 44 },
+  { k: 'connections', art: '/art/village-path/spot-sidechats.webp', icon: 'handshake', label: 'Connections', short: 'Connections', x: 23, y: 44 },
   { k: 'groups', art: '/art/village-path/spot-groups.webp', icon: 'tent', label: 'Your groups', short: 'Groups', x: 76, y: 36 },
   { k: 'cottage', art: '/art/village-path/spot-cottage.webp', icon: 'cottage', label: 'Cottage Chats', short: 'Cottage Chats', x: 76, y: 50 },
-  { k: 'campfires', icon: 'campfire', label: 'Your Campfires', short: 'Campfires', x: 36, y: 60 },
+  { k: 'campfires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Your Campfires', short: 'Campfires', x: 36, y: 60 },
   { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'megaphone', label: 'Village chats', short: 'Village chats', x: 22, y: 72 },
   { k: 'help', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Help', short: 'Help', x: 73, y: 78 },
   { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'Your corner', short: 'You', x: 24, y: 89, s: 1.1 },
@@ -53,33 +54,33 @@ export const COTTAGE_SPOTS = [
 // members: only members can open it (others see it faded with a lock).
 // organizers: only Heads and organizers see it at all.
 export const ORG_SPOTS = [
-  { k: 'rules', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 14, y: 27, members: true },
-  { k: 'where', icon: 'houses', label: 'Where we work', short: 'Where', em: '\u{1F3D8}️', x: 32, y: 17 },
-  { k: 'links', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
-  { k: 'events', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
-  { k: 'news', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
-  { k: 'fires', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52, members: true },
-  { k: 'members', icon: 'card', label: 'Members', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
-  { k: 'needs', icon: 'heart-hands', label: 'Needs and offers', short: 'Needs', em: '\u{1F91D}', x: 15, y: 74, members: true },
-  { k: 'share', icon: 'box', label: 'What we share', short: 'Share', em: '\u{1F4E6}', x: 41, y: 74 },
-  { k: 'involved', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
-  { k: 'tools', icon: 'toolbox', label: 'Organizer tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
+  { k: 'rules', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 14, y: 27, members: true },
+  { k: 'where', art: '/art/life/life-cottage-lit.webp', icon: 'houses', label: 'Where we work', short: 'Where', em: '\u{1F3D8}️', x: 32, y: 17 },
+  { k: 'links', art: '/art/village-path/spot-sisters.webp', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
+  { k: 'events', art: '/art/village-path/spot-chat.webp', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
+  { k: 'news', art: '/art/life/life-sign.webp', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
+  { k: 'fires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52, members: true },
+  { k: 'members', art: '/art/village-path/spot-orgs.webp', icon: 'card', label: 'Members', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
+  { k: 'needs', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Needs and offers', short: 'Needs', em: '\u{1F91D}', x: 15, y: 74, members: true },
+  { k: 'share', art: '/art/village-build/deco-garden.webp', icon: 'box', label: 'What we share', short: 'Share', em: '\u{1F4E6}', x: 41, y: 74 },
+  { k: 'involved', art: '/art/village-path/spot-cottage.webp', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
+  { k: 'tools', art: '/art/village-path/spot-keeper.webp', icon: 'toolbox', label: 'Organizer tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
 ]
 
 // An emergency response Group's page (OrgPage.jsx with kind 'group'). Same roadmap
 // and lots as ORG_SPOTS. Groups say Keeper and Helper where organizations say Head and Organizer.
 export const GROUP_SPOTS = [
-  { k: 'rules', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 14, y: 27, members: true },
-  { k: 'where', icon: 'houses', label: 'Where we cover', short: 'Where', em: '\u{1F3D8}', x: 32, y: 17 },
-  { k: 'links', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
-  { k: 'events', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
-  { k: 'news', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
-  { k: 'fires', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52, members: true },
-  { k: 'members', icon: 'card', label: 'Members and what we bring', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
-  { k: 'ready', icon: 'siren', label: 'Ready to respond', short: 'Respond', em: '\u{1F6A8}', x: 15, y: 74 },
-  { k: 'share', icon: 'box', label: 'Supplies we keep', short: 'Supplies', em: '\u{1F4E6}', x: 41, y: 74 },
-  { k: 'involved', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
-  { k: 'tools', icon: 'toolbox', label: 'Keeper tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
+  { k: 'rules', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 14, y: 27, members: true },
+  { k: 'where', art: '/art/life/life-cottage-lit.webp', icon: 'houses', label: 'Where we cover', short: 'Where', em: '\u{1F3D8}', x: 32, y: 17 },
+  { k: 'links', art: '/art/village-path/spot-sisters.webp', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 49, y: 27 },
+  { k: 'events', art: '/art/village-path/spot-chat.webp', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 86, y: 22 },
+  { k: 'news', art: '/art/life/life-sign.webp', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 12, y: 51, members: true },
+  { k: 'fires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52, members: true },
+  { k: 'members', art: '/art/village-path/spot-orgs.webp', icon: 'card', label: 'Members and what we bring', short: 'Members', em: '\u{1F4C7}', x: 74, y: 53, members: true },
+  { k: 'ready', art: '/art/village-path/spot-groups.webp', icon: 'siren', label: 'Ready to respond', short: 'Respond', em: '\u{1F6A8}', x: 15, y: 74 },
+  { k: 'share', art: '/art/village-build/deco-well.webp', icon: 'box', label: 'Supplies we keep', short: 'Supplies', em: '\u{1F4E6}', x: 41, y: 74 },
+  { k: 'involved', art: '/art/village-path/spot-cottage.webp', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 27, y: 90, s: 1.1 },
+  { k: 'tools', art: '/art/village-path/spot-keeper.webp', icon: 'toolbox', label: 'Keeper tools', short: 'Tools', em: '\u{1F9F0}', x: 85, y: 90, s: 1.1, organizers: true },
 ]
 
 // The living village scene (vwb-village-life.sql). Painted art made in
