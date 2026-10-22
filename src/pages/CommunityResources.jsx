@@ -507,7 +507,7 @@ export default function CommunityResources() {
                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
                                   Anonymous &middot; {new Date(rev.created_at).toLocaleDateString()}
                                   {rev.user_id === user?.id && (
-                                    <> &middot; <button onClick={() => deleteMyReview(r.id, rev.id)} aria-label="Delete your review" style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.35rem 0.1rem', minHeight: '32px' }}>delete</button></>
+                                    <> &middot; <button onClick={() => deleteMyReview(r.id, rev.id)} aria-label="Delete your review" style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.35rem 0.25rem', minHeight: '44px' }}>delete</button></>
                                   )}
                                 </span>
                               </div>
@@ -548,7 +548,7 @@ export default function CommunityResources() {
                                   {ed.source_url && <> &middot; <a href={ed.source_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--info)' }}>source</a></>}
                                   {ed.reverted && <> &middot; undone{ed.reverted_by_name ? ' by ' + ed.reverted_by_name : ''}</>}
                                   {!ed.reverted && canVerify && (
-                                    <> &middot; <button onClick={() => revertEdit(ed.id)} disabled={revertingId === ed.id} aria-label="Undo this edit" style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.35rem 0.1rem', minHeight: '32px' }}>{revertingId === ed.id ? 'undoing...' : 'undo'}</button></>
+                                    <> &middot; <button onClick={() => revertEdit(ed.id)} disabled={revertingId === ed.id} aria-label="Undo this edit" style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.35rem 0.25rem', minHeight: '44px' }}>{revertingId === ed.id ? 'undoing...' : 'undo'}</button></>
                                   )}
                                 </span>
                               </div>

@@ -11,11 +11,12 @@ import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
 import { useGoBack } from '../components/BackLink'
 
 // Each choice also sets when the request closes on its own (set by the database):
-// now = 6 hours, today = midnight Eastern, this_week = 7 days.
+// now = 6 hours, today = midnight Eastern (at least 3 hours), this_week = 7 days.
+// Changing it when editing starts a new closing time.
 // 'flexible' still exists in the database for old requests, but is not offered.
 const URGENCY_OPTIONS = [
     { value: 'now', label: 'Right now', desc: 'Stays open 6 hours' },
-    { value: 'today', label: 'Today', desc: 'Stays open until midnight' },
+    { value: 'today', label: 'Today', desc: 'Stays open until midnight, at least 3 hours' },
     { value: 'this_week', label: 'This week', desc: 'Stays open 7 days' },
 ]
 

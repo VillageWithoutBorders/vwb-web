@@ -434,7 +434,7 @@ html.simple .vs-room { min-height: 72px; }
 html.simple .vs-room-text b { font-size: 1.15rem; }
 
 /* Town list folded into one chip (Oct 22). */
-.vs-chip-btn-towns { cursor: pointer; font: inherit; font-size: 0.88rem; min-height: 32px; }
+.vs-chip-btn-towns { cursor: pointer; font: inherit; font-size: 0.88rem; min-height: 44px; }
 .vs-chip-btn-towns:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 2px; }
 .vs-towns-list { margin: 8px 0 0; color: var(--vs-muted); font-size: 0.95rem; line-height: 1.45; }
 @media (pointer: coarse) { .vs-chip-btn-towns { min-height: 44px; } }
