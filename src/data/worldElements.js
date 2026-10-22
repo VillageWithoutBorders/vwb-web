@@ -9,20 +9,25 @@
 // Lots: top-left (town square), top-right (beyond the village),
 // middle-left small, middle-right, bottom-left (main street),
 // bottom-right small, bottom-right corner.
+// Layout (Oct 22): the painted village path (public/art/village-path/village-path.webp).
+// Each spot sits on a clearing beside the path; x, y = percent of the picture.
+// Everyday spots sit low, by your thumb. Four clearings are left empty, room to grow.
+// art: the painted building for this spot (public/art/village-path). Until the
+// file is there, the round badge picture shows instead (the Keeper's house still does).
 export const VILLAGE_SPOTS = [
-  { k: 'charter', icon: 'scroll', label: 'Our charter', short: 'Charter', em: '\u{1F4DC}', x: 14, y: 27 },
-  { k: 'chat', icon: 'megaphone', label: 'Village chat', short: 'Village chat', em: '\u{1F4E3}', x: 32, y: 17 },
-  { k: 'keeper', icon: 'key', label: "Keeper's house", short: 'Keeper', em: '\u{1F5DD}️', x: 49, y: 27 },
-  { k: 'sisters', icon: 'bridge', label: 'Sister villages', short: 'Sisters', em: '\u{1F309}', x: 86, y: 14 },
-  { k: 'orgs', icon: 'people', label: 'Organizations here', short: 'Organizations', em: '\u{1F465}', x: 84, y: 30 },
-  { k: 'sidechats', icon: 'sidechats', label: 'Sidechats', short: 'Sidechats', em: '\u{1F4AC}', x: 12, y: 51 },
-  { k: 'campfires', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 42, y: 52 },
-  { k: 'cottage', icon: 'cottage', label: 'Cottage Chats', short: 'Cottage Chats', em: '\u{1F3E1}', x: 74, y: 53 },
-  { k: 'skillshare', icon: 'basket', label: 'SkillShare', short: 'SkillShare', em: '\u{1F9FA}', x: 15, y: 74 },
-  { k: 'neighbors', icon: 'wave', label: 'Neighbors', short: 'Neighbors', em: '\u{1F44B}', x: 41, y: 74 },
-  { k: 'groups', icon: 'tent', label: 'Groups here', short: 'Groups', em: '⛺', x: 84, y: 68 },
-  { k: 'me', icon: 'house', label: 'Your corner', short: 'You', em: '\u{1F3E0}', x: 27, y: 90, s: 1.1 },
-  { k: 'messages', icon: 'mailbox', label: 'Messages', short: 'Messages', em: '\u{1F4EE}', x: 85, y: 90, s: 1.1 },
+  { k: 'charter', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our charter', short: 'Charter', em: '\u{1F4DC}', x: 38, y: 9 },
+  { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'megaphone', label: 'Village chat', short: 'Village chat', em: '\u{1F4E3}', x: 21, y: 45 },
+  { k: 'keeper', art: '/art/village-path/spot-keeper.webp', icon: 'key', label: "Keeper's house", short: 'Keeper', em: '\u{1F5DD}️', x: 20, y: 22 },
+  { k: 'sisters', art: '/art/village-path/spot-sisters.webp', icon: 'bridge', label: 'Sister villages', short: 'Sisters', em: '\u{1F309}', x: 87, y: 18 },
+  { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Organizations here', short: 'Organizations', em: '\u{1F465}', x: 67, y: 8 },
+  { k: 'sidechats', art: '/art/village-path/spot-sidechats.webp', icon: 'sidechats', label: 'Sidechats', short: 'Sidechats', em: '\u{1F4AC}', x: 27, y: 33 },
+  { k: 'campfires', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 57, y: 48 },
+  { k: 'cottage', art: '/art/village-path/spot-cottage.webp', icon: 'cottage', label: 'Cottage Chats', short: 'Cottage Chats', em: '\u{1F3E1}', x: 76, y: 37 },
+  { k: 'skillshare', art: '/art/village-path/spot-skillshare.webp', icon: 'basket', label: 'SkillShare', short: 'SkillShare', em: '\u{1F9FA}', x: 27, y: 60 },
+  { k: 'neighbors', icon: 'wave', label: 'Neighbors', short: 'Neighbors', em: '\u{1F44B}', x: 69, y: 63 },
+  { k: 'groups', art: '/art/village-path/spot-groups.webp', icon: 'tent', label: 'Groups here', short: 'Groups', em: '⛺', x: 64, y: 25 },
+  { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'Your corner', short: 'You', em: '\u{1F3E0}', x: 26, y: 89, s: 1.1 },
+  { k: 'messages', art: '/art/village-path/spot-messages.webp', icon: 'mailbox', label: 'Messages', short: 'Messages', em: '\u{1F4EE}', x: 71, y: 87, s: 1.1 },
 ]
 
 // The Organization page (OrgPage.jsx). Same roadmap.
