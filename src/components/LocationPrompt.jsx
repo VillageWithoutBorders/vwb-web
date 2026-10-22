@@ -1,7 +1,7 @@
 import Icon from './Icon'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { lookupZip, saveZip, setVisitZip, shareDeviceLocation, forgetVisitLocation } from '../utils/location'
+import { lookupZip, saveZip, setVisitZip, forgetVisitLocation } from '../utils/location'
 
 // Asks "where should we look?" with a zip code. We never guess a location.
 // Shown wherever a page needs a location and doesn't have one yet.
@@ -38,15 +38,6 @@ export function LocationPrompt({ onDone, onCancel, title = 'Where should we look
       setVisitZip(place)
     }
     setBusy(false)
-    onDone?.()
-  }
-
-  async function handleDevice() {
-    setError('')
-    setBusy(true)
-    const loc = await shareDeviceLocation()
-    setBusy(false)
-    if (!loc) { setError("We couldn't get your phone's location. You can use your zip code instead."); return }
     onDone?.()
   }
 
@@ -100,9 +91,6 @@ export function LocationPrompt({ onDone, onCancel, title = 'Where should we look
       {error && <p id="locZipError" className="form-error" role="alert">{error}</p>}
 
       <div className="location-prompt-alt">
-        <button type="button" className="link-button" onClick={handleDevice} disabled={busy}>
-          Use my phone's location instead
-        </button>
         {onCancel && (
           <button type="button" className="link-button" onClick={onCancel}>Cancel</button>
         )}
