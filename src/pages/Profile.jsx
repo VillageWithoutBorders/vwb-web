@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import HomeVillageRow from '../components/HomeVillageRow'
 import { VouchRequestsForMe } from '../components/PersonalVouches'
 import PastTasks from '../components/PastTasks'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
@@ -341,6 +342,7 @@ export default function Profile() {
             <span className="detail-label">Neighborhood</span>
             <span className="detail-value">{profile?.neighborhood || 'Not set'}</span>
           </div>
+          <HomeVillageRow />
           <div className="detail-row detail-row-stack">
             <span className="detail-label">Skills</span>
             <span className="detail-value">

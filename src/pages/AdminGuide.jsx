@@ -25,7 +25,7 @@ function Block({ b }) {
           <thead><tr>{b.table.head.map((h) => <th key={h} scope="col">{h}</th>)}</tr></thead>
           <tbody>
             {b.table.rows.map((r) => (
-              <tr key={r[0]}>{r.map((c, i) => (i === 0 ? <th key={i} scope="row">{c}</th> : <td key={i}>{c}</td>))}</tr>
+              <tr key={r[0]}>{r.map((c, i) => (i === 0 ? <th key={i} scope="row">{c}</th> : <td key={i} data-label={b.table.head[i]}>{c}</td>))}</tr>
             ))}
           </tbody>
         </table>

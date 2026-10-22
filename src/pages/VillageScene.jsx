@@ -625,7 +625,7 @@ export default function VillageScene() {
       <div className="vs-title">
         <h1>{village.name}</h1>
         <div className="vs-chips">
-          {mine && !isGuest && <span className="vs-chip vs-chip-in">You are in</span>}
+          {mine && !isGuest && (profile?.home_village_id === village.id ? <span className="vs-chip vs-chip-in">Your home village</span> : <span className="vs-chip vs-chip-in">You are in</span>)}
           {mine && isGuest && <span className="vs-chip vs-chip-guest">Guest</span>}
           {mine && keepers && keepers.i_am_keeper && <span className="vs-chip vs-chip-in">Keeper</span>}
           {!mine && <span className="vs-chip">Not joined yet</span>}

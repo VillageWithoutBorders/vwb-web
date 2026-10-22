@@ -46,7 +46,8 @@ export function orgWords(org) {
     tools: isGroup ? 'Keeper tools' : 'Organizer tools',
     settings: isGroup ? 'Keeper settings' : 'Organizer settings',
     // Labels that also name the shared step, for safety screens: 'Director (keeper)'.
-    stepLabel: { admin: head === 'Keeper' ? head : head + ' (keeper)', organizer: organizer === 'Helper' ? organizer : organizer + ' (helper)', member: 'Member' },
+    // Only for titles an organization chose itself; the usual Head and Organizer need no extra word (Oct 22).
+    stepLabel: { admin: ['Keeper', 'Head'].includes(head) ? head : head + ' (keeper)', organizer: ['Helper', 'Organizer'].includes(organizer) ? organizer : organizer + ' (helper)', member: 'Member' },
     roleLabel: { admin: head, organizer, member: 'Member' },
   }
 }
