@@ -52,14 +52,42 @@ function Road({ pts, drawing }) {
   )
 }
 
+// Water: soft, uneven banks (a little noise moves the edges), shallow and deep
+// water in layers, and scattered glints that drift slowly downstream.
+function StreamDefs() {
+  return (
+    <defs>
+      <filter id="vs-water" filterUnits="userSpaceOnUse" x="-5" y="-5" width="110" height="160">
+        <feTurbulence type="fractalNoise" baseFrequency="0.07" numOctaves="2" seed="7" />
+        <feDisplacementMap in="SourceGraphic" scale="4" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+      <filter id="vs-bank" filterUnits="userSpaceOnUse" x="-5" y="-5" width="110" height="160">
+        <feTurbulence type="fractalNoise" baseFrequency="0.1" numOctaves="2" seed="3" />
+        <feDisplacementMap in="SourceGraphic" scale="5" xChannelSelector="R" yChannelSelector="G" result="d" />
+        <feGaussianBlur in="d" stdDeviation="0.7" />
+      </filter>
+      <filter id="vs-glint" filterUnits="userSpaceOnUse" x="-5" y="-5" width="110" height="160">
+        <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="1" seed="11" />
+        <feDisplacementMap in="SourceGraphic" scale="1.6" xChannelSelector="R" yChannelSelector="G" result="d" />
+        <feGaussianBlur in="d" stdDeviation="0.15" />
+      </filter>
+    </defs>
+  )
+}
 function Stream({ pts, drawing }) {
   const dd = roadPath(pts)
+  const line = { fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' }
   return (
-    <g className={drawing ? 'vs-road-live' : undefined}>
-      <path d={dd} fill="none" stroke="#6f8f5a" strokeOpacity="0.55" strokeWidth="7.4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={dd} fill="none" stroke="#5f9e98" strokeWidth="5.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={dd} fill="none" stroke="#7fc0b6" strokeOpacity="0.8" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={dd} fill="none" stroke="#e9f6ef" strokeOpacity="0.55" strokeWidth="0.7" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1.6 4.2" />
+    <g className={'vs-stream' + (drawing ? ' vs-road-live' : '')}>
+      <path d={dd} {...line} stroke="#5f7442" strokeOpacity="0.5" strokeWidth="10.5" filter="url(#vs-bank)" />
+      <path d={dd} {...line} stroke="#9cc4a6" strokeWidth="8" filter="url(#vs-water)" />
+      <path d={dd} {...line} stroke="#5aa3a4" strokeWidth="6.2" filter="url(#vs-water)" />
+      <path d={dd} {...line} stroke="#347f8b" strokeOpacity="0.75" strokeWidth="3.6" filter="url(#vs-bank)" />
+      <g filter="url(#vs-glint)">
+        <path className="vs-ripple" d={dd} {...line} stroke="#effaf5" strokeOpacity="0.7" strokeWidth="0.45" strokeDasharray="1.4 4.5 0.6 7 2 5" transform="translate(0.4,-1.6)" />
+        <path className="vs-ripple vs-ripple-2" d={dd} {...line} stroke="#effaf5" strokeOpacity="0.5" strokeWidth="0.35" strokeDasharray="0.8 6 1.8 3.5 0.5 8" transform="translate(-0.6,1.4)" />
+        <path className="vs-ripple vs-ripple-3" d={dd} {...line} stroke="#d6f0ea" strokeOpacity="0.45" strokeWidth="0.3" strokeDasharray="0.6 9 1 5" transform="translate(0.2,0.2)" />
+      </g>
     </g>
   )
 }
@@ -547,6 +575,7 @@ export default function VillageScene() {
         <img className="vs-ground" src={world.ground === 'open' ? OPEN_MEADOW : '/art/village-path/village-meadow.webp'} alt="" width="768" height="1152" fetchpriority="high" />
         {(world.roads.length > 0 || world.streams.length > 0 || drawing) && (
           <svg className="vs-roads" viewBox="0 0 100 150" preserveAspectRatio="none" aria-hidden="true">
+            {(world.streams.length > 0 || tool === 'stream') && <StreamDefs />}
             {world.streams.map((r, i) => <Stream key={'s' + i} pts={r} />)}
             {drawing && drawing.length > 1 && tool === 'stream' && <Stream pts={drawing} drawing />}
             {world.roads.map((r, i) => <Road key={i} pts={r} />)}
