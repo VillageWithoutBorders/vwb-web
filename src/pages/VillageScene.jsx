@@ -180,6 +180,8 @@ export default function VillageScene() {
   const [picked, setPicked] = useState(null) // a place key, or 'd:' + decor id
   // Phones: when the picked piece is high on the screen, the tool panel drops to the bottom so it does not cover it.
   const [panelLow, setPanelLow] = useState(false)
+  // The picked piece's tools open on a tap, not while you drag it (Jade, Oct 22).
+  const [pickTools, setPickTools] = useState(false)
   const [layoutNote, setLayoutNote] = useState('')
   const [drawing, setDrawing] = useState(null) // points of the road being drawn
   const fromSaved = (v) => {
@@ -312,7 +314,7 @@ export default function VillageScene() {
   function dragStart(e, key) {
     if (!arrange || tool !== 'move') return
     e.preventDefault(); e.stopPropagation()
-    setPicked(key); setLayoutNote('')
+    setPicked(key); setLayoutNote(''); setPickTools(false)
     dragRef.current = { key, moved: false, before: worldRef.current }
     try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* older browsers */ }
   }
@@ -353,6 +355,7 @@ export default function VillageScene() {
     const { moved, before } = dragRef.current
     dragRef.current = null
     if (moved) { remember(before); saveWorld(worldRef.current) }
+    else setPickTools(true) // a tap: show its tools
   }
   function roadStart(e) {
     if (!arrange || (tool !== 'road' && tool !== 'stream') || !sceneRef.current) return
@@ -385,7 +388,7 @@ export default function VillageScene() {
     const r = sceneRef.current && sceneRef.current.getBoundingClientRect()
     if (r && r.height) y = Math.min(90, Math.max(10, (((window.innerHeight / 2) - r.top) / r.height) * 100))
     commit({ ...world, decor: [...world.decor, { id, k: piece.k, x: 50, y: round1(y), s: piece.s }] })
-    setTool('move'); setPicked('d:' + id); setTrayOpen(false)
+    setTool('move'); setPicked('d:' + id); setPickTools(true); setTrayOpen(false)
     setLayoutNote(piece.label + ' added. Drag it, or use the arrows, to put it where you want.')
   }
   function removePicked() {
@@ -923,7 +926,7 @@ export default function VillageScene() {
           const style = { left: d.x + '%', top: d.y + '%', '--s': d.s || 1 }
           const img = <img className={'vs-deco-img' + (d.flip ? ' vs-flip' : '')} src={piece.src} alt="" width="96" height="96" draggable="false" />
           return arrange && tool === 'move'
-            ? <button key={d.id} type="button" className={'vs-deco vs-deco-edit' + (picked === 'd:' + d.id ? ' vs-picked' : '')} style={style} aria-label={piece.label} onPointerDown={(e) => dragStart(e, 'd:' + d.id)}>{img}</button>
+            ? <button key={d.id} type="button" className={'vs-deco vs-deco-edit' + (picked === 'd:' + d.id ? ' vs-picked' : '')} style={style} aria-label={piece.label} onPointerDown={(e) => dragStart(e, 'd:' + d.id)} onClick={(e) => { if (e.detail === 0) { setPicked('d:' + d.id); setPickTools(true) } }}>{img}</button>
             : <span key={d.id} className="vs-deco" style={style} aria-hidden="true">{img}</span>
         })}
         {cottage && GIFTS.filter((g) => g.got).map((g) => (
@@ -938,7 +941,7 @@ export default function VillageScene() {
               style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1) }}
               aria-label={s.label + '. ' + i.sub}
               onPointerDown={(e) => dragStart(e, s.k)}
-              onClick={() => { if (!arrange) tap(s) }}>
+              onClick={(e) => { if (!arrange) tap(s); else if (e.detail === 0 && tool === 'move') { setPicked(s.k); setPickTools(true) } }}>
               <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true">
                 {s.k === 'campfires' && life
                   ? <img className="vs-icon vs-life-fire" src={LIFE_ART.fire[life.fire_level] || LIFE_ART.fire[1]} alt="" width="96" height="96" draggable="false" />
@@ -982,7 +985,7 @@ export default function VillageScene() {
 
       {<div className={'vs-arrange' + (arrange ? ' vs-arrange-on' : '')}>
         {arrange && (
-          <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + (panelLow && picked && !trayOpen ? ' vs-toolbar-low' : '')} role="region" aria-label="Arrange and build tools">
+          <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked && pickTools) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + (panelLow && picked && !trayOpen ? ' vs-toolbar-low' : '')} role="region" aria-label="Arrange and build tools">
             {/* Oct 22: on phones the tools are a rail on the right side; this panel slides out beside it and scrolls. */}
             <div className="vs-toolpanel">
             {trayOpen && (
@@ -993,7 +996,7 @@ export default function VillageScene() {
             {layoutNote && <p className="vs-tool-note" role="status">{layoutNote}</p>}
             {!layoutNote && tool === 'move' && !picked && !trayOpen && <p className="vs-tool-note">Drag a place to move it, or tap it for more choices. Tap <b>Add</b> for trees, ground, and more.</p>}
 
-            {tool === 'move' && picked && !trayOpen && (
+            {tool === 'move' && picked && pickTools && !trayOpen && (
               <div className="vs-tool-picked">
                 <div className="vs-tool-picked-head">
                   <b>{pickedDecor ? ((DECOR_PIECES.find((p) => p.k === pickedDecor.k) || {}).label || 'Piece') : (SPOTS.find((v) => v.k === picked) || {}).label}{!pickedDecor && isHidden(picked) ? ' (hidden)' : ''}</b>
