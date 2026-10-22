@@ -452,11 +452,6 @@ export default function Admin() {
     await loadOrganizations()
   }
 
-  async function toggleOrgUmbrella(org) {
-    const { error } = await supabase.from('organizations').update({ is_umbrella: !org.is_umbrella }).eq('id', org.id)
-    if (reportError('toggleOrgUmbrella', error, 'Could not change this. Try again.')) return
-    await loadOrganizations()
-  }
 
   // Approve or turn down an organization that is still waiting.
   // Both send its members an alert. Turning down removes the waiting org.
@@ -1568,15 +1563,10 @@ export default function Admin() {
               </div>
               {org.approved && (
                 <p style={{ margin: '0.3rem 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                  {org.hide_from_public ? 'Hidden from the public. Only people with an account can see this group.' : 'Visible to the public.'} The group sets this itself.
+                  {org.hide_from_public ? 'Hidden from the public. Only people with an account can see it.' : 'Visible to the public.'} {org.kind === 'group' ? 'The group' : 'The organization'} sets this itself.
                 </p>
               )}
-              {org.approved && (
-                <p style={{ margin: '0.3rem 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                  {org.is_umbrella ? 'This is a council. Other groups can link to it.' : 'Not a council.'}{' '}
-                  <button onClick={() => toggleOrgUmbrella(org)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, textDecoration: 'underline', padding: '0.5rem 0.25rem', minHeight: '44px' }}>{org.is_umbrella ? 'Make it a regular group' : 'Make it a council'}</button>
-                </p>
-              )}
+              {/* Council links were taken out of the app (Oct 8); organizations connect to each other directly. */}
               {org.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0' }}>{org.description}</p>}
               {org.website_url && (
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{org.website_url}</p>
@@ -1586,7 +1576,7 @@ export default function Admin() {
               )}
 
               <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.6rem 0 0.3rem' }}>Members: {org.member_count}</p>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.4rem' }}>Names and member lists are private to the group. Only its Head and organizers can see or change them.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.4rem' }}>Names and member lists are private. Only its leaders can see or change them.</p>
             </div>
           ))}
         </>
