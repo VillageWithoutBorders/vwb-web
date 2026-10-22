@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient'
 import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
-import { VILLAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS } from '../data/worldElements'
+import { VILLAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, DECOR_PIECES, OPEN_MEADOW } from '../data/worldElements'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
 import '../village-scene.css'
@@ -14,6 +14,43 @@ import Icon from '../components/Icon'
 // hills is a button that goes to its own page. A plain list sits below for
 // anyone who would rather tap a list. Names follow the VWB Vocabulary sheet.
 // Route: /village/:id
+
+// Roads you draw: fewer points (so the saved layout stays small), then a
+// smooth curve through them. Points are percent of the map (x, y), and the
+// map is 2 wide by 3 tall, so y counts 1.5 times as far.
+function simplify(pts, eps) {
+  if (pts.length < 3) return pts
+  const d = (p, a, b) => {
+    const ax = a[0], ay = a[1] * 1.5, bx = b[0], by = b[1] * 1.5, px = p[0], py = p[1] * 1.5
+    const len = Math.hypot(bx - ax, by - ay) || 1
+    return Math.abs((by - ay) * px - (bx - ax) * py + bx * ay - by * ax) / len
+  }
+  let max = 0, at = 0
+  for (let i = 1; i < pts.length - 1; i++) { const v = d(pts[i], pts[0], pts[pts.length - 1]); if (v > max) { max = v; at = i } }
+  if (max <= eps) return [pts[0], pts[pts.length - 1]]
+  return [...simplify(pts.slice(0, at + 1), eps).slice(0, -1), ...simplify(pts.slice(at), eps)]
+}
+function roadPath(pts) {
+  const P = pts.map(([x, y]) => [x, y * 1.5])
+  if (P.length < 2) return ''
+  let dd = 'M' + P[0][0] + ' ' + P[0][1]
+  for (let i = 1; i < P.length - 1; i++) {
+    const mx = (P[i][0] + P[i + 1][0]) / 2, my = (P[i][1] + P[i + 1][1]) / 2
+    dd += ' Q' + P[i][0] + ' ' + P[i][1] + ' ' + mx.toFixed(1) + ' ' + my.toFixed(1)
+  }
+  const L = P[P.length - 1]
+  return dd + ' L' + L[0] + ' ' + L[1]
+}
+function Road({ pts, drawing }) {
+  const dd = roadPath(pts)
+  return (
+    <g className={drawing ? 'vs-road-live' : undefined}>
+      <path d={dd} fill="none" stroke="#9c8250" strokeOpacity="0.45" strokeWidth="6.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={dd} fill="none" stroke="#dcc48e" strokeWidth="5.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={dd} fill="none" stroke="#efe0b4" strokeOpacity="0.45" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="0.6 2.4" />
+    </g>
+  )
+}
 
 export default function VillageScene() {
   const { id } = useParams()
@@ -40,91 +77,153 @@ export default function VillageScene() {
   const sheetRef = useRef(null)
   const lastFocus = useRef(null)
 
-  // Arrange my village (everyone): move the buildings, make them bigger or
-  // smaller, hide the ones you don't use. Saved on your account
-  // (helper_profiles.village_layout, vwb-village-layout.sql) so it follows you
-  // to any device, and kept on this device too in case saving fails.
+  // Arrange and build my village (everyone). Your own village map, saved on
+  // your account (helper_profiles.village_layout) so it follows you to any
+  // device, and kept on this device too in case saving fails. It shows the
+  // same way in every village you open. Nobody else sees it.
+  //   spots:  where each working place sits (move, size, flip, hide)
+  //   decor:  pieces you add (trees, pond, fence, bridge...)
+  //   roads:  paths you draw with your finger
+  //   ground: 'path' (the painted path) or 'open' (an open meadow)
   // Hidden places stay in the list under the map.
-  // The founder can also copy a layout to make it everyone's starting layout.
+  // The founder can also copy the place layout to make it everyone's starting layout.
   const LAYOUT_KEY = 'vwb_village_layout'
   const sceneRef = useRef(null)
   const dragRef = useRef(null)
+  const drawRef = useRef(null)
   const saveTimer = useRef(null)
   const [arrange, setArrange] = useState(false)
-  const [picked, setPicked] = useState(null)
+  const [tool, setTool] = useState('move') // move | road
+  const [picked, setPicked] = useState(null) // a place key, or 'd:' + decor id
   const [layoutNote, setLayoutNote] = useState('')
-  const [layout, setLayout] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(LAYOUT_KEY) || '{}') || {} } catch { return {} }
+  const [drawing, setDrawing] = useState(null) // points of the road being drawn
+  const fromSaved = (v) => {
+    if (!v || typeof v !== 'object') return { spots: {}, decor: [], roads: [], ground: 'path' }
+    if (!v.spots && !v.decor && !v.roads && !v.ground) return { spots: v, decor: [], roads: [], ground: 'path' } // older device copy
+    return { spots: v.spots || {}, decor: Array.isArray(v.decor) ? v.decor : [], roads: Array.isArray(v.roads) ? v.roads : [], ground: v.ground === 'open' ? 'open' : 'path' }
+  }
+  const [world, setWorld] = useState(() => {
+    try { return fromSaved(JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null')) } catch { return fromSaved(null) }
   })
-  const layoutRef = useRef(layout)
-  layoutRef.current = layout
+  const worldRef = useRef(world)
+  worldRef.current = world
+  const layout = world.spots
   // The account's saved layout wins once the profile has loaded.
   const accountLayout = profile?.village_layout
   useEffect(() => {
-    if (accountLayout && typeof accountLayout === 'object' && accountLayout.spots) setLayout(accountLayout.spots)
-  }, [accountLayout])
-  function keepLocal(next) {
+    if (accountLayout && typeof accountLayout === 'object') setWorld(fromSaved(accountLayout))
+  }, [accountLayout]) // eslint-disable-line react-hooks/exhaustive-deps
+  function saveWorld(next) {
+    setWorld(next)
+    worldRef.current = next
     try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(next)) } catch { /* private mode */ }
-  }
-  function saveLayout(next) {
-    setLayout(next)
-    keepLocal(next)
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
-      const empty = !next || Object.keys(next).length === 0
-      const { error } = await supabase.rpc('set_my_village_layout', { p_layout: empty ? null : { spots: next } })
+      const empty = Object.keys(next.spots).length === 0 && next.decor.length === 0 && next.roads.length === 0 && next.ground === 'path'
+      const { error } = await supabase.rpc('set_my_village_layout', { p_layout: empty ? null : next })
       if (error) {
         // Before the database step is run, the layout simply stays on this device.
         if (error.code !== 'PGRST202') { console.error('Failed to save village layout:', error); setLayoutNote('Saved on this device only. It will try again next time you change something.') }
         return
       }
       if (refreshProfile) refreshProfile()
-    }, 700)
+    }, 800)
   }
+  const saveLayout = (spots) => saveWorld({ ...worldRef.current, spots })
   const placed = (s) => (layout[s.k] ? { ...s, ...layout[s.k] } : s)
   const isHidden = (k) => !!(layout[k] && layout[k].hide)
   const round1 = (n) => Math.round(n * 2) / 2
-  function dragStart(e, s) {
-    if (!arrange) return
-    e.preventDefault()
-    setPicked(s.k); setLayoutNote('')
-    dragRef.current = { k: s.k, moved: false }
+  const pickedDecor = picked && picked.startsWith('d:') ? world.decor.find((d) => d.id === picked.slice(2)) : null
+  function scenePoint(e) {
+    const r = sceneRef.current.getBoundingClientRect()
+    return [Math.min(99, Math.max(1, ((e.clientX - r.left) / r.width) * 100)), Math.min(99, Math.max(1, ((e.clientY - r.top) / r.height) * 100))]
+  }
+  function dragStart(e, key) {
+    if (!arrange || tool !== 'move') return
+    e.preventDefault(); e.stopPropagation()
+    setPicked(key); setLayoutNote('')
+    dragRef.current = { key, moved: false }
     try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* older browsers */ }
   }
   function dragMove(e) {
-    if (!arrange || !dragRef.current || !sceneRef.current) return
-    const r = sceneRef.current.getBoundingClientRect()
-    const x = Math.min(97, Math.max(3, ((e.clientX - r.left) / r.width) * 100))
-    const y = Math.min(97, Math.max(3, ((e.clientY - r.top) / r.height) * 100))
-    const k = dragRef.current.k
+    if (!arrange || !sceneRef.current) return
+    if (drawRef.current) {
+      const [x, y] = scenePoint(e)
+      const pts = drawRef.current
+      const last = pts[pts.length - 1]
+      if (Math.hypot(x - last[0], (y - last[1]) * 1.5) > 1.2) { pts.push([round1(x), round1(y)]); setDrawing([...pts]) }
+      return
+    }
+    if (!dragRef.current) return
+    const [x, y] = scenePoint(e)
+    const key = dragRef.current.key
     dragRef.current.moved = true
-    const d = layoutRef.current
-    const next = { ...d, [k]: { ...(d[k] || {}), x: round1(x), y: round1(y) } }
-    layoutRef.current = next
-    setLayout(next)
+    const w = worldRef.current
+    const next = key.startsWith('d:')
+      ? { ...w, decor: w.decor.map((d) => (d.id === key.slice(2) ? { ...d, x: round1(x), y: round1(y) } : d)) }
+      : { ...w, spots: { ...w.spots, [key]: { ...(w.spots[key] || {}), x: round1(Math.min(97, Math.max(3, x))), y: round1(Math.min(97, Math.max(3, y))) } } }
+    worldRef.current = next
+    setWorld(next)
   }
   function dragEnd() {
+    if (drawRef.current) {
+      const pts = simplify(drawRef.current, 0.7)
+      drawRef.current = null
+      setDrawing(null)
+      if (pts.length >= 2) {
+        const w = worldRef.current
+        if (w.roads.length >= 30) { setLayoutNote('That is a lot of roads. Take one away to draw another.'); return }
+        saveWorld({ ...w, roads: [...w.roads, pts] })
+      }
+      return
+    }
     if (!dragRef.current) return
     const moved = dragRef.current.moved
     dragRef.current = null
-    if (moved) saveLayout(layoutRef.current)
+    if (moved) saveWorld(worldRef.current)
+  }
+  function roadStart(e) {
+    if (!arrange || tool !== 'road' || !sceneRef.current) return
+    e.preventDefault()
+    const [x, y] = scenePoint(e)
+    drawRef.current = [[round1(x), round1(y)]]
+    setDrawing(drawRef.current)
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* older browsers */ }
   }
   function changePicked(change) {
     if (!picked) return
+    if (pickedDecor) { saveWorld({ ...world, decor: world.decor.map((d) => (d.id === pickedDecor.id ? { ...d, ...change } : d)) }); return }
     saveLayout({ ...layout, [picked]: { ...(layout[picked] || {}), ...change } })
   }
   function resize(by) {
     if (!picked) return
-    const s0 = placed(VILLAGE_SPOTS.find((v) => v.k === picked))
-    changePicked({ s: Math.min(1.8, Math.max(0.6, Math.round(((s0.s || 1) + by) * 10) / 10)) })
+    const cur = pickedDecor ? pickedDecor.s || 1 : placed(VILLAGE_SPOTS.find((v) => v.k === picked)).s || 1
+    changePicked({ s: Math.min(pickedDecor ? 3 : 1.8, Math.max(0.3, Math.round((cur + by) * 10) / 10)) })
+  }
+  function flipPicked() {
+    if (!picked) return
+    changePicked({ flip: !(pickedDecor ? pickedDecor.flip : layout[picked] && layout[picked].flip) })
+  }
+  function addDecor(piece) {
+    if (world.decor.length >= 80) { setLayoutNote('Your village is full. Take a piece away to add another.'); return }
+    const id = Math.random().toString(36).slice(2, 8)
+    saveWorld({ ...world, decor: [...world.decor, { id, k: piece.k, x: 50, y: 50, s: piece.s }] })
+    setTool('move'); setPicked('d:' + id)
+    setLayoutNote(piece.label + ' added in the middle. Drag it where you want it.')
+  }
+  function removePicked() {
+    if (!pickedDecor) return
+    saveWorld({ ...world, decor: world.decor.filter((d) => d.id !== pickedDecor.id) })
+    setPicked(null)
   }
   async function copyLayout() {
     const text = 'Village layout:\n' + VILLAGE_SPOTS.map((v) => { const p = placed(v); return v.k + ': x ' + p.x + ', y ' + p.y + ', size ' + (p.s || 1) + (p.flip ? ', flipped' : '') + (isHidden(v.k) ? ', hidden' : '') }).join('\n')
+      + (world.decor.length || world.roads.length ? '\nVillage build: ' + JSON.stringify({ decor: world.decor, roads: world.roads, ground: world.ground }) : '')
     try { await navigator.clipboard.writeText(text); setLayoutNote('Copied. Paste it to Claude to make it everyone’s starting layout.') }
     catch { setLayoutNote('Could not copy. Here it is to copy by hand:\n' + text) }
   }
   function resetLayout() {
-    saveLayout({}); setPicked(null); setLayoutNote('Back to the usual village layout.')
+    saveWorld(fromSaved(null)); setPicked(null); setLayoutNote('Back to the usual village.')
   }
 
   useEffect(() => {
@@ -427,8 +526,23 @@ export default function VillageScene() {
         </Link>
       )}
 
-      <div ref={sceneRef} className={'vs-scene vs-scene-path' + (arrange ? ' vs-arranging' : '')} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={dragEnd}>
-        <img className="vs-ground" src="/art/village-path/village-meadow.webp" alt="" width="768" height="1152" fetchpriority="high" />
+      <div ref={sceneRef} className={'vs-scene vs-scene-path' + (arrange ? ' vs-arranging' : '') + (arrange && tool === 'road' ? ' vs-drawing' : '')} onPointerDown={roadStart} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={dragEnd}>
+        <img className="vs-ground" src={world.ground === 'open' ? OPEN_MEADOW : '/art/village-path/village-meadow.webp'} alt="" width="768" height="1152" fetchpriority="high" />
+        {(world.roads.length > 0 || drawing) && (
+          <svg className="vs-roads" viewBox="0 0 100 150" preserveAspectRatio="none" aria-hidden="true">
+            {world.roads.map((r, i) => <Road key={i} pts={r} />)}
+            {drawing && drawing.length > 1 && <Road pts={drawing} drawing />}
+          </svg>
+        )}
+        {world.decor.slice().sort((a, b) => a.y - b.y).map((d) => {
+          const piece = DECOR_PIECES.find((p) => p.k === d.k)
+          if (!piece) return null
+          const style = { left: d.x + '%', top: d.y + '%', '--s': d.s || 1 }
+          const img = <img className={'vs-deco-img' + (d.flip ? ' vs-flip' : '')} src={piece.src} alt="" width="96" height="96" draggable="false" />
+          return arrange && tool === 'move'
+            ? <button key={d.id} type="button" className={'vs-deco vs-deco-edit' + (picked === 'd:' + d.id ? ' vs-picked' : '')} style={style} aria-label={piece.label} onPointerDown={(e) => dragStart(e, 'd:' + d.id)}>{img}</button>
+            : <span key={d.id} className="vs-deco" style={style} aria-hidden="true">{img}</span>
+        })}
         {VILLAGE_SPOTS.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
           const s = placed(s0)
           const i = info(s.k)
@@ -437,7 +551,7 @@ export default function VillageScene() {
               className={'vs-el' + (s.soon ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' + (life ? ' vs-fire-' + life.fire_level : '') : '') + (bump === s.k ? ' vs-bump' : '') + (arrange && picked === s.k ? ' vs-picked' : '') + (arrange && isHidden(s.k) ? ' vs-hidden' : '')}
               style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1) }}
               aria-label={s.label + '. ' + i.sub}
-              onPointerDown={(e) => dragStart(e, s)}
+              onPointerDown={(e) => dragStart(e, s.k)}
               onClick={() => { if (!arrange) tap(s) }}>
               <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true">
                 {s.k === 'campfires' && life
@@ -464,22 +578,56 @@ export default function VillageScene() {
       <p className="vs-hint">{arrange ? 'Drag each building onto its place on the map.' : 'Tap anything in the village to go there.'}</p>
 
       <div className="vs-arrange">
-        {!arrange && <button type="button" className="btn btn-outline btn-full" onClick={() => { setArrange(true); setLayoutNote('') }}>Arrange my village</button>}
+        {!arrange && <button type="button" className="btn btn-outline btn-full" onClick={() => { setArrange(true); setTool('move'); setLayoutNote('') }}>Arrange and build my village</button>}
         {arrange && <>
-          <p className="vs-note">Drag a building to move it. Tap one to pick it, then make it smaller or bigger, flip it to face the other way, or hide it. Hidden places are still in the list below. Your layout is saved on your account and shows in every village.</p>
-          <p className="vs-arrange-picked" role="status">{picked ? 'Picked: ' + (VILLAGE_SPOTS.find((v) => v.k === picked) || {}).label + (isHidden(picked) ? ' (hidden)' : '') : 'Tap a building to pick it.'}</p>
-          <div className="vs-arrange-row">
-            <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(-0.1)}>Smaller</button>
-            <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(0.1)}>Bigger</button>
-            <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => changePicked({ flip: !(layout[picked] && layout[picked].flip) })}>Flip it</button>
-            <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => changePicked({ hide: !isHidden(picked) })}>{picked && isHidden(picked) ? 'Show it' : 'Hide it'}</button>
+          <div className="vs-arrange-tools" role="group" aria-label="What to do">
+            <button type="button" className={'btn ' + (tool === 'move' ? 'btn-primary' : 'btn-outline')} aria-pressed={tool === 'move'} onClick={() => setTool('move')}>Move and pick</button>
+            <button type="button" className={'btn ' + (tool === 'road' ? 'btn-primary' : 'btn-outline')} aria-pressed={tool === 'road'} onClick={() => { setTool('road'); setPicked(null) }}>Draw roads</button>
           </div>
+
+          {tool === 'move' && <>
+            <p className="vs-note">Drag anything to move it. Tap something to pick it, then change it below. Touch the grass to scroll. Hidden places are still in the list under the map.</p>
+            <p className="vs-arrange-picked" role="status">{pickedDecor ? 'Picked: ' + ((DECOR_PIECES.find((p) => p.k === pickedDecor.k) || {}).label || 'piece') : picked ? 'Picked: ' + (VILLAGE_SPOTS.find((v) => v.k === picked) || {}).label + (isHidden(picked) ? ' (hidden)' : '') : 'Tap something to pick it.'}</p>
+            <div className="vs-arrange-row">
+              <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(-0.1)}>Smaller</button>
+              <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => resize(0.1)}>Bigger</button>
+              <button type="button" className="btn btn-outline" disabled={!picked} onClick={flipPicked}>Flip it</button>
+              {pickedDecor
+                ? <button type="button" className="btn btn-outline" onClick={removePicked}>Take it away</button>
+                : <button type="button" className="btn btn-outline" disabled={!picked} onClick={() => changePicked({ hide: !isHidden(picked) })}>{picked && isHidden(picked) ? 'Show it' : 'Hide it'}</button>}
+            </div>
+            <h3 className="vs-arrange-h">Add to your village</h3>
+            <div className="vs-palette">
+              {DECOR_PIECES.map((p) => (
+                <button key={p.k} type="button" className="vs-palette-item" onClick={() => addDecor(p)}>
+                  <img src={p.src} alt="" width="56" height="56" loading="lazy" />
+                  <span>{p.label}</span>
+                </button>
+              ))}
+            </div>
+          </>}
+
+          {tool === 'road' && <>
+            <p className="vs-note">Draw a road with your finger or mouse on the map. Lift to finish it. While drawing roads the map won't scroll, so switch back to Move and pick to scroll.</p>
+            <div className="vs-arrange-row">
+              <button type="button" className="btn btn-outline" disabled={!world.roads.length} onClick={() => saveWorld({ ...world, roads: world.roads.slice(0, -1) })}>Undo last road</button>
+              <button type="button" className="btn btn-outline" disabled={!world.roads.length} onClick={() => saveWorld({ ...world, roads: [] })}>Take away all roads</button>
+            </div>
+          </>}
+
+          <h3 className="vs-arrange-h">Ground</h3>
+          <div className="vs-arrange-row" role="group" aria-label="Ground">
+            <button type="button" className={'btn ' + (world.ground === 'path' ? 'btn-primary' : 'btn-outline')} aria-pressed={world.ground === 'path'} onClick={() => saveWorld({ ...world, ground: 'path' })}>Painted path</button>
+            <button type="button" className={'btn ' + (world.ground === 'open' ? 'btn-primary' : 'btn-outline')} aria-pressed={world.ground === 'open'} onClick={() => saveWorld({ ...world, ground: 'open' })}>Open meadow</button>
+          </div>
+
           <div className="vs-arrange-row">
-            <button type="button" className="btn btn-primary" onClick={() => { setArrange(false); setPicked(null) }}>Done</button>
-            <button type="button" className="btn btn-outline" onClick={resetLayout}>Back to the usual layout</button>
+            <button type="button" className="btn btn-primary" onClick={() => { setArrange(false); setPicked(null); setTool('move') }}>Done</button>
+            <button type="button" className="btn btn-outline" onClick={resetLayout}>Back to the usual village</button>
           </div>
           {isFounder && <button type="button" className="btn btn-outline btn-full" onClick={copyLayout}>Copy layout for everyone (founder)</button>}
           {layoutNote && <p className="vs-note vs-arrange-note" role="status">{layoutNote}</p>}
+          <p className="vs-note">Your village is saved on your account and only you see it.</p>
         </>}
       </div>
 
