@@ -97,3 +97,11 @@ export const DECOR_PIECES = [
   { k: 'rocks', label: 'Rocks', s: 0.5 },
 ].map((p) => ({ ...p, src: '/art/village-build/deco-' + p.k + '.webp' }))
 export const OPEN_MEADOW = '/art/village-build/meadow-open.webp'
+
+// Grounds people can choose under their village (Arrange and build).
+export const GROUNDS = [
+  { k: 'path', label: 'Meadow path', src: '/art/village-path/village-meadow.webp' },
+  { k: 'open', label: 'Open meadow', src: '/art/village-build/meadow-open.webp' },
+  { k: 'clearings', label: 'Sunny clearings', src: '/art/village-build/ground-clearings.webp' },
+  { k: 'roads', label: 'Village roads', src: '/art/village-roads.webp' },
+]

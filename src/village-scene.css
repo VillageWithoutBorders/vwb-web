@@ -250,3 +250,60 @@
 .vs-ripple-3 { animation-duration: 12s; }
 @keyframes vs-flow { to { stroke-dashoffset: -24.6; } }
 @media (prefers-reduced-motion: reduce) { .vs-ripple { animation: none; } }
+
+/* ---------- Arrange and build: the tool bar (Oct 22) ----------
+   Phones and tablets: a bar fixed just above the bottom tabs, always in
+   reach of your thumb, with the map in view above it. What you picked shows
+   its own buttons in the bar. Computers: the bar sits at the top of the
+   right column and stays there while you scroll. */
+.vs-arrange-on { padding: 0; margin: 0; }
+.vs-toolbar {
+  position: fixed; left: 0; right: 0; z-index: 40;
+  bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px));
+  max-width: 560px; margin: 0 auto; padding: 8px 10px 10px; box-sizing: border-box;
+  background: rgba(20, 44, 43, 0.97); border-top: 2px solid var(--vs-gold); border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.35); max-height: 72vh; overflow-y: auto; overscroll-behavior: contain;
+}
+.vs-page-path:has(.vs-arrange-on) { padding-bottom: 280px; }
+.vs-tool-main { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.vs-tool { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 52px; min-width: 44px;
+  padding: 4px 2px; border-radius: 12px; border: 1px solid var(--vs-line); background: var(--vs-card); color: var(--vs-ink);
+  font: inherit; font-size: 0.78rem; font-weight: 600; line-height: 1.1; cursor: pointer; }
+.vs-tool:disabled { opacity: 0.4; cursor: default; }
+.vs-tool.on { background: var(--vs-teal); border-color: var(--vs-teal); color: var(--vs-on-teal); }
+.vs-tool-done { background: var(--vs-gold); border-color: var(--vs-gold); color: var(--vs-on-gold); }
+.vs-tool:not(:disabled):active { transform: scale(0.95); }
+.vs-tool-ic { flex: none; }
+.vs-tool-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 6px; margin: 0 0 8px; }
+.vs-tool-picked { margin: 0 0 8px; padding: 6px 8px 8px; border: 1px solid var(--vs-gold); border-radius: 12px; background: rgba(242, 199, 99, 0.08); }
+.vs-tool-picked-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.vs-tool-picked-head b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vs-tool-x { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 22px; border: 1px solid var(--vs-line); background: none; color: var(--vs-ink); cursor: pointer; }
+.vs-tool-nudge { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.vs-tool-sm { min-height: 44px; }
+.vs-tool-note { margin: 0 0 8px; font-size: 0.9rem; color: var(--vs-muted); white-space: pre-line; }
+.vs-tray { margin: 0 0 8px; }
+.vs-tray .vs-arrange-h:first-child { margin-top: 2px; }
+.vs-chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.vs-chip-btn { min-height: 44px; padding: 0 12px; border-radius: 22px; border: 1px solid var(--vs-gold); background: none; color: var(--vs-ink); font: inherit; font-size: 0.9rem; cursor: pointer; }
+.vs-grounds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.vs-ground-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; border-radius: 10px; border: 2px solid var(--vs-line); background: var(--vs-card); color: var(--vs-ink); font: inherit; font-size: 0.78rem; cursor: pointer; }
+.vs-ground-card img { width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 6px; }
+.vs-ground-card.on { border-color: var(--vs-gold); }
+.vs-tray-more { display: grid; gap: 8px; margin-top: 12px; }
+.vs-tray-more .btn { min-height: 44px; }
+/* While drawing: the bar says so, with a Stop button. */
+.vs-draw-banner { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px;
+  padding: 4px 4px 4px 12px; border-radius: 12px; background: rgba(127, 192, 182, 0.18); border: 1px solid #7fc0b6; color: var(--vs-ink); font-size: 0.9rem; }
+.vs-draw-banner button { min-height: 44px; padding: 0 16px; border-radius: 10px; border: 0; background: var(--vs-gold); color: var(--vs-on-gold); font: inherit; font-weight: 700; cursor: pointer; }
+.vs-drawing { outline-color: #7fc0b6; }
+@media (prefers-reduced-motion: reduce) { .vs-tool:not(:disabled):active { transform: none; } }
+@media (min-width: 1024px) {
+  /* On a computer the tools sit in the right column, beside the map,
+     and the list steps aside while you arrange. */
+  .vs-toolbar { position: static; max-width: none; margin: 8px 0 0; border-radius: 16px; border: 2px solid var(--vs-gold); max-height: none; overflow: visible; box-shadow: none; }
+  .vs-page-path:has(.vs-arrange-on) { padding-bottom: 32px; }
+  .vs-page-path:has(.vs-arrange-on) > .vs-body { display: none; }
+  .vs-toolbar { display: flex; flex-direction: column; }
+  .vs-tool-main { order: -1; margin-bottom: 8px; }
+}
