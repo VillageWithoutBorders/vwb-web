@@ -25,7 +25,7 @@ export default function Layout() {
   // instead of sitting inside the padded page column.
   // World pages (the globe, a village, an organization) fill the whole screen
   // with their own teal background, edge to edge.
-  const isWorld = (pathname === '/' && !simple) || pathname === '/world' || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
+  const isWorld = (pathname === '/' && !simple) || pathname === '/world' || pathname === '/cottage' || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
   const isChat = pathname === '/campfire' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
 
   // Back button on every page (Oct 22, Jade). Not on Home (the globe), and not on chats,
