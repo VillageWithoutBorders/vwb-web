@@ -6173,4 +6173,4 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 .header-admin-wide { display: contents; }
 @media (max-width: 767px) { .header-admin-wide { display: none; } }
 .tab-item-btn { position: relative; }
-.tab-badge-admin { background: var(--gold, #f2c763); color: #2a2004; }
+.tab-badge-admin { background: #f2c763; color: #2a2004; border: 2px solid var(--white, #fff); }
