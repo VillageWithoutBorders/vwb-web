@@ -64,7 +64,7 @@ export default function OrgSceneEditor({ org, spots, isGroup, onSaved }) {
       </div>
 
       <h4 className="ose-h">Places on our map</h4>
-      <p className="cal-sub">Turn off places you don't use, and give places your own names (30 letters at most).</p>
+      <p className="cal-sub">Untick a place to hide it. Tap a name to change it (30 letters at most). Leave it empty to keep the usual name.</p>
       <ul className="ose-places">
         {spots.filter((s) => s.k !== 'tools').map((s) => {
           const shown = !hide.includes(s.k)
@@ -73,7 +73,7 @@ export default function OrgSceneEditor({ org, spots, isGroup, onSaved }) {
               <label className="ose-show">
                 <input type="checkbox" checked={shown} onChange={() => setHide((h) => (shown ? [...h, s.k] : h.filter((x) => x !== s.k)))} />
                 <span className="ose-ic" aria-hidden="true"><Icon name={s.icon} size={28} /></span>
-                <span>{shown ? 'Shown' : 'Hidden'}</span>
+                <span className="sr-only">Show {s.label} on our map</span>
               </label>
               <label className="ose-name">
                 <span className="sr-only">Name for {s.label}</span>

@@ -107,8 +107,8 @@ const ALL_STEPS = [
     route: '/home',
     target: '[data-tour="top-dashboard"]',
     icon: '\u2600\uFE0F',
-    title: 'Dashboard',
-    body: 'Your day at a glance: what needs you, your shortcuts, your places, and what is coming up. Tap Dashboard at the top to come back here.',
+    title: 'Today',
+    body: 'Your day at a glance: what needs you, your shortcuts, your places, and what is coming up. Tap Today at the top to come back here.',
   },
   {
     route: '/calendar',
