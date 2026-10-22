@@ -393,7 +393,7 @@ export default function Feed() {
             ) : view === 'requests' ? (
                 !myLoc ? null : sortedRequests.length === 0 ? (
                     <div className="feed-empty">
-                        <span className="feed-empty-icon">&#x1F33F;</span>
+                        <span className="feed-empty-icon" aria-hidden="true"><Icon name="sprout" size={64} /></span>
                         <h2>No requests right now</h2>
                         <p>{filterSkill !== 'all' ? `No open "${filterSkill}" requests nearby.` : 'No open requests in your area right now.'}</p>
                         <button className="btn btn-primary" onClick={() => navigate('/ask')}>Post a request</button>
@@ -496,7 +496,7 @@ export default function Feed() {
             ) : (
                 offers.length === 0 ? (
                     <div className="feed-empty">
-                        <span className="feed-empty-icon">&#x1F381;</span>
+                        <span className="feed-empty-icon" aria-hidden="true"><Icon name="gift" size={64} /></span>
                         <h2>No offers right now</h2>
                         <p>Be the first to share something with your neighbors.</p>
                     </div>
