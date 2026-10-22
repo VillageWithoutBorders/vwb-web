@@ -604,7 +604,7 @@ export default function CommunityResources() {
 
       <form className="hub-search" role="search" onSubmit={(e) => e.preventDefault()}>
         <label htmlFor="res-search" className="sr-only">Search resources</label>
-        <input id="res-search" type="search" inputMode="search" enterKeyHint="search" placeholder="What do you need? (food, rent, rides, power bill...)" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input id="res-search" type="search" inputMode="search" enterKeyHint="search" placeholder="Food, rent, rides..." value={query} onChange={(e) => setQuery(e.target.value)} />
         {query && <button type="button" className="btn btn-outline" onClick={() => setQuery('')}>Clear</button>}
       </form>
 
@@ -807,6 +807,15 @@ export default function CommunityResources() {
               </div>
             </section>
           ))}
+
+          {/* A kind of help with nothing listed near you yet: say so instead of showing a blank page. */}
+          {!visitorNeedsArea && !loadingResources && !query.trim() && selectedCat && !grouped[selectedCat] && filteredVerifiedResources.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '1.25rem 1rem' }}>
+              <p style={{ color: 'var(--text-muted)', margin: '0 0 0.75rem' }}>Nothing is listed for {selectedCat} near you yet.</p>
+              <button type="button" className="btn btn-outline" onClick={() => openCat(null)} style={{ minHeight: '44px', marginRight: '0.5rem' }}>See all kinds of help</button>
+              {user && <Link to="/ask" className="btn btn-primary" style={{ minHeight: '44px' }}>Ask a neighbor</Link>}
+            </div>
+          )}
 
           {!visitorNeedsArea && !loadingResources && filteredVerifiedResources.length === 0 && (
             <>
