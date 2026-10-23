@@ -24,6 +24,8 @@ export function VillageNewMembers({ villageId, myId }) {
   const key = 'vwb_village_joiners_seen_' + myId + '_' + villageId
   const [rows, setRows] = useState([])
   const [guests, setGuests] = useState([])
+  // When I joined: only people who joined after me are new to me (Oct 22).
+  const [mine, setMine] = useState(undefined)
   const [seen, setSeen] = useState(() => {
     try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] }
   })
@@ -36,6 +38,12 @@ export function VillageNewMembers({ villageId, myId }) {
       if (error) { console.error('Failed to load new members:', error); return }
       setRows(data || [])
     })
+    setMine(undefined)
+    supabase.from('village_members').select('joined_at').eq('village_id', villageId).eq('user_id', myId).maybeSingle().then(({ data, error }) => {
+      if (!alive) return
+      if (error) { console.error('Failed to load when you joined:', error); setMine(null); return }
+      setMine(data ? data.joined_at : null)
+    })
     supabase.rpc('village_guest_ids', { p_village: villageId }).then(({ data, error }) => {
       if (!alive) return
       if (error) { console.error('Failed to load village guests:', error); return }
@@ -45,7 +53,9 @@ export function VillageNewMembers({ villageId, myId }) {
     return () => { alive = false }
   }, [villageId])
 
-  const fresh = rows.filter(r => !seen.includes(r.user_id))
+  // Wait until we know when I joined, so the notice never flashes the wrong names.
+  if (mine === undefined) return null
+  const fresh = rows.filter(r => !seen.includes(r.user_id) && (!mine || new Date(r.joined_at) > new Date(mine)))
   if (fresh.length === 0) return null
 
   function dismiss() {
