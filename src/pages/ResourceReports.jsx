@@ -160,7 +160,7 @@ export default function ResourceReports() {
   if (!canReview) {
     return (
       <div className="community-page">
-        <BackLink fallback="/community/resources" fallbackLabel="Find help" />
+        <BackLink fallback="/community/resources" fallbackLabel="Find resources" />
         <h1 style={{ fontSize: '1.4rem' }}>Reports to review</h1>
         <p style={small}>Hope Ambassadors and VWB admins review reports about listings.</p>
       </div>
@@ -172,12 +172,12 @@ export default function ResourceReports() {
 
   return (
     <div className="community-page">
-      <BackLink fallback="/community/resources" fallbackLabel="Find help" />
+      <BackLink fallback="/community/resources" fallbackLabel="Find resources" />
       <h1 style={{ fontSize: '1.4rem', margin: '0.5rem 0' }}>Reports to review</h1>
       <p style={small}>Reports and suggested edits on Find Help listings in your area. Urgent ones come first. Nothing changes until someone approves it.</p>
       {error && <p role="alert" style={{ color: 'var(--danger)' }}>{error}</p>}
       {loading && <p style={small}>Loading...</p>}
-      {!loading && open.length === 0 && <p style={{ ...small, padding: '1rem 0' }}>Nothing waiting right now. <Link to="/community/resources" style={{ color: 'var(--accent)' }}>Back to Find help</Link></p>}
+      {!loading && open.length === 0 && <p style={{ ...small, padding: '1rem 0' }}>Nothing waiting right now. <Link to="/community/resources" style={{ color: 'var(--accent)' }}>Back to Find resources</Link></p>}
       <ul style={{ listStyle: 'none', margin: '0.75rem 0 0', padding: 0 }}>
         {open.map((r) => <ReportCard key={r.id + r.status} r={r} placeNames={placeNames} onDone={load} />)}
       </ul>

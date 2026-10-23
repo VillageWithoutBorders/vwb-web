@@ -12,7 +12,7 @@ import Icon from './Icon'
 // The same four keys are used for the long-press app shortcuts in vite.config.js.
 
 const QUICK_ACTIONS = [
-  { key: 'find_help', label: 'Find help', icon: 'heart-hands', to: '/community/resources', desc: 'Food, housing, safety, and more near you' },
+  { key: 'find_help', label: 'Find resources', icon: 'heart-hands', to: '/community/resources', desc: 'Food, housing, safety, and more near you' },
   { key: 'ask', label: 'Ask for help', icon: 'raise-hand', to: '/ask', desc: 'Ask your neighbors for a hand' },
   { key: 'my_code', label: 'Show my QR', icon: 'phone-add', to: '/my-code', desc: 'Connect with someone in person' },
   { key: 'village', label: 'My village', icon: 'houses', to: '/village', desc: 'Your village and its chat' },
