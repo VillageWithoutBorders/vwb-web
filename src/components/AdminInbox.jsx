@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import Icon from './Icon'
 import { timeAgo } from '../utils/notificationDisplay'
+import { tell } from './AdminDialog'
 
 // "Needs you": the first thing an admin sees. One shared list for every
 // admin and founder (see hooks/useAdminInbox.js), urgent items first, each
@@ -30,7 +31,8 @@ export default function AdminInbox({ inbox, onOpenTab }) {
   const [recentFailed, setRecentFailed] = useState(false)
   // On a phone the alert list gets long: show the newest 5, the rest on request.
   const [showAll, setShowAll] = useState(false)
-  const { items, loaded, failed } = inbox
+  const { items, loaded, failed, mark, clearedCount } = inbox
+  const [busyKind, setBusyKind] = useState(null)
   // Who opened which item in the last 30 minutes (vwb-admin-round3.sql).
   const [claims, setClaims] = useState([])
 
@@ -82,20 +84,41 @@ export default function AdminInbox({ inbox, onOpenTab }) {
     return others.map((x) => x.admin_name).join(' and ') + ' opened this ' + minsAgo(others[0].claimed_at)
   }
 
-  const urgent = items.filter((i) => i.urgent)
-  const waiting = items.filter((i) => !i.urgent)
+  // Clear and Flag for later are shared: every admin sees the change (Oct 25).
+  async function markIt(i, how) {
+    if (!mark) return
+    setBusyKind(i.kind)
+    const err = await mark(i, how)
+    setBusyKind(null)
+    if (err) { tell(err.code === 'PGRST202' ? 'This needs a database update first (vwb-admin-inbox-marks.sql).' : 'Could not do that. Try again.', { tone: 'error' }); return }
+    if (how === 'cleared') tell(i.label + ' cleared. It comes back when something new comes in.', { action: { label: 'Undo', run: () => mark(i, i.later ? 'later' : null) } })
+    else if (how === 'later') tell(i.label + ' flagged for later.', { action: { label: 'Undo', run: () => mark(i, null) } })
+  }
+
+  const urgent = items.filter((i) => i.urgent && !i.later)
+  const waiting = items.filter((i) => !i.urgent && !i.later)
+  const later = items.filter((i) => i.later)
 
   const row = (i) => (
-    <li key={i.kind}>
-      <button type="button" className={'admin-inbox-row' + (i.urgent ? ' urgent' : '')} onClick={() => open(i)}>
+    <li key={i.kind} className="admin-inbox-item">
+      <button type="button" className={'admin-inbox-row' + (i.urgent ? ' urgent' : '') + (i.later ? ' later' : '')} onClick={() => open(i)}>
         <span className="admin-inbox-icon" aria-hidden="true"><Icon name={ICONS[i.kind] || 'inbox'} size={28} /></span>
         <span className="admin-inbox-text">
           <span className="admin-inbox-label">{i.label}</span>
           <span className="admin-inbox-meta">{i.how_many} waiting{i.oldest ? ' · oldest ' + timeAgo(i.oldest) : ''}</span>
           {onIt(i.kind) && <span className="admin-inbox-onit">{onIt(i.kind)}</span>}
+          {i.later && <span className="admin-inbox-onit">Flagged for later by {i.laterMine ? 'you' : i.laterBy || 'an admin'}{i.laterAt ? ', ' + timeAgo(i.laterAt) : ''}</span>}
         </span>
         <span className="admin-inbox-open">Open</span>
       </button>
+      {mark && (
+        <div className="admin-inbox-actions">
+          {i.later
+            ? <button type="button" className="btn btn-outline" disabled={busyKind === i.kind} onClick={() => markIt(i, null)}><Icon name="inbox" size={20} /> Back to waiting</button>
+            : <button type="button" className="btn btn-outline" disabled={busyKind === i.kind} onClick={() => markIt(i, 'later')}><Icon name="flag" size={20} /> Flag for later</button>}
+          <button type="button" className="btn btn-outline" disabled={busyKind === i.kind} onClick={() => markIt(i, 'cleared')}><Icon name="check" size={20} /> Clear</button>
+        </div>
+      )}
     </li>
   )
 
@@ -108,7 +131,7 @@ export default function AdminInbox({ inbox, onOpenTab }) {
         <p className="admin-inbox-problem" role="alert">The inbox couldn't load. If this keeps happening, the database step (vwb-admin-inbox.sql) may not be run yet.</p>
       )}
       {!failed && !loaded && <p className="admin-section-note">Loading...</p>}
-      {!failed && loaded && items.length === 0 && (
+      {!failed && loaded && urgent.length + waiting.length === 0 && (
         <p className="admin-inbox-empty"><Icon name="check" size={28} /> You're all caught up.</p>
       )}
 
@@ -123,6 +146,16 @@ export default function AdminInbox({ inbox, onOpenTab }) {
           <h3 className="admin-inbox-group">Waiting</h3>
           <ul className="admin-inbox-list">{waiting.map(row)}</ul>
         </>
+      )}
+      {later.length > 0 && (
+        <>
+          <h3 className="admin-inbox-group">Later</h3>
+          <p className="admin-section-note">Flagged for later. These don't count in the number on your tools button.</p>
+          <ul className="admin-inbox-list">{later.map(row)}</ul>
+        </>
+      )}
+      {clearedCount > 0 && (
+        <p className="admin-section-note">{clearedCount === 1 ? '1 row is cleared.' : clearedCount + ' rows are cleared.'} Cleared rows come back on their own when something new comes in.</p>
       )}
 
       <h3 className="admin-inbox-group">Latest admin alerts</h3>

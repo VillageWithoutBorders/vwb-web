@@ -20,10 +20,15 @@ export function useAdminInbox() {
   const [items, setItems] = useState([])
   const [loaded, setLoaded] = useState(false)
   const [failed, setFailed] = useState(false)
+  // Clear / Flag for later, shared by every admin (vwb-admin-inbox-marks.sql, Oct 25).
+  const [marks, setMarks] = useState([])
 
   const load = useCallback(async () => {
     if (!user?.id || !isAdmin) { setItems([]); return }
-    const { data, error } = await supabase.rpc('admin_inbox')
+    const [{ data, error }, mk] = await Promise.all([supabase.rpc('admin_inbox'), supabase.rpc('admin_inbox_marks_now')])
+    // Before the database step is run, there are simply no marks.
+    if (mk.error) { if (mk.error.code !== 'PGRST202') console.error('[useAdminInbox] marks failed:', mk.error); setMarks([]) }
+    else setMarks(mk.data || [])
     if (error) {
       console.error('[useAdminInbox] admin_inbox failed:', error)
       setFailed(true)
@@ -48,7 +53,24 @@ export function useAdminInbox() {
     }
   }, [load, isAdmin])
 
-  const total = items.reduce((sum, i) => sum + (i.how_many || 0), 0)
-  const urgent = items.some((i) => i.urgent)
-  return { items, total, urgent, loaded, failed, reload: load }
+  // A cleared row stays hidden until more come in than when it was cleared.
+  // A row flagged for later moves to the Later list and leaves the counts.
+  const markOf = (kind) => marks.find((m) => m.kind === kind)
+  const shown = items
+    .filter((i) => { const m = markOf(i.kind); return !(m && m.mark === 'cleared' && (i.how_many || 0) <= m.how_many) })
+    .map((i) => { const m = markOf(i.kind); return m && m.mark === 'later' ? { ...i, later: true, laterBy: m.marked_by_name, laterMine: m.mine, laterAt: m.marked_at } : i })
+  const now = shown.filter((i) => !i.later)
+  const total = now.reduce((sum, i) => sum + (i.how_many || 0), 0)
+  const urgent = now.some((i) => i.urgent)
+  const clearedCount = items.length - shown.length
+
+  async function mark(item, how) {
+    const { error } = await supabase.rpc('admin_inbox_mark', { p_kind: item.kind, p_mark: how, p_how_many: item.how_many || 0 })
+    if (error) { console.error('[useAdminInbox] mark failed:', error); return error }
+    await load()
+    refreshAdminInbox()
+    return null
+  }
+
+  return { items: shown, total, urgent, loaded, failed, reload: load, mark, clearedCount }
 }

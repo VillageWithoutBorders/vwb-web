@@ -6191,3 +6191,9 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 
 /* Longer action names in the bottom bar ("Ask for help", "I can help") may take two lines on small phones (Oct 22). */
 @media (max-width: 380px) { .tab-label { white-space: normal; text-align: center; line-height: 1.1; } }
+
+/* Admin Needs you: Clear and Flag for later under each row (Oct 25). */
+.admin-inbox-item { display: flex; flex-direction: column; gap: 8px; }
+.admin-inbox-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 0 4px; }
+.admin-inbox-actions .btn { flex: 1 1 9rem; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.admin-inbox-row.later { opacity: 0.85; }
