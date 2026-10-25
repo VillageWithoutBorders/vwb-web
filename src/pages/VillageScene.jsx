@@ -627,7 +627,7 @@ export default function VillageScene() {
     <div className="vs-page vs-page-path">
       {cottage ? (
         <div className="vs-title">
-          <h1>Your cottage</h1>
+          <h1>My Cottage</h1>
           <p className="vs-cottage-sub">Everything you are part of, in one place. Only you see your map.</p>
           <div className="vs-chips">
             {home?.village_id
