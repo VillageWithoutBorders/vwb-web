@@ -636,11 +636,6 @@ export default function VillageScene() {
           </div>
         </div>
       ) : (<>
-      <nav className="vs-top" aria-label="Where you are">
-        <Link className="vs-crumb" to="/world">World</Link>
-        <span className="vs-sep" aria-hidden="true">&#8250;</span>
-        <span className="vs-here" aria-current="page">{village.name}</span>
-      </nav>
 
       <div className="vs-title">
         <h1>{village.name}</h1>
