@@ -4824,9 +4824,9 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 .org-request-form h3 { margin: 0; font-size: 1.1rem; color: var(--text); }
 .org-request-help { margin: 0 0 0.25rem; color: var(--text-secondary); font-size: 0.95rem; line-height: 1.45; }
 .org-request-form label { color: var(--text); font-weight: 600; font-size: 1rem; margin-top: 0.35rem; }
-.org-request-form input, .org-request-form textarea { width: 100%; box-sizing: border-box; min-height: 48px; padding: 0.65rem 0.75rem; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface-sunk); color: var(--text); font-family: inherit; }
+.org-request-form input, .org-request-form textarea, .org-request-form select { width: 100%; box-sizing: border-box; min-height: 48px; padding: 0.65rem 0.75rem; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface-sunk); color: var(--text); font-family: inherit; }
 .org-request-form textarea { min-height: 6rem; resize: vertical; }
-.org-request-form input:focus-visible, .org-request-form textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.org-request-form input:focus-visible, .org-request-form textarea:focus-visible, .org-request-form select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .org-request-form .btn { min-height: 48px; margin-top: 0.35rem; }
 .org-request-note { border-left: 4px solid var(--accent); margin: 0.75rem 0; }
 
@@ -4857,7 +4857,8 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
   font-weight: 600;
 }
 .org-request-form input,
-.org-request-form textarea {
+.org-request-form textarea,
+.org-request-form select {
   width: 100%;
   box-sizing: border-box;
   min-height: 44px;
@@ -4870,13 +4871,15 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
   border-radius: 8px;
 }
 .org-request-form input:focus-visible,
-.org-request-form textarea:focus-visible {
+.org-request-form textarea:focus-visible,
+.org-request-form select:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
 .org-request-form input[aria-invalid="true"] {
   border-color: var(--danger);
 }
+.org-request-form select option { color: var(--text); background: var(--surface); }
 .org-request-form .btn {
   margin-top: 0.5rem;
   min-height: 44px;
