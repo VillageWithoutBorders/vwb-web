@@ -231,15 +231,12 @@
   .vs-page-path > .vs-title { order: 1; }
   .vs-page-path > .vs-hint { order: 2; text-align: left; margin: 6px 0 0; }
   .vs-page-path > .vs-ask { order: 3; margin-top: 12px; }
-  .vs-page-path > .vs-build-start, .vs-page-path > .vs-gifts-btn { order: 4; }
+  .vs-page-path > .vs-customize, .vs-page-path > .vs-gifts-btn { order: 4; }
   .vs-page-path > .vs-note { order: 5; }
   .vs-page-path > .vs-arrange { order: 5; }
   .vs-page-path > .vs-body { order: 6; }
-  /* Arrange beside Garden (cottage) or beside Set the default look (keepers). Alone, full width. */
-  .vs-page-path:has(> .vs-gifts-btn) > .vs-build-start,
-  .vs-page-path:has(> .vs-build-shared) > .vs-build-start:not(.vs-build-shared) { grid-column: 2; }
-  .vs-page-path > .vs-gifts-btn, .vs-page-path > .vs-build-shared { grid-column: 3; }
-  .vs-page-path > .vs-build-start, .vs-page-path > .vs-gifts-btn { align-self: stretch; margin: 14px 0 4px; width: 100%; box-sizing: border-box; }
+  .vs-page-path > .vs-gifts-btn { margin: 10px 0 4px; width: 100%; box-sizing: border-box; }
+  .vs-page-path > .vs-customize { margin: 12px 0 0; }
   .vs-page-path > .vs-top, .vs-page-path > .vs-title, .vs-page-path > .vs-body, .vs-page-path > .vs-arrange { padding-left: 0; padding-right: 0; }
   .vs-page-path .vs-title h1 { font-size: 2.2rem; }
   .vs-page-path .vs-list { grid-template-columns: 1fr 1fr; }
@@ -452,7 +449,7 @@
 
 /* Simple view (Oct 22): village, cottage, organization and group pages show only their plain
    list, big and calm. No painted map, no builder, no name tags to manage. */
-html.simple .vs-scene, html.simple .vs-build-start, html.simple .vs-arrange, html.simple .vs-hint,
+html.simple .vs-scene, html.simple .vs-customize, html.simple .vs-build-start, html.simple .vs-arrange, html.simple .vs-hint,
 html.simple .vs-gifts-btn, html.simple .vs-pick-h, html.simple .vs-top { display: none !important; }
 html.simple .vs-room { min-height: 72px; }
 html.simple .vs-room-text b { font-size: 1.15rem; }
@@ -476,7 +473,6 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
   .vs-page-path > .vs-scene-path { order: -4; scroll-margin-top: calc(var(--header-height) + 8px); }
   .vs-page-path > .vs-scroll-cue { order: -3; }
   .vs-page-path > .vs-map-under { order: -2; }
-  .vs-page-path > .vs-build-start { order: -1; }
 
   .vs-page-path:has(.vs-arrange-on) { padding-bottom: 16px; padding-right: 76px; }
   .vs-toolbar {
@@ -510,7 +506,6 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 
 /* Keeper and Helper button: arrange the village for everyone (Oct 22). */
 .vs-build-shared { background: var(--vs-teal); color: var(--vs-on-teal); }
-@media (max-width: 1023px) { .vs-page-path > .vs-build-shared { order: -1; } }
 
 /* Phones: a piece picked high on the screen drops the tool panel to the bottom (Oct 22). */
 @media (max-width: 1023px) {
@@ -610,3 +605,21 @@ html.simple .vs-scroll-cue { display: none; }
 .vs-top .vs-back { flex: none; white-space: nowrap; }
 .vs-top { padding-top: 8px; }
 .vs-top .vs-here { font-size: 1.1rem; }
+
+/* Customize drawer (Oct 25, Jade): names, zoom, and arranging, folded into one bar
+   that opens downward. Closed, it is one calm line under the title. */
+.vs-customize { margin: 12px 16px 0; border: 2px solid var(--vs-line); border-radius: 16px; background: var(--vs-card); color: var(--vs-ink); overflow: hidden; }
+.vs-customize > summary { list-style: none; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 14px; cursor: pointer; font-weight: 700; font-size: 1.05rem; }
+.vs-customize > summary::-webkit-details-marker { display: none; }
+.vs-customize-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 18px; background: rgba(242, 199, 99, 0.18); color: var(--vs-gold); flex: none; }
+.vs-customize-word { flex: 1; }
+.vs-customize-chev { transition: transform 0.2s ease; color: var(--vs-muted); }
+.vs-customize[open] .vs-customize-chev { transform: rotate(180deg); }
+.vs-customize > summary:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: -3px; border-radius: 14px; }
+.vs-customize > summary:active { background: rgba(255, 255, 255, 0.06); }
+.vs-customize-body { padding: 0 12px 12px; display: grid; gap: 8px; }
+.vs-customize-body .vs-map-under { margin: 4px 0 4px; justify-content: flex-start; }
+.vs-customize-body .vs-build-start { width: 100%; margin: 0; }
+.vs-customize-body .vs-note { margin: 0; padding: 0 4px; }
+@media (prefers-reduced-motion: reduce) { .vs-customize-chev { transition: none; } }
+@media (min-width: 1024px) { .vs-page-path > .vs-customize { margin-left: 0; margin-right: 0; } }

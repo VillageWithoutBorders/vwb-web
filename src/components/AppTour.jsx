@@ -101,7 +101,7 @@ const ALL_STEPS = [
     target: '[data-tour="village-arrange"]',
     icon: '\u{1F333}',
     title: 'My Cottage',
-    body: 'My Village, at the top, opens your home village. Your cottage is your house there: your own map with your chats, groups, and more. Tap Arrange and build to move things, add trees and bridges, and draw roads. Only you see it.',
+    body: 'My Village, at the top, opens your home village. Your cottage is your house there: your own map with your chats, groups, and more. Tap Customize, then Arrange and build, to move things, add trees and bridges, and draw roads. Only you see it.',
   },
   {
     route: '/cottage',
