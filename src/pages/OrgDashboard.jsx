@@ -25,7 +25,7 @@ import PlaceReports, { usePlaceReportCount } from '../components/PlaceReports'
 
 const TABS = [
   { k: 'people', em: '\u{1F4C7}', label: 'People' },
-  { k: 'chats', em: '\u{1F525}', label: 'Chats' },
+  { k: 'chats', em: '\u{1F525}', label: 'Connections' },
   { k: 'events', em: '\u{1F4C5}', label: 'Events' },
   { k: 'settings', em: '\u2699\uFE0F', label: 'Settings' },
 ]

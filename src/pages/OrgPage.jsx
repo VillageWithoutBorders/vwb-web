@@ -299,7 +299,7 @@ export default function OrgPage() {
       case 'share': return { sub: resources.length ? resources.length + ' shared resource' + (resources.length === 1 ? '' : 's') : 'Nothing shared yet' }
       case 'members': return { sub: !isMember ? 'Members only' : isGroup ? 'Who is in, and what we bring' : 'Who is part of this group' }
       case 'involved': return { sub: isMember ? 'Share this page with a friend' : asked ? 'You asked to join' : 'Ask to join or reach the ' + W.leadsLower }
-      case 'tools': return { sub: 'Members, chats, events, connections' }
+      case 'tools': return { sub: 'Members, connections, events' }
       default: return { sub: '' }
     }
   }
