@@ -17,7 +17,7 @@ export default function OrgSceneEditor({ org, spots, isGroup, onSaved }) {
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState('')
 
-  const kind = isGroup ? 'group' : 'organization'
+  const kind = isGroup ? 'crew' : 'group'
 
   async function save(reset) {
     setSaving(true); setNote('')

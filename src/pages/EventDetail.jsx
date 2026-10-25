@@ -514,7 +514,7 @@ export default function EventDetail() {
 
       {!event.verified && event.status === 'active' && canCheck && (
         <div className="ev-verify" role="region" aria-label="Verify this emergency">
-          <p><b>Waiting to be checked.</b> You are a Hope Ambassador or VWB admin. If this is real, verify it to open the Response Camp and call the groups that cover this village.</p>
+          <p><b>Waiting to be checked.</b> You are a Hope Ambassador or VWB admin. If this is real, verify it to open the Response Camp and call the crews that cover this village.</p>
           <button type="button" className="btn btn-primary btn-full" onClick={verifyNow} disabled={verifying}>{verifying ? 'Verifying...' : 'Verify this emergency'}</button>
         </div>
       )}

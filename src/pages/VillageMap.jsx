@@ -157,7 +157,7 @@ export default function VillageMap({ embedded = false, net = null }) {
     let alive = true
     supabase.from('organizations').select('id, name, description, website_url, kind').eq('approved', true).order('name').then(({ data, error: err }) => {
       if (!alive) return
-      if (err) { console.error('Failed to load organizations:', err); setOrgsError("We couldn't load the organizations. Try again in a moment."); setOrgs([]); return }
+      if (err) { console.error('Failed to load organizations:', err); setOrgsError("We couldn't load the groups. Try again in a moment."); setOrgs([]); return }
       setOrgs(data || [])
     })
     return () => { alive = false }
@@ -390,17 +390,17 @@ export default function VillageMap({ embedded = false, net = null }) {
 
       <div role="tablist" aria-label="Village Network" style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0 0.75rem' }}>
         <button type="button" role="tab" id="tab-hoods" aria-selected={tab === 'hoods'} aria-controls="panel-hoods" className={'btn ' + (tab === 'hoods' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('hoods')}><Icon name="tree" /> Neighborhoods</button>
-        <button type="button" role="tab" id="tab-orgs" aria-selected={tab === 'orgs'} aria-controls="panel-orgs" className={'btn ' + (tab === 'orgs' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('orgs')}><Icon name="people" /> Organizations</button>
+        <button type="button" role="tab" id="tab-orgs" aria-selected={tab === 'orgs'} aria-controls="panel-orgs" className={'btn ' + (tab === 'orgs' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('orgs')}><Icon name="people" /> Groups</button>
       </div>
       </>}
 
       {tab === 'orgs' && (
         <section id="panel-orgs" role="tabpanel" aria-labelledby="tab-orgs">
-          <p className="cal-sub">Organizations working with Village Without Borders, and groups <Icon name="tent" /> that respond to emergencies. Tap a name to see more.</p>
-          {net !== 'orgs' && <Link className="btn btn-outline btn-full" style={{ minHeight: '48px', marginBottom: '0.75rem' }} to="/start-group"><Icon name="tent" /> Start an emergency response group</Link>}
+          <p className="cal-sub">Groups working with Village Without Borders, and emergency crews <Icon name="tent" /> that respond when disaster hits. Tap a name to see more.</p>
+          {net !== 'orgs' && <Link className="btn btn-outline btn-full" style={{ minHeight: '48px', marginBottom: '0.75rem' }} to="/start-group"><Icon name="tent" /> Start an emergency crew</Link>}
           {orgs === null && <p className="cal-empty">Loading...</p>}
           {orgsError && <p className="form-error" role="alert">{orgsError}</p>}
-          {shownOrgs && !orgsError && shownOrgs.length === 0 && <p className="cal-empty">{net === 'groups' ? 'No groups yet.' : 'No organizations yet.'}</p>}
+          {shownOrgs && !orgsError && shownOrgs.length === 0 && <p className="cal-empty">{net === 'groups' ? 'No crews yet.' : 'No groups yet.'}</p>}
           {shownOrgs && shownOrgs.map((o) => {
             const open = !!openOrgs[o.id]
             const site = safeUrl(o.website_url)
@@ -410,7 +410,7 @@ export default function VillageMap({ embedded = false, net = null }) {
                   <span aria-hidden="true" style={{ flex: 'none', width: '44px', height: '44px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', background: 'rgba(78, 204, 163, 0.15)' }}><Icon name={o.kind === 'group' ? 'tent' : 'people'} /></span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span className="cal-card-title" style={{ display: 'block' }}>{o.name}</span>
-                    <span className="cal-card-meta">{o.kind === 'group' ? 'Emergency response group' : 'Organization'}</span>
+                    <span className="cal-card-meta">{o.kind === 'group' ? 'Emergency crew' : 'Group'}</span>
                   </span>
                   <span aria-hidden="true" style={{ flex: 'none', display: 'grid', placeItems: 'center', width: '44px', height: '44px', fontSize: '1.6rem', lineHeight: 1, color: 'var(--accent)', transform: open ? 'rotate(180deg)' : 'none' }}>{'\u25BE'}</span>
                 </button>

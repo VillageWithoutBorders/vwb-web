@@ -212,7 +212,7 @@ export default function OrgDashboard() {
     return (
       <div className="cal-page hub-page dash-page">
         <BackLink fallback="/" fallbackLabel="Home" />
-        <h1 className="hub-org-name">Organization dashboard</h1>
+        <h1 className="hub-org-name">Group dashboard</h1>
         {choices.length === 0 && (
           <p className="cal-empty">You don't run a group on VWB yet. You can ask to add yours from the Calendar page.</p>
         )}
@@ -250,9 +250,9 @@ export default function OrgDashboard() {
   const soon = events.filter((e) => e.status !== 'cancelled' && new Date(e.starts_at).getTime() < weekOut)
 
   const needs = loading ? null : [
-    reportCount && { k: 'reports', tab: 'people', em: '\u{1F6A9}', text: reportCount === 1 ? 'Someone in your ' + (isGroup ? 'group' : 'organization') + ' was reported' : reportCount + ' reports to look at' },
+    reportCount && { k: 'reports', tab: 'people', em: '\u{1F6A9}', text: reportCount === 1 ? 'Someone in your ' + (isGroup ? 'crew' : 'group') + ' was reported' : reportCount + ' reports to look at' },
     asks.length && { k: 'asks', tab: 'people', em: '\u{1F64B}', text: asks.length === 1 ? asks[0].display_name + ' asked to join' : asks.length + ' people asked to join' },
-    linkAsks && { k: 'links', tab: 'chats', em: '\u{1F517}', text: linkAsks === 1 ? 'An organization asked to connect' : linkAsks + ' organizations asked to connect' },
+    linkAsks && { k: 'links', tab: 'chats', em: '\u{1F517}', text: linkAsks === 1 ? 'A group asked to connect' : linkAsks + ' groups asked to connect' },
     !general && chatsReady && { k: 'general', tab: 'chats', em: '\u{1F525}', text: 'Start your general chat so members have a place to talk' },
     soon.length && { k: 'soon', tab: 'events', em: '\u{1F4C5}', text: soon.length === 1 ? soon[0].title + ' is this week' : soon.length + ' events this week' },
   ].filter(Boolean)
@@ -263,10 +263,10 @@ export default function OrgDashboard() {
 
   return (
     <div className="cal-page hub-page dash-page">
-      <BackLink fallback={'/orgs/' + id} fallbackLabel={orgName || 'Organization'} />
+      <BackLink fallback={'/orgs/' + id} fallbackLabel={orgName || 'Group'} />
       <div className="dash-head">
         <span className="dash-head-icon" aria-hidden="true"><Icon name="toolbox" /></span>
-        <h1>{orgName || 'Your organization'}</h1>
+        <h1>{orgName || 'Your group'}</h1>
       </div>
       <p className="dash-sub">{W.tools}{isHead ? ' · You are ' + W.aHead : ' · You are ' + W.anOrganizer}</p>
 
@@ -354,21 +354,21 @@ export default function OrgDashboard() {
                   <span className="groups-row-meta">Post news &#8250;</span>
                 </button>
               : <>
-                  <p className="hub-org-desc">A board for news to everyone in {orgName || 'your organization'}. {W.leads} post. Members read it and get an alert.</p>
+                  <p className="hub-org-desc">A board for news to everyone in {orgName || 'your group'}. {W.leads} post. Members read it and get an alert.</p>
                   <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} disabled={chatBusy} onClick={startNews}>Start Announcements</button>
                 </>}
           </section>
 
           <section className="hub-section" aria-labelledby="od-chats">
             <div className="hub-section-head"><h2 id="od-chats">Campfires</h2></div>
-            <p className="hub-org-desc">{general ? 'The general chat has everyone in ' + (orgName || 'your organization') + '. Start a smaller Campfire under it for one task or topic, and pick who joins. Only the people you pick see it.' : 'Private chats for ' + (orgName || 'your organization') + '. The general chat adds everyone in your organization automatically.'}</p>
+            <p className="hub-org-desc">{general ? 'The general chat has everyone in ' + (orgName || 'your group') + '. Start a smaller Campfire under it for one task or topic, and pick who joins. Only the people you pick see it.' : 'Private chats for ' + (orgName || 'your group') + '. The general chat adds everyone in your group automatically.'}</p>
             {chatsReady && chats.length === 0 && <p className="hub-empty">No chats yet. Start your general chat below.</p>}
             {general && chatRow(general, false)}
             {sidechats.map((c) => chatRow(c, true))}
             {otherChats.map((c) => chatRow(c, false))}
             <form onSubmit={startChat} noValidate style={{ marginTop: '0.75rem' }}>
               <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{!general ? 'Name for your general chat' : 'Start a smaller Campfire under ' + general.name}</label>
-              <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={!general ? (orgName || 'Organization') + ' general chat' : 'For example, Volunteers or Food drive'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
+              <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={!general ? (orgName || 'Group') + ' general chat' : 'For example, Volunteers or Food drive'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
               {general && (
                 <fieldset style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
                   <legend className="cal-sub">Who is in it (you are added automatically)</legend>
@@ -425,7 +425,7 @@ export default function OrgDashboard() {
 
           <section className="hub-section" aria-labelledby="od-posts">
             <div className="hub-section-head"><h2 id="od-posts">Needs and offers</h2></div>
-            {!loading && posts.length === 0 && <p className="hub-empty">Nothing posted under your organization's name yet.</p>}
+            {!loading && posts.length === 0 && <p className="hub-empty">Nothing posted under your group's name yet.</p>}
             {posts.map((p) => (
               <div key={p.kind + p.id} className="cal-card">
                 <span className="cal-card-title">{p.kind === 'need' ? 'Need' : 'Offer'}: {p.title}</span>
@@ -446,7 +446,7 @@ export default function OrgDashboard() {
         <DashPanel k="settings">
           <section className="hub-section" aria-labelledby="od-public">
             <div className="hub-section-head"><h2 id="od-public">Your public page</h2></div>
-            <p className="hub-org-desc">Home area, who can see your organization, and your contact email are set at the bottom of your organization page.</p>
+            <p className="hub-org-desc">Home area, who can see your group, and your contact email are set at the bottom of your group page.</p>
             <div className="dash-shortcuts">
               {shortcut('\u{1F3E1}', 'Open our page', '/orgs/' + id)}
               {shortcut('pencil', 'Change how our page looks', '/orgs/' + id + '?look=1')}

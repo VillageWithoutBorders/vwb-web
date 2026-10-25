@@ -30,8 +30,9 @@ Goal: finished and simple enough that it runs without its founder (Jade Michalsk
 ## Roles
 - Member. A new account (first 14 days, unless vouched for or finished a task with someone) has limits.
 - Hope Ambassador. VWB admin (`role = 'admin'`). Founder.
-- Organizations: Heads (`role 'admin'`) and organizers.
-- Groups (`organizations.kind = 'group'`, tent icon): emergency response crews run by a Lead keeper (`'admin'`) and keepers (`'organizer'`). Called to emergencies only after a Hope Ambassador or VWB admin outside the group approves.
+- Wording (Oct 25): the app says **group** for what the database calls an organization (`kind = 'organization'`), and **emergency crew** (or crew) for `kind = 'group'`. Never show the word "organization" except the "Official organization" kind-of-group choice and outside resource providers. See `claude/VWB-Vocabulary.md`.
+- Groups (`kind = 'organization'`): Heads (`role 'admin'`) and organizers.
+- Emergency crews (`kind = 'group'`, tent icon): run by a Keeper (`'admin'`) and Helpers (`'organizer'`). Called to emergencies only after a Hope Ambassador or VWB admin outside the crew approves.
 - Neighborhood villages: one keeper.
 - Enforce roles in the database (RLS or RPC), not only on screen.
 

@@ -152,7 +152,7 @@ export default function OrgResources({ orgId }) {
       </div>
       {adding && <div style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--accent)', borderRadius: '10px', marginBottom: '0.5rem' }}>{renderForm('or-new')}</div>}
       {rows === null && <p>Loading...</p>}
-      {rows && rows.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No resources are listed under this organization yet. Tap Add resource to list one.</p>}
+      {rows && rows.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No resources are listed under this group yet. Tap Add resource to list one.</p>}
       {rows && rows.length > 0 && (
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {rows.map((r) => (

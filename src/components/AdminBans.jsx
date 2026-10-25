@@ -78,7 +78,7 @@ export function BanDialog({ target, onClose, onDone }) {
       <div role="dialog" aria-modal="true" aria-labelledby="ban-title" className="app-dialog">
         <h2 id="ban-title">Ban {who}?</h2>
         {needsSecond && (
-          <p className="groups-note"><strong>{who} is a Hope Ambassador, or leads a village, group or organization.</strong> A second admin has to agree before the ban happens. Your request shows in Reports for the other admins.</p>
+          <p className="groups-note"><strong>{who} is a Hope Ambassador, or leads a village, group or crew.</strong> A second admin has to agree before the ban happens. Your request shows in Reports for the other admins.</p>
         )}
         <p className="groups-note">
           They'll be signed out and can't log back in. {target.email ? 'This email' : 'Their email'} can't be used to sign up again.

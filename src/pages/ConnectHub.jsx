@@ -42,7 +42,7 @@ export default function ConnectHub() {
     { key: 'cottage', label: 'Cottage Chats' },
     { key: 'campfires', label: 'Campfires' },
     { key: 'connections', label: 'Connections' },
-    ...((organizations || []).length > 0 ? [{ key: 'orgs', label: 'Organizations' }] : []),
+    ...((organizations || []).length > 0 ? [{ key: 'orgs', label: 'Groups' }] : []),
     ...(isAdmin ? [{ key: 'admin', label: 'Admin' }] : []),
   ]
   // Older links said tab=chats: that is the Cottage Chats tab now.
@@ -97,7 +97,7 @@ export default function ConnectHub() {
           <div className="cal-page">
             <section className="cal-card" aria-label="Admin tools">
               <div className="cal-card-title">Admin</div>
-              <p className="cal-sub">Reports, removals, appeals, and organization approvals.</p>
+              <p className="cal-sub">Reports, removals, appeals, and group approvals.</p>
               <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/admin')}>Open admin tools</button>
             </section>
           </div>

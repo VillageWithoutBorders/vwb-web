@@ -34,7 +34,7 @@ export function useMyTools() {
   const runsOrg = (organizations || []).some((o) => o.kind !== 'group' && (o.role === 'admin' || o.role === 'organizer'))
   if (runsOrg) tools.push({ key: 'organizer', label: 'Organizer', icon: 'toolbox', to: '/org-dashboard' })
   ;(organizations || []).filter((o) => o.kind === 'group' && (o.role === 'admin' || o.role === 'organizer'))
-    .forEach((g) => tools.push({ key: 'group-' + g.id, label: 'My group', name: g.name, icon: 'tent', to: '/orgs/' + g.id }))
+    .forEach((g) => tools.push({ key: 'group-' + g.id, label: 'My crew', name: g.name, icon: 'tent', to: '/orgs/' + g.id }))
   keptVillages.forEach((v) => tools.push({ key: 'village-' + v.id, label: 'Keeper', name: v.name, icon: 'key', to: '/village/' + v.id + '/keeper' }))
   return tools
 }
