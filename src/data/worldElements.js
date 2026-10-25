@@ -18,7 +18,7 @@ export const VILLAGE_SPOTS = [
   { k: 'skillshare', art: '/art/village-path/spot-skillshare.webp', icon: 'basket', label: 'SkillShare', short: 'SkillShare', em: '\u{1F9FA}', x: 79, y: 82, s: 1.1 },
   { k: 'neighbors', art: '/art/life/life-cottage-lit.webp', icon: 'wave', label: 'Neighbors', short: 'Neighbors', em: '\u{1F44B}', x: 17, y: 60 },
   { k: 'groups', art: '/art/village-path/spot-groups.webp', icon: 'tent', label: 'Emergency crews', short: 'Crews', em: '⛺', x: 83, y: 19 },
-  { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'Your corner', short: 'You', em: '\u{1F3E0}', x: 50, y: 73 },
+  { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'My Corner', short: 'Me', em: '\u{1F3E0}', x: 50, y: 73 },
 ]
 
 // Your cottage (Oct 22): your own page, the "My Village" tab. One per person,
@@ -36,7 +36,7 @@ export const COTTAGE_SPOTS = [
   { k: 'campfires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Your Campfires', short: 'Campfires', x: 50, y: 32, s: 0.9 },
   { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'chat-bubble', label: 'Village Square', short: 'Village Square', x: 19, y: 79 },
   { k: 'help', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Help', short: 'Help', x: 81, y: 79 },
-  { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'Your corner', short: 'Your corner', x: 50, y: 56, s: 1.35 },
+  { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'My Corner', short: 'My Corner', x: 50, y: 56, s: 1.35 },
   { k: 'messages', art: '/art/village-path/spot-messages.webp', icon: 'mailbox', label: 'Messages', short: 'Messages', x: 50, y: 87, s: 0.9 },
 ]
 

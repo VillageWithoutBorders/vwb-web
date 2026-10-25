@@ -100,7 +100,7 @@ const ALL_STEPS = [
     route: '/cottage',
     target: '[data-tour="village-arrange"]',
     icon: '\u{1F333}',
-    title: 'Your cottage',
+    title: 'My Cottage',
     body: 'My Village, at the top, opens your home village. Your cottage is your house there: your own map with your chats, groups, and more. Tap Arrange and build to move things, add trees and bridges, and draw roads. Only you see it.',
   },
   {
@@ -222,7 +222,7 @@ const SIMPLE_STEPS = [
     route: '/',
     target: '[data-tour="me"]',
     icon: '\u{1F331}',
-    title: 'Your corner',
+    title: 'My Corner',
     body: 'Tap your picture for your profile and settings. Want the full app? Tap Show me everything at the bottom of Home.',
     last: 'Take this tour again any time from Settings or Help.',
   },

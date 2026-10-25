@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { loadMyTaskOverview } from '../utils/myTasks'
 import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
-import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, askGoTo, fromSaved, isPlainWorld, mapBody } from '../components/MapBuilder'
+import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, askGoTo, fromSaved, isPlainWorld, mapBody, ScrollCue } from '../components/MapBuilder'
 import { askConfirm } from '../components/AdminDialog'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
@@ -46,7 +46,7 @@ export default function VillageScene() {
   const isHome = !cottage && !!id && profile?.home_village_id === id
   // Your cottage shows only in your home village (Oct 22).
   const SPOTS = cottage ? COTTAGE_SPOTS
-    : isHome ? VILLAGE_SPOTS.map((v) => (v.k === 'me' ? { ...v, label: 'Your cottage', short: 'Your cottage' } : v))
+    : isHome ? VILLAGE_SPOTS.map((v) => (v.k === 'me' ? { ...v, label: 'My Cottage', short: 'My Cottage' } : v))
     : VILLAGE_SPOTS.filter((v) => v.k !== 'me')
   const { unreadCount } = useUnreadCount()
   // The You button and old /me links open the cottage at Your corner (Oct 22).
@@ -745,6 +745,7 @@ export default function VillageScene() {
           a place. This button turns them on or off for you, on every map.
           It sits under the map so it never covers a place. */}
       <NamesToggle b={b} onChange={saveLabels} />
+      <ScrollCue b={b} />
 
       {cottage && !arrange && (
         <button type="button" className="vs-gifts-btn" onClick={() => openSheet({ k: 'gifts' })}>
@@ -782,7 +783,7 @@ export default function VillageScene() {
           })}
         </div>
         <Link className="btn btn-outline btn-full vs-big" to="/calendar">Events near you</Link>
-        {cottage && <section id="corner" className="vs-corner" aria-label="Your corner"><YourCorner embedded /></section>}
+        {cottage && <section id="corner" className="vs-corner" aria-label="My Corner"><YourCorner embedded /></section>}
       </div>
 
       {sheet && (

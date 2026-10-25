@@ -358,27 +358,36 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
   const panRef = useRef(null)
   const panMovedRef = useRef(false)
   function setZoom(v) { zoomRef.current = v; setZoomState(v) }
+  // Where the map art sits inside its frame. On phones (Oct 25) the art can be bigger than
+  // the frame so it fills the screen, centered, with a little cut off the sides.
+  // All zoom math works in the art's own space: ol/ot is how far it sits from the frame's corner.
+  function layerBox() {
+    const el = outerRef.current, L = sceneRef.current
+    const W = el ? el.clientWidth : 0, H = el ? el.clientHeight : 0
+    return L ? { W, H, ol: L.offsetLeft, ot: L.offsetTop, LW: L.offsetWidth || W, LH: L.offsetHeight || H } : { W, H, ol: 0, ot: 0, LW: W, LH: H }
+  }
   function fitZoom(z, x, y) {
     const el = outerRef.current
     if (!el) return { z: 1, x: 0, y: 0 }
-    const W = el.clientWidth, H = el.clientHeight
+    const { W, H, ol, ot, LW, LH } = layerBox()
     z = Math.min(3, Math.max(1, z))
     if (z < 1.03) return { z: 1, x: 0, y: 0 }
-    return { z, x: Math.min(0, Math.max(W - W * z, x)), y: Math.min(0, Math.max(H - H * z, y)) }
+    // Keep the art covering the whole frame: no empty edges.
+    return { z, x: Math.min(-ol, Math.max(W - ol - LW * z, x)), y: Math.min(-ot, Math.max(H - ot - LH * z, y)) }
   }
   function zoomAt(z, mx, my, from) {
     const c = from || zoomRef.current
     const px = (mx - c.x) / c.z, py = (my - c.y) / c.z
     setZoom(fitZoom(z, mx - px * z, my - py * z))
   }
-  function zoomBy(f) { const el = outerRef.current; if (el) zoomAt(zoomRef.current.z * f, el.clientWidth / 2, el.clientHeight / 2) }
+  function zoomBy(f) { const el = outerRef.current; if (!el) return; const { ol, ot } = layerBox(); zoomAt(zoomRef.current.z * f, el.clientWidth / 2 - ol, el.clientHeight / 2 - ot) }
   function zoomReset() { setZoom({ z: 1, x: 0, y: 0 }) }
   useEffect(() => {
     const onResize = () => setZoom({ z: 1, x: 0, y: 0 })
     window.addEventListener('orientationchange', onResize)
     return () => window.removeEventListener('orientationchange', onResize)
   }, [])
-  function localPt(e) { const r = outerRef.current.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top] }
+  function localPt(e) { const r = outerRef.current.getBoundingClientRect(); const { ol, ot } = layerBox(); return [e.clientX - r.left - ol, e.clientY - r.top - ot] }
   function pinchNow() {
     const [a, c] = [...ptrsRef.current.values()]
     return { m: [(a[0] + c[0]) / 2, (a[1] + c[1]) / 2], d: Math.hypot(a[0] - c[0], a[1] - c[1]) || 1 }
@@ -769,4 +778,30 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
   // Has this person arranged their own view? Then a new default does not show for them.
   const hasOwn = mapLoaded > 0 && !!mapLayouts.current.own
   return { b, arrangeFor, startArrange, resetLayout, saveLabels, hasOwn }
+}
+
+// "More below" (Oct 25, Jade). On phones the map fills the screen, so this pill sits
+// just above the bottom bar to say there is more under it. It fades once you scroll
+// and comes back at the top. Tap it to slide down to what is under the map.
+export function ScrollCue({ b, label = 'More below' }) {
+  const [top, setTop] = useState(true)
+  useEffect(() => {
+    const onScroll = () => setTop(window.scrollY < 40)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  if (b.arrange) return null
+  function go() {
+    const el = b.outerRef.current
+    if (!el) return
+    const head = (document.querySelector('.app-header') || { getBoundingClientRect: () => ({ bottom: 56 }) }).getBoundingClientRect().bottom
+    const y = el.getBoundingClientRect().bottom + window.scrollY - head - 8
+    window.scrollTo({ top: y, behavior: stillMotion() ? 'auto' : 'smooth' })
+  }
+  return (
+    <button type="button" className={'vs-scroll-cue' + (top ? '' : ' vs-scroll-cue-gone')} onClick={go} tabIndex={top ? 0 : -1} aria-hidden={top ? undefined : 'true'}>
+      {label} <span className="vs-scroll-cue-arrow" aria-hidden="true">&#8595;</span>
+    </button>
+  )
 }
