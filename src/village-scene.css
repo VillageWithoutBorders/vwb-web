@@ -570,17 +570,14 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 }
 
 /* ---------- Phones and tablets (Oct 25, Jade): the map fills the screen ----------
-   The map frame is as tall as the space between the top bar and the bottom bar
-   (less the Back button and the "where you are" line above it). The painted art
+   The map frame reaches from where it starts down to the bottom bar. The painted art
    inside covers the frame, centered, so there are no empty bands; a little of the
    sides may be cut off on tall phones. Zoom in to see the edges. */
 @media (max-width: 1023px) {
-  .app-main-world { --vs-above: 8px; }
-  .app-main-world:has(> .app-back-row) { --vs-above: 60px; }
-  .app-main-world:has(.vs-page-path > .vs-top) { --vs-above: 66px; }
-  .app-main-world:has(> .app-back-row):has(.vs-page-path > .vs-top) { --vs-above: 118px; }
   .vs-page-path > .vs-scene-path {
-    --vs-fill-h: max(320px, calc(100dvh - var(--header-height) - var(--tab-height) - env(safe-area-inset-bottom, 0px) - var(--vs-above, 60px)));
+    /* --vs-fill-top: where the map starts on the page, measured by ScrollCue (MapBuilder.jsx),
+       so big text or a tall title above it never pushes the map under the bottom bar. */
+    --vs-fill-h: max(320px, calc(100dvh - var(--tab-height) - env(safe-area-inset-bottom, 0px) - var(--vs-fill-top, 180px)));
     aspect-ratio: auto; width: 100%; height: var(--vs-fill-h); container-type: size;
   }
   .vs-page-path > .vs-scene-path > .vs-zoom {
@@ -603,7 +600,10 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 .vs-scroll-cue-arrow { display: inline-block; font-size: 1.2rem; line-height: 1; animation: vs-cue-bob 1.6s ease-in-out infinite; }
 @keyframes vs-cue-bob { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
 .vs-scroll-cue:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 3px; }
-.vs-scroll-cue-gone { opacity: 0; pointer-events: none; }
+.vs-scroll-cue-gone { opacity: 0; pointer-events: none; transition: opacity 0.6s ease; }
 @media (min-width: 1024px) { .vs-scroll-cue { display: none; } }
 @media (prefers-reduced-motion: reduce) { .vs-scroll-cue { transition: none; } .vs-scroll-cue-arrow { animation: none; } }
 html.simple .vs-scroll-cue { display: none; }
+
+/* The Back button on map pages sat under the blurred backdrop and could not be seen (Oct 25). */
+.app-main-world > .app-back-row { position: relative; z-index: 2; }
