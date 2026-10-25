@@ -472,8 +472,9 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
    Both scroll on their own, so nothing is cut off on a small screen. */
 @media (max-width: 1023px) {
   .vs-page.vs-page-path { display: flex; flex-direction: column; }
-  .vs-page-path > .vs-top { order: -3; }
-  .vs-page-path > .vs-scene-path { order: -2; scroll-margin-top: calc(var(--header-height) + 8px); }
+  .vs-page-path > .vs-top { order: -5; }
+  .vs-page-path > .vs-scene-path { order: -4; scroll-margin-top: calc(var(--header-height) + 8px); }
+  .vs-page-path > .vs-scroll-cue { order: -3; }
   .vs-page-path > .vs-map-under { order: -2; }
   .vs-page-path > .vs-build-start { order: -1; }
 
@@ -577,7 +578,7 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
   .vs-page-path > .vs-scene-path {
     /* --vs-fill-top: where the map starts on the page, measured by ScrollCue (MapBuilder.jsx),
        so big text or a tall title above it never pushes the map under the bottom bar. */
-    --vs-fill-h: max(320px, calc(100dvh - var(--tab-height) - env(safe-area-inset-bottom, 0px) - var(--vs-fill-top, 180px)));
+    --vs-fill-h: max(320px, calc(100dvh - var(--tab-height) - env(safe-area-inset-bottom, 0px) - var(--vs-fill-top, 180px) - 64px));
     aspect-ratio: auto; width: 100%; height: var(--vs-fill-h); container-type: size;
   }
   .vs-page-path > .vs-scene-path > .vs-zoom {
@@ -587,23 +588,25 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
   }
 }
 
-/* "More below" cue (Oct 25): sits just above the bottom bar while the map fills the
-   screen, and fades away once you scroll. Tap it to go down to the rest of the page. */
+/* "More below" (Oct 25): right under the map, so map plus button fill the screen
+   down to the bottom bar. Tap it to go down to the rest of the page. */
 .vs-scroll-cue {
-  position: fixed; left: 50%; transform: translateX(-50%); z-index: 40;
-  bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px) + 12px);
-  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px;
-  border-radius: 22px; border: 2px solid var(--vs-gold); background: rgba(20, 44, 43, 0.92); color: #fff;
-  font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-  transition: opacity 0.25s ease;
+  display: flex; align-items: center; justify-content: center; gap: 8px; align-self: center;
+  min-height: 48px; margin: 8px auto; padding: 0 20px; box-sizing: border-box;
+  border-radius: 24px; border: 2px solid var(--vs-gold); background: rgba(20, 44, 43, 0.92); color: #fff;
+  font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
 }
 .vs-scroll-cue-arrow { display: inline-block; font-size: 1.2rem; line-height: 1; animation: vs-cue-bob 1.6s ease-in-out infinite; }
 @keyframes vs-cue-bob { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
 .vs-scroll-cue:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 3px; }
-.vs-scroll-cue-gone { opacity: 0; pointer-events: none; transition: opacity 0.6s ease; }
+.vs-scroll-cue:active { transform: scale(0.97); }
 @media (min-width: 1024px) { .vs-scroll-cue { display: none; } }
-@media (prefers-reduced-motion: reduce) { .vs-scroll-cue { transition: none; } .vs-scroll-cue-arrow { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .vs-scroll-cue-arrow { animation: none; } .vs-scroll-cue:active { transform: none; } }
 html.simple .vs-scroll-cue { display: none; }
 
 /* The Back button on map pages sat under the blurred backdrop and could not be seen (Oct 25). */
 .app-main-world > .app-back-row { position: relative; z-index: 2; }
+/* Back and the place name share one line at the top (Oct 25). */
+.vs-top .vs-back { flex: none; white-space: nowrap; }
+.vs-top { padding-top: 8px; }
+.vs-top .vs-here { font-size: 1.1rem; }
