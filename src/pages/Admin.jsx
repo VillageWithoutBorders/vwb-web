@@ -20,6 +20,7 @@ import { AdminApplications, AdminTrials } from '../components/AdminRecruiting'
 import { useAdminInbox, refreshAdminInbox } from '../hooks/useAdminInbox'
 import { useWideScreen } from '../hooks/useWideScreen'
 import { ask, askConfirm, tell } from '../components/AdminDialog'
+import { ORG_TYPES } from '../data/orgTypes'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also tell the person (an in-page note) and let the caller bail out; omit it for
@@ -415,7 +416,7 @@ export default function Admin() {
   }
 
   async function loadOrganizations() {
-    const { data, error } = await supabase.from('organizations').select('id, name, description, website_url, social_links, approved, created_at, home_zip, hide_from_public, is_umbrella').order('created_at', { ascending: false })
+    const { data, error } = await supabase.from('organizations').select('id, name, description, website_url, social_links, approved, created_at, home_zip, hide_from_public, is_umbrella, kind, org_type').order('created_at', { ascending: false })
     reportError('loadOrganizations', error)
     if (!data) { setOrganizations([]); return }
     const { data: contactRows } = await supabase.rpc('admin_org_contacts')
@@ -443,6 +444,25 @@ export default function Admin() {
     if (reportError('createOrganization', error, 'Could not create this organization. Try again.')) return
     setNewOrgName(''); setNewOrgDesc(''); setNewOrgEmail(''); setNewOrgWebsite(''); setNewOrgSocial('')
     setShowNewOrgForm(false)
+    await loadOrganizations()
+  }
+
+  // Oct 25: what kind of organization it is (optional), and fixing a place that
+  // signed up as the wrong kind (organization vs emergency response group).
+  async function setOrgType(org, value) {
+    const { error } = await supabase.from('organizations').update({ org_type: value || null }).eq('id', org.id)
+    if (reportError('setOrgType', error, 'Could not save the kind of organization. Try again.')) return
+    await loadOrganizations()
+  }
+
+  async function switchOrgKind(org) {
+    const toGroup = org.kind !== 'group'
+    const msg = toGroup
+      ? 'Make ' + org.name + ' an emergency response group? Its leaders will be called Keeper and Helper, and it will need approval before it is called to emergencies.'
+      : 'Make ' + org.name + ' an organization? It will no longer be called to emergencies. Its members, chats, events and resources stay.'
+    if (!(await askConfirm(msg, { yes: toGroup ? 'Make it a group' : 'Make it an organization' }))) return
+    const { error } = await supabase.from('organizations').update({ kind: toGroup ? 'group' : 'organization', response_status: 'none' }).eq('id', org.id)
+    if (reportError('switchOrgKind', error, 'Could not change this. Try again.')) return
     await loadOrganizations()
   }
 
@@ -1566,6 +1586,16 @@ export default function Admin() {
                   {org.hide_from_public ? 'Hidden from the public. Only people with an account can see it.' : 'Visible to the public.'} {org.kind === 'group' ? 'The group' : 'The organization'} sets this itself.
                 </p>
               )}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', margin: '0.4rem 0' }}>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{org.kind === 'group' ? 'Emergency response group' : 'Organization'}</span>
+                {org.kind !== 'group' && (
+                  <select aria-label={'Kind of organization for ' + org.name} value={org.org_type || ''} onChange={(e) => setOrgType(org, e.target.value)} style={{ minHeight: '44px', maxWidth: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }}>
+                    <option value="">Kind not picked</option>
+                    {ORG_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                )}
+                <button type="button" onClick={() => switchOrgKind(org)} style={{ minHeight: '44px', padding: '0.4rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--accent)', border: '1px solid var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{org.kind === 'group' ? 'Make it an organization' : 'Make it a group'}</button>
+              </div>
               {/* Council links were taken out of the app (Oct 8); organizations connect to each other directly. */}
               {org.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0' }}>{org.description}</p>}
               {org.website_url && (

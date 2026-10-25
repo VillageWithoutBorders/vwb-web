@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { ORG_TYPES } from '../data/orgTypes'
 
 // "Bring your organization to VWB": the request form (Oct 22: moved from the old
 // Around you page to the Calendar and the World's Organizations tab).
 // ?bring=org in the address opens the form and scrolls to it.
 export default function BringOrg() {
   const { profile, organizations } = useAuth()
-  const emptyOrgForm = { name: '', description: '', email: '', website: '', social: '', hidePublic: false }
+  const emptyOrgForm = { name: '', description: '', email: '', website: '', social: '', orgType: '', hidePublic: false }
   const [pendingOrg, setPendingOrg] = useState(null)
   const [showOrgForm, setShowOrgForm] = useState(() => new URLSearchParams(window.location.search).get('bring') === 'org')
   const [orgForm, setOrgForm] = useState(emptyOrgForm)
@@ -54,6 +56,7 @@ export default function BringOrg() {
       p_website_url: orgForm.website,
       p_social_link: orgForm.social,
       p_hide_from_public: orgForm.hidePublic,
+      p_org_type: orgForm.orgType || null,
     })
     setOrgSending(false)
     if (error) {
@@ -85,9 +88,16 @@ export default function BringOrg() {
           <form className="org-request-form" onSubmit={sendOrgRequest} noValidate aria-labelledby="org-request-title">
             <h3 id="org-request-title">Bring your organization to VWB</h3>
             <p className="org-request-help">Tell us a little about your group. We'll look it over. Once it's approved, you can post events and resources.</p>
+            <p className="org-request-help">Starting a crew that shows up during emergencies? <Link to="/start-group">Start an emergency response group</Link> instead.</p>
 
             <label htmlFor="org-name">Organization name (required)</label>
             <input id="org-name" type="text" autoComplete="organization" maxLength={120} required aria-invalid={orgError && !orgForm.name.trim() ? 'true' : undefined} value={orgForm.name} onChange={setOrgField('name')} />
+
+            <label htmlFor="org-type">What kind of organization is it? (optional)</label>
+            <select id="org-type" value={orgForm.orgType} onChange={setOrgField('orgType')}>
+              <option value="">Choose one</option>
+              {ORG_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
 
             <label htmlFor="org-desc">What does your group do?</label>
             <textarea id="org-desc" rows={3} maxLength={1000} value={orgForm.description} onChange={setOrgField('description')} />
