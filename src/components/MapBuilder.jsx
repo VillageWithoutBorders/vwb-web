@@ -783,15 +783,32 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
 // "More below" (Oct 25, Jade). On phones the map fills the screen, so this pill sits
 // just above the bottom bar to say there is more under it. It fades once you scroll
 // and comes back at the top. Tap it to slide down to what is under the map.
+// It also measures where the map starts, so the map can reach exactly to the bottom bar.
+// After a few seconds it fades on its own, so it never hides the places on the map for long.
 export function ScrollCue({ b, label = 'More below' }) {
   const [top, setTop] = useState(true)
+  const [shown, setShown] = useState(true)
   useEffect(() => {
     const onScroll = () => setTop(window.scrollY < 40)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    const t = setTimeout(() => setShown(false), 6000)
+    return () => { window.removeEventListener('scroll', onScroll); clearTimeout(t) }
   }, [])
+  useEffect(() => {
+    function measure() {
+      const el = b.outerRef.current
+      if (!el) return
+      const y = el.getBoundingClientRect().top + window.scrollY
+      el.style.setProperty('--vs-fill-top', Math.round(y) + 'px')
+    }
+    measure()
+    const t = setTimeout(measure, 500)
+    window.addEventListener('resize', measure)
+    return () => { clearTimeout(t); window.removeEventListener('resize', measure) }
+  })
   if (b.arrange) return null
+  const on = top && shown
   function go() {
     const el = b.outerRef.current
     if (!el) return
@@ -800,7 +817,7 @@ export function ScrollCue({ b, label = 'More below' }) {
     window.scrollTo({ top: y, behavior: stillMotion() ? 'auto' : 'smooth' })
   }
   return (
-    <button type="button" className={'vs-scroll-cue' + (top ? '' : ' vs-scroll-cue-gone')} onClick={go} tabIndex={top ? 0 : -1} aria-hidden={top ? undefined : 'true'}>
+    <button type="button" className={'vs-scroll-cue' + (on ? '' : ' vs-scroll-cue-gone')} onClick={go} tabIndex={on ? 0 : -1} aria-hidden={on ? undefined : 'true'}>
       {label} <span className="vs-scroll-cue-arrow" aria-hidden="true">&#8595;</span>
     </button>
   )
