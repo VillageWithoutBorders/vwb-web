@@ -221,7 +221,7 @@ export default function OrgPage() {
     const who = orgWords(org).leadsLower
     if (data === 'asked' || data === 'wait') { setAsked(true); setAskNote(data === 'asked' ? 'Sent. The ' + who + ' will see your name and can add you.' : 'You already asked this week. The ' + who + ' have your name.'); return }
     if (data === 'closed') { setAskNote(org.name + ' is not taking asks to join right now. You can still reach them with the contact info on this page.'); return }
-    if (data === 'member') { setAskNote('You are already part of this ' + (org?.kind === 'group' ? 'group' : 'organization') + '.'); return }
+    if (data === 'member') { setAskNote('You are already part of this ' + (org?.kind === 'group' ? 'crew' : 'group') + '.'); return }
     setAskNote("We couldn't send that right now. Try again later.")
   }
 
@@ -256,7 +256,7 @@ export default function OrgPage() {
   const roleName = (r) => W.roleLabel[r] || 'Member'
   const LEADS = W.leads
   const TOOLS = W.tools
-  const KIND = isGroup ? 'group' : 'organization'
+  const KIND = isGroup ? 'crew' : 'group'
 
   const locked = (s) => !!s.members && !isMember
   // The look its leaders chose (vwb-org-scene.sql): sign, hidden places, own names.
@@ -291,13 +291,13 @@ export default function OrgPage() {
       case 'rules': return { sub: isMember ? 'How this ' + KIND + ' runs' : 'Members only' }
       case 'where': return { sub: villageCount ? (isGroup ? 'Covers ' : 'Works in ') + villageCount + ' village' + (villageCount === 1 ? '' : 's') : 'No villages picked yet' }
       case 'ready': return { sub: org.response_status === 'approved' ? 'Approved to respond to emergencies' : org.response_status === 'asked' ? 'Waiting for approval' : 'Not called to emergencies yet' }
-      case 'links': return { sub: links.length ? links.length + ' connected organization' + (links.length === 1 ? '' : 's') : 'No connections yet' }
+      case 'links': return { sub: links.length ? links.length + ' connected group' + (links.length === 1 ? '' : 's') : 'No connections yet' }
       case 'news': return { sub: !isMember ? 'Members only' : news ? 'News from ' + org.name : canManage ? 'Start Announcements for your members' : 'No announcements yet' }
       case 'fires': return { sub: !isMember ? 'Members only' : chats.length ? chats.length + ' Campfire' + (chats.length === 1 ? '' : 's') + ' you are in' : 'No Campfires yet' }
       case 'events': return { sub: events.length ? events.length + ' coming up' : 'Nothing on the calendar yet' }
       case 'needs': return { sub: isMember ? 'What we need and what we offer' : 'Members only' }
       case 'share': return { sub: resources.length ? resources.length + ' shared resource' + (resources.length === 1 ? '' : 's') : 'Nothing shared yet' }
-      case 'members': return { sub: !isMember ? 'Members only' : isGroup ? 'Who is in, and what we bring' : 'Who is part of this organization' }
+      case 'members': return { sub: !isMember ? 'Members only' : isGroup ? 'Who is in, and what we bring' : 'Who is part of this group' }
       case 'involved': return { sub: isMember ? 'Share this page with a friend' : asked ? 'You asked to join' : 'Ask to join or reach the ' + W.leadsLower }
       case 'tools': return { sub: 'Members, chats, events, connections' }
       default: return { sub: '' }
@@ -352,14 +352,14 @@ export default function OrgPage() {
         return <>{title}<OrgVillages orgId={id} orgName={org.name} canManage={canManage} /></>
       case 'links':
         return <>{title}
-          {links.length === 0 && <p>{org.name} is not connected with an organization or group yet.</p>}
+          {links.length === 0 && <p>{org.name} is not connected with a group or crew yet.</p>}
           {links.map((o) => (
             <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
-              <span aria-hidden="true"><Icon name="people" /></span> {o.name}<small>Connected organization</small>
+              <span aria-hidden="true"><Icon name="people" /></span> {o.name}<small>Connected group</small>
             </button>
           ))}
-          <p className="vs-note">The leaders of connected organizations and groups share a Campfire <Icon name="campfire" />.</p>
-          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Connect with an organization or group</Link>}
+          <p className="vs-note">The leaders of connected groups and crews share a Campfire <Icon name="campfire" />.</p>
+          {canManage && <Link className="btn btn-outline btn-full" to={'/orgs/' + id + '/dashboard'}>Connect with a group or crew</Link>}
         </>
       case 'news':
         return <>{title}
@@ -379,7 +379,7 @@ export default function OrgPage() {
             <div key={c.id}>
               <button type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/groups/' + c.id) }}>
                 <span aria-hidden="true"><Icon name="campfire" /></span> {c.name}
-                <small>{c.is_general ? 'General chat, every member' : 'Shared Campfire with a connected ' + (isGroup ? 'organization or group' : 'organization')}</small>
+                <small>{c.is_general ? 'General chat, every member' : 'Shared Campfire with a connected ' + (isGroup ? 'group or crew' : 'group')}</small>
               </button>
               {c.is_general && chats.filter((x) => !x.is_general && !x.shared).map((x) => (
                 <button key={x.id} type="button" className="vs-row vs-row-sub" onClick={() => { setSheet(null); navigate('/groups/' + x.id) }}>
@@ -423,7 +423,7 @@ export default function OrgPage() {
         return <>{title}<GroupResponse orgId={id} orgName={org.name} isKeeper={canManage} villageCount={villageCount} onChanged={loadOrg} /></>
       case 'share':
         return <>{title}
-          {resources.length === 0 && <p>{isGroup ? 'No supplies listed yet. Keepers and Helpers can add the supplies your group keeps ready, like tarps or water, as resources.' : 'Nothing shared yet.'}</p>}
+          {resources.length === 0 && <p>{isGroup ? 'No supplies listed yet. Keepers and Helpers can add the supplies your crew keeps ready, like tarps or water, as resources.' : 'Nothing shared yet.'}</p>}
           {resources.map((r) => (
             <div key={r.id} className="vs-item">
               <b>{r.name}</b>
@@ -520,7 +520,7 @@ export default function OrgPage() {
   if (missing || !org) {
     return <div className="vs-page">
       <div className="vs-top"><Link className="vs-crumb" to="/world?tab=orgs">World</Link></div>
-      <p className="vs-error" role="alert">We couldn't find this organization. It may not be on VWB anymore.</p>
+      <p className="vs-error" role="alert">We couldn't find this group. It may not be on VWB anymore.</p>
     </div>
   }
 
@@ -537,7 +537,7 @@ export default function OrgPage() {
         <h1 className="org-title"><span className="org-sign" aria-hidden="true"><Icon name={sign} size={40} /></span>{org.name}</h1>
         <div className="vs-chips">
           {isMember ? <span className="vs-chip vs-chip-in">{roleName(mine.role)}</span> : <span className="vs-chip">Public view</span>}
-          {isGroup ? <span className="vs-chip"><Icon name="tent" /> Emergency response group</span> : <span className="vs-chip"><Icon name="people" /> Organization</span>}
+          {isGroup ? <span className="vs-chip"><Icon name="tent" /> Emergency crew</span> : <span className="vs-chip"><Icon name="people" /> Group</span>}
           {isGroup && org.response_status === 'approved' && <span className="vs-chip vs-chip-in"><Icon name="check" /> Approved to respond</span>}
           {place && <span className="vs-chip">Near {place}</span>}
           {org.invisible
@@ -609,13 +609,13 @@ export default function OrgPage() {
 
       {isNew && isGroup && canManage && (
         <section className="vs-body gs-new" aria-labelledby="gs-new-h">
-          <h2 id="gs-new-h">Your group is started</h2>
+          <h2 id="gs-new-h">Your crew is started</h2>
           <p className="vs-note">Four steps to get ready. You can do them in any order.</p>
           <ol className="gs-steps">
             <li><button type="button" className="vs-row" onClick={() => openSheet({ k: 'where' })}><span aria-hidden="true"><Icon name="houses" /></span> Pick the villages you cover<small>{villageCount ? 'Covers ' + villageCount + ' so far' : 'None yet'}</small></button></li>
             <li><Link className="vs-row" to={'/orgs/' + id + '/dashboard'}><span aria-hidden="true"><Icon name="toolbox" /></span> Add your crew<small>Search for people you know in Keeper tools</small></Link></li>
             <li><button type="button" className="vs-row" onClick={() => openSheet({ k: 'members' })}><span aria-hidden="true"><Icon name="card" /></span> List what you bring<small>Skills and gear, like a chainsaw or first aid</small></button></li>
-            <li><button type="button" className="vs-row" onClick={() => openSheet({ k: 'ready' })}><span aria-hidden="true"><Icon name="siren" /></span> Ask to be approved to respond<small>So your group is called when an emergency is verified nearby</small></button></li>
+            <li><button type="button" className="vs-row" onClick={() => openSheet({ k: 'ready' })}><span aria-hidden="true"><Icon name="siren" /></span> Ask to be approved to respond<small>So your crew is called when an emergency is verified nearby</small></button></li>
           </ol>
         </section>
       )}

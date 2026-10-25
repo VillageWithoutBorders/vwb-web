@@ -23,7 +23,7 @@ const ROOMS = [
   {
     icon: 'campfire',
     name: 'Campfire',
-    who: 'A team inside a village, organization, or group.',
+    who: 'A team inside a village, group, or crew.',
     for: 'Planning and working together: a church, a nonprofit, a cleanup crew. A smaller Campfire can branch off for one job, like "Saturday food drive drivers", so the main one stays calm.',
     safe: 'Members only. You ask to join or someone adds you.',
   },

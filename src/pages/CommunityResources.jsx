@@ -435,7 +435,7 @@ export default function CommunityResources() {
   const toggleAccess = (f) => setAccessFilter((prev) => prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f])
   const managesOrg = (oid) => !!oid && (isAdmin || (myOrgs || []).some((o) => o.id === oid && (o.role === 'admin' || o.role === 'organizer')))
   const visitorNeedsArea = placesEnabled && !user && !visitorArea
-  const orgName = (oid) => (allOrgs.find((o) => o.id === oid) || {}).name || 'Organization'
+  const orgName = (oid) => (allOrgs.find((o) => o.id === oid) || {}).name || 'Group'
 
   const submitOrgOptions = isAdmin ? allOrgs : (myOrgs || [])
 
@@ -704,7 +704,7 @@ export default function CommunityResources() {
 
           {!canSubmit && (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>
-              Listings come from local partner organizations and the Community Resource Network.{user && <>{' '}
+              Listings come from local partner groups and the Community Resource Network.{user && <>{' '}
               <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', textDecoration: 'underline', padding: 0 }}>Want your org involved?</button></>}
             </p>
           )}
@@ -729,9 +729,9 @@ export default function CommunityResources() {
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>Share a resource with your community. Hope Ambassadors will verify submissions.</p>
                     {submitOrgOptions.length > 0 && (
                       <>
-                        <label htmlFor="sub-org" style={labelStyle}>Organization</label>
+                        <label htmlFor="sub-org" style={labelStyle}>Group</label>
                         <select id="sub-org" style={fieldStyle} value={subOrgId} onChange={e => setSubOrgId(e.target.value)}>
-                          <option value="">{isAdmin ? 'No organization (post as VWB)' : 'Choose your organization'}</option>
+                          <option value="">{isAdmin ? 'No group (post as VWB)' : 'Choose your group'}</option>
                           {submitOrgOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
                       </>

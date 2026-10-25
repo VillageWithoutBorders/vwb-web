@@ -46,10 +46,10 @@ export default function YourCorner({ embedded = false }) {
         {!embedded && <Link to="/cottage" className="corner-item"><span aria-hidden="true"><Icon name="cottage" /></span> My cottage<span className="corner-arrow" aria-hidden="true">›</span></Link>}
         <Link to="/world" className="corner-item"><span aria-hidden="true"><Icon name="tree" /></span> My villages<span className="corner-arrow" aria-hidden="true">›</span></Link>
         {!organizations.some((o) => o.kind !== 'group') && (
-          <Link to="/calendar?bring=org" className="corner-item"><span aria-hidden="true"><Icon name="people" /></span> Bring your organization<span className="corner-arrow" aria-hidden="true">›</span></Link>
+          <Link to="/calendar?bring=org" className="corner-item"><span aria-hidden="true"><Icon name="people" /></span> Bring your group<span className="corner-arrow" aria-hidden="true">›</span></Link>
         )}
         {runsAGroup && (
-          <Link to="/org-dashboard" className="corner-item"><span aria-hidden="true"><Icon name="people" /></span> My organization dashboard<span className="corner-arrow" aria-hidden="true">›</span></Link>
+          <Link to="/org-dashboard" className="corner-item"><span aria-hidden="true"><Icon name="people" /></span> My group dashboard<span className="corner-arrow" aria-hidden="true">›</span></Link>
         )}
       </nav>
 

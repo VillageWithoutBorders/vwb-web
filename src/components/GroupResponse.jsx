@@ -27,8 +27,8 @@ export default function GroupResponse({ orgId, orgName, isKeeper, villageCount, 
     const { data, error } = await supabase.rpc('ask_group_response_approval', { p_org: orgId })
     setBusy(false)
     if (error) { console.error('Failed to ask for approval:', error); setMsg("We couldn't send that. Try again."); return }
-    if (data === 'asked' || data === 'already') setMsg('Sent. Hope Ambassadors and VWB admins will look at your group.')
-    else if (data === 'approved') setMsg('Your group is already approved.')
+    if (data === 'asked' || data === 'already') setMsg('Sent. Hope Ambassadors and VWB admins will look at your crew.')
+    else if (data === 'approved') setMsg('Your crew is already approved.')
     else setMsg("We couldn't send that right now.")
     load(); onChanged?.()
   }
@@ -37,8 +37,8 @@ export default function GroupResponse({ orgId, orgName, isKeeper, villageCount, 
     setBusy(true); setMsg('')
     const { data, error } = await supabase.rpc('decide_group_response', { p_org: orgId, p_approve: yes, p_note: decideNote.trim() || null })
     setBusy(false)
-    if (error || !['approved', 'declined'].includes(data)) { console.error('Failed to decide:', error || data); setMsg(data === 'inside' ? 'You are in this group, so someone else has to decide.' : data === 'notlocal' ? "This group doesn't cover your villages. A Hope Ambassador there or a VWB admin can decide." : "We couldn't save that. Try again."); return }
-    setMsg(yes ? orgName + ' can now be called to emergencies. The group was told.' : 'Saved. The group was told it is not approved yet.')
+    if (error || !['approved', 'declined'].includes(data)) { console.error('Failed to decide:', error || data); setMsg(data === 'inside' ? 'You are in this crew, so someone else has to decide.' : data === 'notlocal' ? "This group doesn't cover your villages. A Hope Ambassador there or a VWB admin can decide." : "We couldn't save that. Try again."); return }
+    setMsg(yes ? orgName + ' can now be called to emergencies. The crew was told.' : 'Saved. The crew was told it is not approved yet.')
     setDecideNote('')
     load(); onChanged?.()
   }
@@ -48,8 +48,8 @@ export default function GroupResponse({ orgId, orgName, isKeeper, villageCount, 
 
   return (
     <div>
-      {s === 'approved' && <div className="vs-item gr-ok"><b>Approved to respond</b><small>Since {day(info.decided_at)}. When an emergency is verified in the villages this group covers, its keepers are asked to help.</small></div>}
-      {s === 'asked' && <div className="vs-item"><b>Waiting for approval</b><small>Asked {day(info.asked_at)}. A Hope Ambassador or VWB admin outside the group will decide. You get an alert either way. Meanwhile, keep adding members and what you bring.</small></div>}
+      {s === 'approved' && <div className="vs-item gr-ok"><b>Approved to respond</b><small>Since {day(info.decided_at)}. When an emergency is verified in the villages this crew covers, its keepers are asked to help.</small></div>}
+      {s === 'asked' && <div className="vs-item"><b>Waiting for approval</b><small>Asked {day(info.asked_at)}. A Hope Ambassador or VWB admin outside the crew will decide. You get an alert either way. Meanwhile, keep adding members and what you bring.</small></div>}
       {(s === 'none' || s === 'declined') && <div className="vs-item"><b>Not called to emergencies yet</b><small>{orgName} can meet, chat, and plan now. To be called when an emergency is verified nearby, a keeper asks for approval.</small></div>}
       {s === 'declined' && isKeeper && info.note && <p className="vs-note">Note from the reviewer: {info.note}</p>}
 
@@ -61,8 +61,8 @@ export default function GroupResponse({ orgId, orgName, isKeeper, villageCount, 
       {info.i_can_decide && (s === 'asked' || s === 'approved') && (
         <section className="cal-box" aria-labelledby="gr-decide">
           <h3 id="gr-decide">{s === 'asked' ? 'You can decide' : 'Take back approval'}</h3>
-          <p className="cal-sub">You are a Hope Ambassador or VWB admin and not in this group. Check that it is real and local before saying yes.</p>
-          <label htmlFor="gr-note" className="gg-label">Note to the group (optional)</label>
+          <p className="cal-sub">You are a Hope Ambassador or VWB admin and not in this crew. Check that it is real and local before saying yes.</p>
+          <label htmlFor="gr-note" className="gg-label">Note to the crew (optional)</label>
           <textarea id="gr-note" rows={2} maxLength={300} value={decideNote} onChange={(e) => setDecideNote(e.target.value)} />
           {s === 'asked' && <button type="button" className="btn btn-primary btn-full" onClick={() => decide(true)} disabled={busy}>Approve to respond</button>}
           <button type="button" className="btn btn-outline btn-full" onClick={() => decide(false)} disabled={busy}>{s === 'asked' ? 'Not yet' : 'Take back approval'}</button>
@@ -72,7 +72,7 @@ export default function GroupResponse({ orgId, orgName, isKeeper, villageCount, 
       {msg && <p className="vs-note" role="status">{msg}</p>}
 
       <h3>Past responses</h3>
-      <p className="vs-note">Emergencies this group helped with will show here.</p>
+      <p className="vs-note">Emergencies this crew helped with will show here.</p>
     </div>
   )
 }

@@ -70,7 +70,7 @@ export default function GroupGear({ orgId, orgName, isKeeper }) {
     const { data, error } = await supabase.rpc('set_my_group_gear', { p_org: orgId, p_skills: skills, p_gear: gear, p_note: note.trim() || null })
     setSaving(false)
     if (error || data !== 'saved') { console.error('Failed to save what you bring:', error || data); setMsg("We couldn't save that. Try again."); return }
-    setMsg("Saved. Your group's Keepers and Helpers can see what you bring.")
+    setMsg("Saved. Your crew's Keepers and Helpers can see what you bring.")
     setEditing(false)
     load()
   }
@@ -100,7 +100,7 @@ export default function GroupGear({ orgId, orgName, isKeeper }) {
       </>}
       {msg && <p className="vs-note" role="status">{msg}</p>}
 
-      <h3>The whole group</h3>
+      <h3>The whole crew</h3>
       {totals.length === 0
         ? <p className="vs-note">Nobody has listed anything yet.</p>
         : <>

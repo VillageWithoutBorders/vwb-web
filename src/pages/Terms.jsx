@@ -147,7 +147,7 @@ export default function Terms() {
           <li>Using help requests or offers as a way to gain access to someone&apos;s home, belongings, children, or personal life for harmful purposes</li>
           <li>Pressuring any member for money, sexual favors, personal information, or anything beyond the scope of the help being offered or requested</li>
           <li>Grooming, manipulation, or building false trust in order to exploit someone later</li>
-          <li>Recruiting members into schemes, scams, cults, or predatory organizations</li>
+          <li>Recruiting members into schemes, scams, cults, or predatory groups</li>
           <li>Catfishing or creating fake accounts to deceive other members</li>
         </ul>
 
@@ -165,7 +165,7 @@ export default function Terms() {
         <ul>
           <li>Using VWB to sell goods or services, run a business, or solicit paid work</li>
           <li>Posting false or misleading help requests</li>
-          <li>Impersonating another member, admin, or organization</li>
+          <li>Impersonating another member, admin, or group</li>
           <li>Spamming, advertising, or promoting products in any public space</li>
           <li>Using the emergency events feature to spread false information</li>
           <li>Attempting to access another member&apos;s account or private data</li>
@@ -207,8 +207,8 @@ export default function Terms() {
         <p>Direct messages between two people are end-to-end encrypted. That means only the two people in the conversation can ever read them, not admins, not the founder, not us. If you need to report something from a private conversation, you attach your own copy of the messages you&apos;re reporting, the same way you&apos;d forward a text message.</p>
         <p>Announcements and village chats work differently. Announcements are open for every member to read, and only Hope Ambassadors and admins can post there. A village chat is for neighbors near a village. Anyone with an account and a zip code within reach can join, there is no limit on how many people can join, and you can join more than one. Before you join, you must agree that you understand the risk of being in a community chat. People who join later cannot read what was said before they joined. Only people who joined a village chat can open it, and VWB admins cannot open village chats in the app. Village chats are not end-to-end encrypted the way private messages are. The words are stored as readable text on our servers, and the app keeps everyone who has not joined out. Everyone in the chat can read it, so keep sensitive details out. Two members of a village chat can ask to have someone removed, and a second member has to agree. You can leave a village chat any time.</p>
         <p><strong>Village keepers.</strong> Every village chat has a keeper. The keeper is the neighbor who started the village, or the member who took over from them. A keeper looks after the village and can post announcements for it. A keeper cannot read anything that other members cannot read. One neighbor can keep up to three villages. A keeper can hand the role to another member at any time. If the keeper leaves or is removed, the role passes to a helper first, then to the member who has been there longest. If a village has no members, the first person who joins becomes its keeper.</p>
-        <p>If you choose to make a recovery key, we store a locked backup of your message key that only your recovery key can open. We never see the recovery key, so we cannot open the backup or your messages. If you lose the key, we cannot get it back for you. We do not keep a separate archive of messages. Announcements and village chat messages are deleted automatically after 30 days. Direct messages, Cottage Chats, and organization chats are never readable by us, and we do not save copies of them.</p>
-        <p>Cottage Chats and organization chats (including general chats and Campfires) are end-to-end encrypted, so only current members can read them. When a chat sets posts to disappear, or when someone deletes a message or post for everyone, the locked text is erased from our servers. Deleting a message for yourself only hides it from you. We can&apos;t take back anything someone already read, copied, or took a screenshot of.</p>
+        <p>If you choose to make a recovery key, we store a locked backup of your message key that only your recovery key can open. We never see the recovery key, so we cannot open the backup or your messages. If you lose the key, we cannot get it back for you. We do not keep a separate archive of messages. Announcements and village chat messages are deleted automatically after 30 days. Direct messages, Cottage Chats, and group chats are never readable by us, and we do not save copies of them.</p>
+        <p>Cottage Chats and group chats (including general chats and Campfires) are end-to-end encrypted, so only current members can read them. When a chat sets posts to disappear, or when someone deletes a message or post for everyone, the locked text is erased from our servers. Deleting a message for yourself only hides it from you. We can&apos;t take back anything someone already read, copied, or took a screenshot of.</p>
         <p>You are responsible for what you post. Do not post content that is:</p>
         <ul>
           <li>Illegal</li>

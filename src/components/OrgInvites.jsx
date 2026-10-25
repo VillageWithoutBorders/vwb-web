@@ -39,7 +39,7 @@ export default function OrgInvites() {
         <div key={inv.org_id} className="cal-card" style={{ width: '100%', boxSizing: 'border-box' }}>
           <span className="cal-card-title"><Icon name={inv.kind === 'group' ? 'tent' : 'people'} /> {inv.org_name}</span>
           <span className="cal-card-meta" style={{ display: 'block', margin: '0.2rem 0 0.5rem' }}>
-            {inv.invited_by_name} invited you to join this {inv.kind === 'group' ? 'group' : 'organization'}.
+            {inv.invited_by_name} invited you to join this {inv.kind === 'group' ? 'emergency crew' : 'group'}.
           </span>
           <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} disabled={busy} onClick={() => answer(inv, true)}>Join</button>
           <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} disabled={busy} onClick={() => answer(inv, false)}>No thanks</button>

@@ -83,9 +83,9 @@ export default function Ambassador() {
       </section>
 
       <section className="amb-box" aria-labelledby="amb-groups">
-        <h2 id="amb-groups"><Icon name="tent" /> Groups asking to respond</h2>
+        <h2 id="amb-groups"><Icon name="tent" /> Crews asking to respond</h2>
         {groups === null ? <p role="status">Loading...</p>
-          : groups.length === 0 ? <p className="amb-note">No group is waiting. When a group asks to be called to emergencies, it shows here. You can't decide for a group you are in.</p>
+          : groups.length === 0 ? <p className="amb-note">No crew is waiting. When a crew asks to be called to emergencies, it shows here. You can't decide for a crew you are in.</p>
           : (
             <ul className="amb-list">
               {groups.map((g) => (
