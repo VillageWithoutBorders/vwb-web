@@ -14,6 +14,8 @@ import Icon from '../components/Icon'
 import AreaPicker from '../components/AreaPicker'
 import CrnCardDetails from '../components/CrnCardDetails'
 import ResourceReport from '../components/ResourceReport'
+import SuggestResource from '../components/SuggestResource'
+import ResourceSuggestionsReview from '../components/ResourceSuggestionsReview'
 import { placesEnabled, getMyPlaces, getVisitorArea, setVisitorArea } from '../utils/places'
 import { findHelpForMe, resourcesForPlace, friendlyError, saysNo } from '../utils/resourceReports'
 import { tell } from '../components/AdminDialog'
@@ -765,6 +767,8 @@ export default function CommunityResources() {
             </div>
           )}
 
+          {canVerify && <ResourceSuggestionsReview />}
+
           {canVerify && pendingResources.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>
               <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>Pending review ({pendingResources.length})</p>
@@ -828,6 +832,13 @@ export default function CommunityResources() {
                 </div>
               )}
             </>
+          )}
+
+      {user && (
+            <div className="sr-suggest">
+              <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-soft)' }}>Know a place that helps that isn't listed, or is a kind of help missing near you?</p>
+              <SuggestResource category={selectedCat || ''} />
+            </div>
           )}
 
       {reportFor && (
