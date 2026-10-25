@@ -223,7 +223,7 @@ export default function KeeperDashboard() {
       {tab === 'chats' && (
         <DashPanel k="chats">
           <section className="hub-section" aria-labelledby="kd-chat">
-            <div className="hub-section-head"><h2 id="kd-chat"><Icon name="megaphone" /> Village chat</h2></div>
+            <div className="hub-section-head"><h2 id="kd-chat"><Icon name="chat-bubble" /> Village chat</h2></div>
             <p className="hub-org-desc">Everyone in the village. As a keeper you can pin announcements here.</p>
             <div className="dash-shortcuts">
               {go('\u{1F4E3}', 'Open the village chat', () => navigate(board ? '/village-square?board=' + board.id : '/village/' + id))}

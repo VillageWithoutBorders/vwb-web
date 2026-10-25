@@ -14,7 +14,7 @@ import Icon from './Icon'
 const QUICK_ACTIONS = [
   { key: 'find_help', label: 'Find resources', icon: 'heart-hands', to: '/community/resources', desc: 'Food, housing, safety, and more near you' },
   { key: 'ask', label: 'Find Help', icon: 'raise-hand', to: '/ask', desc: 'Ask your neighbors for a hand' },
-  { key: 'my_code', label: 'Show my QR', icon: 'phone-add', to: '/my-code', desc: 'Connect with someone in person' },
+  { key: 'my_code', label: 'Show my QR', icon: 'qr-code', to: '/my-code', desc: 'Connect with someone in person' },
   { key: 'village', label: 'My village', icon: 'houses', to: '/village', desc: 'Your village and its chat' },
   { key: 'can_help', label: 'Offer Help', icon: 'heart', to: '/skillshare', desc: 'See what neighbors near you need' },
   { key: 'calendar', label: 'Today', icon: 'calendar', to: '/calendar', desc: 'Events coming up' },
