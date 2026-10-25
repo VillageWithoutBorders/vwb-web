@@ -19,6 +19,7 @@ import GroupResponse from '../components/GroupResponse'
 import '../village-scene.css'
 import Icon from '../components/Icon'
 import { orgWords } from '../utils/roleWords'
+import { askConfirm } from '../components/AdminDialog'
 
 // The Organization page: one organization as a little world, the same way a
 // village page works. Every element on the hills opens its part. Members-only
