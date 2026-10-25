@@ -148,7 +148,7 @@ export default function OrgConnections({ orgId, orgName }) {
             )}
           </div>
         ))}
-        {searched && found.length === 0 && <p className="hub-empty">No group with that name. They may not be on VWB yet, or they keep their page private.</p>}
+        {searched && found.length === 0 && <p className="hub-empty">No group with that name. They may not be on VWB yet, or they chose to stay invisible.</p>}
         {note && <p className="hub-note" role="status">{note}</p>}
       </section>
 
