@@ -17,7 +17,7 @@ const APP_URL = window.location.origin
 const SIGNUP_URL = `${APP_URL}/login?mode=signup`
 const SHARE_TEXT = 'Village Without Borders is a mutual aid network where neighbors help neighbors. Join us:'
 
-// inline: shown as a plain list inside Your corner (/me), with no button and no pop-up.
+// inline: shown as a plain list inside My Corner (/me), with no button and no pop-up.
 export default function AppMenu({ inline = false }) {
   const navigate = useNavigate()
   const { signOut, isAdmin } = useAuth()

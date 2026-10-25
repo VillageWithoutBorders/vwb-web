@@ -72,7 +72,7 @@ export default function MyCode() {
 
   return (
     <div className="cal-page mycode-page">
-      <BackLink fallback="/me" fallbackLabel="Your corner" />
+      <BackLink fallback="/me" fallbackLabel="My Corner" />
       <h1 className="mycode-title">My QR code</h1>
       <p className="cal-sub">Met a neighbor in person? Let them scan this with their phone camera. You will be connected, and it counts as a vouch.</p>
 

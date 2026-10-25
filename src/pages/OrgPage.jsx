@@ -12,7 +12,7 @@ import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import OrgMemberNames from '../components/OrgMemberNames'
 import { ORG_SPOTS, GROUP_SPOTS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
-import { usePageMap, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, askGoTo } from '../components/MapBuilder'
+import { usePageMap, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, askGoTo, ScrollCue } from '../components/MapBuilder'
 import OrgSceneEditor from '../components/OrgSceneEditor'
 import GroupGear from '../components/GroupGear'
 import GroupResponse from '../components/GroupResponse'
@@ -599,6 +599,7 @@ export default function OrgPage() {
         <div className="vs-fade" />
       </div>
       <NamesToggle b={b} onChange={user ? saveLabels : null} />
+      <ScrollCue b={b} />
 
       <p className="vs-hint">{arrange ? (arrangeFor === 'everyone' ? 'You are setting the default look for ' + org.name + '. Personal views stay as they are. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : 'Tap anything to go there.'}</p>
 

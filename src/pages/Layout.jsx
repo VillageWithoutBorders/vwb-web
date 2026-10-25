@@ -71,7 +71,7 @@ export default function Layout() {
           <MyCornerButton />
           <MyToolsButton tools={tools} adminWaiting={adminWaiting} adminUrgent={adminUrgent} />
           </>)}
-          {/* Simple view keeps its two: Alerts and your corner. */}
+          {/* Simple view keeps its two: Alerts and My Corner. */}
           {simple && <AlertsMenu />}
           {simple && <MeButton />}
         </nav>
