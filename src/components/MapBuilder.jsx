@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { DECOR_PIECES, BACKGROUNDS, HAS_SEASONS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
 import { supabase } from '../supabaseClient'
 import { askConfirm } from './AdminDialog'
+import { useOwnBack } from './BackLink'
 
 // The map builder (Oct 22): Arrange and build for every map page.
 // Your cottage, village pages, organization and group pages all use it.
@@ -780,21 +781,12 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
   return { b, arrangeFor, startArrange, resetLayout, saveLabels, hasOwn }
 }
 
-// "More below" (Oct 25, Jade). On phones the map fills the screen, so this pill sits
-// just above the bottom bar to say there is more under it. It fades once you scroll
-// and comes back at the top. Tap it to slide down to what is under the map.
-// It also measures where the map starts, so the map can reach exactly to the bottom bar.
-// After a few seconds it fades on its own, so it never hides the places on the map for long.
+// "More below" (Oct 25, Jade). On phones the map fills the screen, and this button sits
+// right under the map, just above the bottom bar, to say there is more. Tap it to slide
+// down. It also measures where the map starts, so map plus button end at the bottom bar.
 export function ScrollCue({ b, label = 'More below' }) {
-  const [top, setTop] = useState(true)
-  const [shown, setShown] = useState(true)
-  useEffect(() => {
-    const onScroll = () => setTop(window.scrollY < 40)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    const t = setTimeout(() => setShown(false), 6000)
-    return () => { window.removeEventListener('scroll', onScroll); clearTimeout(t) }
-  }, [])
+  // Oct 25 (Jade): the map pages have no Back button; the top bar takes you anywhere.
+  useOwnBack()
   useEffect(() => {
     function measure() {
       const el = b.outerRef.current
@@ -808,7 +800,6 @@ export function ScrollCue({ b, label = 'More below' }) {
     return () => { clearTimeout(t); window.removeEventListener('resize', measure) }
   })
   if (b.arrange) return null
-  const on = top && shown
   function go() {
     const el = b.outerRef.current
     if (!el) return
@@ -817,7 +808,7 @@ export function ScrollCue({ b, label = 'More below' }) {
     window.scrollTo({ top: y, behavior: stillMotion() ? 'auto' : 'smooth' })
   }
   return (
-    <button type="button" className={'vs-scroll-cue' + (on ? '' : ' vs-scroll-cue-gone')} onClick={go} tabIndex={on ? 0 : -1} aria-hidden={on ? undefined : 'true'}>
+    <button type="button" className="vs-scroll-cue" onClick={go}>
       {label} <span className="vs-scroll-cue-arrow" aria-hidden="true">&#8595;</span>
     </button>
   )

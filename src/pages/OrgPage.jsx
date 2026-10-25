@@ -527,11 +527,6 @@ export default function OrgPage() {
 
   return (
     <div className="vs-page vs-page-path">
-      <nav className="vs-top" aria-label="Where you are">
-        <Link className="vs-crumb" to="/world?tab=orgs">World</Link>
-        <span className="vs-sep" aria-hidden="true">&#8250;</span>
-        <span className="vs-here" aria-current="page">{org.name}</span>
-      </nav>
 
       <div className="vs-title">
         <h1 className="org-title"><span className="org-sign" aria-hidden="true"><Icon name={sign} size={40} /></span>{org.name}</h1>
