@@ -36,7 +36,7 @@ const REMOVE_REASONS = [
   'Harassing or bullying members',
   'Scam, spam, or asking for money',
   'Fake or pretend account',
-  'Not part of what this group is for',
+  'Not part of what this chat is for',
   'Something else',
 ]
 
@@ -499,7 +499,7 @@ export default function GroupBoard() {
     const open = removals.find(r => r.target_id === member.userId)
     if (open && group?.steward_id !== user.id) {
       const why = open.reason ? ' Reason given: ' + open.reason + '.' : ''
-      if (!(await askConfirm('Agree to remove ' + member.name + '?' + why + ' They will be removed from the group right away.', { yes: 'Agree, remove', danger: true }))) return
+      if (!(await askConfirm('Agree to remove ' + member.name + '?' + why + ' They will be removed from the chat right away.', { yes: 'Agree, remove', danger: true }))) return
       doRemove(member, null).then(r => { if (r && r.error) tell(r.error.code === '42501' && r.error.message ? r.error.message : 'Could not do that. Try again.', { tone: 'error' }) })
       return
     }
@@ -511,7 +511,7 @@ export default function GroupBoard() {
   async function doRemove(member, reason) {
     const { data, error } = await supabase.rpc('request_community_group_removal', { p_group: id, p_target: member.userId, p_reason: reason })
     if (error) { console.error('Removal request failed:', error); return { error } }
-    if (data === 'removed') tell(member.name + ' was removed from the group.')
+    if (data === 'removed') tell(member.name + ' was removed from the chat.')
     loadGroup()
     return {}
   }
@@ -533,7 +533,7 @@ export default function GroupBoard() {
   }
 
   async function sayNo(person) {
-    if (!(await askConfirm('Say no to ' + person.name + "? They won't join the group."))) return
+    if (!(await askConfirm('Say no to ' + person.name + "? They won't join the chat."))) return
     const { error } = await supabase.rpc('decline_community_group_member', { p_group: id, p_user: person.userId })
     if (error) { console.error('Decline failed:', error); tell('Could not do that. Try again.', { tone: 'error' }); return }
     loadGroup()
@@ -551,7 +551,7 @@ export default function GroupBoard() {
   }
 
   async function answerSteward(accept) {
-    if (accept && !(await askConfirm("Become this group's steward? You'll control the join link, you can remove someone on your own for safety, and members can't remove you."))) return
+    if (accept && !(await askConfirm("Become this chat's steward? You'll control the join link, you can remove someone on your own for safety, and members can't remove you."))) return
     const { error } = await supabase.rpc('answer_community_group_steward', { p_group: id, p_accept: accept })
     if (error) {
       console.error('Steward answer failed:', error)
@@ -573,7 +573,7 @@ export default function GroupBoard() {
     const stewardNote = group.steward_id === user.id && !last
       ? "You're the steward. If you leave, the chat becomes an everyday chat where everyone is equal. To pass the role on instead, use Make steward first (it's offered to the group's head and organizers in the chat). "
       : ''
-    if (!(await askConfirm(last ? "You're the last member. Leaving deletes this group and its whole board. Leave?" : stewardNote + 'Leave ' + group.name + '? You can only come back if someone invites you again.'))) return
+    if (!(await askConfirm(last ? "You're the last member. Leaving deletes this chat and its whole board. Leave?" : stewardNote + 'Leave ' + group.name + '? You can only come back if someone invites you again.'))) return
     const { error } = await supabase.from('community_group_members').delete().eq('group_id', id).eq('user_id', user.id)
     if (error) { console.error('Failed to leave group:', error); tell('Could not leave the group. Try again.', { tone: 'error' }); return }
     navigate('/groups', { replace: true })
@@ -587,7 +587,7 @@ export default function GroupBoard() {
     let details = reportDetails.trim()
     const theirs = posts.filter(p => p.sender_id === reportFor.userId).slice(-10)
     if (includeEvidence && theirs.length > 0) {
-      details = (details ? details + '\n\n' : '') + '--- Their recent posts in the group, attached by the reporter ---\n' + theirs.map(p => p.text).join('\n')
+      details = (details ? details + '\n\n' : '') + '--- Their recent posts in the chat, attached by the reporter ---\n' + theirs.map(p => p.text).join('\n')
     }
     const { error } = await submitUserReport({ reporterId: user.id, reportedUserId: reportFor.userId, source: 'group', reason: reportReason, details,
       place: group?.organization_id ? { kind: 'org', id: group.organization_id } : group?.village_id ? { kind: 'village', id: group.village_id } : null })
@@ -603,7 +603,7 @@ export default function GroupBoard() {
       <div className="conversation-page group-page">
         <div className="groups-page">
           <h1>{campfires.has(group.id) ? <><Icon name="campfire" />{' '}</> : ''}{group.name}</h1>
-          <p className="groups-note">You're waiting to be let in. A member of the group will approve you soon. You'll see the board once they do.</p>
+          <p className="groups-note">You're waiting to be let in. A member of the chat will approve you soon. You'll see the board once they do.</p>
           <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Back to chats</button>
         </div>
       </div>
@@ -613,7 +613,7 @@ export default function GroupBoard() {
   if (!group) {
     return (
       <div className="conversation-page group-page">
-        <p className="groups-empty">This group isn't available. You may have left it, or it was removed.</p>
+        <p className="groups-empty">This chat isn't available. You may have left it, or it was removed.</p>
         <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Back to chats</button>
       </div>
     )
@@ -658,7 +658,7 @@ export default function GroupBoard() {
         <p className="group-lock-note"><Icon name="lock" /> Only members can read this board. Not even VWB can.</p>
         {group.steward_offer_to === user.id && (
           <div className="group-offer" role="status">
-            <p><strong>{nameOf(group.steward_id)}</strong> asked you to take over as this group's steward.</p>
+            <p><strong>{nameOf(group.steward_id)}</strong> asked you to take over as this chat's steward.</p>
             <div className="groups-actions">
               <button type="button" className="btn btn-outline" onClick={() => answerSteward(false)}>No thanks</button>
               <button type="button" className="btn btn-primary" onClick={() => answerSteward(true)}>Become steward</button>
@@ -745,12 +745,12 @@ export default function GroupBoard() {
 
             {panelTab === 'mine' && (
             <div role="tabpanel" id="panel-mine" aria-labelledby="tab-mine">
-            <h3 className="groups-section">Alerts from this group</h3>
-            <p className="groups-note">Only you see these. Nobody else in the group is told.</p>
+            <h3 className="groups-section">Alerts from this chat</h3>
+            <p className="groups-note">Only you see these. Nobody else in the chat is told.</p>
             <label htmlFor="group-alerts" className="groups-note">New post alerts</label>
             <select id="group-alerts" className="group-search" value={mySettings.alerts} onChange={e => saveSetting({ alerts: e.target.value })}>
               <option value="all">Tell me about new posts</option>
-              <option value="off">No alerts from this group</option>
+              <option value="off">No alerts from this chat</option>
             </select>
             <label htmlFor="group-mute" className="groups-note">Quiet for a while</label>
             <select id="group-mute" className="group-search" value={mutedNow ? (mySettings.muted_until >= '2099' ? 'forever' : 'timed') : 'off'} onChange={e => {
@@ -779,13 +779,13 @@ export default function GroupBoard() {
             {panelTab === 'group' && (
             <div role="tabpanel" id="panel-group" aria-labelledby="tab-group">
             {focusGone && <p className="groups-note" role="status">That request isn't open anymore. It was already answered or taken back.</p>}
-            <h3 className="groups-section">Group settings</h3>
+            <h3 className="groups-section">Chat settings</h3>
             <p className="groups-note">{group.steward_id
               ? (iAmSteward ? 'You are the steward, so you can change these right away. Everyone is told.' : 'Only the steward can change these. Everyone is told when they do.')
-              : 'These change the group for everyone. You ask, and a different member has to agree. Everyone is told.'}</p>
+              : 'These change the chat for everyone. You ask, and a different member has to agree. Everyone is told.'}</p>
             {(group.steward_id ? iAmSteward : true) && (
               <>
-                <label htmlFor="group-name-edit" className="groups-note">Group name</label>
+                <label htmlFor="group-name-edit" className="groups-note">Chat name</label>
                 <input id="group-name-edit" className="group-search" maxLength={80} value={nameDraft ?? group.name} onChange={e => setNameDraft(e.target.value)} />
                 {nameDraft !== null && nameDraft.trim() && nameDraft.trim() !== group.name && (
                   <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={async () => { await changeSetting('name', nameDraft.trim()); setNameDraft(null) }}>{group.steward_id ? 'Save name' : 'Ask to change name'}</button>
@@ -819,7 +819,7 @@ export default function GroupBoard() {
             {proposals.map(pr => {
               const who = members.find(m => m.userId === pr.proposed_by)?.name || 'A member'
               const mine = pr.proposed_by === user.id
-              const what = pr.kind === 'name' ? 'rename the group to "' + pr.value + '"'
+              const what = pr.kind === 'name' ? 'rename the chat to "' + pr.value + '"'
                 : pr.kind === 'description' ? 'change the description'
                 : (pr.value === '0' ? 'turn off disappearing posts' : 'make posts disappear after ' + (Number(pr.value) / 1440) + ' day' + (pr.value === '1440' ? '' : 's'))
               return (
@@ -921,7 +921,7 @@ export default function GroupBoard() {
                 <button type="button" className="btn btn-outline btn-full" onClick={() => setLink(true)}>Turn on join link</button>
               </>
             ) : (
-              <p className="groups-note">The join link is off. In this group, only the steward can turn it on. You can still invite people by name.</p>
+              <p className="groups-note">The join link is off. In this chat, only the steward can turn it on. You can still invite people by name.</p>
             )}
 
             </>)}
@@ -962,7 +962,7 @@ export default function GroupBoard() {
               )
             })}
 
-            <button type="button" className="btn btn-outline btn-full group-leave-btn" onClick={leave}>Leave group</button>
+            <button type="button" className="btn btn-outline btn-full group-leave-btn" onClick={leave}>Leave chat</button>
             </div>
             )}
           </div>
