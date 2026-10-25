@@ -48,6 +48,33 @@ export default function Layout() {
     window.scrollTo(0, 0)
   }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Top and bottom bars stay put on a zoomed-in phone (Oct 25, Jade). When someone pinch
+  // zooms the page, the browser lets fixed bars slide away with the page. This follows the
+  // part of the page you can see and keeps both bars on screen, at their normal size.
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const root = document.documentElement
+    let raf = 0
+    function follow() {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const s = vv.scale || 1
+        if (s <= 1.01) { root.classList.remove('vv-zoomed'); return }
+        const H = root.clientHeight
+        root.classList.add('vv-zoomed')
+        root.style.setProperty('--vv-x', vv.offsetLeft + 'px')
+        root.style.setProperty('--vv-top', vv.offsetTop + 'px')
+        root.style.setProperty('--vv-bottom', (vv.offsetTop + vv.height - H) + 'px')
+        root.style.setProperty('--vv-s', String(1 / s))
+      })
+    }
+    follow()
+    vv.addEventListener('resize', follow)
+    vv.addEventListener('scroll', follow)
+    return () => { cancelAnimationFrame(raf); vv.removeEventListener('resize', follow); vv.removeEventListener('scroll', follow); root.classList.remove('vv-zoomed') }
+  }, [])
+
   // The Admin page gets a wider column on a computer for its side menu.
   const isAdminPage = pathname === '/admin'
 

@@ -6225,3 +6225,9 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
   .header-nav .header-btn-label { font-size: 0.75rem; }
 }
 @media (max-width: 359px) { .header-nav .header-my { display: none; } }
+
+/* Bars stay on screen when a phone is pinch zoomed (Oct 25). Layout.jsx sets these while zoomed. */
+html.vv-zoomed .app-header { transform-origin: 0 0; transform: translate(var(--vv-x, 0px), var(--vv-top, 0px)) scale(var(--vv-s, 1)); }
+html.vv-zoomed .bottom-tabs { transform-origin: 0 100%; transform: translate(var(--vv-x, 0px), var(--vv-bottom, 0px)) scale(var(--vv-s, 1)); }
+/* A pinch that starts on a bar does not zoom the page. Taps and scrolling still work. */
+.app-header, .bottom-tabs { touch-action: pan-x pan-y; }
