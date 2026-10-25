@@ -15,6 +15,7 @@ const ICONS = {
   member_report: 'flag',
   task_issue: 'flag',
   resource_report: 'books',
+  resource_suggestion: 'books',
   event_close: 'calendar',
   ambassador_application: 'star',
   admin_application: 'shield',

@@ -6,6 +6,7 @@ import { resourceCats, currentCategory, CAT_ICON_FILES } from '../utils/resource
 import { searchResources } from '../utils/resourceSearch'
 import AddressLink from './AddressLink'
 import { useGoBack } from './BackLink'
+import SuggestResource from './SuggestResource'
 
 // The resource hub (Oct 25): the World tab's Resources button and Ask for help
 // both open here. Resources in your area first, then asking a neighbor. The database already limits Find Help to your area plus national
@@ -99,6 +100,11 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       {results.length > SHOW && (
         <Link to={cat && !query.trim() ? '/community/resources?cat=' + encodeURIComponent(cat) : '/community/resources'} style={{ ...link, color: 'var(--accent)', marginBottom: '0.5rem' }}>See all {results.length} in Find Help</Link>
       )}
+
+      <div className="sr-suggest">
+        <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-soft)' }}>Know a place that helps, or is a kind of help missing near you?</p>
+        <SuggestResource category={query.trim() ? '' : cat} />
+      </div>
 
       <div id="nr-ask" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
         <h2 style={{ margin: '0 0 0.3rem', fontSize: '1.15rem' }}>Didn't find what you need?</h2>
