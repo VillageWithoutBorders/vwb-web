@@ -175,7 +175,7 @@ const ALL_STEPS = [
     route: '/org-dashboard',
     icon: '\u{1F9F0}',
     title: 'Organizer tools',
-    body: 'You help run a group. Here you see who wants to join, your chats, events, and settings.',
+    body: 'You help run a group. Here you see who wants to join, your connections, events, and settings.',
   },
   {
     need: 'ambassador',
