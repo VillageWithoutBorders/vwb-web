@@ -77,6 +77,10 @@ export default function OrgPage() {
   const [privacyNote, setPrivacyNote] = useState('')
   const [savingEmail, setSavingEmail] = useState(false)
   const [emailNote, setEmailNote] = useState('')
+  const [savingInvisible, setSavingInvisible] = useState(false)
+  const [invisibleNote, setInvisibleNote] = useState('')
+  const [savingJoin, setSavingJoin] = useState(false)
+  const [joinNote, setJoinNote] = useState('')
 
   const mine = (organizations || []).find((o) => o.id === id)
   const isMember = !!mine
@@ -84,7 +88,7 @@ export default function OrgPage() {
   const isHead = !!mine && mine.role === 'admin'
 
   async function loadOrg() {
-    const cols = 'id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label, kind, response_status, head_title, organizer_title'
+    const cols = 'id, name, description, website_url, social_links, home_zip, approved, hide_from_public, show_contact_email, is_umbrella, affiliate_label, kind, response_status, head_title, organizer_title, invisible, join_open'
     let { data, error } = await supabase.from('organizations').select(cols + ', scene').eq('id', id).eq('approved', true).maybeSingle()
     // Before vwb-org-scene.sql is run, the page look column isn't there yet: load without it.
     if (error && (error.code === '42703' || /scene/.test(error.message || ''))) {
@@ -215,6 +219,7 @@ export default function OrgPage() {
     if (error) { console.error('Failed to ask to join:', error); setAskNote("We couldn't send that. Check your connection and try again."); return }
     const who = orgWords(org).leadsLower
     if (data === 'asked' || data === 'wait') { setAsked(true); setAskNote(data === 'asked' ? 'Sent. The ' + who + ' will see your name and can add you.' : 'You already asked this week. The ' + who + ' have your name.'); return }
+    if (data === 'closed') { setAskNote(org.name + ' is not taking asks to join right now. You can still reach them with the contact info on this page.'); return }
     if (data === 'member') { setAskNote('You are already part of this ' + (org?.kind === 'group' ? 'group' : 'organization') + '.'); return }
     setAskNote("We couldn't send that right now. Try again later.")
   }
@@ -318,7 +323,9 @@ export default function OrgPage() {
     navigate('/groups/' + gid, { state: { justStarted: true } })
   }
 
+  const joinOpen = org?.join_open !== false
   function askButton() {
+    if (!joinOpen) return <p className="vs-note">{org.name} is not taking asks to join right now.{contactEmail && org.show_contact_email ? ' You can email them instead.' : ''}</p>
     return <>
       <button type="button" className="btn btn-primary btn-full" onClick={askToJoin} disabled={asking || asked}>
         {asking ? 'Sending...' : asked ? 'You asked to join' : 'Ask to join ' + org.name}
@@ -393,7 +400,7 @@ export default function OrgPage() {
         return <>{title}
           <CalendarEventList events={events} emptyText={'No upcoming events from this ' + KIND + ' yet.'} />
           {canManage && <Link className="btn btn-outline btn-full" to="/calendar/new">Post an event</Link>}
-          {!org.hide_from_public && <CalendarSubscribe orgId={id} orgName={org.name} />}
+          {!org.hide_from_public && !org.invisible && <CalendarSubscribe orgId={id} orgName={org.name} />}
         </>
       case 'needs':
         return <>{title}
@@ -487,6 +494,27 @@ export default function OrgPage() {
     await loadOrg()
   }
 
+  async function toggleInvisible() {
+    const next = !org.invisible
+    if (next && !(await askConfirm('Make ' + org.name + ' invisible? Only your members will see it, its events and its resources. It leaves every list, search, map and Find Help. New people can only join by an invite link.', { yes: 'Make it invisible', no: 'Not now' }))) return
+    setSavingInvisible(true); setInvisibleNote('')
+    const { error } = await supabase.rpc('set_org_invisible', { p_org: id, p_on: next })
+    setSavingInvisible(false)
+    if (error) { console.error('Failed to change invisible setting:', error); setInvisibleNote("We couldn't save that. Try again."); return }
+    setInvisibleNote(next ? 'Saved. Only your members can see your ' + KIND + ' now.' : 'Saved. People can find your ' + KIND + ' again.')
+    await loadOrg()
+  }
+
+  async function toggleJoinOpen() {
+    const next = !joinOpen
+    setSavingJoin(true); setJoinNote('')
+    const { error } = await supabase.rpc('set_org_join_open', { p_org: id, p_on: next })
+    setSavingJoin(false)
+    if (error) { console.error('Failed to change ask to join setting:', error); setJoinNote("We couldn't save that. Try again."); return }
+    setJoinNote(next ? 'Saved. People can ask to join again.' : 'Saved. The Ask to join button is off. Invite links still work.')
+    await loadOrg()
+  }
+
   if (loading) return <div className="vs-page"><p className="vs-loading" role="status">Loading...</p></div>
   if (missing || !org) {
     return <div className="vs-page">
@@ -511,10 +539,17 @@ export default function OrgPage() {
           {isGroup ? <span className="vs-chip"><Icon name="tent" /> Emergency response group</span> : <span className="vs-chip"><Icon name="people" /> Organization</span>}
           {isGroup && org.response_status === 'approved' && <span className="vs-chip vs-chip-in"><Icon name="check" /> Approved to respond</span>}
           {place && <span className="vs-chip">Near {place}</span>}
-          {org.hide_from_public && <span className="vs-chip">Seen only by VWB members</span>}
+          {org.invisible
+            ? <span className="vs-chip"><Icon name="lock" /> Invisible: members only</span>
+            : org.hide_from_public && <span className="vs-chip">Seen only by VWB members</span>}
         </div>
         {org.description && <p className="vs-note" style={{ marginTop: 10 }}>{org.description}</p>}
       </div>
+
+      {/* Public profile (Oct 25): people who are not members see how to reach the
+          organization, what's coming up and what it shares first. Ask to join sits
+          near the bottom of the page. */}
+      {!isMember && <OrgPublicTop org={org} place={place} contactEmail={contactEmail} events={events} resources={resources} kind={KIND} onMore={(k) => openSheet({ k })} />}
 
       {/* Only members arrange their own view (Oct 22). Visitors see the default look. */}
       {user && isMember && !arrange && (
@@ -585,7 +620,6 @@ export default function OrgPage() {
       )}
 
       <div className="vs-body">
-        {!isMember && <div className="vs-help-one">{askButton()}</div>}
         {isMember && general && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/groups/' + general.id)}><Icon name="campfire" /> Open the general chat</button>}
         <h2 className="vs-pick-h">Or pick from the list</h2>
         <div className="vs-list">
@@ -601,6 +635,14 @@ export default function OrgPage() {
             )
           })}
         </div>
+
+        {!isMember && (
+          <section className="op-join" aria-labelledby="op-join-h">
+            <h2 id="op-join-h">Want to be part of {org.name}?</h2>
+            {joinOpen && <p className="vs-note">Ask to join, and the {W.leadsLower} will see your name. They decide who to add.</p>}
+            <div className="vs-help-one">{askButton()}</div>
+          </section>
+        )}
 
         {canManage && <>
           <OrgSceneEditor org={org} spots={SPOTS.filter((s) => !s.organizers)} isGroup={isGroup} onSaved={loadOrg} />
@@ -626,6 +668,7 @@ export default function OrgPage() {
           <section className="cal-box" aria-labelledby="org-privacy">
             <h3 id="org-privacy">Who can see your {KIND}</h3>
             <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
+              {org.invisible ? 'Your ' + KIND + ' is invisible right now, so only members see it. This choice comes back into play if you turn Invisible off. ' : ''}
               {org.hide_from_public
                 ? 'Only people with a VWB account can see your ' + KIND + ', its resources and its events. Nothing shows to the public or on the website.'
                 : 'Your ' + KIND + ', its resources and its public events can be seen by anyone, including on the website.'}
@@ -635,6 +678,34 @@ export default function OrgPage() {
             </button>
             {privacyNote && <p className="hub-note" role="status">{privacyNote}</p>}
           </section>
+
+          <section className="cal-box" aria-labelledby="org-invisible">
+            <h3 id="org-invisible">Invisible</h3>
+            <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
+              {org.invisible
+                ? 'Your ' + KIND + ' is invisible. Only your members can see it, its events and its resources. New people join by an invite link from Organizer tools.'
+                : 'Turn this on if your ' + KIND + ' needs to stay out of sight. Only members would see it. It would leave every list, search, map and Find Help.'}
+            </p>
+            <button type="button" className="btn btn-outline btn-full" onClick={toggleInvisible} disabled={savingInvisible} style={{ minHeight: '44px' }}>
+              {savingInvisible ? 'Saving...' : org.invisible ? 'Let people find my ' + KIND + ' again' : 'Make my ' + KIND + ' invisible'}
+            </button>
+            {invisibleNote && <p className="hub-note" role="status">{invisibleNote}</p>}
+          </section>
+
+          {!org.invisible && (
+            <section className="cal-box" aria-labelledby="org-join-open">
+              <h3 id="org-join-open">Ask to join</h3>
+              <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
+                {joinOpen
+                  ? 'People who are not members see an Ask to join button. You get an alert and decide who to add.'
+                  : 'The Ask to join button is off. People can still reach you with your contact info, and invite links still work.'}
+              </p>
+              <button type="button" className="btn btn-outline btn-full" onClick={toggleJoinOpen} disabled={savingJoin} style={{ minHeight: '44px' }}>
+                {savingJoin ? 'Saving...' : joinOpen ? 'Turn off Ask to join' : 'Turn on Ask to join'}
+              </button>
+              {joinNote && <p className="hub-note" role="status">{joinNote}</p>}
+            </section>
+          )}
 
           {contactEmail && (
             <section className="cal-box" aria-labelledby="org-email">
@@ -661,6 +732,56 @@ export default function OrgPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// The top of an organization's public profile, for people who are not members:
+// how to reach them, what's coming up, and what they share.
+function OrgPublicTop({ org, place, contactEmail, events, resources, kind, onMore }) {
+  const website = safeLink(org.website_url)
+  const social = safeLink(org.social_links?.primary)
+  const email = contactEmail && org.show_contact_email ? contactEmail : null
+  const soon = events.slice(0, 3)
+  const shared = resources.slice(0, 3)
+  return (
+    <div className="op-public">
+      <section className="op-card" aria-labelledby="op-contact-h">
+        <h2 id="op-contact-h">Get in touch</h2>
+        {place && <p className="vs-note">Serves the area near {place}</p>}
+        {(email || website || social)
+          ? <div className="op-contact">
+              {email && <a className="btn btn-outline btn-full" href={'mailto:' + email}>Email {org.name}</a>}
+              {website && <a className="btn btn-outline btn-full" href={website} target="_blank" rel="noopener noreferrer">Visit their website</a>}
+              {social && <a className="btn btn-outline btn-full" href={social} target="_blank" rel="noopener noreferrer">Follow them online</a>}
+            </div>
+          : <p className="vs-note">This {kind} has not shared contact info yet.</p>}
+      </section>
+
+      <section className="op-card" aria-labelledby="op-events-h">
+        <h2 id="op-events-h">Coming up</h2>
+        <CalendarEventList events={soon} emptyText={'No upcoming events from this ' + kind + ' yet.'} />
+        {events.length > soon.length && <button type="button" className="btn btn-outline btn-full" onClick={() => onMore('events')}>See all {events.length} events</button>}
+      </section>
+
+      <section className="op-card" aria-labelledby="op-res-h">
+        <h2 id="op-res-h">What they share</h2>
+        {shared.length === 0 && <p className="vs-note">Nothing shared yet.</p>}
+        {shared.map((r) => (
+          <div key={r.id} className="vs-item">
+            <b>{r.name}</b>
+            {r.description && <small>{r.description}</small>}
+            <small>{resourceCats(r).join(' \u00b7 ')}</small>
+            {(r.phone || r.url) && (
+              <span className="hub-resource-links">
+                {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')}>Call {r.phone}</a>}
+                {r.url && <a href={safeLink(r.url)} target="_blank" rel="noopener noreferrer">Website</a>}
+              </span>
+            )}
+          </div>
+        ))}
+        {resources.length > shared.length && <button type="button" className="btn btn-outline btn-full" onClick={() => onMore('share')}>See all {resources.length} resources</button>}
+      </section>
     </div>
   )
 }
