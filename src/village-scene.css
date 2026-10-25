@@ -205,21 +205,42 @@
    and staying in view while you scroll; the name, buttons, list and
    arrange tools on the right. Phones and tablets keep the single column. */
 @media (min-width: 1024px) {
+  /* Oct 25 (Jade): the map and its zoom and names buttons on the left; on the right,
+     the title first, then Arrange and Garden side by side, then the page itself. */
   .vs-page.vs-page-path {
-    --vs-map-w: min(600px, calc((100dvh - var(--header-height) - var(--tab-height) - 48px) * 0.6667));
+    --vs-map-w: min(560px, calc((100dvh - var(--header-height) - var(--tab-height) - 112px) * 0.6667));
     max-width: 1200px; padding: 16px 24px 32px; overflow-x: clip;
-    display: grid; grid-template-columns: var(--vs-map-w) minmax(340px, 1fr);
+    display: grid; grid-template-columns: calc(var(--vs-map-w) + 20px) minmax(160px, 1fr) minmax(160px, 1fr);
     /* Enough rows for every part on the right, then one stretchy row that soaks up the
-       map's height, so the right column stays packed at the top (Oct 25). */
-    grid-template-rows: repeat(16, auto) 1fr; column-gap: 32px; align-items: start;
+       map's height, so the right column stays packed at the top. */
+    grid-template-rows: repeat(16, auto) 1fr; column-gap: 12px; align-items: start;
   }
   .vs-page-path > .vs-scene-path {
     grid-column: 1; grid-row: 1 / -1; width: var(--vs-map-w); margin-top: 0;
     position: sticky; top: calc(var(--header-height) + 16px); border-radius: 16px; align-self: start;
   }
-  .vs-page-path > :not(.vs-scene-path):not(.vs-shade) { grid-column: 2; }
+  /* Zoom and names sit right under the map and stay with it. */
+  .vs-page-path > .vs-map-under {
+    grid-column: 1; grid-row: 1 / -1; width: var(--vs-map-w); align-self: start;
+    margin: calc(var(--vs-map-w) * 1.5 + 10px) 0 0;
+    position: sticky; top: calc(var(--header-height) + 26px + var(--vs-map-w) * 1.5);
+  }
+  /* :where keeps this rule weak, so the placements below win. */
+  :where(.vs-page-path) > :where(:not(.vs-scene-path):not(.vs-shade):not(.vs-map-under)) { grid-column: 2 / 4; order: 6; }
+  .vs-page-path > .vs-top { order: 0; }
+  .vs-page-path > .vs-title { order: 1; }
+  .vs-page-path > .vs-hint { order: 2; text-align: left; margin: 6px 0 0; }
+  .vs-page-path > .vs-ask { order: 3; margin-top: 12px; }
+  .vs-page-path > .vs-build-start, .vs-page-path > .vs-gifts-btn { order: 4; }
+  .vs-page-path > .vs-note { order: 5; }
+  .vs-page-path > .vs-arrange { order: 5; }
+  .vs-page-path > .vs-body { order: 6; }
+  /* Arrange beside Garden (cottage) or beside Set the default look (keepers). Alone, full width. */
+  .vs-page-path:has(> .vs-gifts-btn) > .vs-build-start,
+  .vs-page-path:has(> .vs-build-shared) > .vs-build-start:not(.vs-build-shared) { grid-column: 2; }
+  .vs-page-path > .vs-gifts-btn, .vs-page-path > .vs-build-shared { grid-column: 3; }
+  .vs-page-path > .vs-build-start, .vs-page-path > .vs-gifts-btn { align-self: stretch; margin: 14px 0 4px; width: 100%; box-sizing: border-box; }
   .vs-page-path > .vs-top, .vs-page-path > .vs-title, .vs-page-path > .vs-body, .vs-page-path > .vs-arrange { padding-left: 0; padding-right: 0; }
-  .vs-page-path > .vs-hint { text-align: left; margin-left: 0; }
   .vs-page-path .vs-title h1 { font-size: 2.2rem; }
   .vs-page-path .vs-list { grid-template-columns: 1fr 1fr; }
 }
@@ -341,7 +362,6 @@
 .vs-build-start-text { display: flex; flex-direction: column; min-width: 0; }
 .vs-build-start-text b { font-size: 1.05rem; line-height: 1.2; }
 .vs-build-start-text small { font-size: 0.9rem; line-height: 1.3; opacity: 0.85; }
-@media (min-width: 1024px) { .vs-page-path > .vs-build-start { width: 100%; margin: 12px 0 8px; } }
 @media (prefers-reduced-motion: reduce) { .vs-build-start:active { transform: none; } }
 
 .vs-tray-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 0 0 8px; padding: 4px; border-radius: 14px; background: var(--vs-bg); border: 1px solid var(--vs-line); }
@@ -428,7 +448,6 @@
 .vs-gift-row img { flex: none; width: 48px; height: 48px; object-fit: contain; }
 .vs-gift-row span { display: flex; flex-direction: column; }
 .vs-gift-next img { opacity: 0.4; filter: grayscale(0.7); }
-@media (min-width: 1024px) { .vs-page-path > .vs-gifts-btn { width: 100%; margin: 10px 0 0; } }
 @media (prefers-reduced-motion: reduce) { .vs-lantern-lit { animation: none; } }
 
 /* Simple view (Oct 22): village, cottage, organization and group pages show only their plain
