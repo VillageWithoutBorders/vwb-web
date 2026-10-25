@@ -765,8 +765,8 @@ export default function VillageScene() {
         {/* Your cottage: Today (what needs you, shortcuts, coming up) sits right under the map (Oct 22). */}
         {cottage && <section id="today" className="vs-panel vs-today" aria-label="Today"><Dashboard embedded /></section>}
         {!cottage && <div className="vs-help">
-          <button type="button" className="vs-big vs-ask" onClick={() => navigate('/ask')}>Ask for help</button>
-          <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>
+          <button type="button" className="vs-big vs-find" onClick={() => navigate('/ask')}>Find Help</button>
+          <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>Offer Help</button>
         </div>}
         <h2 className="vs-pick-h">Or pick from the list</h2>
         <div className="vs-list">

@@ -45,7 +45,7 @@ export default function SimpleOffer() {
         {large && <p className="so-text">Your phone uses large text, so Simple view may feel easier.</p>}
         <button type="button" className="so-choice so-choice-simple" disabled={busy} onClick={() => pick(true)}>
           <b>Simple</b>
-          <span>Bigger words and buttons. Just the main things: ask for help, help others, and messages.</span>
+          <span>Bigger words and buttons. Just the main things: Find Help, Offer Help, and Messages.</span>
         </button>
         <button type="button" className="so-choice" disabled={busy} onClick={() => pick(false)}>
           <b>Everything</b>

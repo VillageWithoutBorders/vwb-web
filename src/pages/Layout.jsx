@@ -5,16 +5,21 @@ import { useAuth } from '../context/AuthContext'
 import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView'
 import SimpleOffer from '../components/SimpleOffer'
 import BottomTabs from '../components/BottomTabs'
-import MeButton from '../components/MeButton'
+import MeButton, { MyCornerButton } from '../components/MeButton'
 import AlertsMenu from '../components/AlertsMenu'
-import AdminShield from '../components/AdminShield'
+import MyToolsButton from '../components/MyToolsButton'
+import { useMyTools } from '../hooks/useMyTools'
+import { useAdminInbox } from '../hooks/useAdminInbox'
 import AppTour from '../components/AppTour'
 import KeyRestorePrompt from '../components/KeyRestorePrompt'
 import { PageBackContext, FrameBack } from '../components/BackLink'
 
 export default function Layout() {
   const { pathname } = useLocation()
-  const { profile, isAdmin } = useAuth()
+  const { profile } = useAuth()
+  // Your role tools and the Admin inbox count, for My Tools in the top bar.
+  const tools = useMyTools()
+  const { total: adminWaiting, urgent: adminUrgent } = useAdminInbox()
   const simple = useSimpleView()
   // The account says which view to use. Follow it on this phone too.
   useEffect(() => {
@@ -49,29 +54,25 @@ export default function Layout() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        {/* Oct 22 (Jade): the top bar is places, the bottom bar is actions.
-            Left to right: World, Village, Cottage (your picture), Calendar, then Alerts. */}
-        <nav className={'app-header-inner header-nav' + (isAdmin ? ' header-nav-admin' : '')} aria-label="Top menu">
+        {/* Oct 25 (Jade): top bar, left to right: My World, My Village, My Cottage,
+            My Corner (profile, account, settings), and My Tools (alerts and role tools).
+            The bottom bar is actions: Find Help, Offer Help, Calendar, Messages. */}
+        <nav className="app-header-inner header-nav" aria-label="Top menu">
           {!simple && (<>
-          <Link to="/world" className={'header-btn' + (pathname === '/world' ? ' on' : '')} aria-current={pathname === '/world' ? 'page' : undefined} aria-label="World: your networks on the globe" data-tour="top-home">
+          <Link to="/world" className={'header-btn' + (pathname === '/world' ? ' on' : '')} aria-current={pathname === '/world' ? 'page' : undefined} aria-label="My World: your networks on the globe" data-tour="top-home">
             <img className="header-btn-logo" src="/images/vwb_header-v2.png" alt="" width="26" height="26" />
-            <span className="header-btn-label" aria-hidden="true">World</span>
+            <span className="header-btn-label" aria-hidden="true"><span className="header-my">My </span>World</span>
           </Link>
-          <Link to="/village" className={'header-btn' + (villageHere ? ' on' : '')} aria-current={villageHere ? 'page' : undefined} aria-label="Village: your home village" data-tour="top-village">
+          <Link to="/village" className={'header-btn' + (villageHere ? ' on' : '')} aria-current={villageHere ? 'page' : undefined} aria-label="My Village: your home village" data-tour="top-village">
             <Icon name="houses" size={26} className="header-btn-pic" />
-            <span className="header-btn-label" aria-hidden="true">Village</span>
+            <span className="header-btn-label" aria-hidden="true"><span className="header-my">My </span>Village</span>
           </Link>
           <MeButton />
-          <Link to="/calendar" className={'header-btn' + (pathname.startsWith('/calendar') ? ' on' : '')} aria-current={pathname === '/calendar' ? 'page' : undefined} aria-label="Calendar" data-tour="top-calendar">
-            <Icon name="calendar" size={26} className="header-btn-pic" />
-            <span className="header-btn-label" aria-hidden="true">Calendar</span>
-          </Link>
+          <MyCornerButton />
+          <MyToolsButton tools={tools} adminWaiting={adminWaiting} adminUrgent={adminUrgent} />
           </>)}
-          {/* Admins and founders: the shield opens the shared Admin inbox. */}
-          {/* On phones the shield moves to My tools in the bottom bar, so the top bar stays calm (Oct 22). */}
-          {isAdmin && <span className="header-admin-wide"><AdminShield /></span>}
-          {/* Tap for your 5 newest alerts, with "See all alerts" at the bottom. */}
-          <AlertsMenu />
+          {/* Simple view keeps its two: Alerts and your corner. */}
+          {simple && <AlertsMenu />}
           {simple && <MeButton />}
         </nav>
       </header>

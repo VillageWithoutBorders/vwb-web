@@ -52,7 +52,7 @@ export default function Help() {
           <div className="help-step">
             <span className="help-step-num">1</span>
             <div>
-              <strong>Ask for help</strong>
+              <strong>Find Help</strong>
               <p>Post what you need. Only your name and general area are shared.</p>
             </div>
           </div>

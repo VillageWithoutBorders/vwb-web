@@ -331,7 +331,7 @@ export default function Feed() {
             <div className="feed-sticky">
                 <h1>SkillShare</h1>
                 <div className="help-cta">
-                    <button type="button" className="btn btn-primary help-cta-btn" onClick={() => navigate('/ask')}>Ask for help</button>
+                    <button type="button" className="btn btn-primary help-cta-btn" onClick={() => navigate('/ask')}>Find Help</button>
                     <button type="button" className="btn btn-outline help-cta-btn" onClick={() => navigate('/post-offer')}>Offer something</button>
                 </div>
                 <HelpSwitch />
@@ -467,7 +467,7 @@ export default function Feed() {
                                         <div className="feed-card-actions">
                                             {req.requester_id !== user.id && !isPending && !isFull && (
                                                 <button className="btn btn-primary btn-sm" onClick={(e) => handleOfferHelp(e, req)}>
-                                                    I can help
+                                                    Offer Help
                                                 </button>
                                             )}
                                             {req.requester_id !== user.id && isPending && (
@@ -580,7 +580,7 @@ export default function Feed() {
                 )
             )}
 
-            {/* No floating button here: Ask for help and Offer something sit at the top of this page. */}
+            {/* No floating button here: Find Help and Offer something sit at the top of this page. */}
             </div>
         </div>
     )
