@@ -568,3 +568,42 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 @media (min-width: 768px) {
   .op-public { grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); align-items: start; }
 }
+
+/* ---------- Phones and tablets (Oct 25, Jade): the map fills the screen ----------
+   The map frame is as tall as the space between the top bar and the bottom bar
+   (less the Back button and the "where you are" line above it). The painted art
+   inside covers the frame, centered, so there are no empty bands; a little of the
+   sides may be cut off on tall phones. Zoom in to see the edges. */
+@media (max-width: 1023px) {
+  .app-main-world { --vs-above: 8px; }
+  .app-main-world:has(> .app-back-row) { --vs-above: 60px; }
+  .app-main-world:has(.vs-page-path > .vs-top) { --vs-above: 66px; }
+  .app-main-world:has(> .app-back-row):has(.vs-page-path > .vs-top) { --vs-above: 118px; }
+  .vs-page-path > .vs-scene-path {
+    --vs-fill-h: max(320px, calc(100dvh - var(--header-height) - var(--tab-height) - env(safe-area-inset-bottom, 0px) - var(--vs-above, 60px)));
+    aspect-ratio: auto; width: 100%; height: var(--vs-fill-h); container-type: size;
+  }
+  .vs-page-path > .vs-scene-path > .vs-zoom {
+    --vs-lw: max(100cqw, 66.667cqh);
+    inset: auto; width: var(--vs-lw); height: calc(var(--vs-lw) * 1.5);
+    left: calc((100cqw - var(--vs-lw)) / 2); top: calc((100cqh - var(--vs-lw) * 1.5) / 2);
+  }
+}
+
+/* "More below" cue (Oct 25): sits just above the bottom bar while the map fills the
+   screen, and fades away once you scroll. Tap it to go down to the rest of the page. */
+.vs-scroll-cue {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 40;
+  bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px) + 12px);
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px;
+  border-radius: 22px; border: 2px solid var(--vs-gold); background: rgba(20, 44, 43, 0.92); color: #fff;
+  font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: opacity 0.25s ease;
+}
+.vs-scroll-cue-arrow { display: inline-block; font-size: 1.2rem; line-height: 1; animation: vs-cue-bob 1.6s ease-in-out infinite; }
+@keyframes vs-cue-bob { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
+.vs-scroll-cue:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 3px; }
+.vs-scroll-cue-gone { opacity: 0; pointer-events: none; }
+@media (min-width: 1024px) { .vs-scroll-cue { display: none; } }
+@media (prefers-reduced-motion: reduce) { .vs-scroll-cue { transition: none; } .vs-scroll-cue-arrow { animation: none; } }
+html.simple .vs-scroll-cue { display: none; }

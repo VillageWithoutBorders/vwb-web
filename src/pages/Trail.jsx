@@ -60,7 +60,7 @@ export default function Trail() {
 
   return (
     <div className="cal-page tr-page">
-      <BackLink fallback="/me" fallbackLabel="Your corner" />
+      <BackLink fallback="/me" fallbackLabel="My Corner" />
       <h1 className="tr-title">My trail</h1>
       <p className="cal-sub">The path you have walked in Village Without Borders. Only you can see this.</p>
 
