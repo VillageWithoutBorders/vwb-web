@@ -6197,3 +6197,12 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 .admin-inbox-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 0 4px; }
 .admin-inbox-actions .btn { flex: 1 1 9rem; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .admin-inbox-row.later { opacity: 0.85; }
+
+/* Today: add your zip code to find your village (Oct 25). */
+.zip-card { border: 2px solid var(--accent); border-radius: 14px; padding: 14px; margin: 0 0 1rem; background: var(--surface); }
+.zip-card h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 1.2rem; }
+.zip-card p { margin: 0 0 10px; }
+.zip-card-form label { display: block; font-weight: 600; margin-bottom: 4px; }
+.zip-card-row { display: flex; gap: 8px; }
+.zip-card-row input { flex: 1; min-width: 0; min-height: 48px; font-size: 16px; padding: 0 12px; border-radius: 10px; border: 2px solid var(--border-strong, var(--border)); background: var(--white); color: var(--text); }
+.zip-card-row .btn { min-height: 48px; min-width: 88px; }
