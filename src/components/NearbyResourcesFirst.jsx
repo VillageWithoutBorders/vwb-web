@@ -7,8 +7,8 @@ import { searchResources } from '../utils/resourceSearch'
 import AddressLink from './AddressLink'
 import { useGoBack } from './BackLink'
 
-// First screen of Ask for help: look at resources near you before asking a
-// neighbor. The database already limits Find Help to your area plus national
+// The resource hub (Oct 25): the World tab's Resources button and Ask for help
+// both open here. Resources in your area first, then asking a neighbor. The database already limits Find Help to your area plus national
 // resources, so whatever comes back here is local or national.
 // The 12 kinds of help, most asked first (211 data, Oct 2026).
 const QUICK_PICKS = ['Food', 'Housing', 'Bills and Utilities', 'Rides', 'Health', 'Home Repair', 'Legal and Tenant Help',
@@ -56,12 +56,13 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
     <div className="ask-page">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
-        <h1 style={{ margin: 0 }}>Ask for help</h1>
+        <h1 style={{ margin: 0 }}>Resources near you</h1>
       </div>
-      <p className="ask-intro">Start here. Many needs can be met today by a pantry, a hotline, or a local group. Pick what you need and see what is near you.</p>
+      <p className="ask-intro">This is your resource hub. It shows what is available in your area, like food pantries, help with bills, rides, and hotlines. Search or pick what you need to see what is near you.</p>
+      <p className="ask-intro">Can't find it here? You can ask a neighbor for help at the bottom of this page.</p>
       <p style={{ margin: '0 0 0.75rem', fontSize: '0.95rem', color: 'var(--gold)' }}>In danger right now? Call 911.</p>
 
-      <a href="#nr-ask" className="nr-skip">Skip to asking a neighbor</a>
+      <a href="#nr-ask" className="nr-skip">Skip to ask a neighbor</a>
 
       <label htmlFor="nr-q" style={{ display: 'block', fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>Search by word</label>
       <input id="nr-q" type="search" inputMode="search" enterKeyHint="search" autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="rent, diapers, ride, mold" style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.75rem', borderRadius: '10px', border: '2px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', fontFamily: 'inherit' }} />
@@ -78,7 +79,7 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
 
       {!loc && <p style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>Add your zip code in your profile to see distances and ones near you. Until then you see national resources.</p>}
       {rows === null && <p>Loading...</p>}
-      {rows && picked && results.length === 0 && <p style={{ color: 'var(--text-soft)' }}>Nothing found. A neighbor may be able to help. Tap the button below.</p>}
+      {rows && picked && results.length === 0 && <p style={{ color: 'var(--text-soft)' }}>Nothing found nearby. A neighbor may be able to help. Ask at the bottom of this page.</p>}
       {results.length > 0 && (
         <ul style={{ listStyle: 'none', margin: '0 0 0.5rem', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {results.slice(0, SHOW).map(({ r, d }) => (
@@ -100,7 +101,8 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       )}
 
       <div id="nr-ask" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
-        <p style={{ margin: '0 0 0.6rem', fontSize: '0.95rem', color: 'var(--text-soft)' }}>Not what you need, or want a neighbor too?</p>
+        <h2 style={{ margin: '0 0 0.3rem', fontSize: '1.15rem' }}>Didn't find what you need?</h2>
+        <p style={{ margin: '0 0 0.6rem', fontSize: '0.95rem', color: 'var(--text-soft)' }}>Ask your neighbors. Someone nearby may have the skill, the tool, or the time to help.</p>
         <button type="button" onClick={() => onContinue(query.trim() ? '' : currentCategory(cat))} style={{ width: '100%', minHeight: '52px', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '1.05rem', cursor: 'pointer' }}>Ask a neighbor for help</button>
         <button type="button" onClick={() => navigate(-1)} style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontSize: '1rem', cursor: 'pointer' }}>I found what I need</button>
       </div>

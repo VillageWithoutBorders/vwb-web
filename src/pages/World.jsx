@@ -262,8 +262,10 @@ export default function World() {
 
       <div className="wd-switch" role="group" aria-label="Which network">
         <button type="button" aria-pressed={net === 'villages'} onClick={() => setNet('villages')}><span aria-hidden="true"><Icon name="houses" /></span> Villages</button>
-        <button type="button" aria-pressed={net === 'orgs'} onClick={() => setNet('orgs')}><span aria-hidden="true"><Icon name="people" /></span> Organizations</button>
-        <button type="button" aria-pressed={net === 'groups'} onClick={() => setNet('groups')}><span aria-hidden="true"><Icon name="tent" /></span> Groups</button>
+        <button type="button" aria-pressed={net === 'orgs' || net === 'groups'} onClick={() => setNet('orgs')}><span aria-hidden="true"><Icon name="people" /></span> Organizations</button>
+        {/* Oct 25: the third button opens the resource hub (the same page as Ask for help).
+            Emergency response groups are now reached from the Organizations view. */}
+        <button type="button" onClick={() => navigate('/ask')}><span aria-hidden="true"><Icon name="heart-hands" /></span> Resources</button>
       </div>
 
       <div className="wd-globe-wrap">
@@ -352,6 +354,8 @@ export default function World() {
       <div className="wd-actions">
         {net === 'villages' && !hasMine && villages !== null && <button type="button" className="btn btn-primary btn-full wd-start" onClick={() => navigate('/find-village')}>Find my village</button>}
         {net === 'groups' && !myGroups.length && <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/start-group')}>Start a group</button>}
+        {net === 'orgs' && <button type="button" className="btn btn-outline btn-full" onClick={() => setNet('groups')}><Icon name="tent" /> See emergency response groups</button>}
+        {net === 'groups' && <button type="button" className="btn btn-outline btn-full" onClick={() => setNet('orgs')}><Icon name="people" /> Back to organizations</button>}
         <button type="button" className="btn btn-outline btn-full" onClick={seeAll}>{net === 'villages' ? 'Find a village by zip code or town' : net === 'groups' ? 'See every group' : 'See every organization'}</button>
       </div>
 
