@@ -547,27 +547,36 @@ export default function OrgPage() {
           near the bottom of the page. */}
       {!isMember && <OrgPublicTop org={org} place={place} contactEmail={contactEmail} events={events} resources={resources} kind={KIND} onMore={(k) => openSheet({ k })} />}
 
-      {/* Only members arrange their own view (Oct 22). Visitors see the default look. */}
-      {user && isMember && !arrange && (
-        <button type="button" className="vs-build-start" onClick={() => startArrange('me')}>
-          <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
-          <span className="vs-build-start-text">
-            <b>Arrange my view of {org.name}</b>
-            <small>Only you see your view. Move places, add trees, draw roads.</small>
-          </span>
-        </button>
-      )}
-      {user && !arrange && canManage && (
-        <button type="button" className="vs-build-start vs-build-shared" onClick={() => startArrange('everyone')}>
-          <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
-          <span className="vs-build-start-text">
-            <b>Set the default look for {org.name}</b>
-            <small>Everyone starts with this. Anyone who arranged their own view keeps it.</small>
-          </span>
-        </button>
-      )}
-      {!arrange && canManage && hasOwn && (
-        <p className="vs-note">You are seeing your own view, so a new default will not show for you. To see the default, open Arrange my view and tap Back to the default look.</p>
+      {/* Oct 25 (Jade): Customize drawer: names, zoom, and arranging, folded away. */}
+      {!arrange && (
+        <details className="vs-customize">
+          <summary><span className="vs-customize-ic" aria-hidden="true"><ToolIcon name="move" /></span><span className="vs-customize-word">Customize</span><span className="vs-customize-chev" aria-hidden="true">&#9662;</span></summary>
+          <div className="vs-customize-body">
+            <NamesToggle b={b} onChange={user ? saveLabels : null} />
+            {/* Only members arrange their own view (Oct 22). Visitors see the default look. */}
+            {user && isMember && !arrange && (
+              <button type="button" className="vs-build-start" onClick={() => startArrange('me')}>
+                <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
+                <span className="vs-build-start-text">
+                  <b>Arrange my view of {org.name}</b>
+                  <small>Only you see your view. Move places, add trees, draw roads.</small>
+                </span>
+              </button>
+            )}
+            {user && !arrange && canManage && (
+              <button type="button" className="vs-build-start vs-build-shared" onClick={() => startArrange('everyone')}>
+                <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
+                <span className="vs-build-start-text">
+                  <b>Set the default look for {org.name}</b>
+                  <small>Everyone starts with this. Anyone who arranged their own view keeps it.</small>
+                </span>
+              </button>
+            )}
+            {!arrange && canManage && hasOwn && (
+              <p className="vs-note">You are seeing your own view, so a new default will not show for you. To see the default, open Arrange my view and tap Back to the default look.</p>
+            )}
+          </div>
+        </details>
       )}
 
       <div {...sceneProps(b, 'vs-scene vs-scene-path', user && isMember ? holdToArrange : null)}>
@@ -593,7 +602,7 @@ export default function OrgPage() {
        </div>
         <div className="vs-fade" />
       </div>
-      <NamesToggle b={b} onChange={user ? saveLabels : null} />
+      {arrange && <NamesToggle b={b} onChange={user ? saveLabels : null} />}
       <ScrollCue b={b} />
 
       <p className="vs-hint">{arrange ? (arrangeFor === 'everyone' ? 'You are setting the default look for ' + org.name + '. Personal views stay as they are. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : 'Tap anything to go there.'}</p>

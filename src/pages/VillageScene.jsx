@@ -665,26 +665,35 @@ export default function VillageScene() {
         </Link>
       )}
 
+      {/* Oct 25 (Jade): the edit choices fold into one Customize drawer that opens downward. */}
       {!arrange && (
-        <button type="button" data-tour="village-arrange" className="vs-build-start" onClick={() => startArrange('me')}>
-          <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
-          <span className="vs-build-start-text">
-            <b>{cottage ? 'Arrange and build my cottage' : 'Arrange my view of ' + village.name}</b>
-            <small>{cottage ? 'Move places, add trees and bridges, draw roads and streams' : 'Only you see your view. Move places, add trees, draw roads.'}</small>
-          </span>
-        </button>
-      )}
-      {!arrange && !cottage && keepers && keepers.i_am_keeper && (
-        <button type="button" className="vs-build-start vs-build-shared" onClick={() => startArrange('everyone')}>
-          <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
-          <span className="vs-build-start-text">
-            <b>Set the default look for {village.name}</b>
-            <small>New neighbors start with this. Anyone who arranged their own view keeps it.</small>
-          </span>
-        </button>
-      )}
-      {!arrange && !cottage && keepers && keepers.i_am_keeper && mapLoaded > 0 && mapLayouts.current.own && (
-        <p className="vs-note">You are seeing your own view, so a new default will not show for you. To see the default, open Arrange my view and tap Back to the default look.</p>
+        <details className="vs-customize">
+          <summary data-tour="village-arrange"><span className="vs-customize-ic" aria-hidden="true"><ToolIcon name="move" /></span><span className="vs-customize-word">Customize</span><span className="vs-customize-chev" aria-hidden="true">&#9662;</span></summary>
+          <div className="vs-customize-body">
+            <NamesToggle b={b} onChange={saveLabels} />
+            {!arrange && (
+              <button type="button" className="vs-build-start" onClick={() => startArrange('me')}>
+                <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
+                <span className="vs-build-start-text">
+                  <b>{cottage ? 'Arrange and build my cottage' : 'Arrange my view of ' + village.name}</b>
+                  <small>{cottage ? 'Move places, add trees and bridges, draw roads and streams' : 'Only you see your view. Move places, add trees, draw roads.'}</small>
+                </span>
+              </button>
+            )}
+            {!arrange && !cottage && keepers && keepers.i_am_keeper && (
+              <button type="button" className="vs-build-start vs-build-shared" onClick={() => startArrange('everyone')}>
+                <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
+                <span className="vs-build-start-text">
+                  <b>Set the default look for {village.name}</b>
+                  <small>New neighbors start with this. Anyone who arranged their own view keeps it.</small>
+                </span>
+              </button>
+            )}
+            {!arrange && !cottage && keepers && keepers.i_am_keeper && mapLoaded > 0 && mapLayouts.current.own && (
+              <p className="vs-note">You are seeing your own view, so a new default will not show for you. To see the default, open Arrange my view and tap Back to the default look.</p>
+            )}
+          </div>
+        </details>
       )}
 
       <div {...sceneProps(b, 'vs-scene vs-scene-path', holdToArrange)}>
@@ -739,7 +748,7 @@ export default function VillageScene() {
       {/* Name tags: on phones they show; with a mouse they show when you point at
           a place. This button turns them on or off for you, on every map.
           It sits under the map so it never covers a place. */}
-      <NamesToggle b={b} onChange={saveLabels} />
+      {arrange && <NamesToggle b={b} onChange={saveLabels} />}
       <ScrollCue b={b} />
 
       {cottage && !arrange && (
