@@ -61,7 +61,7 @@ const ALL_STEPS = [
     target: '.wd-switch',
     icon: '\u{1F30D}',
     title: 'World',
-    body: 'World opens the globe. Gold circles are your villages. Use these tabs to see your Villages, Organizations, or Groups.',
+    body: 'World opens the globe. Gold circles are your villages. Use these buttons to see your Villages and Groups, or open Resources.',
   },
   {
     need: 'noVillage',
@@ -101,7 +101,7 @@ const ALL_STEPS = [
     target: '[data-tour="village-arrange"]',
     icon: '\u{1F333}',
     title: 'Your cottage',
-    body: 'Village, at the top, opens your home village. Your cottage is your house there: your own map with your chats, organizations, and more. Tap Arrange and build to move things, add trees and bridges, and draw roads. Only you see it.',
+    body: 'Village, at the top, opens your home village. Your cottage is your house there: your own map with your chats, groups, and more. Tap Arrange and build to move things, add trees and bridges, and draw roads. Only you see it.',
   },
   {
     route: '/cottage',
@@ -175,7 +175,7 @@ const ALL_STEPS = [
     route: '/org-dashboard',
     icon: '\u{1F9F0}',
     title: 'Organizer tools',
-    body: 'You help run an organization. Here you see who wants to join, your chats, events, and settings.',
+    body: 'You help run a group. Here you see who wants to join, your chats, events, and settings.',
   },
   {
     need: 'ambassador',
@@ -183,14 +183,14 @@ const ALL_STEPS = [
     target: '.amb-title',
     icon: '\u2B50',
     title: 'Ambassador tools',
-    body: 'Emergencies to check, groups asking to respond, and needs near you, all in one place.',
+    body: 'Emergencies to check, crews asking to respond, and needs near you, all in one place.',
   },
   {
     route: '/',
     target: '[data-tour="role-tab"]',
     icon: '\u{1F9F0}',
     title: 'Your last button',
-    body: 'This button changes with your role. Most people see Emergency. If you keep a village, run an organization, or are an Ambassador, your tools are here.',
+    body: 'This button changes with your role. Most people see Emergency. If you keep a village, run a group, or are an Ambassador, your tools are here.',
   },
   {
     route: '/cottage',

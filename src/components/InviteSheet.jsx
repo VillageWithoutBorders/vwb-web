@@ -8,7 +8,7 @@ import Icon from './Icon'
 const SECTIONS = [
   { kind: 'chat', title: 'Cottage Chats', icon: 'cottage' },
   { kind: 'village', title: 'Villages', icon: 'houses' },
-  { kind: 'organization', title: 'Organizations', icon: 'people' },
+  { kind: 'organization', title: 'Groups', icon: 'people' },
   { kind: 'group', title: 'Groups', icon: 'tent' },
 ]
 
@@ -82,7 +82,7 @@ export default function InviteSheet({ person, onClose }) {
         {places === null && <p className="inv-note" role="status">Loading...</p>}
         {failed && <p className="inv-note" role="alert">We couldn't load your places. Try again.</p>}
         {places && !failed && !any && (
-          <p className="inv-note">There's nowhere you can invite them yet. You can invite people to your Cottage Chats, your villages, and organizations or groups you run.</p>
+          <p className="inv-note">There's nowhere you can invite them yet. You can invite people to your Cottage Chats, your villages, and groups or crews you run.</p>
         )}
 
         {any && SECTIONS.map((s) => {

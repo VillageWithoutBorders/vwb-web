@@ -18,7 +18,7 @@ function stop(r) {
     case 'arrived': return { icon: 'sprout', text: r.label }
     case 'village': return { icon: 'houses', text: 'You joined ' + r.label }
     case 'org': return { icon: 'people', text: 'You joined ' + r.label }
-    case 'group': return { icon: 'tent', text: 'You joined the group ' + r.label }
+    case 'group': return { icon: 'tent', text: 'You joined the emergency crew ' + r.label }
     case 'role': return { icon: 'key', text: 'You became ' + (ROLE_WORD[r.extra] || 'a leader') + ' of ' + r.label }
     case 'met_first': return { icon: 'handshake', text: r.label }
     case 'vouch_first': return { icon: 'star', text: r.label }
@@ -52,7 +52,7 @@ export default function Trail() {
 
   const facts = totals ? [
     { n: totals.villages, one: 'village', many: 'villages' },
-    { n: totals.places, one: 'organization or group', many: 'organizations and groups' },
+    { n: totals.places, one: 'group or crew', many: 'groups and crews' },
     { n: totals.met, one: 'neighbor met in person', many: 'neighbors met in person' },
     { n: totals.tasks, one: 'task finished together', many: 'tasks finished together' },
     { n: totals.vouches, one: 'vouch for you', many: 'vouches for you' },

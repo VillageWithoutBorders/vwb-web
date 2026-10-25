@@ -68,7 +68,7 @@ export default function NearbyOrganizers({ origin, miles }) {
       {loading && <p className="cal-empty">Loading groups...</p>}
       {!loading && failed && <p className="cal-error">We couldn't load local groups right now. Try again in a bit.</p>}
       {!loading && !failed && orgs.length === 0 && (
-        <p className="hub-empty">No groups have posted near here yet. Know one that should be here? Invite them to bring their organization.</p>
+        <p className="hub-empty">No groups have posted near here yet. Know one that should be here? Invite them to bring their group.</p>
       )}
       {!loading && !failed && shown.map((org) => <OrgCard key={org.id} org={org} />)}
       {!loading && orgs.length > ORG_COUNT && (

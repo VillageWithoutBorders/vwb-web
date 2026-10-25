@@ -148,7 +148,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
       </div>
 
       {show === 'campfires' ? (
-        <p className="groups-sub">Campfires start in a village or an organization. Open your village map and tap Campfires.</p>
+        <p className="groups-sub">Campfires start in a village or a group. Open your village map and tap Campfires.</p>
       ) : !showStart ? (
         established === false ? (
           <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE} A member can still invite you to their group.</p>
@@ -168,7 +168,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
           </div>
           {orgsIHead.length > 0 && (
             <div className="form-field">
-              <label htmlFor="group-org">Is this a Campfire for an organization you lead or organize for?</label>
+              <label htmlFor="group-org">Is this a Campfire for a group you lead or organize for?</label>
               <select id="group-org" value={forOrg} onChange={e => setForOrg(e.target.value)}>
                 <option value="">No, it's a Cottage Chat with people I choose</option>
                 {orgsIHead.map(o => <option key={o.id} value={o.id}>Yes, a Campfire for {o.name}</option>)}

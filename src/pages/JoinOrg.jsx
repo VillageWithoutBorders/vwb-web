@@ -59,7 +59,7 @@ export default function JoinOrg() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    if (!name.trim()) { setError('Organization name is required.'); return }
+    if (!name.trim()) { setError('Group name is required.'); return }
 
     if (!user) {
       stashAndGo('/login?mode=signup')
@@ -87,7 +87,7 @@ export default function JoinOrg() {
 
   function handleSignInInstead(e) {
     e.preventDefault()
-    if (!name.trim()) { setError('Organization name is required.'); return }
+    if (!name.trim()) { setError('Group name is required.'); return }
     stashAndGo('/login')
   }
 
@@ -98,7 +98,7 @@ export default function JoinOrg() {
       <div className="login-card">
         <div className="login-header">
           <h1>Village Without Borders</h1>
-          <p className="login-subtitle">Add your organization</p>
+          <p className="login-subtitle">Add your group</p>
         </div>
 
         {notFound && (
@@ -133,11 +133,11 @@ export default function JoinOrg() {
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem', fontStyle: 'italic' }}>&ldquo;{invite.note}&rdquo;</p>
             )}
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 1rem' }}>
-              Tell us about your organization.{!user ? " You'll make (or sign in to) a Village Without Borders account next." : ''} A founder or admin reviews every new organization before it shows up for neighbors, same as usual.
+              Tell us about your group.{!user ? " You'll make (or sign in to) a Village Without Borders account next." : ''} A founder or admin reviews every new group before it shows up for neighbors, same as usual.
             </p>
 
             <div className="form-field">
-              <label htmlFor="org-name">Organization name *</label>
+              <label htmlFor="org-name">Group name *</label>
               <input id="org-name" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             <div className="form-field">
@@ -160,7 +160,7 @@ export default function JoinOrg() {
             {error && <p className="form-error" role="alert">{error}</p>}
 
             <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
-              {submitting ? 'Saving...' : user ? 'Add our organization' : 'Continue to sign up'}
+              {submitting ? 'Saving...' : user ? 'Add our group' : 'Continue to sign up'}
             </button>
 
             {!user && (

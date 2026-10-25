@@ -451,7 +451,7 @@ export default function AskForHelp() {
                             <option value="">Myself</option>
                             {managedOrgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
-                        <span className="field-hint">Posting as your organization lists it on your organization dashboard.</span>
+                        <span className="field-hint">Posting as your group lists it on your group dashboard.</span>
                     </div>
                 )}
 
@@ -464,11 +464,11 @@ export default function AskForHelp() {
                         </label>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'group'} onChange={() => setAudience('group')} style={{ marginTop: '0.3rem' }} />
-                            <span>Only {groupName} first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>Members of your organization see it right away. Neighbors and Hope Ambassadors see it once it opens to everyone.</small></span>
+                            <span>Only {groupName} first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>Members of your group see it right away. Neighbors and Hope Ambassadors see it once it opens to everyone.</small></span>
                         </label>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'network'} onChange={() => setAudience('network')} style={{ marginTop: '0.3rem' }} />
-                            <span>{groupName} and its network first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>Organizations connected to {groupName} can see it too.</small></span>
+                            <span>{groupName} and its network first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>Groups connected to {groupName} can see it too.</small></span>
                         </label>
                         {audience !== 'everyone' && (
                             <>

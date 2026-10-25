@@ -432,7 +432,7 @@ export default function Admin() {
   }
 
   async function createOrganization() {
-    if (!newOrgName.trim()) { tell('Organization name is required.', { tone: 'error' }); return }
+    if (!newOrgName.trim()) { tell('Group name is required.', { tone: 'error' }); return }
     const social_links = newOrgSocial.trim() ? { primary: newOrgSocial.trim() } : {}
     const { error } = await supabase.from('organizations').insert({
       name: newOrgName.trim(),
@@ -441,7 +441,7 @@ export default function Admin() {
       website_url: newOrgWebsite.trim() || null,
       social_links,
     })
-    if (reportError('createOrganization', error, 'Could not create this organization. Try again.')) return
+    if (reportError('createOrganization', error, 'Could not create this group. Try again.')) return
     setNewOrgName(''); setNewOrgDesc(''); setNewOrgEmail(''); setNewOrgWebsite(''); setNewOrgSocial('')
     setShowNewOrgForm(false)
     await loadOrganizations()
@@ -451,16 +451,16 @@ export default function Admin() {
   // signed up as the wrong kind (organization vs emergency response group).
   async function setOrgType(org, value) {
     const { error } = await supabase.from('organizations').update({ org_type: value || null }).eq('id', org.id)
-    if (reportError('setOrgType', error, 'Could not save the kind of organization. Try again.')) return
+    if (reportError('setOrgType', error, 'Could not save the kind of group. Try again.')) return
     await loadOrganizations()
   }
 
   async function switchOrgKind(org) {
     const toGroup = org.kind !== 'group'
     const msg = toGroup
-      ? 'Make ' + org.name + ' an emergency response group? Its leaders will be called Keeper and Helper, and it will need approval before it is called to emergencies.'
-      : 'Make ' + org.name + ' an organization? It will no longer be called to emergencies. Its members, chats, events and resources stay.'
-    if (!(await askConfirm(msg, { yes: toGroup ? 'Make it a group' : 'Make it an organization' }))) return
+      ? 'Make ' + org.name + ' an emergency crew? Its leaders will be called Keeper and Helper, and it will need approval before it is called to emergencies.'
+      : 'Make ' + org.name + ' a group? It will no longer be called to emergencies. Its members, chats, events and resources stay.'
+    if (!(await askConfirm(msg, { yes: toGroup ? 'Make it a crew' : 'Make it a group' }))) return
     const { error } = await supabase.from('organizations').update({ kind: toGroup ? 'group' : 'organization', response_status: 'none' }).eq('id', org.id)
     if (reportError('switchOrgKind', error, 'Could not change this. Try again.')) return
     await loadOrganizations()
@@ -468,7 +468,7 @@ export default function Admin() {
 
   async function toggleOrgApproved(org) {
     const { error } = await supabase.from('organizations').update({ approved: !org.approved }).eq('id', org.id)
-    if (reportError('toggleOrgApproved', error, 'Could not update this organization. Try again.')) return
+    if (reportError('toggleOrgApproved', error, 'Could not update this group. Try again.')) return
     await loadOrganizations()
   }
 
@@ -982,7 +982,7 @@ export default function Admin() {
     { key: 'emergencies', label: 'Emergencies', icon: 'siren', count: pendingEvents.length, urgent: pendingEvents.length > 0 },
     { key: 'users', label: 'People', icon: 'people' },
     { key: 'log', label: 'Admin log', icon: 'scroll' },
-    { key: 'organizations', label: 'Organizations', icon: 'houses', count: orgsWaiting },
+    { key: 'organizations', label: 'Groups', icon: 'houses', count: orgsWaiting },
     { key: 'villages', label: 'Villages', icon: 'cottage', desktopOnly: true },
     { key: 'content', label: 'SkillShare', icon: 'handshake', count: duplicateCount, desktopOnly: true },
     ...(placesEnabled ? [{ key: 'crn', label: 'CRN Import', icon: 'folder', desktopOnly: true }] : []),
@@ -1513,24 +1513,24 @@ export default function Admin() {
       {!loading && showTab === 'organizations' && (
         <>
           <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
-          <button onClick={() => setShowNewOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewOrgForm ? 'Cancel' : '+ New Organization'}</button>
+          <button onClick={() => setShowNewOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewOrgForm ? 'Cancel' : '+ New group'}</button>
 
           {showNewOrgForm && (
             <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
-              <input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="Organization name *" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="Group name *" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
               <textarea value={newOrgDesc} onChange={(e) => setNewOrgDesc(e.target.value)} placeholder="Short description" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '3rem' }} />
               <input value={newOrgEmail} onChange={(e) => setNewOrgEmail(e.target.value)} placeholder="Contact email" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
               <input value={newOrgWebsite} onChange={(e) => setNewOrgWebsite(e.target.value)} placeholder="Website URL" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
               <input value={newOrgSocial} onChange={(e) => setNewOrgSocial(e.target.value)} placeholder="Social media link (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
-              <button onClick={createOrganization} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create Organization</button>
+              <button onClick={createOrganization} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create group</button>
             </div>
           )}
 
-          <button onClick={() => setShowInviteOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showInviteOrgForm ? 'Cancel' : '+ Invite an Organization'}</button>
+          <button onClick={() => setShowInviteOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showInviteOrgForm ? 'Cancel' : '+ Invite a group'}</button>
 
           {showInviteOrgForm && (
             <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.5rem' }}>Generates a link you send yourself (text, email, whatever). Whoever opens it fills in their own organization's details and joins as its first member -- it lands here as PENDING APPROVAL just like one you create yourself.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.5rem' }}>Generates a link you send yourself (text, email, whatever). Whoever opens it fills in their own group's details and joins as its first member -- it lands here as PENDING APPROVAL just like one you create yourself.</p>
               <input value={inviteContactName} onChange={(e) => setInviteContactName(e.target.value)} placeholder="Contact name (for your reference)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
               <input value={inviteContactEmail} onChange={(e) => setInviteContactEmail(e.target.value)} placeholder="Contact email (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
               <textarea value={inviteNote} onChange={(e) => setInviteNote(e.target.value)} placeholder="A short note they'll see on the invite page (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '3rem' }} />
@@ -1564,7 +1564,7 @@ export default function Admin() {
           )}
 
           {organizations.length === 0 ? (
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No organizations yet</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No groups yet</p>
           ) : organizations.map(org => (
             <div key={org.id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -1583,18 +1583,18 @@ export default function Admin() {
               </div>
               {org.approved && (
                 <p style={{ margin: '0.3rem 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                  {org.hide_from_public ? 'Hidden from the public. Only people with an account can see it.' : 'Visible to the public.'} {org.kind === 'group' ? 'The group' : 'The organization'} sets this itself.
+                  {org.hide_from_public ? 'Hidden from the public. Only people with an account can see it.' : 'Visible to the public.'} {org.kind === 'group' ? 'The crew' : 'The group'} sets this itself.
                 </p>
               )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', margin: '0.4rem 0' }}>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{org.kind === 'group' ? 'Emergency response group' : 'Organization'}</span>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{org.kind === 'group' ? 'Emergency crew' : 'Group'}</span>
                 {org.kind !== 'group' && (
-                  <select aria-label={'Kind of organization for ' + org.name} value={org.org_type || ''} onChange={(e) => setOrgType(org, e.target.value)} style={{ minHeight: '44px', maxWidth: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }}>
+                  <select aria-label={'Kind of group for ' + org.name} value={org.org_type || ''} onChange={(e) => setOrgType(org, e.target.value)} style={{ minHeight: '44px', maxWidth: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }}>
                     <option value="">Kind not picked</option>
                     {ORG_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 )}
-                <button type="button" onClick={() => switchOrgKind(org)} style={{ minHeight: '44px', padding: '0.4rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--accent)', border: '1px solid var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{org.kind === 'group' ? 'Make it an organization' : 'Make it a group'}</button>
+                <button type="button" onClick={() => switchOrgKind(org)} style={{ minHeight: '44px', padding: '0.4rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--accent)', border: '1px solid var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{org.kind === 'group' ? 'Make it a group' : 'Make it a crew'}</button>
               </div>
               {/* Council links were taken out of the app (Oct 8); organizations connect to each other directly. */}
               {org.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0' }}>{org.description}</p>}

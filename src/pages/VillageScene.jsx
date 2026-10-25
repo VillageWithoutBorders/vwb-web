@@ -397,7 +397,7 @@ export default function VillageScene() {
     { k: 'home', got: !!home?.village_id, src: '/art/village-build/deco-well.webp', label: 'A well', why: 'for finding your home village', next: 'Find your home village', x: 12, y: 80 },
     { k: 'task', got: !!(tasks && tasks.archived.length), src: '/art/village-build/deco-flowers.webp', label: 'Flowers', why: 'for finishing your first task with a neighbor', next: 'Finish a task with a neighbor', x: 40, y: 93 },
     { k: 'vouch', got: vouched, src: '/art/village-build/deco-lamp.webp', label: 'A garden lamp', why: 'for your first vouch', next: 'Vouch for someone you know, or be vouched for', x: 10, y: 95 },
-    { k: 'org', got: (organizations || []).length > 0, src: '/art/village-build/deco-garden.webp', label: 'A vegetable garden', why: 'for joining an organization or group', next: 'Join an organization or a group', x: 58, y: 70 },
+    { k: 'org', got: (organizations || []).length > 0, src: '/art/village-build/deco-garden.webp', label: 'A vegetable garden', why: 'for joining a group or crew', next: 'Join a group or an emergency crew', x: 58, y: 70 },
   ]
   const myOrgs = (organizations || []).filter((o) => o.kind !== 'group')
   const myGroups = (organizations || []).filter((o) => o.kind === 'group')
@@ -409,11 +409,11 @@ export default function VillageScene() {
       case 'home': return { sub: home?.village_id ? 'Step into ' + home.name : home ? 'Find or start your home village' : 'Loading...' }
       case 'visits': return { sub: visits.length ? plural(visits.length, 'village', 'villages') + ' where you are a guest' : 'Villages you visit show up here' }
       case 'calendar': return { sub: 'Events and sign-ups near you' }
-      case 'orgs': return { sub: myOrgs.length ? plural(myOrgs.length, 'organization', 'organizations') : 'Find an organization near you' }
+      case 'orgs': return { sub: myOrgs.length ? plural(myOrgs.length, 'group', 'groups') : 'Find a group near you' }
       case 'connections': return { sub: 'People you know on VWB' }
-      case 'groups': return { sub: myGroups.length ? plural(myGroups.length, 'emergency group', 'emergency groups') : 'Crews that help when disaster hits' }
+      case 'groups': return { sub: myGroups.length ? plural(myGroups.length, 'emergency crew', 'emergency crews') : 'Crews that help when disaster hits' }
       case 'cottage': return { sub: 'Private chats with people you chose' }
-      case 'campfires': return { sub: 'Team chats in your organizations and villages' }
+      case 'campfires': return { sub: 'Team chats in your groups and villages' }
       case 'chat': return { sub: chatsNew ? chatsNew + ' new in your villages and Campfires' : 'Your village chats', badge: chatsNew, lantern: chatsNew ? chatsNew + ' new' : '' }
       case 'help': return offersWaiting || yourTurn
         ? { sub: (offersWaiting ? plural(offersWaiting, 'neighbor offered', 'neighbors offered') + ' to help. ' : '') + (yourTurn ? plural(yourTurn, 'task is', 'tasks are') + ' waiting on you.' : ''), badge: offersWaiting + yourTurn, lantern: offersWaiting ? 'Say yes?' : 'Your turn' }
@@ -453,14 +453,14 @@ export default function VillageScene() {
         <Link className="btn btn-outline btn-full" to="/world">See every village</Link>
       </>
       case 'orgs': return <>{title}
-        {myOrgs.length === 0 && <p>You are not in an organization yet.</p>}
-        {myOrgs.map((o) => row('/orgs/' + o.id, 'people', o.name, 'Organization'))}
-        <Link className="btn btn-outline btn-full" to="/world?tab=orgs">See every organization</Link>
+        {myOrgs.length === 0 && <p>You are not in a group yet.</p>}
+        {myOrgs.map((o) => row('/orgs/' + o.id, 'people', o.name, 'Group'))}
+        <Link className="btn btn-outline btn-full" to="/world?tab=orgs">See every group</Link>
       </>
       case 'groups': return <>{title}
-        {myGroups.length === 0 && <p>You are not in an emergency group yet. Groups are crews that help when disaster hits.</p>}
-        {myGroups.map((o) => row('/orgs/' + o.id, 'tent', o.name, 'Emergency group'))}
-        <Link className="btn btn-outline btn-full" to="/start-group">Start a group</Link>
+        {myGroups.length === 0 && <p>You are not in an emergency crew yet. Crews help when disaster hits.</p>}
+        {myGroups.map((o) => row('/orgs/' + o.id, 'tent', o.name, 'Emergency crew'))}
+        <Link className="btn btn-outline btn-full" to="/start-group">Start an emergency crew</Link>
       </>
       default: return title
     }
@@ -505,7 +505,7 @@ export default function VillageScene() {
       case 'me': return { sub: isHome ? 'Your house: your own map of everything you are part of' : 'Your profile, vouches, and settings' }
       case 'messages': return { sub: unreadCount ? unreadCount + ' unread' : 'Requests and private messages', badge: unreadCount }
       case 'orgs': { const n = orgs.filter((o) => o.kind !== 'group').length; return { sub: n ? n + ' working here' : 'None working here yet' } }
-      case 'groups': { const n = orgs.filter((o) => o.kind === 'group').length; return { sub: n ? n + ' emergency response group' + (n === 1 ? '' : 's') : 'Start a crew for when disaster hits' } }
+      case 'groups': { const n = orgs.filter((o) => o.kind === 'group').length; return { sub: n ? n + ' emergency crew' + (n === 1 ? '' : 's') : 'Start a crew for when disaster hits' } }
       default: return { sub: '' }
     }
   }
@@ -591,24 +591,24 @@ export default function VillageScene() {
         </>
       case 'orgs':
         return <>{title}
-          {orgs.filter((o) => o.kind !== 'group').length === 0 && <p>No organizations work in this village yet.</p>}
+          {orgs.filter((o) => o.kind !== 'group').length === 0 && <p>No groups work in this village yet.</p>}
           {orgs.filter((o) => o.kind !== 'group').map((o) => (
             <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
-              <span aria-hidden="true"><Icon name="people" /></span> {o.name}<small>Organization</small>
+              <span aria-hidden="true"><Icon name="people" /></span> {o.name}<small>Group</small>
             </button>
           ))}
         </>
       case 'groups': {
         const groups = orgs.filter((o) => o.kind === 'group')
         return <>{title}
-          <p>Groups are crews that show up when disaster hits here: flooding, storms, mold, fires. They plan together ahead of time.</p>
-          {groups.length === 0 && <p className="vs-note">No groups cover this village yet.</p>}
+          <p>Emergency crews show up when disaster hits here: flooding, storms, mold, fires. They plan together ahead of time.</p>
+          {groups.length === 0 && <p className="vs-note">No crews cover this village yet.</p>}
           {groups.map((o) => (
             <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
-              <span aria-hidden="true"><Icon name="tent" /></span> {o.name}<small>Emergency response group</small>
+              <span aria-hidden="true"><Icon name="tent" /></span> {o.name}<small>Emergency crew</small>
             </button>
           ))}
-          <Link className="btn btn-outline btn-full" to={'/start-group?village=' + id}>Start a group for {village ? village.name : 'this village'}</Link>
+          <Link className="btn btn-outline btn-full" to={'/start-group?village=' + id}>Start a crew for {village ? village.name : 'this village'}</Link>
         </>
       }
       default: return title

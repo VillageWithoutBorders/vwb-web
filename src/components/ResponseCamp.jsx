@@ -68,7 +68,7 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey, pa
 
   return (
     <section className="rc-box" aria-labelledby="rc-title">
-      <h2 id="rc-title" className="rc-title"><Icon name="tent" /> {part === 'groups' ? 'Groups responding' : 'Response Camp' + (campClosed ? ', closed' : '')}</h2>
+      <h2 id="rc-title" className="rc-title"><Icon name="tent" /> {part === 'groups' ? 'Crews responding' : 'Response Camp' + (campClosed ? ', closed' : '')}</h2>
 
       {part !== 'groups' && (camp?.i_am_in && camp.board_id ? (
         <>
@@ -89,9 +89,9 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey, pa
         </p>
       ))}
 
-      {part === 'all' && <h3 className="rc-sub">Groups responding</h3>}
+      {part === 'all' && <h3 className="rc-sub">Crews responding</h3>}
       {part !== 'chat' && (responding.length === 0
-        ? <p className="rc-note">No group has taken this on yet.</p>
+        ? <p className="rc-note">No crew has taken this on yet.</p>
         : (
           <ul className="rc-groups">
             {responding.map((g) => (
@@ -114,8 +114,8 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey, pa
             </p>
             <p className="rc-note">
               {g.status === 'responding' ? 'Members who have not signed up were asked to. You can step back if plans change.'
-                : asked ? 'Your group covers this village. A yes lists your group here and asks your members to sign up.'
-                : 'You keep this group. You can step in even if it was not asked.'}
+                : asked ? 'Your crew covers this village. A yes lists your crew here and asks your members to sign up.'
+                : 'You keep this crew. You can step in even if it was not asked.'}
             </p>
             <div className="rc-actions">
               {g.status !== 'responding' && (

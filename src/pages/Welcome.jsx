@@ -97,7 +97,7 @@ const SAFETY_POINTS = [
   'Every account needs a working email address. We do not check IDs, so use the same good sense you would with anyone new.',
   'Both people have to say yes before anyone connects. No surprise matches.',
   'After a task, both people can say how it went. Neighbors can also vouch for people they know.',
-  'Private messages, Cottage Chats, and organization chats are end-to-end encrypted.',
+  'Private messages, Cottage Chats, and group chats are end-to-end encrypted.',
   'You can block anyone, or report a problem to VWB admins.',
   'Village chats are for neighbors in that village. Only people who joined a village chat can open it. VWB admins cannot open it, but village chats are not encrypted the way private messages are.',
   'Locations are rounded, and your exact address is never shown. You choose what appears on your public profile.',
@@ -142,7 +142,7 @@ const FAQS = [
   },
   {
     q: 'Is my information private?',
-    a: 'Your exact address is never shown to anyone, and locations are rounded. You control what appears on your public profile. Private messages, Cottage Chats, and organization chats are end-to-end encrypted. Announcements are open to every member. Village chats can be opened only by the neighbors who joined them, but they are not encrypted the same way, so keep sensitive details out of both.',
+    a: 'Your exact address is never shown to anyone, and locations are rounded. You control what appears on your public profile. Private messages, Cottage Chats, and group chats are end-to-end encrypted. Announcements are open to every member. Village chats can be opened only by the neighbors who joined them, but they are not encrypted the same way, so keep sensitive details out of both.',
   },
   {
     q: 'What about teens and kids?',

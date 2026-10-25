@@ -52,8 +52,8 @@ export default function OrgVillages({ orgId, orgName, canManage }) {
     setEditing(false)
     const skipped = Array.isArray(data) ? data : []
     setNote(skipped.length
-      ? 'Saved. ' + skipped.join(', ') + (skipped.length === 1 ? ' was' : ' were') + ' left off because a keeper there removed your organization.'
-      : 'Saved. Neighbors will see your organization in these neighborhoods.')
+      ? 'Saved. ' + skipped.join(', ') + (skipped.length === 1 ? ' was' : ' were') + ' left off because a keeper there removed your group.'
+      : 'Saved. Neighbors will see your group in these neighborhoods.')
   }
 
   const blockedIds = useMemo(() => new Set(blocked.map((b) => String(b.village_id))), [blocked])
@@ -97,7 +97,7 @@ export default function OrgVillages({ orgId, orgName, canManage }) {
                   <span>
                     {v.name}
                     {v.region_label ? <span className="cal-sub" style={{ display: 'block', fontSize: '0.85rem' }}>{v.region_label}</span> : null}
-                    {isBlocked ? <span className="cal-sub" style={{ display: 'block', fontSize: '0.85rem' }}>A keeper here removed your organization.</span> : null}
+                    {isBlocked ? <span className="cal-sub" style={{ display: 'block', fontSize: '0.85rem' }}>A keeper here removed your group.</span> : null}
                   </span>
                 </label>
               )

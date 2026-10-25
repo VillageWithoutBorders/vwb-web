@@ -44,7 +44,7 @@ export default function BringOrg() {
   async function sendOrgRequest(e) {
     e.preventDefault()
     if (!orgForm.name.trim()) {
-      setOrgError("Please add your organization's name.")
+      setOrgError("Please add your group's name.")
       return
     }
     setOrgSending(true)
@@ -76,7 +76,7 @@ export default function BringOrg() {
   return (
     <section className="hub-section" aria-labelledby="bring-org-h" ref={boxRef} style={{ scrollMarginTop: 'calc(var(--header-height) + 12px)' }}>
       <div className="hub-section-head">
-        <h2 id="bring-org-h">Bring your organization</h2>
+        <h2 id="bring-org-h">Bring your group</h2>
       </div>
       {pendingOrg && (
         <div className="cal-card org-request-note" role="status">
@@ -86,14 +86,14 @@ export default function BringOrg() {
       )}
         {showOrgForm && !pendingOrg && (
           <form className="org-request-form" onSubmit={sendOrgRequest} noValidate aria-labelledby="org-request-title">
-            <h3 id="org-request-title">Bring your organization to VWB</h3>
+            <h3 id="org-request-title">Bring your group to VWB</h3>
             <p className="org-request-help">Tell us a little about your group. We'll look it over. Once it's approved, you can post events and resources.</p>
-            <p className="org-request-help">Starting a crew that shows up during emergencies? <Link to="/start-group">Start an emergency response group</Link> instead.</p>
+            <p className="org-request-help">Starting a crew that shows up during emergencies? <Link to="/start-group">Start an emergency crew</Link> instead.</p>
 
-            <label htmlFor="org-name">Organization name (required)</label>
+            <label htmlFor="org-name">Group name (required)</label>
             <input id="org-name" type="text" autoComplete="organization" maxLength={120} required aria-invalid={orgError && !orgForm.name.trim() ? 'true' : undefined} value={orgForm.name} onChange={setOrgField('name')} />
 
-            <label htmlFor="org-type">What kind of organization is it? (optional)</label>
+            <label htmlFor="org-type">What kind of group is it? (optional)</label>
             <select id="org-type" value={orgForm.orgType} onChange={setOrgField('orgType')}>
               <option value="">Choose one</option>
               {ORG_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -123,7 +123,7 @@ export default function BringOrg() {
           </form>
         )}
       {!pendingOrg && !showOrgForm && (
-        <button type="button" className="btn btn-outline btn-full" onClick={() => setShowOrgForm(true)}>Bring your organization to VWB</button>
+        <button type="button" className="btn btn-outline btn-full" onClick={() => setShowOrgForm(true)}>Bring your group to VWB</button>
       )}
     </section>
   )

@@ -71,7 +71,7 @@ async function applyPendingOrgInvite(authUser) {
   if (error) { console.error('[AuthContext] applyPendingOrgInvite', error); return }
   await clearStash('vwb_pending_org_invite', 'org_invite_pending', authUser)
   // Say it went through. It happens in the background right after sign up.
-  tell('Thank you! ' + (invite.name || 'Your organization') + ' is saved and waiting for approval. A VWB admin will look at it soon. You can post once it is approved.')
+  tell('Thank you! ' + (invite.name || 'Your group') + ' is saved and waiting for approval. A VWB admin will look at it soon. You can post once it is approved.')
 }
 
 // The 5-digit zip code someone typed when they signed up (Oct 25), or null.

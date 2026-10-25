@@ -245,8 +245,8 @@ export default function KeeperDashboard() {
           </section>
 
           <section className="hub-section" aria-labelledby="kd-orgs">
-            <div className="hub-section-head"><h2 id="kd-orgs"><Icon name="people" /> Organizations working here</h2></div>
-            <p className="hub-org-desc">Organizations pick the neighborhoods they work in. You can remove one that doesn't belong.</p>
+            <div className="hub-section-head"><h2 id="kd-orgs"><Icon name="people" /> Groups working here</h2></div>
+            <p className="hub-org-desc">Groups pick the neighborhoods they work in. You can remove one that doesn't belong.</p>
             {orgs.length === 0 && <p className="hub-empty">None yet.</p>}
             {orgs.map((o) => (
               <div key={o.id} className="dash-row">
@@ -281,7 +281,7 @@ export default function KeeperDashboard() {
               <li>Pin announcements in the village chat</li>
               <li>Start Campfires and pick who is in</li>
               <li>Answer Sister Village asks</li>
-              <li>Remove an organization that doesn't belong</li>
+              <li>Remove a group that doesn't belong</li>
             </ul>
             <p className="hub-org-desc">If a Keeper or Helper doesn't open VWB for 60 days, VWB asks if they are still taking part. With no answer in 14 days, the role passes on, so the village is never left without someone.</p>
             {isStarter && <p className="hub-org-desc">You can name up to 2 helpers or hand the village to another member. Open the people list and tap a name.</p>}

@@ -13,8 +13,8 @@ export default function HubOrganizations() {
 
   return (
     <div className="cal-page" style={{ maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}>
-      <p className="cal-sub" style={{ marginTop: 0 }}>Open your organization's page, dashboard, and events here. Its Campfire chats are under Cottage Chats &amp; Campfires.</p>
-      {list.length === 0 && <p className="cal-empty">You are not in an organization yet.</p>}
+      <p className="cal-sub" style={{ marginTop: 0 }}>Open your group's page, dashboard, and events here. Its Campfire chats are under Cottage Chats &amp; Campfires.</p>
+      {list.length === 0 && <p className="cal-empty">You are not in a group yet.</p>}
       {list.map((o) => {
         const manages = o.role === 'admin' || o.role === 'organizer'
         return (

@@ -197,7 +197,7 @@ export default function CreateEvent() {
             <ol className="ce-list">
               <li>Neighbors{villageName ? ' in ' + villageName : ' in your village'} see it as waiting to be checked.</li>
               <li>Two neighbors confirm it, or a Hope Ambassador or VWB admin checks it.</li>
-              <li>A Response Camp chat opens for everyone who signs up to help. Response groups that cover your village are asked to take it on.</li>
+              <li>A Response Camp chat opens for everyone who signs up to help. Emergency crews that cover your village are asked to take it on.</li>
               <li>You are the first coordinator. You add what is needed and close it when it is over.</li>
             </ol>
           </section>

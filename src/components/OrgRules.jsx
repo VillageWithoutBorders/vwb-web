@@ -90,7 +90,7 @@ export default function OrgRules({ orgId, isHead, org, onTitles }) {
       <div className="hub-section-head"><h2 id="od-rules">Our rules</h2></div>
       <p className="hub-org-desc">
         {isHead
-          ? 'These are your organization\'s decisions. Each one starts on the most private choice. Change them any time.'
+          ? 'These are your group\'s decisions. Each one starts on the most private choice. Change them any time.'
           : 'Your ' + W.head + ' decides these. You can see how they are set.'}
       </p>
       <form onSubmit={save} noValidate>
@@ -113,7 +113,7 @@ export default function OrgRules({ orgId, isHead, org, onTitles }) {
           </label>
           <label style={radio}>
             <input type="radio" name="od-see" checked={see} onChange={() => { setSee(true); setNote('') }} style={dot} />
-            <span>Everyone in the organization</span>
+            <span>Everyone in the group</span>
           </label>
         </fieldset>
         {isHead && (
@@ -125,7 +125,7 @@ export default function OrgRules({ orgId, isHead, org, onTitles }) {
         <form onSubmit={saveTitles} noValidate style={{ marginTop: '1rem' }}>
           <fieldset style={{ border: 'none', padding: 0, margin: 0 }} disabled={!isHead || tBusy}>
             <legend className="cal-sub">Our titles</legend>
-            <p className="hub-org-desc">Call your leaders what your organization calls them. Leave a box empty to use Head and Organizer. VWB still treats them as Keeper and Helper for safety.</p>
+            <p className="hub-org-desc">Call your leaders what your group calls them. Leave a box empty to use Head and Organizer. VWB still treats them as Keeper and Helper for safety.</p>
             <label className="admin-dialog-label" htmlFor="or-head">Title for the people who lead (Head)</label>
             <input id="or-head" type="text" autoComplete="off" maxLength={24} placeholder="Head" value={headT}
               onChange={(e) => { setHeadT(e.target.value); setTNote('') }}

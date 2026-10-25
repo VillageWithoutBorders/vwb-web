@@ -90,7 +90,7 @@ export default function Dashboard({ embedded = false }) {
         <section className="new-here" aria-labelledby="new-here-h">
           <h2 id="new-here-h"><Icon name="sprout" /> You're new here</h2>
           <p>Right now you can ask for help, offer to help on requests, join your village, and reply to anyone who messages you.</p>
-          <p>Once a neighbor vouches for you, or you finish a task with someone, you can also message people first, post offers, and start chats and groups. It keeps VWB safe from fake accounts.</p>
+          <p>Once a neighbor vouches for you, or you finish a task with someone, you can also message people first, post offers, and start chats and emergency crews. It keeps VWB safe from fake accounts.</p>
         </section>
       )}
 

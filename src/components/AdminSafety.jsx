@@ -64,7 +64,7 @@ export function BanRequests({ me, refreshKey, onChanged }) {
   return (
     <section className="admin-role-box" aria-labelledby="banReqTitle">
       <h3 id="banReqTitle" className="admin-role-title">Bans waiting for a second admin</h3>
-      <p className="admin-section-note">Banning a Hope Ambassador, or anyone who leads a village, group or organization, takes two admins. The person being banned can't answer.</p>
+      <p className="admin-section-note">Banning a Hope Ambassador, or anyone who leads a village, group or crew, takes two admins. The person being banned can't answer.</p>
       {note && <p className="admin-role-note" role="status">{note}</p>}
       {rows.map((r) => {
         const mine = r.asked_by === me
@@ -96,7 +96,7 @@ const FILTERS = [
   ['ban', 'Bans'],
   ['ambassador', 'Ambassadors'],
   ['emergency', 'Emergencies'],
-  ['org', 'Organizations'],
+  ['org', 'Groups'],
   ['deleted', 'Deleted posts'],
   ['report', 'Reports'],
   ['village', 'Villages'],

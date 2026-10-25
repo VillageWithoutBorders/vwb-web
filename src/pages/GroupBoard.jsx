@@ -556,7 +556,7 @@ export default function GroupBoard() {
     if (error) {
       console.error('Steward answer failed:', error)
       tell(error.message?.includes('head or one of its organizers')
-        ? "Only the organization's head or one of its organizers can be steward. Ask the organization to make you an organizer first."
+        ? "Only the group's head or one of its organizers can be steward. Ask the group to make you an organizer first."
         : 'Could not do that. The offer may have been taken back.', { tone: 'error' })
     }
     loadGroup()
@@ -571,7 +571,7 @@ export default function GroupBoard() {
   async function leave() {
     const last = members.length === 1
     const stewardNote = group.steward_id === user.id && !last
-      ? "You're the steward. If you leave, the group becomes an everyday group where everyone is equal. To pass the role on instead, use Make steward first (it's offered to the organization's head and organizers in the group). "
+      ? "You're the steward. If you leave, the chat becomes an everyday chat where everyone is equal. To pass the role on instead, use Make steward first (it's offered to the group's head and organizers in the chat). "
       : ''
     if (!(await askConfirm(last ? "You're the last member. Leaving deletes this group and its whole board. Leave?" : stewardNote + 'Leave ' + group.name + '? You can only come back if someone invites you again.'))) return
     const { error } = await supabase.from('community_group_members').delete().eq('group_id', id).eq('user_id', user.id)
@@ -886,7 +886,7 @@ export default function GroupBoard() {
                 <button type="button" className="btn btn-primary group-small-btn" onClick={() => invite(p)}>Invite</button>
               </div>
             ))}
-            {search.trim().length >= 2 && results.length === 0 && <p className="groups-note">No one found by that name. You can search people you have messaged, vouched for, or share a group or organization with.</p>}
+            {search.trim().length >= 2 && results.length === 0 && <p className="groups-note">No one found by that name. You can search people you have messaged, vouched for, or share a group or chat with.</p>}
             </>)}
             {pendingInvites.length > 0 && (
               <>
@@ -932,7 +932,7 @@ export default function GroupBoard() {
                 ? 'Everyone here posts and invites the same way. ' + (iAmSteward ? 'As steward, you can remove someone on your own if it\'s needed for safety. ' : 'The steward can remove someone on their own for safety. ') + 'Other removals take two members: one asks, and a second agrees. The person isn\'t shown the request.'
                 : 'Everyone here is equal. Removing someone takes two members: one asks, and a second agrees. The person isn\'t shown the request.'}
             </p>
-            {iAmSteward && <p className="groups-note">To hand off the steward role, tap Make steward. It only shows for the organization's head and organizers who are in the group, and they have to say yes.</p>}
+            {iAmSteward && <p className="groups-note">To hand off the steward role, tap Make steward. It only shows for the group's head and organizers who are in the chat, and they have to say yes.</p>}
             {members.map(m => {
               const isMe = m.userId === user.id
               const isSteward = m.userId === group.steward_id
