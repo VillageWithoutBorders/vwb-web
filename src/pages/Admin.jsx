@@ -982,9 +982,9 @@ export default function Admin() {
     { key: 'emergencies', label: 'Emergencies', icon: 'siren', count: pendingEvents.length, urgent: pendingEvents.length > 0 },
     { key: 'users', label: 'People', icon: 'people' },
     { key: 'log', label: 'Admin log', icon: 'scroll' },
-    { key: 'organizations', label: 'Groups', icon: 'houses', count: orgsWaiting },
-    { key: 'villages', label: 'Villages', icon: 'cottage', desktopOnly: true },
-    { key: 'content', label: 'SkillShare', icon: 'handshake', count: duplicateCount, desktopOnly: true },
+    { key: 'organizations', label: 'Groups', icon: 'people', count: orgsWaiting },
+    { key: 'villages', label: 'Villages', icon: 'houses', desktopOnly: true },
+    { key: 'content', label: 'SkillShare', icon: 'basket', count: duplicateCount, desktopOnly: true },
     ...(placesEnabled ? [{ key: 'crn', label: 'CRN Import', icon: 'folder', desktopOnly: true }] : []),
   ]
   const current = SECTIONS.find(s => s.key === tab)

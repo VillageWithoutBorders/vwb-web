@@ -84,7 +84,7 @@ export default function SisterVillages({ village, villages, sisters, isKeeper, j
 
   return (
     <div style={box}>
-      <p style={{ margin: '0 0 0.25rem', fontWeight: 700 }}><Icon name="handshake" /> Sister Villages</p>
+      <p style={{ margin: '0 0 0.25rem', fontWeight: 700 }}><Icon name="bridge" /> Sister Villages</p>
       {mySisters.length === 0
         ? <p className="cal-sub" style={{ margin: '0 0 0.25rem' }}>No Sister Villages yet.</p>
         : (

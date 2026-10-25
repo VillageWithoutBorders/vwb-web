@@ -36,11 +36,11 @@ export default function YourCorner({ embedded = false }) {
       <nav aria-label="Your things" className="corner-list">
         <Link to="/profile#past-tasks" className="corner-item"><span aria-hidden="true"><Icon name="box" /></span> Past tasks<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/trail" className="corner-item"><span aria-hidden="true"><Icon name="compass" /></span> My trail<span className="corner-arrow" aria-hidden="true">›</span></Link>
-        <Link to="/my-code" className="corner-item"><span aria-hidden="true"><Icon name="phone-add" /></span> My QR code<span className="corner-arrow" aria-hidden="true">›</span></Link>
+        <Link to="/my-code" className="corner-item"><span aria-hidden="true"><Icon name="qr-code" /></span> My QR code<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/profile" className="corner-item"><span aria-hidden="true"><Icon name="handshake" /></span> Vouches and trust<span className="corner-arrow" aria-hidden="true">›</span></Link>
         {/* Oct 22: your cottage is your house in your home village: your own private map. */}
         {!embedded && <Link to="/cottage" className="corner-item"><span aria-hidden="true"><Icon name="cottage" /></span> My cottage<span className="corner-arrow" aria-hidden="true">›</span></Link>}
-        <Link to="/world" className="corner-item"><span aria-hidden="true"><Icon name="tree" /></span> My villages<span className="corner-arrow" aria-hidden="true">›</span></Link>
+        <Link to="/world" className="corner-item"><span aria-hidden="true"><Icon name="houses" /></span> My villages<span className="corner-arrow" aria-hidden="true">›</span></Link>
         {!organizations.some((o) => o.kind !== 'group') && (
           <Link to="/calendar?bring=org" className="corner-item"><span aria-hidden="true"><Icon name="people" /></span> Bring your group<span className="corner-arrow" aria-hidden="true">›</span></Link>
         )}

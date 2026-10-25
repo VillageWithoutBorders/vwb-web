@@ -10,7 +10,7 @@
 // The round badge (icon) still shows in the list under the map, and if a painting fails to load.
 export const VILLAGE_SPOTS = [
   { k: 'charter', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our charter', short: 'Charter', em: '\u{1F4DC}', x: 17, y: 39 },
-  { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'megaphone', label: 'Village chat', short: 'Village chat', em: '\u{1F4E3}', x: 21, y: 82, s: 1.1 },
+  { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'chat-bubble', label: 'Village chat', short: 'Village chat', em: '\u{1F4AC}', x: 21, y: 82, s: 1.1 },
   { k: 'keeper', art: '/art/village-path/spot-keeper.webp', icon: 'key', label: "Keeper's house", short: 'Keeper', em: '\u{1F5DD}️', x: 83, y: 39 },
   { k: 'sisters', art: '/art/village-path/spot-sisters.webp', icon: 'bridge', label: 'Sister villages', short: 'Sisters', em: '\u{1F309}', x: 50, y: 8 },
   { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Groups here', short: 'Groups', em: '\u{1F465}', x: 17, y: 19 },
@@ -34,7 +34,7 @@ export const COTTAGE_SPOTS = [
   { k: 'groups', art: '/art/village-path/spot-groups.webp', icon: 'tent', label: 'Your crews', short: 'Crews', x: 83, y: 38 },
   { k: 'cottage', art: '/art/village-path/spot-cottage.webp', icon: 'cottage', label: 'Cottage Chats', short: 'Cottage Chats', x: 83, y: 57 },
   { k: 'campfires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Your Campfires', short: 'Campfires', x: 50, y: 32, s: 0.9 },
-  { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'megaphone', label: 'Village Square', short: 'Village Square', x: 19, y: 79 },
+  { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'chat-bubble', label: 'Village Square', short: 'Village Square', x: 19, y: 79 },
   { k: 'help', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Help', short: 'Help', x: 81, y: 79 },
   { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'Your corner', short: 'Your corner', x: 50, y: 56, s: 1.35 },
   { k: 'messages', art: '/art/village-path/spot-messages.webp', icon: 'mailbox', label: 'Messages', short: 'Messages', x: 50, y: 87, s: 0.9 },
