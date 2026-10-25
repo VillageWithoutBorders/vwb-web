@@ -74,6 +74,12 @@ async function applyPendingOrgInvite(authUser) {
   tell('Thank you! ' + (invite.name || 'Your organization') + ' is saved and waiting for approval. A VWB admin will look at it soon. You can post once it is approved.')
 }
 
+// The 5-digit zip code someone typed when they signed up (Oct 25), or null.
+function signupZip(authUser) {
+  const z = String(authUser?.user_metadata?.zip_code || '').replace(/[^0-9]/g, '').slice(0, 5)
+  return z.length === 5 ? z : null
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -189,6 +195,12 @@ export function AuthProvider({ children }) {
           if (applied) await clearStash('vwb_ambassador_pending', 'ambassador_pending', authUser)
           setProfile(updated)
         }
+      } else if (!data.zip_code && signupZip(authUser)) {
+        // The zip typed at sign up (Oct 25), if the profile didn't get it yet.
+        const { data: withZip, error: zipErr } = await supabase.from('helper_profiles')
+          .update({ zip_code: signupZip(authUser) }).eq('user_id', authUser.id).select().single()
+        if (zipErr) console.error('[AuthContext] saving sign-up zip failed', zipErr)
+        setProfile(zipErr ? data : withZip)
       } else {
         setProfile(data)
       }
@@ -203,6 +215,8 @@ export function AuthProvider({ children }) {
     // No profile yet, create one
     const displayName = authUser.user_metadata?.display_name || ''
     const insertData = { user_id: authUser.id, display_name: displayName }
+    // The zip code typed at sign up (Oct 25). The database checks it and sets the area from it.
+    if (signupZip(authUser)) insertData.zip_code = signupZip(authUser)
     if (pendingData) {
       insertData.skills = pendingData.skills
       insertData.availability = pendingData.availability
@@ -216,11 +230,16 @@ export function AuthProvider({ children }) {
     // the zip on their profile (vwb-villages-by-zip.sql), so nobody is ever
     // guessed into an area they don't live in.
 
-    const { data: newProfile, error } = await supabase
+    let { data: newProfile, error } = await supabase
       .from('helper_profiles')
       .insert(insertData)
       .select()
       .single()
+    // A zip the database won't take never blocks the account: save without it (they are asked again on Today).
+    if (error && error.code === '22023' && insertData.zip_code) {
+      delete insertData.zip_code
+      ;({ data: newProfile, error } = await supabase.from('helper_profiles').insert(insertData).select().single())
+    }
 
     if (!error) {
       if (pendingData) {

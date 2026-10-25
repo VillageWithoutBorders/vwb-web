@@ -13,6 +13,7 @@ import NearbyNeedTiles from '../components/NearbyNeedTiles'
 import OrgInvites from '../components/OrgInvites'
 import VillageGuestInvites from '../components/VillageGuestInvites'
 import QuickActions from '../components/QuickActions'
+import ZipCard from '../components/ZipCard'
 
 function VillageAsk() {
   const { profile, refreshProfile } = useAuth()
@@ -82,6 +83,8 @@ export default function Dashboard({ embedded = false }) {
         </p>
         {profile?.is_hope_ambassador && <p className="today-role"><Icon name="star" size={20} /> Hope Ambassador</p>}
       </div>
+
+      <ZipCard />
 
       {established === false && (
         <section className="new-here" aria-labelledby="new-here-h">
