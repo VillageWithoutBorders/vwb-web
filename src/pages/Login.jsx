@@ -86,6 +86,7 @@ export default function Login() {
   const [resetSent, setResetSent] = useState(false)
 
   const { signIn, signUp } = useAuth()
+  const [signupZipCode, setSignupZipCode] = useState('')
   const navigate = useNavigate()
 
   const totalSteps = wantAmbassador ? 2 : 1
@@ -148,6 +149,7 @@ export default function Login() {
     setError('')
     if (!displayName.trim()) { setError('Please enter your name.'); return }
     if (!email.trim()) { setError('Please enter your email.'); return }
+    if (signupZipCode.replace(/[^0-9]/g, '').length !== 5) { setError('Please enter your 5-digit zip code. We use it to find your village.'); return }
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
     if (!isAdult) { setError('Please confirm you are 18 or older to make an account.'); return }
     if (wantAmbassador) { setStep(2) } else { handleSignUp() }
@@ -161,7 +163,7 @@ export default function Login() {
       how_known: howKnown.trim(),
       campfire_notifications_enabled: campfireNotify,
     } : null
-    const { error } = await signUp(email, password, displayName.trim(), wantAmbassador, captcha, ambassadorPending ? { ambassador_pending: ambassadorPending } : {})
+    const { error } = await signUp(email, password, displayName.trim(), wantAmbassador, captcha, { zip_code: signupZipCode.replace(/[^0-9]/g, '').slice(0, 5), ...(ambassadorPending ? { ambassador_pending: ambassadorPending } : {}) })
     setCaptchaKey((k) => k + 1)
     if (error) {
       // A banned email or a throwaway email service is refused by the
@@ -287,6 +289,11 @@ export default function Login() {
             <div className="form-field">
               <label htmlFor="displayName">Your name or nickname</label>
               <input id="displayName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="What should we call you?" autoComplete="name" />
+            </div>
+            <div className="form-field">
+              <label htmlFor="signupZip">Zip code</label>
+              <input id="signupZip" type="text" inputMode="numeric" autoComplete="postal-code" maxLength={10} value={signupZipCode} onChange={(e) => setSignupZipCode(e.target.value)} placeholder="Where you live, like 30736" required aria-describedby="signupZipHelp" />
+              <small id="signupZipHelp" className="field-hint">We use it to find your village. Only you and VWB admins can see it.</small>
             </div>
             <div className="form-field">
               <label htmlFor="signupEmail">Email</label>
