@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { orgWords } from '../utils/roleWords'
+import { useAuth } from '../context/AuthContext'
 
 // The rules a Head sets for their own organization. Organizers can read them.
 // The database checks who may change them, so a hidden button is never the
@@ -9,12 +10,13 @@ import { orgWords } from '../utils/roleWords'
 // leader steps here. Empty means Head and Organizer.
 
 // Same check the database makes, so people see the problem right away.
-function titleProblem(t) {
+function titleProblem(t, vwbOwn) {
   const v = t.trim()
   if (!v) return ''
   if (v.length < 2 || v.length > 24) return 'A title needs 2 to 24 letters.'
   if (!/^[A-Za-z][A-Za-z' -]*$/.test(v)) return 'Use letters and spaces only.'
-  if (/(admin|vwb|founder|ambassador|staff)/i.test(v)) return 'That word belongs to VWB. Pick another title.'
+  // Village Without Borders' own group (a VWB admin changing it) may use VWB's words.
+  if (!vwbOwn && /(vwb|village without borders|admin|ambassador)/i.test(v)) return 'That word belongs to the VWB team. Pick another title.'
   return ''
 }
 
@@ -28,6 +30,8 @@ export default function OrgRules({ orgId, isHead, org, onTitles }) {
   const [orgT, setOrgT] = useState('')
   const [tBusy, setTBusy] = useState(false)
   const [tNote, setTNote] = useState('')
+  const { isAdmin } = useAuth()
+  const vwbOwn = !!org?.is_vwb_home && isAdmin
   const isGroup = org?.kind === 'group'
   const W = orgWords(org)
 
@@ -38,7 +42,7 @@ export default function OrgRules({ orgId, isHead, org, onTitles }) {
 
   async function saveTitles(e) {
     e.preventDefault()
-    const problem = titleProblem(headT) || titleProblem(orgT)
+    const problem = titleProblem(headT, vwbOwn) || titleProblem(orgT, vwbOwn)
     if (problem) { setTNote(problem); return }
     if ((headT.trim() || 'Head').toLowerCase() === (orgT.trim() || 'Organizer').toLowerCase()) { setTNote('The two titles need to be different.'); return }
     setTBusy(true); setTNote('')
