@@ -4,7 +4,7 @@ import Icon from './Icon'
 import MyAvatar from './MyAvatar'
 
 // Cottage in the top bar. Opens your cottage: your own map, with Your corner under it.
-// Oct 25 (Jade): the top bar shows the single house. Your avatar is on My Corner, next to it.
+// Oct 25 (Jade): the top bar shows the cottage icon, the same one as Cottage Chats. Your avatar is on My Corner, next to it.
 // Simple view has no maps or My Corner tab, so there it keeps your picture and opens Your corner.
 export default function MeButton() {
   const { pathname } = useLocation()
@@ -19,7 +19,7 @@ export default function MeButton() {
       aria-label={simple ? 'Your corner: profile, settings, and more' : 'Your cottage: your own map'}
       aria-current={here ? 'page' : undefined}
     >
-      {simple ? <MyAvatar size={26} /> : <Icon name="house" size={26} className="header-btn-pic" />}
+      {simple ? <MyAvatar size={26} /> : <Icon name="cottage" size={26} className="header-btn-pic" />}
       <span className="header-btn-label" aria-hidden="true">{simple ? 'Your corner' : <><span className="header-my">My </span>Cottage</>}</span>
     </Link>
   )
