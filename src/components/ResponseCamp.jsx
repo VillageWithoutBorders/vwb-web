@@ -85,7 +85,7 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey, pa
         <p className="rc-note">This emergency is closed, so its camp chat is closed too.</p>
       ) : (
         <p className="rc-note">
-          Everyone who taps I can help joins the camp chat{camp?.member_count ? ' (' + camp.member_count + ' so far)' : ''}. Neighbors who need help are not added. They check in on this page.
+          Everyone who taps Offer Help joins the camp chat{camp?.member_count ? ' (' + camp.member_count + ' so far)' : ''}. Neighbors who need help are not added. They check in on this page.
         </p>
       ))}
 

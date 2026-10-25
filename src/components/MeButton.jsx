@@ -1,19 +1,14 @@
-import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { useSimpleView } from '../utils/simpleView'
+import Icon from './Icon'
+import MyAvatar from './MyAvatar'
 
-// Your picture in the top bar (Oct 22). Opens your cottage: your own map, with
-// Your corner (profile, settings, QR code, app help) under it.
-// Simple view has no maps, so there it opens Your corner on its own.
-// Shows the avatar you made (or the drawn one others see). The letter shows only if it can't load.
+// Cottage in the top bar. Opens your cottage: your own map, with Your corner under it.
+// Oct 25 (Jade): the top bar shows the single house. Your avatar is on My Corner, next to it.
+// Simple view has no maps or My Corner tab, so there it keeps your picture and opens Your corner.
 export default function MeButton() {
-  const { user, profile } = useAuth()
   const { pathname } = useLocation()
   const simple = useSimpleView()
-  const [failed, setFailed] = useState(false)
-  const letter = ((profile?.display_name || '').trim().charAt(0) || '?').toUpperCase()
-  const src = profile?.avatar_url || 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + (user?.id || 'default')
   const to = simple ? '/me' : '/cottage'
   const here = pathname === to
   return (
@@ -21,13 +16,26 @@ export default function MeButton() {
       to={to}
       className={'header-btn me-btn' + (here ? ' on' : '')}
       data-tour="me"
-      aria-label={simple ? 'Your corner: profile, settings, and more' : 'Your cottage: your map, profile, and settings'}
+      aria-label={simple ? 'Your corner: profile, settings, and more' : 'Your cottage: your own map'}
       aria-current={here ? 'page' : undefined}
     >
-      {failed
-        ? <span className="me-btn-letter" aria-hidden="true">{letter}</span>
-        : <img className="me-btn-img" src={src} alt="" width="26" height="26" onError={() => setFailed(true)} />}
-      <span className="header-btn-label" aria-hidden="true">{simple ? 'Your corner' : 'Cottage'}</span>
+      {simple ? <MyAvatar size={26} /> : <Icon name="house" size={26} className="header-btn-pic" />}
+      <span className="header-btn-label" aria-hidden="true">{simple ? 'Your corner' : <><span className="header-my">My </span>Cottage</>}</span>
+    </Link>
+  )
+}
+
+// My Corner in the top bar (Oct 25, Jade): your avatar. Opens /me: your profile,
+// account, and settings.
+const CORNER = ['/me', '/profile', '/settings', '/my-code', '/trail']
+export function MyCornerButton() {
+  const { pathname } = useLocation()
+  const here = CORNER.some((p) => pathname === p || pathname.startsWith(p + '/'))
+  return (
+    <Link to="/me" className={'header-btn me-btn' + (here ? ' on' : '')} data-tour="corner"
+      aria-label="My Corner: your profile, account, and settings" aria-current={pathname === '/me' ? 'page' : undefined}>
+      <MyAvatar size={26} />
+      <span className="header-btn-label" aria-hidden="true"><span className="header-my">My </span>Corner</span>
     </Link>
   )
 }

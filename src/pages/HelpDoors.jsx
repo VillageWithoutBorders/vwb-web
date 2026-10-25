@@ -8,8 +8,8 @@ import '../find-help.css'
 
 // The Help tab's front door. Three big doors, resources first:
 //   1. Find resources (search plus the most asked-for kinds of help)
-//   2. Ask for help
-//   3. I can help
+//   2. Find Help
+//   3. Offer Help
 // Below them, a small link to your own requests and tasks.
 
 const TOP_KINDS = ['Emergency Help', 'Food', 'Housing', 'Bills and Utilities', 'Health', 'Rides']
@@ -54,21 +54,21 @@ export default function HelpDoors() {
         <Link to="/community/resources" className="btn btn-outline btn-full door-all">See all resources</Link>
       </section>
 
-      {/* Door 2: Ask for help */}
+      {/* Door 2: Find Help */}
       <Link to="/ask" className="door door-link">
         <span aria-hidden="true" className="door-icon"><Icon name="raise-hand" size={36} /></span>
         <span className="door-text">
-          <span className="door-link-title">Ask for help</span>
+          <span className="door-link-title">Find Help</span>
           <span className="door-desc">Ask neighbors for a hand. We show nearby resources first.</span>
         </span>
         <span aria-hidden="true" className="door-arrow">&#8250;</span>
       </Link>
 
-      {/* Door 3: I can help */}
+      {/* Door 3: Offer Help */}
       <Link to="/skillshare" className="door door-link">
         <span aria-hidden="true" className="door-icon"><Icon name="heart" size={36} /></span>
         <span className="door-text">
-          <span className="door-link-title">I can help</span>
+          <span className="door-link-title">Offer Help</span>
           <span className="door-desc">Opens SkillShare: see what neighbors near you need.</span>
         </span>
         <span aria-hidden="true" className="door-arrow">&#8250;</span>

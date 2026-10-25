@@ -415,8 +415,8 @@ export default function OrgPage() {
             </button>
           ))}
           <div className="vs-help">
-            <button type="button" className="vs-big vs-ask" onClick={() => navigate('/ask')}>Ask for help</button>
-            <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>I can help</button>
+            <button type="button" className="vs-big vs-find" onClick={() => navigate('/ask')}>Find Help</button>
+            <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>Offer Help</button>
           </div>
         </>
       case 'ready':

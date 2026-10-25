@@ -702,7 +702,7 @@ export default function Messages({ embedded = false }) {
             <button onClick={() => setEditingHelpMsg(true)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem' }}>Edit</button>
           </div>
         )}
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>Auto-sent when you tap "I can help" on a request</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>Auto-sent when you tap "Offer Help" on a request</p>
 
         <div style={sectionTitle}>Blocked Users</div>
         {blockedUsers.length === 0 ? (

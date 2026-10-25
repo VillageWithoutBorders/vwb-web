@@ -6192,7 +6192,7 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 .app-back:focus-visible { outline: 3px solid #e8b84a; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .app-back:active { transform: none; } }
 
-/* Longer action names in the bottom bar ("Ask for help", "I can help") may take two lines on small phones (Oct 22). */
+/* Longer action names in the bottom bar ("Find Help", "Offer Help") may take two lines on small phones (Oct 22). */
 @media (max-width: 380px) { .tab-label { white-space: normal; text-align: center; line-height: 1.1; } }
 
 /* Admin Needs you: Clear and Flag for later under each row (Oct 25). */
@@ -6209,3 +6209,19 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 .zip-card-row { display: flex; gap: 8px; }
 .zip-card-row input { flex: 1; min-width: 0; min-height: 48px; font-size: 16px; padding: 0 12px; border-radius: 10px; border: 2px solid var(--border-strong, var(--border)); background: var(--white); color: var(--text); }
 .zip-card-row .btn { min-height: 48px; min-width: 88px; }
+
+/* My Corner (bottom bar) and My tools (top bar), Oct 25: your avatar in the tab and the list */
+.tab-icon-pic .me-btn-img, .tab-icon-pic .me-btn-letter { width: 26px; height: 26px; border-color: var(--border-strong); }
+.tools-row .me-btn-img, .tools-row span.me-btn-letter { flex: none; width: 28px; height: 28px; display: flex; border-color: var(--border-strong); }
+
+/* Top bar (Oct 25): My World, My Village, My Cottage, My Corner, My Tools.
+   "My" drops on the smallest phones so five names still fit. */
+.tools-sub { margin: 0.75rem 0 0.4rem; font-size: 1rem; color: var(--text-strong); }
+.tools-sheet h2 + .tools-sub { margin-top: 0; }
+.tools-alerts { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface-2); }
+.header-nav .header-btn-label { white-space: nowrap; }
+@media (max-width: 479px) {
+  .header-nav .header-btn { padding: 2px 2px; }
+  .header-nav .header-btn-label { font-size: 0.75rem; }
+}
+@media (max-width: 359px) { .header-nav .header-my { display: none; } }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 
-// The tools a person has because of their role, for the 4th bottom button.
+// The tools a person has because of their role, for My tools (top bar) and My Corner (bottom bar).
 // Admin, Hope Ambassador, organization Head or organizer, group keeper, village keeper.
 // Each tool: { key, label, icon, to }. An empty list means a neighbor with no role.
 export function useMyTools() {
@@ -29,7 +29,7 @@ export function useMyTools() {
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const tools = []
-  if (isAdmin) tools.push({ key: 'admin', label: 'Admin', icon: 'gear', to: '/admin' })
+  if (isAdmin) tools.push({ key: 'admin', label: 'Admin', icon: 'shield', to: '/admin' })
   if (profile?.is_hope_ambassador || isAdmin) tools.push({ key: 'ambassador', label: 'Ambassador', icon: 'star', to: '/ambassador' })
   const runsOrg = (organizations || []).some((o) => o.kind !== 'group' && (o.role === 'admin' || o.role === 'organizer'))
   if (runsOrg) tools.push({ key: 'organizer', label: 'Organizer', icon: 'toolbox', to: '/org-dashboard' })

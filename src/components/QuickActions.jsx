@@ -13,10 +13,10 @@ import Icon from './Icon'
 
 const QUICK_ACTIONS = [
   { key: 'find_help', label: 'Find resources', icon: 'heart-hands', to: '/community/resources', desc: 'Food, housing, safety, and more near you' },
-  { key: 'ask', label: 'Ask for help', icon: 'raise-hand', to: '/ask', desc: 'Ask your neighbors for a hand' },
+  { key: 'ask', label: 'Find Help', icon: 'raise-hand', to: '/ask', desc: 'Ask your neighbors for a hand' },
   { key: 'my_code', label: 'Show my QR', icon: 'phone-add', to: '/my-code', desc: 'Connect with someone in person' },
   { key: 'village', label: 'My village', icon: 'houses', to: '/village', desc: 'Your village and its chat' },
-  { key: 'can_help', label: 'I can help', icon: 'heart', to: '/skillshare', desc: 'See what neighbors near you need' },
+  { key: 'can_help', label: 'Offer Help', icon: 'heart', to: '/skillshare', desc: 'See what neighbors near you need' },
   { key: 'calendar', label: 'Today', icon: 'calendar', to: '/calendar', desc: 'Events coming up' },
   { key: 'messages', label: 'Messages', icon: 'envelope', to: '/messages', desc: 'Your conversations' },
 ]
@@ -40,7 +40,7 @@ export default function QuickActions() {
   const keys = (saved || (established === false ? NEW_DEFAULT : SETTLED_DEFAULT)).filter(byKey)
   const actions = keys.map(byKey)
 
-  // One gentle note once someone is settled in, if their own picks leave out "I can help".
+  // One gentle note once someone is settled in, if their own picks leave out "Offer Help".
   const showNudge = established === true && saved && !saved.includes('can_help') && !profile?.quick_actions_nudged && !editing
 
   async function save(next) {
@@ -134,7 +134,7 @@ export default function QuickActions() {
       </div>
       {showNudge && (
         <div className="qa-nudge" role="region" aria-label="New button idea">
-          <p>You're settled in now. Want an <strong>I can help</strong> button so you can help neighbors too?</p>
+          <p>You're settled in now. Want an <strong>Offer Help</strong> button so you can help neighbors too?</p>
           <div className="qa-edit-buttons">
             <button type="button" className="btn btn-primary" disabled={saving} onClick={() => answerNudge(true)}>Yes, add it</button>
             <button type="button" className="btn btn-outline" disabled={saving} onClick={() => answerNudge(false)}>No thanks</button>
