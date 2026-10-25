@@ -535,3 +535,15 @@ html.simple .vs-room-text b { font-size: 1.15rem; }
 /* Today under the cottage map (Oct 22): a light panel so its cards read like the rest of the app. */
 .vs-panel { background: var(--bg); color: var(--text); border-radius: 16px; padding: 16px; margin: 0 0 16px; text-align: left; scroll-margin-top: calc(var(--header-height) + 12px); }
 .vs-panel h2 { color: var(--text); }
+
+/* Organization public profile (Oct 25): contact, events and resources on top
+   for people who are not members; Ask to join near the bottom. */
+.op-public { display: grid; gap: 12px; padding: 12px 16px 4px; }
+.op-card { display: grid; gap: 8px; background: var(--vs-card, var(--surface-2)); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.op-card h2, .op-join h2 { font-size: 1.15rem; margin: 0; }
+.op-contact { display: grid; gap: 8px; }
+.op-contact .btn, .op-card > .btn { min-height: 44px; }
+.op-join { display: grid; gap: 8px; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--vs-line, rgba(128, 128, 128, 0.35)); }
+@media (min-width: 768px) {
+  .op-public { grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); align-items: start; }
+}
