@@ -828,7 +828,7 @@ export default function CommunityResources() {
               </p>
               {query.trim() && user && (
                 <div style={{ textAlign: 'center', paddingBottom: '1rem' }}>
-                  <Link to="/ask" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', padding: '0 1.25rem' }}>Ask for help instead</Link>
+                  <Link to="/ask" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', padding: '0 1.25rem' }}>Ask neighbors instead</Link>
                 </div>
               )}
             </>

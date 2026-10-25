@@ -32,7 +32,7 @@ export default function SimpleViewPicker() {
     <div className="profile-details" style={{ marginBottom: '1rem' }}>
       <div className="detail-section-header" id="simple-h">Simple view</div>
       <div role="radiogroup" aria-labelledby="simple-h" style={{ display: 'grid', gap: '0.5rem', padding: '0.5rem 1rem 0.25rem' }}>
-        {opt(true, 'Simple', 'Bigger words and buttons. Just ask for help, help others, and messages.')}
+        {opt(true, 'Simple', 'Bigger words and buttons. Just Find Help, Offer Help, and Messages.')}
         {opt(false, 'Everything', 'The full app with villages, the globe, Campfires, and more.')}
       </div>
       <p role="status" style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
