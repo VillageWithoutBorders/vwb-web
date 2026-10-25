@@ -79,7 +79,7 @@ export default function OrgDashboard() {
       supabase.rpc('list_org_members', { p_org: id }),
       supabase.rpc('org_needs_and_offers', { p_org: id }),
       fetchCalendarEvents(),
-      supabase.from('organizations').select('id, name, is_umbrella, affiliate_label, kind, head_title, organizer_title').eq('id', id).maybeSingle(),
+      supabase.from('organizations').select('id, name, is_umbrella, affiliate_label, kind, head_title, organizer_title, is_vwb_home').eq('id', id).maybeSingle(),
       supabase.rpc('org_join_asks_list', { p_org: id }),
       supabase.rpc('my_org_connections', { p_org: id }),
     ])
