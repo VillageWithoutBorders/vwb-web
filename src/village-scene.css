@@ -252,6 +252,12 @@
 .vs-deco-img { display: block; width: calc(clamp(50px, 14.5vw, 78px) * var(--s, 1)); height: auto; filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.18)); }
 .vs-deco-edit { pointer-events: auto; background: none; border: 0; padding: 0; cursor: grab; touch-action: none; min-width: 44px; min-height: 44px; }
 .vs-deco-edit.vs-picked { outline: 3px solid var(--vs-gold); outline-offset: 2px; border-radius: 8px; }
+/* Layers (Oct 27): places and gifts sit at 10. Added pieces go behind (1 to 5) or in front (11 to 14). */
+.vs-el, .vs-gift { z-index: 10; }
+.vs-fade { z-index: 20; }
+.vs-tool-layer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; margin: 0 0 8px; }
+.vs-tool-layer-now { margin: 0; font-size: 0.9rem; font-weight: 700; text-align: center; color: var(--vs-muted); }
+.vs-tool-layer .vs-tool:disabled { opacity: 0.45; cursor: default; }
 .vs-drawing { touch-action: none; cursor: crosshair; }
 .vs-drawing .vs-el { pointer-events: none; }
 .vs-arrange-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 8px; }
