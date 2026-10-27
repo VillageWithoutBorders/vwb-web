@@ -78,7 +78,7 @@ export default function SimpleHome() {
       <div className="sh-buttons" data-tour="simple-buttons">
         <button type="button" className="sh-big sh-big-ask" onClick={() => navigate('/ask?skip=1')}>
           <Icon name="raise-hand" size={44} />
-          <span><b>Find Help</b><small>Tell neighbors what you need</small></span>
+          <span><b>Ask for Help</b><small>Tell neighbors what you need. No shame in asking.</small></span>
         </button>
         <button type="button" className="sh-big" onClick={() => navigate('/community/resources')}>
           <Icon name="heart-hands" size={44} />

@@ -54,7 +54,7 @@ const ALL_STEPS = [
     target: '.header-nav',
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
-    body: 'The top buttons are yours: My World, My Village, My Cottage, My Corner, and Alerts. The bottom buttons are things to do: Find Help, Offer Help, Calendar, and Messages. Tap Show me around to see each part. You can skip any time.',
+    body: 'The top buttons are yours: My World, My Village, My Cottage, My Corner, and Alerts. The bottom buttons are things to do: Ask for Help, Offer Help, Calendar, and Messages. Tap Show me around to see each part. You can skip any time.',
   },
   {
     route: '/world',

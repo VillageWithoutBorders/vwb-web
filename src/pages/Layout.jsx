@@ -82,7 +82,7 @@ export default function Layout() {
       <header className="app-header">
         {/* Oct 25 (Jade): top bar, left to right: My World, My Village, My Cottage,
             My Corner (profile, account, settings), and My Tools (alerts and role tools).
-            The bottom bar is actions: Find Help, Offer Help, Calendar, Messages. */}
+            The bottom bar is actions: Ask for Help, Offer Help, Calendar, Messages. */}
         <nav className="app-header-inner header-nav" aria-label="Top menu">
           {!simple && (<>
           <Link to="/world" className={'header-btn' + (pathname === '/world' ? ' on' : '')} aria-current={pathname === '/world' ? 'page' : undefined} aria-label="My World: your networks on the globe" data-tour="top-home">

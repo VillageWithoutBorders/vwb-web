@@ -728,7 +728,7 @@ export default function ActiveTasks() {
     archived: archivedRequests.length + archivedHelping.length,
   }
   const EMPTY = {
-    requests: ['No open requests', 'When you ask for help, your request waits here until a neighbor says yes.', 'Find Help', '/ask'],
+    requests: ['No open requests', 'When you ask for help, your request waits here until a neighbor says yes.', 'Ask for Help', '/ask'],
     active: ['No tasks in progress', 'When someone takes your request, or you help a neighbor, it shows here.', 'See who needs help', '/skillshare'],
     archived: ['Nothing archived yet', 'Finished tasks move here once you have both said how it went.', null, null],
   }
@@ -748,7 +748,7 @@ export default function ActiveTasks() {
       <HelpSwitch />
       {/* Was a floating button that covered task buttons on phones (Oct 22); now it sits in the page. */}
       <button type="button" className="btn btn-primary btn-full mine-new" onClick={() => navigate(tab === 'offers' ? '/post-offer' : '/ask')}>
-        <span aria-hidden="true">+</span> {tab === 'offers' ? 'Offer something' : 'Find Help'}
+        <span aria-hidden="true">+</span> {tab === 'offers' ? 'Offer something' : 'Ask for Help'}
       </button>
 
       <div className="home-tasks-tabs mine-tabs" role="tablist" aria-label="My help">

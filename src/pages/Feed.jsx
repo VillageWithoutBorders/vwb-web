@@ -585,7 +585,7 @@ export default function Feed() {
                 )
             )}
 
-            {/* No floating button here: Find Help and Offer something sit at the top of this page. */}
+            {/* No floating button here: Ask for Help and Offer something sit at the top of this page. */}
             </div>
         </div>
     )

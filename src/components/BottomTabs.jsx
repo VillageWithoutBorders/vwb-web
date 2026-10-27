@@ -51,7 +51,7 @@ export default function BottomTabs() {
       <div className="bottom-tabs-inner">
         <NavLink to="/ask" className={() => 'tab-item' + (askOn ? ' active' : '')} data-tour="ask">
           <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="raise-hand" size={26} /></span>
-          <span className="tab-label">Find Help</span>
+          <span className="tab-label">Ask for Help</span>
         </NavLink>
         <NavLink to="/skillshare" className={() => 'tab-item' + (offerOn ? ' active' : '')} data-tour="offer">
           <span className="tab-icon tab-icon-pic" aria-hidden="true"><Icon name="heart" size={26} /></span>

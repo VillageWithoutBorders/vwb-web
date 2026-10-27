@@ -54,11 +54,11 @@ export default function HelpDoors() {
         <Link to="/community/resources" className="btn btn-outline btn-full door-all">See all resources</Link>
       </section>
 
-      {/* Door 2: Find Help */}
+      {/* Door 2: Ask for Help */}
       <Link to={simple ? '/ask?skip=1' : '/ask'} className="door door-link">
         <span aria-hidden="true" className="door-icon"><Icon name="raise-hand" size={36} /></span>
         <span className="door-text">
-          <span className="door-link-title">Find Help</span>
+          <span className="door-link-title">Ask for Help</span>
           <span className="door-desc">Ask neighbors for a hand. We show nearby resources first.</span>
         </span>
         <span aria-hidden="true" className="door-arrow">&#8250;</span>
