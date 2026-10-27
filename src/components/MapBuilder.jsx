@@ -122,6 +122,12 @@ export function decorLayer(z) {
   const n = Math.max(LAYER_MIN, Math.min(LAYER_MAX, Math.round(z || 0)))
   return n > 0 ? 10 + n : 5 + n
 }
+// Places and gifts: 10 is the usual. They can step in front (up to 14) or
+// behind other places, and all the way behind the pieces (down to 2).
+export const PLACE_LAYER_MIN = -8
+export function placeLayer(z) {
+  return 10 + Math.max(PLACE_LAYER_MIN, Math.min(LAYER_MAX, Math.round(z || 0)))
+}
 
 export function ToolIcon({ name }) {
   return <svg className="vs-tool-ic" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d={TOOL_PATHS[name]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -273,10 +279,14 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     const cur = pickedDecor ? pickedDecor.s || 1 : placed(spots.find((v) => v.k === picked) || {}).s || 1
     changePicked({ s: Math.min(pickedDecor ? 3 : 1.8, Math.max(0.3, Math.round((cur + by) * 10) / 10)) })
   }
+  function pickedLayer() {
+    if (pickedDecor) return Math.round(pickedDecor.z || 0)
+    return Math.round((picked && layout[picked] && layout[picked].z) || 0)
+  }
   function layerPicked(by) {
-    if (!pickedDecor) return
-    const cur = Math.round(pickedDecor.z || 0)
-    const next = Math.max(LAYER_MIN, Math.min(LAYER_MAX, cur + by))
+    if (!picked) return
+    const cur = pickedLayer()
+    const next = Math.max(pickedDecor ? LAYER_MIN : PLACE_LAYER_MIN, Math.min(LAYER_MAX, cur + by))
     if (next === cur) { setLayoutNote(by > 0 ? 'This piece is already in front of everything.' : 'This piece is already behind everything.'); return }
     changePicked({ z: next })
   }
@@ -506,7 +516,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     arrange, openArrange, closeArrange, tool, setTool, trayOpen, setTrayOpen, trayTab, setTrayTab,
     picked, setPicked, pickTools, setPickTools, panelLow, layoutNote, setLayoutNote, drawing,
     placed, isHidden, hiddenCount, pickedDecor, dragStart, dragMove, dragEnd, roadStart,
-    changePicked, resize, flipPicked, layerPicked, addDecor, toolsHidden, setToolsHidden, removePicked, nudge, pickByKey, namesShowing,
+    changePicked, resize, flipPicked, layerPicked, pickedLayer, addDecor, toolsHidden, setToolsHidden, removePicked, nudge, pickByKey, namesShowing,
     holdStart, holdMove, holdStop, holdClick,
     outerRef, zoom, zoomBy, zoomReset, zoomDown, zoomMove, zoomUp,
   }
@@ -592,7 +602,7 @@ export function NamesToggle({ b, onChange }) {
 // more: what goes at the top of the More tab (start over buttons and a note).
 export function MapToolbar({ b, more }) {
   const { world, layout, spots, tool, setTool, trayOpen, setTrayOpen, trayTab, setTrayTab, picked, setPicked, pickTools,
-    panelLow, layoutNote, setLayoutNote, pickedDecor, isHidden, hiddenCount, resize, flipPicked, layerPicked, removePicked, changePicked,
+    panelLow, layoutNote, setLayoutNote, pickedDecor, isHidden, hiddenCount, resize, flipPicked, layerPicked, pickedLayer, removePicked, changePicked,
     nudge, commit, addDecor, canUndo, undo, closeArrange, toolsHidden, setToolsHidden } = b
   if (!b.arrange) return <div className="vs-arrange" />
   return (
@@ -624,13 +634,11 @@ export function MapToolbar({ b, more }) {
                     ? <button type="button" className="vs-tool" onClick={removePicked}><ToolIcon name="trash" /><span>Remove</span></button>
                     : <button type="button" className="vs-tool" onClick={() => changePicked({ hide: !isHidden(picked) })}><ToolIcon name="eye" /><span>{isHidden(picked) ? 'Show' : 'Hide'}</span></button>}
                 </div>
-                {pickedDecor && (
-                  <div className="vs-tool-layer" role="group" aria-label="In front or behind">
-                    <button type="button" className="vs-tool" disabled={Math.round(pickedDecor.z || 0) <= LAYER_MIN} onClick={() => layerPicked(-1)}><ToolIcon name="back" /><span>Behind</span></button>
-                    <p className="vs-tool-layer-now" role="status">{Math.round(pickedDecor.z || 0) > 0 ? 'In front of places' : 'Behind places'}</p>
-                    <button type="button" className="vs-tool" disabled={Math.round(pickedDecor.z || 0) >= LAYER_MAX} onClick={() => layerPicked(1)}><ToolIcon name="front" /><span>In front</span></button>
-                  </div>
-                )}
+                <div className="vs-tool-layer" role="group" aria-label="In front or behind">
+                  <button type="button" className="vs-tool" disabled={pickedLayer() <= (pickedDecor ? LAYER_MIN : PLACE_LAYER_MIN)} onClick={() => layerPicked(-1)}><ToolIcon name="back" /><span>Behind</span></button>
+                  <p className="vs-tool-layer-now" role="status">{pickedDecor ? (pickedLayer() > 0 ? 'In front of places' : 'Behind places') : pickedLayer() === 0 ? 'Usual spot' : pickedLayer() > 0 ? 'Brought forward' : 'Sent back'}</p>
+                  <button type="button" className="vs-tool" disabled={pickedLayer() >= LAYER_MAX} onClick={() => layerPicked(1)}><ToolIcon name="front" /><span>In front</span></button>
+                </div>
                 <div className="vs-tool-nudge" role="group" aria-label="Move it a little">
                   <button type="button" className="vs-tool vs-tool-sm" aria-label="Move left" onClick={() => nudge(-1, 0)}><ToolIcon name="left" /></button>
                   <button type="button" className="vs-tool vs-tool-sm" aria-label="Move up" onClick={() => nudge(0, -1)}><ToolIcon name="up" /></button>
