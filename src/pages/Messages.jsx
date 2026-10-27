@@ -785,14 +785,14 @@ export default function Messages({ embedded = false }) {
                   disabled={processingOffer === offer.id}
                   onClick={() => acceptOffer(offer)}
                 >
-                  {processingOffer === offer.id ? 'Accepting...' : 'Accept'}
+                  {processingOffer === offer.id ? 'Saving...' : 'Say yes'}
                 </button>
                 <button
                   style={offerBtnDecline}
                   disabled={processingOffer === offer.id}
                   onClick={() => declineOffer(offer)}
                 >
-                  Decline
+                  Not now
                 </button>
               </div>
             </div>

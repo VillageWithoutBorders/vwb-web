@@ -521,7 +521,7 @@ export default function CommunityResources() {
 <textarea
                               value={reviewDrafts[r.id] || ''}
                               onChange={e => setReviewDrafts(prev => ({ ...prev, [r.id]: e.target.value }))}
-                              placeholder="Add an anonymous note about your experience — no name shown, ever"
+                              placeholder="Add a note about how it went. Your name is never shown."
                               aria-label="Your anonymous review"
                               maxLength={500}
                               style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.8125rem', marginBottom: '0.4rem', minHeight: '50px', resize: 'vertical', boxSizing: 'border-box' }}
@@ -651,7 +651,7 @@ export default function CommunityResources() {
             <>
             <h3 className="fh-sheet-h">Who shares it</h3>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-              <button onClick={() => setOrgFilter('all')} aria-pressed={orgFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: orgFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: orgFilter === 'all' ? 'var(--accent)' : 'none', color: orgFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All orgs</button>
+              <button onClick={() => setOrgFilter('all')} aria-pressed={orgFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: orgFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: orgFilter === 'all' ? 'var(--accent)' : 'none', color: orgFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All groups</button>
               {allOrgs.map(o => (
                 <button key={o.id} onClick={() => setOrgFilter(o.id)} aria-pressed={orgFilter === o.id} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: orgFilter === o.id ? 'none' : '1px solid var(--border-strong)', background: orgFilter === o.id ? 'var(--accent)' : 'none', color: orgFilter === o.id ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{o.name}</button>
               ))}
@@ -705,9 +705,9 @@ export default function CommunityResources() {
           </div>
 
           {!canSubmit && (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: '0 0 0.75rem' }}>
               Listings come from local partner groups and the Community Resource Network.{user && <>{' '}
-              <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', textDecoration: 'underline', padding: 0 }}>Want your org involved?</button></>}
+              <button onClick={() => navigate('/start-group')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.95rem', textDecoration: 'underline', padding: 0, minHeight: 44 }}>Want your group listed here?</button></>}
             </p>
           )}
 
@@ -747,7 +747,7 @@ export default function CommunityResources() {
                     <label htmlFor="sub-name" style={labelStyle}>Resource name (required)</label>
                     <input id="sub-name" style={fieldStyle} placeholder="e.g. Ringgold Community Food Pantry" value={subName} onChange={e => setSubName(e.target.value)} maxLength={120} required />
                     <label htmlFor="sub-desc" style={labelStyle}>What do they offer?</label>
-                    <textarea id="sub-desc" style={{ ...fieldStyle, minHeight: '60px', resize: 'vertical' }} placeholder="Who's it for, anything people should know? — e.g. Free groceries every Tuesday, no ID required" value={subDesc} onChange={e => setSubDesc(e.target.value)} maxLength={500} />
+                    <textarea id="sub-desc" style={{ ...fieldStyle, minHeight: '60px', resize: 'vertical' }} placeholder="Who is it for? Anything people should know? Like: Free groceries every Tuesday, no ID needed" value={subDesc} onChange={e => setSubDesc(e.target.value)} maxLength={500} />
                     <label htmlFor="sub-phone" style={labelStyle}>Phone number (optional)</label>
                     <input id="sub-phone" style={fieldStyle} placeholder="e.g. (706) 555-0100" value={subPhone} onChange={e => setSubPhone(e.target.value)} />
                     <label htmlFor="sub-url" style={labelStyle}>Website (optional)</label>

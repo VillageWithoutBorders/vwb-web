@@ -53,21 +53,21 @@ export default function Help() {
             <span className="help-step-num">1</span>
             <div>
               <strong>Find Help</strong>
-              <p>Post what you need. Only your name and general area are shared.</p>
+              <p>Post what you need. Neighbors see your name and town, never your address.</p>
             </div>
           </div>
           <div className="help-step">
             <span className="help-step-num">2</span>
             <div>
-              <strong>Get matched</strong>
-              <p>Hope Ambassadors in your area see the request and reach out.</p>
+              <strong>A neighbor offers</strong>
+              <p>Neighbors near you see your request and can offer to help.</p>
             </div>
           </div>
           <div className="help-step">
             <span className="help-step-num">3</span>
             <div>
-              <strong>Connect directly</strong>
-              <p>We put you in touch. No personal info is stored after the match.</p>
+              <strong>You say yes</strong>
+              <p>You pick who helps. Then you message each other to set a time.</p>
             </div>
           </div>
         </div>

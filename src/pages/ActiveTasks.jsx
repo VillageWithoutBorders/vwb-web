@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import MyOffers from '../components/MyOffers'
 import HelpSwitch from '../components/HelpSwitch'
@@ -55,7 +55,9 @@ export default function ActiveTasks() {
   // "How did it go?" after a task is finished
   const [myFeedback, setMyFeedback] = useState({})
   const [feedbackReady, setFeedbackReady] = useState(false)
-  const [notice, setNotice] = useState('')
+  const location = useLocation()
+  // A note from the page before, like "Your request has been posted." (Oct 27)
+  const [notice, setNotice] = useState(location.state?.message || '')
   // Taking an open request back to the group
   const [narrowing, setNarrowing] = useState(null)
   // "Still need help?" alert opens /tasks?tab=requests&still=ID
@@ -594,6 +596,13 @@ export default function ActiveTasks() {
     if (m.helper_completed && m.requester_completed) return feedbackReady && !myFeedback[m.id]
     return !mine && theirs
   }
+  // No tab in the address: open where your things are (Oct 27). If nothing is in
+  // progress but you have requests waiting for a helper, open Requests.
+  const noTabAsked = !searchParams.get('tab')
+  useEffect(() => {
+    if (loading || !noTabAsked || tab !== 'active') return
+    if (takenRequests.length === 0 && activeHelping.length === 0 && openRequests.length > 0) setTabState('requests')
+  }, [loading]) // eslint-disable-line react-hooks/exhaustive-deps
   const requestsWaiting = openRequests.filter(r => (r.pending || []).length > 0).length
   const activeWaiting = takenRequests.filter(r => r.matches.some(m => waitsOnMe(m, true))).length +
     activeHelping.filter(h => waitsOnMe(h, false)).length
