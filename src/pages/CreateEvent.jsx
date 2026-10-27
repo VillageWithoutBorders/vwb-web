@@ -188,8 +188,8 @@ export default function CreateEvent() {
 
           <section className="ce-card" aria-labelledby="ce-one">
             <h2 id="ce-one" className="ce-h2"><Icon name="raise-hand" /> Just you or one household?</h2>
-            <p>Use Find Help instead. Neighbors near you see it right away.</p>
-            <button type="button" className="btn btn-outline ce-btn" onClick={() => navigate('/ask')}>Find Help</button>
+            <p>Use Ask for Help instead. Neighbors near you see it right away.</p>
+            <button type="button" className="btn btn-outline ce-btn" onClick={() => navigate('/ask')}>Ask for Help</button>
           </section>
 
           <section className="ce-card" aria-labelledby="ce-next">

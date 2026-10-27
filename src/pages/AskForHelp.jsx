@@ -255,7 +255,7 @@ export default function AskForHelp() {
         <div className="ask-page">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0, minWidth: 44, minHeight: 44 }}>&#8592;</button>
-                <h1 style={{ margin: 0 }}>{editId ? 'Edit your request' : 'Find Help'}</h1>
+                <h1 style={{ margin: 0 }}>{editId ? 'Edit your request' : 'Ask for Help'}</h1>
             </div>
             <p className="ask-intro">
                 {forOther
