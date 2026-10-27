@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { loadMyTaskOverview } from '../utils/myTasks'
 import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
-import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, askGoTo, fromSaved, isPlainWorld, mapBody, ScrollCue } from '../components/MapBuilder'
+import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, askGoTo, fromSaved, isPlainWorld, mapBody, ScrollCue, placeLayer } from '../components/MapBuilder'
 import { askConfirm } from '../components/AdminDialog'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
@@ -720,7 +720,7 @@ export default function VillageScene() {
           const gs = placed(GIFT_SPOTS.find((x) => x.k === 'gift-' + g.k))
           if (!arrange && isHidden(gs.k)) return null
           const img = <img className={'vs-gift-img' + (gs.flip ? ' vs-flip' : '')} src={g.src} alt="" width="64" height="64" draggable="false" />
-          const style = { left: gs.x + '%', top: gs.y + '%', '--s': gs.s || 1 }
+          const style = { left: gs.x + '%', top: gs.y + '%', '--s': gs.s || 1, zIndex: placeLayer(gs.z) }
           return arrange
             ? <button key={gs.k} type="button" data-spot={gs.k} className={'vs-gift vs-gift-edit' + (picked === gs.k ? ' vs-picked' : '') + (isHidden(gs.k) ? ' vs-hidden' : '')} style={style}
                 aria-label={gs.label} onPointerDown={(e) => dragStart(e, gs.k)} onClick={(e) => { if (e.detail === 0) pickByKey(gs.k) }}>{img}</button>
@@ -732,7 +732,7 @@ export default function VillageScene() {
           return (
             <button key={s.k} type="button" data-spot={s.k}
               className={'vs-el' + (s.soon || (!cottage && !mine && GATED.includes(s.k)) ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' + (life ? ' vs-fire-' + life.fire_level : '') : '') + (bump === s.k ? ' vs-bump' : '') + (arrange && picked === s.k ? ' vs-picked' : '') + (arrange && isHidden(s.k) ? ' vs-hidden' : '')}
-              style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1) }}
+              style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1), zIndex: placeLayer(s.z) }}
               aria-label={s.label + '. ' + i.sub}
               onPointerDown={(e) => dragStart(e, s.k)}
               onClick={(e) => { if (!arrange) tap(s, true); else if (e.detail === 0) pickByKey(s.k) }}>
