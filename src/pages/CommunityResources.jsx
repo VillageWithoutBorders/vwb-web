@@ -621,7 +621,7 @@ export default function CommunityResources() {
       )}
       {placesEnabled && user && myAreaCount === 0 && (
         <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.95rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem', lineHeight: 1.45 }}>
-          Choose your area to see programs that serve you. <Link to="/settings" style={{ color: 'var(--accent)', fontWeight: 600 }}>Choose your area</Link>
+          Choose your area to see programs that serve you. <Link to="/settings?tab=account" style={{ color: 'var(--accent)', fontWeight: 600 }}>Choose your area</Link>
         </p>
       )}
       {placesEnabled && canVerify && (

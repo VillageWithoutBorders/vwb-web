@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { resetAccountToBase } from '../utils/resetAccount'
@@ -84,6 +84,23 @@ export default function Settings() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [signOutAllError, setSignOutAllError] = useState('')
+
+  // Two tabs (Oct 27, Jade): "Easy to use" (Simple view, text size, light or dark,
+  // the app tour) and "Account and privacy" (everything else). /settings?tab=account
+  // opens the second one, and so do the #two-step and #recovery links.
+  const [params, setParams] = useSearchParams()
+  const [tab, setTab] = useState(() => {
+    const h = window.location.hash
+    return params.get('tab') === 'account' || h === '#two-step' || h === '#recovery' ? 'account' : 'easy'
+  })
+  function pickTab(key) {
+    setTab(key)
+    setParams(key === 'account' ? { tab: 'account' } : {}, { replace: true })
+  }
+  const tabStyle = (on) => ({
+    minHeight: '48px', padding: '0.5rem 0.75rem', borderRadius: '12px', lineHeight: 1.25, border: 'none', cursor: 'pointer',
+    fontSize: '1rem', fontWeight: 700, background: on ? 'var(--accent)' : 'var(--surface-2)', color: on ? 'var(--on-accent)' : 'var(--text-soft)',
+  })
 
   // The Admin page links here (/settings#two-step) when two-step login is off.
   useEffect(() => {
@@ -322,13 +339,30 @@ export default function Settings() {
         <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--accent)' }}>Settings &amp; Privacy</h1>
       </div>
 
-      <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '44px', marginBottom: '1rem' }}>
-        <span aria-hidden="true"><Icon name="compass" /></span> Take the app tour again
-      </button>
+      <div role="tablist" aria-label="Settings" className="hub-tabs" style={{ marginTop: 0, marginBottom: '1rem' }}>
+        <button type="button" role="tab" id="settings-tab-easy" aria-selected={tab === 'easy'} aria-controls="settings-panel" style={tabStyle(tab === 'easy')} onClick={() => pickTab('easy')}>
+          Easy to use
+        </button>
+        <button type="button" role="tab" id="settings-tab-account" aria-selected={tab === 'account'} aria-controls="settings-panel" style={tabStyle(tab === 'account')} onClick={() => pickTab('account')}>
+          Account and privacy
+        </button>
+      </div>
 
-      <SimpleViewPicker />
-      <TextSizePicker />
-      <AppearancePicker />
+      <div role="tabpanel" id="settings-panel" aria-labelledby={'settings-tab-' + tab}>
+      {tab === 'easy' && (
+        <>
+          <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>Make VWB easier to see and use. Changes save right away.</p>
+          <SimpleViewPicker />
+          <TextSizePicker />
+          <AppearancePicker />
+          <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '48px', marginTop: '0.5rem' }}>
+            <span aria-hidden="true"><Icon name="compass" /></span> Take the app tour again
+          </button>
+        </>
+      )}
+
+      {tab === 'account' && (
+      <>
       {placesEnabled && <AreaPicker />}
 
       <div className="profile-details">
@@ -579,6 +613,9 @@ export default function Settings() {
             {resetting ? 'Resetting...' : 'Reset to Neighbor'}
           </button>
         )}
+      </div>
+      </>
+      )}
       </div>
     </div>
   )
