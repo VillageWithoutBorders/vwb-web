@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { getMyLocation } from '../utils/location'
+import { LocationPrompt } from '../components/LocationPrompt'
 import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES, OFFER_ITEMS_GROUP } from '../utils/skillGroups'
 import { useGoBack } from '../components/BackLink'
 
@@ -13,6 +14,7 @@ const labelStyle = { display: 'block', marginBottom: '0.25rem', marginTop: '1rem
 
 export default function PostOffer() {
   const { user, profile, established, organizations } = useAuth()
+  const [, setAreaTick] = useState(0)
   const [searchParams] = useSearchParams()
   const managedOrgs = organizations.filter((o) => o.role === 'admin' || o.role === 'organizer')
   const [postAs, setPostAs] = useState(() => {
@@ -55,6 +57,8 @@ export default function PostOffer() {
     // The area they chose (zip or phone, never a guess). No area, no location.
     const loc = getMyLocation(profile)
     if (loc) { lat = loc.lat; lng = loc.lng }
+    // No area, nobody nearby would ever see it (Oct 27). Ask first.
+    if (!loc) { setSubmitting(false); setError('Add your zip code at the top first, so neighbors near you can see your offer.'); window.scrollTo(0, 0); return }
 
     const { error: insertErr } = await supabase.from('offers').insert({
       user_id: user.id,
@@ -76,7 +80,7 @@ export default function PostOffer() {
       return
     }
 
-    navigate('/skillshare?tab=offers')
+    navigate('/skillshare?tab=offers', { state: { message: 'Your offer is shared. Neighbors near you can see it now.' } })
   }
 
   return (
@@ -89,6 +93,9 @@ export default function PostOffer() {
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
         Let your neighbors know what you have to share. Free meals, supplies, labor, rides, anything helps.
       </p>
+
+      {/* Oct 27: offers are shown by area, so ask for a zip code up front. */}
+      {!getMyLocation(profile) && <LocationPrompt onDone={() => setAreaTick((n) => n + 1)} intro="Add your zip code so neighbors near you can see your offer. We never guess where you are." />}
 
       {established === false && (
         <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE}</p>

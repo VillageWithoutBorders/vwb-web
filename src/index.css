@@ -5120,7 +5120,7 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 /* Touch targets (Oct 14 check at 320px): small controls get a 44px tap area
    without changing how they look. */
 .link-button { min-height: 44px; display: inline-flex; align-items: center; }
-button[aria-label^="Back"], button[aria-label^="Close"], button[aria-label^="Cancel"] { min-width: 44px; min-height: 44px; }
+button[aria-label^="Back"], button[aria-label^="Go back"], button[aria-label^="Close"], button[aria-label^="Cancel"] { min-width: 44px; min-height: 44px; }
 [role="switch"] { position: relative; }
 [role="switch"]::after { content: ""; position: absolute; inset: -11px -4px; }
 .user-name-btn { position: relative; }
@@ -6182,6 +6182,8 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 .feed-empty-icon .vwb-icon { width: 64px; height: 64px; vertical-align: 0; }
 .vm-tap { color: var(--accent); font-weight: 600; }
 .sh-village { margin: 0 0 1rem; }
+.sh-groups { padding: 1rem; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.sh-groups h2 { margin: 0 0 0.1rem; font-size: 1.15rem; color: var(--text-strong); }
 
 /* Back button on every page, from the app frame (Oct 22). A dark pill, so it reads on light pages and on the maps. */
 .app-back-row { padding: 8px 12px 0; }
@@ -6231,3 +6233,41 @@ html.vv-zoomed .app-header { transform-origin: 0 0; transform: translate(var(--v
 html.vv-zoomed .bottom-tabs { transform-origin: 0 100%; transform: translate(var(--vv-x, 0px), var(--vv-bottom, 0px)) scale(var(--vv-s, 1)); }
 /* A pinch that starts on a bar does not zoom the page. Taps and scrolling still work. */
 .app-header, .bottom-tabs { touch-action: pan-x pan-y; }
+
+/* ---------- Simple view, bigger and calmer (Oct 27, Jade) ----------
+   Nothing smaller than about 17px, and top bar words people can read. */
+html.simple .header-nav .header-btn-label { font-size: 0.85rem !important; }
+html.simple .feed-card-time, html.simple .urgency-badge, html.simple .alerts-popout-time,
+html.simple .btn-sm, html.simple small, html.simple .cal-sub, html.simple .hub-note { font-size: 0.9rem; }
+html.simple .alerts-popout-time { opacity: 1; }
+html.simple .btn-sm { min-height: 48px; }
+/* Text size (Settings > Text size). Bigger on top of Simple view, or on its own. */
+html.text-large { font-size: 125%; }
+html.text-larger { font-size: 140%; --tab-height: 84px; }
+.corner-item-text { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.4rem 0; }
+.corner-item-text small { color: var(--text-secondary); font-size: 0.9rem; }
+.corner-settings { margin: 0 0 1rem; min-height: 64px; border: 2px solid var(--accent); border-radius: 14px; background: var(--surface); font-weight: 700; font-size: 1.1rem; }
+.corner-settings .corner-arrow { margin-left: auto; }
+.sh-settings { margin-top: 0; }
+.sh-done { display: flex; align-items: center; gap: 0.75rem; padding: 0.9rem 1rem; border: 2px solid var(--accent); border-radius: 16px; background: var(--green-light); color: var(--text-strong); font-size: 1.05rem; line-height: 1.4; }
+.sh-done > span { flex: 1; min-width: 0; }
+.sh-done-x { flex: none; min-width: 64px; min-height: 48px; border-radius: 12px; border: 2px solid var(--accent); background: var(--surface); color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }
+.sh-done-x:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ---------- Easier for everyone (Oct 27, Jade): both views ----------
+   "The app is a tool to use, not a new invention to learn." Bigger small words,
+   44px taps, a visible focus ring on the message box, no iOS zoom when typing. */
+.tab-label { font-size: 0.875rem; }
+@media (max-width: 479px) { .header-nav .header-btn-label { font-size: 0.8rem; } }
+@media (max-width: 359px) { .header-nav .header-btn-label { font-size: 0.75rem; } }
+.field-hint, .urgency-badge, .btn-sm { font-size: 0.9rem; }
+.btn-sm { min-height: 44px; }
+.convo-input { font-size: 1rem; }
+.convo-input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.convo-back { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.toggle-switch { position: relative; }
+.toggle-switch::after { content: ""; position: absolute; inset: -11px -4px; }
+.ev-wait { margin: 0 0 1rem; padding: 0.9rem 1rem; border: 2px solid var(--info); border-radius: 12px; background: var(--info-bg); color: var(--text-strong); line-height: 1.45; font-size: 1rem; }
+.ev-wait p { margin: 0 0 0.6rem; }
+.ev-wait p:last-child { margin: 0; }
+.ev-wait .btn { min-height: 48px; }

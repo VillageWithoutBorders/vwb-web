@@ -55,7 +55,7 @@ export default function HelpDoors() {
       </section>
 
       {/* Door 2: Find Help */}
-      <Link to="/ask" className="door door-link">
+      <Link to={simple ? '/ask?skip=1' : '/ask'} className="door door-link">
         <span aria-hidden="true" className="door-icon"><Icon name="raise-hand" size={36} /></span>
         <span className="door-text">
           <span className="door-link-title">Find Help</span>
@@ -69,7 +69,7 @@ export default function HelpDoors() {
         <span aria-hidden="true" className="door-icon"><Icon name="heart" size={36} /></span>
         <span className="door-text">
           <span className="door-link-title">Offer Help</span>
-          <span className="door-desc">Opens SkillShare: see what neighbors near you need.</span>
+          <span className="door-desc">See what neighbors near you need.</span>
         </span>
         <span aria-hidden="true" className="door-arrow">&#8250;</span>
       </Link>

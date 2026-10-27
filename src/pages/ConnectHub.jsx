@@ -35,7 +35,7 @@ export default function ConnectHub() {
   // Simple view: just private messages and Cottage Chats.
   const tabs = simple ? [
     { key: 'messages', label: 'Private messages', badge: unreadCount },
-    { key: 'cottage', label: 'Cottage Chats' },
+    { key: 'cottage', label: 'Group chats' },
   ] : [
     { key: 'messages', label: 'Messages', badge: unreadCount },
     { key: 'villages', label: 'Village Square', badge: villageUnread },

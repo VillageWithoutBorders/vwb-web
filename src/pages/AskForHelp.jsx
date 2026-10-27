@@ -9,6 +9,7 @@ import { getMyLocation, lookupZip } from '../utils/location'
 import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
 import { useGoBack } from '../components/BackLink'
+import { isSimpleView } from '../utils/simpleView'
 
 // Each choice also sets when the request closes on its own (set by the database):
 // now = 6 hours, today = midnight Eastern (at least 3 hours), this_week = 7 days.
@@ -194,7 +195,7 @@ export default function AskForHelp() {
                 setError(editError.message && editError.message.length < 140 ? editError.message : 'Something went wrong. Please try again.')
                 return
             }
-            navigate('/tasks')
+            navigate('/tasks?tab=requests', { state: { message: 'Your request is updated.' } })
             return
         }
 
@@ -240,11 +241,12 @@ export default function AskForHelp() {
             return
         }
 
-        navigate('/skillshare', { state: { message: forOther ? 'Your request for ' + forName.trim() + ' has been posted. Helpers will message you.' : audience === 'everyone' ? 'Your request has been posted.' : 'Your request is posted. Your group can see it now. Everyone nearby sees it after your chosen time, or when you open it from Tasks.' } })
+        // Simple view goes back to Home, where the new request shows under Waiting on you (Oct 27).
+        navigate(isSimpleView() ? '/' : '/tasks?tab=requests', { state: { message: forOther ? 'Your request for ' + forName.trim() + ' has been posted. Helpers will message you.' : audience === 'everyone' ? 'Your request has been posted.' : 'Your request is posted. Your group can see it now. Everyone nearby sees it after your chosen time, or when you open it from Tasks.' } })
     }
 
     if (!checkedResources) {
-        return <NearbyResourcesFirst profile={profile} onContinue={(cat) => { setFromCat(cat || ''); setCheckedResources(true) }} />
+        return <NearbyResourcesFirst profile={profile} onContinue={(cat) => { setFromCat(cat || ''); setCheckedResources(true); window.scrollTo(0, 0) }} />
     }
 
     return (
@@ -499,7 +501,7 @@ export default function AskForHelp() {
                     <button
                         type="button"
                         className="btn btn-outline"
-                        onClick={() => navigate('/skillshare')}
+                        onClick={() => goBack('/')}
                     >
                         Cancel
                     </button>

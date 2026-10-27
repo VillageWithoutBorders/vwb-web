@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import VillageRiskDialog from '../components/VillageRiskDialog'
 import VillageGuestInvites from '../components/VillageGuestInvites'
 import BackLink from '../components/BackLink'
+import { isSimpleView } from '../utils/simpleView'
 
 // Join or start a village. Oct 22: the list of villages lives on the Village
 // Network page (/villages), the list twin of the globe. This page is the join
@@ -223,10 +224,11 @@ export default function FindVillage() {
 
   return (
     <div className="cal-page hub-page">
-      <BackLink fallback="/village-square" fallbackLabel="Village Square" />
+      <BackLink fallback={isSimpleView() ? '/' : '/village-square'} fallbackLabel={isSimpleView() ? 'Home' : 'Village Square'} />
       <h1 className="hub-org-name">Join or start a village</h1>
       <p className="cal-sub">A village chat is for neighbors in the zip codes it covers. Anyone with an account can join a village that has their zip code. You can join more than one, especially where villages overlap. Any neighbor can start one.</p>
-      <Link to="/world" className="btn btn-primary btn-full" style={{ minHeight: '48px', margin: '0 0 0.75rem' }}>See villages near you</Link>
+      {/* Simple view (Oct 27): no globe. The villages for your zip code are listed below. */}
+      {!isSimpleView() && <Link to="/world" className="btn btn-primary btn-full" style={{ minHeight: '48px', margin: '0 0 0.75rem' }}>See villages near you</Link>}
 
       <VillageGuestInvites />
 

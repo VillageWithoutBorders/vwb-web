@@ -7,6 +7,7 @@ import { useCampfireIds } from '../hooks/useCampfireIds'
 import { useSidechatParents } from '../hooks/useSidechatParents'
 import Icon from '../components/Icon'
 import { tell } from '../components/AdminDialog'
+import { isSimpleView } from '../utils/simpleView'
 
 // Groups: private circles anyone can start. No roles, no one in charge.
 // Every group has its own board (its own Campfire), end-to-end encrypted.
@@ -143,7 +144,9 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
       <div className="groups-head">
         <div>
           {!embedded && <h1>{show === 'campfires' ? 'Your Campfires' : show === 'cottage' ? 'Your Cottage Chats' : 'Your group chats'}</h1>}
-          <p className="groups-sub"><Icon name="cottage" /> Cottage Chat: take a seat, let it out. You're safe here. <Icon name="campfire" /> Campfire: gather round and let your voices be heard.</p>
+          {isSimpleView()
+            ? <p className="groups-sub">Chats with a few people you chose. Only the people in a chat can read it.</p>
+            : <p className="groups-sub"><Icon name="cottage" /> Cottage Chat: take a seat, let it out. You're safe here. <Icon name="campfire" /> Campfire: gather round and let your voices be heard.</p>}
         </div>
       </div>
 
@@ -151,7 +154,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
         <p className="groups-sub">Campfires start in a village or a group. Open your village map and tap Campfires.</p>
       ) : !showStart ? (
         established === false ? (
-          <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE} A member can still invite you to their group.</p>
+          <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE} A member can still invite you to their Cottage Chat.</p>
         ) : <button type="button" className="btn btn-primary btn-full groups-start-btn" onClick={() => setShowStart(true)}>
           + Start a Cottage Chat
         </button>

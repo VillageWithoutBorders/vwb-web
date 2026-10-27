@@ -20,6 +20,7 @@ import '../village-scene.css'
 import Icon from '../components/Icon'
 import { orgWords } from '../utils/roleWords'
 import { askConfirm } from '../components/AdminDialog'
+import { useSimpleView } from '../utils/simpleView'
 
 // The Organization page: one organization as a little world, the same way a
 // village page works. Every element on the hills opens its part. Members-only
@@ -45,6 +46,7 @@ export default function OrgPage() {
   const [params] = useSearchParams()
   const isNew = params.get('new') === '1'
   const { user, profile, refreshProfile, organizations } = useAuth()
+  const simple = useSimpleView()
 
   const [org, setOrg] = useState(null)
   const [place, setPlace] = useState('')
@@ -516,6 +518,22 @@ export default function OrgPage() {
     await loadOrg()
   }
 
+  // Simple view: the few places most people need, in this order. Leaders see their tools first.
+  const simpleMain = !isMember ? ['involved']
+    : isGroup ? ['tools', 'ready', 'news', 'fires', 'events', 'members']
+    : ['tools', 'news', 'fires', 'events', 'needs', 'members']
+  function roomRow(s) {
+    const i = info(s.k)
+    const lock = locked(s)
+    return (
+      <button key={s.k} type="button" className={'vs-room' + (s.soon || lock ? ' vs-soon' : '')} onClick={() => tap(s)}>
+        <span className="vs-room-ic" aria-hidden="true"><SpotIcon spot={s} size={40} /></span>
+        <span className="vs-room-text"><b>{s.label}{lock && <span aria-hidden="true"> <Icon name="lock" /></span>}</b><small>{i.sub}</small></span>
+        <span className="vs-go" aria-hidden="true">&#8250;</span>
+      </button>
+    )
+  }
+
   if (loading) return <div className="vs-page"><p className="vs-loading" role="status">Loading...</p></div>
   if (missing || !org) {
     return <div className="vs-page">
@@ -548,7 +566,7 @@ export default function OrgPage() {
       {!isMember && <OrgPublicTop org={org} place={place} contactEmail={contactEmail} events={events} resources={resources} kind={KIND} onMore={(k) => openSheet({ k })} />}
 
       {/* Oct 25 (Jade): Customize drawer: names, zoom, and arranging, folded away. */}
-      {!arrange && (
+      {!arrange && !simple && (
         <details className="vs-customize">
           <summary><span className="vs-customize-ic" aria-hidden="true"><ToolIcon name="move" /></span><span className="vs-customize-word">Customize</span><span className="vs-customize-chev" aria-hidden="true">&#9662;</span></summary>
           <div className="vs-customize-body">
@@ -579,7 +597,7 @@ export default function OrgPage() {
         </details>
       )}
 
-      <div {...sceneProps(b, 'vs-scene vs-scene-path', user && isMember ? holdToArrange : null)}>
+      {!simple && <div {...sceneProps(b, 'vs-scene vs-scene-path', user && isMember ? holdToArrange : null)}>
        <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(b.world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
@@ -601,9 +619,9 @@ export default function OrgPage() {
         })}
        </div>
         <div className="vs-fade" />
-      </div>
+      </div>}
       {arrange && <NamesToggle b={b} onChange={user ? saveLabels : null} />}
-      <ScrollCue b={b} />
+      {!simple && <ScrollCue b={b} />}
 
       <p className="vs-hint">{arrange ? (arrangeFor === 'everyone' ? 'You are setting the default look for ' + org.name + '. Personal views stay as they are. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : 'Tap anything to go there.'}</p>
 
@@ -628,19 +646,15 @@ export default function OrgPage() {
       <div className="vs-body">
         {isMember && general && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/groups/' + general.id)}><Icon name="campfire" /> Open the general chat</button>}
         <h2 className="vs-pick-h">Or pick from the list</h2>
-        <div className="vs-list">
-          {spots.map((s) => {
-            const i = info(s.k)
-            const lock = locked(s)
-            return (
-              <button key={s.k} type="button" className={'vs-room' + (s.soon || lock ? ' vs-soon' : '')} onClick={() => tap(s)}>
-                <span className="vs-room-ic" aria-hidden="true"><SpotIcon spot={s} size={40} /></span>
-                <span className="vs-room-text"><b>{s.label}{lock && <span aria-hidden="true"> <Icon name="lock" /></span>}</b><small>{i.sub}</small></span>
-                <span className="vs-go" aria-hidden="true">&#8250;</span>
-              </button>
-            )
-          })}
-        </div>
+        {/* Simple view (Oct 27): the main things first, the rest folded under More. */}
+        {simple && <div className="vs-list">{spots.filter((s) => simpleMain.includes(s.k)).sort((a, b) => simpleMain.indexOf(a.k) - simpleMain.indexOf(b.k)).map(roomRow)}</div>}
+        {simple && spots.some((s) => !simpleMain.includes(s.k)) && (
+          <details className="op-simple-more">
+            <summary>More about {org.name}</summary>
+            <div className="vs-list">{spots.filter((s) => !simpleMain.includes(s.k)).map(roomRow)}</div>
+          </details>
+        )}
+        {!simple && <div className="vs-list">{spots.map(roomRow)}</div>}
 
         {!isMember && (
           <section className="op-join" aria-labelledby="op-join-h">
@@ -650,9 +664,9 @@ export default function OrgPage() {
           </section>
         )}
 
-        {canManage && <>
-          <OrgSceneEditor org={org} spots={SPOTS.filter((s) => !s.organizers)} isGroup={isGroup} onSaved={loadOrg} />
-          <h2>{W.settings}</h2>
+        {canManage && <SimpleFold on={simple} label={W.settings}>
+          {!simple && <OrgSceneEditor org={org} spots={SPOTS.filter((s) => !s.organizers)} isGroup={isGroup} onSaved={loadOrg} />}
+          {!simple && <h2>{W.settings}</h2>}
           <section className="cal-box" aria-labelledby="org-home">
             <h3 id="org-home">Home area</h3>
             <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
@@ -727,7 +741,7 @@ export default function OrgPage() {
               {emailNote && <p className="hub-note" role="status">{emailNote}</p>}
             </section>
           )}
-        </>}
+        </SimpleFold>}
       </div>
 
       {sheet && (
@@ -789,5 +803,16 @@ function OrgPublicTop({ org, place, contactEmail, events, resources, kind, onMor
         {resources.length > shared.length && <button type="button" className="btn btn-outline btn-full" onClick={() => onMore('share')}>See all {resources.length} resources</button>}
       </section>
     </div>
+  )
+}
+
+// Simple view folds the leader settings away under one plain button (Oct 27).
+function SimpleFold({ on, label, children }) {
+  if (!on) return <>{children}</>
+  return (
+    <details className="op-simple-more">
+      <summary>{label}</summary>
+      {children}
+    </details>
   )
 }
