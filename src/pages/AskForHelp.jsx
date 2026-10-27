@@ -17,7 +17,7 @@ import { isSimpleView } from '../utils/simpleView'
 // 'flexible' still exists in the database for old requests, but is not offered.
 const URGENCY_OPTIONS = [
     { value: 'now', label: 'Right now', desc: 'Stays open 6 hours' },
-    { value: 'today', label: 'Today', desc: 'Stays open until midnight, at least 3 hours' },
+    { value: 'today', label: 'Today', desc: 'Stays open until midnight. Late at night, it stays open 3 hours.' },
     { value: 'this_week', label: 'This week', desc: 'Stays open 7 days' },
 ]
 
