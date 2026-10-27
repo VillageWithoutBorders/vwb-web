@@ -674,3 +674,78 @@ html.simple .vs-sheet { border-top-color: var(--accent); }
 html.simple .vs-list { grid-template-columns: 1fr !important; }
 /* Outline buttons on map pages look like buttons, not plain words (Oct 27). */
 .vs-page .btn-outline.vs-big { border: 2px solid var(--vs-teal); color: var(--vs-ink); display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* ---------- "More below" is quiet now (Oct 27, Jade) ----------
+   No box, just the words and a gently bobbing arrow. Still a 48px tap. */
+.vs-scroll-cue { background: none; border: 0; color: var(--vs-muted, #cfd8cf); font-size: 0.95rem; font-weight: 600; gap: 6px; }
+.vs-scroll-cue-arrow { font-size: 1.6rem; color: var(--vs-gold); }
+.vs-scroll-cue:hover { color: var(--vs-ink, #fff); }
+
+/* ---------- Arranging fills the screen (Oct 27, Jade) ----------
+   The map covers everything between the top bar and the bottom bar, at every size.
+   The tools are a rail on the right side that slides out of the way with
+   Hide, and comes back with Tools. Tapping a piece brings the tools back. */
+.vs-page-path:has(.vs-arrange-on) { padding-right: 0; padding-bottom: 16px; }
+.vs-page-path:has(.vs-arrange-on) > .vs-scene-path {
+  position: fixed; z-index: 30; left: 0; right: 0; top: var(--header-height);
+  bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px));
+  width: auto; height: auto; margin: 0; border-radius: 0; box-shadow: none;
+  aspect-ratio: auto; container-type: size; background: #1d3330;
+}
+/* Phones and tablets: the art covers the screen. Computers: the whole map shows, centered. */
+.vs-page-path:has(.vs-arrange-on) > .vs-scene-path > .vs-zoom {
+  --vs-lw: max(100cqw, 66.667cqh);
+  inset: auto; width: var(--vs-lw); height: calc(var(--vs-lw) * 1.5);
+  left: calc((100cqw - var(--vs-lw)) / 2); top: calc((100cqh - var(--vs-lw) * 1.5) / 2);
+}
+@media (min-width: 1024px) {
+  .vs-page-path:has(.vs-arrange-on) > .vs-scene-path > .vs-zoom { --vs-lw: min(100cqw, 66.667cqh); }
+}
+/* Zoom and name tag buttons float on the map, bottom left. */
+.vs-page-path:has(.vs-arrange-on) > .vs-map-under {
+  position: fixed; z-index: 35; left: 8px; top: auto; right: auto; width: auto; margin: 0;
+  bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px) + 8px);
+  justify-content: flex-start;
+}
+
+/* The tool rail, the same on every screen size. */
+.vs-toolbar {
+  position: fixed; z-index: 40; top: calc(var(--header-height) + 8px);
+  bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px) + 8px);
+  left: auto; right: 0; width: 72px; max-width: none; max-height: none; margin: 0; padding: 0;
+  display: flex; flex-direction: row; align-items: flex-start; gap: 6px; overflow: visible;
+  background: none; border: 0; border-radius: 0; box-shadow: none; pointer-events: none;
+}
+.vs-toolbar > * { pointer-events: auto; }
+.vs-toolbar-wide { width: calc(78px + min(280px, 100vw - 120px)); }
+.vs-toolpanel {
+  display: none; flex: 1 1 auto; min-width: 0; max-height: 100%; box-sizing: border-box; padding: 8px;
+  overflow-y: auto; overscroll-behavior: contain;
+  background: rgba(20, 44, 43, 0.97); border: 2px solid var(--vs-gold); border-radius: 16px;
+  box-shadow: -6px 6px 20px rgba(0, 0, 0, 0.35);
+}
+.vs-toolbar-wide .vs-toolpanel { display: block; }
+.vs-tool-main {
+  order: 0; flex: none; width: 72px; max-height: 100%; box-sizing: border-box; padding: 6px; margin: 0;
+  grid-template-columns: 1fr; align-content: start; gap: 6px; overflow-y: auto; overscroll-behavior: contain;
+  background: rgba(20, 44, 43, 0.97); border-left: 2px solid var(--vs-gold); border-radius: 16px 0 0 16px;
+  box-shadow: -6px 0 20px rgba(0, 0, 0, 0.35);
+}
+.vs-toolbar-low .vs-toolpanel { align-self: flex-end; }
+
+/* Hide and Tools: a tab on the rail's left edge. Hidden, the rail slides off
+   the screen and only the tab stays. */
+.vs-tools-toggle {
+  position: absolute; right: 100%; bottom: 0; margin-right: 4px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-width: 48px; min-height: 56px; padding: 4px; box-sizing: border-box;
+  border-radius: 12px; border: 2px solid var(--vs-gold); background: rgba(20, 44, 43, 0.95); color: var(--vs-ink, #fff);
+  font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer;
+}
+.vs-tools-toggle:focus-visible { outline: 3px solid var(--vs-focus, #fff); outline-offset: 2px; }
+.vs-toolbar-wide .vs-tools-toggle { display: none; }
+.vs-toolbar-hidden { transform: translateX(100%); }
+.vs-toolbar-hidden .vs-tools-toggle { display: flex; }
+@media (prefers-reduced-motion: no-preference) {
+  .vs-toolbar { transition: transform 0.2s ease, width 0.2s ease; }
+}
