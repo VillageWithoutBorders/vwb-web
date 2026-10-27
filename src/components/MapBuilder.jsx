@@ -111,7 +111,18 @@ const TOOL_PATHS = {
   up: 'M6 15l6-6 6 6', down: 'M6 9l6 6 6-6', left: 'M15 6l-6 6 6 6', right: 'M9 6l6 6-6 6',
   close: 'M6 6l12 12M18 6L6 18',
   tag: 'M3 12V4h8l10 10-8 8L3 12zM7.5 7.5h.01',
+  front: 'M8 8h12v12H8zM4 16V4h12', back: 'M4 4h12v12H4zM20 8v12H8',
 }
+// Layers for added pieces (Oct 27). d.z: -4 to -1 behind the usual,
+// 0 the usual (behind the places), 1 to 4 in front of the places.
+// Places sit at z-index 10, so pieces land at 1 to 5 or 11 to 14.
+export const LAYER_MIN = -4
+export const LAYER_MAX = 4
+export function decorLayer(z) {
+  const n = Math.max(LAYER_MIN, Math.min(LAYER_MAX, Math.round(z || 0)))
+  return n > 0 ? 10 + n : 5 + n
+}
+
 export function ToolIcon({ name }) {
   return <svg className="vs-tool-ic" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d={TOOL_PATHS[name]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
 }
@@ -163,6 +174,8 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
   const [picked, setPicked] = useState(null) // a place key, or 'd:' + decor id
   // The picked piece's tools open on a tap, not while you drag it (Jade, Oct 22).
   const [pickTools, setPickTools] = useState(false)
+  // Oct 27: while arranging, the map fills the screen and the tools slide in and out.
+  const [toolsHidden, setToolsHidden] = useState(false)
   // Phones: when the picked piece is high on the screen, the tool panel drops to the bottom.
   const [panelLow, setPanelLow] = useState(false)
   const [layoutNote, setLayoutNote] = useState('')
@@ -260,6 +273,13 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     const cur = pickedDecor ? pickedDecor.s || 1 : placed(spots.find((v) => v.k === picked) || {}).s || 1
     changePicked({ s: Math.min(pickedDecor ? 3 : 1.8, Math.max(0.3, Math.round((cur + by) * 10) / 10)) })
   }
+  function layerPicked(by) {
+    if (!pickedDecor) return
+    const cur = Math.round(pickedDecor.z || 0)
+    const next = Math.max(LAYER_MIN, Math.min(LAYER_MAX, cur + by))
+    if (next === cur) { setLayoutNote(by > 0 ? 'This piece is already in front of everything.' : 'This piece is already behind everything.'); return }
+    changePicked({ z: next })
+  }
   function flipPicked() {
     if (!picked) return
     changePicked({ flip: !(pickedDecor ? pickedDecor.flip : layout[picked] && layout[picked].flip) })
@@ -288,7 +308,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     changePicked({ x: round1(Math.min(lim[1], Math.max(lim[0], cur.x + dx))), y: round1(Math.min(lim[1], Math.max(lim[0], cur.y + dy))) })
   }
   // Keyboard: Enter on a place or piece while arranging picks it and opens its tools.
-  function pickByKey(key) { if (tool === 'move') { setPicked(key); setPickTools(true) } }
+  function pickByKey(key) { if (tool === 'move') { setPicked(key); setPickTools(true); setToolsHidden(false) } }
   useEffect(() => {
     if (!arrange || !picked || !sceneRef.current) return
     const t = setTimeout(() => {
@@ -476,7 +496,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     if (n === 0) panRef.current = null
   }
 
-  function closeArrange() { setArrange(false); setPicked(null); setTool('move'); setTrayOpen(false) }
+  function closeArrange() { setArrange(false); setPicked(null); setTool('move'); setTrayOpen(false); setToolsHidden(false) }
   // Do the name tags show right now (without pointing at a place)?
   const [canHover] = useState(() => { try { return window.matchMedia('(hover: hover) and (pointer: fine)').matches } catch { return false } })
   const namesShowing = world.labels === 'show' || (world.labels !== 'hide' && !canHover)
@@ -486,7 +506,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     arrange, openArrange, closeArrange, tool, setTool, trayOpen, setTrayOpen, trayTab, setTrayTab,
     picked, setPicked, pickTools, setPickTools, panelLow, layoutNote, setLayoutNote, drawing,
     placed, isHidden, hiddenCount, pickedDecor, dragStart, dragMove, dragEnd, roadStart,
-    changePicked, resize, flipPicked, addDecor, removePicked, nudge, pickByKey, namesShowing,
+    changePicked, resize, flipPicked, layerPicked, addDecor, toolsHidden, setToolsHidden, removePicked, nudge, pickByKey, namesShowing,
     holdStart, holdMove, holdStop, holdClick,
     outerRef, zoom, zoomBy, zoomReset, zoomDown, zoomMove, zoomUp,
   }
@@ -532,7 +552,7 @@ export function MapLayers({ b }) {
     {world.decor.slice().sort((a, c) => a.y - c.y).map((d) => {
       const piece = DECOR_PIECES.find((p) => p.k === d.k)
       if (!piece) return null
-      const style = { left: d.x + '%', top: d.y + '%', '--s': d.s || 1 }
+      const style = { left: d.x + '%', top: d.y + '%', '--s': d.s || 1, zIndex: decorLayer(d.z) }
       const img = <img className={'vs-deco-img' + (d.flip ? ' vs-flip' : '')} src={piece.src} alt="" width="96" height="96" draggable="false" />
       return arrange && tool === 'move'
         ? <button key={d.id} type="button" className={'vs-deco vs-deco-edit' + (picked === 'd:' + d.id ? ' vs-picked' : '')} style={style} aria-label={piece.label} onPointerDown={(e) => dragStart(e, 'd:' + d.id)} onClick={(e) => { if (e.detail === 0) pickByKey('d:' + d.id) }}>{img}</button>
@@ -572,13 +592,16 @@ export function NamesToggle({ b, onChange }) {
 // more: what goes at the top of the More tab (start over buttons and a note).
 export function MapToolbar({ b, more }) {
   const { world, layout, spots, tool, setTool, trayOpen, setTrayOpen, trayTab, setTrayTab, picked, setPicked, pickTools,
-    panelLow, layoutNote, setLayoutNote, pickedDecor, isHidden, hiddenCount, resize, flipPicked, removePicked, changePicked,
-    nudge, commit, addDecor, canUndo, undo, closeArrange } = b
+    panelLow, layoutNote, setLayoutNote, pickedDecor, isHidden, hiddenCount, resize, flipPicked, layerPicked, removePicked, changePicked,
+    nudge, commit, addDecor, canUndo, undo, closeArrange, toolsHidden, setToolsHidden } = b
   if (!b.arrange) return <div className="vs-arrange" />
   return (
     <div className="vs-arrange vs-arrange-on">
-      <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked && pickTools) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + ((panelLow && picked && !trayOpen) || tool !== 'move' ? ' vs-toolbar-low' : '') + (tool !== 'move' ? ' vs-toolbar-draw' : '')} role="region" aria-label="Arrange and build tools">
-        <div className="vs-toolpanel">
+      <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked && pickTools) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + ((panelLow && picked && !trayOpen) || tool !== 'move' ? ' vs-toolbar-low' : '') + (tool !== 'move' ? ' vs-toolbar-draw' : '') + (toolsHidden ? ' vs-toolbar-hidden' : '')} role="region" aria-label="Arrange and build tools">
+        <button type="button" className="vs-tools-toggle" aria-expanded={!toolsHidden} onClick={() => setToolsHidden(!toolsHidden)}>
+          <ToolIcon name={toolsHidden ? 'left' : 'right'} /><span>{toolsHidden ? 'Tools' : 'Hide'}</span>
+        </button>
+        <div className="vs-toolpanel" inert={toolsHidden}>
         {trayOpen && (
           <button type="button" className="vs-drawer-close" onClick={() => { setTrayOpen(false); setPicked(null) }}>
             <ToolIcon name="right" /><span>Close Add</span>
@@ -601,6 +624,13 @@ export function MapToolbar({ b, more }) {
                     ? <button type="button" className="vs-tool" onClick={removePicked}><ToolIcon name="trash" /><span>Remove</span></button>
                     : <button type="button" className="vs-tool" onClick={() => changePicked({ hide: !isHidden(picked) })}><ToolIcon name="eye" /><span>{isHidden(picked) ? 'Show' : 'Hide'}</span></button>}
                 </div>
+                {pickedDecor && (
+                  <div className="vs-tool-layer" role="group" aria-label="In front or behind">
+                    <button type="button" className="vs-tool" disabled={Math.round(pickedDecor.z || 0) <= LAYER_MIN} onClick={() => layerPicked(-1)}><ToolIcon name="back" /><span>Behind</span></button>
+                    <p className="vs-tool-layer-now" role="status">{Math.round(pickedDecor.z || 0) > 0 ? 'In front of places' : 'Behind places'}</p>
+                    <button type="button" className="vs-tool" disabled={Math.round(pickedDecor.z || 0) >= LAYER_MAX} onClick={() => layerPicked(1)}><ToolIcon name="front" /><span>In front</span></button>
+                  </div>
+                )}
                 <div className="vs-tool-nudge" role="group" aria-label="Move it a little">
                   <button type="button" className="vs-tool vs-tool-sm" aria-label="Move left" onClick={() => nudge(-1, 0)}><ToolIcon name="left" /></button>
                   <button type="button" className="vs-tool vs-tool-sm" aria-label="Move up" onClick={() => nudge(0, -1)}><ToolIcon name="up" /></button>
@@ -676,7 +706,7 @@ export function MapToolbar({ b, more }) {
             )}
         </div>
 
-        <div className="vs-tool-main" role="group" aria-label="What to do">
+        <div className="vs-tool-main" role="group" aria-label="What to do" inert={toolsHidden}>
           <button type="button" className={'vs-tool' + (tool === 'move' && !trayOpen ? ' on' : '')} aria-pressed={tool === 'move' && !trayOpen} onClick={() => { setTool('move'); setTrayOpen(false) }}><ToolIcon name="move" /><span>Move</span></button>
           <button type="button" className={'vs-tool' + (trayOpen ? ' on' : '')} aria-pressed={trayOpen} aria-expanded={trayOpen} onClick={() => { setTrayOpen(!trayOpen); setTool('move') }}><ToolIcon name="add" /><span>Add</span></button>
           <button type="button" className={'vs-tool' + (tool === 'road' ? ' on' : '')} aria-pressed={tool === 'road'} onClick={() => { setTool('road'); setPicked(null); setTrayOpen(false) }}><ToolIcon name="road" /><span>Road</span></button>
