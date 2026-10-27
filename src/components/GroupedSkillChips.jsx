@@ -31,7 +31,7 @@ export default function GroupedSkillChips({ skills, renderChip, gridClassName = 
 
   return (
     <div className="skill-groups skill-groups-collapsible">
-      <p className="skill-groups-hint">Tap a group to see the skills in it.</p>
+      <p className="skill-groups-hint">Tap a group to see what is in it.</p>
       {groups.map((g) => (
         <CollapsibleGroup
           key={g.group}
