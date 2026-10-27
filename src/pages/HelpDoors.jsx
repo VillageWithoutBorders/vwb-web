@@ -59,7 +59,7 @@ export default function HelpDoors() {
         <span aria-hidden="true" className="door-icon"><Icon name="raise-hand" size={36} /></span>
         <span className="door-text">
           <span className="door-link-title">Ask for Help</span>
-          <span className="door-desc">Ask neighbors for a hand. We show nearby resources first.</span>
+          <span className="door-desc">{simple ? 'Tell neighbors what you need.' : 'Tell neighbors what you need. We show nearby resources first.'}</span>
         </span>
         <span aria-hidden="true" className="door-arrow">&#8250;</span>
       </Link>
