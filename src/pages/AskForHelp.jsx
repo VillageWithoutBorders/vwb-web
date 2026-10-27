@@ -156,7 +156,9 @@ export default function AskForHelp() {
 
     // The group the request is for: the one picked, else the one posting as, else the first.
     const groupId = audienceOrg || postAs || organizations[0]?.id || ''
-    const groupName = (organizations.find((o) => o.id === groupId) || {}).name || 'your group'
+    // With more than one group and none picked yet, don't name one at random.
+    const groupPicked = Boolean(audienceOrg || postAs) || organizations.length === 1
+    const groupName = groupPicked ? ((organizations.find((o) => o.id === groupId) || {}).name || 'your group') : 'your group'
 
     async function handleSubmit(e) {
         e.preventDefault()
