@@ -147,7 +147,7 @@ export default function EmergencyEvents() {
         <span style={{ fontSize: '1.75rem' }}><Icon name="cat-emergency" /></span>
         <div>
           <span style={{ display: 'block', color: 'var(--gold)', fontWeight: 700, fontSize: '0.95rem' }}>Report an emergency</span>
-          <span style={{ color: 'var(--danger)', fontSize: '0.8125rem' }}>When many neighbors are hit at once. Someone in danger? Call 911 first.</span>
+          <span style={{ color: 'var(--danger)', fontSize: '1rem', fontWeight: 700 }}>When many neighbors are hit at once. Someone in danger? Call 911 first.</span>
         </div>
       </button>
 
@@ -192,10 +192,11 @@ export default function EmergencyEvents() {
                     {ev.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
                     {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem' }}>
-                      <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid var(--accent)' : '1px solid var(--border-strong)', background: voted ? 'var(--success-bg)' : 'none', color: voted ? 'var(--accent)' : 'var(--text-secondary)', cursor: voted ? 'default' : 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
-                        &#9650; {ev.upvote_count || 0}
+                      <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid var(--accent)' : '1px solid var(--border-strong)', background: voted ? 'var(--success-bg)' : 'none', color: voted ? 'var(--accent)' : 'var(--text-secondary)', cursor: voted ? 'default' : 'pointer', fontSize: '1rem', fontWeight: 700, minHeight: 48 }}>
+                        {/* Oct 27: words on the button, not just an arrow. */}
+                        {voted ? 'You said you see it' : 'I see this too'}
                       </button>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{(ev.upvote_count || 0) + ' verified'}</span>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{(ev.upvote_count || 0) === 1 ? '1 neighbor sees it' : (ev.upvote_count || 0) + ' neighbors see it'}</span>
                       {canVerify(ev) && !voted && (
                         <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Verify</button>
                       )}

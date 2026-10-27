@@ -14,6 +14,7 @@ import '../village-scene.css'
 import Icon from '../components/Icon'
 import YourCorner from './YourCorner'
 import Dashboard from './Dashboard'
+import { useSimpleView } from '../utils/simpleView'
 
 // The Village page: one village as a little world. Every element on the
 // hills is a button that goes to its own page. A plain list sits below for
@@ -42,6 +43,7 @@ export default function VillageScene() {
   const cottage = !id
   const navigate = useNavigate()
   const { user, profile, isFounder, refreshProfile, organizations } = useAuth()
+  const simple = useSimpleView()
   // In your home village, your house (the 'me' spot) is your cottage.
   const isHome = !cottage && !!id && profile?.home_village_id === id
   // Your cottage shows only in your home village (Oct 22).
@@ -615,6 +617,19 @@ export default function VillageScene() {
     }
   }
 
+  // Simple view: the places most people need, in this order.
+  const simpleMain = cottage ? ['messages', 'help', 'home', 'chat', 'me'] : ['chat', 'neighbors', 'skillshare', 'orgs']
+  function roomRow(s) {
+    const i = info(s.k)
+    return (
+      <button key={s.k} type="button" className={'vs-room' + (s.soon ? ' vs-soon' : '')} onClick={() => tap(s)}>
+        <span className="vs-room-ic" aria-hidden="true"><SpotIcon spot={s} size={40} /></span>
+        <span className="vs-room-text"><b>{simple && s.k === 'skillshare' ? 'Help nearby' : s.label}{i.badge > 0 && <span className="vs-dot" aria-label="New" />}</b><small>{simple && s.k === 'skillshare' ? 'Neighbors who need a hand, and free things to share' : i.sub}</small></span>
+        <span className="vs-go" aria-hidden="true">&#8250;</span>
+      </button>
+    )
+  }
+
   if (loadError) {
     return <div className="vs-page vs-page-path"><div className="vs-top"><Link className="vs-crumb" to="/world">World</Link></div><p className="vs-error" role="alert">{loadError}</p></div>
   }
@@ -628,7 +643,7 @@ export default function VillageScene() {
       {cottage ? (
         <div className="vs-title">
           <h1>My Cottage</h1>
-          <p className="vs-cottage-sub">Everything you are part of, in one place. Only you see your map.</p>
+          <p className="vs-cottage-sub">{simple ? 'Everything you are part of, in one place.' : 'Everything you are part of, in one place. Only you see your map.'}</p>
           <div className="vs-chips">
             {home?.village_id
               ? <Link className="vs-chip vs-chip-in vs-chip-link" to={'/village/' + home.village_id}>Home: {home.name}</Link>
@@ -666,7 +681,7 @@ export default function VillageScene() {
       )}
 
       {/* Oct 25 (Jade): the edit choices fold into one Customize drawer that opens downward. */}
-      {!arrange && (
+      {!arrange && !simple && (
         <details className="vs-customize">
           <summary data-tour="village-arrange"><span className="vs-customize-ic" aria-hidden="true"><ToolIcon name="move" /></span><span className="vs-customize-word">Customize</span><span className="vs-customize-chev" aria-hidden="true">&#9662;</span></summary>
           <div className="vs-customize-body">
@@ -696,7 +711,8 @@ export default function VillageScene() {
         </details>
       )}
 
-      <div {...sceneProps(b, 'vs-scene vs-scene-path', holdToArrange)}>
+      {/* Simple view (Oct 27): no map at all, so its pictures never download. */}
+      {!simple && <div {...sceneProps(b, 'vs-scene vs-scene-path', holdToArrange)}>
        <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
@@ -744,12 +760,12 @@ export default function VillageScene() {
         })}
        </div>
         <div className="vs-fade" />
-      </div>
+      </div>}
       {/* Name tags: on phones they show; with a mouse they show when you point at
           a place. This button turns them on or off for you, on every map.
           It sits under the map so it never covers a place. */}
       {arrange && <NamesToggle b={b} onChange={saveLabels} />}
-      <ScrollCue b={b} />
+      {!simple && <ScrollCue b={b} />}
 
       {cottage && !arrange && (
         <button type="button" className="vs-gifts-btn" onClick={() => openSheet({ k: 'gifts' })}>
@@ -771,23 +787,21 @@ export default function VillageScene() {
         {cottage && <section id="today" className="vs-panel vs-today" aria-label="Today"><Dashboard embedded /></section>}
         {!cottage && <div className="vs-help">
           <button type="button" className="vs-big vs-find" onClick={() => navigate('/ask')}>Find Help</button>
-          <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>Offer Help</button>
+          <button type="button" className="vs-big vs-offer" onClick={() => navigate('/skillshare')}>Offer Help</button>
         </div>}
         <h2 className="vs-pick-h">Or pick from the list</h2>
-        <div className="vs-list">
-          {SPOTS.map((s) => {
-            const i = info(s.k)
-            return (
-              <button key={s.k} type="button" className={'vs-room' + (s.soon ? ' vs-soon' : '')} onClick={() => tap(s)}>
-                <span className="vs-room-ic" aria-hidden="true"><SpotIcon spot={s} size={40} /></span>
-                <span className="vs-room-text"><b>{s.label}{i.badge > 0 && <span className="vs-dot" aria-label="New" />}</b><small>{i.sub}</small></span>
-                <span className="vs-go" aria-hidden="true">&#8250;</span>
-              </button>
-            )
-          })}
-        </div>
+        {/* Simple view (Oct 27): the main places first, the rest folded under More. */}
+        {simple ? <>
+          <div className="vs-list">{SPOTS.filter((s) => simpleMain.includes(s.k)).sort((a, b) => simpleMain.indexOf(a.k) - simpleMain.indexOf(b.k)).map(roomRow)}</div>
+          {SPOTS.some((s) => !simpleMain.includes(s.k)) && (
+            <details className="op-simple-more">
+              <summary>{cottage ? 'More' : 'More about ' + village.name}</summary>
+              <div className="vs-list">{SPOTS.filter((s) => !simpleMain.includes(s.k)).map(roomRow)}</div>
+            </details>
+          )}
+        </> : <div className="vs-list">{SPOTS.map(roomRow)}</div>}
         <Link className="btn btn-outline btn-full vs-big" to="/calendar">Events near you</Link>
-        {cottage && <section id="corner" className="vs-corner" aria-label="My Corner"><YourCorner embedded /></section>}
+        {cottage && !simple && <section id="corner" className="vs-corner" aria-label="My Corner"><YourCorner embedded /></section>}
       </div>
 
       {sheet && (

@@ -45,11 +45,11 @@ export default function SimpleOffer() {
         {large && <p className="so-text">Your phone uses large text, so Simple view may feel easier.</p>}
         <button type="button" className="so-choice so-choice-simple" disabled={busy} onClick={() => pick(true)}>
           <b>Simple</b>
-          <span>Bigger words and buttons. Just the main things: Find Help, Offer Help, and Messages.</span>
+          <span>Bigger words and buttons. A plain home page with the main things: get help, give help, and messages.</span>
         </button>
         <button type="button" className="so-choice" disabled={busy} onClick={() => pick(false)}>
           <b>Everything</b>
-          <span>The full app: villages, the globe, Campfires, calendar, and more.</span>
+          <span>The full app: maps of your village and area, group chats, a calendar, and more.</span>
         </button>
         <p className="so-text">You can change this any time in Settings.</p>
       </div>

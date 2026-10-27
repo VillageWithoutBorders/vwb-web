@@ -9,6 +9,7 @@ import RecoveryKeySection from '../components/RecoveryKeySection'
 import { useGoBack } from '../components/BackLink'
 import AppearancePicker from '../components/AppearancePicker'
 import SimpleViewPicker from '../components/SimpleViewPicker'
+import TextSizePicker from '../components/TextSizePicker'
 import AreaPicker from '../components/AreaPicker'
 import { placesEnabled } from '../utils/places'
 import Icon from '../components/Icon'
@@ -326,8 +327,9 @@ export default function Settings() {
       </button>
 
       <SimpleViewPicker />
-      {placesEnabled && <AreaPicker />}
+      <TextSizePicker />
       <AppearancePicker />
+      {placesEnabled && <AreaPicker />}
 
       <div className="profile-details">
         <div className="detail-row">

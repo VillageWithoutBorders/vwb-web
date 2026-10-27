@@ -380,7 +380,7 @@ export default function Conversation() {
           <h1><UserName userId={otherUserId} name={otherName} /></h1>
           {request && <p className="convo-context">{request.skill_needed}{request.for_name ? ' for ' + request.for_name : ''}</p>}
         </div>
-        <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto' }} title='Settings'><Icon name="gear" /></button>
+        <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: 44, minHeight: 44 }} title='Settings'><Icon name="gear" /></button>
 
 
 
@@ -452,6 +452,7 @@ export default function Conversation() {
       )}
       <div className="convo-input-bar">
         <input
+          aria-label="Write a message"
           type="text"
           value={newMsg}
           onChange={(e) => setNewMsg(e.target.value)}

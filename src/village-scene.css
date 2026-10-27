@@ -623,3 +623,48 @@ html.simple .vs-scroll-cue { display: none; }
 .vs-customize-body .vs-note { margin: 0; padding: 0 4px; }
 @media (prefers-reduced-motion: reduce) { .vs-customize-chev { transition: none; } }
 @media (min-width: 1024px) { .vs-page-path > .vs-customize { margin-left: 0; margin-right: 0; } }
+
+/* Simple view (Oct 27): group and crew pages fold the extra places and the leader
+   settings under one plain button each. */
+.op-simple-more { margin-top: 1rem; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.op-simple-more > summary { min-height: 56px; display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; font-weight: 700; font-size: 1.05rem; color: var(--accent); cursor: pointer; list-style: none; border-radius: 14px; }
+.op-simple-more > summary::-webkit-details-marker { display: none; }
+.op-simple-more > summary::after { content: '\25BE'; margin-left: auto; color: var(--text-muted); }
+.op-simple-more[open] > summary::after { content: '\25B4'; }
+.op-simple-more > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.op-simple-more > :not(summary) { margin: 0 0.75rem 0.75rem; }
+
+/* Simple view on a computer (Oct 27): no map, so no map column. The page is one
+   column in the middle of the screen, not pushed to the right. */
+html.simple .vs-map-under { display: none !important; }
+@media (min-width: 1024px) {
+  html.simple .vs-page.vs-page-path { display: block; max-width: 760px; margin-left: auto; margin-right: auto; }
+}
+
+/* Simple view (Oct 27, Jade): village, cottage and group pages look like the rest of the
+   app. No painted meadow behind the page, no dark teal. They follow the person's light or
+   dark choice, with the same calm background as Home. */
+html.simple .app-main.app-main-world { background: var(--bg); }
+html.simple .vs-page-path::before { display: none; }
+html.simple .vs-page {
+  color-scheme: normal;
+  --text-strong: inherit; --text: inherit; --text-soft: inherit; --text-secondary: inherit; --text-muted: inherit;
+  --white: inherit; --surface: inherit; --surface-2: inherit; --surface-3: inherit; --surface-sunk: inherit;
+  --border: inherit; --border-strong: inherit; --green-light: inherit;
+  --accent: inherit; --on-accent: inherit; --btn-bg: inherit; --btn-ink: inherit; --btn-hover: inherit;
+  --warn: inherit; --info: inherit; --danger: inherit; --gold: inherit;
+  --success-bg: inherit; --info-bg: inherit; --warn-bg: inherit; --danger-bg: inherit;
+  --purple: inherit; --purple-bg: inherit;
+  --vs-bg: var(--bg); --vs-card: var(--surface); --vs-card2: var(--surface-2); --vs-line: var(--border-strong);
+  --vs-ink: var(--text-strong); --vs-muted: var(--text-secondary); --vs-teal: var(--accent); --vs-on-teal: var(--on-accent);
+  --vs-coral: var(--danger); --vs-gold: var(--gold); --vs-on-gold: var(--on-accent); --vs-focus: var(--focus);
+  background: var(--bg);
+}
+html.simple .vs-chip { font-size: 1rem; padding: 6px 14px; min-height: 40px; white-space: normal; }
+html.simple .vs-title h1 { font-size: 2rem; }
+html.simple .vs-room-text small, html.simple .vs-note, html.simple .vs-row small, html.simple .vs-item small { font-size: 1rem; }
+html.simple .vs-sheet { border-top-color: var(--accent); }
+/* One column of places, easier to read in order. */
+html.simple .vs-list { grid-template-columns: 1fr !important; }
+/* Outline buttons on map pages look like buttons, not plain words (Oct 27). */
+.vs-page .btn-outline.vs-big { border: 2px solid var(--vs-teal); color: var(--vs-ink); display: flex; align-items: center; justify-content: center; gap: 8px; }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useBlockedBy } from '../utils/blockedBy'
 import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import GroupedSkillChips from '../components/GroupedSkillChips'
@@ -29,6 +29,7 @@ const RESOURCE_CATEGORIES = ['Water', 'Food', 'Shelter', 'Tools', 'Transportatio
 const menuBtnStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.6rem 0.75rem', background: 'none', border: 'none', color: 'var(--text-soft)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left' }
 
 export default function EventDetail() {
+  const justReported = !!useLocation().state?.justReported
   const { id } = useParams()
   const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
@@ -505,13 +506,25 @@ export default function EventDetail() {
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => goBack('/emergency')} aria-label="Back to emergency events" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => goBack('/emergency')} aria-label="Back to emergency events" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <div style={{ flex: 1 }}>
           <span style={{ background: 'var(--danger)', color: '#fff', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{event.event_type}</span>
           <h1 style={{ margin: '0.25rem 0 0', fontSize: '1.3rem' }}>{event.title}</h1>
         </div>
       </div>
 
+      {/* Oct 27: say what happens next, for everyone, right at the top. */}
+      {justReported && (
+        <div className="ev-wait" role="status">
+          <p><b>Report sent. Thank you.</b> Stay safe. If anyone is in danger, call 911.</p>
+        </div>
+      )}
+      {!event.verified && event.status === 'active' && !canCheck && (
+        <div className="ev-wait" role="region" aria-label="Waiting to be confirmed">
+          <p><b>Waiting to be confirmed.</b> When 2 neighbors say they see it too, or a Hope Ambassador checks it, the Response Camp chat opens and nearby emergency crews are called.</p>
+          {event.created_by !== user.id && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/emergency')}>I see this too: go to the list to say so</button>}
+        </div>
+      )}
       {!event.verified && event.status === 'active' && canCheck && (
         <div className="ev-verify" role="region" aria-label="Verify this emergency">
           <p><b>Waiting to be checked.</b> You are a Hope Ambassador or VWB admin. If this is real, verify it to open the Response Camp and call the crews that cover this village.</p>

@@ -17,6 +17,9 @@
           // The printed setup card's QR code opens /?simple=1: start this phone in Simple view.
           if (/[?&]simple=1\b/.test(location.search)) localStorage.setItem('vwb_simple', '1');
           if (localStorage.getItem('vwb_simple') === '1') document.documentElement.classList.add('simple');
+          // Text size, picked in Settings (Oct 27).
+          var ts = localStorage.getItem('vwb_text');
+          if (ts === 'large' || ts === 'larger') document.documentElement.classList.add('text-' + ts);
         } catch (e) {}
       })();
     </script>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { supabase } from '../supabaseClient'
@@ -8,8 +8,9 @@ import Icon from '../components/Icon'
 import { forTitle } from '../utils/forSomeone'
 import OrgInvites from '../components/OrgInvites'
 import VillageGuestInvites from '../components/VillageGuestInvites'
+import { orgWords } from '../utils/roleWords'
 
-// Simple view home: three big buttons, what's waiting, and the emergency button.
+// Simple view home: four big buttons, your village and groups, what's waiting, and the emergency button.
 // Replaces the globe as the first screen when Simple view is on.
 
 function hello() {
@@ -23,9 +24,12 @@ const STATUS = {
 }
 
 export default function SimpleHome() {
-  const { user, profile, refreshProfile } = useAuth()
+  const { user, profile, refreshProfile, organizations } = useAuth()
   const { unreadCount } = useUnreadCount()
   const navigate = useNavigate()
+  const location = useLocation()
+  // A note from the page before, like "Your request has been posted."
+  const [done, setDone] = useState(location.state?.message || '')
   const [mine, setMine] = useState(null)
   const [busy, setBusy] = useState(false)
 
@@ -63,8 +67,16 @@ export default function SimpleHome() {
       <h1 className="sh-hello">{hello()}{first ? ', ' + first : ''}.</h1>
       <p className="sh-sub">What would you like to do?</p>
 
+      {done && (
+        <div className="sh-done" role="status">
+          <Icon name="check" size={32} />
+          <span>{done}</span>
+          <button type="button" className="sh-done-x" onClick={() => setDone('')}>OK</button>
+        </div>
+      )}
+
       <div className="sh-buttons" data-tour="simple-buttons">
-        <button type="button" className="sh-big sh-big-ask" onClick={() => navigate('/ask')}>
+        <button type="button" className="sh-big sh-big-ask" onClick={() => navigate('/ask?skip=1')}>
           <Icon name="raise-hand" size={44} />
           <span><b>Find Help</b><small>Tell neighbors what you need</small></span>
         </button>
@@ -89,6 +101,24 @@ export default function SimpleHome() {
         <span className="sh-arrow" aria-hidden="true">&#8250;</span>
       </button>
 
+      {/* Your groups and emergency crews (Oct 27): one plain button each, straight to it. */}
+      {(organizations || []).length > 0 && (
+        <section className="sh-groups" aria-labelledby="sh-groups-h">
+          <h2 id="sh-groups-h">My groups</h2>
+          {organizations.map((o) => {
+            const crew = o.kind === 'group'
+            const role = orgWords(o).roleLabel[o.role] || 'Member'
+            return (
+              <button key={o.id} type="button" className="sh-row" onClick={() => navigate('/orgs/' + o.id)}>
+                <Icon name={crew ? 'tent' : 'people'} size={32} />
+                <span><b>{o.name}</b><small>{(crew ? 'Emergency crew' : 'Group') + '. You are ' + (/^[aeiou]/i.test(role) ? 'an ' : 'a ') + role.toLowerCase() + '.'}</small></span>
+                <span className="sh-arrow" aria-hidden="true">&#8250;</span>
+              </button>
+            )
+          })}
+        </section>
+      )}
+
       <OrgInvites />
       <VillageGuestInvites />
 
@@ -104,7 +134,7 @@ export default function SimpleHome() {
           </button>
         )}
         {(mine || []).map((r) => (
-          <button key={r.id} type="button" className="sh-row" onClick={() => navigate('/tasks')}>
+          <button key={r.id} type="button" className="sh-row" onClick={() => navigate(r.status === 'open' ? '/tasks?tab=requests' : '/tasks?tab=active')}>
             <Icon name="raise-hand" size={32} />
             <span>
               <b>{forTitle(r, 'Your request')}</b>
@@ -118,6 +148,13 @@ export default function SimpleHome() {
       <button type="button" className="sh-emergency" onClick={() => navigate('/emergency')}>
         <Icon name="cat-emergency" size={40} />
         <span><b>Emergency</b><small>Flood, storm, fire, or outage. In danger? Call 911 first.</small></span>
+      </button>
+
+      {/* Settings, easy to find (Oct 27, Jade). */}
+      <button type="button" className="sh-row sh-settings" onClick={() => navigate('/settings')}>
+        <Icon name="gear" size={32} />
+        <span><b>Settings</b><small>Text size, light or dark, and Simple view</small></span>
+        <span className="sh-arrow" aria-hidden="true">&#8250;</span>
       </button>
 
       <button type="button" className="sh-everything" disabled={busy} onClick={showEverything}>

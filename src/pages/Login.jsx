@@ -243,8 +243,9 @@ export default function Login() {
             {error && <p className="form-error" role="alert">{error}</p>}
             {message && <p className="form-success" role="status">{message}</p>}
             {resetSent && <p className="form-success" role="status">Password reset email sent. Check your inbox.</p>}
-            {showForgot && !resetSent && (
-              <button type="button" className="link-button" onClick={handleForgotPassword} style={{ fontSize: '0.875rem' }}>
+            {/* Oct 27: always there, not only after a wrong password. */}
+            {!resetSent && (
+              <button type="button" className="link-button" onClick={handleForgotPassword} style={{ fontSize: showForgot ? '1rem' : '0.95rem', fontWeight: showForgot ? 700 : 400 }}>
                 Forgot password?
               </button>
             )}
@@ -279,12 +280,12 @@ export default function Login() {
             <p className="login-subtitle">Neighbors helping neighbors</p>
           </div>
           <form onSubmit={handleNext} className="login-form">
-            <div className="step-indicator">
+            {totalSteps > 1 && <div className="step-indicator">
               <span className="step-text">Step 1 of {totalSteps}</span>
               <div className="step-bar">
                 <div className="step-fill" style={{ width: `${(1 / totalSteps) * 100}%` }} />
               </div>
-            </div>
+            </div>}
             <h2>Create your account</h2>
             <div className="form-field">
               <label htmlFor="displayName">Your name or nickname</label>
@@ -335,6 +336,7 @@ export default function Login() {
               // Say what is still missing, so nobody is stuck at a grey button.
               const missing = [
                 !displayName.trim() && 'your name',
+                signupZipCode.replace(/[^0-9]/g, '').length !== 5 && 'your 5-digit zip code',
                 !email.trim() && 'your email',
                 password.length < 6 && 'a password of 6 or more letters or numbers',
                 !isAdult && 'the 18 or older box',

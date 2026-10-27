@@ -130,7 +130,7 @@ export default function CreateEvent() {
     if (signupErr) console.error('Failed to record event creator as coordinator:', signupErr)
 
     setSubmitting(false)
-    navigate('/emergency/' + data.id)
+    navigate('/emergency/' + data.id, { state: { justReported: true } })
   }
 
   function showFieldError(errs) {

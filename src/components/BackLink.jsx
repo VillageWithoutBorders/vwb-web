@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { isSimpleView } from '../utils/simpleView'
 
 // The app frame (Layout) shows a Back button at the top of every page (Oct 22, Jade).
 // A page that has its own BackLink tells the frame, so there is only ever one.
@@ -63,7 +64,7 @@ export function FrameBack({ world }) {
   const cameFromApp = location.key !== 'default'
   return (
     <div className={'app-back-row' + (world ? ' app-back-world' : '')}>
-      <Link to="/world" className="app-back" onClick={cameFromApp ? (e) => { e.preventDefault(); navigate(-1) } : undefined}>
+      <Link to={isSimpleView() ? '/' : '/world'} className="app-back" onClick={cameFromApp ? (e) => { e.preventDefault(); navigate(-1) } : undefined}>
         <span aria-hidden="true">&#8592;</span> {cameFromApp ? 'Back' : 'Home'}
       </Link>
     </div>

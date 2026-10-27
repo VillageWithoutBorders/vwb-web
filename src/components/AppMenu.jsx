@@ -5,6 +5,7 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt'
 import { startAppTour } from './AppTour'
 import Icon from './Icon'
 import { tell } from './AdminDialog'
+import { useSimpleView } from '../utils/simpleView'
 
 // The one menu in the top bar. It replaces two hidden menus (tapping the logo,
 // and a separate person icon) that people didn't know were there.
@@ -21,6 +22,7 @@ const SHARE_TEXT = 'Village Without Borders is a mutual aid network where neighb
 export default function AppMenu({ inline = false }) {
   const navigate = useNavigate()
   const { signOut, isAdmin } = useAuth()
+  const simple = useSimpleView()
   const { canInstall, isStandalone, isIOS, promptInstall } = useInstallPrompt()
   const [open, setOpen] = useState(false)
   const [panel, setPanel] = useState(null) // 'share' | 'install' | 'logout'
@@ -110,9 +112,11 @@ export default function AppMenu({ inline = false }) {
             <button type="button" className="app-menu-item" onClick={() => go('/profile', { openEdit: true })}>
               <span aria-hidden="true"><Icon name="person" /></span> Edit my profile
             </button>
-            <button type="button" className="app-menu-item" onClick={() => go('/groups')}>
-              <span aria-hidden="true"><Icon name="people" /></span> Cottage Chats &amp; Campfires
-            </button>
+            {!simple && (
+              <button type="button" className="app-menu-item" onClick={() => go('/groups')}>
+                <span aria-hidden="true"><Icon name="people" /></span> Cottage Chats &amp; Campfires
+              </button>
+            )}
             <button type="button" className="app-menu-item" onClick={() => go('/settings')}>
               <span aria-hidden="true"><Icon name="gear" /></span> Settings and privacy
             </button>

@@ -6,7 +6,6 @@ import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView
 import SimpleOffer from '../components/SimpleOffer'
 import BottomTabs from '../components/BottomTabs'
 import MeButton, { MyCornerButton } from '../components/MeButton'
-import AlertsMenu from '../components/AlertsMenu'
 import MyToolsButton from '../components/MyToolsButton'
 import { useMyTools } from '../hooks/useMyTools'
 import { useAdminInbox } from '../hooks/useAdminInbox'
@@ -38,7 +37,7 @@ export default function Layout() {
   // which have their own back arrow. Pages with their own BackLink hide this one.
   const [ownBacks, setOwnBacks] = useState(0)
   const tellFrame = useCallback((n) => setOwnBacks((c) => c + n), [])
-  const showBack = !ownBacks && !isChat && pathname !== '/' && pathname !== '/world'
+  const showBack = !ownBacks && !isChat && pathname !== '/' && (simple || pathname !== '/world')
 
   // Every page opens at the top (Oct 22, Jade), except chats, which open at the newest
   // message, and links to a spot on a page (#corner and the like).
@@ -98,8 +97,10 @@ export default function Layout() {
           <MyCornerButton />
           <MyToolsButton tools={tools} adminWaiting={adminWaiting} adminUrgent={adminUrgent} />
           </>)}
-          {/* Simple view keeps its two: Alerts and My Corner. */}
-          {simple && <AlertsMenu />}
+          {/* Simple view keeps it short: Alerts and My Corner. People with a role
+              (Admin, Ambassador, a group or crew leader, a village Keeper) get My Tools
+              in place of Alerts, so their tools and alerts stay one tap away (Oct 27). */}
+          {simple && <MyToolsButton tools={tools} adminWaiting={adminWaiting} adminUrgent={adminUrgent} />}
           {simple && <MeButton />}
         </nav>
       </header>

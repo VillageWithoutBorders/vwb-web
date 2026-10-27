@@ -15,6 +15,7 @@ import HelpSwitch from '../components/HelpSwitch'
 import Icon from '../components/Icon'
 import { forLine, helperNote } from '../utils/forSomeone'
 import { askConfirm, tell } from '../components/AdminDialog'
+import { useSimpleView } from '../utils/simpleView'
 
 // Request statuses that mean "not looking for helpers anymore".
 const NO_LONGER_OPEN = ['in_progress', 'matched', 'completed', 'cancelled', 'closed', 'archived']
@@ -62,13 +63,15 @@ const URGENCY_CONFIG = {
 
 
 export default function Feed() {
+    const simple = useSimpleView()
     const { user, profile } = useAuth()
     const navigate = useNavigate()
     const blockedBy = useBlockedBy()
     const location = useLocation()
     const [successMsg, setSuccessMsg] = useState(location.state?.message || null)
 
-    const [view, setView] = useState('requests')
+    // /skillshare?tab=offers opens the Offers list (after sharing an offer).
+    const [view, setView] = useState(() => (new URLSearchParams(location.search).get('tab') === 'offers' ? 'offers' : 'requests'))
     const [requests, setRequests] = useState([])
     const [offers, setOffers] = useState([])
     const [loading, setLoading] = useState(true)
@@ -253,7 +256,7 @@ export default function Feed() {
             type: 'help_offer',
             title: 'Someone wants to help!',
             body: `A neighbor offered to help with your request: ${req.skill_needed}`,
-            link: '/messages',
+            link: '/tasks?tab=requests',
         })
 
         // Update local state so the card shows "Pending" immediately
@@ -329,19 +332,20 @@ export default function Feed() {
         <div className="feed-page">
             <div className="feed-header">
             <div className="feed-sticky">
-                <h1>SkillShare</h1>
-                <div className="help-cta">
-                    <button type="button" className="btn btn-primary help-cta-btn" onClick={() => navigate('/ask')}>Find Help</button>
+                {/* Simple view (Oct 27): plain title, no switches or sort, just the list. */}
+                {/* Oct 27 (Jade): the page is called what the bottom tab says. */}
+                <h1>Offer Help</h1>
+                {!simple && <div className="help-cta">
                     <button type="button" className="btn btn-outline help-cta-btn" onClick={() => navigate('/post-offer')}>Offer something</button>
-                </div>
-                <HelpSwitch />
-                <p className="feed-subtitle">Help requests and free offers from your neighbors</p>
+                </div>}
+                {!simple && <HelpSwitch />}
+                <p className="feed-subtitle">{view === 'offers' ? 'Free things and help your neighbors are sharing.' : 'Neighbors near you who need a hand. Tap Offer Help on one, or tap the card to read more.'}</p>
             </div>
 
             {successMsg && (
                 <div className="toast toast-success" style={{ marginBottom: '0.75rem' }}>
                     {successMsg}
-                    <button onClick={() => setSuccessMsg(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1.1rem' }}>&times;</button>
+                    <button onClick={() => setSuccessMsg(null)} aria-label="Close this note" style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1.3rem', minWidth: 44, minHeight: 44 }}>&times;</button>
                 </div>
             )}
 
@@ -383,7 +387,7 @@ export default function Feed() {
                     </select>
                 )}
                 <button className="btn btn-sm btn-outline" onClick={loadFeed} aria-label="Refresh feed">&#x21bb; Refresh</button>
-                <select className="feed-filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}><option value="urgency">Sort: Urgency</option><option value="newest">Sort: Newest</option></select>
+                {!simple && <select className="feed-filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}><option value="urgency">Sort: Urgency</option><option value="newest">Sort: Newest</option></select>}
             </div>
 
             </div>
@@ -412,7 +416,7 @@ export default function Feed() {
                                     <div className="feed-card-top">
                                         <span className={'urgency-badge ' + urg.className}>{urg.label}</span>
                                         {req.requester_id === user.id && (
-                                            <span className="urgency-badge" style={{ background: '#2d6a4f', color: '#fff' }}>Your request</span>
+                                            <span className="urgency-badge" style={{ background: 'var(--btn-bg)', color: 'var(--btn-ink)' }}>Your request</span>
                                         )}
                                         {req.audience && req.audience !== 'everyone' && (!req.opens_to_all_at || new Date(req.opens_to_all_at) > new Date()) && (
                                             <span className="urgency-badge" style={{ background: 'var(--info-bg)', color: 'var(--text-strong)' }}>{req.audience === 'network' ? 'From your network' : 'From your group'}</span>
@@ -457,13 +461,14 @@ export default function Feed() {
                                     )}
 
                                     {/* Helper count status */}
-                                    <div style={{ fontSize: '0.8125rem', color: isFull ? '#2d6a4f' : 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                    <div style={{ fontSize: '0.8125rem', color: isFull ? 'var(--accent)' : 'var(--text-muted)', marginTop: '0.25rem' }}>
                                         <Icon name={isFull ? 'check' : 'handshake'} />{' '}{helperStatus}
                                     </div>
 
                                     <p className={'feed-card-desc' + (isExpanded ? '' : ' feed-card-desc-clamp')}>{req.description}</p>
 
-                                    {isExpanded && (
+                                    {/* Oct 27: the actions show on every card, not only after it is opened. */}
+                                    {(
                                         <div className="feed-card-actions">
                                             {req.requester_id !== user.id && !isPending && !isFull && (
                                                 <button className="btn btn-primary btn-sm" onClick={(e) => handleOfferHelp(e, req)}>
@@ -481,11 +486,11 @@ export default function Feed() {
                                                 </>
                                             )}
                                             {req.requester_id !== user.id && isFull && !isPending && (
-                                                <span style={{ fontSize: '0.8125rem', color: '#2d6a4f', fontWeight: 600 }}>
+                                                <span style={{ fontSize: '0.8125rem', color: 'var(--accent)', fontWeight: 600 }}>
                                                     <Icon name="check" /> Full
                                                 </span>
                                             )}
-                                            {req.requester_id && <VouchButton userId={req.requester_id} size="md" showCount={false} />}
+                                            {isExpanded && req.requester_id && <VouchButton userId={req.requester_id} size="md" showCount={false} />}
                                         </div>
                                     )}
                                 </div>

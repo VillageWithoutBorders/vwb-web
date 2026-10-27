@@ -25,7 +25,7 @@ export default function AppearancePicker() {
           </button>
         ))}
       </div>
-      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Saved on this device. The village and globe pages keep their painted colors.</p>
+      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Saved on this device. In the full view, the village and globe pages keep their painted colors.</p>
     </div>
   )
 }

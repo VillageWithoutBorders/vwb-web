@@ -54,7 +54,7 @@ const ALL_STEPS = [
     target: '.header-nav',
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
-    body: 'The top buttons are yours: My World, My Village, My Cottage, My Corner, and My Tools. The bottom buttons are things to do: Find Help, Offer Help, Calendar, and Messages. Tap Show me around to see each part. You can skip any time.',
+    body: 'The top buttons are yours: My World, My Village, My Cottage, My Corner, and Alerts. The bottom buttons are things to do: Find Help, Offer Help, Calendar, and Messages. Tap Show me around to see each part. You can skip any time.',
   },
   {
     route: '/world',
@@ -87,14 +87,7 @@ const ALL_STEPS = [
     title: 'A living village',
     body: 'More cottages light up as more neighbors join. The campfire grows when the chats are busy. A lantern means a keeper looks after the village.',
   },
-  {
-    need: 'village',
-    route: VILLAGE,
-    target: '.vs-names-toggle',
-    icon: '\u{1F3F7}\uFE0F',
-    title: 'Names on the map',
-    body: 'Tap here to show or hide the names. On a computer, point at a place to see its name.',
-  },
+  // Oct 27: the Names on the map step is gone. The names button now sits inside Customize, out of sight.
   {
     need: 'village',
     route: '/cottage',
@@ -187,10 +180,10 @@ const ALL_STEPS = [
   },
   {
     route: '/',
-    target: '[data-tour="top-tools"]',
-    icon: '\u{1F9F0}',
-    title: 'My Tools',
-    body: 'Your alerts live here. A number shows when something is new. If you keep a village, run a group, or are an Ambassador, your tools are here too. So is Emergency.',
+    target: '[data-tour="top-tools"], [data-tour="alerts"]',
+    icon: '\u{1F514}',
+    title: 'Alerts',
+    body: 'Your alerts live here. A number shows when something is new. Emergency is here too. If you keep a village, run a group, or are an Ambassador, this button says My Tools and holds your tools.',
   },
   {
     route: '/cottage',
@@ -202,14 +195,14 @@ const ALL_STEPS = [
   },
 ]
 
-// Simple view gets a short tour: three stops.
+// Simple view gets a short tour.
 const SIMPLE_STEPS = [
   {
     route: '/',
     target: '[data-tour="simple-buttons"]',
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
-    body: 'These three buttons are all you need. Find Help, Offer Help, or read your Messages.',
+    body: 'These big buttons are the main things. Get help, find food and rides, help a neighbor, or read your messages.',
   },
   {
     route: '/',
@@ -220,10 +213,33 @@ const SIMPLE_STEPS = [
   },
   {
     route: '/',
+    target: '.tab-item[data-tour="help"]',
+    icon: '\u{1F91D}',
+    title: 'Help',
+    body: 'Tap Help any time to find food, rides and more, ask neighbors for a hand, or help someone.',
+  },
+  {
+    route: '/',
+    target: '[data-tour="alerts"]',
+    icon: '\u{1F514}',
+    title: 'Alerts',
+    body: 'When something new happens, like a neighbor offering to help you, a number shows here.',
+    need: 'alerts',
+  },
+  {
+    route: '/',
+    target: '[data-tour="top-tools"]',
+    icon: '\u{1F9F0}',
+    title: 'My Tools',
+    body: 'Your alerts and your tools live here. A number shows when something is new. Emergency is here too.',
+    need: 'tools',
+  },
+  {
+    route: '/',
     target: '[data-tour="me"]',
     icon: '\u{1F331}',
     title: 'My Corner',
-    body: 'Tap your picture for your profile and settings. Want the full app? Tap Show me everything at the bottom of Home.',
+    body: 'Tap your picture for your profile and Settings, where you can make the words bigger. Want the full app? Tap Show me everything at the bottom of Home.',
     last: 'Take this tour again any time from Settings or Help.',
   },
 ]
@@ -273,7 +289,7 @@ function SampleCard({ kind }) {
 
 // Steps that fit this person (see "need" above).
 function stepsFor(ctx) {
-  if (ctx.simple) return SIMPLE_STEPS
+  if (ctx.simple) return SIMPLE_STEPS.filter((st) => (st.need !== 'tools' || ctx.hasTools) && (st.need !== 'alerts' || !ctx.hasTools))
   return ALL_STEPS.filter((st) => {
     if (st.need === 'village') return !!ctx.villageId
     if (st.need === 'noVillage') return ctx.ready && !ctx.villageId
@@ -334,7 +350,9 @@ export default function AppTour() {
   const isOrganizer = (organizations || []).some((o) => o.kind !== 'group' && (o.role === 'admin' || o.role === 'organizer'))
   const isAmbassador = !!profile?.is_hope_ambassador || profile?.role === 'admin' || profile?.role === 'founder'
   const simple = useSimpleView()
-  const STEPS = stepsFor({ ...ctx, isOrganizer, isAmbassador, simple })
+  // Anyone with a role sees My Tools in Simple view too (Oct 27).
+  const hasTools = isAmbassador || ctx.isKeeper || (organizations || []).some((o) => o.role === 'admin' || o.role === 'organizer')
+  const STEPS = stepsFor({ ...ctx, isOrganizer, isAmbassador, simple, hasTools })
   const step = STEPS[index] || STEPS[0]
   const isLast = index === STEPS.length - 1
   const inPractice = !!step.practice

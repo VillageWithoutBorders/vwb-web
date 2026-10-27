@@ -199,7 +199,7 @@ export default function FirstVillage() {
             {error && <p id="fv1-err" className="form-error" role="alert">{error}</p>}
             <button type="submit" className="btn btn-primary btn-full" disabled={busy}>{busy ? 'Looking...' : 'Show my village'}</button>
             <button type="button" className="btn btn-outline btn-full fv1-gap" disabled={busy} onClick={() => finish(false)}>Not now</button>
-            <p className="fv1-note">You can find your village later from the Village tab.</p>
+            <p className="fv1-note">You can find your village later. Tap My Village at the top.</p>
           </form>
         )}
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { isSimpleView } from '../utils/simpleView'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useChatScroll } from '../hooks/useChatScroll'
 import { useAuth } from '../context/AuthContext'
@@ -590,14 +591,14 @@ export default function Campfire() {
   return (
     <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--surface)' }}>
       <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => goBack(activeBoard?.village_id ? '/village/' + activeBoard.village_id : '/')} aria-label="Back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span><Icon name="megaphone" /></span> The Village Square
+            <span><Icon name={activeBoard?.village_id ? 'chat-bubble' : 'megaphone'} /></span> {activeBoard?.village_id ? activeBoard.name + ' village chat' : 'The Village Square'}
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{activeBoard ? (activeBoard.village_id ? activeBoard.name + ' village chat' : activeBoard.event_id ? 'Response Camp' + (activeBoard.archived ? ', closed' : '') : activeBoard.sister_a ? 'Sister Campfire' + (activeBoard.archived ? ', closed' : '') : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
+          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{activeBoard ? (activeBoard.village_id ? 'Part of the Village Square, where all village chats live' : activeBoard.event_id ? 'Response Camp' + (activeBoard.archived ? ', closed' : '') : activeBoard.sister_a ? 'Sister Campfire' + (activeBoard.archived ? ', closed' : '') : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
         </div>
-        <button onClick={() => navigate('/world')} aria-label="Village map" title="Village map" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}><Icon name="compass" /></button>
+        {!isSimpleView() && activeBoard?.village_id && <button onClick={() => navigate('/village/' + activeBoard.village_id)} aria-label="Village page" title="Village page" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}><Icon name="compass" /></button>}
         {isVillageBoard && inVillage && (
           <button onClick={() => setShowPeople(true)} aria-label={'People in ' + activeBoard.name + (removalRequests.some(r => r.requested_by !== user.id) ? ', a removal request needs a second member' : '')} title="People" style={{ position: 'relative', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }}>
             <Icon name="people" />

@@ -25,7 +25,9 @@ export default function MyToolsButton({ tools, adminWaiting = 0, adminUrgent = f
   const parts = []
   if (badgeCount > 0) parts.push(badgeCount + ' new ' + (badgeCount === 1 ? 'alert' : 'alerts'))
   if (adminWaiting > 0) parts.push(adminWaiting + ' waiting in the Admin inbox' + (adminUrgent ? ', some urgent' : ''))
-  const label = 'My Tools: alerts and tools' + (parts.length ? ', ' + parts.join(', ') : '')
+  // Oct 27 (Jade): people with no role see a plain Alerts bell. Same sheet, same place.
+  const plain = (tools || []).length === 0
+  const label = (plain ? 'Alerts' : 'My Tools: alerts and tools') + (parts.length ? ', ' + parts.join(', ') : '')
 
   const recent = [...(notifications || [])]
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -51,13 +53,13 @@ export default function MyToolsButton({ tools, adminWaiting = 0, adminUrgent = f
 
   return (
     <>
-      <button type="button" className={'header-btn' + (on ? ' on' : '')} aria-label={label} aria-haspopup="dialog" aria-expanded={open} data-tour="top-tools" onClick={openSheet}>
-        <Icon name="toolbox" size={26} className="header-btn-pic" />
-        <span className="header-btn-label" aria-hidden="true"><span className="header-my">My </span>Tools</span>
+      <button type="button" className={'header-btn' + (on ? ' on' : '')} aria-label={label} aria-haspopup="dialog" aria-expanded={open} data-tour={plain ? 'alerts' : 'top-tools'} onClick={openSheet}>
+        <Icon name={plain ? 'bell' : 'toolbox'} size={26} className="header-btn-pic" />
+        <span className="header-btn-label" aria-hidden="true">{plain ? 'Alerts' : <><span className="header-my">My </span>Tools</>}</span>
         {total > 0 && <span className={'bell-badge' + (calm ? ' admin-badge-calm' : '')} aria-hidden="true">{total > 9 ? '9+' : total}</span>}
       </button>
       {open && (
-        <ToolsSheet id="top-tools-title" title="My Tools" rowsTitle="Tools" rows={[...toolRows(tools, adminWaiting), EMERGENCY]} onClose={close}>
+        <ToolsSheet id="top-tools-title" title={plain ? 'Alerts' : 'My Tools'} rowsTitle={plain ? 'If something big happens' : 'Tools'} rows={[...toolRows(tools, adminWaiting), EMERGENCY]} onClose={close}>
           <h3 className="tools-sub">Alerts</h3>
           <div className="tools-alerts">
             {recent.length === 0 ? (
