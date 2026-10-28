@@ -55,20 +55,19 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
 
   return (
     <div className="ask-page">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0, minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Resources near you</h1>
       </div>
-      <p className="ask-intro">This is your resource hub. It shows what is available in your area, like food pantries, help with bills, rides, and hotlines. Search or pick what you need to see what is near you.</p>
-      <p className="ask-intro">Can't find it here? You can ask a neighbor for help at the bottom of this page.</p>
-      <p style={{ margin: '0 0 0.75rem', fontSize: '0.95rem', color: 'var(--gold)' }}>In danger right now? Call 911.</p>
+      <p className="ask-intro nr-intro">Food, bills, rides, hotlines, and more near you. Can't find it? Ask a neighbor at the bottom.</p>
+      <div className="nr-top-row">
+        <a href="tel:911" className="nr-911">In danger? Call 911</a>
+        <a href="#nr-ask" className="nr-skip">Ask a neighbor &#8595;</a>
+      </div>
 
-      <a href="#nr-ask" className="nr-skip">Skip to ask a neighbor</a>
+      <label htmlFor="nr-q" className="nr-label">Search or pick what you need</label>
+      <input id="nr-q" type="search" inputMode="search" enterKeyHint="search" autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="rent, diapers, ride, mold" style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', borderRadius: '10px', border: '2px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', fontFamily: 'inherit' }} />
 
-      <label htmlFor="nr-q" style={{ display: 'block', fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>Search by word</label>
-      <input id="nr-q" type="search" inputMode="search" enterKeyHint="search" autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="rent, diapers, ride, mold" style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.75rem', borderRadius: '10px', border: '2px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', fontFamily: 'inherit' }} />
-
-      <p style={{ margin: '0 0 0.4rem', fontSize: '1rem', fontWeight: 600 }}>Or pick what you need</p>
       <div role="group" aria-label="What do you need?" className="hub-tiles nr-tiles">
         {QUICK_PICKS.map((c) => (
           <button key={c} type="button" className={'hub-tile nr-tile' + (cat === c && !query.trim() ? ' on' : '')} aria-pressed={cat === c && !query.trim()} onClick={() => { setQuery(''); setCat(cat === c ? '' : c) }}>
