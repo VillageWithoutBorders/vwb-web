@@ -925,3 +925,16 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
   .vs-page-path .vs-panel.vs-today { background: none; padding: 0; margin-top: 12px; }
 }
 html.simple .vs-page.vs-page-path::after { display: none; }
+
+/* ---------- Computers: editing keeps the two halves (Oct 28, Jade) ----------
+   The map stays in its left half, the same size as before, and the tools rail
+   sits at the right edge over the dark panel. Phones still edit full screen. */
+@media (min-width: 1024px) {
+  .vs-page-path:has(.vs-arrange-on) > .vs-scene-path {
+    position: sticky; top: calc(var(--header-height) + 16px); left: auto; right: auto; bottom: auto;
+    width: 100%; height: var(--vs-map-h); z-index: 2; border-radius: 16px; margin: 0;
+    grid-column: 1; grid-row: 1 / -1; align-self: start;
+  }
+  /* Zoom in stays fixed at the bottom left, over the map. */
+  .vs-page-path:has(.vs-arrange-on) > .vs-map-under { left: 40px; bottom: calc(var(--tab-height) + 32px); }
+}
