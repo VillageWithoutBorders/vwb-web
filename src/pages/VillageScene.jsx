@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { loadMyTaskOverview } from '../utils/myTasks'
 import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
-import { useMapBuilder, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, askGoTo, fromSaved, isPlainWorld, mapBody, ScrollCue, placeLayer } from '../components/MapBuilder'
+import { useMapBuilder, MapLayers, MapToolbar, ToolIcon, sceneProps, zoomLayer, askGoTo, fromSaved, isPlainWorld, mapBody, ScrollCue, placeLayer } from '../components/MapBuilder'
 import { askConfirm } from '../components/AdminDialog'
 import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
@@ -679,36 +679,7 @@ export default function VillageScene() {
         </Link>
       )}
 
-      {/* Oct 25 (Jade): the edit choices fold into one Customize drawer that opens downward. */}
-      {!arrange && !simple && (
-        <details className="vs-customize">
-          <summary data-tour="village-arrange"><span className="vs-customize-ic" aria-hidden="true"><ToolIcon name="move" /></span><span className="vs-customize-word">Customize</span><span className="vs-customize-chev" aria-hidden="true">&#9662;</span></summary>
-          <div className="vs-customize-body">
-            <NamesToggle b={b} onChange={saveLabels} />
-            {!arrange && (
-              <button type="button" className="vs-build-start" onClick={() => startArrange('me')}>
-                <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
-                <span className="vs-build-start-text">
-                  <b>{cottage ? 'Arrange and build my cottage' : 'Arrange my view of ' + village.name}</b>
-                  <small>{cottage ? 'Move places, add trees and bridges, draw roads and streams' : 'Only you see your view. Move places, add trees, draw roads.'}</small>
-                </span>
-              </button>
-            )}
-            {!arrange && !cottage && keepers && keepers.i_am_keeper && (
-              <button type="button" className="vs-build-start vs-build-shared" onClick={() => startArrange('everyone')}>
-                <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
-                <span className="vs-build-start-text">
-                  <b>Set the default look for {village.name}</b>
-                  <small>New neighbors start with this. Anyone who arranged their own view keeps it.</small>
-                </span>
-              </button>
-            )}
-            {!arrange && !cottage && keepers && keepers.i_am_keeper && mapLoaded > 0 && mapLayouts.current.own && (
-              <p className="vs-note">You are seeing your own view, so a new default will not show for you. To see the default, open Arrange my view and tap Back to the default look.</p>
-            )}
-          </div>
-        </details>
-      )}
+      {/* Oct 28 (Jade): the Customize drawer folded into the Edit button on the map. */}
 
       {/* Simple view (Oct 27): no map at all, so its pictures never download. */}
       {!simple && <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
@@ -763,26 +734,43 @@ export default function VillageScene() {
         {/* Oct 28 (Jade): Edit map sits on the map itself, top corner, on phones and
             computers, so it's always in view. Keepers choose: their own view or the
             default look for everyone. */}
+        {/* Oct 28 (Jade): one Edit button holds everything that used to be in Customize:
+            arranging (your own view, or the default for Keepers) and name tags. */}
         {!arrange && (
           <div className="vs-edit-fab-wrap" onPointerDown={(e) => e.stopPropagation()}>
-            <button type="button" className="vs-edit-fab" aria-haspopup={keeperChoice ? 'menu' : undefined} aria-expanded={keeperChoice ? editMenu : undefined}
-              onClick={() => { if (keeperChoice) setEditMenu((v) => !v); else startArrange('me') }}>
+            <button type="button" className="vs-edit-fab" data-tour="village-arrange" aria-haspopup="menu" aria-expanded={editMenu}
+              onClick={() => setEditMenu((v) => !v)}>
               <ToolIcon name="move" /><span>{cottage ? 'Edit cottage' : 'Edit map'}</span>
             </button>
-            {keeperChoice && editMenu && (
+            {editMenu && (
               <div className="vs-edit-menu" role="menu">
-                <button type="button" role="menuitem" onClick={() => { setEditMenu(false); startArrange('me') }}><b>My own view</b><small>Only you see it.</small></button>
-                <button type="button" role="menuitem" onClick={() => { setEditMenu(false); startArrange('everyone') }}><b>Default for everyone</b><small>New neighbors start with this.</small></button>
+                <button type="button" role="menuitem" onClick={() => { setEditMenu(false); startArrange('me') }}>
+                  <b>{cottage ? 'Arrange and build' : keeperChoice ? 'My own view' : 'Arrange my view'}</b>
+                  <small>{cottage ? 'Move places, add trees, draw roads and streams.' : 'Only you see it. Move places, add trees, draw roads.'}</small>
+                </button>
+                {keeperChoice && (
+                  <button type="button" role="menuitem" onClick={() => { setEditMenu(false); startArrange('everyone') }}>
+                    <b>Default for everyone</b><small>New neighbors start with this.{mapLoaded > 0 && mapLayouts.current.own ? ' You see your own view, so you will not see the new default.' : ''}</small>
+                  </button>
+                )}
+                <button type="button" role="menuitem" onClick={() => { setEditMenu(false); saveLabels(b.namesShowing ? 'hide' : 'show') }}>
+                  <b>{b.namesShowing ? 'Hide name tags' : 'Show name tags'}</b><small>On every map, for you.</small>
+                </button>
               </div>
             )}
           </div>
         )}
+        {/* The magnifier floats on the map, top left, so it is always in reach. */}
+        <div className="vs-zoom-fab-wrap" onPointerDown={(e) => e.stopPropagation()}>
+          <button type="button" className="vs-zoom-btn vs-zoom-one" aria-pressed={b.zoom.z > 1} onClick={() => (b.zoom.z > 1 ? b.zoomReset() : b.zoomBy(2))}>
+            <ToolIcon name={b.zoom.z > 1 ? 'unmagnify' : 'magnify'} /><span>{b.zoom.z > 1 ? 'Whole map' : 'Zoom in'}</span>
+          </button>
+        </div>
         <div className="vs-fade" />
       </div>}
       {/* Name tags: on phones they show; with a mouse they show when you point at
           a place. This button turns them on or off for you, on every map.
           It sits under the map so it never covers a place. */}
-      {arrange && <NamesToggle b={b} onChange={saveLabels} />}
       {!simple && <ScrollCue b={b} />}
 
       {cottage && !arrange && (
