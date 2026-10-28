@@ -367,7 +367,10 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     if (startWorld) setWorld(startWorld)
     historyRef.current = []; setCanUndo(false)
     setArrange(true); setTool('move'); setTrayTab('pieces'); setLayoutNote(''); setPicked(null); setTrayOpen(false)
-    setTimeout(() => sceneRef.current && sceneRef.current.scrollIntoView({ block: 'start', behavior: stillMotion() ? 'auto' : 'smooth' }), 120)
+    // Oct 28: editing opens on the whole map, unzoomed. (It used to scroll the map into
+    // view, which could slide the map out of its own frame once editing filled the screen.)
+    setZoom({ z: 1, x: 0, y: 0 })
+    setTimeout(() => { const f = outerRef.current; if (f) { f.scrollTop = 0; f.scrollLeft = 0 } }, 0)
   }
   // Long press (about half a second) on the map asks to start arranging.
   // Moving the finger first (scrolling) or lifting it early cancels it.
