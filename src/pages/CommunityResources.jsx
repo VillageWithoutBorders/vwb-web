@@ -788,7 +788,6 @@ export default function CommunityResources() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
             <h2 style={{ fontSize: '1.1rem', color: 'var(--text)', margin: 0 }}>{!query.trim() && !selectedCat && !visitorNeedsArea ? 'Kinds of help' : ''}</h2>
-            {canSubmit && <button onClick={() => { setFromSuggestion(null); setShowSubmit(true); setSubmitted(false) }} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>+ Add Resource</button>}
           </div>
 
           {!canSubmit && (
@@ -899,7 +898,9 @@ export default function CommunityResources() {
             </div>
           )}
 
-          {canVerify && <ResourceSuggestionsReview onAdd={addFromSuggestion} refreshKey={suggestionsKey} />}
+          {/* Oct 28 (Jade): the review box only opens from My Tools > Resource suggestions
+              (or an admin alert), so the library starts at the top for everyone. */}
+          {canVerify && searchParams.get('suggestions') === '1' && <ResourceSuggestionsReview onAdd={addFromSuggestion} refreshKey={suggestionsKey} />}
 
           {canVerify && pendingResources.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>
@@ -969,10 +970,14 @@ export default function CommunityResources() {
             </>
           )}
 
+      {/* Oct 28 (Jade): one way to add a resource. Group organizers and VWB admins add it
+          straight to the library; everyone else suggests it for review. */}
       {user && (
             <div className="sr-suggest">
-              <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-soft)' }}>Know a place that helps that isn't listed, or is a kind of help missing near you?</p>
-              <SuggestResource category={selectedCat || ''} />
+              <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-soft)' }}>Know a place that helps that isn't listed{canSubmit ? '?' : ', or is a kind of help missing near you?'}</p>
+              {canSubmit
+                ? <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={() => { setFromSuggestion(null); setShowSubmit(true); setSubmitted(false) }}><Icon name="books" /> Add a resource</button>
+                : <SuggestResource category={selectedCat || ''} />}
             </div>
           )}
 

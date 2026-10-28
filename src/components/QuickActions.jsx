@@ -21,8 +21,10 @@ const QUICK_ACTIONS = [
   { key: 'messages', label: 'Messages', icon: 'envelope', to: '/messages', desc: 'Your conversations' },
 ]
 
-const NEW_DEFAULT = ['find_help', 'ask', 'my_code', 'village']
-const SETTLED_DEFAULT = ['find_help', 'ask', 'can_help', 'village']
+// Oct 28 (Jade): defaults skip what the top and bottom bars already have
+// (Ask for Help, Offer Help, My village, Calendar, Messages). Anyone can still add them.
+const NEW_DEFAULT = ['find_help', 'my_code']
+const SETTLED_DEFAULT = ['find_help', 'my_code']
 const MAX = 4
 
 function byKey(k) { return QUICK_ACTIONS.find((a) => a.key === k) }
