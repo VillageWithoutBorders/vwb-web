@@ -19,12 +19,20 @@ export default function ResourceSuggestionsReview({ onAdd, refreshKey = 0 }) {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(null)
   const boxRef = useRef(null)
+  const openedHandled = useRef(false)
 
   async function load(which = show) {
     setError('')
     const { data, error: err } = await supabase.rpc('list_resource_suggestions', { p_status: which === 'new' ? 'new' : null })
     if (err) { console.error('Failed to load resource suggestions:', err); setError("We couldn't load suggestions. Try again."); setRows([]); return }
-    setRows(which === 'new' ? (data || []) : (data || []).filter((r) => r.status !== 'new'))
+    const list = which === 'new' ? (data || []) : (data || []).filter((r) => r.status !== 'new')
+    // Opened from an admin alert but nothing is new: it was already handled, so show Handled.
+    if (which === 'new' && !list.length && !openedHandled.current && new URLSearchParams(window.location.search).get('suggestions') === '1') {
+      openedHandled.current = true
+      setShow('handled')
+      return
+    }
+    setRows(list)
   }
 
   useEffect(() => { load(show) }, [show, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -77,7 +85,11 @@ export default function ResourceSuggestionsReview({ onAdd, refreshKey = 0 }) {
                 {r.kind === 'resource' && <button type="button" className="btn btn-outline" disabled={!!busy} onClick={() => mark(r, 'added')}>Already in the library</button>}
                 <button type="button" className="btn btn-outline" disabled={!!busy} onClick={() => mark(r, 'done')}>{r.kind === 'gap' ? 'Noted' : 'Handled'}</button>
                 <button type="button" className="btn btn-outline" disabled={!!busy} onClick={() => mark(r, 'dismissed')}>Not a fit</button>
-              </> : <button type="button" className="btn btn-outline" disabled={!!busy} onClick={() => mark(r, 'new')}>Move back to New</button>}
+              </> : <>
+                {/* Oct 28: a suggestion marked done before it was really added can still be added. */}
+                {r.kind === 'resource' && onAdd && <button type="button" className="btn btn-primary" disabled={!!busy} onClick={() => onAdd(r)}>Add to the library</button>}
+                <button type="button" className="btn btn-outline" disabled={!!busy} onClick={() => mark(r, 'new')}>Move back to New</button>
+              </>}
             </div>
           </article>
         )
