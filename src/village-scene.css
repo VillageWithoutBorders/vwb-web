@@ -795,3 +795,18 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
 @media (min-width: 1024px) {
   .vs-page-path:has(.vs-arrange-on) > .vs-scene-path > .vs-zoom { --vs-lw: min(100cqw, 66.667cqh); top: calc((100cqh - var(--vs-lw) * 1.5) / 2); }
 }
+
+/* ---------- Hide tools in the top right corner (Oct 28, Jade) ----------
+   Fixed to the screen's top right, just under the top bar. The tool rail
+   starts below it. It stays put when the rail slides away. */
+.vs-tools-toggle {
+  position: fixed; z-index: 45; top: calc(var(--header-height) + 8px); right: 8px; bottom: auto; margin: 0;
+  display: flex !important; flex-direction: row; align-items: center; gap: 6px; max-width: none;
+  min-width: 44px; min-height: 48px; padding: 0 14px; border-radius: 24px;
+  font-size: 0.95rem; white-space: nowrap; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.vs-toolbar { top: calc(var(--header-height) + 64px); }
+.vs-tools-toggle-moving { opacity: 0.35; }
+
+/* One magnifier for the map (Oct 28): words and picture, easy to tap. */
+.vs-zoom-one { gap: 8px; padding: 0 16px; min-height: 48px; font-size: 0.95rem; }

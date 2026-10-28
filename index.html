@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/vwb_favicon-v2.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#1a1a1a" />
     <script>
       // Appearance (Settings): apply light or dark before anything draws.
@@ -19,7 +19,10 @@
           if (localStorage.getItem('vwb_simple') === '1') document.documentElement.classList.add('simple');
           // Text size, picked in Settings (Oct 27).
           var ts = localStorage.getItem('vwb_text');
-          if (ts === 'large' || ts === 'larger') document.documentElement.classList.add('text-' + ts);
+          if (ts === 'large' || ts === 'larger' || ts === 'largest') document.documentElement.classList.add('text-' + ts);
+          // No pinch zoom on the app (Oct 28, Jade): Settings > Text size makes words bigger instead.
+          // iPhones ignore the viewport rule, so stop their pinch gesture here. Maps zoom with their own button.
+          document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
           // Calm motion, picked in Settings (Oct 27).
           if (localStorage.getItem('vwb_motion') === 'calm') document.documentElement.classList.add('calm-motion');
         } catch (e) {}

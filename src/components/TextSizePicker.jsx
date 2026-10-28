@@ -7,16 +7,18 @@ const CHOICES = [
   { k: 'normal', label: 'Normal', size: '1rem' },
   { k: 'large', label: 'Large', size: '1.2rem' },
   { k: 'larger', label: 'Larger', size: '1.4rem' },
+  { k: 'largest', label: 'Largest', size: '1.6rem' },
 ]
 
 function read() {
-  try { const v = localStorage.getItem(KEY); return v === 'large' || v === 'larger' ? v : 'normal' } catch { return 'normal' }
+  try { const v = localStorage.getItem(KEY); return v === 'large' || v === 'larger' || v === 'largest' ? v : 'normal' } catch { return 'normal' }
 }
 
 export function applyTextSize(v) {
   const root = document.documentElement
   root.classList.toggle('text-large', v === 'large')
   root.classList.toggle('text-larger', v === 'larger')
+  root.classList.toggle('text-largest', v === 'largest')
   try { if (v === 'normal') localStorage.removeItem(KEY); else localStorage.setItem(KEY, v) } catch { /* private window */ }
 }
 
@@ -36,7 +38,7 @@ export default function TextSizePicker() {
           </button>
         ))}
       </div>
-      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Makes all the words bigger. Saved on this phone.</p>
+      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Makes all the words and buttons bigger, everywhere in the app. Saved on this phone.</p>
     </div>
   )
 }

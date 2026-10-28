@@ -112,6 +112,8 @@ const TOOL_PATHS = {
   up: 'M6 15l6-6 6 6', down: 'M6 9l6 6 6-6', left: 'M15 6l-6 6 6 6', right: 'M9 6l6 6-6 6',
   close: 'M6 6l12 12M18 6L6 18',
   tag: 'M3 12V4h8l10 10-8 8L3 12zM7.5 7.5h.01',
+  magnify: 'M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13zM15.5 15.5L21 21M10.5 7.5v6M7.5 10.5h6',
+  unmagnify: 'M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13zM15.5 15.5L21 21M7.5 10.5h6',
   front: 'M8 8h12v12H8zM4 16V4h12', back: 'M4 4h12v12H4zM20 8v12H8',
 }
 // Layers for added pieces (Oct 27). d.z: -4 to -1 behind the usual,
@@ -456,7 +458,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
         const s0 = dec ? dec.s || 1 : placed(spots.find((v) => v.k === piece) || { k: piece }).s || 1
         pinchRef.current = { m, d, piece, s0, max: dec ? 3 : 1.8, before: w }
         setPicked(piece); setPickTools(true)
-      } else pinchRef.current = { m, d, from: { ...zoomRef.current } }
+      } else pinchRef.current = null // Oct 28 (Jade): the map zooms only with its Zoom in button, not by pinching.
       try { for (const id of ptrsRef.current.keys()) outerRef.current.setPointerCapture(id) } catch { /* older browsers */ }
     }
   }
@@ -583,12 +585,12 @@ export function zoomLayer(b) {
   return { ref: b.sceneRef, className: 'vs-zoom', style: { transform: 'translate(' + x + 'px, ' + y + 'px) scale(' + z + ')' } }
 }
 
-// Under the map: zoom out, show or hide names, back to the whole map, zoom in.
+// Under the map: show or hide names, and one magnifier (Oct 28, Jade): one tap
+// zooms in, the next tap goes back to the whole map. Drag to look around while zoomed.
 export function NamesToggle({ b, onChange }) {
   const z = b.zoom.z
   return (
     <div className="vs-map-under">
-      <button type="button" className="vs-zoom-btn" aria-label="Zoom out" disabled={z <= 1} onClick={() => b.zoomBy(1 / 1.5)}><ToolIcon name="minus" /></button>
       {onChange && !b.arrange && (
         <button type="button" className="vs-names-toggle" aria-pressed={b.namesShowing}
           onClick={() => onChange(b.namesShowing ? 'hide' : 'show')}>
@@ -596,8 +598,9 @@ export function NamesToggle({ b, onChange }) {
           <span>{b.namesShowing ? 'Hide names' : 'Show names'}</span>
         </button>
       )}
-      {z > 1 && <button type="button" className="vs-zoom-btn vs-zoom-fit" onClick={b.zoomReset}>Whole map</button>}
-      <button type="button" className="vs-zoom-btn" aria-label="Zoom in" disabled={z >= 3} onClick={() => b.zoomBy(1.5)}><ToolIcon name="plus" /></button>
+      <button type="button" className="vs-zoom-btn vs-zoom-one" aria-pressed={z > 1} onClick={() => (z > 1 ? b.zoomReset() : b.zoomBy(2))}>
+        <ToolIcon name={z > 1 ? 'unmagnify' : 'magnify'} /><span>{z > 1 ? 'Whole map' : 'Zoom in'}</span>
+      </button>
     </div>
   )
 }
@@ -612,10 +615,12 @@ export function MapToolbar({ b, more }) {
   if (!b.arrange) return <div className="vs-arrange" />
   return (
     <div className="vs-arrange vs-arrange-on">
+      {/* Oct 28 (Jade): Hide tools / Tools lives in the top right corner of the screen,
+          outside the sliding rail, so it never moves or hides. */}
+      <button type="button" className={'vs-tools-toggle' + (moving ? ' vs-tools-toggle-moving' : '')} aria-expanded={!toolsHidden} onClick={() => setToolsHidden(!toolsHidden)}>
+        <ToolIcon name={toolsHidden ? 'left' : 'right'} /><span>{toolsHidden ? 'Show tools' : 'Hide tools'}</span>
+      </button>
       <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked && pickTools) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + ((panelLow && picked && !trayOpen) || tool !== 'move' ? ' vs-toolbar-low' : '') + (tool !== 'move' ? ' vs-toolbar-draw' : '') + (toolsHidden ? ' vs-toolbar-hidden' : '') + (moving ? ' vs-toolbar-moving' : '')} role="region" aria-label="Arrange and build tools">
-        <button type="button" className="vs-tools-toggle" aria-expanded={!toolsHidden} onClick={() => setToolsHidden(!toolsHidden)}>
-          <ToolIcon name={toolsHidden ? 'left' : 'right'} /><span>{toolsHidden ? 'Tools' : 'Hide tools'}</span>
-        </button>
         <div className="vs-toolpanel" inert={toolsHidden}>
         {trayOpen && (
           <button type="button" className="vs-drawer-close" onClick={() => { setTrayOpen(false); setPicked(null) }}>
