@@ -810,3 +810,10 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
 
 /* One magnifier for the map (Oct 28): words and picture, easy to tap. */
 .vs-zoom-one { gap: 8px; padding: 0 16px; min-height: 48px; font-size: 0.95rem; }
+
+/* A piece you just added glows gold for a moment (Oct 28), so it's easy to find. */
+.vs-just-added { filter: drop-shadow(0 0 10px rgba(255, 214, 110, 1)) drop-shadow(0 0 4px rgba(255, 214, 110, 1)); }
+@media (prefers-reduced-motion: no-preference) {
+  .vs-just-added { animation: vs-added-pop 0.6s ease-out 2; }
+  @keyframes vs-added-pop { 0% { transform: translate(-50%, -60%) scale(1); } 50% { transform: translate(-50%, -60%) scale(1.25); } 100% { transform: translate(-50%, -60%) scale(1); } }
+}
