@@ -95,6 +95,12 @@ export default function CommunityResources() {
   const [editFormFor, setEditFormFor] = useState(null) // resource id currently open for editing, or null
   const [editDraft, setEditDraft] = useState({ name: '', description: '', phone: '', url: '', address: '', requirements: '', source_url: '' })
   const [submittingEdit, setSubmittingEdit] = useState(false)
+  // Oct 28: Hope Ambassadors and VWB admins open a listing and fix it right away
+  // (reviewer_edit_resource, vwb-resource-direct-edit.sql). fixing = the resource open.
+  const [fixing, setFixing] = useState(null)
+  const [fix, setFix] = useState({})
+  const [savingFix, setSavingFix] = useState(false)
+  const fixModalRef = useRef(null)
   const [revertingId, setRevertingId] = useState(null)
 
   // CRN preview (test project only): areas, reports, and the new Find Help lists.
@@ -334,6 +340,55 @@ export default function CommunityResources() {
     await Promise.all([loadResources(), loadEditHistory()])
   }
 
+  function openFix(r) {
+    setFix({
+      name: r.name || '', description: r.description || '', phone: r.phone || '', url: r.url || '',
+      address: r.address || '', neighborhood: r.neighborhood || '', requirements: r.requirements || '',
+      categories: resourceCats(r).filter((c) => CATEGORIES.includes(c)), source: '',
+    })
+    setFixing(r)
+  }
+
+  async function saveFix() {
+    if (!fixing) return
+    if (!fix.name.trim()) { tell('A resource needs a name.', { tone: 'error' }); return }
+    if (!fix.categories.length) { tell('Pick at least one kind of help.', { tone: 'error' }); return }
+    const fields = {}
+    ;['name', 'description', 'phone', 'url', 'address', 'neighborhood', 'requirements'].forEach((k) => {
+      if ((fix[k] || '').trim() !== (fixing[k] || '')) fields[k] = (fix[k] || '').trim()
+    })
+    const before = resourceCats(fixing).filter((c) => CATEGORIES.includes(c))
+    const catsChanged = before.length !== fix.categories.length || before.some((c) => !fix.categories.includes(c))
+    if (!Object.keys(fields).length && !catsChanged) { setFixing(null); return }
+    setSavingFix(true)
+    const { error } = await supabase.rpc('reviewer_edit_resource', {
+      p_resource: fixing.id, p_fields: fields, p_categories: catsChanged ? fix.categories : null, p_source: fix.source.trim() || null,
+    })
+    setSavingFix(false)
+    if (error) {
+      console.error('Failed to save resource changes:', error)
+      tell(error.code === 'PGRST202' ? 'This needs a quick database update first (vwb-resource-direct-edit.sql).'
+        : error.message && error.message.length < 160 ? error.message : 'Could not save your changes. Try again.', { tone: 'error' })
+      return
+    }
+    const id = fixing.id
+    setFixing(null)
+    setCardNotice({ id, text: 'Saved. The listing is updated.' })
+    await Promise.all([loadResources(), loadEditHistory()])
+  }
+
+  // The edit sheet: focus in on open, Tab stays inside, Escape closes.
+  useEffect(() => {
+    if (!fixing) return
+    fixModalRef.current?.focus()
+    function onKey(e) {
+      if (e.key === 'Escape') { setFixing(null); return }
+      trapTabKey(e, fixModalRef.current)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [fixing])
+
   async function revertEdit(editId) {
     if (!canVerify) return
     setRevertingId(editId)
@@ -497,6 +552,20 @@ export default function CommunityResources() {
                         {placesEnabled && user && r.verified && (
                           <button type="button" onClick={() => setReportFor(r)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', minHeight: 44, marginTop: '0.4rem', padding: '0 0.2rem', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>
                             <Icon name="flag" /> Something wrong?
+                          </button>
+                        )}
+                        {!placesEnabled && cardNotice?.id === r.id && (
+                          <p role="status" style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 600, margin: '0.4rem 0 0' }}>{cardNotice.text}</p>
+                        )}
+                        {/* Oct 28: edit straight from the card. */}
+                        {user && canVerify && (
+                          <button type="button" className="btn btn-outline" onClick={() => openFix(r)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', minHeight: 44, marginTop: '0.5rem' }}>
+                            <Icon name="pencil" /> Edit
+                          </button>
+                        )}
+                        {user && !canVerify && r.verified && editFormFor !== r.id && (
+                          <button type="button" className="btn btn-outline" onClick={() => { if (!openHistoryFor.includes(r.id)) toggleHistory(r.id); openEditForm(r) }} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', minHeight: 44, marginTop: '0.5rem' }}>
+                            <Icon name="pencil" /> Suggest an edit
                           </button>
                         )}
 
@@ -789,6 +858,47 @@ export default function CommunityResources() {
             </div>
           )}
 
+          {fixing && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setFixing(null)}>
+              <div ref={fixModalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="fix-title" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', maxWidth: '440px', width: '92%', maxHeight: '88vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <h3 id="fix-title" style={{ margin: 0, color: 'var(--accent)' }}>Edit {fixing.name}</h3>
+                  <button type="button" onClick={() => setFixing(null)} aria-label="Close" style={{ minWidth: 44, minHeight: 44, background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
+                </div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.75rem', lineHeight: 1.45 }}>Changes show right away. They go in the edit history, so they can be undone.</p>
+                <label id="fix-cat-label" style={labelStyle}>Kinds of help (pick at least one)</label>
+                <div role="group" aria-labelledby="fix-cat-label" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                  {CATEGORIES.map((c) => {
+                    const on = fix.categories.includes(c)
+                    return <button key={c} type="button" aria-pressed={on} onClick={() => setFix((f) => ({ ...f, categories: on ? f.categories.filter((x) => x !== c) : [...f.categories, c] }))} style={{ padding: '0.5rem 0.75rem', minHeight: '44px', borderRadius: '16px', border: on ? 'none' : '1px solid var(--border-strong)', background: on ? 'var(--accent)' : 'none', color: on ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
+                  })}
+                </div>
+                {[
+                  ['name', 'Name (required)', 'input'],
+                  ['description', 'What do they offer?', 'area'],
+                  ['phone', 'Phone', 'input', 'tel'],
+                  ['url', 'Website', 'input', 'url'],
+                  ['address', 'Address', 'input'],
+                  ['neighborhood', 'Town or area', 'input'],
+                  ['requirements', 'What to bring or know before you go', 'area'],
+                ].map(([k, label, kind, mode]) => (
+                  <div key={k}>
+                    <label htmlFor={'fix-' + k} style={labelStyle}>{label}</label>
+                    {kind === 'area'
+                      ? <textarea id={'fix-' + k} style={{ ...fieldStyle, fontSize: '1rem', minHeight: '64px', resize: 'vertical' }} value={fix[k]} onChange={(e) => setFix((f) => ({ ...f, [k]: e.target.value }))} maxLength={k === 'requirements' ? 300 : 1000} />
+                      : <input id={'fix-' + k} type={mode === 'url' ? 'url' : mode === 'tel' ? 'tel' : 'text'} inputMode={mode || undefined} style={{ ...fieldStyle, fontSize: '1rem' }} value={fix[k]} onChange={(e) => setFix((f) => ({ ...f, [k]: e.target.value }))} maxLength={k === 'name' ? 120 : 300} />}
+                  </div>
+                ))}
+                <label htmlFor="fix-source" style={labelStyle}>Where did you check this? (optional)</label>
+                <input id="fix-source" style={{ ...fieldStyle, fontSize: '1rem' }} placeholder="Their website, a call, a visit" value={fix.source} onChange={(e) => setFix((f) => ({ ...f, source: e.target.value }))} maxLength={500} />
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <button type="button" className="btn btn-outline" style={{ flex: 1, minHeight: 48 }} onClick={() => setFixing(null)}>Cancel</button>
+                  <button type="button" className="btn btn-primary" style={{ flex: 1, minHeight: 48 }} disabled={savingFix} onClick={saveFix}>{savingFix ? 'Saving...' : 'Save'}</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {canVerify && <ResourceSuggestionsReview onAdd={addFromSuggestion} refreshKey={suggestionsKey} />}
 
           {canVerify && pendingResources.length > 0 && (
@@ -798,7 +908,10 @@ export default function CommunityResources() {
                 <div key={r.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0.6rem', marginBottom: '0.35rem', borderLeft: '3px solid var(--warn)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{r.name}</span>
-                    <button onClick={() => verifyResource(r.id)} style={{ padding: '0.3rem 0.9rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Verify</button>
+                    <span style={{ display: 'flex', gap: '0.4rem' }}>
+                      <button type="button" onClick={() => openFix(r)} style={{ padding: '0.3rem 0.9rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Edit</button>
+                      <button onClick={() => verifyResource(r.id)} style={{ padding: '0.3rem 0.9rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Verify</button>
+                    </span>
                   </div>
                   {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{r.description}</p>}
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{resourceCats(r).join(' · ')}{r.organizations ? ' · ' + r.organizations.name : ''}</span>
