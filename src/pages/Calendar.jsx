@@ -6,6 +6,7 @@ import CalendarSubscribe from '../components/CalendarSubscribe'
 import { CalendarLocationBar, CalendarView, CalendarEventList, AllAgesFilter } from '../components/CalendarParts'
 import NearbyOrganizers from '../components/NearbyOrganizers'
 import BringOrg from '../components/BringOrg'
+import { calmMotion } from '../utils/motion'
 
 export default function Calendar() {
   const { isAdmin, organizations, profile } = useAuth()
@@ -27,7 +28,7 @@ export default function Calendar() {
   function jumpToSubscribe() {
     const el = document.getElementById('cal-subscribe')
     if (el) {
-      el.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+      el.scrollIntoView({ behavior: calmMotion() ? 'auto' : 'smooth', block: 'start' })
       el.focus({ preventScroll: true })
     }
   }
