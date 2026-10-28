@@ -1,7 +1,7 @@
 import Icon from './Icon'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { DISTANCE_OPTIONS, groupByDay, hasEnded, timeRange, VISIBILITY, placeFromZip } from '../utils/calendar'
+import { DISTANCE_OPTIONS, groupByDay, hasEnded, timeRange, dayLabel, VISIBILITY, placeFromZip } from '../utils/calendar'
 
 // Where to look: a zip code (any US zip), "Use my location" (this visit
 // only), or "Back to my area" (the member's saved area), plus how far.
@@ -107,11 +107,12 @@ function badges(ev) {
   return out
 }
 
-export function CalendarEventCard({ ev, newTab }) {
+// showDate (Oct 28): lists with no day headings above them (like Coming up) show the day too.
+export function CalendarEventCard({ ev, newTab, showDate }) {
   const where = ev.is_online ? 'Online' : [ev.town, ev.miles != null ? (ev.miles < 1 ? 'nearby' : Math.round(ev.miles) + ' mi away') : null].filter(Boolean).join(' · ')
   const inner = (
     <>
-      <span className="cal-card-time">{timeRange(ev)}</span>
+      <span className="cal-card-time">{showDate && <span className="cal-card-day">{dayLabel(ev.starts_at)}</span>}{timeRange(ev)}</span>
       <span className="cal-card-title">{ev.title}</span>
       <span className="cal-card-meta">
         {ev.organization_name || 'Village Without Borders'}{where ? ' · ' + where : ''}
