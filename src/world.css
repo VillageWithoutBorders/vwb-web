@@ -67,3 +67,57 @@
 /* The Village Network under the globe (Oct 22). Light panel, left-aligned, full width. */
 .wd-network-wrap { width: 100%; max-width: 760px; margin: 16px auto 0; text-align: left; scroll-margin-top: calc(var(--header-height) + 8px); }
 .wd-network { background: var(--bg); color: var(--text); border-radius: 16px; padding: 16px; margin: 0 0 12px; max-width: none; }
+
+/* ---------- My World on a computer: globe and dashboard side by side (Oct 28, Jade) ----------
+   Two even halves, like the cottage and village pages: the globe on the left,
+   staying in view, and everything else on one dark panel on the right. */
+@media (min-width: 1024px) {
+  .wd-page {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: repeat(10, auto) 1fr;
+    column-gap: 24px; align-items: start; justify-content: stretch; text-align: left;
+    max-width: none; padding: 16px 24px 24px; position: relative;
+  }
+  .wd-page::after {
+    content: ''; position: absolute; inset: 0; grid-column: 2; grid-row: 1 / -1;
+    background: var(--bg, #121212); border-radius: 16px; z-index: 0; pointer-events: none;
+  }
+  .wd-page > * { grid-column: 2; position: relative; z-index: 1; margin-left: 20px; margin-right: 20px; }
+  .wd-page > .vs-shade { position: fixed; z-index: 200; margin: 0; }
+  .wd-page > .wd-switch { margin-top: 20px; width: auto; }
+  .wd-page > .wd-hint { margin-top: 12px; }
+  .wd-page > .wd-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 8px; }
+  .wd-page > .wd-network-wrap { max-width: none; margin-top: 12px; margin-bottom: 20px; }
+  /* The globe: a square as big as the left half and the screen height allow, centered and staying put. */
+  .wd-page > .wd-globe-wrap {
+    grid-column: 1; grid-row: 1 / -1; margin: 0; justify-self: center;
+    width: min(100%, calc(100dvh - var(--header-height) - var(--tab-height) - 64px));
+    position: sticky; top: calc(var(--header-height) + 32px);
+  }
+}
+@media (min-width: 1024px) {
+  .wd-page > .wd-actions { width: auto; }
+  .wd-page > .wd-sub { max-width: none; }
+}
+
+/* ---------- Only the right side scrolls (Oct 28, Jade) ---------- */
+.wd-panel { display: contents; }
+.wd-panel > .wd-switch { order: -1; }
+.wd-page > .wd-brand { order: -2; }
+@media (min-width: 1024px) {
+  .wd-page {
+    height: calc(100dvh - var(--header-height) - var(--tab-height) - env(safe-area-inset-bottom, 0px));
+    min-height: 0; overflow: hidden; grid-template-rows: minmax(0, 1fr); box-sizing: border-box;
+  }
+  .wd-page::after { display: none; }
+  .wd-page > .wd-panel {
+    display: flex; flex-direction: column; gap: 10px; grid-column: 2; grid-row: 1; align-self: stretch;
+    height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+    margin: 0; padding: 20px; box-sizing: border-box; background: var(--bg, #121212); border-radius: 16px;
+  }
+  .wd-panel > * { margin-left: 0 !important; margin-right: 0 !important; }
+  .wd-panel > .wd-switch { margin-top: 0; width: auto; }
+  .wd-panel > .wd-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 8px; width: auto; }
+  .wd-panel > .wd-sub { max-width: none; }
+  .wd-panel > .wd-network-wrap { max-width: none; margin: 4px 0 0; }
+  .wd-page > .wd-globe-wrap { grid-row: 1; position: relative; top: auto; align-self: center; }
+}
