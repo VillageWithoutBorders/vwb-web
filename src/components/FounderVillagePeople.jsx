@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient'
 import { askConfirm, tell } from './AdminDialog'
 import { UserName } from './AvatarDisplay'
 
-// Founder only, on each village in Admin > Villages: who is in the village
+// VWB admins and the founder (Oct 28; was founder only), on each village in Admin > Villages: who is in the village
 // chat (names and roles, never messages), ask a member to be Keeper, and put
 // people in the chat. Invite = they read the warning and join themselves.
 // Add now = they already said yes in person. The database checks every rule
