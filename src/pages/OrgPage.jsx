@@ -12,7 +12,7 @@ import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import OrgMemberNames from '../components/OrgMemberNames'
 import { ORG_SPOTS, GROUP_SPOTS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
-import { usePageMap, MapLayers, MapToolbar, NamesToggle, ToolIcon, sceneProps, zoomLayer, askGoTo, ScrollCue, placeLayer } from '../components/MapBuilder'
+import { usePageMap, MapLayers, MapToolbar, ToolIcon, sceneProps, zoomLayer, askGoTo, ScrollCue, placeLayer } from '../components/MapBuilder'
 import OrgSceneEditor from '../components/OrgSceneEditor'
 import GroupGear from '../components/GroupGear'
 import GroupResponse from '../components/GroupResponse'
@@ -50,6 +50,8 @@ export default function OrgPage() {
   const simple = useSimpleView()
 
   const [org, setOrg] = useState(null)
+  // Oct 28: the Edit button's menu on the map.
+  const [editMenu, setEditMenu] = useState(false)
   const [place, setPlace] = useState('')
   const [loading, setLoading] = useState(true)
   const [missing, setMissing] = useState(false)
@@ -561,37 +563,7 @@ export default function OrgPage() {
           near the bottom of the page. */}
       {!isMember && <OrgPublicTop org={org} place={place} contactEmail={contactEmail} events={events} resources={resources} kind={KIND} onMore={(k) => openSheet({ k })} />}
 
-      {/* Oct 25 (Jade): Customize drawer: names, zoom, and arranging, folded away. */}
-      {!arrange && !simple && (
-        <details className="vs-customize">
-          <summary><span className="vs-customize-ic" aria-hidden="true"><ToolIcon name="move" /></span><span className="vs-customize-word">Customize</span><span className="vs-customize-chev" aria-hidden="true">&#9662;</span></summary>
-          <div className="vs-customize-body">
-            <NamesToggle b={b} onChange={user ? saveLabels : null} />
-            {/* Only members arrange their own view (Oct 22). Visitors see the default look. */}
-            {user && isMember && !arrange && (
-              <button type="button" className="vs-build-start" onClick={() => startArrange('me')}>
-                <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
-                <span className="vs-build-start-text">
-                  <b>Arrange my view of {org.name}</b>
-                  <small>Only you see your view. Move places, add trees, draw roads.</small>
-                </span>
-              </button>
-            )}
-            {user && !arrange && canManage && (
-              <button type="button" className="vs-build-start vs-build-shared" onClick={() => startArrange('everyone')}>
-                <span className="vs-build-start-ic" aria-hidden="true"><ToolIcon name="move" /></span>
-                <span className="vs-build-start-text">
-                  <b>Set the default look for {org.name}</b>
-                  <small>Everyone starts with this. Anyone who arranged their own view keeps it.</small>
-                </span>
-              </button>
-            )}
-            {!arrange && canManage && hasOwn && (
-              <p className="vs-note">You are seeing your own view, so a new default will not show for you. To see the default, open Arrange my view and tap Back to the default look.</p>
-            )}
-          </div>
-        </details>
-      )}
+      {/* Oct 28 (Jade): Customize folded into the Edit button on the map, like cottage and village maps. */}
 
       {!simple && <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
        {/* Oct 28: the same picture, soft and blurred, fills any space around the map. */}
@@ -616,9 +588,37 @@ export default function OrgPage() {
           )
         })}
        </div>
+        {!arrange && user && (
+          <div className="vs-edit-fab-wrap" onPointerDown={(e) => e.stopPropagation()}>
+            <button type="button" className="vs-edit-fab" aria-haspopup="menu" aria-expanded={editMenu} onClick={() => setEditMenu((v) => !v)}>
+              <ToolIcon name="move" /><span>Edit map</span>
+            </button>
+            {editMenu && (
+              <div className="vs-edit-menu" role="menu">
+                {isMember && (
+                  <button type="button" role="menuitem" onClick={() => { setEditMenu(false); startArrange('me') }}>
+                    <b>{canManage ? 'My own view' : 'Arrange my view'}</b><small>Only you see it. Move places, add trees, draw roads.</small>
+                  </button>
+                )}
+                {canManage && (
+                  <button type="button" role="menuitem" onClick={() => { setEditMenu(false); startArrange('everyone') }}>
+                    <b>Default for everyone</b><small>Everyone starts with this.{hasOwn ? ' You see your own view, so you will not see the new default.' : ''}</small>
+                  </button>
+                )}
+                <button type="button" role="menuitem" onClick={() => { setEditMenu(false); saveLabels(b.namesShowing ? 'hide' : 'show') }}>
+                  <b>{b.namesShowing ? 'Hide name tags' : 'Show name tags'}</b><small>On every map, for you.</small>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="vs-zoom-fab-wrap" onPointerDown={(e) => e.stopPropagation()}>
+          <button type="button" className="vs-zoom-btn vs-zoom-one" aria-pressed={b.zoom.z > 1} onClick={() => (b.zoom.z > 1 ? b.zoomReset() : b.zoomBy(2))}>
+            <ToolIcon name={b.zoom.z > 1 ? 'unmagnify' : 'magnify'} /><span>{b.zoom.z > 1 ? 'Whole map' : 'Zoom in'}</span>
+          </button>
+        </div>
         <div className="vs-fade" />
       </div>}
-      {arrange && <NamesToggle b={b} onChange={user ? saveLabels : null} />}
       {!simple && <ScrollCue b={b} />}
 
       <p className="vs-hint">{arrange ? (arrangeFor === 'everyone' ? 'You are setting the default look for ' + org.name + '. Personal views stay as they are. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : 'Tap anything to go there.'}</p>

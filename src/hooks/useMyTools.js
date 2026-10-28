@@ -8,6 +8,18 @@ import { supabase } from '../supabaseClient'
 export function useMyTools() {
   const { user, profile, isAdmin, organizations } = useAuth()
   const [keptVillages, setKeptVillages] = useState([])
+  // Oct 28: new resource suggestions, for a My Tools row (Hope Ambassadors and admins).
+  const [newSuggestions, setNewSuggestions] = useState(0)
+  const reviewer = !!(profile?.is_hope_ambassador || isAdmin)
+  useEffect(() => {
+    if (!user || !reviewer) { setNewSuggestions(0); return }
+    let alive = true
+    supabase.rpc('list_resource_suggestions', { p_status: 'new' }).then(({ data, error }) => {
+      if (error) { console.error('Failed to count resource suggestions:', error); return }
+      if (alive) setNewSuggestions((data || []).length)
+    })
+    return () => { alive = false }
+  }, [user?.id, reviewer]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Villages I keep: check the villages I am in (usually one to three).
   useEffect(() => {
@@ -31,6 +43,7 @@ export function useMyTools() {
   const tools = []
   if (isAdmin) tools.push({ key: 'admin', label: 'Admin', icon: 'shield', to: '/admin' })
   if (profile?.is_hope_ambassador || isAdmin) tools.push({ key: 'ambassador', label: 'Ambassador', icon: 'star', to: '/ambassador' })
+  if (reviewer) tools.push({ key: 'suggestions', label: 'Resource suggestions', icon: 'books', to: '/community/resources?suggestions=1', note: newSuggestions ? newSuggestions + ' new' : 'Nothing new' })
   const runsOrg = (organizations || []).some((o) => o.kind !== 'group' && (o.role === 'admin' || o.role === 'organizer'))
   if (runsOrg) tools.push({ key: 'organizer', label: 'Organizer', icon: 'toolbox', to: '/org-dashboard' })
   ;(organizations || []).filter((o) => o.kind === 'group' && (o.role === 'admin' || o.role === 'organizer'))
