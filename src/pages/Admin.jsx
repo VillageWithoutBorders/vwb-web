@@ -90,16 +90,6 @@ export default function Admin() {
     setForceTool(false)
   }, [location.search])
   useEffect(() => { refreshAdminInbox() }, [tab])
-  useEffect(() => {
-    if (tab !== 'villages' || !villages.length) return
-    let want = null
-    try { want = new URLSearchParams(location.search).get('village') } catch { /* none */ }
-    if (!want || !villages.some((v) => v.id === want)) return
-    setFocusVillage(want)
-    const t = setTimeout(() => document.getElementById('village-' + want)?.scrollIntoView({ block: 'center', behavior: calmMotion() ? 'auto' : 'smooth' }), 150)
-    const off = setTimeout(() => setFocusVillage(null), 6000)
-    return () => { clearTimeout(t); clearTimeout(off) }
-  }, [tab, villages, location.search])
   const [resourceClaims, setResourceClaims] = useState([])
   const [loading, setLoading] = useState(true)
   const [pendingEvents, setPendingEvents] = useState([])
@@ -147,6 +137,16 @@ export default function Admin() {
   const [villages, setVillages] = useState([])
   // Oct 28: alerts open /admin?tab=villages&village=<id>, straight to that village.
   const [focusVillage, setFocusVillage] = useState(null)
+  useEffect(() => {
+    if (tab !== 'villages' || !villages.length) return
+    let want = null
+    try { want = new URLSearchParams(location.search).get('village') } catch { /* none */ }
+    if (!want || !villages.some((v) => v.id === want)) return
+    setFocusVillage(want)
+    const t = setTimeout(() => document.getElementById('village-' + want)?.scrollIntoView({ block: 'center', behavior: calmMotion() ? 'auto' : 'smooth' }), 150)
+    const off = setTimeout(() => setFocusVillage(null), 6000)
+    return () => { clearTimeout(t); clearTimeout(off) }
+  }, [tab, villages, location.search])
   // Founder only: admins per village (vwb-two-admins-per-village.sql). Goal is 2 each.
   const [showNewVillageForm, setShowNewVillageForm] = useState(false)
   const [newVillageName, setNewVillageName] = useState('')
