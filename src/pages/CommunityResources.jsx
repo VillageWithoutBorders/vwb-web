@@ -15,6 +15,7 @@ import AreaPicker from '../components/AreaPicker'
 import CrnCardDetails from '../components/CrnCardDetails'
 import ResourceReport from '../components/ResourceReport'
 import SuggestResource from '../components/SuggestResource'
+import { useWideScreen } from '../hooks/useWideScreen'
 import ResourceSuggestionsReview from '../components/ResourceSuggestionsReview'
 import { placesEnabled, getMyPlaces, getVisitorArea, setVisitorArea } from '../utils/places'
 import { findHelpForMe, resourcesForPlace, friendlyError, saysNo } from '../utils/resourceReports'
@@ -58,7 +59,10 @@ export default function CommunityResources() {
   // Resource Library
   const [resources, setResources] = useState([])
   const [loadingResources, setLoadingResources] = useState(true)
+  const wide = useWideScreen()
   const [selectedCat, setSelectedCat] = useState(() => (searchParams.get('cat') ? currentCategory(searchParams.get('cat')) : null))
+  // Oct 28 (Jade): a tapped place on Resources near you opens here (?show=<id>).
+  const showId = searchParams.get('show')
   const [showFilters, setShowFilters] = useState(false)
   const [orgFilter, setOrgFilter] = useState('all')
   const [radiusFilter, setRadiusFilter] = useState('all') // 'all' | 10 | 25 | 50 (miles)
@@ -446,6 +450,15 @@ export default function CommunityResources() {
     await loadResources()
   }
 
+  // Slide to the place someone tapped on Resources near you, once it has loaded.
+  useEffect(() => {
+    if (!showId || loadingResources) return
+    const el = document.getElementById('res-' + showId)
+    if (!el) return
+    const reduce = document.documentElement.classList.contains('calm-motion') || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' })
+  }, [showId, loadingResources])
+
   // One kind of help at a time; the address keeps it (?cat=Food) so Back works.
   function openCat(cat) {
     setSelectedCat(cat)
@@ -518,7 +531,7 @@ export default function CommunityResources() {
   const labelStyle = { display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }
 
   const resourceCard = (r) => (
-                      <div key={r.id} className="fh-card">
+                      <div key={r.id} id={'res-' + r.id} className={'fh-card' + (showId === String(r.id) ? ' fh-card-picked' : '')}>
                         <span className="fh-card-name">{r.name}</span>
                         {r.description && <p className="fh-card-desc">{r.description}</p>}
                         {placesEnabled && <CrnCardDetails r={r} />}
@@ -683,7 +696,10 @@ export default function CommunityResources() {
   )
 
   return (
-    <div className="community-page">
+    <div className="community-page fr-page">
+      {/* Oct 28 (Jade): computers show the kinds of help on the left and the places on the right,
+          like the map pages. Phones keep one column. */}
+      <div className="fr-left">
       {user ? <HelpSwitch /> : <BackLink fallback="/welcome" fallbackLabel="Welcome" />}
       <div className="fh-head">
         <img src="/art/icons/heart-hands.svg" alt="" width="48" height="48" />
@@ -728,6 +744,27 @@ export default function CommunityResources() {
               {radiusFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRadiusFilter('all')} aria-label={'Remove filter: within ' + radiusFilter + ' miles'}>Within {radiusFilter} mi <span aria-hidden="true">&#10005;</span></button>}
               {accessFilter.map((f) => <button key={f} type="button" className="fh-chip" onClick={() => toggleAccess(f)} aria-label={'Remove filter: ' + accessLabel(f)}>{accessLabel(f)} <span aria-hidden="true">&#10005;</span></button>)}
             </div>
+          )}
+
+          {wide && !visitorNeedsArea && !loadingResources && (
+            <div className="fh-grid fr-side-tiles" role="group" aria-label="Kinds of help">
+              {orderedCats.map(cat => {
+                const on = selectedCat === cat && !query.trim()
+                return (
+                  <button key={cat} type="button" className={'fh-tile' + (on ? ' on' : '')} aria-pressed={on} onClick={() => { setQuery(''); openCat(on ? null : cat) }}>
+                    <img src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="48" height="48" />
+                    <span className="fh-tile-name">{cat}</span>
+                    <span className="fh-tile-count">{grouped[cat].length} {grouped[cat].length === 1 ? 'place' : 'places'}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+      </div>
+
+      <div className="fr-right">
+          {wide && !visitorNeedsArea && !loadingResources && !query.trim() && !selectedCat && filteredVerifiedResources.length > 0 && (
+            <p className="fr-pick-hint">Pick a kind of help on the left, or search. The places show up here.</p>
           )}
 
           {showFilters && (
@@ -915,7 +952,7 @@ export default function CommunityResources() {
 
           {loadingResources && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Loading...</p>}
 
-          {!visitorNeedsArea && !loadingResources && !query.trim() && !selectedCat && (
+          {!wide && !visitorNeedsArea && !loadingResources && !query.trim() && !selectedCat && (
             <div className="fh-grid">
               {orderedCats.map(cat => (
                 <button key={cat} type="button" className="fh-tile" onClick={() => openCat(cat)}>
@@ -978,6 +1015,8 @@ export default function CommunityResources() {
                 : <SuggestResource category={selectedCat || ''} />}
             </div>
           )}
+
+      </div>
 
       {reportFor && (
         <ResourceReport

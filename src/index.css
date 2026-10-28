@@ -6409,3 +6409,28 @@ html, body { touch-action: pan-x pan-y; }
   .nr-right #nr-ask { scroll-margin-top: calc(var(--header-height) + 1rem); }
   .nr-pick-hint { display: block; margin: 0 0 0.75rem; padding: 1rem; border: 1px dashed var(--border-strong); border-radius: 10px; color: var(--text-soft); font-size: 1rem; }
 }
+
+/* Oct 28 (Jade): Resources near you uses the whole screen on computers, and the
+   left side shrinks its tiles to fit so it never needs scrolling. */
+@media (min-width: 1024px) {
+  .app-main:has(.nr-page) { max-width: none; }
+  .ask-page.nr-page { max-width: none; --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - env(safe-area-inset-bottom, 0px)); }
+  .nr-left { display: flex; flex-direction: column; height: var(--fit-h); max-height: none; overflow: hidden; }
+  .nr-left > * { flex: 0 0 auto; }
+  .nr-left > .nr-tiles { flex: 1 1 0; min-height: 0; margin-bottom: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); align-content: stretch; overflow-y: auto; }
+  .nr-left .hub-tile { min-height: 44px; height: 100%; }
+  .nr-left .hub-tile img { width: clamp(28px, 4.5dvh, 48px); height: clamp(28px, 4.5dvh, 48px); }
+  .nr-right { min-height: var(--fit-h); }
+}
+
+/* Oct 28 (Jade): result cards on Resources near you are tappable as a whole. */
+.nr-card { position: relative; cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
+.nr-card:hover { border-color: var(--accent) !important; }
+.nr-card:active { transform: scale(0.99); }
+.nr-card-open { color: var(--text-strong); text-decoration: none; display: inline-flex; min-height: 44px; align-items: center; gap: 0.3rem; }
+.nr-card-open::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+.nr-card-open:focus-visible { outline: none; }
+.nr-card:has(.nr-card-open:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+.nr-card a:not(.nr-card-open), .nr-card button { position: relative; z-index: 1; }
+@media (prefers-reduced-motion: reduce) { .nr-card { transition: none; } .nr-card:active { transform: none; } }
+html.calm-motion .nr-card:active { transform: none; }
