@@ -467,14 +467,34 @@ export default function VillageScene() {
     }
   }
 
+  // Where each gift's first step happens.
+  const GIFT_STEPS = { home: '/find-village', task: '/skillshare', vouch: '/my-code', org: '/groups' }
+  function moveGift(k) {
+    closeSheet()
+    startArrange('me')
+    setTimeout(() => { b.setPicked('gift-' + k); b.setPickTools(true) }, 0)
+  }
+
   function giftsSheet() {
     const got = GIFTS.filter((g) => g.got)
     return <>
       <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><Icon name="sprout" size={36} /></span> Your garden</h2>
       <p>Small gifts grow in your garden as you take first steps with your neighbors. Only you see them, and they never go away.</p>
-      {got.map((g) => <div key={g.k} className="vs-item vs-gift-row"><img src={g.src} alt="" width="48" height="48" /><span><b>{g.label}</b><small>{g.why}</small></span></div>)}
+      {/* Oct 28 (Jade): every row does something. A grown gift opens editing with it picked,
+          so you can move it. A gift still to grow takes you to the step that grows it. */}
+      {got.map((g) => (
+        <button key={g.k} type="button" className="vs-item vs-gift-row" onClick={() => moveGift(g.k)}>
+          <img src={g.src} alt="" width="48" height="48" /><span><b>{g.label}</b><small>{g.why}. Tap to move it on your map.</small></span>
+          <span className="vs-gift-go" aria-hidden="true">&#8250;</span>
+        </button>
+      ))}
       {got.length < GIFTS.length && <h3 className="vs-arrange-h">Still to grow</h3>}
-      {GIFTS.filter((g) => !g.got).map((g) => <div key={g.k} className="vs-item vs-gift-row vs-gift-next"><img src={g.src} alt="" width="48" height="48" /><span><b>{g.next}</b><small>A gift will grow when you do</small></span></div>)}
+      {GIFTS.filter((g) => !g.got).map((g) => (
+        <button key={g.k} type="button" className="vs-item vs-gift-row vs-gift-next" onClick={() => { closeSheet(); navigate(GIFT_STEPS[g.k]) }}>
+          <img src={g.src} alt="" width="48" height="48" /><span><b>{g.next}</b><small>A gift will grow when you do. Tap to start.</small></span>
+          <span className="vs-gift-go" aria-hidden="true">&#8250;</span>
+        </button>
+      ))}
     </>
   }
 
@@ -815,7 +835,6 @@ export default function VillageScene() {
           <div className="vs-sheet" role="dialog" aria-modal="true" aria-labelledby="vs-sheet-title" ref={sheetRef}>
             <button type="button" className="vs-sheet-close" onClick={closeSheet}><ToolIcon name="down" /><span>Close</span></button>
             {sheetBody(sheet.k)}
-            <button type="button" className="btn btn-outline btn-full" onClick={closeSheet}>{cottage ? 'Back to my cottage' : 'Back to the village'}</button>
           </div>
         </div>
       )}

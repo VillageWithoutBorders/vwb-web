@@ -261,14 +261,6 @@ export default function World() {
     <div className="vs-page wd-page">
       <div className="wd-brand">Village Without Borders</div>
 
-      <div className="wd-switch" role="group" aria-label="Which network">
-        <button type="button" aria-pressed={net === 'villages'} onClick={() => setNet('villages')}><span aria-hidden="true"><Icon name="houses" /></span> Villages</button>
-        <button type="button" aria-pressed={net === 'orgs' || net === 'groups'} onClick={() => setNet('orgs')}><span aria-hidden="true"><Icon name="people" /></span> Groups</button>
-        {/* Oct 25: the third button opens the resource hub (the same page as Ask for help).
-            Emergency crews are reached from the Groups view. */}
-        <button type="button" onClick={() => navigate('/ask')}><span aria-hidden="true"><Icon name="heart-hands" /></span> Resources</button>
-      </div>
-
       <div className="wd-globe-wrap">
         {announceBoard && (
           <button type="button" className="wd-news" aria-label="Announcements" onClick={() => navigate('/village-square?board=' + announceBoard)}><Icon name="megaphone" /></button>
@@ -340,6 +332,18 @@ export default function World() {
         </div>
       </div>
 
+      {/* Oct 28 (Jade): everything beside the globe sits in one panel. On a computer the
+          panel scrolls by itself and the globe stays put. On phones the panel is invisible
+          and the page reads as before (the switch still comes first). */}
+      <div className="wd-panel">
+      <div className="wd-switch" role="group" aria-label="Which network">
+        <button type="button" aria-pressed={net === 'villages'} onClick={() => setNet('villages')}><span aria-hidden="true"><Icon name="houses" /></span> Villages</button>
+        <button type="button" aria-pressed={net === 'orgs' || net === 'groups'} onClick={() => setNet('orgs')}><span aria-hidden="true"><Icon name="people" /></span> Groups</button>
+        {/* Oct 25: the third button opens the resource hub (the same page as Ask for help).
+            Emergency crews are reached from the Groups view. */}
+        <button type="button" onClick={() => navigate('/ask')}><span aria-hidden="true"><Icon name="heart-hands" /></span> Resources</button>
+      </div>
+
       {villages === null && <p className="wd-sub" role="status">Loading your world...</p>}
       {error && <p className="vs-error" role="alert">{error}</p>}
 
@@ -367,6 +371,7 @@ export default function World() {
         </Suspense>
         {net === 'orgs' && <div className="cal-page wd-network"><BringOrg /></div>}
       </section>
+      </div>
 
       {sheet && (
         <div className="vs-shade" onClick={(e) => { if (e.target === e.currentTarget) closeSheet() }}>
