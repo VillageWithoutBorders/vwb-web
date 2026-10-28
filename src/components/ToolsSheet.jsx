@@ -5,7 +5,7 @@ import Icon from './Icon'
 // The pop-up list behind My Tools (top bar). children show above the rows (your alerts).
 // rows: { key, label, to, icon, pic?, name?, note? }. pic shows in place of the icon (your avatar).
 // onClose(true) puts focus back on the button that opened it.
-export default function ToolsSheet({ id, title, rows, onClose, children, rowsTitle }) {
+export default function ToolsSheet({ id, title, rows, onClose, children, rowsTitle, footer }) {
   const navigate = useNavigate()
   const ref = useRef(null)
   const closeRef = useRef(onClose)
@@ -38,6 +38,7 @@ export default function ToolsSheet({ id, title, rows, onClose, children, rowsTit
             </li>
           ))}
         </ul>
+        {footer}
         <button type="button" className="btn btn-outline btn-full" onClick={() => onClose(true)}>Close</button>
       </div>
     </div>
