@@ -6328,3 +6328,10 @@ html, body { touch-action: pan-x pan-y; }
 
 /* Coming up cards show the day above the time (Oct 28). */
 .cal-card-day { display: block; font-weight: 700; color: var(--text-strong, var(--text)); margin-bottom: 0.1rem; }
+
+/* ---------- Kind-of-help tiles everywhere: picture above the words (Oct 28, Jade) ----------
+   Same as the Help page. Words like "Emergency" never split in the middle,
+   and long names like "Legal and Tenant Help" get the full tile width. */
+.hub-tiles .hub-tile { flex-direction: column; justify-content: center; text-align: center; gap: 0.4rem; min-height: 104px; padding: 0.7rem 0.45rem; }
+.hub-tiles .hub-tile span { overflow-wrap: normal; word-break: normal; hyphens: manual; line-height: 1.25; }
+@media (max-width: 359px) { .hub-tiles .hub-tile span { overflow-wrap: break-word; } }
