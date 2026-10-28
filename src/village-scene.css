@@ -861,3 +861,27 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
   left: calc((100cqw - var(--vs-lw)) / 2);
   top: calc((100cqh - var(--vs-lw) * 1.5) / 2);
 }
+
+/* ---------- Computers: the map is half the screen (Oct 28, Jade) ----------
+   Two even halves: the map on the left, filling its half and the height of the
+   screen; the page on the right. The whole map picture shows, centered, with
+   the zoom and names buttons right under it. */
+@media (min-width: 1024px) {
+  .vs-page.vs-page-path {
+    --vs-map-h: calc(100dvh - var(--header-height) - var(--tab-height) - 104px);
+    max-width: none; padding: 16px 24px 32px; column-gap: 24px;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .vs-page-path > .vs-scene-path {
+    width: 100%; height: var(--vs-map-h); aspect-ratio: auto; container-type: size;
+  }
+  .vs-page-path > .vs-scene-path > .vs-zoom {
+    --vs-lw: min(100cqw, 66.667cqh);
+    inset: auto; width: var(--vs-lw); height: calc(var(--vs-lw) * 1.5);
+    left: calc((100cqw - var(--vs-lw)) / 2); top: calc((100cqh - var(--vs-lw) * 1.5) / 2);
+  }
+  .vs-page-path > .vs-map-under {
+    width: 100%; margin: calc(var(--vs-map-h) + 10px) 0 0;
+    top: calc(var(--header-height) + 26px + var(--vs-map-h));
+  }
+}
