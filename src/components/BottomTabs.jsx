@@ -7,8 +7,8 @@ import { useSimpleView } from '../utils/simpleView'
 // Places, My Corner, and My Tools (alerts and role tools) are in the top bar.
 
 const HELP = ['/help-doors', '/skillshare', '/tasks', '/ask', '/post-offer', '/community/resources']
-// Which action tab lights up. Find resources and the Help doors sit under Find Help.
-const ASK = ['/ask', '/community/resources', '/help-doors']
+// Which action tab lights up (Oct 28: Ask for Help only for the ask form itself, not the resource library).
+const ASK = ['/ask']
 const OFFER = ['/skillshare', '/post-offer', '/tasks']
 const under = (path, list) => list.some((p) => path === p || path.startsWith(p + '/'))
 

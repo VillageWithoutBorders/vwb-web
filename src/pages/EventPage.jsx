@@ -302,10 +302,13 @@ export default function EventPage() {
   const needsList = needsText.split('\n').map((n) => n.trim()).filter(Boolean).slice(0, 15)
   const cancelled = ev.status === 'cancelled'
   const placeHidden = ev.hide_address && !ev.address && !ev.location_name
+  // The town shows once: not again under an address that already names it (Oct 28).
+  const townInAddress = !!(ev.town && ev.address && ev.address.toLowerCase().includes(ev.town.split(',')[0].trim().toLowerCase()))
 
   return (
     <div>
-      {topbar}
+      {/* Inside the app frame the top bar and Back are already there. */}
+      {!user && topbar}
       <main className="cal-page">
         {cancelled && <p className="cal-error" role="status"><strong>This event was cancelled.</strong></p>}
 
@@ -335,13 +338,13 @@ export default function EventPage() {
             {mapLink(ev) && (ev.location_name || ev.address) ? (
               <a href={mapLink(ev)} {...(mapLink(ev).startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})} style={{ color: 'var(--accent)' }}>
                 {[ev.location_name, ev.address].filter(Boolean).join(', ')}
-                {ev.town ? <><br />{ev.town}</> : null}
+                {ev.town && !townInAddress ? <><br />{ev.town}</> : null}
               </a>
             ) : (
               <>
                 {[ev.location_name, ev.address].filter(Boolean).join(', ') || null}
-                {(ev.location_name || ev.address) && ev.town ? <br /> : null}
-                {ev.town}
+                {(ev.location_name || ev.address) && ev.town && !townInAddress ? <br /> : null}
+                {!townInAddress && ev.town}
               </>
             )}
             {placeHidden && <><br /><em style={{ color: 'var(--text-secondary)' }}>The exact address is shared with people who sign up.</em></>}

@@ -30,6 +30,18 @@ export default function CalendarImport() {
     ...hostOrgs.map((o) => ({ id: o.id, name: o.name })),
   ]
 
+  // Council-wide only shows for a council host, like the event form (Oct 28).
+  const [umbrellaIds, setUmbrellaIds] = useState([])
+  const hostIdsKey = hostOrgs.map((o) => o.id).join(',')
+  useEffect(() => {
+    if (!hostIdsKey) return
+    supabase.from('organizations').select('id').eq('is_umbrella', true).in('id', hostIdsKey.split(','))
+      .then(({ data, error: err }) => {
+        if (err) { console.error('[CalendarImport] council check failed:', err); return }
+        setUmbrellaIds((data || []).map((o) => o.id))
+      })
+  }, [hostIdsKey])
+
   const orgParam = searchParams.get('org')
   const [host, setHost] = useState(hostChoices.some((h) => h.id === orgParam) ? orgParam : (hostChoices[0]?.id || ''))
   const [zip, setZip] = useState('')
@@ -69,7 +81,8 @@ export default function CalendarImport() {
   async function changeHost(value) {
     setHost(value)
     if (value === VWB_HOST && visibility === 'members') setVisibility('public')
-    if (value === VWB_HOST) setOverrides((o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== 'members')))
+    if (!umbrellaIds.includes(value) && visibility === 'affiliates') setVisibility('public')
+    setOverrides((o) => Object.fromEntries(Object.entries(o).filter(([, v]) => !(v === 'members' && value === VWB_HOST) && !(v === 'affiliates' && !umbrellaIds.includes(value)))))
     if (parsed) {
       const dup = await findDuplicates(parsed.events, value)
       setDupes(dup)
@@ -168,6 +181,8 @@ export default function CalendarImport() {
     setParsed(null)
   }
 
+  const visChoices = Object.entries(VISIBILITY).filter(([k]) => !(k === 'members' && host === VWB_HOST) && (k !== 'affiliates' || umbrellaIds.includes(host)))
+
   if (hostChoices.length === 0) {
     return (
       <div className="cal-page">
@@ -261,21 +276,28 @@ export default function CalendarImport() {
 
       <h3 style={{ fontSize: '1rem', margin: '0.75rem 0 0.25rem' }}>Who can see them?</h3>
       <p className="cal-sub" style={{ marginTop: 0 }}>This sets every event. You can change one event at a time in step 3.</p>
-      {Object.entries(VISIBILITY).map(([key, v]) => {
-        const disabled = key === 'members' && host === VWB_HOST
-        return (
-          <label key={key} className={'cal-choice' + (visibility === key ? ' is-on' : '') + (disabled ? ' is-disabled' : '')}>
-            <input type="radio" name="imp-visibility" value={key} checked={visibility === key} disabled={disabled} onChange={() => setVisibility(key)} />
-            <span>{v.label}<small>{disabled ? 'Only for events hosted by a group.' : v.desc}</small></span>
-          </label>
-        )
-      })}
+      {/* Only the choices that fit this host show (Oct 28). */}
+      {visChoices.map(([key, v]) => (
+        <label key={key} className={'cal-choice' + (visibility === key ? ' is-on' : '')}>
+          <input type="radio" name="imp-visibility" value={key} checked={visibility === key} onChange={() => setVisibility(key)} />
+          <span>{v.label}<small>{v.desc}</small></span>
+        </label>
+      ))}
       <label className={'cal-choice' + (allAges ? ' is-on' : '')}>
         <input type="checkbox" checked={allAges} onChange={(e) => setAllAges(e.target.checked)} />
         <span>All ages welcome
           <small>Leave this off and they show as adults 18 and over. You can change one event at a time later.</small>
         </span>
       </label>
+
+      {/* Before a file is picked, say what comes next instead of ending the page here. */}
+      {!parsed && (
+        <>
+          <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>3. Pick what to bring in</h2>
+          <p className="cal-sub">Choose your .ics file in step 1. Your events show up here, and you pick which ones to bring in.</p>
+          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '48px' }} onClick={() => { const f = document.getElementById('imp-file'); if (f) { f.scrollIntoView({ block: 'center' }); f.focus() } }}>Go to step 1</button>
+        </>
+      )}
 
       {parsed && (
         <>
@@ -311,7 +333,7 @@ export default function CalendarImport() {
                           <label htmlFor={'imp-vis-' + ev.key} style={{ fontSize: '0.85rem' }}>Who can see this one?</label>
                           <select id={'imp-vis-' + ev.key} value={overrides[ev.key] || ''} onChange={(e) => setOverrides((o) => { const n = { ...o }; if (e.target.value) n[ev.key] = e.target.value; else delete n[ev.key]; return n })}>
                             <option value="">Same as above ({VISIBILITY[visibility].label})</option>
-                            {Object.entries(VISIBILITY).map(([k, v]) => <option key={k} value={k} disabled={k === 'members' && host === VWB_HOST}>{v.label}</option>)}
+                            {visChoices.map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                           </select>
                         </div>
                       )}

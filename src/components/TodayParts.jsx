@@ -116,7 +116,7 @@ export function ComingUp() {
       <h2 id="today-coming-h" className="today-h">Coming up</h2>
       {events === null && <p className="today-empty" role="status">Loading events...</p>}
       {events && events.length === 0 && <p className="today-empty">No events nearby yet.</p>}
-      {events && events.map((ev) => <CalendarEventCard key={ev.id} ev={ev} />)}
+      {events && events.map((ev) => <CalendarEventCard key={ev.id} ev={ev} showDate />)}
       <Link to="/calendar" className="today-more">See the calendar</Link>
     </section>
   )
