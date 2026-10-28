@@ -6395,3 +6395,17 @@ html, body { touch-action: pan-x pan-y; }
 .nr-top-row .nr-skip { margin: 0; padding: 0 0.85rem; border: 1px solid var(--accent); border-radius: 999px; text-decoration: none; font-size: 0.95rem; }
 .nr-911:focus-visible, .nr-top-row .nr-skip:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .nr-label { display: block; font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+
+/* Resources near you: phones scroll to results, computers go side by side (Oct 28) */
+.nr-left, .nr-right { display: contents; }
+.nr-results { scroll-margin-top: calc(var(--header-height) + 0.75rem); }
+.nr-pick-hint { display: none; }
+@media (min-width: 1024px) {
+  .ask-page.nr-page { max-width: 1200px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+  .nr-left, .nr-right { display: block; min-width: 0; }
+  .nr-left { position: sticky; top: calc(var(--header-height) + 1rem); max-height: calc(100dvh - var(--header-height) - 2rem); overflow-y: auto; padding-right: 0.25rem; }
+  .nr-left .hub-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .nr-right { padding-top: 0.5rem; }
+  .nr-right #nr-ask { scroll-margin-top: calc(var(--header-height) + 1rem); }
+  .nr-pick-hint { display: block; margin: 0 0 0.75rem; padding: 1rem; border: 1px dashed var(--border-strong); border-radius: 10px; color: var(--text-soft); font-size: 1rem; }
+}
