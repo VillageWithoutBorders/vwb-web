@@ -2,6 +2,7 @@ import Icon from './Icon'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DISTANCE_OPTIONS, groupByDay, hasEnded, timeRange, dayLabel, VISIBILITY, placeFromZip } from '../utils/calendar'
+import { useWideScreen } from '../hooks/useWideScreen'
 
 // Where to look: a zip code (any US zip), "Use my location" (this visit
 // only), or "Back to my area" (the member's saved area), plus how far.
@@ -220,10 +221,21 @@ function CalendarMonth({ events, newTab }) {
 // Month calendar by default, with a switch to the plain list.
 export function CalendarView({ events, newTab, emptyText, belowTabs = null }) {
   const [mode, setMode] = useState('list')
+  const wide = useWideScreen()
   const upcoming = events.filter((e) => !hasEnded(e)).length
   return (
     <>
       <p className="cal-sub" role="status">{upcoming === 0 ? 'No upcoming events found for this search. Try more miles.' : upcoming + (upcoming === 1 ? ' upcoming event found.' : ' upcoming events found.')}</p>
+      {/* Oct 28 (Jade): on a computer, the month and the list sit side by side, two even halves. */}
+      {wide ? (
+        <>
+          {belowTabs}
+          <div className="cal-two">
+            <section aria-label="Month"><CalendarMonth events={events} newTab={newTab} /></section>
+            <section aria-label="List"><CalendarEventList events={events.filter((e) => !hasEnded(e))} newTab={newTab} emptyText={emptyText} /></section>
+          </div>
+        </>
+      ) : (<>
       <div className="cal-mode" role="group" aria-label="How to show events">
         <button type="button" className={mode === 'list' ? 'is-on' : ''} aria-pressed={mode === 'list'} onClick={() => setMode('list')}>List</button>
         <button type="button" className={mode === 'month' ? 'is-on' : ''} aria-pressed={mode === 'month'} onClick={() => setMode('month')}>Month</button>
@@ -232,6 +244,7 @@ export function CalendarView({ events, newTab, emptyText, belowTabs = null }) {
       {mode === 'month'
         ? <CalendarMonth events={events} newTab={newTab} />
         : <CalendarEventList events={events.filter((e) => !hasEnded(e))} newTab={newTab} emptyText={emptyText} />}
+      </>)}
     </>
   )
 }

@@ -712,6 +712,8 @@ export default function VillageScene() {
 
       {/* Simple view (Oct 27): no map at all, so its pictures never download. */}
       {!simple && <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
+       {/* Oct 28: the same picture, soft and blurred, fills any space around the map. */}
+       <img className="vs-ground-blur" src={backgroundSrc(world.bg)} alt="" aria-hidden="true" draggable="false" />
        <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
@@ -802,7 +804,7 @@ export default function VillageScene() {
         {/* Your cottage: Today (what needs you, shortcuts, coming up) sits right under the map (Oct 22). */}
         {cottage && <section id="today" className="vs-panel vs-today" aria-label="Today"><Dashboard embedded /></section>}
         {!cottage && <div className="vs-help">
-          <button type="button" className="vs-big vs-find" onClick={() => navigate('/ask')}>Find Help</button>
+          <button type="button" className="vs-big vs-find" onClick={() => navigate('/ask')}>Ask for Help</button>
           <button type="button" className="vs-big vs-offer" onClick={() => navigate('/skillshare')}>Offer Help</button>
         </div>}
         <h2 className="vs-pick-h">Or pick from the list</h2>
