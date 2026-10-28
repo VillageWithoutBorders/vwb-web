@@ -885,3 +885,14 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
     top: calc(var(--header-height) + 26px + var(--vs-map-h));
   }
 }
+
+/* ---------- No flat bands beside the map (Oct 28, Jade) ----------
+   When the map picture fits inside a wider frame (computers, some tablets),
+   the space beside it shows the same picture, blurred and a little darker,
+   so the map looks like it fills its whole half. Taps there do nothing. */
+.vs-ground-blur {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  filter: blur(18px) brightness(0.72) saturate(1.1); transform: scale(1.12);
+  pointer-events: none; user-select: none;
+}
+.vs-scene-path { isolation: isolate; }

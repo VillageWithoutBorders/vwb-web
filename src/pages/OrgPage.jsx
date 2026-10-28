@@ -594,6 +594,8 @@ export default function OrgPage() {
       )}
 
       {!simple && <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
+       {/* Oct 28: the same picture, soft and blurred, fills any space around the map. */}
+       <img className="vs-ground-blur" src={backgroundSrc(b.world.bg)} alt="" aria-hidden="true" draggable="false" />
        <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(b.world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />

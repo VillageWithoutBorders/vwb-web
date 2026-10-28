@@ -6335,3 +6335,24 @@ html, body { touch-action: pan-x pan-y; }
 .hub-tiles .hub-tile { flex-direction: column; justify-content: center; text-align: center; gap: 0.4rem; min-height: 104px; padding: 0.7rem 0.45rem; }
 .hub-tiles .hub-tile span { overflow-wrap: normal; word-break: normal; hyphens: manual; line-height: 1.25; }
 @media (max-width: 359px) { .hub-tiles .hub-tile span { overflow-wrap: break-word; } }
+
+/* ---------- One page width on a computer (Oct 28, Jade) ----------
+   The top bar, the bottom bar and every page share the same centered column.
+   Pages that set their own narrower width (600, 640, 760px) now fill it, so
+   nothing sits in a thin strip in the middle. Chats and maps keep their own layout. */
+@media (min-width: 860px) {
+  .app-main:not(.app-main-chat):not(.app-main-world) div[style*="max-width: 600px"][style*="margin: 0px auto"],
+  .app-main:not(.app-main-chat):not(.app-main-world) div[style*="max-width: 640px"][style*="margin: 0px auto"],
+  .app-main:not(.app-main-chat):not(.app-main-world) div[style*="max-width: 720px"][style*="margin: 0px auto"] { max-width: none !important; }
+  .app-main .doors, .app-main .cal-page, .app-main .dash-page { max-width: none; }
+  .app-main .cal-page { padding-left: 0; padding-right: 0; }
+}
+/* Calendar on a computer: month and list in two even halves. */
+.cal-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; margin-top: 0.5rem; }
+/* Help page on a computer: resources on the left, Ask and Offer on the right, even halves. */
+@media (min-width: 1024px) {
+  .doors:not(.doors-simple) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 1.25rem; align-items: start; }
+  .doors:not(.doors-simple) > .doors-title, .doors:not(.doors-simple) > .doors-sub { grid-column: 1 / -1; }
+  .doors:not(.doors-simple) > .door-resources { grid-column: 1; grid-row: span 3; }
+  .doors:not(.doors-simple) > .door-link, .doors:not(.doors-simple) > .doors-mine { grid-column: 2; }
+}
