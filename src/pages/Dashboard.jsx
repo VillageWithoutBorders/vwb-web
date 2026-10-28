@@ -100,6 +100,8 @@ export default function Dashboard({ embedded = false }) {
         {(profile?.is_hope_ambassador || isAdmin) && <NearbyNeedTiles />}
       </NeedsYou>
 
+      {/* Oct 28 (Jade): Quick buttons stay, with "Change these buttons", so nothing is lost.
+          They now start with only the ones the top and bottom bars don't already have. */}
       <QuickActions />
 
       <YourPlaces />
