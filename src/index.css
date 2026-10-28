@@ -6259,6 +6259,7 @@ html.simple .btn-sm { min-height: 48px; }
 /* Text size (Settings > Text size). Bigger on top of Simple view, or on its own. */
 html.text-large { font-size: 125%; }
 html.text-larger { font-size: 140%; --tab-height: 84px; }
+html.text-largest { font-size: 165%; --tab-height: 92px; }
 .corner-item-text { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.4rem 0; }
 .corner-item-text small { color: var(--text-secondary); font-size: 0.9rem; }
 .corner-settings { margin: 0 0 1rem; min-height: 64px; border: 2px solid var(--accent); border-radius: 14px; background: var(--surface); font-weight: 700; font-size: 1.1rem; }
@@ -6320,3 +6321,7 @@ html.calm-motion *, html.calm-motion *::before, html.calm-motion *::after {
 /* Log out at the bottom of My Tools (Oct 28). */
 .tools-logout { margin: 0.75rem 0; width: 100%; }
 .tools-logout b { color: var(--danger, #d9503f); }
+
+/* No pinch zoom on the app (Oct 28, Jade). Text size in Settings makes words bigger.
+   Maps have their own Zoom in button. Scrolling still works everywhere. */
+html, body { touch-action: pan-x pan-y; }
