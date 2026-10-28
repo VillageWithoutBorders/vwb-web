@@ -12,7 +12,6 @@ import SisterCampfireButton from '../components/SisterCampfireButton'
 import VillageRooms from '../components/VillageRooms'
 import '../village-scene.css'
 import Icon from '../components/Icon'
-import YourCorner from './YourCorner'
 import Dashboard from './Dashboard'
 import { useSimpleView } from '../utils/simpleView'
 import { calmMotion } from '../utils/motion'
@@ -55,7 +54,7 @@ export default function VillageScene() {
   // The You button and old /me links open the cottage at Your corner (Oct 22).
   useEffect(() => {
     const spot = window.location.hash.slice(1)
-    if (!cottage || (spot !== 'corner' && spot !== 'today')) return
+    if (!cottage || spot !== 'today') return
     const t = setTimeout(() => document.getElementById(spot)?.scrollIntoView({ block: 'start' }), 400)
     return () => clearTimeout(t)
   }, [cottage])
@@ -428,15 +427,16 @@ export default function VillageScene() {
     switch (k) {
       case 'home': goTo(home?.village_id ? '/village/' + home.village_id : '/find-village'); return
       case 'calendar': goTo('/calendar'); return
-      case 'connections': goTo('/connections'); return
+      case 'connections': goTo('/messages?tab=connections'); return
       // Each picture opens its own page (Oct 22), not the same Messages page.
-      case 'cottage': goTo('/groups?show=cottage'); return
-      case 'campfires': goTo('/groups?show=campfires'); return
+      // Oct 28: one home for each list, the tabs in Messages.
+      case 'cottage': goTo('/messages?tab=cottage'); return
+      case 'campfires': goTo('/messages?tab=campfires'); return
       case 'chat': goTo('/village-square'); return
       // One place every time (Oct 22). Waiting tasks show as a badge on the spot and on Your tasks.
       case 'help': goTo('/help-doors'); return
-      // Your corner sits under the cottage map (Oct 22).
-      case 'me': goTo('#corner'); return
+      // Oct 28 (Jade): My Corner on the map opens My Corner, the same as the top bar button.
+      case 'me': goTo('/me'); return
       case 'messages': goTo('/messages'); return
       default: openSheet({ k })
     }
@@ -536,7 +536,7 @@ export default function VillageScene() {
         return
       case 'charter': goTo('/village/' + id + '/charter'); return
       case 'skillshare': goTo('/skillshare'); return
-      case 'cottage': goTo('/messages'); return
+      case 'cottage': goTo('/messages?tab=cottage'); return
       case 'messages': goTo('/messages'); return
       // In your home village, your house is your cottage: your own private map.
       case 'me': goTo(isHome ? '/cottage' : '/me'); return
@@ -817,7 +817,7 @@ export default function VillageScene() {
           )}
         </> : <div className="vs-list">{SPOTS.map(roomRow)}</div>}
         <Link className="btn btn-outline btn-full vs-big" to="/calendar">Events near you</Link>
-        {cottage && !simple && <section id="corner" className="vs-corner" aria-label="My Corner"><YourCorner embedded /></section>}
+        {/* Oct 28 (Jade): My Corner is no longer repeated under the cottage map. The My Corner button opens it. */}
       </div>
 
       {sheet && (
