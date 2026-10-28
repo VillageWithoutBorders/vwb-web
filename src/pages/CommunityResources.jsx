@@ -689,7 +689,7 @@ export default function CommunityResources() {
         <img src="/art/icons/heart-hands.svg" alt="" width="48" height="48" />
         <h1>Find resources</h1>
       </div>
-      <p className="feed-subtitle" style={{ marginBottom: '1rem' }}>Food, housing, safety, and more, shared by neighbors and local groups.</p>
+      <p className="feed-subtitle fh-sub">Food, housing, safety, and more, shared by neighbors and local groups.</p>
 
       <form className="hub-search" role="search" onSubmit={(e) => e.preventDefault()}>
         <label htmlFor="res-search" className="sr-only">Search resources</label>
@@ -786,16 +786,8 @@ export default function CommunityResources() {
             </div>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <h2 style={{ fontSize: '1.1rem', color: 'var(--text)', margin: 0 }}>{!query.trim() && !selectedCat && !visitorNeedsArea ? 'Kinds of help' : ''}</h2>
-          </div>
+          {/* Oct 28 (Jade): no "Kinds of help" heading; the picture tiles speak for themselves. */}
 
-          {!canSubmit && (
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: '0 0 0.75rem' }}>
-              Listings come from local partner groups and the Community Resource Network.{user && <>{' '}
-              <button onClick={() => navigate('/start-group')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.95rem', textDecoration: 'underline', padding: 0, minHeight: 44 }}>Want your group listed here?</button></>}
-            </p>
-          )}
 
           {!placesEnabled && user && profile && profile.latitude == null && (
             <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.8125rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem' }}>
@@ -903,8 +895,8 @@ export default function CommunityResources() {
           {canVerify && searchParams.get('suggestions') === '1' && <ResourceSuggestionsReview onAdd={addFromSuggestion} refreshKey={suggestionsKey} />}
 
           {canVerify && pendingResources.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
-              <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>Pending review ({pendingResources.length})</p>
+            <details className="fh-pending" open={!!fromSuggestion || undefined}>
+              <summary>Waiting for review ({pendingResources.length})</summary>
               {pendingResources.map(r => (
                 <div key={r.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0.6rem', marginBottom: '0.35rem', borderLeft: '3px solid var(--warn)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -918,7 +910,7 @@ export default function CommunityResources() {
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{resourceCats(r).join(' · ')}{r.organizations ? ' · ' + r.organizations.name : ''}</span>
                 </div>
               ))}
-            </div>
+            </details>
           )}
 
           {loadingResources && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Loading...</p>}
@@ -975,6 +967,12 @@ export default function CommunityResources() {
       {user && (
             <div className="sr-suggest">
               <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-soft)' }}>Know a place that helps that isn't listed{canSubmit ? '?' : ', or is a kind of help missing near you?'}</p>
+              {!canSubmit && (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: 0 }}>
+              Listings come from local partner groups and the Community Resource Network.{user && <>{' '}
+              <button onClick={() => navigate('/start-group')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.95rem', textDecoration: 'underline', padding: 0, minHeight: 44 }}>Want your group listed here?</button></>}
+            </p>
+              )}
               {canSubmit
                 ? <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={() => { setFromSuggestion(null); setShowSubmit(true); setSubmitted(false) }}><Icon name="books" /> Add a resource</button>
                 : <SuggestResource category={selectedCat || ''} />}
