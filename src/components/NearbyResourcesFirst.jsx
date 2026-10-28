@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { getMyLocation, distanceMiles } from '../utils/location'
@@ -7,6 +7,7 @@ import { searchResources } from '../utils/resourceSearch'
 import AddressLink from './AddressLink'
 import { useGoBack } from './BackLink'
 import SuggestResource from './SuggestResource'
+import { useWideScreen } from '../hooks/useWideScreen'
 
 // The resource hub (Oct 25): the World tab's Resources button and Ask for help
 // both open here. Resources in your area first, then asking a neighbor. The database already limits Find Help to your area plus national
@@ -23,6 +24,9 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
   const [cat, setCat] = useState('')
   const [query, setQuery] = useState('')
   const loc = getMyLocation(profile)
+  const wide = useWideScreen()
+  const resultsRef = useRef(null)
+  const [scrollAsked, setScrollAsked] = useState(0)
 
   useEffect(() => {
     let alive = true
@@ -51,10 +55,19 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
   }, [rows, cat, query, loc])
 
   const picked = Boolean(cat || query.trim())
+
+  // Phones: tapping a kind of help slides down to what it found (Oct 28).
+  // Computers show the results beside the tiles, so nothing needs to move.
+  useEffect(() => {
+    if (!scrollAsked || wide || !resultsRef.current) return
+    const reduce = document.documentElement.classList.contains('calm-motion') || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    resultsRef.current.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  }, [scrollAsked, wide, rows])
   const link = { minHeight: '44px', display: 'inline-flex', alignItems: 'center', fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none' }
 
   return (
-    <div className="ask-page">
+    <div className="ask-page nr-page">
+      <div className="nr-left">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0, minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>Resources near you</h1>
@@ -70,7 +83,7 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
 
       <div role="group" aria-label="What do you need?" className="hub-tiles nr-tiles">
         {QUICK_PICKS.map((c) => (
-          <button key={c} type="button" className={'hub-tile nr-tile' + (cat === c && !query.trim() ? ' on' : '')} aria-pressed={cat === c && !query.trim()} onClick={() => { setQuery(''); setCat(cat === c ? '' : c) }}>
+          <button key={c} type="button" className={'hub-tile nr-tile' + (cat === c && !query.trim() ? ' on' : '')} aria-pressed={cat === c && !query.trim()} onClick={() => { setQuery(''); const next = cat === c ? '' : c; setCat(next); if (next) setScrollAsked(n => n + 1) }}>
             <img className="hub-tile-icon" src={'/art/icons/' + (CAT_ICON_FILES[c] || 'cat-other') + '.svg'} alt="" width="40" height="40" />
             <span>{c}</span>
           </button>
@@ -78,6 +91,11 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       </div>
 
       {!loc && <p style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>Add your zip code in your profile to see distances and ones near you. Until then you see national resources.</p>}
+      </div>
+
+      <div className="nr-right">
+      <div ref={resultsRef} className="nr-results">
+      {!picked && <p className="nr-pick-hint">Pick a kind of help or search on the left. What is near you shows up here.</p>}
       {rows === null && <p>Loading...</p>}
       {rows && picked && results.length === 0 && <p style={{ color: 'var(--text-soft)' }}>Nothing found nearby. A neighbor may be able to help. Ask at the bottom of this page.</p>}
       {results.length > 0 && (
@@ -99,6 +117,7 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       {results.length > SHOW && (
         <Link to={cat && !query.trim() ? '/community/resources?cat=' + encodeURIComponent(cat) : '/community/resources'} style={{ ...link, color: 'var(--accent)', marginBottom: '0.5rem' }}>See all {results.length} in Find Help</Link>
       )}
+      </div>
 
       <div className="sr-suggest">
         <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-soft)' }}>Know a place that helps, or is a kind of help missing near you?</p>
@@ -110,6 +129,7 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
         <p style={{ margin: '0 0 0.6rem', fontSize: '0.95rem', color: 'var(--text-soft)' }}>Ask your neighbors. Someone nearby may have the skill, the tool, or the time to help.</p>
         <button type="button" onClick={() => onContinue(query.trim() ? '' : currentCategory(cat))} style={{ width: '100%', minHeight: '52px', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '1.05rem', cursor: 'pointer' }}>Ask a neighbor for help</button>
         <button type="button" onClick={() => navigate(-1)} style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontSize: '1rem', cursor: 'pointer' }}>I found what I need</button>
+      </div>
       </div>
     </div>
   )
