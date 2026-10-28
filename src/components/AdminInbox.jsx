@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import Icon from './Icon'
 import { timeAgo } from '../utils/notificationDisplay'
 import { tell } from './AdminDialog'
+import { adminAlertLink } from '../utils/alertLink'
 
 // "Needs you": the first thing an admin sees. One shared list for every
 // admin and founder (see hooks/useAdminInbox.js), urgent items first, each
@@ -68,7 +69,9 @@ export default function AdminInbox({ inbox, onOpenTab }) {
   }
 
   function openAlert(a) {
-    const link = a.link || '/admin?tab=inbox'
+    const link = adminAlertLink(a)
+    // Already there (for example the inbox itself): go to the top so the tap shows.
+    if (link === window.location.pathname + window.location.search) { window.scrollTo({ top: 0 }); return }
     navigate(link)
   }
 

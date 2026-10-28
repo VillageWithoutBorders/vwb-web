@@ -12,6 +12,7 @@ import {
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
 import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
+import { personalAlertLink } from '../utils/alertLink'
 
 export default function Notifications() {
   const { user } = useAuth()
@@ -59,9 +60,9 @@ export default function Notifications() {
       await markNotificationRead(notification.id)
     }
     await refresh()
-    if (notification.link) {
-      navigate(notification.link)
-    }
+    // Every alert opens somewhere (Oct 28): its own link, or the page for its kind.
+    const link = personalAlertLink(notification)
+    if (link !== '/notifications') navigate(link)
   }
 
   async function handleMarkAllRead() {

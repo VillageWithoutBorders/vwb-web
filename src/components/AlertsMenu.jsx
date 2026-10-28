@@ -4,6 +4,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import { markNotificationRead } from '../utils/notificationHelpers'
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
 import Icon from './Icon'
+import { personalAlertLink } from '../utils/alertLink'
 
 // The Alerts button in the top bar. Tapping it opens a small popout with
 // your 5 newest alerts and a "See all alerts" button that opens the full
@@ -57,7 +58,7 @@ export default function AlertsMenu() {
     setOpen(false)
     if (!n.read) await markNotificationRead(n.id)
     await refresh?.()
-    navigate(n.link || '/notifications')
+    navigate(personalAlertLink(n))
   }
 
   function seeAll() {
