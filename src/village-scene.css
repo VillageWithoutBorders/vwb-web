@@ -909,10 +909,13 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
    halves line up. Today's panel melts into it. */
 @media (min-width: 1024px) {
   .vs-page.vs-page-path::after {
-    content: ''; grid-column: 2 / 4; grid-row: 1 / -1; align-self: stretch;
+    /* Absolutely placed over the right-hand grid area, so it takes no grid cells
+       and the page's own parts stay where they belong (Oct 28 fix: it was pushing
+       them below the screen). */
+    content: ''; position: absolute; inset: 0; grid-column: 2 / 4; grid-row: 1 / -1;
     background: var(--bg, #121212); border-radius: 16px; z-index: 0; pointer-events: none;
-    min-height: var(--vs-map-h);
   }
+  .vs-page.vs-page-path { position: relative; }
   .vs-page-path > :not(.vs-scene-path):not(.vs-map-under):not(.vs-shade):not(.vs-arrange-on) {
     position: relative; z-index: 1; margin-left: 20px !important; margin-right: 20px !important;
   }
