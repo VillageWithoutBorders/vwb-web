@@ -185,6 +185,9 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
   const [pickTools, setPickTools] = useState(false)
   // Oct 27: while arranging, the map fills the screen and the tools slide in and out.
   const [toolsHidden, setToolsHidden] = useState(false)
+  // Oct 28: a piece you just added glows for a moment so you can find it.
+  const [justAdded, setJustAdded] = useState(null)
+  const justAddedTimer = useRef(null)
   // Oct 28: while a finger is moving something, the tools slide away so they never cover it.
   const [moving, setMoving] = useState(false)
   // Phones: when the picked piece is high on the screen, the tool panel drops to the bottom.
@@ -318,7 +321,9 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
       const right = Math.min(r.right, barLeft, window.innerWidth)
       if (right > left) x = Math.min(92, Math.max(8, ((((left + right) / 2) - r.left) / r.width) * 100))
     }
-    commit({ ...world, decor: [...world.decor, { id, k: piece.k, x: round1(x), y: round1(y), s: piece.s }] })
+    // Oct 28: small pieces (rocks, flowers) start big enough to spot. Smaller shrinks them after.
+    commit({ ...world, decor: [...world.decor, { id, k: piece.k, x: round1(x), y: round1(y), s: Math.max(piece.s || 1, 0.9) }] })
+    setJustAdded(id); clearTimeout(justAddedTimer.current); justAddedTimer.current = setTimeout(() => setJustAdded(null), 3000)
     setTool('move'); setPicked('d:' + id); setPickTools(true); setTrayOpen(false)
     setLayoutNote(piece.label + ' added. Drag it, or use the arrows, to put it where you want.')
   }
@@ -533,7 +538,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     arrange, openArrange, closeArrange, tool, setTool, trayOpen, setTrayOpen, trayTab, setTrayTab,
     picked, setPicked, pickTools, setPickTools, panelLow, layoutNote, setLayoutNote, drawing,
     placed, isHidden, hiddenCount, pickedDecor, dragStart, dragMove, dragEnd, roadStart,
-    changePicked, resize, flipPicked, layerPicked, pickedLayer, addDecor, toolsHidden, setToolsHidden, moving, removePicked, nudge, pickByKey, namesShowing,
+    changePicked, resize, flipPicked, layerPicked, pickedLayer, addDecor, toolsHidden, setToolsHidden, moving, justAdded, removePicked, nudge, pickByKey, namesShowing,
     holdStart, holdMove, holdStop, holdClick,
     outerRef, zoom, zoomBy, zoomReset, zoomDown, zoomMove, zoomUp,
   }
@@ -565,7 +570,7 @@ export function sceneProps(b, extraClass, onHold) {
 
 // Roads, streams and added pieces, drawn on the field (inside the scene box).
 export function MapLayers({ b }) {
-  const { world, drawing, tool, arrange, picked, dragStart, pickByKey } = b
+  const { world, drawing, tool, arrange, picked, dragStart, pickByKey, justAdded } = b
   return <>
     {(world.roads.length > 0 || world.streams.length > 0 || drawing) && (
       <svg className="vs-roads" viewBox="0 0 100 150" preserveAspectRatio="none" aria-hidden="true">
@@ -582,7 +587,7 @@ export function MapLayers({ b }) {
       const style = { left: d.x + '%', top: d.y + '%', '--s': d.s || 1, zIndex: decorLayer(d.z) }
       const img = <img className={'vs-deco-img' + (d.flip ? ' vs-flip' : '')} src={piece.src} alt="" width="96" height="96" draggable="false" />
       return arrange && tool === 'move'
-        ? <button key={d.id} type="button" className={'vs-deco vs-deco-edit' + (picked === 'd:' + d.id ? ' vs-picked' : '')} style={style} aria-label={piece.label} onPointerDown={(e) => dragStart(e, 'd:' + d.id)} onClick={(e) => { if (e.detail === 0) pickByKey('d:' + d.id) }}>{img}</button>
+        ? <button key={d.id} type="button" className={'vs-deco vs-deco-edit' + (picked === 'd:' + d.id ? ' vs-picked' : '') + (justAdded === d.id ? ' vs-just-added' : '')} style={style} aria-label={piece.label} onPointerDown={(e) => dragStart(e, 'd:' + d.id)} onClick={(e) => { if (e.detail === 0) pickByKey('d:' + d.id) }}>{img}</button>
         : <span key={d.id} className="vs-deco" style={style} aria-hidden="true">{img}</span>
     })}
   </>
