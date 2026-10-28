@@ -101,8 +101,9 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       {results.length > 0 && (
         <ul style={{ listStyle: 'none', margin: '0 0 0.5rem', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {results.slice(0, SHOW).map(({ r, d }) => (
-            <li key={r.id} style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px' }}>
-              <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{r.name}</div>
+            <li key={r.id} className="nr-card" style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px' }}>
+              {/* Oct 28 (Jade): the whole card opens the full listing in Find resources. */}
+              <Link className="nr-card-open" to={'/community/resources?cat=' + encodeURIComponent((cat && !query.trim()) ? cat : (resourceCats(r)[0] || '')) + '&show=' + r.id} style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{r.name} <span aria-hidden="true">&#8250;</span></Link>
               {d != null && <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{d < 1 ? 'Under a mile away' : Math.round(d) + ' miles away'}</div>}
               {r.description && <p style={{ margin: '0.3rem 0 0', fontSize: '0.9rem', color: 'var(--text-soft)', overflowWrap: 'anywhere' }}>{r.description}</p>}
               {r.address && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', overflowWrap: 'anywhere' }}><AddressLink address={r.address} /></p>}
