@@ -758,3 +758,40 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
 @media (prefers-reduced-motion: no-preference) {
   .vs-toolbar { transition: transform 0.2s ease, width 0.2s ease, opacity 0.15s ease; }
 }
+
+/* ---------- Edit map button on the map (Oct 28, Jade) ----------
+   Top corner of the map on phones and computers, always in view, never under
+   the name tags. Keepers get a small menu: their own view or the default. */
+.vs-edit-fab-wrap { position: absolute; top: 10px; right: 10px; z-index: 25; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.vs-edit-fab {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px;
+  border-radius: 24px; border: 2px solid var(--vs-gold, #f2c763); background: rgba(20, 44, 43, 0.92); color: #fff;
+  font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.vs-edit-fab:focus-visible, .vs-edit-menu button:focus-visible { outline: 3px solid var(--vs-focus, #fff); outline-offset: 2px; }
+.vs-edit-fab:active { transform: scale(0.97); }
+.vs-edit-menu { display: grid; gap: 6px; width: min(260px, 70vw); padding: 8px; border-radius: 16px; border: 2px solid var(--vs-gold, #f2c763); background: rgba(20, 44, 43, 0.97); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); }
+.vs-edit-menu button { display: grid; gap: 2px; min-height: 52px; padding: 8px 12px; text-align: left; border-radius: 12px; border: 1px solid var(--vs-line, rgba(255,255,255,0.2)); background: var(--vs-card, rgba(255,255,255,0.06)); color: #fff; font: inherit; cursor: pointer; }
+.vs-edit-menu small { color: var(--vs-muted, #cfd8cf); font-size: 0.9rem; }
+@media (prefers-reduced-motion: reduce) { .vs-edit-fab:active { transform: none; } }
+
+/* ---------- The top of the map is never cut off (Oct 28, Jade) ----------
+   Before, the art was centered and grown until it covered the frame. On a wide
+   frame (a tablet, a small computer window, a phone on its side) that cut off a
+   big strip at the top and bottom. Now the top always shows, and the art grows
+   at most a little past the frame (a thin strip at the bottom at most), with
+   plain color at the sides when the frame is very wide. Tall phones look the
+   same as before. */
+@media (max-width: 1023px) {
+  .vs-page-path > .vs-scene-path > .vs-zoom {
+    --vs-lw: max(min(100cqw, 76.667cqh), 66.667cqh);
+    top: 0;
+  }
+}
+.vs-page-path:has(.vs-arrange-on) > .vs-scene-path > .vs-zoom {
+  --vs-lw: max(min(100cqw, 76.667cqh), 66.667cqh);
+  top: 0;
+}
+@media (min-width: 1024px) {
+  .vs-page-path:has(.vs-arrange-on) > .vs-scene-path > .vs-zoom { --vs-lw: min(100cqw, 66.667cqh); top: calc((100cqh - var(--vs-lw) * 1.5) / 2); }
+}
