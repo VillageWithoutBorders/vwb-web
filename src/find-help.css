@@ -97,3 +97,29 @@ img.hub-tile-icon { width: 40px; height: 40px; }
 .fh-grid .fh-tile img { width: 36px; height: 36px; grid-row: 1 / span 2; align-self: center; }
 .fh-grid .fh-tile-name, .fh-grid .fh-tile-count { grid-column: 2; min-width: 0; overflow-wrap: anywhere; }
 @media (min-width: 768px) { .fh-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Find resources side by side on computers (Oct 28) */
+.fr-left, .fr-right { display: contents; }
+.fh-tile.on { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+@media (min-width: 1024px) {
+  .community-page.fr-page { max-width: 1200px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+  .fr-left, .fr-right { display: block; min-width: 0; }
+  .fr-left { position: sticky; top: calc(var(--header-height) + 1rem); max-height: calc(100dvh - var(--header-height) - 2rem); overflow-y: auto; padding-right: 0.25rem; }
+  .fr-left .fh-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fr-right { padding-top: 0.5rem; }
+  .fr-pick-hint { margin: 0 0 0.75rem; padding: 1rem; border: 1px dashed var(--border-strong); border-radius: 10px; color: var(--text-soft); font-size: 1rem; }
+}
+
+/* Oct 28 (Jade): on computers the page uses the whole screen, and the left side
+   shrinks its tiles to fit so it never needs scrolling. */
+@media (min-width: 1024px) {
+  .app-main:has(.fr-page) { max-width: none; }
+  .community-page.fr-page { max-width: none; --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - env(safe-area-inset-bottom, 0px)); }
+  .fr-left { display: flex; flex-direction: column; height: var(--fit-h); max-height: none; overflow: hidden; }
+  .fr-left > * { flex: 0 0 auto; }
+  .fr-left > .fr-side-tiles { flex: 1 1 0; min-height: 0; margin-bottom: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); align-content: stretch; overflow-y: auto; }
+  .fr-left .fh-tile { min-height: 44px; height: 100%; }
+  .fr-left .fh-tile img { width: clamp(28px, 4.5dvh, 48px); height: clamp(28px, 4.5dvh, 48px); }
+  .fr-right { min-height: var(--fit-h); }
+}
+.fh-card-picked { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); }
