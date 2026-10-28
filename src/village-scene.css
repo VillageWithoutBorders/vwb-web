@@ -944,3 +944,9 @@ html.simple .vs-page.vs-page-path::after { display: none; }
   .vs-page-path > .vs-gifts-btn { width: auto; }
   .vs-page-path > .vs-body .vs-panel.vs-today { margin-top: 0; }
 }
+
+/* The map magnifier floats on the map, top left, across from Edit (Oct 28). */
+.vs-zoom-fab-wrap { position: absolute; left: 10px; top: 10px; z-index: 25; }
+.vs-zoom-fab-wrap .vs-zoom-btn { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); border-color: var(--vs-gold, #f2c763); }
+/* While editing the old under-map row is gone; nothing else needs its space. */
+.vs-page-path:has(.vs-arrange-on) > .vs-map-under { display: none; }
