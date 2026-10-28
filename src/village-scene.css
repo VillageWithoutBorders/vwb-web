@@ -817,3 +817,19 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
   .vs-just-added { animation: vs-added-pop 0.6s ease-out 2; }
   @keyframes vs-added-pop { 0% { transform: translate(-50%, -60%) scale(1); } 50% { transform: translate(-50%, -60%) scale(1.25); } 100% { transform: translate(-50%, -60%) scale(1); } }
 }
+
+/* ---------- Editing: places light up, and stickers next to them are easy to grab (Oct 28, Jade) ----------
+   1. A picked place glows gold around its picture, the same as a picked sticker.
+      Pointing at anything you can move gives a softer glow first.
+   2. While editing, a place only catches taps on its picture and name tag, not on the
+      empty box around them, so a sticker beside it can be grabbed.
+   (Behind and In front still show right away, so a picked sticker keeps its layer.) */
+.vs-arranging .vs-el { pointer-events: none; }
+.vs-arranging .vs-el > * { pointer-events: auto; }
+.vs-arranging .vs-el.vs-picked .vs-art,
+.vs-arranging .vs-el.vs-picked .vs-hamlet { filter: drop-shadow(0 0 6px rgba(255, 214, 110, 1)) drop-shadow(0 0 2px rgba(255, 214, 110, 1)); }
+.vs-arranging .vs-el.vs-picked .vs-em { outline: 3px solid var(--vs-gold); outline-offset: 4px; border-radius: 12px; }
+@media (hover: hover) {
+  .vs-arranging .vs-el:hover .vs-art, .vs-deco-edit:hover .vs-deco-img { filter: drop-shadow(0 0 5px rgba(255, 240, 200, 0.95)); }
+}
+.vs-arranging .vs-el:focus-visible .vs-em, .vs-deco-edit:focus-visible { outline: 3px solid var(--vs-focus, #fff); outline-offset: 3px; border-radius: 10px; }

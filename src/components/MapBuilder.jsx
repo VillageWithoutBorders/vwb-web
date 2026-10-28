@@ -321,8 +321,12 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
       const right = Math.min(r.right, barLeft, window.innerWidth)
       if (right > left) x = Math.min(92, Math.max(8, ((((left + right) / 2) - r.left) / r.width) * 100))
     }
+    // Oct 28: a new piece goes in front of the places and of every other piece
+    // (Behind still sends it back).
+    const topZ = world.decor.reduce((m, d) => Math.max(m, Math.round(d.z || 0)), 0)
+    const frontLayer = Math.min(LAYER_MAX, Math.max(1, topZ + (topZ >= 1 ? 1 : 0)))
     // Oct 28: small pieces (rocks, flowers) start big enough to spot. Smaller shrinks them after.
-    commit({ ...world, decor: [...world.decor, { id, k: piece.k, x: round1(x), y: round1(y), s: Math.max(piece.s || 1, 0.9) }] })
+    commit({ ...world, decor: [...world.decor, { id, k: piece.k, x: round1(x), y: round1(y), s: Math.max(piece.s || 1, 0.9), z: frontLayer }] })
     setJustAdded(id); clearTimeout(justAddedTimer.current); justAddedTimer.current = setTimeout(() => setJustAdded(null), 3000)
     setTool('move'); setPicked('d:' + id); setPickTools(true); setTrayOpen(false)
     setLayoutNote(piece.label + ' added. Drag it, or use the arrows, to put it where you want.')
