@@ -896,3 +896,9 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
   pointer-events: none; user-select: none;
 }
 .vs-scene-path { isolation: isolate; }
+
+/* Computers (Oct 28): the map reaches down to the bottom bar. The zoom and names
+   buttons live in Customize, so no room is kept for them under the map. */
+@media (min-width: 1024px) {
+  .vs-page.vs-page-path { --vs-map-h: calc(100dvh - var(--header-height) - var(--tab-height) - 32px); padding-bottom: 16px; }
+}
