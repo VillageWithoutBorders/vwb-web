@@ -6286,3 +6286,12 @@ html.text-larger { font-size: 140%; --tab-height: 84px; }
 .ev-wait p { margin: 0 0 0.6rem; }
 .ev-wait p:last-child { margin: 0; }
 .ev-wait .btn { min-height: 48px; }
+
+/* Calm motion (Oct 27, Jade): Settings > Easy to use > Motion > Calm.
+   Same as the phone's own reduce motion setting, for everyone who picks it here. */
+html.calm-motion *, html.calm-motion *::before, html.calm-motion *::after {
+  animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important; scroll-behavior: auto !important;
+}
+.settings-group-h { margin: 1.25rem 0 0.5rem; font-size: 1.15rem; color: var(--text-strong, var(--text)); }
+.settings-group-h:first-of-type { margin-top: 0.25rem; }

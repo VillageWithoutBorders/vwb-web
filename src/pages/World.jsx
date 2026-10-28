@@ -10,6 +10,7 @@ import '../world.css'
 import Icon from '../components/Icon'
 import BringOrg from '../components/BringOrg'
 import { askConfirm } from '../components/AdminDialog'
+import { calmMotion } from '../utils/motion'
 
 // Oct 22: the Village Network (search, street map, every village and organization)
 // lives under the globe now. /villages opens this page.
@@ -26,7 +27,7 @@ const MAX_ON_GLOBE = 8
 const LAND = { x0: 20, x1: 80, y0: 16, y1: 82 } // the part of the globe picture that is land, in percent
 
 function stillMotion() {
-  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  return !!(calmMotion())
 }
 
 // Fit the laid-out circles onto the globe's land, in percent of the globe.

@@ -14,6 +14,7 @@ import { useGoBack } from '../components/BackLink'
 import { sendVillagePost, fetchVillageBodies, editVillagePost, fetchVillageEditHistory } from '../lib/e2ee'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
+import { calmMotion } from '../utils/motion'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
@@ -538,7 +539,7 @@ export default function Campfire() {
   function jumpToMessage(id) {
     const el = document.getElementById('cf-msg-' + id)
     if (!el) return
-    el.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+    el.scrollIntoView({ block: 'center', behavior: calmMotion() ? 'auto' : 'smooth' })
     setFlashId(id)
     setTimeout(() => setFlashId(null), 1500)
   }

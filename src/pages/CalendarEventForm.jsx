@@ -8,6 +8,7 @@ import { parsePastedEvent } from '../utils/pasteEvent'
 import ShiftsEditor from '../components/ShiftsEditor'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
+import { calmMotion } from '../utils/motion'
 
 const VWB_HOST = 'vwb'
 
@@ -225,7 +226,7 @@ export default function CalendarEventForm() {
     setTimeout(() => {
       const el = document.getElementById(id)
       if (!el) return
-      const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const calm = calmMotion()
       el.scrollIntoView({ block: 'center', behavior: calm ? 'auto' : 'smooth' })
       if (el.focus) el.focus({ preventScroll: true })
     }, 0)
