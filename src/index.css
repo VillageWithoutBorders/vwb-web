@@ -6387,3 +6387,11 @@ html, body { touch-action: pan-x pan-y; }
 .cal-filters > summary small { color: var(--text-secondary); font-size: 0.95rem; }
 .cal-filters-body { padding: 0 0.75rem 0.75rem; }
 .cal-more > summary:focus-visible, .cal-filters > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Ask for Help top tightened (Oct 28) */
+.nr-intro { margin-bottom: 0.4rem; }
+.nr-top-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; margin: 0 0 0.5rem; }
+.nr-911 { display: inline-flex; align-items: center; min-height: 44px; color: var(--gold); font-weight: 700; font-size: 0.95rem; text-decoration: none; }
+.nr-top-row .nr-skip { margin: 0; padding: 0 0.85rem; border: 1px solid var(--accent); border-radius: 999px; text-decoration: none; font-size: 0.95rem; }
+.nr-911:focus-visible, .nr-top-row .nr-skip:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.nr-label { display: block; font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
