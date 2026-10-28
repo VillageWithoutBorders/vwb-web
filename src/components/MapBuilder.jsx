@@ -305,10 +305,20 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     if (world.decor.length >= 80) { setLayoutNote('This map is full. Take a piece away to add another.'); return }
     const id = Math.random().toString(36).slice(2, 8)
     // Land it in the middle of the part of the map you can see.
+    // Oct 28: and never under the tool panel. The open panel covers most of the right
+    // side of a phone, so the piece lands in the middle of the open space to its left.
     let y = 50
+    let x = 50
     const r = sceneRef.current && sceneRef.current.getBoundingClientRect()
     if (r && r.height) y = Math.min(90, Math.max(10, (((window.innerHeight / 2) - r.top) / r.height) * 100))
-    commit({ ...world, decor: [...world.decor, { id, k: piece.k, x: 50, y: round1(y), s: piece.s }] })
+    if (r && r.width) {
+      const bar = document.querySelector('.vs-toolbar')
+      const barLeft = bar ? bar.getBoundingClientRect().left : window.innerWidth
+      const left = Math.max(r.left, 0)
+      const right = Math.min(r.right, barLeft, window.innerWidth)
+      if (right > left) x = Math.min(92, Math.max(8, ((((left + right) / 2) - r.left) / r.width) * 100))
+    }
+    commit({ ...world, decor: [...world.decor, { id, k: piece.k, x: round1(x), y: round1(y), s: piece.s }] })
     setTool('move'); setPicked('d:' + id); setPickTools(true); setTrayOpen(false)
     setLayoutNote(piece.label + ' added. Drag it, or use the arrows, to put it where you want.')
   }
