@@ -67,6 +67,20 @@ const HelpDoors = lazyPage(() => import('./pages/HelpDoors'))
 import { peekReturnTo } from './utils/returnTo'
 import { placesEnabled } from './utils/places'
 
+// One home for each list (Oct 28, Jade). In the full view, Connections, Cottage Chats
+// and Campfires live as tabs in Messages, so their old standalone pages open those tabs.
+// /groups with no ?show= (every group) and Simple view keep the standalone pages.
+function OneHome({ tab, groups, children }) {
+  const simple = useSimpleView()
+  const { search } = useLocation()
+  if (simple) return children
+  if (tab) return <Navigate to={'/messages?tab=' + tab} replace />
+  const show = new URLSearchParams(search).get('show')
+  if (groups && (show === 'cottage' || show === 'campfires')) return <Navigate to={'/messages?tab=' + show} replace />
+  return children
+}
+
+
 // Event pages: the app frame for people who are signed in, a plain page for everyone else.
 function EventFrame() {
   const { user } = useAuth()
@@ -241,7 +255,7 @@ function AppRoutes() {
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="u/:userId" element={<PublicProfile />} />
         <Route path="messages" element={<MessagesPage />} />
-        <Route path="connections" element={<Connections />} />
+        <Route path="connections" element={<OneHome tab="connections"><Connections /></OneHome>} />
         <Route path="my-code" element={<MyCode />} />
         <Route path="trail" element={<Trail />} />
         <Route path="notifications" element={<Notifications />} />
@@ -249,7 +263,7 @@ function AppRoutes() {
         <Route path="calendar/new" element={<CalendarEventForm />} />
         <Route path="calendar/import" element={<CalendarImport />} />
         <Route path="calendar/:id/edit" element={<CalendarEventForm />} />
-        <Route path="groups" element={<Groups />} />
+        <Route path="groups" element={<OneHome groups><Groups /></OneHome>} />
         <Route path="groups/:id" element={<GroupBoard />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
