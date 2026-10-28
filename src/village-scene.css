@@ -833,3 +833,31 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
   .vs-arranging .vs-el:hover .vs-art, .vs-deco-edit:hover .vs-deco-img { filter: drop-shadow(0 0 5px rgba(255, 240, 200, 0.95)); }
 }
 .vs-arranging .vs-el:focus-visible .vs-em, .vs-deco-edit:focus-visible { outline: 3px solid var(--vs-focus, #fff); outline-offset: 3px; border-radius: 10px; }
+
+/* ---------- The whole map shows, top to bottom (Oct 28, Jade) ----------
+   Phones and tablets: the map picture fits inside its frame instead of being
+   grown past it, so nothing is cut off at the top or the bottom. Any thin
+   leftover strip at the sides or the bottom takes the map's own green.
+   "More below" floats over the bottom edge of the map, see-through, so the
+   map gets that space back and can be taller. */
+@media (max-width: 1023px) {
+  .vs-page-path > .vs-scene-path {
+    --vs-fill-h: max(320px, calc(100dvh - var(--tab-height) - env(safe-area-inset-bottom, 0px) - var(--vs-fill-top, 180px) - 8px));
+  }
+  .vs-page-path > .vs-scene-path > .vs-zoom {
+    --vs-lw: min(100cqw, 66.667cqh);
+    left: calc((100cqw - var(--vs-lw)) / 2);
+    top: calc((100cqh - var(--vs-lw) * 1.5) / 2);
+  }
+  .vs-page-path > .vs-scroll-cue {
+    position: relative; z-index: 26; margin: -56px auto 8px; min-height: 48px;
+    background: none; border: 0; color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6);
+  }
+  .vs-page-path > .vs-scroll-cue .vs-scroll-cue-arrow { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+}
+.vs-page-path:has(.vs-arrange-on) > .vs-scene-path > .vs-zoom {
+  --vs-lw: min(100cqw, 66.667cqh);
+  left: calc((100cqw - var(--vs-lw)) / 2);
+  top: calc((100cqh - var(--vs-lw) * 1.5) / 2);
+}
