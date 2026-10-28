@@ -21,6 +21,7 @@ import Icon from '../components/Icon'
 import { orgWords } from '../utils/roleWords'
 import { askConfirm } from '../components/AdminDialog'
 import { useSimpleView } from '../utils/simpleView'
+import { calmMotion } from '../utils/motion'
 
 // The Organization page: one organization as a little world, the same way a
 // village page works. Every element on the hills opens its part. Members-only
@@ -37,7 +38,7 @@ function safeLink(url) {
 }
 
 function stillMotion() {
-  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  return !!(calmMotion())
 }
 
 export default function OrgPage() {

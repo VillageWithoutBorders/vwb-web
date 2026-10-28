@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { calmMotion } from '../utils/motion'
 
 // In-page "Are you sure?" panels and short notes, in place of the browser's
 // pop-ups. Started in Admin; now used across the app (the host is in App.jsx). The panel sits at the bottom of the screen, where a thumb
@@ -158,7 +159,7 @@ function SwipeNote({ note: n, onClose, onHold, onRelease }) {
   const [leaving, setLeaving] = useState(0)
 
   function reducedMotion() {
-    return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    return calmMotion()
   }
   function dismiss(dir) {
     if (reducedMotion()) { onClose(); return }

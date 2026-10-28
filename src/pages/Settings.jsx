@@ -10,6 +10,7 @@ import { useGoBack } from '../components/BackLink'
 import AppearancePicker from '../components/AppearancePicker'
 import SimpleViewPicker from '../components/SimpleViewPicker'
 import TextSizePicker from '../components/TextSizePicker'
+import MotionPicker from '../components/MotionPicker'
 import AreaPicker from '../components/AreaPicker'
 import { placesEnabled } from '../utils/places'
 import Icon from '../components/Icon'
@@ -352,10 +353,17 @@ export default function Settings() {
       {tab === 'easy' && (
         <>
           <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>Make VWB easier to see and use. Changes save right away.</p>
-          <SimpleViewPicker />
+
+          <h2 className="settings-group-h">Seeing</h2>
           <TextSizePicker />
           <AppearancePicker />
-          <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '48px', marginTop: '0.5rem' }}>
+
+          <h2 className="settings-group-h">Using</h2>
+          <SimpleViewPicker />
+          <MotionPicker />
+
+          <h2 className="settings-group-h">Learning the app</h2>
+          <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '48px' }}>
             <span aria-hidden="true"><Icon name="compass" /></span> Take the app tour again
           </button>
         </>

@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import '../dashboard.css'
 import Icon from './Icon'
+import { calmMotion } from '../utils/motion'
 
 // Shared pieces for the Keeper and Organizer dashboards.
 // The open tab lives in the address (?tab=people) so links and the back button land on it.
@@ -29,7 +30,7 @@ export function NeedsYou({ items, onGo, calm }) {
     setTimeout(() => {
       const el = document.getElementById(it.target || ('dash-panel-' + it.tab))
       if (!el) return
-      const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const still = calmMotion()
       el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
     }, 60)
   }

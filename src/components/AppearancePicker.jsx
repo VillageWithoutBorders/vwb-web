@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { getTheme, setTheme } from '../utils/theme'
 import Icon from './Icon'
 
-// Settings > Appearance. Light, dark, or whatever the phone is set to.
+// Settings > Light or dark. Light, dark, or whatever the phone is set to.
 const CHOICES = [
-  { k: 'auto', label: 'Match my phone', em: '\u{1F4F1}' },
-  { k: 'light', label: 'Light', em: '\u2600\uFE0F' },
-  { k: 'dark', label: 'Dark', em: '\u{1F319}' },
+  { k: 'auto', label: 'Match my phone', em: 'phone' },
+  { k: 'light', label: 'Light', em: 'sun' },
+  { k: 'dark', label: 'Dark', em: 'moon' },
 ]
 
 export default function AppearancePicker() {
@@ -14,7 +14,7 @@ export default function AppearancePicker() {
   function choose(k) { setTheme(k); pick(k) }
   return (
     <div className="profile-details" style={{ marginBottom: '1rem' }}>
-      <div className="detail-section-header" id="appearance-h">Appearance</div>
+      <div className="detail-section-header" id="appearance-h">Light or dark</div>
       <div role="radiogroup" aria-labelledby="appearance-h" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.5rem', padding: '0.5rem 1rem 0.25rem' }}>
         {CHOICES.map((c) => (
           <button key={c.k} type="button" role="radio" aria-checked={theme === c.k} onClick={() => choose(c.k)}
@@ -25,7 +25,7 @@ export default function AppearancePicker() {
           </button>
         ))}
       </div>
-      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Saved on this device. In the full view, the village and globe pages keep their painted colors.</p>
+      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Saved on this phone. In the full view, map pages keep their painted colors.</p>
     </div>
   )
 }

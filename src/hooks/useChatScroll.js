@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { calmMotion } from '../utils/motion'
 
 // Keeps a chat scrolled to the newest message only when that is what the
 // reader wants.
@@ -24,7 +25,7 @@ export function useChatScroll(messages, myUserId, active = true) {
   const scrollToBottom = useCallback((smooth) => {
     const el = containerRef.current
     if (!el) return
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const reduce = calmMotion()
     el.scrollTo({ top: el.scrollHeight, behavior: smooth && !reduce ? 'smooth' : 'auto' })
   }, [])
 

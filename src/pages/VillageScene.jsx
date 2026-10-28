@@ -15,6 +15,7 @@ import Icon from '../components/Icon'
 import YourCorner from './YourCorner'
 import Dashboard from './Dashboard'
 import { useSimpleView } from '../utils/simpleView'
+import { calmMotion } from '../utils/motion'
 
 // The Village page: one village as a little world. Every element on the
 // hills is a button that goes to its own page. A plain list sits below for
@@ -518,13 +519,13 @@ export default function VillageScene() {
     const spot = askRef.current
     askRef.current = null
     if (spot && !(await askGoTo(spot, info(spot.k).sub))) return
-    if (to === '#corner') { document.getElementById('corner')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); return }
+    if (to === '#corner') { document.getElementById('corner')?.scrollIntoView({ behavior: calmMotion() ? 'auto' : 'smooth', block: 'start' }); return }
     navigate(to, opts)
   }
   // fromMap: tapped on the map picture (asks first). The list under the map goes straight there.
   function tap(spot, fromMap) {
     askRef.current = fromMap ? spot : null
-    if (!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (!calmMotion()) {
       setBump(spot.k); setTimeout(() => setBump(null), 450)
     }
     if (cottage) { cottageTap(spot.k); return }

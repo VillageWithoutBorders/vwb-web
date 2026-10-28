@@ -20,6 +20,8 @@
           // Text size, picked in Settings (Oct 27).
           var ts = localStorage.getItem('vwb_text');
           if (ts === 'large' || ts === 'larger') document.documentElement.classList.add('text-' + ts);
+          // Calm motion, picked in Settings (Oct 27).
+          if (localStorage.getItem('vwb_motion') === 'calm') document.documentElement.classList.add('calm-motion');
         } catch (e) {}
       })();
     </script>

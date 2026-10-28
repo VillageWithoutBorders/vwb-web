@@ -3,6 +3,7 @@ import { DECOR_PIECES, BACKGROUNDS, HAS_SEASONS, backgroundSrc, DEFAULT_WORLDS }
 import { supabase } from '../supabaseClient'
 import { askConfirm } from './AdminDialog'
 import { useOwnBack } from './BackLink'
+import { calmMotion } from '../utils/motion'
 
 // The map builder (Oct 22): Arrange and build for every map page.
 // Your cottage, village pages, organization and group pages all use it.
@@ -155,7 +156,7 @@ export function mapBody(w) {
   return { spots: w.spots, decor: w.decor, roads: w.roads, streams: w.streams, bg: w.bg || 'seasons' }
 }
 
-const stillMotion = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false } }
+const stillMotion = () => { try { return calmMotion() } catch { return false } }
 
 export function useMapBuilder({ spots, initial, onSave, base }) {
   const sceneRef = useRef(null) // the zoom layer: everything on the map, moved and scaled together
