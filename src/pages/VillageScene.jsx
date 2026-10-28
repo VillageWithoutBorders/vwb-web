@@ -180,13 +180,7 @@ export default function VillageScene() {
     b.openArrange(start)
   }
 
-  // Long press on the map: ask, then open arranging with that place picked.
-  async function holdToArrange(key) {
-    const msg = cottage ? 'Move things in your cottage?' : 'Move things on your view of this map? Only you see your view.'
-    if (!(await askConfirm(msg, { yes: 'Yes, move things', no: 'Not now' }))) return
-    startArrange('me')
-    if (key) { b.setPicked(key); b.setPickTools(true) }
-  }
+  // Oct 28 (Jade): no long press to start editing. The Edit button on the map does it.
 
   // Your cottage: kept on this device right away, then saved on your account.
   function saveCottage(next) {
@@ -717,7 +711,7 @@ export default function VillageScene() {
       )}
 
       {/* Simple view (Oct 27): no map at all, so its pictures never download. */}
-      {!simple && <div {...sceneProps(b, 'vs-scene vs-scene-path', holdToArrange)}>
+      {!simple && <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
        <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />

@@ -276,12 +276,7 @@ export default function OrgPage() {
   // Arrange and build (Oct 22, vwb-map-layouts.sql): the Heads and organizers (a
   // group's Keeper and Helpers) set the shared look; anyone signed in can arrange
   // their own view on top. Only they see it.
-  // Long press on the map: ask, then open arranging with that place picked.
-  async function holdToArrange(key) {
-    if (!(await askConfirm('Move things on your view of this map? Only you see your view.', { yes: 'Yes, move things', no: 'Not now' }))) return
-    startArrange('me')
-    if (key) { b.setPicked(key); b.setPickTools(true) }
-  }
+  // Oct 28 (Jade): no long press to start editing. The Edit button on the map does it.
   const { b, arrangeFor, startArrange, resetLayout, saveLabels, hasOwn } = usePageMap({
     kind: 'org', id, spots, user, accountLayout: profile?.village_layout, refreshProfile, name: org?.name,
     base: isGroup ? DEFAULT_WORLDS.group : DEFAULT_WORLDS.org,
@@ -598,7 +593,7 @@ export default function OrgPage() {
         </details>
       )}
 
-      {!simple && <div {...sceneProps(b, 'vs-scene vs-scene-path', user && isMember ? holdToArrange : null)}>
+      {!simple && <div {...sceneProps(b, 'vs-scene vs-scene-path')}>
        <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(b.world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
