@@ -21,6 +21,7 @@ import { useAdminInbox, refreshAdminInbox } from '../hooks/useAdminInbox'
 import { useWideScreen } from '../hooks/useWideScreen'
 import { ask, askConfirm, tell } from '../components/AdminDialog'
 import { ORG_TYPES } from '../data/orgTypes'
+import { calmMotion } from '../utils/motion'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also tell the person (an in-page note) and let the caller bail out; omit it for
@@ -89,6 +90,16 @@ export default function Admin() {
     setForceTool(false)
   }, [location.search])
   useEffect(() => { refreshAdminInbox() }, [tab])
+  useEffect(() => {
+    if (tab !== 'villages' || !villages.length) return
+    let want = null
+    try { want = new URLSearchParams(location.search).get('village') } catch { /* none */ }
+    if (!want || !villages.some((v) => v.id === want)) return
+    setFocusVillage(want)
+    const t = setTimeout(() => document.getElementById('village-' + want)?.scrollIntoView({ block: 'center', behavior: calmMotion() ? 'auto' : 'smooth' }), 150)
+    const off = setTimeout(() => setFocusVillage(null), 6000)
+    return () => { clearTimeout(t); clearTimeout(off) }
+  }, [tab, villages, location.search])
   const [resourceClaims, setResourceClaims] = useState([])
   const [loading, setLoading] = useState(true)
   const [pendingEvents, setPendingEvents] = useState([])
@@ -134,6 +145,8 @@ export default function Admin() {
   const [memberSearchQuery, setMemberSearchQuery] = useState({})
   const [memberSearchResults, setMemberSearchResults] = useState({})
   const [villages, setVillages] = useState([])
+  // Oct 28: alerts open /admin?tab=villages&village=<id>, straight to that village.
+  const [focusVillage, setFocusVillage] = useState(null)
   // Founder only: admins per village (vwb-two-admins-per-village.sql). Goal is 2 each.
   const [showNewVillageForm, setShowNewVillageForm] = useState(false)
   const [newVillageName, setNewVillageName] = useState('')
@@ -988,7 +1001,8 @@ export default function Admin() {
     ...(placesEnabled ? [{ key: 'crn', label: 'CRN Import', icon: 'folder', desktopOnly: true }] : []),
   ]
   const current = SECTIONS.find(s => s.key === tab)
-  const toolWaits = !wide && !forceTool && current?.desktopOnly
+  // Oct 28 (Jade): every admin tool works on a phone too. Nothing waits for a computer.
+  const toolWaits = false
   // Nothing opens until two-step login is on.
   const showTab = (toolWaits || twoStepOn !== true) ? null : tab
   const navBtn = (s) => (
@@ -1018,13 +1032,16 @@ export default function Admin() {
         </nav>
       ) : (
         <nav className="admin-chips" aria-label="Admin sections">
-          {SECTIONS.filter(s => !s.desktopOnly).map(navBtn)}
+          {SECTIONS.map(navBtn)}
+          <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/admin-guide')}><Icon name="books" size={24} /><span className="admin-nav-label">Admin Guide</span></button>
+          {isFounder && <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/admin/report')}><Icon name="scroll" size={24} /><span className="admin-nav-label">Grant report</span></button>}
+          <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/scramble-test')}><Icon name="lock" size={24} /><span className="admin-nav-label">Test tools</span></button>
         </nav>
       )}
 
       <div className="admin-main">
-      {wide && showTab === 'inbox' && (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+      {showTab === 'inbox' && (
+      <div className="admin-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
         <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('all'); goTab('users') }} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{stats.users}</div>
           <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Users</div>
@@ -1063,9 +1080,6 @@ export default function Admin() {
       {twoStepOn === false && <TwoStepGate onSettings={() => navigate('/settings#two-step')} />}
       {twoStepOn && showTab === 'inbox' && <AdminInbox inbox={inbox} onOpenTab={goTab} />}
       {twoStepOn && showTab === 'log' && <AdminActionLog />}
-      {!wide && showTab === 'inbox' && (
-        <p className="admin-computer-note"><a href="/admin-guide" onClick={(e) => { e.preventDefault(); navigate('/admin-guide') }}>Read the Admin Guide</a>. Villages, SkillShare, CRN Import{isFounder ? ', the grant report' : ''} and test tools are in the computer view of this page.</p>
-      )}
 
       {twoStepOn && toolWaits && (
         <div className="admin-tool-wait">
@@ -1639,7 +1653,7 @@ export default function Admin() {
           {villages.length === 0 ? (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No villages yet</p>
           ) : villages.map(c => (
-            <div key={c.id} style={cardStyle}>
+            <div key={c.id} id={'village-' + c.id} className={'admin-village-card' + (focusVillage === c.id ? ' admin-focus' : '')} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {editingVillageId === c.id ? (
                   <div style={{ flex: 1 }}>
