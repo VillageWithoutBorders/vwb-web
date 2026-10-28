@@ -81,24 +81,34 @@ export default function Calendar() {
           <h1>Calendar</h1>
           <p className="cal-sub">Gatherings, drives, volunteer shifts, and who is organizing near you</p>
         </div>
-        {canPost && (
-          <div className="cal-post-row">
-            <button type="button" className="btn btn-primary" onClick={() => navigate('/calendar/new')}>
-              + New event
-            </button>
-            <button type="button" className="btn btn-outline" onClick={() => navigate('/calendar/import')}>
-              Bring in events
-            </button>
-          </div>
-        )}
       </div>
 
-      <button type="button" className="cal-change cal-phone-link" onClick={jumpToSubscribe}>
-        Add these events to my phone calendar
-      </button>
+      {/* Oct 28 (Jade): one calm row before the events. New event; Place and filters
+          (place, distance, all ages) fold into one line; Bring in events and the phone
+          calendar link move under More. Nothing was taken away. */}
+      <div className="cal-top-row">
+        {canPost && (
+          <button type="button" className="btn btn-primary" onClick={() => navigate('/calendar/new')}>+ New event</button>
+        )}
+        <details className="cal-more">
+          <summary>More</summary>
+          <div className="cal-more-body">
+            {canPost && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/calendar/import')}>Bring in events</button>}
+            <button type="button" className="btn btn-outline btn-full" onClick={jumpToSubscribe}>Add these events to my phone calendar</button>
+          </div>
+        </details>
+      </div>
 
-      <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
-      <AllAgesFilter checked={allAgesOnly} onChange={setAllAgesOnly} />
+      <details className="cal-filters" open={!origin}>
+        <summary>
+          <span className="cal-filters-word">Place and filters</span>
+          <small>{(origin && origin.name ? origin.name + ', ' : '') + 'within ' + miles + ' miles' + (allAgesOnly ? ', all ages only' : '')}</small>
+        </summary>
+        <div className="cal-filters-body">
+          <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
+          <AllAgesFilter checked={allAgesOnly} onChange={setAllAgesOnly} />
+        </div>
+      </details>
 
       {loading && <p className="cal-empty">Loading events...</p>}
       {!loading && loadError && (

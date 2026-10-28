@@ -950,3 +950,9 @@ html.simple .vs-page.vs-page-path::after { display: none; }
 .vs-zoom-fab-wrap .vs-zoom-btn { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); border-color: var(--vs-gold, #f2c763); }
 /* While editing the old under-map row is gone; nothing else needs its space. */
 .vs-page-path:has(.vs-arrange-on) > .vs-map-under { display: none; }
+
+/* Your garden rows are buttons now (Oct 28): tap a gift to move it, or a step to start it. */
+button.vs-gift-row { width: 100%; border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; min-height: 64px; }
+button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid var(--vs-gold); outline-offset: 2px; }
+.vs-gift-row > span:not(.vs-gift-go) { flex: 1; min-width: 0; }
+.vs-gift-go { font-size: 1.6rem; color: var(--vs-gold); margin-left: auto; }
