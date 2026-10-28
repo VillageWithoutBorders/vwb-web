@@ -121,3 +121,5 @@
   .wd-panel > .wd-network-wrap { max-width: none; margin: 4px 0 0; }
   .wd-page > .wd-globe-wrap { grid-row: 1; position: relative; top: auto; align-self: center; }
 }
+/* Oct 28 (Jade): the globe sits at the top of the left half, centered across it. */
+@media (min-width: 1024px) { .wd-page > .wd-globe-wrap { align-self: start; justify-self: center; } }

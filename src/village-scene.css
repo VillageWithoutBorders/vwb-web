@@ -956,3 +956,25 @@ button.vs-gift-row { width: 100%; border: 0; text-align: left; font: inherit; co
 button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid var(--vs-gold); outline-offset: 2px; }
 .vs-gift-row > span:not(.vs-gift-go) { flex: 1; min-width: 0; }
 .vs-gift-go { font-size: 1.6rem; color: var(--vs-gold); margin-left: auto; }
+
+/* ---------- Computers: a fixed map on the left, the dashboard scrolls on the right (Oct 28, Jade) ----------
+   The map sits at the top of the left half and never moves. The page itself is the
+   right half: everything scrolls there, beside the map, on one dark panel. */
+@media (min-width: 1024px) {
+  .vs-page.vs-page-path {
+    display: flex; flex-direction: column; align-items: stretch;
+    padding: 16px 24px 24px calc(50vw + 12px); position: relative;
+  }
+  .vs-page.vs-page-path::after {
+    grid-column: auto; grid-row: auto;
+    top: 16px; bottom: 24px; left: calc(50vw + 12px); right: 24px; inset: 16px 24px 24px calc(50vw + 12px);
+  }
+  .vs-page-path > .vs-scene-path,
+  .vs-page-path:has(.vs-arrange-on) > .vs-scene-path {
+    position: fixed; z-index: 5; margin: 0;
+    top: calc(var(--header-height) + 16px); left: 24px; right: auto; bottom: auto;
+    width: calc(50vw - 36px); height: var(--vs-map-h);
+    grid-column: auto; grid-row: auto; border-radius: 16px;
+  }
+  .vs-page-path > .vs-map-under { display: none; }
+}
