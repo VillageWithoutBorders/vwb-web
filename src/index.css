@@ -6316,3 +6316,7 @@ html.calm-motion *, html.calm-motion *::before, html.calm-motion *::after {
 /* An alert opened this village: it glows gold for a few seconds. */
 .admin-village-card { scroll-margin-top: calc(var(--header-height) + 1rem); }
 .admin-village-card.admin-focus { outline: 3px solid var(--gold, #f2c763); outline-offset: 2px; }
+
+/* Log out at the bottom of My Tools (Oct 28). */
+.tools-logout { margin: 0.75rem 0; width: 100%; }
+.tools-logout b { color: var(--danger, #d9503f); }
