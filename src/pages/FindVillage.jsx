@@ -26,6 +26,7 @@ const WORDS = {
   badzip: 'One of those zip codes was not found. Try again.',
   toomany: 'A village can have up to 40 zip codes. Untick a few and try again.',
   needagree: 'Please read and agree to the warning first.',
+  new: 'New accounts can join a village right away. Starting one opens up after your first 14 days, or sooner once a neighbor vouches for you or you finish a task with someone.',
   removed: 'Members of this village chat asked for you to be removed. If you think this is a mistake, contact VWB.',
 }
 
