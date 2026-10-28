@@ -938,3 +938,9 @@ html.simple .vs-page.vs-page-path::after { display: none; }
   /* Zoom in stays fixed at the bottom left, over the map. */
   .vs-page-path:has(.vs-arrange-on) > .vs-map-under { left: 40px; bottom: calc(var(--tab-height) + 32px); }
 }
+/* Oct 28: Your garden fits inside the dark panel (its old 100% width plus the
+   panel's side margins ran past the right edge). */
+@media (min-width: 1024px) {
+  .vs-page-path > .vs-gifts-btn { width: auto; }
+  .vs-page-path > .vs-body .vs-panel.vs-today { margin-top: 0; }
+}
