@@ -1,5 +1,5 @@
 import Icon from '../components/Icon'
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView'
@@ -12,9 +12,10 @@ import { useAdminInbox } from '../hooks/useAdminInbox'
 import AppTour from '../components/AppTour'
 import KeyRestorePrompt from '../components/KeyRestorePrompt'
 import { PageBackContext, FrameBack } from '../components/BackLink'
+import { calmMotion } from '../utils/motion'
 
 export default function Layout() {
-  const { pathname } = useLocation()
+  const { pathname, search, key } = useLocation()
   const { profile } = useAuth()
   // Your role tools and the Admin inbox count, for My Tools in the top bar.
   const tools = useMyTools()
@@ -46,6 +47,18 @@ export default function Layout() {
     if (isChat || window.location.hash) return
     window.scrollTo(0, 0)
   }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Tapping a button or tab for the page you are already on goes back to the top
+  // (Oct 28, Jade). Same page and same address, but a new tap (a new location key).
+  const lastPlace = useRef({ where: pathname + search, key })
+  useEffect(() => {
+    const where = pathname + search
+    const before = lastPlace.current
+    lastPlace.current = { where, key }
+    if (before.where !== where || before.key === key) return
+    if (isChat || window.location.hash) return
+    window.scrollTo({ top: 0, behavior: calmMotion() ? 'auto' : 'smooth' })
+  }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Top and bottom bars stay put on a zoomed-in phone (Oct 25, Jade). When someone pinch
   // zooms the page, the browser lets fixed bars slide away with the page. This follows the

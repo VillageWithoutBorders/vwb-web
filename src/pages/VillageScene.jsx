@@ -89,6 +89,9 @@ export default function VillageScene() {
   const LAYOUT_KEY = 'vwb_village_layout_v2'
   const saveTimer = useRef(null)
   const [showTowns, setShowTowns] = useState(false)
+  // Oct 28: the Edit map button on the map; Keepers pick whose look to change.
+  const [editMenu, setEditMenu] = useState(false)
+  const keeperChoice = !cottage && !!(keepers && keepers.i_am_keeper)
   // The usual look: roads, streams and a few trees for this kind of map.
   const BASE = cottage ? DEFAULT_WORLDS.cottage : DEFAULT_WORLDS.village
   const CBASE = DEFAULT_WORLDS.cottage
@@ -167,6 +170,7 @@ export default function VillageScene() {
   }
 
   function startArrange(forWho) {
+    setEditMenu(false)
     let start = null
     if (!cottage) {
       const { own, shared } = mapLayouts.current
@@ -760,6 +764,23 @@ export default function VillageScene() {
           )
         })}
        </div>
+        {/* Oct 28 (Jade): Edit map sits on the map itself, top corner, on phones and
+            computers, so it's always in view. Keepers choose: their own view or the
+            default look for everyone. */}
+        {!arrange && (
+          <div className="vs-edit-fab-wrap" onPointerDown={(e) => e.stopPropagation()}>
+            <button type="button" className="vs-edit-fab" aria-haspopup={keeperChoice ? 'menu' : undefined} aria-expanded={keeperChoice ? editMenu : undefined}
+              onClick={() => { if (keeperChoice) setEditMenu((v) => !v); else startArrange('me') }}>
+              <ToolIcon name="move" /><span>{cottage ? 'Edit cottage' : 'Edit map'}</span>
+            </button>
+            {keeperChoice && editMenu && (
+              <div className="vs-edit-menu" role="menu">
+                <button type="button" role="menuitem" onClick={() => { setEditMenu(false); startArrange('me') }}><b>My own view</b><small>Only you see it.</small></button>
+                <button type="button" role="menuitem" onClick={() => { setEditMenu(false); startArrange('everyone') }}><b>Default for everyone</b><small>New neighbors start with this.</small></button>
+              </div>
+            )}
+          </div>
+        )}
         <div className="vs-fade" />
       </div>}
       {/* Name tags: on phones they show; with a mouse they show when you point at
