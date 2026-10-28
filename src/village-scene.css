@@ -978,3 +978,15 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
   }
   .vs-page-path > .vs-map-under { display: none; }
 }
+
+/* ---------- The cottage dashboard, condensed (Oct 28, Jade) ----------
+   Quick buttons become one slim row with the picture beside the words,
+   sections sit closer together, and Your garden is a slimmer bar. */
+.vs-today .welcome-section { margin-bottom: 0.5rem; }
+.vs-today .welcome-section h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.vs-today .today-h { margin: 0.9rem 0 0.4rem; }
+.vs-today .qa-grid { gap: 0.5rem; }
+.vs-today .qa-btn { flex-direction: row; justify-content: flex-start; gap: 0.6rem; min-height: 56px; padding: 0.4rem 0.8rem; text-align: left; }
+.vs-today .qa-btn-icon .vwb-icon { width: 32px; height: 32px; }
+.vs-gifts-btn { min-height: 44px; font-size: 0.95rem; }
+@media (min-width: 1024px) { .vs-page-path > .vs-gifts-btn { margin-top: 6px; } }

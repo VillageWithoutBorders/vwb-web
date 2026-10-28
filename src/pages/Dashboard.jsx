@@ -78,9 +78,10 @@ export default function Dashboard({ embedded = false }) {
       )}
       <div className="welcome-section">
         {embedded ? <h2>{hello}, {displayName}</h2> : <h1>{hello}, {displayName}</h1>}
-        <p className="welcome-sub" role="status">
+        {/* Oct 28: under the cottage map, "all caught up" is said once, by Needs you. */}
+        {!(embedded && waiting === 0) && <p className="welcome-sub" role="status">
           {waiting === null ? 'Here is your day.' : waiting === 0 ? "You're all caught up." : waiting + (waiting === 1 ? ' thing needs' : ' things need') + ' you today.'}
-        </p>
+        </p>}
         {profile?.is_hope_ambassador && <p className="today-role"><Icon name="star" size={20} /> Hope Ambassador</p>}
       </div>
 
@@ -104,7 +105,9 @@ export default function Dashboard({ embedded = false }) {
           They now start with only the ones the top and bottom bars don't already have. */}
       <QuickActions />
 
-      <YourPlaces />
+      {/* Oct 28 (Jade): under the cottage map, Your places is left out. Every place in it is
+          already on the map, in the top and bottom bars, or in My Tools. */}
+      {!embedded && <YourPlaces />}
 
       <ComingUp />
 
