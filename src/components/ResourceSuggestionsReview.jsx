@@ -3,6 +3,8 @@ import { supabase } from '../supabaseClient'
 
 // Hope Ambassadors and VWB admins: suggestions from "Suggest a resource" (Oct 25).
 // Shown on Find resources. ?suggestions=1 in the address scrolls here (admin alerts link to it).
+// Oct 28: "Add to the library" opens the Add Resource form filled in from the suggestion
+// (onAdd). Once it is saved, the page marks the suggestion added and bumps refreshKey.
 
 const STATUS_WORD = { new: 'New', added: 'Added to the library', done: 'Handled', dismissed: 'Not a fit' }
 
@@ -11,7 +13,7 @@ function safeLink(url) {
   return /^https?:\/\//i.test(url) ? url : 'https://' + url
 }
 
-export default function ResourceSuggestionsReview() {
+export default function ResourceSuggestionsReview({ onAdd, refreshKey = 0 }) {
   const [show, setShow] = useState('new')
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
@@ -25,7 +27,7 @@ export default function ResourceSuggestionsReview() {
     setRows(which === 'new' ? (data || []) : (data || []).filter((r) => r.status !== 'new'))
   }
 
-  useEffect(() => { load(show) }, [show]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(show) }, [show, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('suggestions') !== '1') return
@@ -71,7 +73,8 @@ export default function ResourceSuggestionsReview() {
             <p className="sr-meta">From {r.suggested_by}, {new Date(r.created_at).toLocaleDateString()}{r.status !== 'new' ? '. ' + STATUS_WORD[r.status] : ''}</p>
             <div className="sr-actions">
               {r.status === 'new' ? <>
-                {r.kind === 'resource' && <button type="button" className="btn btn-primary" disabled={!!busy} onClick={() => mark(r, 'added')}>Added to the library</button>}
+                {r.kind === 'resource' && onAdd && <button type="button" className="btn btn-primary" disabled={!!busy} onClick={() => onAdd(r)}>Add to the library</button>}
+                {r.kind === 'resource' && <button type="button" className="btn btn-outline" disabled={!!busy} onClick={() => mark(r, 'added')}>Already in the library</button>}
                 <button type="button" className="btn btn-outline" disabled={!!busy} onClick={() => mark(r, 'done')}>{r.kind === 'gap' ? 'Noted' : 'Handled'}</button>
                 <button type="button" className="btn btn-outline" disabled={!!busy} onClick={() => mark(r, 'dismissed')}>Not a fit</button>
               </> : <button type="button" className="btn btn-outline" disabled={!!busy} onClick={() => mark(r, 'new')}>Move back to New</button>}

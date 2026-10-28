@@ -183,6 +183,8 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
   const [pickTools, setPickTools] = useState(false)
   // Oct 27: while arranging, the map fills the screen and the tools slide in and out.
   const [toolsHidden, setToolsHidden] = useState(false)
+  // Oct 28: while a finger is moving something, the tools slide away so they never cover it.
+  const [moving, setMoving] = useState(false)
   // Phones: when the picked piece is high on the screen, the tool panel drops to the bottom.
   const [panelLow, setPanelLow] = useState(false)
   const [layoutNote, setLayoutNote] = useState('')
@@ -235,6 +237,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     if (!dragRef.current.moved && Math.hypot(e.clientX - dragRef.current.sx, e.clientY - dragRef.current.sy) < 8) return
     const [x, y] = scenePoint(e)
     const key = dragRef.current.key
+    if (!dragRef.current.moved) setMoving(true)
     dragRef.current.moved = true
     const w = worldRef.current
     const next = key.startsWith('d:')
@@ -258,8 +261,9 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     if (!dragRef.current) return
     const { moved, before } = dragRef.current
     dragRef.current = null
+    setMoving(false)
     if (moved) { remember(before); saveWorld(worldRef.current) }
-    else setPickTools(true) // a tap: show its tools
+    else { setPickTools(true); setToolsHidden(false) } // a tap: show its tools
   }
   function roadStart(e) {
     if (!arrange || (tool !== 'road' && tool !== 'stream') || !sceneRef.current) return
@@ -517,7 +521,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     arrange, openArrange, closeArrange, tool, setTool, trayOpen, setTrayOpen, trayTab, setTrayTab,
     picked, setPicked, pickTools, setPickTools, panelLow, layoutNote, setLayoutNote, drawing,
     placed, isHidden, hiddenCount, pickedDecor, dragStart, dragMove, dragEnd, roadStart,
-    changePicked, resize, flipPicked, layerPicked, pickedLayer, addDecor, toolsHidden, setToolsHidden, removePicked, nudge, pickByKey, namesShowing,
+    changePicked, resize, flipPicked, layerPicked, pickedLayer, addDecor, toolsHidden, setToolsHidden, moving, removePicked, nudge, pickByKey, namesShowing,
     holdStart, holdMove, holdStop, holdClick,
     outerRef, zoom, zoomBy, zoomReset, zoomDown, zoomMove, zoomUp,
   }
@@ -604,13 +608,13 @@ export function NamesToggle({ b, onChange }) {
 export function MapToolbar({ b, more }) {
   const { world, layout, spots, tool, setTool, trayOpen, setTrayOpen, trayTab, setTrayTab, picked, setPicked, pickTools,
     panelLow, layoutNote, setLayoutNote, pickedDecor, isHidden, hiddenCount, resize, flipPicked, layerPicked, pickedLayer, removePicked, changePicked,
-    nudge, commit, addDecor, canUndo, undo, closeArrange, toolsHidden, setToolsHidden } = b
+    nudge, commit, addDecor, canUndo, undo, closeArrange, toolsHidden, setToolsHidden, moving } = b
   if (!b.arrange) return <div className="vs-arrange" />
   return (
     <div className="vs-arrange vs-arrange-on">
-      <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked && pickTools) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + ((panelLow && picked && !trayOpen) || tool !== 'move' ? ' vs-toolbar-low' : '') + (tool !== 'move' ? ' vs-toolbar-draw' : '') + (toolsHidden ? ' vs-toolbar-hidden' : '')} role="region" aria-label="Arrange and build tools">
+      <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked && pickTools) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + ((panelLow && picked && !trayOpen) || tool !== 'move' ? ' vs-toolbar-low' : '') + (tool !== 'move' ? ' vs-toolbar-draw' : '') + (toolsHidden ? ' vs-toolbar-hidden' : '') + (moving ? ' vs-toolbar-moving' : '')} role="region" aria-label="Arrange and build tools">
         <button type="button" className="vs-tools-toggle" aria-expanded={!toolsHidden} onClick={() => setToolsHidden(!toolsHidden)}>
-          <ToolIcon name={toolsHidden ? 'left' : 'right'} /><span>{toolsHidden ? 'Tools' : 'Hide'}</span>
+          <ToolIcon name={toolsHidden ? 'left' : 'right'} /><span>{toolsHidden ? 'Tools' : 'Hide tools'}</span>
         </button>
         <div className="vs-toolpanel" inert={toolsHidden}>
         {trayOpen && (
