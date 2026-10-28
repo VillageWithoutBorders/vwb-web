@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
 import { NotificationsProvider } from './context/NotificationsContext'
@@ -66,6 +66,13 @@ const Trail = lazyPage(() => import('./pages/Trail'))
 const HelpDoors = lazyPage(() => import('./pages/HelpDoors'))
 import { peekReturnTo } from './utils/returnTo'
 import { placesEnabled } from './utils/places'
+
+// Event pages: the app frame for people who are signed in, a plain page for everyone else.
+function EventFrame() {
+  const { user } = useAuth()
+  return user ? <Layout /> : <Outlet />
+}
+
 
 // Pages load when first opened, so the first visit downloads less.
 // If a new version went out while a tab was open, the old page file is
@@ -184,7 +191,11 @@ function AppRoutes() {
       <Route path="/resources" element={<PublicResources />} />
       {/* Public on purpose: the website calendar and shared event links work without an account. */}
       <Route path="/calendar/embed" element={<CalendarEmbed />} />
-      <Route path="/events/:id" element={<SetupGate><EventPage /></SetupGate>} />
+      {/* Signed in: an event opens inside the app, with the top and bottom bars (Oct 28).
+          Signed out (a shared link): the plain public page. */}
+      <Route element={<EventFrame />}>
+        <Route path="/events/:id" element={<SetupGate><EventPage /></SetupGate>} />
+      </Route>
       <Route path="/groups/join/:token" element={<SetupGate><JoinGroup /></SetupGate>} />
       <Route path="/connect/:code" element={<SetupGate><Connect /></SetupGate>} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>

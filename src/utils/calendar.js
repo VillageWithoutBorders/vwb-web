@@ -12,7 +12,9 @@ import { distanceMiles, getMyLocation, lookupZip } from './location'
 export function memberArea(profile) {
   const mine = getMyLocation(profile)
   if (!mine) return null
-  return { name: 'Your area' + (mine.label ? ' (' + mine.label + ')' : ''), lat: mine.lat, lng: mine.lng, kind: 'area' }
+  // Oct 28: say the town from the profile when there is one ("Ringgold (30736)"), not just "Your area".
+  const town = ((profile && profile.neighborhood) || '').trim()
+  return { name: (town || 'Your area') + (mine.label ? ' (' + mine.label + ')' : ''), lat: mine.lat, lng: mine.lng, kind: 'area' }
 }
 
 // Where the calendar starts: a place this browser picked before, then the

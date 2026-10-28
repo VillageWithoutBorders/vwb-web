@@ -6325,3 +6325,6 @@ html.calm-motion *, html.calm-motion *::before, html.calm-motion *::after {
 /* No pinch zoom on the app (Oct 28, Jade). Text size in Settings makes words bigger.
    Maps have their own Zoom in button. Scrolling still works everywhere. */
 html, body { touch-action: pan-x pan-y; }
+
+/* Coming up cards show the day above the time (Oct 28). */
+.cal-card-day { display: block; font-weight: 700; color: var(--text-strong, var(--text)); margin-bottom: 0.1rem; }
