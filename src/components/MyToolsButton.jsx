@@ -5,6 +5,8 @@ import ToolsSheet, { EMERGENCY, toolRows } from './ToolsSheet'
 import { useNotifications } from '../hooks/useNotifications'
 import { markNotificationRead } from '../utils/notificationHelpers'
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
+import { personalAlertLink } from '../utils/alertLink'
+import { useAuth } from '../context/AuthContext'
 
 // My Tools in the top bar (Oct 25, Jade). Alerts and your tools in one button.
 // Opens your 5 newest alerts (with See all alerts), then the tools for your role
@@ -17,6 +19,8 @@ export default function MyToolsButton({ tools, adminWaiting = 0, adminUrgent = f
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { notifications, badgeCount = 0, refresh, markSeen } = useNotifications()
+  const { signOut } = useAuth()
+  const [leaving, setLeaving] = useState(false)
   const [open, setOpen] = useState(false)
   const lastFocus = useRef(null)
   const on = PATHS.some((p) => pathname === p || pathname.startsWith(p + '/')) || /^\/village\/[^/]+\/keeper$/.test(pathname)
@@ -48,7 +52,16 @@ export default function MyToolsButton({ tools, adminWaiting = 0, adminUrgent = f
       try { await markNotificationRead(n.id) } catch (e) { console.error('[MyTools] mark read failed:', e) }
     }
     refresh?.()
-    navigate(n.link || '/notifications')
+    navigate(personalAlertLink(n))
+  }
+
+  // Log out, at the bottom of My Tools (Oct 28, Jade).
+  async function logOut() {
+    setLeaving(true)
+    try { await signOut() } catch (e) { console.error('[MyTools] log out failed:', e) }
+    setLeaving(false)
+    setOpen(false)
+    navigate('/welcome', { replace: true })
   }
 
   return (
@@ -59,7 +72,11 @@ export default function MyToolsButton({ tools, adminWaiting = 0, adminUrgent = f
         {total > 0 && <span className={'bell-badge' + (calm ? ' admin-badge-calm' : '')} aria-hidden="true">{total > 9 ? '9+' : total}</span>}
       </button>
       {open && (
-        <ToolsSheet id="top-tools-title" title={plain ? 'Alerts' : 'My Tools'} rowsTitle={plain ? 'If something big happens' : 'Tools'} rows={[...toolRows(tools, adminWaiting), EMERGENCY]} onClose={close}>
+        <ToolsSheet id="top-tools-title" title={plain ? 'Alerts' : 'My Tools'} rowsTitle={plain ? 'If something big happens' : 'Tools'} rows={[...toolRows(tools, adminWaiting), EMERGENCY]} onClose={close}
+          footer={<button type="button" className="tools-row tools-logout" disabled={leaving} onClick={logOut}>
+            <Icon name="door" size={28} />
+            <span><b>{leaving ? 'Logging out...' : 'Log out'}</b><small>You can log back in any time.</small></span>
+          </button>}>
           <h3 className="tools-sub">Alerts</h3>
           <div className="tools-alerts">
             {recent.length === 0 ? (
