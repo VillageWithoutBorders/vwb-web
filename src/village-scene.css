@@ -743,9 +743,18 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
   font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer;
 }
 .vs-tools-toggle:focus-visible { outline: 3px solid var(--vs-focus, #fff); outline-offset: 2px; }
-.vs-toolbar-wide .vs-tools-toggle { display: none; }
 .vs-toolbar-hidden { transform: translateX(100%); }
 .vs-toolbar-hidden .vs-tools-toggle { display: flex; }
 @media (prefers-reduced-motion: no-preference) {
   .vs-toolbar { transition: transform 0.2s ease, width 0.2s ease; }
+}
+
+/* Oct 28 (Jade): the edit tools never cover what you are working on.
+   Hide tools works any time, even with a picked piece's buttons open.
+   While a finger moves something, the tools slide away and come back on letting go. */
+.vs-tools-toggle { max-width: 64px; text-align: center; line-height: 1.1; }
+.vs-toolbar-moving { transform: translateX(100%); opacity: 0; }
+.vs-toolbar-moving > * { pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .vs-toolbar { transition: transform 0.2s ease, width 0.2s ease, opacity 0.15s ease; }
 }

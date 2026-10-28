@@ -77,6 +77,9 @@ export default function CommunityResources() {
   const [subLng, setSubLng] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  // Oct 28: the suggestion being added from Suggestions from neighbors, if any.
+  const [fromSuggestion, setFromSuggestion] = useState(null)
+  const [suggestionsKey, setSuggestionsKey] = useState(0)
 
   // Resource votes and anonymous reviews
   const [voteCounts, setVoteCounts] = useState({}) // { [resourceId]: { upvotes, downvotes } }
@@ -344,6 +347,16 @@ export default function CommunityResources() {
     await Promise.all([loadResources(), loadEditHistory()])
   }
 
+  // Suggestions from neighbors > Add to the library: open the form filled in.
+  function addFromSuggestion(r) {
+    const cat = r.category ? currentCategory(r.category) : ''
+    setFromSuggestion(r)
+    setSubName(r.name || ''); setSubDesc(r.details || ''); setSubCats(CATEGORIES.includes(cat) ? [cat] : [])
+    setSubPhone(r.phone || ''); setSubUrl(r.url || ''); setSubAddress(''); setSubHood(r.place || ''); setSubRequirements('')
+    setSubLat(null); setSubLng(null); setSubOrgId('')
+    setSubmitted(false); setShowSubmit(true)
+  }
+
   async function submitResource() {
     if (!subName.trim() || !subCats.length) return
     setSubmitting(true)
@@ -360,6 +373,11 @@ export default function CommunityResources() {
       console.error('Failed to submit resource:', error)
       tell('Could not submit this resource. Try again.', { tone: 'error' })
       return
+    }
+    if (fromSuggestion) {
+      const { error: markErr } = await supabase.rpc('set_resource_suggestion_status', { p_id: fromSuggestion.id, p_status: 'added' })
+      if (markErr) { console.error('Failed to mark suggestion added:', markErr); tell('The resource was added, but we could not mark the suggestion. Tap Already in the library on it.', { tone: 'error' }) }
+      setSuggestionsKey((k) => k + 1)
     }
     setSubmitted(true)
     setSubName(''); setSubDesc(''); setSubCats([]); setSubPhone(''); setSubUrl(''); setSubAddress(''); setSubRequirements('')
@@ -701,7 +719,7 @@ export default function CommunityResources() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
             <h2 style={{ fontSize: '1.1rem', color: 'var(--text)', margin: 0 }}>{!query.trim() && !selectedCat && !visitorNeedsArea ? 'Kinds of help' : ''}</h2>
-            {canSubmit && <button onClick={() => { setShowSubmit(true); setSubmitted(false) }} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>+ Add Resource</button>}
+            {canSubmit && <button onClick={() => { setFromSuggestion(null); setShowSubmit(true); setSubmitted(false) }} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>+ Add Resource</button>}
           </div>
 
           {!canSubmit && (
@@ -721,14 +739,18 @@ export default function CommunityResources() {
             <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowSubmit(false)}>
               <div ref={submitModalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="submit-resource-title" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', maxWidth: '400px', width: '90%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <h3 id="submit-resource-title" style={{ margin: 0, color: 'var(--accent)' }}>Submit a Resource</h3>
+                  <h3 id="submit-resource-title" style={{ margin: 0, color: 'var(--accent)' }}>{fromSuggestion ? 'Add a suggested resource' : 'Submit a Resource'}</h3>
                   <button onClick={() => setShowSubmit(false)} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
                 </div>
                 {submitted ? (
-                  <p style={{ color: 'var(--accent)', fontWeight: 600, margin: 0 }}>Thank you! Your resource has been submitted for review.</p>
+                  <p role="status" style={{ color: 'var(--accent)', fontWeight: 600, margin: 0 }}>{fromSuggestion
+                    ? 'Added. It is waiting under Pending review on this page. Tap Verify there to make it live for neighbors.'
+                    : 'Thank you! Your resource has been submitted for review.'}</p>
                 ) : (
                   <>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>Share a resource with your community. Hope Ambassadors will verify submissions.</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>{fromSuggestion
+                      ? 'Filled in from ' + (fromSuggestion.suggested_by || 'a neighbor') + "'s suggestion. Check it, fix anything that is off, then add it. Pick at least one category."
+                      : 'Share a resource with your community. Hope Ambassadors will verify submissions.'}</p>
                     {submitOrgOptions.length > 0 && (
                       <>
                         <label htmlFor="sub-org" style={labelStyle}>Group</label>
@@ -759,7 +781,7 @@ export default function CommunityResources() {
                     <label htmlFor="sub-requirements" style={labelStyle}>What to bring or know before you go (optional)</label>
                     <textarea id="sub-requirements" style={{ ...fieldStyle, minHeight: '50px', resize: 'vertical' }} placeholder="e.g. Photo ID and proof of address, first-come-first-served, no appointment needed" value={subRequirements} onChange={e => setSubRequirements(e.target.value)} maxLength={300} />
                     <button onClick={submitResource} disabled={!subName.trim() || !subCats.length || submitting} style={{ padding: '0.75rem 1.25rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: (!subName.trim() || !subCats.length || submitting) ? 0.5 : 1 }}>
-                      {submitting ? 'Submitting...' : 'Submit Resource'}
+                      {submitting ? 'Saving...' : fromSuggestion ? 'Add to the library' : 'Submit Resource'}
                     </button>
                   </>
                 )}
@@ -767,7 +789,7 @@ export default function CommunityResources() {
             </div>
           )}
 
-          {canVerify && <ResourceSuggestionsReview />}
+          {canVerify && <ResourceSuggestionsReview onAdd={addFromSuggestion} refreshKey={suggestionsKey} />}
 
           {canVerify && pendingResources.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>
@@ -776,7 +798,7 @@ export default function CommunityResources() {
                 <div key={r.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0.6rem', marginBottom: '0.35rem', borderLeft: '3px solid var(--warn)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{r.name}</span>
-                    <button onClick={() => verifyResource(r.id)} style={{ padding: '0.3rem 0.6rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Verify</button>
+                    <button onClick={() => verifyResource(r.id)} style={{ padding: '0.3rem 0.9rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Verify</button>
                   </div>
                   {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{r.description}</p>}
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{resourceCats(r).join(' · ')}{r.organizations ? ' · ' + r.organizations.name : ''}</span>
