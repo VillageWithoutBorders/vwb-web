@@ -78,7 +78,8 @@ export default function Admin() {
   // Which villages each admin covers (the founder sets them).
   const adminVillages = useAdminVillages(roleRefresh)
   // Founder only: asks for an admin to be Keeper of a village.
-  const keeperOffers = useKeeperOffers(isFounder, roleRefresh)
+  // Oct 28: every admin gets People and leaders, so every admin sees the Keeper asks.
+  const keeperOffers = useKeeperOffers(isAdmin || isFounder, roleRefresh)
   // Admin tools need two-step login on (null while checking).
   const twoStepOn = useTwoStepOn()
   // Every section has its own link (/admin?tab=reports), so alerts, the
@@ -1629,7 +1630,7 @@ export default function Admin() {
       {!loading && showTab === 'villages' && (
         <>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>
-            Each village has its own village chat, run by its Keeper and Helpers. Everyone has one home village, from the zip code on their profile. They join its chat after agreeing to a risk warning. Other villages they join, or are invited to, they visit as guests (guests read and post, but cannot be Keeper or Helper). New members only see messages from after they joined. Two members can remove someone, and admins can too. Any neighbor can start a village (up to 3 each, up to 40 zip codes). You can edit any village{"\u2019"}s zip list here.{isFounder ? ' Open People and leaders on a village to see who is in it, ask someone to be Keeper, or put people in the chat.' : ''}
+            Each village has its own village chat, run by its Keeper and Helpers. Everyone has one home village, from the zip code on their profile. They join its chat after agreeing to a risk warning. Other villages they join, or are invited to, they visit as guests (guests read and post, but cannot be Keeper or Helper). New members only see messages from after they joined. Two members can remove someone, and admins can too. Any neighbor can start a village (up to 3 each, up to 40 zip codes). You can edit any village{"\u2019"}s zip list here. Open People and leaders on a village to see who is in it, ask someone to be Keeper, or put people in the chat.
           </p>
           <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? 'Cancel' : '+ New Village'}</button>
 
@@ -1710,7 +1711,7 @@ export default function Admin() {
                   <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>last message</div>
                 </div>
               </div>
-              {isFounder && c.active !== false && (
+              {c.active !== false && (
                 <FounderVillagePeople village={c} offers={keeperOffers} onChanged={() => setRoleRefresh(n => n + 1)} />
               )}
             </div>
