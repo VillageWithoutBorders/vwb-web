@@ -902,3 +902,23 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
 @media (min-width: 1024px) {
   .vs-page.vs-page-path { --vs-map-h: calc(100dvh - var(--header-height) - var(--tab-height) - 32px); padding-bottom: 16px; }
 }
+
+/* ---------- Computers: the right half is one dark panel (Oct 28, Jade) ----------
+   On the cottage, village and group pages, everything beside the map sits on one
+   dark panel that starts at the top, the same height as the map, so the two
+   halves line up. Today's panel melts into it. */
+@media (min-width: 1024px) {
+  .vs-page.vs-page-path::after {
+    content: ''; grid-column: 2 / 4; grid-row: 1 / -1; align-self: stretch;
+    background: var(--bg, #121212); border-radius: 16px; z-index: 0; pointer-events: none;
+    min-height: var(--vs-map-h);
+  }
+  .vs-page-path > :not(.vs-scene-path):not(.vs-map-under):not(.vs-shade):not(.vs-arrange-on) {
+    position: relative; z-index: 1; margin-left: 20px !important; margin-right: 20px !important;
+  }
+  .vs-page-path > .vs-top, .vs-page-path > .vs-title { padding-top: 20px; }
+  .vs-page-path > .vs-top ~ .vs-title { padding-top: 0; }
+  .vs-page-path > .vs-body { padding-bottom: 20px; }
+  .vs-page-path .vs-panel.vs-today { background: none; padding: 0; margin-top: 12px; }
+}
+html.simple .vs-page.vs-page-path::after { display: none; }
