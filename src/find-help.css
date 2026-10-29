@@ -123,3 +123,18 @@ img.hub-tile-icon { width: 40px; height: 40px; }
   .fr-right { min-height: var(--fit-h); }
 }
 .fh-card-picked { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); }
+/* A few tiles stay tile-sized instead of stretching down the whole side. */
+@media (min-width: 1024px) {
+  .fr-left > .fr-side-tiles { grid-auto-rows: minmax(44px, 150px); align-content: start; }
+}
+
+/* Oct 28 (Jade): balanced like Resources near you. The right side is as tall as the left
+   and scrolls by itself; with nothing picked, the hint fills the space and Add a resource
+   lines up with the bottom of the tiles. */
+@media (min-width: 1024px) {
+  .fr-right { display: flex; flex-direction: column; gap: 0.75rem; height: var(--fit-h); min-height: 0; overflow-y: auto; padding-top: 0; }
+  .fr-right > * { flex: 0 0 auto; margin-top: 0; }
+  .fr-right > .fr-pick-hint { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin: 0; padding: 1rem 2rem; font-size: 1.05rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .fr-right > .fr-pick-hint::before { content: ''; width: 64px; height: 64px; margin-bottom: 0.75rem; background: url('/art/icons/heart-hands.svg') center / contain no-repeat; }
+  .fr-right > .sr-suggest { margin-bottom: 0; }
+}
