@@ -104,6 +104,14 @@ export default function CommunityResources() {
   const [fixing, setFixing] = useState(null)
   const [fix, setFix] = useState({})
   const [savingFix, setSavingFix] = useState(false)
+  // Oct 28: Mark as duplicate, from the Edit sheet.
+  const [dupOpen, setDupOpen] = useState(false)
+  const [dupQuery, setDupQuery] = useState('')
+  const [dupResults, setDupResults] = useState([])
+  const [dupSearching, setDupSearching] = useState(false)
+  const [dupPick, setDupPick] = useState(null)
+  const [dupKeepThis, setDupKeepThis] = useState(false)
+  const [merging, setMerging] = useState(false)
   const fixModalRef = useRef(null)
   const [revertingId, setRevertingId] = useState(null)
 
@@ -350,7 +358,88 @@ export default function CommunityResources() {
       address: r.address || '', neighborhood: r.neighborhood || '', requirements: r.requirements || '',
       categories: resourceCats(r).filter((c) => CATEGORIES.includes(c)), source: '',
     })
+    setDupOpen(false); setDupQuery(''); setDupResults([]); setDupPick(null); setDupKeepThis(false)
     setFixing(r)
+  }
+
+  // Search every listing by name for the match (reviewers can read them all).
+  useEffect(() => {
+    if (!fixing || !dupOpen) return
+    const q = dupQuery.replace(/[%_,()]/g, ' ').trim()
+    if (q.length < 2) { setDupResults([]); setDupSearching(false); return }
+    let stale = false
+    setDupSearching(true)
+    const t = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from('community_resources')
+        .select('id, name, address, phone, neighborhood, hidden_reason, verified')
+        .ilike('name', '%' + q + '%')
+        .neq('id', fixing.id)
+        .order('name')
+        .limit(10)
+      if (stale) return
+      setDupSearching(false)
+      if (error) {
+        console.error('Duplicate search failed:', error)
+        tell("Couldn't search right now. Try again.", { tone: 'error' })
+        return
+      }
+      setDupResults((data || []).filter((x) => !x.hidden_reason))
+    }, 300)
+    return () => { stale = true; clearTimeout(t) }
+  }, [dupQuery, dupOpen, fixing?.id])
+
+  // Likely matches: same phone, same street address, or shared name words.
+  function likelyDuplicates(r) {
+    if (!r) return []
+    const digits = (v) => (v || '').replace(/\D/g, '').slice(-10)
+    const street = (v) => (v || '').toLowerCase().split(',')[0].replace(/\s+/g, ' ').trim()
+    const skip = new Set(['the', 'and', 'of', 'for', 'center', 'church', 'county', 'services', 'service', 'food', 'community', 'greater', 'chattanooga', 'georgia'])
+    const words = (v) => new Set((v || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 2 && !skip.has(w)))
+    const mine = words(r.name)
+    return viewResources
+      .filter((x) => x.id !== r.id && x.hidden_reason !== 'duplicate')
+      .map((x) => {
+        let score = 0
+        if (digits(r.phone).length >= 3 && digits(r.phone) === digits(x.phone)) score += 3
+        if (street(r.address) && street(r.address) === street(x.address)) score += 3
+        words(x.name).forEach((w) => { if (mine.has(w)) score += 1 })
+        return { x, score }
+      })
+      .filter((m) => m.score >= 1)
+      .sort((a, b) => b.score - a.score || a.x.name.localeCompare(b.x.name))
+      .slice(0, 5)
+      .map((m) => m.x)
+  }
+
+  async function undoDuplicate(dupId) {
+    const { error } = await supabase.rpc('undo_resource_duplicate', { p_duplicate: dupId })
+    if (error) {
+      console.error('Failed to undo merge:', error)
+      tell(error.message && error.message.length < 160 ? error.message : "Couldn't undo the merge. Try again.", { tone: 'error' })
+      return
+    }
+    tell('Undone. Both listings are back.')
+    await Promise.all([loadResources(), loadEditHistory()])
+  }
+
+  async function markDuplicate() {
+    if (!fixing || !dupPick) return
+    const copy = dupKeepThis ? dupPick : fixing
+    const keep = dupKeepThis ? fixing : dupPick
+    setMerging(true)
+    const { error } = await supabase.rpc('mark_resource_duplicate', { p_duplicate: copy.id, p_keep: keep.id })
+    setMerging(false)
+    if (error) {
+      console.error('Failed to mark duplicate:', error)
+      tell(error.code === 'PGRST202' ? 'This needs a quick database update first (vwb-resource-duplicates.sql).'
+        : error.message && error.message.length < 160 ? error.message : "Couldn't merge these. Try again.", { tone: 'error' })
+      return
+    }
+    setFixing(null)
+    setCardNotice({ id: keep.id, text: 'Merged. ' + copy.name + ' is now part of this listing.' })
+    tell('Merged into ' + keep.name + '.', { action: { label: 'Undo', run: () => undoDuplicate(copy.id) } })
+    await Promise.all([loadResources(), loadEditHistory()])
   }
 
   async function saveFix() {
@@ -474,8 +563,9 @@ export default function CommunityResources() {
   const viewResources = placesEnabled
     ? resources.map((r) => (r.organizations || !r.organization_id ? r : { ...r, organizations: orgById[r.organization_id] || null }))
     : resources
-  const verifiedResources = viewResources.filter(r => r.verified)
-  const pendingResources = viewResources.filter(r => !r.verified)
+  const verifiedResources = viewResources.filter(r => r.verified && r.hidden_reason !== 'duplicate')
+  const pendingResources = viewResources.filter(r => !r.verified && r.hidden_reason !== 'duplicate')
+  const dupLikely = fixing && dupOpen && !dupPick ? likelyDuplicates(fixing) : []
   // Ways to get help, from the programs' own words (CRN preview).
   const deliveryMethods = placesEnabled
     ? [...new Set(verifiedResources.map((r) => (r.delivery_method || '').trim()).filter((v) => v && !/^unknown$/i.test(v)))].sort()
@@ -922,6 +1012,68 @@ export default function CommunityResources() {
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                   <button type="button" className="btn btn-outline" style={{ flex: 1, minHeight: 48 }} onClick={() => setFixing(null)}>Cancel</button>
                   <button type="button" className="btn btn-primary" style={{ flex: 1, minHeight: 48 }} disabled={savingFix} onClick={saveFix}>{savingFix ? 'Saving...' : 'Save'}</button>
+                </div>
+
+                {/* Oct 28: the same place listed twice. */}
+                <div style={{ borderTop: '1px solid var(--border)', marginTop: '1rem', paddingTop: '0.75rem' }}>
+                  {!dupOpen ? (
+                    <button type="button" className="btn btn-outline" aria-expanded="false" onClick={() => setDupOpen(true)} style={{ width: '100%', minHeight: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                      <Icon name="flag" /> Mark as duplicate
+                    </button>
+                  ) : !dupPick ? (
+                    <div>
+                      <h4 style={{ margin: '0 0 0.25rem', color: 'var(--text-strong)' }}>Mark as duplicate</h4>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.6rem', lineHeight: 1.45 }}>Is this place listed twice? Pick the other listing.</p>
+                      {dupLikely.length > 0 && !dupQuery.trim() && (
+                        <>
+                          <p id="dup-likely" style={labelStyle}>Could be one of these</p>
+                          <ul aria-labelledby="dup-likely" style={{ listStyle: 'none', margin: '0 0 0.6rem', padding: 0, display: 'grid', gap: '0.5rem' }}>
+                            {dupLikely.map((x) => (
+                              <li key={x.id}>
+                                <button type="button" onClick={() => setDupPick(x)} style={{ width: '100%', minHeight: 48, textAlign: 'left', padding: '0.55rem 0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', fontSize: '1rem' }}>
+                                  <strong style={{ display: 'block' }}>{x.name}</strong>
+                                  {(x.address || x.phone) && <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{x.address || x.phone}</span>}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      <label htmlFor="dup-search" style={labelStyle}>Search by name</label>
+                      <input id="dup-search" type="search" inputMode="search" autoComplete="off" style={{ ...fieldStyle, fontSize: '1rem' }} placeholder="Type part of the name" value={dupQuery} onChange={(e) => setDupQuery(e.target.value)} maxLength={80} />
+                      <div role="status" aria-live="polite" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', minHeight: '1.2em' }}>
+                        {dupSearching ? 'Looking...' : dupQuery.trim().length >= 2 && dupResults.length === 0 ? 'No listings with that name.' : ''}
+                      </div>
+                      {dupResults.length > 0 && (
+                        <ul aria-label="Matching listings" style={{ listStyle: 'none', margin: '0.25rem 0 0.6rem', padding: 0, display: 'grid', gap: '0.5rem' }}>
+                          {dupResults.map((x) => (
+                            <li key={x.id}>
+                              <button type="button" onClick={() => setDupPick(x)} style={{ width: '100%', minHeight: 48, textAlign: 'left', padding: '0.55rem 0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', fontSize: '1rem' }}>
+                                <strong style={{ display: 'block' }}>{x.name}</strong>
+                                {(x.address || x.phone || x.neighborhood) && <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{x.address || x.phone || x.neighborhood}</span>}
+                                {x.verified === false && <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Waiting for review</span>}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <button type="button" className="btn btn-outline" style={{ width: '100%', minHeight: 48 }} onClick={() => { setDupOpen(false); setDupQuery('') }}>Never mind</button>
+                    </div>
+                  ) : (
+                    <div role="group" aria-labelledby="dup-confirm-title">
+                      <h4 id="dup-confirm-title" style={{ margin: '0 0 0.4rem', color: 'var(--text-strong)' }}>Merge these two?</h4>
+                      <p style={{ margin: '0 0 0.2rem', fontSize: '0.95rem' }}><strong>Stays:</strong> {dupKeepThis ? fixing.name : dupPick.name}</p>
+                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}><strong>Hidden as a copy:</strong> {dupKeepThis ? dupPick.name : fixing.name}</p>
+                      <button type="button" onClick={() => setDupKeepThis((v) => !v)} style={{ minHeight: 44, padding: '0 0.2rem', background: 'none', border: 'none', color: 'var(--info)', fontWeight: 600, fontSize: '0.9rem', textDecoration: 'underline', cursor: 'pointer' }}>
+                        Keep the other one instead
+                      </button>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0.4rem 0 0.75rem', lineHeight: 1.45 }}>Anything the one that stays is missing, like a phone, website, address, or map pin, gets filled in from the copy. Reviews and votes move over too. Nothing is deleted, and you can undo it.</p>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button type="button" className="btn btn-outline" style={{ flex: 1, minHeight: 48 }} onClick={() => { setDupPick(null); setDupKeepThis(false) }}>Pick again</button>
+                        <button type="button" className="btn btn-primary" style={{ flex: 1, minHeight: 48 }} disabled={merging} onClick={markDuplicate}>{merging ? 'Merging...' : 'Yes, merge'}</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
