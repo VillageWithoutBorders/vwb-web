@@ -6457,3 +6457,36 @@ html.calm-motion .nr-card:active { transform: none; }
   .nr-pick-hint::before { content: ''; width: 64px; height: 64px; margin-bottom: 0.75rem; background: url('/art/icons/heart-hands.svg') center / contain no-repeat; }
   .nr-top-row .nr-skip { display: none; }
 }
+
+/* Oct 28 (Jade): Offer Help side by side on computers, like the resource pages.
+   Left: the switch, title, Requests/Offers, area, and filters, held in place.
+   Right: the list, in a panel as tall as the left that scrolls by itself. */
+@media (min-width: 1024px) {
+  html:not(.simple) .app-main:has(.fo-page) { max-width: none; }
+  html:not(.simple) .feed-page.fo-page {
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - env(safe-area-inset-bottom, 0px));
+    max-width: none; padding-bottom: 0;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
+  }
+  html:not(.simple) .fo-page > .feed-header { margin: 0; height: var(--fit-h); overflow-y: auto; min-width: 0; }
+  html:not(.simple) .fo-page > .feed-scroll {
+    height: var(--fit-h); overflow-y: auto; min-width: 0;
+    padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+  }
+  html:not(.simple) .fo-page > .feed-scroll > .feed-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; box-sizing: border-box; }
+}
+
+/* Your tasks: title row, and side by side on computers (Oct 28). */
+.tk-left, .tk-right { display: contents; }
+.tk-page .feed-title-row .mine-new { margin: 0; min-height: 44px; }
+@media (min-width: 1024px) {
+  html:not(.simple) .app-main:has(.tk-page) { max-width: none; }
+  html:not(.simple) .tasks-page.tk-page {
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - env(safe-area-inset-bottom, 0px));
+    max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
+  }
+  html:not(.simple) .tk-left, html:not(.simple) .tk-right { display: block; min-width: 0; height: var(--fit-h); overflow-y: auto; }
+  html:not(.simple) .tk-right { padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-sizing: border-box; }
+  html:not(.simple) .tk-left .mine-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html:not(.simple) .tk-left .mine-tabs .home-tasks-tab { min-height: 64px; font-size: 1rem; }
+}
