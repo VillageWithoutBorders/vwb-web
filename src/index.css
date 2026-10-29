@@ -6490,3 +6490,16 @@ html.calm-motion .nr-card:active { transform: none; }
   html:not(.simple) .tk-left .mine-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   html:not(.simple) .tk-left .mine-tabs .home-tasks-tab { min-height: 64px; font-size: 1rem; }
 }
+
+/* Oct 28 (Jade): Calendar side by side on computers, like the map and help pages. */
+@media (min-width: 1024px) {
+  .app-main:has(.cal-split) { max-width: none; }
+  .cal-page.cal-split {
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - env(safe-area-inset-bottom, 0px));
+    max-width: none; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
+  }
+  .cal-split > .cal-left, .cal-split > .cal-right { min-width: 0; height: var(--fit-h); overflow-y: auto; box-sizing: border-box; }
+  .cal-split > .cal-left { padding-right: 0.25rem; }
+  .cal-split > .cal-right { padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .cal-split > .cal-right > .cal-sub:first-child { margin-top: 0; }
+}

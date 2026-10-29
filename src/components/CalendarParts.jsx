@@ -155,7 +155,7 @@ function dayKey(d) {
 }
 
 // A normal month calendar. Tap a day to see its events underneath.
-function CalendarMonth({ events, newTab }) {
+export function CalendarMonth({ events, newTab }) {
   const today = new Date()
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
   const [picked, setPicked] = useState(() => dayKey(today))
