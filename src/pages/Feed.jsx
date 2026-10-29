@@ -329,7 +329,7 @@ export default function Feed() {
     const sortedOffers = [...offers].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
     return (
-        <div className="feed-page">
+        <div className="feed-page fo-page">
             <div className="feed-header">
             <div className="feed-sticky">
                 {/* Simple view (Oct 27): plain title, no switches or sort, just the list. */}

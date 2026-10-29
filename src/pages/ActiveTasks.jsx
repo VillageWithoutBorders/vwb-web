@@ -743,13 +743,19 @@ export default function ActiveTasks() {
   // Render
   // =============================================
   return (
-    <div className="tasks-page">
-      <div className="tasks-header"><h1>Your tasks</h1></div>
+    <div className="tasks-page tk-page">
+      {/* Oct 28 (Jade): same top as Offer Help and Find resources (All help and the switch first,
+          then the title with its button beside it). On computers the left side holds this and the
+          tabs; the right side holds the tasks and scrolls by itself. */}
+      <div className="tk-left">
       <HelpSwitch />
-      {/* Was a floating button that covered task buttons on phones (Oct 22); now it sits in the page. */}
-      <button type="button" className="btn btn-primary btn-full mine-new" onClick={() => navigate(tab === 'offers' ? '/post-offer' : '/ask')}>
-        <span aria-hidden="true">+</span> {tab === 'offers' ? 'Offer something' : 'Ask for Help'}
-      </button>
+      <div className="feed-title-row tasks-header">
+        <h1>Your tasks</h1>
+        {/* Was a floating button that covered task buttons on phones (Oct 22); now it sits in the page. */}
+        <button type="button" className="btn btn-primary feed-title-btn mine-new" onClick={() => navigate(tab === 'offers' ? '/post-offer' : '/ask')}>
+          <span aria-hidden="true">+</span> {tab === 'offers' ? 'Offer something' : 'Ask for Help'}
+        </button>
+      </div>
 
       <div className="home-tasks-tabs mine-tabs" role="tablist" aria-label="My help">
         {MINE_TABS.map((t) => (
@@ -768,7 +774,9 @@ export default function ActiveTasks() {
           </button>
         ))}
       </div>
+      </div>
 
+      <div className="tk-right">
       {tab !== 'offers' && stillId && !loading && (() => {
         const sr = myRequests.find((r) => String(r.id) === stillId)
         if (!sr) return null
@@ -1107,6 +1115,7 @@ export default function ActiveTasks() {
         </div>
       )}
 
+      </div>
     </div>
   )
 }
