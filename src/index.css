@@ -6434,3 +6434,26 @@ html, body { touch-action: pan-x pan-y; }
 .nr-card a:not(.nr-card-open), .nr-card button { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) { .nr-card { transition: none; } .nr-card:active { transform: none; } }
 html.calm-motion .nr-card:active { transform: none; }
+@media (min-width: 1024px) {
+  .nr-left > .nr-tiles { grid-auto-rows: minmax(44px, 150px); align-content: start; }
+}
+
+/* Offer Help top tightened (Oct 28): title with Offer something beside it. */
+.feed-title-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; margin: 0.25rem 0 0.25rem; }
+.feed-title-row h1 { margin: 0; }
+.feed-title-btn { min-height: 44px; padding: 0 1rem; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; gap: 0.35rem; }
+.feed-subtitle-tight { margin: 0 0 0.6rem; }
+
+/* Oct 28 (Jade): Resources near you, balanced on computers. The right side is the same
+   height as the left: a results panel on top that scrolls by itself, and Suggest and
+   Ask a neighbor lined up with the bottom of the tiles. */
+@media (min-width: 1024px) {
+  .nr-right { display: flex; flex-direction: column; gap: 0.75rem; height: var(--fit-h); min-height: 0; padding-top: 0; }
+  .nr-right > .nr-results { flex: 1 1 0; min-height: 0; overflow-y: auto; margin: 0; padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .nr-right > .nr-results > ul { margin-bottom: 0 !important; }
+  .nr-right > .sr-suggest { flex: 0 0 auto; margin: 0; }
+  .nr-right > #nr-ask { flex: 0 0 auto; margin-top: 0 !important; }
+  .nr-pick-hint { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: none; margin: 0; padding: 1rem 2rem; font-size: 1.05rem; }
+  .nr-pick-hint::before { content: ''; width: 64px; height: 64px; margin-bottom: 0.75rem; background: url('/art/icons/heart-hands.svg') center / contain no-repeat; }
+  .nr-top-row .nr-skip { display: none; }
+}

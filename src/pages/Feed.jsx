@@ -334,12 +334,14 @@ export default function Feed() {
             <div className="feed-sticky">
                 {/* Simple view (Oct 27): plain title, no switches or sort, just the list. */}
                 {/* Oct 27 (Jade): the page is called what the bottom tab says. */}
-                <h1>Offer Help</h1>
-                {!simple && <div className="help-cta">
-                    <button type="button" className="btn btn-outline help-cta-btn" onClick={() => navigate('/post-offer')}>Offer something</button>
-                </div>}
+                {/* Oct 28 (Jade): All help and the switch first, like Find resources; then the title
+                    with Offer something beside it, so the top takes less room. */}
                 {!simple && <HelpSwitch />}
-                <p className="feed-subtitle">{view === 'offers' ? 'Free things and help your neighbors are sharing.' : 'Neighbors near you who need a hand. Tap Offer Help on one, or tap the card to read more.'}</p>
+                <div className="feed-title-row">
+                    <h1>Offer Help</h1>
+                    {!simple && <button type="button" className="btn btn-outline feed-title-btn" onClick={() => navigate('/post-offer')}><span aria-hidden="true">+</span> Offer something</button>}
+                </div>
+                <p className="feed-subtitle feed-subtitle-tight">{view === 'offers' ? 'Free things and help your neighbors are sharing.' : 'Neighbors near you who need a hand. Tap Offer Help on one, or tap the card to read more.'}</p>
             </div>
 
             {successMsg && (
