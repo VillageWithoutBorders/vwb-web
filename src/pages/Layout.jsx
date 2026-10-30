@@ -38,7 +38,8 @@ export default function Layout() {
   // which have their own back arrow. Pages with their own BackLink hide this one.
   const [ownBacks, setOwnBacks] = useState(0)
   const tellFrame = useCallback((n) => setOwnBacks((c) => c + n), [])
-  const showBack = !ownBacks && !isChat && pathname !== '/' && (simple || pathname !== '/world')
+  // Oct 30 (Jade): not on My Corner (/me) either. It's a top-bar place, like My World.
+  const showBack = !ownBacks && !isChat && pathname !== '/' && pathname !== '/me' && (simple || pathname !== '/world')
 
   // Every page opens at the top (Oct 22, Jade), except chats, which open at the newest
   // message, and links to a spot on a page (#corner and the like).
