@@ -13,7 +13,7 @@ export default function RecoveryNudge() {
   useEffect(() => {
     if (!user) return
     let hidden = false
-    try { hidden = localStorage.getItem(DISMISS_KEY + ':' + user.id) === '1' } catch (e) { /* ignore */ }
+    try { hidden = localStorage.getItem(DISMISS_KEY + ':' + user.id) === '1' } catch { /* ignore */ }
     if (hidden) return
     let alive = true
     getRecoveryStatus(user.id).then(s => { if (alive && !s.failed && !s.exists) setShow(true) })
@@ -22,7 +22,7 @@ export default function RecoveryNudge() {
 
   if (!show) return null
   function dismiss() {
-    try { localStorage.setItem(DISMISS_KEY + ':' + user.id, '1') } catch (e) { /* ignore */ }
+    try { localStorage.setItem(DISMISS_KEY + ':' + user.id, '1') } catch { /* ignore */ }
     setShow(false)
   }
   return (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useBlockedBy } from '../utils/blockedBy'
 import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
@@ -34,7 +34,6 @@ export default function EventDetail() {
   const { user, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
-  const blockedBy = useBlockedBy()
   const [event, setEvent] = useState(null)
   const [signups, setSignups] = useState([])
   const [roleCounts, setRoleCounts] = useState([])
@@ -497,9 +496,7 @@ export default function EventDetail() {
   const offers = resources.filter(r => r.resource_type === 'offer')
   const filteredResources = resFilter === 'all' ? resources : resFilter === 'needs' ? needs : resFilter === 'offers' ? offers : resources.filter(r => r.status === resFilter)
   const needsUnfulfilled = needs.filter(r => r.status !== 'fulfilled').length
-  const offersAvailable = offers.filter(r => r.status === 'available').length
 
-  const tabStyle = (active) => ({ padding: '0.5rem 0.75rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, background: active ? 'var(--danger)' : 'var(--surface-2)', color: active ? 'var(--text-strong)' : 'var(--text-secondary)' })
   const fieldStyle = { display: 'block', width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', boxSizing: 'border-box', marginBottom: '0.5rem' }
   const resCatIcon = { 'Water': '💧', 'Food': '🍞', 'Shelter': '🏠', 'Tools': '🔧', 'Transportation': '🚗', 'Medical': '⚕', 'Clothing': '🧥', 'Power/Fuel': '⚡', 'Tarps/Building': '🏗', 'Hygiene': '🧼', 'Other': '📦' }
 

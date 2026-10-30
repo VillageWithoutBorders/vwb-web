@@ -10,7 +10,7 @@ import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import VouchButton from '../components/VouchButton'
 import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
-import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
+import { UserName } from '../components/AvatarDisplay'
 import HelpSwitch from '../components/HelpSwitch'
 import Icon from '../components/Icon'
 import { forLine, helperNote } from '../utils/forSomeone'
@@ -66,7 +66,6 @@ export default function Feed() {
     const simple = useSimpleView()
     const { user, profile } = useAuth()
     const navigate = useNavigate()
-    const blockedBy = useBlockedBy()
     const location = useLocation()
     const [successMsg, setSuccessMsg] = useState(location.state?.message || null)
 
@@ -326,7 +325,6 @@ export default function Feed() {
 
     const URGENCY_ORD = { now: 0, today: 1, this_week: 2, flexible: 3 }
     const sortedRequests = [...requests].sort((a, b) => sortBy === 'newest' ? new Date(b.created_at) - new Date(a.created_at) : (URGENCY_ORD[a.urgency] || 3) - (URGENCY_ORD[b.urgency] || 3) || new Date(b.created_at) - new Date(a.created_at))
-    const sortedOffers = [...offers].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
     return (
         <div className="feed-page fo-page">

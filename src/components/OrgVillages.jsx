@@ -96,7 +96,7 @@ export default function OrgVillages({ orgId, orgName, canManage }) {
                   <input type="checkbox" checked={!!picked[v.id] && !isBlocked} disabled={isBlocked} onChange={(e) => setPicked((m) => ({ ...m, [v.id]: e.target.checked }))} style={{ width: '22px', height: '22px', flex: 'none' }} />
                   <span>
                     {v.name}
-                    {v.region_label ? <span className="cal-sub" style={{ display: 'block', fontSize: '0.85rem' }}>{v.region_label}</span> : null}
+                    {v.region_label && String(v.region_label).trim().toLowerCase() !== String(v.name).trim().toLowerCase() ? <span className="cal-sub" style={{ display: 'block', fontSize: '0.85rem' }}>{v.region_label}</span> : null}
                     {isBlocked ? <span className="cal-sub" style={{ display: 'block', fontSize: '0.85rem' }}>A keeper here removed your group.</span> : null}
                   </span>
                 </label>
