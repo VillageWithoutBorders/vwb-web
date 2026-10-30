@@ -20,7 +20,8 @@ export default function YourCorner({ embedded = false }) {
   const place = profile?.neighborhood || (profile?.zip_code ? 'Zip ' + profile.zip_code : '')
 
   return (
-    <div className="corner-page">
+    // Oct 30 (Jade): on a computer, /me is three cards in a row under your card and Settings.
+    <div className={'corner-page' + (embedded ? '' : ' corner-page-full')}>
       {embedded ? <h2 className="corner-title">My Corner</h2> : <h1 className="corner-title">My Corner</h1>}
 
       <Link to="/profile" className="corner-card">
@@ -44,7 +45,9 @@ export default function YourCorner({ embedded = false }) {
         </Link>
       )}
 
-      <nav aria-label="Your things" className="corner-list">
+      <section className="corner-group" aria-labelledby="corner-things">
+      <h2 id="corner-things" className="corner-group-h">Your things</h2>
+      <nav aria-labelledby="corner-things" className="corner-list">
         <Link to="/profile#past-tasks" className="corner-item"><span aria-hidden="true"><Icon name="box" /></span> Past tasks<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/trail" className="corner-item"><span aria-hidden="true"><Icon name="compass" /></span> My trail<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/my-code" className="corner-item"><span aria-hidden="true"><Icon name="qr-code" /></span> My QR code<span className="corner-arrow" aria-hidden="true">›</span></Link>
@@ -56,6 +59,7 @@ export default function YourCorner({ embedded = false }) {
           <Link to="/calendar?bring=org" className="corner-item"><span aria-hidden="true"><Icon name="people" /></span> Bring your group<span className="corner-arrow" aria-hidden="true">›</span></Link>
         )}
       </nav>
+      </section>
 
       <AppMenu inline />
     </div>

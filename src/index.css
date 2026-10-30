@@ -6521,3 +6521,28 @@ html.calm-motion .nr-card:active { transform: none; }
   .cal-split > .cal-left > .cal-top-row, .cal-split > .cal-left > .cal-filters { margin-bottom: 0.5rem; }
   .cal-split .cal-month-head { margin-bottom: 0.25rem; }
 }
+
+/* ---------- My Corner groups (Oct 30, Jade) ----------
+   Your things, Your account, About the app and Village Without Borders are each a card
+   with a heading above it. On a computer (/me) they sit three across under your card
+   and the big Settings button, so the whole page fits on one screen. */
+.corner-group, .app-menu-group { margin-bottom: 0.9rem; }
+.corner-group .corner-list { margin-bottom: 0; }
+.corner-group-h, .app-menu-group .app-menu-heading { margin: 0 0 0.4rem 0.25rem; font-size: 1rem; font-weight: 700; letter-spacing: 0.02em; color: var(--text-secondary); }
+.app-menu-group .app-menu-list.app-menu-inline { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; padding: 0; }
+.app-menu-group .app-menu-logout { margin-top: 0; }
+@media (min-width: 1024px) {
+  .app-main:has(> .corner-page-full) { max-width: 1240px; }
+  .corner-page-full { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 20px; align-items: start; }
+  .corner-page-full > .corner-title { grid-column: 1 / -1; }
+  .corner-page-full > .corner-card { grid-column: 1 / 3; grid-row: 2; }
+  .corner-page-full > .corner-settings { grid-column: 3; grid-row: 2; align-self: stretch; margin: 0 0 0.9rem; }
+  .corner-page-full > .corner-group { grid-column: 1; grid-row: 3 / span 2; }
+  .corner-page-full > .app-menu { display: contents; }
+  .corner-page-full .app-menu-group-account { grid-column: 2; grid-row: 3 / span 2; }
+  .corner-page-full .app-menu-group-about { grid-column: 3; grid-row: 3; }
+  .corner-page-full .app-menu-group-vwb { grid-column: 3; grid-row: 4; }
+  /* No spare space under the bottom cards, so a laptop screen doesn't scroll. */
+  .corner-page-full { padding-bottom: 0; }
+  .corner-page-full > .corner-group, .corner-page-full .app-menu-group-account, .corner-page-full .app-menu-group-vwb { margin-bottom: 0; }
+}
