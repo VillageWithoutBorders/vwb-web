@@ -62,7 +62,7 @@ const CONTENT_FILTERS = [
 ]
 
 export default function Admin() {
-  const { user, profile, isAdmin, isFounder } = useAuth()
+  const { user, isAdmin, isFounder } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
   const [tab, setTab] = useState(() => { try { return new URLSearchParams(window.location.search).get('tab') || 'inbox' } catch { return 'inbox' } })
@@ -133,8 +133,6 @@ export default function Admin() {
   const [inviteContactEmail, setInviteContactEmail] = useState('')
   const [inviteNote, setInviteNote] = useState('')
   const [creatingInvite, setCreatingInvite] = useState(false)
-  const [memberSearchQuery, setMemberSearchQuery] = useState({})
-  const [memberSearchResults, setMemberSearchResults] = useState({})
   const [villages, setVillages] = useState([])
   // Oct 28: alerts open /admin?tab=villages&village=<id>, straight to that village.
   const [focusVillage, setFocusVillage] = useState(null)

@@ -525,7 +525,7 @@ export async function decryptFromSender(ciphertextB64, nonceB64, senderUserId) {
           sodium.from_base64(identity.privateKey)
         )
         return sodium.to_string(plaintextBytes)
-      } catch (e) {
+      } catch {
         // Not the device that sent it, try the next one.
       }
     }
@@ -806,7 +806,7 @@ export async function needsKeyRestore(userId) {
   if (restoreSkipped.has(userId)) return false
   try {
     if (await idbGet(IDENTITY_KEY)) return false
-  } catch (e) { return false }
+  } catch { return false }
   const { data } = await supabase.from('user_key_backups').select('user_id').eq('user_id', userId).maybeSingle()
   return !!data
 }
@@ -827,7 +827,7 @@ export async function restoreFromRecoveryCode(userId, code) {
     let opened
     try {
       opened = sodium.crypto_secretbox_open_easy(sodium.from_base64(backup.ciphertext), sodium.from_base64(backup.nonce), key)
-    } catch (e) {
+    } catch {
       return 'wrong-code'
     }
     const identity = JSON.parse(sodium.to_string(opened))

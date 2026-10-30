@@ -67,10 +67,6 @@ export default function Campfire() {
   const [removalRequests, setRemovalRequests] = useState([])
   const [introHint, setIntroHint] = useState(false)
   const introDone = useRef(false)
-  // Timestamp/menu row is hidden by default and only shown for the bubble
-  // that's hovered (desktop) or tapped (mobile, via this state) — cuts the
-  // amount of always-on chrome under every single message.
-  const [revealedMeta, setRevealedMeta] = useState(null)
   // One shared board for every Hope Ambassador, admin, and the founder,
   // whatever village they live in.
   const { menuRef: msgMenuRef, menuStyle: msgMenuStyle, openMenu: positionMsgMenu } = useMenuPosition('right')

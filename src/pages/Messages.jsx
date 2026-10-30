@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { supabase } from '../supabaseClient'
 import { MUTE_OPTIONS } from '../utils/muteOptions'
-import { createNotification } from '../utils/notificationHelpers'
 import { getBlockedUserIds } from '../utils/blockedUsers'
 import { acceptHelpOffer, declineHelpOffer } from '../utils/helpOffers'
 import { useMenuPosition } from '../utils/useMenuPosition'
@@ -55,7 +54,6 @@ export default function Messages({ embedded = false }) {
   const [showMuteMenu, setShowMuteMenu] = useState(null)
   const { menuRef: optionsMenuRef, menuStyle: optionsMenuStyle, openMenu: positionOptionsMenu } = useMenuPosition('right')
   const [convoSettings, setConvoSettings] = useState({})
-  const [showArchived, setShowArchived] = useState(false)
   // Campfire shows as a pinned card at the top of the list for Hope
   // Ambassadors and admins, so it lives with the rest of their messages
   // instead of only on the Home screen.

@@ -38,7 +38,7 @@ export default function RecoveryKeySection() {
   }
 
   async function copy() {
-    try { await navigator.clipboard.writeText(code); setCopied(true) } catch (e) { setCopied(false) }
+    try { await navigator.clipboard.writeText(code); setCopied(true) } catch { setCopied(false) }
   }
 
   function download() {

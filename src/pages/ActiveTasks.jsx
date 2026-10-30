@@ -30,7 +30,7 @@ const END_REASONS = {
 const ADMIN_SEES = ['no_show', 'felt_off']
 
 export default function ActiveTasks() {
-  const { user, profile, organizations } = useAuth()
+  const { user, organizations } = useAuth()
   const navigate = useNavigate()
   // /tasks?tab=archived opens the Archived tab (Home and Profile link here).
   const [searchParams, setSearchParams] = useSearchParams()
