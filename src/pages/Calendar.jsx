@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { fetchCalendarEvents, filterByDistance, savePlace, startingOrigin, memberArea } from '../utils/calendar'
 import CalendarSubscribe from '../components/CalendarSubscribe'
-import { CalendarLocationBar, CalendarView, CalendarEventList, CalendarMonth, AllAgesFilter } from '../components/CalendarParts'
+import { CalendarLocationBar, CalendarView, CalendarEventList, CalendarMonth, CalendarDay, AllAgesFilter, dayKey } from '../components/CalendarParts'
 import { useWideScreen } from '../hooks/useWideScreen'
 import { hasEnded } from '../utils/calendar'
 import NearbyOrganizers from '../components/NearbyOrganizers'
@@ -20,6 +20,13 @@ export default function Calendar() {
   const [origin, setOrigin] = useState(() => startingOrigin(profile))
   const [miles, setMiles] = useState(25)
   const [allAgesOnly, setAllAgesOnly] = useState(false)
+  // Wide layout: the day picked on the month shows at the top of the right panel.
+  const [pickedDay, setPickedDay] = useState(() => dayKey(new Date()))
+  const rightRef = useRef(null)
+  function pickDay(k) {
+    setPickedDay(k)
+    rightRef.current?.scrollTo({ top: 0, behavior: calmMotion() ? 'auto' : 'smooth' })
+  }
 
   // Calendars you can subscribe to: the network's own, plus your groups
   // (skipping groups hidden from the public).
@@ -129,14 +136,15 @@ export default function Calendar() {
           </div>
         </details>
 
-          {!loading && !loadError && <CalendarMonth events={visible} />}
+          {!loading && !loadError && <CalendarMonth events={visible} picked={pickedDay} onPick={pickDay} hideDay />}
         </div>
-        <div className="cal-right">
+        <div className="cal-right" ref={rightRef}>
           {loading && <p className="cal-empty">Loading events...</p>}
           {!loading && loadError && (
             <p className="cal-error">We couldn't load the calendar right now. Check your connection and try again.</p>
           )}
           {!loading && !loadError && (<>
+            <CalendarDay day={pickedDay} events={visible} />
             <p className="cal-sub" role="status">{upcoming.length === 0 ? 'No upcoming events found for this search. Try more miles.' : upcoming.length + (upcoming.length === 1 ? ' upcoming event found.' : ' upcoming events found.')}</p>
             {farBox}
             <CalendarEventList events={upcoming} emptyText={emptyText} />
