@@ -123,3 +123,14 @@
 }
 /* Oct 28 (Jade): the globe sits at the top of the left half, centered across it. */
 @media (min-width: 1024px) { .wd-page > .wd-globe-wrap { align-self: start; justify-self: center; } }
+
+/* Oct 30 (Jade): My World holds still on the left on wide screens. The frame makes the
+   page a stretchy flex item (flex: 1), which ignored the height above, so the page grew
+   as tall as the right side and the whole window scrolled. flex: none keeps the height.
+   --back-h counts the Back button row when it shows (Simple view). */
+@media (min-width: 1024px) {
+  .app-main-world > .vs-page.wd-page {
+    flex: none; min-height: 0;
+    height: calc(100dvh - var(--header-height) - var(--tab-height) - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}
