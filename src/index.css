@@ -6202,6 +6202,8 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 
 /* Back button on every page, from the app frame (Oct 22). A dark pill, so it reads on light pages and on the maps. */
 .app-back-row { padding: 8px 12px 0; }
+/* Oct 28: the side by side pages subtract this so the page itself never scrolls (8px + 44px button). */
+.app-main:has(> .app-back-row) { --back-h: 52px; }
 .app-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px 0 12px; border-radius: 22px;
   background: #1f4a47; color: #fff; font-weight: 600; text-decoration: none; }
 .app-back:hover { background: #163936; }
@@ -6414,7 +6416,7 @@ html, body { touch-action: pan-x pan-y; }
    left side shrinks its tiles to fit so it never needs scrolling. */
 @media (min-width: 1024px) {
   .app-main:has(.nr-page) { max-width: none; }
-  .ask-page.nr-page { max-width: none; --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - env(safe-area-inset-bottom, 0px)); }
+  .ask-page.nr-page { max-width: none; --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px)); }
   .nr-left { display: flex; flex-direction: column; height: var(--fit-h); max-height: none; overflow: hidden; }
   .nr-left > * { flex: 0 0 auto; }
   .nr-left > .nr-tiles { flex: 1 1 0; min-height: 0; margin-bottom: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); align-content: stretch; overflow-y: auto; }
@@ -6464,7 +6466,7 @@ html.calm-motion .nr-card:active { transform: none; }
 @media (min-width: 1024px) {
   html:not(.simple) .app-main:has(.fo-page) { max-width: none; }
   html:not(.simple) .feed-page.fo-page {
-    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - env(safe-area-inset-bottom, 0px));
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
     max-width: none; padding-bottom: 0;
     display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
   }
@@ -6482,7 +6484,7 @@ html.calm-motion .nr-card:active { transform: none; }
 @media (min-width: 1024px) {
   html:not(.simple) .app-main:has(.tk-page) { max-width: none; }
   html:not(.simple) .tasks-page.tk-page {
-    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - env(safe-area-inset-bottom, 0px));
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
     max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
   }
   html:not(.simple) .tk-left, html:not(.simple) .tk-right { display: block; min-width: 0; height: var(--fit-h); overflow-y: auto; }
@@ -6495,11 +6497,27 @@ html.calm-motion .nr-card:active { transform: none; }
 @media (min-width: 1024px) {
   .app-main:has(.cal-split) { max-width: none; }
   .cal-page.cal-split {
-    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - env(safe-area-inset-bottom, 0px));
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
     max-width: none; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
   }
-  .cal-split > .cal-left, .cal-split > .cal-right { min-width: 0; height: var(--fit-h); overflow-y: auto; box-sizing: border-box; }
+  .cal-split > .cal-left, .cal-split > .cal-right { min-width: 0; height: var(--fit-h); overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; }
   .cal-split > .cal-left { padding-right: 0.25rem; }
   .cal-split > .cal-right { padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
   .cal-split > .cal-right > .cal-sub:first-child { margin-top: 0; }
+  /* Oct 28: the picked day sits at the top of the right panel, so only the right side scrolls. */
+  .cal-split .cal-picked-day { padding-bottom: 0.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+  .cal-split .cal-picked-day .cal-day { margin-top: 0; }
+  /* Oct 30 (Jade): the left side holds still, like the other pages. The month
+     stretches or shrinks to fill the space under the filters, so nothing scrolls.
+     Day boxes never go under 44px; only a very short screen would scroll. */
+  .cal-split > .cal-left { display: flex; flex-direction: column; overflow-x: hidden; }
+  .cal-split > .cal-left > * { flex: 0 0 auto; }
+  .cal-split > .cal-left > .cal-month { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .cal-split .cal-month-head, .cal-split .cal-month-today { flex: 0 0 auto; }
+  .cal-split .cal-month-grid { flex: 1 1 auto; min-height: 0; grid-template-rows: auto; grid-auto-rows: minmax(44px, 1fr); }
+  .cal-split .cal-month-day { min-height: 44px; height: 100%; box-sizing: border-box; padding: 4px 2px; justify-content: center; }
+  .cal-split .cal-month-blank { min-height: 0; }
+  .cal-split > .cal-left > .cal-head { margin-bottom: 0.5rem; }
+  .cal-split > .cal-left > .cal-top-row, .cal-split > .cal-left > .cal-filters { margin-bottom: 0.5rem; }
+  .cal-split .cal-month-head { margin-bottom: 0.25rem; }
 }

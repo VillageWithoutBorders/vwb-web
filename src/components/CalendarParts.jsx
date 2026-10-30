@@ -150,15 +150,22 @@ export function CalendarEventList({ events, newTab, emptyText }) {
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-function dayKey(d) {
+export function dayKey(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
 }
 
 // A normal month calendar. Tap a day to see its events underneath.
-export function CalendarMonth({ events, newTab }) {
+// Oct 28: on the wide Calendar page the day's events show in the right panel
+// instead (hideDay, with picked and onPick), so the left side doesn't grow.
+export function CalendarMonth({ events, newTab, picked: pickedProp, onPick, hideDay = false }) {
   const today = new Date()
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1))
-  const [picked, setPicked] = useState(() => dayKey(today))
+  const [pickedOwn, setPickedOwn] = useState(() => dayKey(today))
+  const picked = pickedProp || pickedOwn
+  function setPicked(k) {
+    setPickedOwn(k)
+    if (onPick) onPick(k)
+  }
 
   const byDay = {}
   for (const ev of events) {
@@ -210,11 +217,27 @@ export function CalendarMonth({ events, newTab }) {
         })}
       </div>
       <p className="cal-month-today"><button type="button" className="link-button" style={{ minHeight: '44px' }} onClick={goToday}>Jump to today</button></p>
-      <h2 className="cal-day">{pickedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
-      {dayEvents.length === 0
-        ? <p className="cal-sub">Nothing on this day.</p>
-        : dayEvents.map((ev) => <CalendarEventCard key={ev.id} ev={ev} newTab={newTab} />)}
+      {!hideDay && (<>
+        <h2 className="cal-day">{pickedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
+        {dayEvents.length === 0
+          ? <p className="cal-sub">Nothing on this day.</p>
+          : dayEvents.map((ev) => <CalendarEventCard key={ev.id} ev={ev} newTab={newTab} />)}
+      </>)}
     </div>
+  )
+}
+
+// One day's events, for the right panel on the wide Calendar page.
+export function CalendarDay({ day, events, newTab }) {
+  const list = events.filter((ev) => dayKey(new Date(ev.starts_at)) === day)
+  const date = new Date(day + 'T00:00:00')
+  return (
+    <section className="cal-picked-day" aria-live="polite">
+      <h2 className="cal-day">{date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
+      {list.length === 0
+        ? <p className="cal-sub">Nothing on this day.</p>
+        : list.map((ev) => <CalendarEventCard key={ev.id} ev={ev} newTab={newTab} />)}
+    </section>
   )
 }
 
