@@ -990,3 +990,10 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
 .vs-today .qa-btn-icon .vwb-icon { width: 32px; height: 32px; }
 .vs-gifts-btn { min-height: 44px; font-size: 0.95rem; }
 @media (min-width: 1024px) { .vs-page-path > .vs-gifts-btn { margin-top: 6px; } }
+
+/* Wide screens (Oct 30): pop-up sheets sit in the middle of the screen as a card,
+   not stuck to the bottom bar half over the map. Phones and tablets keep the bottom sheet. */
+@media (min-width: 1024px) {
+  .vs-shade { align-items: center; padding: 24px; }
+  .vs-sheet { border: 2px solid var(--vs-line); border-radius: 22px; max-height: 100%; padding-bottom: 18px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45); }
+}
