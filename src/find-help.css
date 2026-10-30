@@ -138,3 +138,6 @@ img.hub-tile-icon { width: 40px; height: 40px; }
   .fr-right > .fr-pick-hint::before { content: ''; width: 64px; height: 64px; margin-bottom: 0.75rem; background: url('/art/icons/heart-hands.svg') center / contain no-repeat; }
   .fr-right > .sr-suggest { margin-bottom: 0; }
 }
+/* Oct 30: Merged listings > Undo this merge asks once before undoing. */
+.sr-confirm { display: grid; gap: 0.4rem; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--gold); }
+.sr-confirm p { margin: 0; line-height: 1.45; }
