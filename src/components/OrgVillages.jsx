@@ -88,7 +88,7 @@ export default function OrgVillages({ orgId, orgName, canManage }) {
               <input id="org-village-filter" type="text" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filter by name" autoComplete="off" style={{ width: '100%', minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem', marginBottom: '0.5rem' }} />
             </>
           )}
-          <div role="group" aria-label="Neighborhoods" style={{ display: 'grid', gap: '0.25rem', maxHeight: '320px', overflowY: 'auto', marginBottom: '0.5rem' }}>
+          <div role="group" aria-label="Neighborhoods" style={{ display: 'grid', gap: '0.25rem', maxHeight: '320px', overflowY: 'auto', padding: '6px', margin: '-6px -6px calc(0.5rem - 6px)' }}>
             {shown.map((v) => {
               const isBlocked = blockedIds.has(String(v.id))
               return (
