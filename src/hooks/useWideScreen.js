@@ -13,8 +13,12 @@ export function useWideScreen() {
     try { mq = window.matchMedia(QUERY) } catch { return }
     const onChange = () => setWide(mq.matches)
     onChange()
-    mq.addEventListener ? mq.addEventListener('change', onChange) : mq.addListener(onChange)
-    return () => { mq.removeEventListener ? mq.removeEventListener('change', onChange) : mq.removeListener(onChange) }
+    if (mq.addEventListener) mq.addEventListener('change', onChange)
+    else mq.addListener(onChange)
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', onChange)
+      else mq.removeListener(onChange)
+    }
   }, [])
   return wide
 }

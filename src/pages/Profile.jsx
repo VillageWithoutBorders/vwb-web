@@ -284,7 +284,7 @@ export default function Profile() {
     setCoverageSaving(false)
   }
 
-  function handleAvatarSaved(url, config) {
+  function handleAvatarSaved() {
     setShowAvatarBuilder(false)
     setMessage('Avatar saved!')
     refreshProfile()

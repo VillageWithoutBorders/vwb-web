@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient'
 import { useGoBack } from '../components/BackLink'
 
 export default function GrantReport() {
-  const { user, profile, isAdmin } = useAuth()
+  const { isAdmin } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
   // isAdmin comes from useAuth context

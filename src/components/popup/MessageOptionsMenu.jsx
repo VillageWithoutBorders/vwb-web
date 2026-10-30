@@ -1,7 +1,7 @@
 import { supabase } from '../../supabaseClient'
 import { askConfirm, tell } from '../AdminDialog'
 
-export default function MessageOptionsMenu({ message, onClose, currentUserId, conversationId, canEdit, onEdit }) {
+export default function MessageOptionsMenu({ message, onClose, currentUserId, canEdit, onEdit }) {
   if (!message) return null
 
   const isMe = message.sender_id === currentUserId
