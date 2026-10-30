@@ -17,6 +17,7 @@ import ResourceReport from '../components/ResourceReport'
 import SuggestResource from '../components/SuggestResource'
 import { useWideScreen } from '../hooks/useWideScreen'
 import ResourceSuggestionsReview from '../components/ResourceSuggestionsReview'
+import ResourceMergesReview from '../components/ResourceMergesReview'
 import { placesEnabled, getMyPlaces, getVisitorArea, setVisitorArea } from '../utils/places'
 import { findHelpForMe, resourcesForPlace, friendlyError, saysNo } from '../utils/resourceReports'
 import { tell } from '../components/AdminDialog'
@@ -1082,6 +1083,8 @@ export default function CommunityResources() {
           {/* Oct 28 (Jade): the review box only opens from My Tools > Resource suggestions
               (or an admin alert), so the library starts at the top for everyone. */}
           {canVerify && searchParams.get('suggestions') === '1' && <ResourceSuggestionsReview onAdd={addFromSuggestion} refreshKey={suggestionsKey} />}
+          {/* Oct 30: My Tools > Merged listings. Undo a merge any time. */}
+          {canVerify && searchParams.get('merges') === '1' && <ResourceMergesReview onChanged={loadResources} />}
 
           {canVerify && pendingResources.length > 0 && (
             <details className="fh-pending" open={!!fromSuggestion || undefined}>

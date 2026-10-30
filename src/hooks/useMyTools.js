@@ -44,6 +44,7 @@ export function useMyTools() {
   if (isAdmin) tools.push({ key: 'admin', label: 'Admin', icon: 'shield', to: '/admin' })
   if (profile?.is_hope_ambassador || isAdmin) tools.push({ key: 'ambassador', label: 'Ambassador', icon: 'star', to: '/ambassador' })
   if (reviewer) tools.push({ key: 'suggestions', label: 'Resource suggestions', icon: 'books', to: '/community/resources?suggestions=1', note: newSuggestions ? newSuggestions + ' new' : 'Nothing new' })
+  if (reviewer) tools.push({ key: 'merges', label: 'Merged listings', icon: 'chain', to: '/community/resources?merges=1', note: 'Undo a merge' })
   const runsOrg = (organizations || []).some((o) => o.kind !== 'group' && (o.role === 'admin' || o.role === 'organizer'))
   if (runsOrg) tools.push({ key: 'organizer', label: 'Organizer', icon: 'toolbox', to: '/org-dashboard' })
   ;(organizations || []).filter((o) => o.kind === 'group' && (o.role === 'admin' || o.role === 'organizer'))
