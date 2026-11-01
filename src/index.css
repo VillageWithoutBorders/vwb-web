@@ -6546,3 +6546,29 @@ html.calm-motion .nr-card:active { transform: none; }
   .corner-page-full { padding-bottom: 0; }
   .corner-page-full > .corner-group, .corner-page-full .app-menu-group-account, .corner-page-full .app-menu-group-vwb { margin-bottom: 0; }
 }
+
+/* Nov 1 (Jade): Messages side by side on computers. Chat list on the left, the open
+   chat on the right. Each side scrolls by itself and the page holds still. */
+@media (min-width: 1024px) {
+  .app-main:has(> .hub-split) { max-width: 1240px; }
+  .hub-split {
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
+    display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 1.5rem; align-items: start;
+  }
+  /* The 6px padding with -6px margin keeps focus rings from being cut off at the edge. */
+  .hub-left { height: var(--fit-h); overflow-y: auto; overscroll-behavior: contain; min-width: 0; padding: 6px; margin: -6px; box-sizing: content-box; }
+  .hub-left .hub-head { max-width: none !important; padding: 0 0.25rem !important; }
+  .hub-left .messages-page { padding: 0 0.25rem; max-width: none; }
+  .hub-right {
+    height: var(--fit-h); min-width: 0; display: flex; flex-direction: column; overflow: hidden;
+    border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-sizing: border-box;
+  }
+  .hub-right > .conversation-page.convo-pane { flex: 1 1 auto; min-height: 0; height: auto; max-width: none; margin: 0; }
+  .convo-pane .convo-header { border-radius: 12px 12px 0 0; }
+  .convo-pane .convo-back { min-width: 44px; min-height: 44px; }
+  .convo-pane .convo-input-bar { border-radius: 0 0 12px 12px; }
+  .hub-pick { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; padding: 2rem; text-align: center; color: var(--text-secondary); }
+  .hub-pick p { margin: 0; font-size: 1rem; }
+  .message-card.message-card-on { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--surface-2); }
+}
+.convo-header-info h2 { font-size: 1.125rem; font-weight: 700; margin: 0; line-height: 1.2; }

@@ -5,6 +5,9 @@ import { useUnreadCount } from '../context/UnreadCountContext'
 import { supabase } from '../supabaseClient'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import Messages from './Messages'
+import Conversation from './Conversation'
+import Icon from '../components/Icon'
+import { useWideScreen } from '../hooks/useWideScreen'
 import ChatGuide from '../components/ChatGuide'
 import { useSimpleView } from '../utils/simpleView'
 
@@ -49,6 +52,24 @@ export default function ConnectHub() {
   const asked = params.get('tab') === 'chats' ? 'cottage' : params.get('tab')
   const active = tabs.some((t) => t.key === asked) ? asked : 'messages'
 
+  // Nov 1 (Jade): on a computer, Messages is side by side. The chat list stays on
+  // the left and the chat you pick opens on the right (?c=<id>, so links work).
+  // Phones and Simple view open a chat on its own page, as before.
+  const wide = useWideScreen()
+  const split = wide && !simple && active === 'messages'
+  const openId = params.get('c')
+  const reportFor = params.get('report') === '1'
+  function openChat(id, opts) { setParams(opts?.report ? { c: id, report: '1' } : { c: id }, { replace: true }) }
+  function closeChat() { setParams({}, { replace: true }) }
+  // A chat link on a phone (or a screen made narrow) opens the chat's own page.
+  useEffect(() => {
+    if (!split && openId && active === 'messages') navigate('/conversation/' + openId, { replace: true })
+  }, [split, openId, active]) // eslint-disable-line react-hooks/exhaustive-deps
+  // The report window opens once; take report=1 off the address after.
+  useEffect(() => {
+    if (split && reportFor && openId) setParams({ c: openId }, { replace: true })
+  }, [split, reportFor, openId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     let alive = true
     function load() {
@@ -67,9 +88,8 @@ export default function ConnectHub() {
     fontSize: '0.9rem', fontWeight: 600, background: on ? 'var(--accent)' : 'var(--surface-2)', color: on ? 'var(--on-accent)' : 'var(--text-soft)',
   })
 
-  return (
-    <div>
-      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '1rem 1rem 0', boxSizing: 'border-box' }}>
+  const head = (
+      <div className="hub-head" style={{ maxWidth: '640px', margin: '0 auto', padding: '1rem 1rem 0', boxSizing: 'border-box' }}>
         <h1 style={{ margin: '0 0 0.25rem' }}>Messages</h1>
         <p className="cal-sub" style={{ marginTop: 0 }}>{simple ? 'Talk with one neighbor, or with a few people you chose.' : 'Chats, villages, and neighbors, all in one place.'}</p>
         {established === false && <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE}</p>}
@@ -83,6 +103,34 @@ export default function ConnectHub() {
           ))}
         </div>
       </div>
+  )
+
+  if (split) {
+    return (
+      <div className="hub-split">
+        <div className="hub-left">
+          {head}
+          <div role="tabpanel" id="hub-panel" aria-labelledby="hub-tab-messages">
+            <Messages embedded onOpen={openChat} selectedId={openId} />
+          </div>
+        </div>
+        <section className="hub-right" aria-label="Open chat">
+          {openId
+            ? <Conversation key={openId} convoId={openId} pane openReport={reportFor} onClose={closeChat} />
+            : (
+              <div className="hub-pick">
+                <Icon name="chat-bubble" size={40} />
+                <p>Pick a chat on the left to read it here.</p>
+              </div>
+            )}
+        </section>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {head}
 
       <div role="tabpanel" id="hub-panel" aria-labelledby={'hub-tab-' + active}>
         {active === 'messages' && <Messages embedded />}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useBlockedBy } from '../utils/blockedBy'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -25,7 +25,9 @@ const DISAPPEAR_STEPS = [
 
 // embedded: shown inside the Messages hub (ConnectHub), which supplies the page
 // title and the links to Villages, Cottage Chats, and Connections.
-export default function Messages({ embedded = false }) {
+// onOpen: on a computer the hub opens chats on the right instead of on their own
+// page (Nov 1, Jade). selectedId is the chat open there, outlined in the list.
+export default function Messages({ embedded = false, onOpen, selectedId }) {
   const { user } = useAuth()
   const { refreshUnread } = useUnreadCount()
   const navigate = useNavigate()
@@ -66,7 +68,16 @@ export default function Messages({ embedded = false }) {
   const [processingOffer, setProcessingOffer] = useState(null)
   const [myOutgoingOffers, setMyOutgoingOffers] = useState([])
 
-  useEffect(() => { loadAll() }, [location.key])
+  // With chats opening on the right, picking one changes the address, so the list
+  // loads once and then refreshes quietly when the open chat changes.
+  const listKey = onOpen ? 'pane' : location.key
+  useEffect(() => { loadAll() }, [listKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const firstPick = useRef(true)
+  useEffect(() => {
+    if (!onOpen) return
+    if (firstPick.current) { firstPick.current = false; return }
+    getBlockedUserIds(user.id).then((ids) => loadConversations(ids))
+  }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadAll() {
     setLoading(true)
@@ -172,7 +183,7 @@ export default function Messages({ embedded = false }) {
     setProcessingOffer(null)
     await loadPendingOffers()
     // Open the chat right away so the two of you can plan.
-    if (convoId) { navigate('/conversation/' + convoId); return }
+    if (convoId) { if (onOpen) onOpen(convoId); else navigate('/conversation/' + convoId); return }
     tell('You accepted this offer, but the chat could not be opened. Find it under Messages in a moment.', { tone: 'error' })
     await loadConversations()
   }
@@ -411,7 +422,8 @@ export default function Messages({ embedded = false }) {
   function openConvo(c) {
     setConvos(prev => prev.map(cv => cv.id === c.id ? { ...cv, hasUnread: false } : cv))
     setConvoSettings(prev => prev[c.id]?.marked_unread ? { ...prev, [c.id]: { ...prev[c.id], marked_unread: false } } : prev)
-    navigate('/conversation/' + c.id)
+    if (onOpen) onOpen(c.id)
+    else navigate('/conversation/' + c.id)
   }
 
   async function loadBlocked() {
@@ -573,7 +585,8 @@ export default function Messages({ embedded = false }) {
   // admins with nothing to go on. Conversation.jsx watches for this flag.
   function reportConversation(convoId) {
     setOpenMenu(null)
-    navigate('/conversation/' + convoId, { state: { openReport: true } })
+    if (onOpen) onOpen(convoId, { report: true })
+    else navigate('/conversation/' + convoId, { state: { openReport: true } })
   }
 
   let filtered = activeFolder === 'all' ? convos : activeFolder === 'unread' ? convos.filter(isUnread) : activeFolder === 'followup' ? convos.filter(c => convoSettings[c.id]?.follow_up) : activeFolder === 'archived' ? convos : convos.filter(c => (assignments[c.id] || []).includes(activeFolder))
@@ -902,8 +915,8 @@ export default function Messages({ embedded = false }) {
         const unread = isUnread(c)
         const followUp = convoSettings[c.id]?.follow_up
         return (
-        <div key={c.id} className="message-card" style={{ position: 'relative', cursor: 'grab', opacity: draggingConvo === c.id ? 0.5 : 1, borderLeft: isPinned ? '3px solid var(--accent)' : 'none' }} draggable onDragStart={(e) => { setDraggingConvo(c.id); e.dataTransfer.setData('text/plain', c.id) }} onDragEnd={() => { setDraggingConvo(null); setDropTarget(null) }}>
-          <div onClick={() => openConvo(c)} role="button" tabIndex={0} aria-label={'Open conversation with ' + c.otherName + (unread ? ', unread' : '') + (followUp ? ', marked follow up' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openConvo(c) } }} style={{ cursor: 'pointer', paddingRight: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div key={c.id} className={'message-card' + (selectedId === c.id ? ' message-card-on' : '')} style={{ position: 'relative', cursor: 'grab', opacity: draggingConvo === c.id ? 0.5 : 1, borderLeft: isPinned ? '3px solid var(--accent)' : 'none' }} draggable onDragStart={(e) => { setDraggingConvo(c.id); e.dataTransfer.setData('text/plain', c.id) }} onDragEnd={() => { setDraggingConvo(null); setDropTarget(null) }}>
+          <div onClick={() => openConvo(c)} role="button" tabIndex={0} aria-current={selectedId === c.id ? 'true' : undefined} aria-label={'Open conversation with ' + c.otherName + (unread ? ', unread' : '') + (followUp ? ', marked follow up' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openConvo(c) } }} style={{ cursor: 'pointer', paddingRight: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <AvatarDisplay url={c.otherAvatar} userId={c.otherId} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
             <div className="message-card-header">
