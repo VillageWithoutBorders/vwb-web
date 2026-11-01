@@ -2,7 +2,9 @@ import Icon from '../components/Icon'
 import MessageOptionsMenu from '../components/popup/MessageOptionsMenu'
 import { useBlockedBy } from '../utils/blockedBy'
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, Navigate } from 'react-router-dom'
+import { useWideScreen } from '../hooks/useWideScreen'
+import { useSimpleView } from '../utils/simpleView'
 import { useChatScroll } from '../hooks/useChatScroll'
 import { useSparks } from '../hooks/useSparks'
 import SparkButton from '../components/SparkButton'
@@ -35,8 +37,15 @@ const REASONS = [
   'Something else',
 ]
 
-export default function Conversation() {
-  const { id } = useParams()
+// pane: shown on the right side of Messages on a computer (Nov 1, Jade). There it
+// gets its id from Messages, has a Close button in place of Back, and onClose
+// clears the open chat. On a computer, /conversation/:id opens that same view.
+export default function Conversation({ convoId, pane = false, openReport = false, onClose }) {
+  const params = useParams()
+  const id = convoId || params.id
+  const wide = useWideScreen()
+  const simple = useSimpleView()
+  const toPane = !pane && wide && !simple
   const { user } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
@@ -73,6 +82,7 @@ export default function Conversation() {
   const [history, setHistory] = useState(null)
 
     useEffect(() => {
+        if (toPane) return
         loadConversation()
         return () => {
             if (pollRef.current) clearInterval(pollRef.current)
@@ -86,7 +96,10 @@ export default function Conversation() {
                 })
             }
         }
-    }, [id])
+    }, [id, toPane])
+
+  // Report asked for from the Messages list while this chat is open on the right.
+  useEffect(() => { if (openReport) setReportDialog('report') }, [openReport, id])
 
   const { containerRef, onScroll, showNew, jumpToNewest } = useChatScroll(messages, user?.id, !loading)
 
@@ -341,9 +354,14 @@ export default function Conversation() {
     setReportDialog('reported')
   }
 
+  if (toPane) return <Navigate to={'/messages?c=' + id + (location.state?.openReport ? '&report=1' : '')} replace />
+
+  const pageClass = 'conversation-page' + (pane ? ' convo-pane' : '')
+  const Title = pane ? 'h2' : 'h1'
+
   if (loading) {
     return (
-      <div className="conversation-page">
+      <div className={pageClass}>
         <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>Loading...</p>
       </div>
     )
@@ -351,9 +369,11 @@ export default function Conversation() {
 
   if (!convo) {
     return (
-      <div className="conversation-page">
+      <div className={pageClass}>
         <p style={{ textAlign: 'center', padding: '2rem' }}>Conversation not found.</p>
-        <button className="btn btn-outline btn-full" onClick={() => navigate(-1)}>Back to Tasks</button>
+        {pane
+          ? <button className="btn btn-outline btn-full" onClick={() => onClose?.()}>Close</button>
+          : <button className="btn btn-outline btn-full" onClick={() => navigate(-1)}>Back to Tasks</button>}
       </div>
     )
   }
@@ -370,14 +390,14 @@ export default function Conversation() {
     : 'Flexible'
 
   return (
-    <div className="conversation-page">
+    <div className={pageClass}>
       <div className="convo-header">
-        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; const { error } = await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id); if (error) console.error('Failed to mark conversation read:', error); refreshUnread() } goBack('/') }} aria-label="Back">
-          &#8592;
+        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; const { error } = await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id); if (error) console.error('Failed to mark conversation read:', error); refreshUnread() } if (pane) onClose?.(); else goBack('/') }} aria-label={pane ? 'Close chat' : 'Back'}>
+          {pane ? '\u2715' : '\u2190'}
         </button>
         <AvatarDisplay url={otherAvatar} userId={otherUserId} size={36} />
         <div className="convo-header-info">
-          <h1><UserName userId={otherUserId} name={otherName} /></h1>
+          <Title><UserName userId={otherUserId} name={otherName} /></Title>
           {request && <p className="convo-context">{request.skill_needed}{request.for_name ? ' for ' + request.for_name : ''}</p>}
         </div>
         <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: 44, minHeight: 44 }} title='Settings'><Icon name="gear" /></button>
