@@ -366,6 +366,11 @@ export default function Settings() {
           <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '48px' }}>
             <span aria-hidden="true"><Icon name="compass" /></span> Take the app tour again
           </button>
+          {/* Nov 1 (Jade): a way back to Full setup, for Quick start people who said Not now. */}
+          <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/setup')} style={{ minHeight: '48px', marginTop: '0.75rem' }}>
+            <span aria-hidden="true"><Icon name="cottage" /></span> Set up your avatar and cottage
+          </button>
+          <p style={{ margin: '0.4rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Make your avatar, pick your skills, and name your cottage. About 10 minutes. Finishing it turns on the full app.</p>
         </>
       )}
 

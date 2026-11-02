@@ -109,7 +109,8 @@ export default function Dashboard({ embedded = false }) {
           already on the map, in the top and bottom bars, or in My Tools. */}
       {!embedded && <YourPlaces />}
 
-      <ComingUp />
+      {/* Nov 1 (Jade): under the cottage map, Coming up and Emergency are slim bars. */}
+      <ComingUp slim={embedded} />
 
       {/* One setup reminder at a time: only the first one that has something to say shows. */}
       <div className="today-setup">
@@ -120,6 +121,13 @@ export default function Dashboard({ embedded = false }) {
         <AmbassadorBanner />
       </div>
 
+      {embedded ? (
+        <button type="button" data-tour="emergency" className="today-slim today-slim-warn" onClick={() => navigate('/emergency')}>
+          <Icon name="cat-emergency" size={28} />
+          <span className="today-slim-text"><b>Emergency Response</b><small>Floods, storms, fires, outages</small></span>
+          <span className="today-slim-go" aria-hidden="true">&#8250;</span>
+        </button>
+      ) : (
       <button data-tour="emergency" onClick={() => navigate('/emergency')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "1.25rem", padding: "1rem 1.25rem", borderRadius: "12px", border: "2px solid var(--warn)", background: "linear-gradient(135deg, var(--warn-bg), var(--warn-bg))", cursor: "pointer", textAlign: "left" }}>
         <span aria-hidden="true" style={{ flexShrink: 0, display: "flex" }}><Icon name="cat-emergency" size={40} /></span>
         <div>
@@ -127,6 +135,7 @@ export default function Dashboard({ embedded = false }) {
           <span style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>Floods, storms, fires, and outages that hit many neighbors</span>
         </div>
       </button>
+      )}
     </div>
   )
 }
