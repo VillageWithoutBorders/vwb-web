@@ -44,7 +44,9 @@
 @keyframes vs-flick { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07) translateY(-1px); } }
 .vs-hint { margin: 4px 16px 0; color: var(--vs-muted); text-align: center; font-size: 0.95rem; }
 
-.vs-body { padding: 12px 16px 8px; display: grid; gap: 14px; }
+.vs-body { padding: 12px 16px 8px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+/* Nov 2: grid items never grow wider than the screen (a long event name in a slim bar did). */
+.vs-body > * { min-width: 0; }
 .vs-body h2 { font-size: 1.15rem; margin: 0; }
 .vs-help { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .vs-big { min-height: 56px; border-radius: 16px; border: 0; font-size: 1.08rem; font-weight: 700; cursor: pointer; padding: 6px 10px; }
