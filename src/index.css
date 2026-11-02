@@ -647,6 +647,7 @@ body {
 /* ---------- Form Layout ---------- */
 .form-row {
   display: flex;
+  flex-wrap: wrap; /* at 200% zoom the buttons stack instead of running off the screen */
   gap: 0.75rem;
   margin-top: 0.5rem;
 }
@@ -1502,6 +1503,8 @@ a:focus:not(:focus-visible) {
 
 .feed-filter-select {
   flex: 1;
+  min-width: 0; /* a long skill name can't push the menu past the screen */
+  max-width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
