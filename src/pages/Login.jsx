@@ -47,6 +47,9 @@ export default function Login() {
   // Accounts are for adults (see Terms). We ask for a confirmation, never a
   // birthdate, so nothing about age is stored.
   const [isAdult, setIsAdult] = useState(false)
+  // Two ways to start (Nov 1, Jade). Quick start: in fast, Simple view. Full setup:
+  // avatar, skills and your own cottage, in the full app. Saved with the account.
+  const [startWay, setStartWay] = useState('quick')
 
   const [selectedSkills, setSelectedSkills] = useState([])
   const [availability, setAvailability] = useState('')
@@ -163,7 +166,7 @@ export default function Login() {
       how_known: howKnown.trim(),
       campfire_notifications_enabled: campfireNotify,
     } : null
-    const { error } = await signUp(email, password, displayName.trim(), wantAmbassador, captcha, { zip_code: signupZipCode.replace(/[^0-9]/g, '').slice(0, 5), ...(ambassadorPending ? { ambassador_pending: ambassadorPending } : {}) })
+    const { error } = await signUp(email, password, displayName.trim(), wantAmbassador, captcha, { zip_code: signupZipCode.replace(/[^0-9]/g, '').slice(0, 5), start_path: startWay, ...(ambassadorPending ? { ambassador_pending: ambassadorPending } : {}) })
     setCaptchaKey((k) => k + 1)
     if (error) {
       // A banned email or a throwaway email service is refused by the
@@ -287,6 +290,17 @@ export default function Login() {
               </div>
             </div>}
             <h2>Create your account</h2>
+            <fieldset className="start-ways">
+              <legend>How do you want to start?</legend>
+              <label className={'start-way' + (startWay === 'quick' ? ' on' : '')}>
+                <input type="radio" name="start-way" value="quick" checked={startWay === 'quick'} onChange={() => setStartWay('quick')} />
+                <span><b>Quick start</b><small>About 1 minute. Big, simple screens with the main things: get help, give help, and messages. You can set up more later.</small></span>
+              </label>
+              <label className={'start-way' + (startWay === 'full' ? ' on' : '')}>
+                <input type="radio" name="start-way" value="full" checked={startWay === 'full'} onChange={() => setStartWay('full')} />
+                <span><b>Full setup</b><small>About 10 minutes. Make your avatar, pick your skills, and set up your own cottage map. You get the full app.</small></span>
+              </label>
+            </fieldset>
             <div className="form-field">
               <label htmlFor="displayName">Your name or nickname</label>
               <input id="displayName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="What should we call you?" autoComplete="name" />

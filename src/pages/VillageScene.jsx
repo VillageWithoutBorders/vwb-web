@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams, Link, useSearchParams } from 'react-router-dom'
+import CottageSettings, { visitorsLine } from '../components/CottageSettings'
+import { pauseFirstRun } from '../utils/firstVillage'
 import { supabase } from '../supabaseClient'
 import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
@@ -101,6 +103,16 @@ export default function VillageScene() {
     onSave: (next) => (cottage ? saveCottage(next) : saveMapLayout(next)),
   })
   const { world, worldRef, setWorld, commit, remember, arrange, picked, setPicked, setTrayOpen, setLayoutNote, placed, isHidden, dragStart, pickByKey } = b
+  // Full setup ends with "Arrange my cottage now" (/cottage?arrange=1, Nov 1).
+  const [params, setParams] = useSearchParams()
+  useEffect(() => {
+    if (!cottage || params.get('arrange') !== '1') return
+    setParams({}, { replace: true })
+    b.openArrange(null)
+  }, [cottage]) // eslint-disable-line react-hooks/exhaustive-deps
+  // The tour and other first-run questions wait while you arrange your cottage.
+  const arrangeSoon = cottage && (arrange || params.get('arrange') === '1')
+  useEffect(() => { pauseFirstRun(arrangeSoon); return () => pauseFirstRun(false) }, [arrangeSoon])
   // The account's saved layout (your cottage, and the name tags choice).
   const accountLayout = profile?.village_layout
   // Village pages (Oct 22, vwb-map-layouts.sql): the Keeper and Helpers set a shared
@@ -566,6 +578,7 @@ export default function VillageScene() {
 
   function sheetBody(k) {
     if (cottage && k === 'gifts') return giftsSheet()
+    if (cottage && k === 'name') return <><h2 id="vs-sheet-title">Name and visitors</h2><CottageSettings onSaved={closeSheet} /></>
     const spot = SPOTS.find((s) => s.k === k)
     const title = <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><SpotIcon spot={spot} size={36} /></span> {spot.label}</h2>
     if (cottage) return cottageSheet(k, title)
@@ -661,8 +674,8 @@ export default function VillageScene() {
     <div className="vs-page vs-page-path">
       {cottage ? (
         <div className="vs-title">
-          <h1>My Cottage</h1>
-          <p className="vs-cottage-sub">{simple ? 'Everything you are part of, in one place.' : 'Everything you are part of, in one place. Only you see your map.'}</p>
+          <h1>{profile?.cottage_name || 'My Cottage'}</h1>
+          <p className="vs-cottage-sub">{profile?.cottage_name ? 'My Cottage. ' : ''}{simple ? 'Everything you are part of, in one place.' : 'Everything you are part of, in one place. ' + visitorsLine(profile?.cottage_visitors || 'nobody')}</p>
           <div className="vs-chips">
             {home?.village_id
               ? <Link className="vs-chip vs-chip-in vs-chip-link" to={'/village/' + home.village_id}>Home: {home.name}</Link>
@@ -773,6 +786,11 @@ export default function VillageScene() {
                     <b>Default for everyone</b><small>New neighbors start with this.{mapLoaded > 0 && mapLayouts.current.own ? ' You see your own view, so you will not see the new default.' : ''}</small>
                   </button>
                 )}
+                {cottage && Object.prototype.hasOwnProperty.call(profile || {}, 'cottage_visitors') && (
+                  <button type="button" role="menuitem" onClick={() => { setEditMenu(false); openSheet({ k: 'name' }) }}>
+                    <b>Name and visitors</b><small>Name your cottage. Choose who can visit it.</small>
+                  </button>
+                )}
                 <button type="button" role="menuitem" onClick={() => { setEditMenu(false); saveLabels(b.namesShowing ? 'hide' : 'show') }}>
                   <b>{b.namesShowing ? 'Hide name tags' : 'Show name tags'}</b><small>On every map, for you.</small>
                 </button>
@@ -803,7 +821,7 @@ export default function VillageScene() {
       <MapToolbar b={b} more={<>
         <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>{cottage ? 'Back to the usual cottage' : arrangeFor === 'everyone' ? 'Default back to the starting village' : 'Back to the default look'}</button>
         {cottage && isFounder && <button type="button" className="btn btn-outline btn-full" onClick={copyLayout}>Copy layout for everyone (founder)</button>}
-        <p className="vs-note">{cottage ? 'Your cottage is saved on your account and only you see it.' : arrangeFor === 'everyone' ? 'This is the default look. Anyone who arranged their own view keeps theirs.' : 'Your view is saved on your account and only you see it.'} Hidden places are still in the list under the map.</p>
+        <p className="vs-note">{cottage ? 'Your cottage is saved on your account. ' + visitorsLine(profile?.cottage_visitors || 'nobody') : arrangeFor === 'everyone' ? 'This is the default look. Anyone who arranged their own view keeps theirs.' : 'Your view is saved on your account and only you see it.'} Hidden places are still in the list under the map.</p>
       </>} />
 
       <div className="vs-body">

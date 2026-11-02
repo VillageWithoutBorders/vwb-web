@@ -1,6 +1,8 @@
 import Icon from '../components/Icon'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { needsFullSetup } from '../utils/startPath'
+import { firstRunPaused } from '../utils/firstVillage'
 import { useAuth } from '../context/AuthContext'
 import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView'
 import SimpleOffer from '../components/SimpleOffer'
@@ -16,7 +18,12 @@ import { calmMotion } from '../utils/motion'
 
 export default function Layout() {
   const { pathname, search, key } = useLocation()
-  const { profile } = useAuth()
+  const { user, profile } = useAuth()
+  const navigate = useNavigate()
+  // Picked Full setup when signing up (Nov 1): avatar, skills and cottage come next,
+  // after Find your village. "Skip setup for now" on that page ends it.
+  const setupNext = needsFullSetup(user, profile) && pathname !== '/setup' && !firstRunPaused(pathname)
+  useEffect(() => { if (setupNext) navigate('/setup', { replace: true }) }, [setupNext]) // eslint-disable-line react-hooks/exhaustive-deps
   // Your role tools and the Admin inbox count, for My Tools in the top bar.
   const tools = useMyTools()
   const { total: adminWaiting, urgent: adminUrgent } = useAdminInbox()
@@ -30,7 +37,7 @@ export default function Layout() {
   // instead of sitting inside the padded page column.
   // World pages (the globe, a village, an organization) fill the whole screen
   // with their own teal background, edge to edge.
-  const isWorld = (pathname === '/' && !simple) || pathname === '/world' || pathname === '/cottage' || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
+  const isWorld = (pathname === '/' && !simple) || pathname === '/world' || pathname === '/cottage' || /^\/u\/[^/]+\/cottage$/.test(pathname) || /^\/village\/[^/]+$/.test(pathname) || /^\/orgs\/[^/]+$/.test(pathname)
   const villageHere = pathname === '/village' || /^\/village\/[^/]+$/.test(pathname)
   const isChat = pathname === '/village-square' || pathname.startsWith('/conversation/') || /^\/groups\/[^/]+$/.test(pathname)
 
