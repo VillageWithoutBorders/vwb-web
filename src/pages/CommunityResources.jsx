@@ -97,6 +97,8 @@ export default function CommunityResources() {
   // Resource edit history -- suggest-an-edit + revert, Wikipedia-style
   const [editHistoryByResource, setEditHistoryByResource] = useState({}) // { [resourceId]: [edit, ...] }
   const [openHistoryFor, setOpenHistoryFor] = useState([])
+  // Nov 1 (Jade): merges show in Edit history too (resource_merge_history()).
+  const [mergesByResource, setMergesByResource] = useState({})
   const [editFormFor, setEditFormFor] = useState(null) // resource id currently open for editing, or null
   const [editDraft, setEditDraft] = useState({ name: '', description: '', phone: '', url: '', address: '', requirements: '', source_url: '' })
   const [submittingEdit, setSubmittingEdit] = useState(false)
@@ -124,7 +126,9 @@ export default function CommunityResources() {
   const [loadError, setLoadError] = useState('')
   const [accessFilter, setAccessFilter] = useState([]) // 'no_appt' | 'no_referral' | 'how:<delivery method>'
 
-  useEffect(() => { loadOrgs(); loadVoteCounts(); loadReviews(); loadEditHistory() }, [])
+  useEffect(() => { loadOrgs(); loadVoteCounts(); loadReviews() }, [])
+  // Edit history loads again once you are signed in, so merges show too (Nov 1).
+  useEffect(() => { loadEditHistory() }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { loadResources() }, [user?.id, visitorArea?.id, canVerify])
   useEffect(() => {
     if (!placesEnabled || !user) { setMyAreaCount(null); return }
@@ -297,6 +301,12 @@ export default function CommunityResources() {
     const map = {}
     ;(data || []).forEach(row => { if (!map[row.resource_id]) map[row.resource_id] = []; map[row.resource_id].push(row) })
     setEditHistoryByResource(map)
+    if (!user) return
+    const { data: merges, error: mErr } = await supabase.rpc('resource_merge_history')
+    if (mErr) { if (mErr.code !== 'PGRST202') console.error('Failed to load merge history:', mErr); return }
+    const mm = {}
+    ;(merges || []).forEach((m) => { if (!mm[m.resource_id]) mm[m.resource_id] = []; mm[m.resource_id].push(m) })
+    setMergesByResource(mm)
   }
 
   function toggleHistory(resourceId) {
@@ -746,7 +756,18 @@ export default function CommunityResources() {
                                 </span>
                               </div>
                             ))}
-                            {(editHistoryByResource[r.id] || []).length === 0 && (
+                            {(mergesByResource[r.id] || []).map((m) => (
+                              <div key={'m' + m.merge_id} style={{ marginBottom: '0.5rem', opacity: m.undone_at ? 0.6 : 1 }}>
+                                <p style={{ color: 'var(--text-soft)', fontSize: '0.8125rem', margin: '0.1rem 0', lineHeight: 1.4 }}>
+                                  {m.is_kept ? <>Merged with <b>{m.other_name}</b>. This listing was kept.</> : <>Merged into <b>{m.other_name}</b> as a copy.</>}
+                                </p>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+                                  {m.merged_by_name} &middot; {new Date(m.merged_at).toLocaleDateString()}
+                                  {m.undone_at && <> &middot; undone by {m.undone_by_name}, {new Date(m.undone_at).toLocaleDateString()}</>}
+                                </span>
+                              </div>
+                            ))}
+                            {(editHistoryByResource[r.id] || []).length === 0 && (mergesByResource[r.id] || []).length === 0 && (
                               <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.4rem' }}>No edits yet.</p>
                             )}
 
@@ -1084,7 +1105,7 @@ export default function CommunityResources() {
               (or an admin alert), so the library starts at the top for everyone. */}
           {canVerify && searchParams.get('suggestions') === '1' && <ResourceSuggestionsReview onAdd={addFromSuggestion} refreshKey={suggestionsKey} />}
           {/* Oct 30: My Tools > Merged listings. Undo a merge any time. */}
-          {canVerify && searchParams.get('merges') === '1' && <ResourceMergesReview onChanged={loadResources} />}
+          {canVerify && searchParams.get('merges') === '1' && <ResourceMergesReview onChanged={() => { loadResources(); loadEditHistory() }} />}
 
           {canVerify && pendingResources.length > 0 && (
             <details className="fh-pending" open={!!fromSuggestion || undefined}>

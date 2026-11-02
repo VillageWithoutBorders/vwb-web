@@ -6,6 +6,7 @@ import { supabase } from '../supabaseClient'
 import { canVouch } from '../utils/vouchEligibility'
 import { startConversation } from '../utils/startConversation'
 import { tell } from './AdminDialog'
+import { cottagesICanVisit } from '../utils/cottageVisits'
 
 function reportError(context, error) {
   if (!error) return false
@@ -54,7 +55,9 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
     const myId = authData?.user?.id
     let hasVouched = false
     let eligible = false
+    let canVisit = false
     if (myId && myId !== userId) {
+      canVisit = (await cottagesICanVisit([userId])).has(userId)
       const { data: myVouch, error: myVouchErr } = await supabase.from('vouches').select('id').eq('voucher_id', myId).eq('vouchee_id', userId).maybeSingle()
       reportError('loadInfo:myVouch', myVouchErr)
       hasVouched = !!myVouch
@@ -69,6 +72,7 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
       vouches: vouchCount || 0,
       hasVouched,
       eligible,
+      canVisit,
       myId: myId || null,
     })
   }
@@ -179,6 +183,10 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
             )}
             {info?.myId && info.myId !== userId && (
               <button type="button" onClick={messageThem} disabled={messaging} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.65rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Opening...' : 'Message'}</button>
+            )}
+            {/* Nov 1 (Jade): visit their cottage, when they let you. */}
+            {info?.canVisit && !blockedBy.has(userId) && (
+              <button type="button" onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId + '/cottage') }} style={{ width: '100%', minHeight: 44, marginBottom: '0.5rem', padding: '0.6rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>Visit their cottage</button>
             )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Close</button>
