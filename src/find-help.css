@@ -141,3 +141,9 @@ img.hub-tile-icon { width: 40px; height: 40px; }
 /* Oct 30: Merged listings > Undo this merge asks once before undoing. */
 .sr-confirm { display: grid; gap: 0.4rem; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--gold); }
 .sr-confirm p { margin: 0; line-height: 1.45; }
+
+/* Nov 1 (Jade): Merged listings tabs (Still merged, Undone). */
+.sr-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0; }
+.sr-tab { min-height: 44px; border-radius: 10px; border: 2px solid var(--border-strong); background: var(--surface-2, var(--surface)); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+.sr-tab.on { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+.sr-tab:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }

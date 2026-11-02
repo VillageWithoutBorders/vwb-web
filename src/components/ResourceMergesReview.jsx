@@ -13,10 +13,24 @@ export default function ResourceMergesReview({ onChanged }) {
   const [asking, setAsking] = useState(null)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
+  // Nov 1 (Jade): two tabs. Still merged (can undo) and Undone (a record).
+  const [tab, setTab] = useState('now')
+  const [past, setPast] = useState(null)
   const boxRef = useRef(null)
+
+  async function loadPast() {
+    const { data, error: err } = await supabase.rpc('list_past_resource_merges')
+    if (err) {
+      console.error('Failed to load undone merges:', err)
+      setPast({ error: err.code === 'PGRST202' ? 'This needs a quick database update first (vwb-merge-history-and-cottage-links.sql).' : "We couldn't load undone merges. Try again." })
+      return
+    }
+    setPast(data || [])
+  }
 
   async function load() {
     setError('')
+    loadPast()
     const { data, error: err } = await supabase.rpc('list_resource_merges')
     if (err) {
       console.error('Failed to load merged listings:', err)
@@ -55,6 +69,24 @@ export default function ResourceMergesReview({ onChanged }) {
     <section className="sr-review" ref={boxRef} aria-labelledby="rm-review-h">
       <h2 id="rm-review-h">Merged listings{rows && rows.length ? ' (' + rows.length + ')' : ''}</h2>
       <p className="sr-note">Listings that were marked as a copy of another one. If a merge was a mistake, undo it here. Only Hope Ambassadors and VWB admins see this.</p>
+      <div className="sr-tabs" role="tablist" aria-label="Which merges">
+        <button type="button" role="tab" aria-selected={tab === 'now'} className={'sr-tab' + (tab === 'now' ? ' on' : '')} onClick={() => setTab('now')}>Still merged</button>
+        <button type="button" role="tab" aria-selected={tab === 'past'} className={'sr-tab' + (tab === 'past' ? ' on' : '')} onClick={() => setTab('past')}>Undone{Array.isArray(past) && past.length ? ' (' + past.length + ')' : ''}</button>
+      </div>
+      {tab === 'past' && <>
+        {past === null && <p role="status">Loading...</p>}
+        {past && past.error && <p className="sr-error" role="alert">{past.error}</p>}
+        {Array.isArray(past) && past.length === 0 && <p className="sr-note">No undone merges.</p>}
+        {Array.isArray(past) && past.map((r) => (
+          <article key={r.merge_id} className="sr-card">
+            <h3>{r.duplicate_name}</h3>
+            <p>Was merged into <b>{r.kept_name}</b>. It is its own listing again.</p>
+            <p className="sr-meta">Merged by {r.merged_by_name}, {new Date(r.merged_at).toLocaleDateString()}</p>
+            <p className="sr-meta">Undone by {r.undone_by_name}, {new Date(r.undone_at).toLocaleDateString()}</p>
+          </article>
+        ))}
+      </>}
+      {tab === 'now' && <>
       {rows === null && <p role="status">Loading...</p>}
       {error && <p className="sr-error" role="alert">{error}</p>}
       {note && <p className="sr-note" role="status">{note}</p>}
@@ -79,6 +111,7 @@ export default function ResourceMergesReview({ onChanged }) {
                 </div>}
         </article>
       ))}
+      </>}
     </section>
   )
 }

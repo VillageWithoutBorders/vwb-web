@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { useGoBack } from '../components/BackLink'
 import InviteSheet from '../components/InviteSheet'
+import { cottagesICanVisit } from '../utils/cottageVisits'
 
 const WHY = {
   messaged: 'Messaged',
@@ -44,6 +45,8 @@ export default function Connections({ embedded = false }) {
   const [filter, setFilter] = useState('all')
   const [q, setQ] = useState('')
   const [inviting, setInviting] = useState(null)
+  // Nov 1 (Jade): a Visit cottage button for each connection who lets you in.
+  const [canVisit, setCanVisit] = useState(new Set())
 
   useEffect(() => {
     let alive = true
@@ -51,6 +54,7 @@ export default function Connections({ embedded = false }) {
       if (!alive) return
       if (error) { console.error('my_connections failed', error); setFailed(true); setRows([]); return }
       setRows(data || [])
+      cottagesICanVisit((data || []).map((r) => r.user_id)).then(setCanVisit)
     })
     return () => { alive = false }
   }, [])
@@ -119,6 +123,12 @@ export default function Connections({ embedded = false }) {
               style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer' }}>
               View profile
             </button>
+            {canVisit.has(r.user_id) && (
+              <button type="button" onClick={() => navigate('/u/' + r.user_id + '/cottage')}
+                style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer' }}>
+                Visit cottage
+              </button>
+            )}
             <button type="button" onClick={() => setInviting(r)}
               style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer' }}>
               Invite to...
