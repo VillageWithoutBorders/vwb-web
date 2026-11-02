@@ -6614,7 +6614,7 @@ html.calm-motion .nr-card:active { transform: none; }
 .today-slim {
   display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 56px; margin-top: 0.75rem; padding: 0.5rem 0.9rem;
   border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); text-decoration: none;
-  text-align: left; font: inherit; cursor: pointer; box-sizing: border-box;
+  text-align: left; font: inherit; cursor: pointer; box-sizing: border-box; max-width: 100%; min-width: 0; overflow: hidden;
 }
 .today-slim-warn { border: 2px solid var(--warn); background: var(--warn-bg); }
 .today-slim-warn b { color: var(--gold); }
