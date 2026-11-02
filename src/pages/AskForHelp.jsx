@@ -360,17 +360,20 @@ export default function AskForHelp() {
             <form onSubmit={handleSubmit} className="ask-form">
 
                 <div className="form-field">
-                    <label htmlFor="skillNeeded">{forOther ? 'What kind of help does ' + theirName + ' need?' : 'What kind of help do you need?'}</label>
+                    <label id="skillNeededQ">{forOther ? 'What kind of help does ' + theirName + ' need?' : 'What kind of help do you need?'}</label>
+                    <div role="group" aria-labelledby="skillNeededQ">
                     <GroupedSkillChips selected={skillNeeded ? [skillNeeded] : []} skills={skills} renderChip={(skill) => (
                         <button
                             key={skill}
                             type="button"
+                            aria-pressed={skillNeeded === skill}
                             className={`skill-chip ${skillNeeded === skill ? 'active' : ''}`}
                             onClick={() => setSkillNeeded(skill)}
                         >
                             {skill}
                         </button>
                     )} />
+                    </div>
                     {autoPicked && skillNeeded === autoPicked && (
                         <p style={{ margin: '0.5rem 0 0', fontSize: '0.95rem', color: 'var(--text-soft)' }}>We picked {autoPicked} from what you chose. Tap another if it fits better.</p>
                     )}
@@ -389,8 +392,8 @@ export default function AskForHelp() {
                 </div>
 
                 <div className="form-field">
-                    <label>{forOther ? 'How soon do they need help?' : 'How soon do you need help?'}</label>
-                    <div className="urgency-options">
+                    <label id="urgencyQ">{forOther ? 'How soon do they need help?' : 'How soon do you need help?'}</label>
+                    <div className="urgency-options" role="radiogroup" aria-labelledby="urgencyQ">
                         {URGENCY_OPTIONS.map((opt) => (
                             <label
                                 key={opt.value}
@@ -413,8 +416,8 @@ export default function AskForHelp() {
                 </div>
 
                 <div className="form-field">
-                    <label>{forOther ? 'How many people do they need?' : 'How many people do you need?'}</label>
-                    <div className="urgency-options">
+                    <label id="maxHelpersQ">{forOther ? 'How many people do they need?' : 'How many people do you need?'}</label>
+                    <div className="urgency-options" role="radiogroup" aria-labelledby="maxHelpersQ">
                         {HELPER_COUNT_OPTIONS.map((opt) => (
                             <label
                                 key={String(opt.value)}
