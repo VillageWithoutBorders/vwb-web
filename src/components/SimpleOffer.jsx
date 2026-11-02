@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { firstRunPaused } from '../utils/firstVillage'
 import { useAuth } from '../context/AuthContext'
 import { saveSimpleView, phoneUsesLargeText, isSimpleView } from '../utils/simpleView'
+import { startPath } from '../utils/startPath'
 
 // Asked once: Simple view or everything. Shows when the account has never
 // answered (simple_view is empty). The tour waits until this is answered.
@@ -15,13 +16,15 @@ export default function SimpleOffer() {
   const headRef = useRef(null)
   const ask = !!user && !!profile && Object.prototype.hasOwnProperty.call(profile, 'simple_view') && profile.simple_view === null && !closed && !firstRunPaused(pathname)
 
-  // Came from the printed card (or chose Simple on this phone already):
-  // save Simple to the account without asking.
-  const already = ask && isSimpleView()
+  // Came from the printed card (or chose Simple on this phone already), or picked
+  // Quick start or Full setup when signing up (Nov 1): save it without asking.
+  // Quick start is Simple view; Full setup is the full app.
+  const path = startPath(user)
+  const already = ask && (!!path || isSimpleView())
   useEffect(() => {
     if (!already) return
     setClosed(true)
-    saveSimpleView(true).then(() => refreshProfile && refreshProfile())
+    saveSimpleView(path ? path === 'quick' : true).then(() => refreshProfile && refreshProfile())
   }, [already]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { if (ask && !already && headRef.current) headRef.current.focus() }, [ask, already])

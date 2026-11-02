@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { useSimpleView } from '../utils/simpleView'
 import Icon from './Icon'
 import { firstRunPaused } from '../utils/firstVillage'
+import { needsFullSetup } from '../utils/startPath'
 
 // A short walk-through of the app.
 //
@@ -313,7 +314,8 @@ export default function AppTour() {
   // been run yet, the tour never forces itself on anyone.
   // Wait until they've picked Simple or Everything (SimpleOffer asks first).
   const pickedView = !profile || !Object.prototype.hasOwnProperty.call(profile, 'simple_view') || profile.simple_view !== null
-  const needsTour = !!profile && Object.prototype.hasOwnProperty.call(profile, 'tour_done_at') && !profile.tour_done_at && pickedView && !firstRunPaused(pathname)
+  // Full setup (Nov 1) comes before the tour.
+  const needsTour = !!profile && Object.prototype.hasOwnProperty.call(profile, 'tour_done_at') && !profile.tour_done_at && pickedView && !needsFullSetup(user, profile) && !firstRunPaused(pathname)
   const [open, setOpen] = useState(false)
   const [required, setRequired] = useState(false)
   const [index, setIndex] = useState(0)

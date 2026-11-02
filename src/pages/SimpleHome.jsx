@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { supabase } from '../supabaseClient'
 import { saveSimpleView } from '../utils/simpleView'
+import { startPath, setupWaiting } from '../utils/startPath'
 import Icon from '../components/Icon'
 import { forTitle } from '../utils/forSomeone'
 import OrgInvites from '../components/OrgInvites'
@@ -57,6 +58,16 @@ export default function SimpleHome() {
     setBusy(false)
     navigate('/')
     window.scrollTo(0, 0)
+  }
+
+  // Quick start (Nov 1): Full setup waits here until they want it, or say not now.
+  const [setupHidden, setSetupHidden] = useState(false)
+  const offerSetup = startPath(user) === 'quick' && setupWaiting(profile) && !setupHidden
+  async function notNow() {
+    setSetupHidden(true)
+    const { error } = await supabase.rpc('set_my_setup_done')
+    if (error) { console.error('Failed to hide setup:', error); return }
+    if (refreshProfile) refreshProfile()
   }
 
   const first = (profile?.display_name || '').trim().split(/\s+/)[0]
@@ -149,6 +160,18 @@ export default function SimpleHome() {
         <Icon name="cat-emergency" size={40} />
         <span><b>Emergency</b><small>Flood, storm, fire, or outage. In danger? Call 911 first.</small></span>
       </button>
+
+      {offerSetup && (
+        <section className="sh-setup" aria-labelledby="sh-setup-h">
+          <h2 id="sh-setup-h">Want to set up more?</h2>
+          <button type="button" className="sh-row" onClick={() => navigate('/setup')}>
+            <Icon name="cottage" size={32} />
+            <span><b>Make your avatar and cottage</b><small>About 10 minutes. This turns on the full app.</small></span>
+            <span className="sh-arrow" aria-hidden="true">&#8250;</span>
+          </button>
+          <button type="button" className="link-button sh-setup-no" onClick={notNow}>Not now</button>
+        </section>
+      )}
 
       {/* Settings, easy to find (Oct 27, Jade). */}
       <button type="button" className="sh-row sh-settings" onClick={() => navigate('/settings')}>

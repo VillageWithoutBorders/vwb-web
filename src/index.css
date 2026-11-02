@@ -6572,3 +6572,40 @@ html.calm-motion .nr-card:active { transform: none; }
   .message-card.message-card-on { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--surface-2); }
 }
 .convo-header-info h2 { font-size: 1.125rem; font-weight: 700; margin: 0; line-height: 1.2; }
+
+/* Nov 1 (Jade): two ways to sign up, Full setup, cottage name and visitors. */
+.start-ways, .cs-fieldset { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
+.start-ways legend, .cs-fieldset legend { font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; padding: 0; }
+.start-way, .cs-choice {
+  display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1rem; margin-bottom: 0.6rem; min-height: 44px;
+  border: 2px solid var(--border); border-radius: 12px; background: var(--surface-2); cursor: pointer; box-sizing: border-box;
+}
+.start-way.on, .cs-choice.on { border-color: var(--accent); }
+.start-way input, .cs-choice input { width: 22px; height: 22px; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--accent); }
+.start-way b, .cs-choice b { display: block; font-size: 1rem; }
+.start-way small, .cs-choice small { display: block; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.35; margin-top: 0.15rem; }
+.start-way:focus-within, .cs-choice:focus-within, .cs-bg:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.cs-form .form-field input[type="text"] { font-size: 1rem; }
+.cs-note { margin: 0 0 0.6rem; font-size: 0.9rem; color: var(--text-secondary); }
+.cs-bgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 0.5rem; }
+.cs-bg { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.4rem; border: 2px solid var(--border); border-radius: 12px; background: var(--surface-2); cursor: pointer; text-align: center; font-size: 0.85rem; }
+.cs-bg.on { border-color: var(--accent); }
+.cs-bg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.cs-bg img { width: 100%; max-width: 96px; height: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 8px; }
+.fs-page { max-width: 640px; margin: 0 auto; padding: 1rem; box-sizing: border-box; }
+.fs-page h1 { font-size: 1.5rem; margin: 0.5rem 0 0.35rem; }
+.fs-page h1:focus { outline: none; }
+.fs-sub { margin: 0 0 1rem; color: var(--text-secondary); font-size: 1rem; line-height: 1.45; }
+.fs-note { margin: 0.75rem 0 0; color: var(--text-secondary); font-size: 0.9rem; text-align: center; }
+.fs-ends { display: grid; gap: 0.6rem; margin-top: 1rem; }
+.fs-ends .btn, .fs-skip { min-height: 48px; }
+.fs-skip { margin-top: 0.75rem; }
+.fs-back { background: none; border: none; color: var(--accent); font-weight: 700; font-size: 1rem; min-height: 44px; padding: 0 0.25rem; cursor: pointer; }
+.fs-later { display: block; margin: 1.25rem auto 0; min-height: 44px; }
+.sh-setup { padding: 1rem; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.sh-setup h2 { margin: 0 0 0.5rem; font-size: 1.15rem; color: var(--text-strong); }
+.sh-setup-no { display: block; margin: 0.5rem auto 0; min-height: 44px; }
+.cv-who { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.cv-still { cursor: default; pointer-events: none; }
+.cv-closed { max-width: 560px; margin: 2rem auto; text-align: center; }
+.cv-closed h1 { font-size: 1.4rem; margin: 0 0 0.5rem; }
