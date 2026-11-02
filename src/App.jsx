@@ -39,6 +39,8 @@ const Campfire = lazyPage(() => import('./pages/Campfire'))
 const FindVillage = lazyPage(() => import('./pages/FindVillage'))
 const Notifications = lazyPage(() => import('./pages/Notifications'))
 const PublicProfile = lazyPage(() => import('./pages/PublicProfile'))
+const FullSetup = lazyPage(() => import('./pages/FullSetup'))
+const CottageVisit = lazyPage(() => import('./pages/CottageVisit'))
 const GrantReport = lazyPage(() => import('./pages/GrantReport'))
 const ScrambleTest = lazyPage(() => import('./pages/ScrambleTest'))
 import CommunityGuidelines from './pages/CommunityGuidelines'
@@ -168,7 +170,7 @@ function ProtectedRoute({ children }) {
   if (!profile) return <ProfileWait />
   if (!profile.guidelines_accepted_at) return <CommunityGuidelines onAgree={refreshProfile} />
   // New members: find your village next (once), before Simple view and the tour.
-  if (needsFirstVillage(profile)) return <FirstVillage />
+  if (needsFirstVillage(profile, user)) return <FirstVillage />
   return children
 }
 
@@ -254,6 +256,8 @@ function AppRoutes() {
         <Route path="cottage" element={<VillageScene />} />
         <Route path="conversation/:id" element={<Conversation />} />
         <Route path="u/:userId" element={<PublicProfile />} />
+        <Route path="u/:userId/cottage" element={<CottageVisit />} />
+        <Route path="setup" element={<FullSetup />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="connections" element={<OneHome tab="connections"><Connections /></OneHome>} />
         <Route path="my-code" element={<MyCode />} />

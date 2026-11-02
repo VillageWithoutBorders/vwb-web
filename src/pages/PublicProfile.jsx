@@ -22,6 +22,7 @@ export default function PublicProfile() {
   const [msgStatus, setMsgStatus] = useState(null)
   const [blockedThem, setBlockedThem] = useState(false)
   const [canInvite, setCanInvite] = useState(false)
+  const [canVisit, setCanVisit] = useState(false)
   const [inviting, setInviting] = useState(false)
   const [profile, setProfile] = useState(null)
   const [tab, setTab] = useState('requests')
@@ -38,6 +39,18 @@ export default function PublicProfile() {
       if (!alive) return
       if (error) { console.error('Failed to check invite places:', error); setCanInvite(false); return }
       setCanInvite((data || []).length > 0)
+    })
+    return () => { alive = false }
+  }, [user, userId])
+
+  // "Visit their cottage" shows only when they let you (Nov 1, get_cottage).
+  useEffect(() => {
+    if (!user || !userId || user.id === userId) { setCanVisit(false); return }
+    let alive = true
+    supabase.rpc('get_cottage', { p_user: userId }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { if (error.code !== 'PGRST202') console.error('Failed to check cottage visits:', error); setCanVisit(false); return }
+      setCanVisit(!!(data && data.ok))
     })
     return () => { alive = false }
   }, [user, userId])
@@ -181,6 +194,9 @@ export default function PublicProfile() {
           )}
           {canInvite && !blockedThem && (
             <button type="button" onClick={() => setInviting(true)} style={{ marginTop: '0.6rem', marginLeft: '0.5rem', minHeight: 44, padding: '0.5rem 1.1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>Invite to...</button>
+          )}
+          {canVisit && !blockedThem && (
+            <button type="button" onClick={() => navigate('/u/' + userId + '/cottage')} style={{ marginTop: '0.6rem', marginLeft: '0.5rem', minHeight: 44, padding: '0.5rem 1.1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>Visit their cottage</button>
           )}
           {inviting && <InviteSheet person={{ user_id: userId, display_name: profile.display_name }} onClose={() => setInviting(false)} />}
           <ProfileSafetyActions userId={userId} name={profile.display_name} myId={user?.id} onBlockChange={setBlockedThem} openWith={location.state?.safety} onOpened={() => navigate(location.pathname, { replace: true, state: {} })} />
