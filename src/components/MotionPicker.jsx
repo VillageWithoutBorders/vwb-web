@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { readCalm, applyCalm } from '../utils/motion'
+import { savePrefs } from '../utils/uiPrefs'
+import { usePrefsRefresh } from '../hooks/usePrefsRefresh'
 
 // Settings > Easy to use > Using: Calm motion (Oct 27, Jade).
 const CHOICES = [
@@ -9,7 +11,8 @@ const CHOICES = [
 
 export default function MotionPicker() {
   const [calm, setCalm] = useState(readCalm())
-  function choose(k) { applyCalm(k); setCalm(k) }
+  usePrefsRefresh(() => setCalm(readCalm()))
+  function choose(k) { applyCalm(k); setCalm(k); savePrefs({ motion: k ? 'calm' : 'normal' }) }
   return (
     <div className="profile-details" style={{ marginBottom: '1rem' }}>
       <div className="detail-section-header" id="motion-h">Motion</div>
@@ -23,7 +26,7 @@ export default function MotionPicker() {
           </button>
         ))}
       </div>
-      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Calm stops moving pictures, sparkles, and sliding. Saved on this phone.</p>
+      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Calm stops moving pictures, sparkles, and sliding. Saved with your account, so it follows you to any phone.</p>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import Icon from '../components/Icon'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { needsFullSetup } from '../utils/startPath'
+import { applyPrefs, devicePrefs, savePrefs } from '../utils/uiPrefs'
 import { firstRunPaused } from '../utils/firstVillage'
 import { useAuth } from '../context/AuthContext'
 import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView'
@@ -33,6 +34,15 @@ export default function Layout() {
     const v = profile?.simple_view
     if (typeof v === 'boolean' && v !== isSimpleView()) setSimpleLocal(v)
   }, [profile?.simple_view])
+  // Text size, Light or dark, and Motion follow the account too (Nov 1). An account that
+  // never saved them takes this phone's choices, so nobody loses what they picked.
+  const prefsKey = profile && Object.prototype.hasOwnProperty.call(profile, 'ui_prefs') ? JSON.stringify(profile.ui_prefs) : ''
+  useEffect(() => {
+    if (!prefsKey) return
+    if (profile.ui_prefs) { applyPrefs(profile.ui_prefs); return }
+    const mine = devicePrefs()
+    if (mine.text !== 'normal' || mine.theme !== 'auto' || mine.motion !== 'normal') savePrefs(mine)
+  }, [prefsKey]) // eslint-disable-line react-hooks/exhaustive-deps
   // Chats fill the space between the top bar and the tabs, edge to edge,
   // instead of sitting inside the padded page column.
   // World pages (the globe, a village, an organization) fill the whole screen
