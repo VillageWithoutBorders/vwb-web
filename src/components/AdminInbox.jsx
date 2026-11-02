@@ -100,7 +100,8 @@ export default function AdminInbox({ inbox, onOpenTab }) {
   }
 
   const urgent = items.filter((i) => i.urgent && !i.later)
-  const waiting = items.filter((i) => !i.urgent && !i.later)
+  const waiting = items.filter((i) => !i.urgent && !i.later && !i.info)
+  const info = items.filter((i) => i.info)
   const later = items.filter((i) => i.later)
 
   const row = (i) => (
@@ -149,6 +150,13 @@ export default function AdminInbox({ inbox, onOpenTab }) {
         <>
           <h3 className="admin-inbox-group">Waiting</h3>
           <ul className="admin-inbox-list">{waiting.map(row)}</ul>
+        </>
+      )}
+      {info.length > 0 && (
+        <>
+          <h3 className="admin-inbox-group">Good to know</h3>
+          <p className="admin-section-note">How things stand. These don't count in the number on your tools button.</p>
+          <ul className="admin-inbox-list">{info.map(row)}</ul>
         </>
       )}
       {later.length > 0 && (
