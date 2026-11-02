@@ -17,6 +17,7 @@ import { submitUserReport } from '../utils/submitUserReport'
 import { sendPrivateMessage, flushOutbox, getQueuedMessages, cancelQueuedMessage, decryptFromSender, getDeviceId, editPrivateMessage, fetchEditHistory } from '../lib/e2ee'
 import { useGoBack } from '../components/BackLink'
 import { askConfirm, tell } from '../components/AdminDialog'
+import { cottagesICanVisit } from '../utils/cottageVisits'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar shown once, tighter spacing) instead of repeating the
@@ -78,6 +79,14 @@ export default function Conversation({ convoId, pane = false, openReport = false
     const lastMarkedRef = useRef(0)
     const convoRef = useRef(null)
   const [selectedMessage, setSelectedMessage] = useState(null)
+  // Nov 1 (Jade): Visit their cottage in chat settings, when they let you.
+  const [canVisit, setCanVisit] = useState(false)
+  useEffect(() => {
+    if (!otherUserId) return
+    let alive = true
+    cottagesICanVisit([otherUserId]).then((set) => { if (alive) setCanVisit(set.has(otherUserId)) })
+    return () => { alive = false }
+  }, [otherUserId])
   const [editing, setEditing] = useState(null)
   const [history, setHistory] = useState(null)
 
@@ -538,6 +547,11 @@ export default function Conversation({ convoId, pane = false, openReport = false
         {!blockedBy.has(otherUserId) && (
         <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="person" /></span> View Profile
+        </button>
+        )}
+        {canVisit && !blockedBy.has(otherUserId) && (
+        <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId + '/cottage') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', minHeight: 44, textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cottage" /></span> Visit their cottage
         </button>
         )}
         <button onClick={async () => {
