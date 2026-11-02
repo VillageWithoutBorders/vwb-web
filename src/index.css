@@ -6609,3 +6609,19 @@ html.calm-motion .nr-card:active { transform: none; }
 .cv-still { cursor: default; pointer-events: none; }
 .cv-closed { max-width: 560px; margin: 2rem auto; text-align: center; }
 .cv-closed h1 { font-size: 1.4rem; margin: 0 0 0.5rem; }
+
+/* Nov 1 (Jade): slim bars under the cottage map (Coming up, Emergency). */
+.today-slim {
+  display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 56px; margin-top: 0.75rem; padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); text-decoration: none;
+  text-align: left; font: inherit; cursor: pointer; box-sizing: border-box;
+}
+.today-slim-warn { border: 2px solid var(--warn); background: var(--warn-bg); }
+.today-slim-warn b { color: var(--gold); }
+.today-slim-text { flex: 1; min-width: 0; }
+.today-slim-text b { display: block; font-size: 1rem; }
+.today-slim-text small { display: block; font-size: 0.875rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.today-slim-go { font-size: 1.4rem; color: var(--text-muted); }
+.today-slim:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.today-slim:active { transform: scale(0.99); }
+@media (prefers-reduced-motion: reduce) { .today-slim:active { transform: none; } }

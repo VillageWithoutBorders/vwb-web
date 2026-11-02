@@ -96,7 +96,8 @@ export function YourPlaces() {
 }
 
 // Coming up: the next two events near you.
-export function ComingUp() {
+// slim (Nov 1, Jade): under the cottage map, one thin bar with the next event.
+export function ComingUp({ slim = false }) {
   const { profile } = useAuth()
   const [events, setEvents] = useState(null)
 
@@ -110,6 +111,21 @@ export function ComingUp() {
     })
     return () => { alive = false }
   }, [profile?.user_id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (slim) {
+    const ev = events && events[0]
+    const when = ev ? new Date(ev.starts_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : ''
+    return (
+      <Link to="/calendar" className="today-slim" aria-label={ev ? 'Coming up: ' + ev.title + ', ' + when + '. Open the calendar' : 'Open the calendar'}>
+        <Icon name="calendar" size={28} />
+        <span className="today-slim-text">
+          <b>Coming up</b>
+          <small>{events === null ? 'Loading...' : ev ? ev.title + ', ' + when : 'No events nearby yet'}</small>
+        </span>
+        <span className="today-slim-go" aria-hidden="true">&#8250;</span>
+      </Link>
+    )
+  }
 
   return (
     <section aria-labelledby="today-coming-h">
