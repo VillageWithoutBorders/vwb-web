@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { readTextSize as read, applyTextSize } from '../utils/textSize'
+import { savePrefs } from '../utils/uiPrefs'
+import { usePrefsRefresh } from '../hooks/usePrefsRefresh'
 
-// Settings > Text size (Oct 27, Jade). Normal, Large, Larger. Saved on this device.
-// index.html puts the class on the page before it draws, so there is no jump.
-const KEY = 'vwb_text'
+// Settings > Text size (Oct 27, Jade). Saved on this phone and on the account (Nov 1).
 const CHOICES = [
   { k: 'normal', label: 'Normal', size: '1rem' },
   { k: 'large', label: 'Large', size: '1.2rem' },
@@ -10,21 +11,10 @@ const CHOICES = [
   { k: 'largest', label: 'Largest', size: '1.6rem' },
 ]
 
-function read() {
-  try { const v = localStorage.getItem(KEY); return v === 'large' || v === 'larger' || v === 'largest' ? v : 'normal' } catch { return 'normal' }
-}
-
-export function applyTextSize(v) {
-  const root = document.documentElement
-  root.classList.toggle('text-large', v === 'large')
-  root.classList.toggle('text-larger', v === 'larger')
-  root.classList.toggle('text-largest', v === 'largest')
-  try { if (v === 'normal') localStorage.removeItem(KEY); else localStorage.setItem(KEY, v) } catch { /* private window */ }
-}
-
 export default function TextSizePicker() {
   const [size, setSize] = useState(read())
-  function choose(k) { applyTextSize(k); setSize(k) }
+  usePrefsRefresh(() => setSize(read()))
+  function choose(k) { applyTextSize(k); setSize(k); savePrefs({ text: k }) }
   return (
     <div className="profile-details" style={{ marginBottom: '1rem' }}>
       <div className="detail-section-header" id="textsize-h">Text size</div>
@@ -38,7 +28,7 @@ export default function TextSizePicker() {
           </button>
         ))}
       </div>
-      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Makes all the words and buttons bigger, everywhere in the app. Saved on this phone.</p>
+      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Makes all the words and buttons bigger, everywhere in the app. Saved with your account, so it follows you to any phone.</p>
     </div>
   )
 }

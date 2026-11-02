@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { getTheme, setTheme } from '../utils/theme'
+import { savePrefs } from '../utils/uiPrefs'
+import { usePrefsRefresh } from '../hooks/usePrefsRefresh'
 import Icon from './Icon'
 
 // Settings > Light or dark. Light, dark, or whatever the phone is set to.
@@ -11,7 +13,8 @@ const CHOICES = [
 
 export default function AppearancePicker() {
   const [theme, pick] = useState(getTheme())
-  function choose(k) { setTheme(k); pick(k) }
+  usePrefsRefresh(() => pick(getTheme()))
+  function choose(k) { setTheme(k); pick(k); savePrefs({ theme: k }) }
   return (
     <div className="profile-details" style={{ marginBottom: '1rem' }}>
       <div className="detail-section-header" id="appearance-h">Light or dark</div>
@@ -25,7 +28,7 @@ export default function AppearancePicker() {
           </button>
         ))}
       </div>
-      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Saved on this phone. In the full view, map pages keep their painted colors.</p>
+      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Saved with your account, so it follows you to any phone. In the full view, map pages keep their painted colors.</p>
     </div>
   )
 }
