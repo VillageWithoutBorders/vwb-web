@@ -9,6 +9,10 @@ import { useAuth } from '../context/AuthContext'
 // refreshAdminInbox() is called (the Admin page calls it after you act).
 
 const POLL_MS = 60000
+// Nov 2 (Jade): the number on My Tools is only for things someone can finish.
+// These rows are how things stand (a village with no Keeper or Hope Ambassador
+// yet, a quiet admin). They stay in the inbox under "Good to know", with no number.
+const INFO_KINDS = ['village_no_keeper', 'village_no_ambassador', 'village_no_admin', 'quiet_admin']
 const EVENT = 'vwb-admin-inbox'
 
 export function refreshAdminInbox() {
@@ -59,7 +63,8 @@ export function useAdminInbox() {
   const shown = items
     .filter((i) => { const m = markOf(i.kind); return !(m && m.mark === 'cleared' && (i.how_many || 0) <= m.how_many) })
     .map((i) => { const m = markOf(i.kind); return m && m.mark === 'later' ? { ...i, later: true, laterBy: m.marked_by_name, laterMine: m.mine, laterAt: m.marked_at } : i })
-  const now = shown.filter((i) => !i.later)
+    .map((i) => (INFO_KINDS.includes(i.kind) && !i.later ? { ...i, info: true } : i))
+  const now = shown.filter((i) => !i.later && !i.info)
   const total = now.reduce((sum, i) => sum + (i.how_many || 0), 0)
   const urgent = now.some((i) => i.urgent)
   const clearedCount = items.length - shown.length
