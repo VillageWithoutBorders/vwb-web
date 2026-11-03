@@ -22,6 +22,7 @@ import { placesEnabled, getMyPlaces, getVisitorArea, setVisitorArea } from '../u
 import { findHelpForMe, resourcesForPlace, friendlyError, saysNo } from '../utils/resourceReports'
 import { tell } from '../components/AdminDialog'
 import PrintResourceList from '../components/PrintResourceList'
+import { useT } from '../utils/lang'
 
 // Keeps Tab/Shift+Tab cycling inside an open dialog instead of leaking focus
 // out to the page behind it.
@@ -42,8 +43,15 @@ function trapTabKey(e, container) {
 }
 
 export default function CommunityResources() {
+  const t = useT()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  // Close a review box opened from My Tools (Nov 3): drop it from the address.
+  function closeReview(key) {
+    const next = new URLSearchParams(searchParams)
+    next.delete(key)
+    setSearchParams(next, { replace: true })
+  }
   const [query, setQuery] = useState(() => searchParams.get('q') || '')
   const { user, profile, isAdmin, organizations: myOrgs } = useAuth()
   const canVerify = profile?.is_hope_ambassador || isAdmin
@@ -108,6 +116,11 @@ export default function CommunityResources() {
   const [fixing, setFixing] = useState(null)
   const [fix, setFix] = useState({})
   const [savingFix, setSavingFix] = useState(false)
+  // Nov 3 (Jade): Hope Ambassadors change a listing right away only in their own
+  // area (can_review_resource, vwb-resource-reports.sql). Outside it, or with no
+  // area chosen yet, the same sheet sends the change for review instead, so
+  // nothing typed is lost. null = still checking, true = right away, false = review.
+  const [fixNow, setFixNow] = useState(null)
   // Oct 28: Mark as duplicate, from the Edit sheet.
   const [dupOpen, setDupOpen] = useState(false)
   const [dupQuery, setDupQuery] = useState('')
@@ -372,6 +385,38 @@ export default function CommunityResources() {
     })
     setDupOpen(false); setDupQuery(''); setDupResults([]); setDupPick(null); setDupKeepThis(false)
     setFixing(r)
+    setFixNow(isAdmin ? true : null)
+    if (!isAdmin) {
+      supabase.rpc('can_review_resource', { p_resource: r.id }).then(({ data, error }) => {
+        // Not set up yet (an older database): the save itself still checks.
+        if (error) { if (error.code !== 'PGRST202') console.error('can_review_resource failed:', error); setFixNow(true); return }
+        setFixNow(data === true)
+      })
+    }
+  }
+
+  // Outside your area: send what was typed as a suggested edit, for that area's
+  // Hope Ambassadors to check. Kinds of help and town can't be suggested this way.
+  async function sendFixForReview() {
+    if (!fixing) return
+    const source = (fix.source || '').trim()
+    if (!source) { tell('Add where you checked this: their website, a call, or a visit.', { tone: 'error' }); document.getElementById('fix-source')?.focus(); return }
+    const payload = { p_resource_id: fixing.id, p_source_url: source }
+    const map = { name: 'p_name', description: 'p_description', phone: 'p_phone', url: 'p_url', address: 'p_address', requirements: 'p_requirements' }
+    Object.keys(map).forEach((k) => { if ((fix[k] || '').trim() !== (fixing[k] || '')) payload[map[k]] = (fix[k] || '').trim() })
+    if (Object.keys(payload).length <= 2) { tell('Nothing to send. Kinds of help and town can only be changed by the Hope Ambassadors for that area.'); return }
+    setSavingFix(true)
+    const { error } = await supabase.rpc('submit_resource_edit', payload)
+    setSavingFix(false)
+    if (error) {
+      console.error('Failed to send resource edit for review:', error)
+      tell(error.message && error.message.length < 160 ? error.message : 'Could not send your changes. Try again.', { tone: 'error' })
+      return
+    }
+    const id = fixing.id
+    setFixing(null)
+    setCardNotice({ id, text: 'Sent. A Hope Ambassador for this area will check it. The listing stays the same until then.' })
+    await Promise.all([loadResources(), loadEditHistory()])
   }
 
   // Search every listing by name for the match (reviewers can read them all).
@@ -456,6 +501,7 @@ export default function CommunityResources() {
 
   async function saveFix() {
     if (!fixing) return
+    if (fixNow === false) { sendFixForReview(); return }
     if (!fix.name.trim()) { tell('A resource needs a name.', { tone: 'error' }); return }
     if (!fix.categories.length) { tell('Pick at least one kind of help.', { tone: 'error' }); return }
     const fields = {}
@@ -470,6 +516,12 @@ export default function CommunityResources() {
       p_resource: fixing.id, p_fields: fields, p_categories: catsChanged ? fix.categories : null, p_source: fix.source.trim() || null,
     })
     setSavingFix(false)
+    if (error && error.code === '42501') {
+      // Outside your area after all. Keep everything typed, and offer to send it for review.
+      setFixNow(false)
+      tell('This listing is outside your area, so the change goes to that area\'s Hope Ambassadors. Add where you checked it, then tap Send for review.')
+      return
+    }
     if (error) {
       console.error('Failed to save resource changes:', error)
       tell(error.code === 'PGRST202' ? 'This needs a quick database update first (vwb-resource-direct-edit.sql).'
@@ -621,7 +673,7 @@ export default function CommunityResources() {
 
   const orderedCats = [...CATEGORIES, ...Object.keys(grouped).filter((c) => !CATEGORIES.includes(c))].filter((c) => grouped[c])
   const activeFilters = (orgFilter !== 'all' ? 1 : 0) + (regionFilter !== 'all' ? 1 : 0) + (radiusFilter !== 'all' ? 1 : 0) + accessFilter.length
-  const accessLabel = (f) => f === 'no_appt' ? 'No appointment needed' : f === 'no_referral' ? 'No referral needed' : f.slice(4)
+  const accessLabel = (f) => f === 'no_appt' ? t('No appointment needed') : f === 'no_referral' ? t('No referral needed') : f.slice(4)
   const toggleAccess = (f) => setAccessFilter((prev) => prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f])
   const managesOrg = (oid) => !!oid && (isAdmin || (myOrgs || []).some((o) => o.id === oid && (o.role === 'admin' || o.role === 'organizer')))
   const visitorNeedsArea = placesEnabled && !user && !visitorArea
@@ -638,35 +690,35 @@ export default function CommunityResources() {
                         {r.description && <p className="fh-card-desc">{r.description}</p>}
                         {placesEnabled && <CrnCardDetails r={r} />}
                         {r.address && <p className="fh-card-meta"><AddressLink address={r.address} /></p>}
-                        {r.neighborhood && <p className="fh-card-meta">Area: {r.neighborhood}</p>}
-                        {r.requirements && <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', margin: '0.2rem 0', lineHeight: 1.4 }}><Icon name="clipboard" /> What to bring: {r.requirements}</p>}
+                        {r.neighborhood && <p className="fh-card-meta">{t('Area:')} {r.neighborhood}</p>}
+                        {r.requirements && <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', margin: '0.2rem 0', lineHeight: 1.4 }}><Icon name="clipboard" /> {t('What to bring:')} {r.requirements}</p>}
                         {resourceDistance(r) != null && (
-                          <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.2rem 0 0' }}><Icon name="pin" /> {resourceDistance(r).toFixed(1)} mi away</p>
+                          <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.2rem 0 0' }}><Icon name="pin" /> {t('{n} mi away', { n: resourceDistance(r).toFixed(1) })}</p>
                         )}
                         {r.organizations && !user && (
-                          <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.4rem 0 0' }}>Shared by {r.organizations.name}</p>
+                          <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.4rem 0 0' }}>{t('Shared by {name}', { name: r.organizations.name })}</p>
                         )}
                         {r.organizations && user && (
-                          <button onClick={() => navigate('/orgs/' + r.organizations.id)} style={{ display: 'block', background: 'none', border: 'none', padding: '0.3rem 0', marginTop: '0.2rem', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>Shared by {r.organizations.name}</button>
+                          <button onClick={() => navigate('/orgs/' + r.organizations.id)} style={{ display: 'block', background: 'none', border: 'none', padding: '0.3rem 0', marginTop: '0.2rem', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>{t('Shared by {name}', { name: r.organizations.name })}</button>
                         )}
                         <div className="fh-card-links">
-                          {r.phone && <a className="fh-link" href={'tel:' + r.phone.replace(/[^0-9+]/g, '')} style={{ color: 'var(--info)' }}>Call {r.phone}</a>}
-                          {!r.phone && r.provider_phone && <a className="fh-link" href={'tel:' + r.provider_phone.replace(/[^0-9+]/g, '')} style={{ color: 'var(--info)' }}>Organization phone: {r.provider_phone}</a>}
-                          {r.url && <a className="fh-link" href={r.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>Visit website &#8599;</a>}
+                          {r.phone && <a className="fh-link" href={'tel:' + r.phone.replace(/[^0-9+]/g, '')} style={{ color: 'var(--info)' }}>{t('Call {phone}', { phone: r.phone })}</a>}
+                          {!r.phone && r.provider_phone && <a className="fh-link" href={'tel:' + r.provider_phone.replace(/[^0-9+]/g, '')} style={{ color: 'var(--info)' }}>{t('Organization phone:')} {r.provider_phone}</a>}
+                          {r.url && <a className="fh-link" href={r.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>{t('Visit website')} &#8599;</a>}
                           {Array.isArray(r.links) && r.links.filter((l) => l && /^https?:\/\//i.test(l.url || '')).map((l, i) => (
                             <a key={i} className="fh-link" href={l.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>{l.label || 'Link'} &#8599;</a>
                           ))}
                         </div>
 
                         {placesEnabled && r.has_pending_edit && (
-                          <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.85rem', margin: '0.4rem 0 0' }}><Icon name="hourglass" /> Your edit is waiting for a Hope Ambassador.</p>
+                          <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.85rem', margin: '0.4rem 0 0' }}><Icon name="hourglass" /> {t('Your edit is waiting for a Hope Ambassador.')}</p>
                         )}
                         {placesEnabled && cardNotice?.id === r.id && (
                           <p role="status" style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 600, margin: '0.4rem 0 0' }}>{cardNotice.text}</p>
                         )}
                         {placesEnabled && user && r.verified && (
                           <button type="button" onClick={() => setReportFor(r)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', minHeight: 44, marginTop: '0.4rem', padding: '0 0.2rem', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>
-                            <Icon name="flag" /> Something wrong?
+                            <Icon name="flag" /> {t('Something wrong?')}
                           </button>
                         )}
                         {!placesEnabled && cardNotice?.id === r.id && (
@@ -680,7 +732,7 @@ export default function CommunityResources() {
                         )}
                         {user && !canVerify && r.verified && editFormFor !== r.id && (
                           <button type="button" className="btn btn-outline" onClick={() => { if (!openHistoryFor.includes(r.id)) toggleHistory(r.id); openEditForm(r) }} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', minHeight: 44, marginTop: '0.5rem' }}>
-                            <Icon name="pencil" /> Suggest an edit
+                            <Icon name="pencil" /> {t('Suggest an edit')}
                           </button>
                         )}
 
@@ -695,10 +747,10 @@ export default function CommunityResources() {
 </>)}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: 'auto' }}>
                             <button onClick={() => toggleHistory(r.id)} aria-expanded={openHistoryFor.includes(r.id)} style={{ background: 'none', border: 'none', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '44px' }}>
-                              {(editHistoryByResource[r.id] || []).filter(e => !e.reverted).length > 0 ? (editHistoryByResource[r.id].filter(e => !e.reverted).length) + ' edit' + ((editHistoryByResource[r.id].filter(e => !e.reverted).length === 1) ? '' : 's') : 'Edit history'}
+                              {(editHistoryByResource[r.id] || []).filter(e => !e.reverted).length > 0 ? t((editHistoryByResource[r.id].filter(e => !e.reverted).length === 1) ? '1 edit' : '{n} edits', { n: editHistoryByResource[r.id].filter(e => !e.reverted).length }) : t('Edit history')}
                             </button>
                             <button onClick={() => toggleReviews(r.id)} aria-expanded={openReviewsFor.includes(r.id)} style={{ background: 'none', border: 'none', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', padding: '0.5rem 0.1rem', minHeight: '44px' }}>
-                              {(reviewsByResource[r.id]?.length || 0) > 0 ? reviewsByResource[r.id].length + ' review' + (reviewsByResource[r.id].length === 1 ? '' : 's') : 'Leave a review'}
+                              {(reviewsByResource[r.id]?.length || 0) > 0 ? t(reviewsByResource[r.id].length === 1 ? '1 review' : '{n} reviews', { n: reviewsByResource[r.id].length }) : t('Leave a review')}
                             </button>
                           </div>
                         </div>
@@ -709,7 +761,7 @@ export default function CommunityResources() {
                               <div key={rev.id} style={{ marginBottom: '0.5rem' }}>
                                 <p style={{ color: 'var(--text-soft)', fontSize: '0.8125rem', margin: 0, lineHeight: 1.4 }}>{rev.body}</p>
                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                                  Anonymous &middot; {new Date(rev.created_at).toLocaleDateString()}
+                                  {t('Anonymous')} &middot; {new Date(rev.created_at).toLocaleDateString()}
                                   {rev.user_id === user?.id && (
                                     <> &middot; <button onClick={() => deleteMyReview(r.id, rev.id)} aria-label="Delete your review" style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.35rem 0.25rem', minHeight: '44px' }}>delete</button></>
                                   )}
@@ -717,22 +769,22 @@ export default function CommunityResources() {
                               </div>
                             ))}
                             {(reviewsByResource[r.id] || []).length === 0 && (
-                              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.4rem' }}>No reviews yet.</p>
+                              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.4rem' }}>{t('No reviews yet.')}</p>
                             )}
                             {user ? (<>
 <textarea
                               value={reviewDrafts[r.id] || ''}
                               onChange={e => setReviewDrafts(prev => ({ ...prev, [r.id]: e.target.value }))}
-                              placeholder="Add a note about how it went. Your name is never shown."
-                              aria-label="Your anonymous review"
+                              placeholder={t('Add a note about how it went. Your name is never shown.')}
+                              aria-label={t('Your anonymous review')}
                               maxLength={500}
                               style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.8125rem', marginBottom: '0.4rem', minHeight: '50px', resize: 'vertical', boxSizing: 'border-box' }}
                             />
                             <button onClick={() => submitReview(r.id)} disabled={!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id} style={{ padding: '0.55rem 0.9rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', opacity: (!reviewDrafts[r.id]?.trim() || submittingReviewFor === r.id) ? 0.5 : 1 }}>
-                              {submittingReviewFor === r.id ? 'Posting...' : 'Post anonymously'}
+                              {t(submittingReviewFor === r.id ? 'Posting...' : 'Post anonymously')}
                             </button>
 </>) : (
-<p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: 0 }}>Sign in to add a note about your experience.</p>
+<p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: 0 }}>{t('Sign in to add a note about your experience.')}</p>
 )}
                           </div>
                         )}
@@ -816,14 +868,14 @@ export default function CommunityResources() {
       {user ? <HelpSwitch /> : <BackLink fallback="/welcome" fallbackLabel="Welcome" />}
       <div className="fh-head">
         <img src="/art/icons/heart-hands.svg" alt="" width="48" height="48" />
-        <h1>Find resources</h1>
+        <h1>{t('Find resources')}</h1>
       </div>
-      <p className="feed-subtitle fh-sub">Food, housing, safety, and more, shared by neighbors and local groups.</p>
+      <p className="feed-subtitle fh-sub">{t('Food, housing, safety, and more, shared by neighbors and local groups.')}</p>
 
       <form className="hub-search" role="search" onSubmit={(e) => e.preventDefault()}>
-        <label htmlFor="res-search" className="sr-only">Search resources</label>
-        <input id="res-search" type="search" inputMode="search" enterKeyHint="search" placeholder="Food, rent, rides..." value={query} onChange={(e) => setQuery(e.target.value)} />
-        {query && <button type="button" className="btn btn-outline" onClick={() => setQuery('')}>Clear</button>}
+        <label htmlFor="res-search" className="sr-only">{t('Search resources')}</label>
+        <input id="res-search" type="search" inputMode="search" enterKeyHint="search" placeholder={t('Food, rent, rides...')} value={query} onChange={(e) => setQuery(e.target.value)} />
+        {query && <button type="button" className="btn btn-outline" onClick={() => setQuery('')}>{t('Clear')}</button>}
       </form>
 
       {visitorNeedsArea && (
@@ -831,43 +883,49 @@ export default function CommunityResources() {
       )}
       {placesEnabled && !user && visitorArea && (
         <p style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.25rem 0.5rem', margin: '0 0 0.75rem', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-          <span>Showing help for <strong style={{ color: 'var(--text)' }}>{visitorArea.label}</strong>.</span>
-          <button type="button" onClick={() => chooseVisitorArea(null)} style={{ minHeight: 44, padding: '0 0.25rem', background: 'none', border: 'none', color: 'var(--accent)', font: 'inherit', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>Change area</button>
+          <span>{t('Showing help for')} <strong style={{ color: 'var(--text)' }}>{visitorArea.label}</strong>.</span>
+          <button type="button" onClick={() => chooseVisitorArea(null)} style={{ minHeight: 44, padding: '0 0.25rem', background: 'none', border: 'none', color: 'var(--accent)', font: 'inherit', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>{t('Change area')}</button>
         </p>
       )}
       {placesEnabled && user && myAreaCount === 0 && (
         <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.95rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem', lineHeight: 1.45 }}>
-          Choose your area to see programs that serve you. <Link to="/settings?tab=account" style={{ color: 'var(--accent)', fontWeight: 600 }}>Choose your area</Link>
+          {t('Choose your area to see programs that serve you.')} <Link to="/settings?tab=account" style={{ color: 'var(--accent)', fontWeight: 600 }}>{t('Choose your area')}</Link>
         </p>
       )}
-      {placesEnabled && canVerify && (
-        <p style={{ margin: '0 0 0.75rem' }}>
-          <Link to="/resource-reports" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', minHeight: 44, padding: '0 1rem' }}><Icon name="flag" /> Reports to review</Link>
-        </p>
-      )}
+      {/* Nov 3 (Jade): Reports to review moved to My Tools, so the list comes first. */}
       {loadError && <p role="alert" style={{ color: 'var(--danger)', fontSize: '0.95rem', margin: '0 0 0.75rem' }}>{loadError}</p>}
 
-          {!visitorNeedsArea && (allOrgs.length > 0 || allRegions.length > 1 || myLocation || hasCrn) && (
+          {!visitorNeedsArea && ((allOrgs.length > 0 || allRegions.length > 1 || myLocation || hasCrn) || (!loadingResources && filteredVerifiedResources.length > 0)) && (
             <div className="fh-filterbar">
+              {(allOrgs.length > 0 || allRegions.length > 1 || myLocation || hasCrn) && (
               <button type="button" className="fh-filter-btn" aria-haspopup="dialog" onClick={() => setShowFilters(true)}>
-                <span aria-hidden="true"><Icon name="gear" /></span> Filters{activeFilters ? ' (' + activeFilters + ')' : ''}
+                <span aria-hidden="true"><Icon name="gear" /></span> {t('Filters')}{activeFilters ? ' (' + activeFilters + ')' : ''}
               </button>
+              )}
+              {/* A paper list to hand out (Nov 3): what is shown now. Next to Filters (Nov 3, Jade). */}
+              {!loadingResources && filteredVerifiedResources.length > 0 && (
+                <PrintResourceList
+                  cats={query.trim() || !selectedCat ? orderedCats : grouped[selectedCat] ? [selectedCat] : []}
+                  grouped={grouped}
+                  title={selectedCat && !query.trim() ? t(selectedCat) + ': ' + t('places that can help') : t('Places that can help')}
+                />
+              )}
               {orgFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setOrgFilter('all')} aria-label={'Remove filter: ' + orgName(orgFilter)}>{orgName(orgFilter)} <span aria-hidden="true">&#10005;</span></button>}
               {regionFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRegionFilter('all')} aria-label={'Remove filter: ' + regionFilter}>{regionFilter} <span aria-hidden="true">&#10005;</span></button>}
-              {radiusFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRadiusFilter('all')} aria-label={'Remove filter: within ' + radiusFilter + ' miles'}>Within {radiusFilter} mi <span aria-hidden="true">&#10005;</span></button>}
+              {radiusFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRadiusFilter('all')} aria-label={t('Remove filter: within {n} miles', { n: radiusFilter })}>{t('Within {n} mi', { n: radiusFilter })} <span aria-hidden="true">&#10005;</span></button>}
               {accessFilter.map((f) => <button key={f} type="button" className="fh-chip" onClick={() => toggleAccess(f)} aria-label={'Remove filter: ' + accessLabel(f)}>{accessLabel(f)} <span aria-hidden="true">&#10005;</span></button>)}
             </div>
           )}
 
           {wide && !visitorNeedsArea && !loadingResources && (
-            <div className="fh-grid fr-side-tiles" role="group" aria-label="Kinds of help">
+            <div className="fh-grid fr-side-tiles" role="group" aria-label={t('Kinds of help')}>
               {orderedCats.map(cat => {
                 const on = selectedCat === cat && !query.trim()
                 return (
                   <button key={cat} type="button" className={'fh-tile' + (on ? ' on' : '')} aria-pressed={on} onClick={() => { setQuery(''); openCat(on ? null : cat) }}>
                     <img src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="48" height="48" />
-                    <span className="fh-tile-name">{cat}</span>
-                    <span className="fh-tile-count">{grouped[cat].length} {grouped[cat].length === 1 ? 'place' : 'places'}</span>
+                    <span className="fh-tile-name">{t(cat)}</span>
+                    <span className="fh-tile-count">{t(grouped[cat].length === 1 ? '1 place' : '{n} places', { n: grouped[cat].length })}</span>
                   </button>
                 )
               })}
@@ -877,7 +935,7 @@ export default function CommunityResources() {
 
       <div className="fr-right">
           {wide && !visitorNeedsArea && !loadingResources && !query.trim() && !selectedCat && filteredVerifiedResources.length > 0 && (
-            <p className="fr-pick-hint">Pick a kind of help on the left, or search. The places show up here.</p>
+            <p className="fr-pick-hint">{t('Pick a kind of help on the left, or search. The places show up here.')}</p>
           )}
 
           {showFilters && (
@@ -1006,12 +1064,20 @@ export default function CommunityResources() {
                   <h3 id="fix-title" style={{ margin: 0, color: 'var(--accent)' }}>Edit {fixing.name}</h3>
                   <button type="button" onClick={() => setFixing(null)} aria-label="Close" style={{ minWidth: 44, minHeight: 44, background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.75rem', lineHeight: 1.45 }}>Changes show right away. They go in the edit history, so they can be undone.</p>
+                {fixNow === false ? (
+                  <p role="status" style={{ color: 'var(--text)', fontSize: '0.95rem', margin: '0 0 0.75rem', lineHeight: 1.45, padding: '0.6rem 0.75rem', borderRadius: '10px', border: '2px solid var(--gold)' }}>
+                    {myAreaCount === 0
+                      ? <>You haven't chosen your area yet, so changes go to a Hope Ambassador for review. <Link to="/settings?tab=account" style={{ color: 'var(--accent)', fontWeight: 600 }}>Choose your area</Link> to fix listings near you right away. Kinds of help and town can't be sent this way.</>
+                      : <>This listing is outside your area. Your changes go to the Hope Ambassadors there for review. Kinds of help and town can't be sent this way.</>}
+                  </p>
+                ) : (
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.75rem', lineHeight: 1.45 }}>Changes show right away. They go in the edit history, so they can be undone.</p>
+                )}
                 <label id="fix-cat-label" style={labelStyle}>Kinds of help (pick at least one)</label>
                 <div role="group" aria-labelledby="fix-cat-label" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
                   {CATEGORIES.map((c) => {
                     const on = fix.categories.includes(c)
-                    return <button key={c} type="button" aria-pressed={on} onClick={() => setFix((f) => ({ ...f, categories: on ? f.categories.filter((x) => x !== c) : [...f.categories, c] }))} style={{ padding: '0.5rem 0.75rem', minHeight: '44px', borderRadius: '16px', border: on ? 'none' : '1px solid var(--border-strong)', background: on ? 'var(--accent)' : 'none', color: on ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
+                    return <button key={c} type="button" aria-pressed={on} disabled={fixNow === false} onClick={() => setFix((f) => ({ ...f, categories: on ? f.categories.filter((x) => x !== c) : [...f.categories, c] }))} style={{ opacity: fixNow === false ? 0.55 : 1, padding: '0.5rem 0.75rem', minHeight: '44px', borderRadius: '16px', border: on ? 'none' : '1px solid var(--border-strong)', background: on ? 'var(--accent)' : 'none', color: on ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
                   })}
                 </div>
                 {[
@@ -1027,14 +1093,14 @@ export default function CommunityResources() {
                     <label htmlFor={'fix-' + k} style={labelStyle}>{label}</label>
                     {kind === 'area'
                       ? <textarea id={'fix-' + k} style={{ ...fieldStyle, fontSize: '1rem', minHeight: '64px', resize: 'vertical' }} value={fix[k]} onChange={(e) => setFix((f) => ({ ...f, [k]: e.target.value }))} maxLength={k === 'requirements' ? 300 : 1000} />
-                      : <input id={'fix-' + k} type={mode === 'url' ? 'url' : mode === 'tel' ? 'tel' : 'text'} inputMode={mode || undefined} style={{ ...fieldStyle, fontSize: '1rem' }} value={fix[k]} onChange={(e) => setFix((f) => ({ ...f, [k]: e.target.value }))} maxLength={k === 'name' ? 120 : 300} />}
+                      : <input id={'fix-' + k} type={mode === 'url' ? 'url' : mode === 'tel' ? 'tel' : 'text'} inputMode={mode || undefined} disabled={k === 'neighborhood' && fixNow === false} style={{ ...fieldStyle, fontSize: '1rem', opacity: k === 'neighborhood' && fixNow === false ? 0.55 : 1 }} value={fix[k]} onChange={(e) => setFix((f) => ({ ...f, [k]: e.target.value }))} maxLength={k === 'name' ? 120 : 300} />}
                   </div>
                 ))}
-                <label htmlFor="fix-source" style={labelStyle}>Where did you check this? (optional)</label>
+                <label htmlFor="fix-source" style={labelStyle}>{fixNow === false ? 'Where did you check this? (needed)' : 'Where did you check this? (optional)'}</label>
                 <input id="fix-source" style={{ ...fieldStyle, fontSize: '1rem' }} placeholder="Their website, a call, a visit" value={fix.source} onChange={(e) => setFix((f) => ({ ...f, source: e.target.value }))} maxLength={500} />
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                   <button type="button" className="btn btn-outline" style={{ flex: 1, minHeight: 48 }} onClick={() => setFixing(null)}>Cancel</button>
-                  <button type="button" className="btn btn-primary" style={{ flex: 1, minHeight: 48 }} disabled={savingFix} onClick={saveFix}>{savingFix ? 'Saving...' : 'Save'}</button>
+                  <button type="button" className="btn btn-primary" style={{ flex: 1, minHeight: 48 }} disabled={savingFix || fixNow === null} onClick={saveFix}>{savingFix ? (fixNow === false ? 'Sending...' : 'Saving...') : fixNow === false ? 'Send for review' : 'Save'}</button>
                 </div>
 
                 {/* Oct 28: the same place listed twice. */}
@@ -1104,9 +1170,9 @@ export default function CommunityResources() {
 
           {/* Oct 28 (Jade): the review box only opens from My Tools > Resource suggestions
               (or an admin alert), so the library starts at the top for everyone. */}
-          {canVerify && searchParams.get('suggestions') === '1' && <ResourceSuggestionsReview onAdd={addFromSuggestion} refreshKey={suggestionsKey} />}
+          {canVerify && searchParams.get('suggestions') === '1' && <ResourceSuggestionsReview onAdd={addFromSuggestion} refreshKey={suggestionsKey} onClose={() => closeReview('suggestions')} />}
           {/* Oct 30: My Tools > Merged listings. Undo a merge any time. */}
-          {canVerify && searchParams.get('merges') === '1' && <ResourceMergesReview onChanged={() => { loadResources(); loadEditHistory() }} />}
+          {canVerify && searchParams.get('merges') === '1' && <ResourceMergesReview onChanged={() => { loadResources(); loadEditHistory() }} onClose={() => closeReview('merges')} />}
 
           {canVerify && pendingResources.length > 0 && (
             <details className="fh-pending" open={!!fromSuggestion || undefined}>
@@ -1127,24 +1193,15 @@ export default function CommunityResources() {
             </details>
           )}
 
-          {loadingResources && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Loading...</p>}
-
-          {/* A paper list to hand out (Nov 3): what is shown now, one kind of help or all of them. */}
-          {!visitorNeedsArea && !loadingResources && filteredVerifiedResources.length > 0 && (
-            <PrintResourceList
-              cats={query.trim() || !selectedCat ? orderedCats : grouped[selectedCat] ? [selectedCat] : []}
-              grouped={grouped}
-              title={selectedCat && !query.trim() ? selectedCat + ': places that can help' : 'Places that can help'}
-            />
-          )}
+          {loadingResources && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>{t('Loading...')}</p>}
 
           {!wide && !visitorNeedsArea && !loadingResources && !query.trim() && !selectedCat && (
             <div className="fh-grid">
               {orderedCats.map(cat => (
                 <button key={cat} type="button" className="fh-tile" onClick={() => openCat(cat)}>
                   <img src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="48" height="48" />
-                  <span className="fh-tile-name">{cat}</span>
-                  <span className="fh-tile-count">{grouped[cat].length} {grouped[cat].length === 1 ? 'place' : 'places'}</span>
+                  <span className="fh-tile-name">{t(cat)}</span>
+                  <span className="fh-tile-count">{t(grouped[cat].length === 1 ? '1 place' : '{n} places', { n: grouped[cat].length })}</span>
                 </button>
               ))}
             </div>
@@ -1153,9 +1210,9 @@ export default function CommunityResources() {
           {!loadingResources && (query.trim() ? orderedCats : selectedCat && grouped[selectedCat] ? [selectedCat] : []).map(cat => (
             <section key={cat} className="fh-cat" aria-labelledby={'fh-cat-' + cat}>
               <div className="fh-cat-head">
-                {!query.trim() && <button type="button" className="fh-back" onClick={() => openCat(null)} aria-label="Back to all kinds of help">&#8249;</button>}
+                {!query.trim() && <button type="button" className="fh-back" onClick={() => openCat(null)} aria-label={t('Back to all kinds of help')}>&#8249;</button>}
                 <img src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="40" height="40" />
-                <h2 id={'fh-cat-' + cat}>{cat} <span>({grouped[cat].length})</span></h2>
+                <h2 id={'fh-cat-' + cat}>{t(cat)} <span>({grouped[cat].length})</span></h2>
               </div>
               <div className="fh-list">
                 {grouped[cat].map(resourceCard)}
@@ -1166,20 +1223,20 @@ export default function CommunityResources() {
           {/* A kind of help with nothing listed near you yet: say so instead of showing a blank page. */}
           {!visitorNeedsArea && !loadingResources && !query.trim() && selectedCat && !grouped[selectedCat] && filteredVerifiedResources.length > 0 && (
             <div style={{ textAlign: 'center', padding: '1.25rem 1rem' }}>
-              <p style={{ color: 'var(--text-muted)', margin: '0 0 0.75rem' }}>Nothing is listed for {selectedCat} near you yet.</p>
-              <button type="button" className="btn btn-outline" onClick={() => openCat(null)} style={{ minHeight: '44px', marginRight: '0.5rem' }}>See all kinds of help</button>
-              {user && <Link to="/ask" className="btn btn-primary" style={{ minHeight: '44px' }}>Ask a neighbor</Link>}
+              <p style={{ color: 'var(--text-muted)', margin: '0 0 0.75rem' }}>{t('Nothing is listed for {cat} near you yet.', { cat: t(selectedCat) })}</p>
+              <button type="button" className="btn btn-outline" onClick={() => openCat(null)} style={{ minHeight: '44px', marginRight: '0.5rem' }}>{t('See all kinds of help')}</button>
+              {user && <Link to="/ask" className="btn btn-primary" style={{ minHeight: '44px' }}>{t('Ask a neighbor')}</Link>}
             </div>
           )}
 
           {!visitorNeedsArea && !loadingResources && filteredVerifiedResources.length === 0 && (
             <>
               <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 1.5rem 0.75rem' }}>
-                {query.trim() ? 'Nothing found for "' + query.trim() + '". Try a shorter word, or ask for help and a neighbor can point you the right way.' : activeFilters ? 'No resources match your filters. Try removing one.' : placesEnabled ? 'Nothing listed for your area yet.' : 'No resources yet. Be the first to add one.'}
+                {query.trim() ? t('Nothing found for "{q}". Try a shorter word, or ask for help and a neighbor can point you the right way.', { q: query.trim() }) : t(activeFilters ? 'No resources match your filters. Try removing one.' : placesEnabled ? 'Nothing listed for your area yet.' : 'No resources yet. Be the first to add one.')}
               </p>
               {query.trim() && user && (
                 <div style={{ textAlign: 'center', paddingBottom: '1rem' }}>
-                  <Link to="/ask" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', padding: '0 1.25rem' }}>Ask neighbors instead</Link>
+                  <Link to="/ask" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px', padding: '0 1.25rem' }}>{t('Ask neighbors instead')}</Link>
                 </div>
               )}
             </>
@@ -1189,15 +1246,15 @@ export default function CommunityResources() {
           straight to the library; everyone else suggests it for review. */}
       {user && (
             <div className="sr-suggest">
-              <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-soft)' }}>Know a place that helps that isn't listed{canSubmit ? '?' : ', or is a kind of help missing near you?'}</p>
+              <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-soft)' }}>{t(canSubmit ? "Know a place that helps that isn't listed?" : "Know a place that helps that isn't listed, or is a kind of help missing near you?")}</p>
               {!canSubmit && (
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: 0 }}>
-              Listings come from local partner groups and the Community Resource Network.{user && <>{' '}
-              <button onClick={() => navigate('/start-group')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.95rem', textDecoration: 'underline', padding: 0, minHeight: 44 }}>Want your group listed here?</button></>}
+              {t('Listings come from local partner groups and the Community Resource Network.')}{user && <>{' '}
+              <button onClick={() => navigate('/start-group')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.95rem', textDecoration: 'underline', padding: 0, minHeight: 44 }}>{t('Want your group listed here?')}</button></>}
             </p>
               )}
               {canSubmit
-                ? <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={() => { setFromSuggestion(null); setShowSubmit(true); setSubmitted(false) }}><Icon name="books" /> Add a resource</button>
+                ? <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={() => { setFromSuggestion(null); setShowSubmit(true); setSubmitted(false) }}><Icon name="books" /> {t('Add a resource')}</button>
                 : <SuggestResource category={selectedCat || ''} />}
             </div>
           )}

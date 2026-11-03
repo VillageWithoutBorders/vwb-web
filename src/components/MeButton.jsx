@@ -18,11 +18,11 @@ export default function MeButton() {
       to={to}
       className={'header-btn me-btn' + (here ? ' on' : '')}
       data-tour="me"
-      aria-label={simple ? t('My Corner: profile, settings, and more') : 'My Cottage: your own map'}
+      aria-label={simple ? t('My Corner: profile, settings, and more') : t('My Cottage: your own map')}
       aria-current={here ? 'page' : undefined}
     >
       {simple ? <MyAvatar size={26} /> : <Icon name="cottage" size={26} className="header-btn-pic" />}
-      <span className="header-btn-label" aria-hidden="true">{simple ? t('My Corner') : <><span className="header-my">My </span>Cottage</>}</span>
+      <span className="header-btn-label" aria-hidden="true">{simple ? t('My Corner') : <><span className="header-my">{t('My ')}</span>{t('Cottage')}</>}</span>
     </Link>
   )
 }
@@ -31,13 +31,14 @@ export default function MeButton() {
 // account, and settings.
 const CORNER = ['/me', '/profile', '/settings', '/my-code', '/trail']
 export function MyCornerButton() {
+  const t = useT()
   const { pathname } = useLocation()
   const here = CORNER.some((p) => pathname === p || pathname.startsWith(p + '/'))
   return (
     <Link to="/me" className={'header-btn me-btn' + (here ? ' on' : '')} data-tour="corner"
-      aria-label="My Corner: your profile, account, and settings" aria-current={pathname === '/me' ? 'page' : undefined}>
+      aria-label={t('My Corner: your profile, account, and settings')} aria-current={pathname === '/me' ? 'page' : undefined}>
       <MyAvatar size={26} />
-      <span className="header-btn-label" aria-hidden="true"><span className="header-my">My </span>Corner</span>
+      <span className="header-btn-label" aria-hidden="true"><span className="header-my">{t('My ')}</span>{t('Corner')}</span>
     </Link>
   )
 }

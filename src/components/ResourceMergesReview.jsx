@@ -7,7 +7,7 @@ import { supabase } from '../supabaseClient'
 // The list comes from list_resource_merges() (vwb-resource-merge-list.sql).
 // onChanged runs after an undo so the page reloads its listings.
 
-export default function ResourceMergesReview({ onChanged }) {
+export default function ResourceMergesReview({ onChanged, onClose }) {
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
   const [asking, setAsking] = useState(null)
@@ -67,8 +67,11 @@ export default function ResourceMergesReview({ onChanged }) {
 
   return (
     <section className="sr-review" ref={boxRef} aria-labelledby="rm-review-h">
-      <h2 id="rm-review-h">Merged listings{rows && rows.length ? ' (' + rows.length + ')' : ''}</h2>
-      <p className="sr-note">Listings that were marked as a copy of another one. If a merge was a mistake, undo it here. Only Hope Ambassadors and VWB admins see this.</p>
+      <div className="sr-head">
+        <h2 id="rm-review-h">Merged listings{rows && rows.length ? ' (' + rows.length + ')' : ''}</h2>
+        {onClose && <button type="button" className="sr-close" onClick={onClose} aria-label="Close merged listings">&#10005;</button>}
+      </div>
+      <p className="sr-note">Listings marked as a copy of another one. Undo a mistake here. Only Hope Ambassadors and VWB admins see this.</p>
       <div className="sr-tabs" role="tablist" aria-label="Which merges">
         <button type="button" role="tab" aria-selected={tab === 'now'} className={'sr-tab' + (tab === 'now' ? ' on' : '')} onClick={() => setTab('now')}>Still merged</button>
         <button type="button" role="tab" aria-selected={tab === 'past'} className={'sr-tab' + (tab === 'past' ? ' on' : '')} onClick={() => setTab('past')}>Undone{Array.isArray(past) && past.length ? ' (' + past.length + ')' : ''}</button>
@@ -90,7 +93,7 @@ export default function ResourceMergesReview({ onChanged }) {
       {rows === null && <p role="status">Loading...</p>}
       {error && <p className="sr-error" role="alert">{error}</p>}
       {note && <p className="sr-note" role="status">{note}</p>}
-      {rows && rows.length === 0 && !error && <p className="sr-note">No merged listings.</p>}
+      {rows && rows.length === 0 && !error && <p className="sr-note">Nothing to undo right now.</p>}
       {rows && rows.map((r) => (
         <article key={r.merge_id} className="sr-card">
           <h3>{r.duplicate_name}</h3>
