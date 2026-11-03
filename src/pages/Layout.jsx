@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView'
 import SimpleOffer from '../components/SimpleOffer'
 import ReadAloud from '../components/ReadAloud'
+import PendingAsks from '../components/PendingAsks'
 import BottomTabs from '../components/BottomTabs'
 import MeButton, { MyCornerButton } from '../components/MeButton'
 import MyToolsButton from '../components/MyToolsButton'
@@ -58,6 +59,20 @@ export default function Layout() {
   const tellFrame = useCallback((n) => setOwnBacks((c) => c + n), [])
   // Oct 30 (Jade): not on My Corner (/me) either. It's a top-bar place, like My World.
   const showBack = !ownBacks && !isChat && pathname !== '/' && pathname !== '/me' && (simple || pathname !== '/world')
+
+  // Ask for Help is ready even if the signal drops later (Nov 3): its screen is
+  // fetched once, quietly, a few seconds after the app opens, and kept on the phone.
+  useEffect(() => {
+    if (!user) return
+    const t = setTimeout(() => {
+      import('./AskForHelp').catch(() => { /* no signal yet; it loads when opened */ })
+      // The list of kinds of help too, kept on the phone by loadSkillCategories.
+      let saved = null
+      try { saved = localStorage.getItem('vwb_skill_list') } catch { /* private window */ }
+      if (!saved) import('../utils/skillGroups').then((m) => m.loadSkillCategories()).catch(() => {})
+    }, 5000)
+    return () => clearTimeout(t)
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Every page opens at the top (Oct 22, Jade), except chats, which open at the newest
   // message, and links to a spot on a page (#corner and the like).
@@ -142,6 +157,8 @@ export default function Layout() {
         {showBack
           ? <FrameBack world={isWorld}>{simple && !isChat && !isWorld && <ReadAloud />}</FrameBack>
           : simple && !isChat && !isWorld && <div className="app-back-row read-aloud-row"><ReadAloud /></div>}
+        {/* Requests saved with no signal (Nov 3): waiting, sending, or sent. */}
+        {!isChat && !isWorld && <PendingAsks />}
         <PageBackContext.Provider value={tellFrame}>
           <Outlet />
         </PageBackContext.Provider>

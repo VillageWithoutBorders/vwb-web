@@ -78,11 +78,18 @@ SKILL_GROUPS.forEach((g, gi) => {
 // Returns [{ title, group }], sorted by header, then by the order above.
 // select('*') on purpose: it keeps working whether or not optional columns
 // like group_name exist yet.
+// The last list that loaded is kept on this phone (Nov 3), so Ask for Help still
+// works with no signal. With nothing kept yet, the built-in list above is used.
+const SAVED = 'vwb_skill_list'
+
 export async function loadSkillCategories() {
-  const { data, error } = await supabase.from('skill_categories').select('*')
+  let { data, error } = await supabase.from('skill_categories').select('*')
   if (error) {
     console.error('Failed to load skill categories:', error)
-    return []
+    try { data = JSON.parse(localStorage.getItem(SAVED) || 'null') } catch { data = null }
+    if (!data || !data.length) data = SKILL_GROUPS.flatMap((g) => g.skills.map((title) => ({ title, group_name: g.name })))
+  } else if (data && data.length) {
+    try { localStorage.setItem(SAVED, JSON.stringify(data.map((r) => ({ title: r.title, group_name: r.group_name || null })))) } catch { /* private window */ }
   }
   return (data || [])
     .filter((row) => row.title)
