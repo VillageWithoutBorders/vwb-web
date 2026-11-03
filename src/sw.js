@@ -11,6 +11,37 @@ clientsClaim()
 
 precacheAndRoute(self.__WB_MANIFEST)
 
+// Screens and pictures are saved the first time someone opens them (Nov 3),
+// instead of all at once on the first visit. App files have a new name on each
+// update, so a saved copy never goes stale. The oldest copies are dropped once
+// there are more than 150.
+const RUNTIME_CACHE = 'vwb-runtime-v1'
+const RUNTIME_MAX = 150
+
+async function trimRuntime() {
+  const cache = await caches.open(RUNTIME_CACHE)
+  const keys = await cache.keys()
+  for (let i = 0; i < keys.length - RUNTIME_MAX; i++) await cache.delete(keys[i])
+}
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request
+  if (req.method !== 'GET') return
+  const url = new URL(req.url)
+  if (url.origin !== self.location.origin) return
+  if (!url.pathname.startsWith('/assets/') && !url.pathname.startsWith('/art/')) return
+  event.respondWith((async () => {
+    const hit = await caches.match(req)
+    if (hit) return hit
+    const res = await fetch(req)
+    if (res.ok && res.type === 'basic') {
+      const copy = res.clone()
+      event.waitUntil(caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy)).then(trimRuntime).catch(() => {}))
+    }
+    return res
+  })())
+})
+
 self.addEventListener('push', (event) => {
   if (!event.data) return
   let data

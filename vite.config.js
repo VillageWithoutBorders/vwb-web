@@ -69,8 +69,25 @@ export default defineConfig({
           { name: 'My village', short_name: 'Village', description: 'Your cottage and your home village', url: '/village', icons: [{ src: '/icons/shortcut-houses.png', sizes: '96x96', type: 'image/png' }] }
         ]
       },
+      // Lighter first visit (Nov 3, barriers review): people on prepaid data were
+      // downloading every screen of the app (about 3.6 MB) on their first visit.
+      // Now only what the first screen needs is saved up front; every other
+      // screen is saved the first time someone opens it (see src/sw.js), so it
+      // still opens offline after that. The phone fetches the big app icons itself.
+      includeManifestIcons: false,
       injectManifest: {
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        globPatterns: [
+          'index.html',
+          'registerSW.js',
+          'manifest.webmanifest',
+          'assets/index-*.{js,css}',
+          'assets/rolldown-runtime-*.js',
+          'assets/jsx-runtime-*.js',
+          'assets/chunk-*.js',
+          'assets/AuthContext-*.js',
+          'assets/simpleView-*.js'
+        ]
       }
     })
   ]
