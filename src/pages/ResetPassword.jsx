@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { useT } from '../utils/lang'
 
 export default function ResetPassword() {
+  const t = useT()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -48,10 +50,10 @@ export default function ResetPassword() {
         <div className="login-card">
           <div className="login-header">
             <h1>Village Without Borders</h1>
-            <p className="login-subtitle">Reset your password</p>
+            <p className="login-subtitle">{t('Reset your password')}</p>
           </div>
           <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem 1rem' }}>
-            Loading... If this takes more than a few seconds, try clicking the reset link in your email again.
+            {t('Loading... If this takes more than a few seconds, try clicking the reset link in your email again.')}
           </p>
         </div>
       </div>
@@ -63,26 +65,26 @@ export default function ResetPassword() {
       <div className="login-card">
         <div className="login-header">
           <h1>Village Without Borders</h1>
-          <p className="login-subtitle">Set a new password</p>
+          <p className="login-subtitle">{t('Set a new password')}</p>
         </div>
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-field">
-            <label htmlFor="newPassword">New password</label>
+            <label htmlFor="newPassword">{t('New password')}</label>
             <div className="password-input-wrap">
-              <input id="newPassword" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" minLength={6} required />
-              <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
-                {showPassword ? 'Hide' : 'Show'}
+              <input id="newPassword" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('At least 6 characters')} minLength={6} required />
+              <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} aria-label={t(showPassword ? 'Hide password' : 'Show password')}>
+                {t(showPassword ? 'Hide' : 'Show')}
               </button>
             </div>
           </div>
           <div className="form-field">
-            <label htmlFor="confirmPassword">Confirm new password</label>
-            <input id="confirmPassword" type={showPassword ? 'text' : 'password'} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Type it again" required />
+            <label htmlFor="confirmPassword">{t('Confirm new password')}</label>
+            <input id="confirmPassword" type={showPassword ? 'text' : 'password'} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={t('Type it again')} required />
           </div>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          {message && <p className="form-success" role="status">{message}</p>}
+          {error && <p className="form-error" role="alert">{t(error)}</p>}
+          {message && <p className="form-success" role="status">{t(message)}</p>}
           <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
-            {submitting ? 'Updating...' : 'Update password'}
+            {t(submitting ? 'Updating...' : 'Update password')}
           </button>
         </form>
       </div>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import QRCode from 'qrcode'
+import Icon from './Icon'
+import { useT, getLang } from '../utils/lang'
 
 // A paper list of the places on screen (Nov 3, barriers review). Hope
 // Ambassadors hand it out at a pantry, a church, or a door, to neighbors who
@@ -19,6 +21,7 @@ function site(url) {
 }
 
 export default function PrintResourceList({ cats, grouped, title }) {
+  const t = useT()
   const [qr, setQr] = useState('')
 
   useEffect(() => {
@@ -40,34 +43,34 @@ export default function PrintResourceList({ cats, grouped, title }) {
     window.print()
   }
 
-  const today = new Date().toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })
+  const today = new Date().toLocaleDateString(getLang() === 'es' ? 'es-US' : [], { month: 'long', day: 'numeric', year: 'numeric' })
 
   return (
     <>
-      <button type="button" className="btn btn-outline btn-full fh-print-btn" onClick={printIt}>
-        Print this list
+      <button type="button" className="fh-filter-btn" onClick={printIt}>
+        <span aria-hidden="true"><Icon name="scroll" /></span> {t('Print this list')}
       </button>
       {createPortal(
         <div className="print-sheet" aria-hidden="true">
           <header className="print-head">
             <div>
               <h1>{title}</h1>
-              <p>Village Without Borders. Free help from neighbors and local groups. Printed {today}.</p>
-              <p>Call ahead when you can. Hours and rules can change.</p>
+              <p>Village Without Borders. {t('Free help from neighbors and local groups.')} {t('Printed {date}.', { date: today })}</p>
+              <p>{t('Call ahead when you can. Hours and rules can change.')}</p>
             </div>
             {qr && <img src={qr} alt="" width="96" height="96" />}
           </header>
           {cats.map((cat) => (
             <section key={cat} className="print-cat">
-              <h2>{cat}</h2>
+              <h2>{t(cat)}</h2>
               {grouped[cat].map((r) => {
                 const phone = r.phone || r.provider_phone
                 return (
                   <div key={cat + r.id} className="print-item">
                     <b>{r.name}</b>
-                    {phone && <span>. Phone: {phone}</span>}
-                    {r.address && <span>. Address: {r.address}</span>}
-                    {!r.address && r.url && site(r.url) && <span>. Website: {site(r.url)}</span>}
+                    {phone && <span>. {t('Phone:')} {phone}</span>}
+                    {r.address && <span>. {t('Address:')} {r.address}</span>}
+                    {!r.address && r.url && site(r.url) && <span>. {t('Website:')} {site(r.url)}</span>}
                     {r.description && <small>{short(r.description, 160)}</small>}
                   </div>
                 )
@@ -75,7 +78,7 @@ export default function PrintResourceList({ cats, grouped, title }) {
             </section>
           ))}
           <footer className="print-foot">
-            Scan the code, or go to app.villagewithoutborders.org/resources, for the full list. Need a hand from a neighbor? Ask a Hope Ambassador.
+            {t('Scan the code, or go to app.villagewithoutborders.org/resources, for the full list. Need a hand from a neighbor? Ask a Hope Ambassador.')}
           </footer>
         </div>,
         document.body

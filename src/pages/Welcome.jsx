@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Icon from '../components/Icon'
+import { useT } from '../utils/lang'
+import LangSwitch from '../components/LangSwitch'
 
 const COLORS = {
   bg: 'var(--bg)',
@@ -151,6 +153,7 @@ const FAQS = [
 ]
 
 function FaqItem({ item, index, isOpen, onToggle }) {
+  const t = useT()
   const panelId = `faq-panel-${index}`
   const buttonId = `faq-button-${index}`
   return (
@@ -178,13 +181,13 @@ function FaqItem({ item, index, isOpen, onToggle }) {
             cursor: 'pointer',
           }}
         >
-          <span>{item.q}</span>
+          <span>{t(item.q)}</span>
           <span aria-hidden="true" style={{ color: COLORS.green, fontSize: '1.1rem', flexShrink: 0 }}>{isOpen ? '−' : '+'}</span>
         </button>
       </h3>
       {isOpen && (
         <div id={panelId} role="region" aria-labelledby={buttonId} style={{ paddingBottom: '1rem' }}>
-          <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.9rem', lineHeight: 1.6 }}>{item.a}</p>
+          <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.9rem', lineHeight: 1.6 }}>{t(item.a)}</p>
         </div>
       )}
     </div>
@@ -192,6 +195,7 @@ function FaqItem({ item, index, isOpen, onToggle }) {
 }
 
 export default function Welcome() {
+  const t = useT()
   const [openFaqIndex, setOpenFaqIndex] = useState(null)
   // Short page first: logo, one line, Sign up, Log in. "Learn more" (or ?more=1) shows the rest.
   const [more, setMore] = useState(() => new URLSearchParams(window.location.search).get('more') === '1')
@@ -203,21 +207,24 @@ export default function Welcome() {
           <img src="/images/vwb_header-v2.png" alt="" style={{ height: '36px', borderRadius: '50%' }} />
           <span style={{ fontWeight: 700, fontSize: '1rem', color: COLORS.text }}>Village Without Borders</span>
         </div>
-        <Link to="/login" style={{ ...btnSecondary, padding: '0.5rem 1rem', fontSize: '0.9rem' }}>Log In</Link>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <LangSwitch />
+          <Link to="/login" style={{ ...btnSecondary, padding: '0.5rem 1rem', fontSize: '0.9rem' }}>{t('Log In')}</Link>
+        </div>
       </header>
 
       <main>
         {/* Hero */}
         <section style={{ ...sectionStyle, textAlign: 'center', paddingTop: '2rem' }}>
           <img src="/images/vwb_logo.png" alt="" width="120" height="120" style={{ width: '120px', height: '120px', maxWidth: '40vw', borderRadius: '50%', margin: '0 auto 1rem', display: 'block' }} />
-          <h1 style={{ fontSize: '2rem', lineHeight: 1.25, margin: '0 0 0.75rem', color: COLORS.text }}>Neighbors helping neighbors</h1>
+          <h1 style={{ fontSize: '2rem', lineHeight: 1.25, margin: '0 0 0.75rem', color: COLORS.text }}>{t('Neighbors helping neighbors')}</h1>
           <p style={{ fontSize: '1.1rem', color: COLORS.textDim, lineHeight: 1.6, margin: '0 auto 1.5rem', maxWidth: '520px' }}>
-            Ask for help or offer a hand, with people near you. Free, always.
+            {t('Ask for help or offer a hand, with people near you. Free, always.')}
           </p>
           <div className="welcome-short-actions">
-            <Link to="/login?mode=signup" style={btnPrimary}>Sign up</Link>
-            <Link to="/login" style={btnSecondary}>Log in</Link>
-            {!more && <button type="button" className="welcome-more" onClick={() => setMore(true)}>Learn more about how it works</button>}
+            <Link to="/login?mode=signup" style={btnPrimary}>{t('Sign up')}</Link>
+            <Link to="/login" style={btnSecondary}>{t('Log in')}</Link>
+            {!more && <button type="button" className="welcome-more" onClick={() => setMore(true)}>{t('Learn more about how it works')}</button>}
           </div>
         </section>
 
@@ -225,14 +232,14 @@ export default function Welcome() {
 
         {/* How it works */}
         <section style={sectionStyle}>
-          <div style={eyebrow}>How it works</div>
-          <h2 style={{ margin: '0 0 1.5rem', fontSize: '1.4rem' }}>Three simple steps</h2>
+          <div style={eyebrow}>{t('How it works')}</div>
+          <h2 style={{ margin: '0 0 1.5rem', fontSize: '1.4rem' }}>{t('Three simple steps')}</h2>
           <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
             {STEPS.map((s) => (
               <div key={s.title} style={cardStyle}>
                 <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }} aria-hidden="true"><Icon name={s.icon} /></div>
-                <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.05rem', color: COLORS.text }}>{s.title}</h3>
-                <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.875rem', lineHeight: 1.55 }}>{s.body}</p>
+                <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.05rem', color: COLORS.text }}>{t(s.title)}</h3>
+                <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.875rem', lineHeight: 1.55 }}>{t(s.body)}</p>
               </div>
             ))}
           </div>
@@ -240,52 +247,52 @@ export default function Welcome() {
 
         {/* Villages */}
         <section style={sectionStyle}>
-          <div style={eyebrow}>Village chats</div>
-          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>Find your village</h2>
+          <div style={eyebrow}>{t('Village chats')}</div>
+          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>{t('Find your village')}</h2>
           <p style={{ margin: '0 0 0.75rem', color: COLORS.textDim, lineHeight: 1.6 }}>
-            A village is a group of neighbors in nearby zip codes, with its own chat. Join the one that covers your zip code, or start one for your area if there is not one yet.
+            {t('A village is a group of neighbors in nearby zip codes, with its own chat. Join the one that covers your zip code, or start one for your area if there is not one yet.')}
           </p>
           <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.9rem', lineHeight: 1.6 }}>
-            Village chats can be read only by the neighbors who joined them. Private messages are the place for anything sensitive.
+            {t('Village chats can be read only by the neighbors who joined them. Private messages are the place for anything sensitive.')}
           </p>
         </section>
 
         {/* Who it's for / Hope Ambassador */}
         <section style={sectionStyle}>
           <div style={{ ...cardStyle, background: COLORS.cardAlt, borderColor: COLORS.greenDark }}>
-            <div style={eyebrow}>Who it's for</div>
+            <div style={eyebrow}>{t("Who it's for")}</div>
             <p style={{ margin: '0 0 1rem', color: COLORS.textDim, lineHeight: 1.6 }}>
-              Anyone 18 or older. Whether you need help or want to give it, there is no income requirement and no application to ask for help.
+              {t('Anyone 18 or older. Whether you need help or want to give it, there is no income requirement and no application to ask for help.')}
             </p>
             <p style={{ margin: 0, color: COLORS.textDim, lineHeight: 1.6 }}>
-              Want to help regularly? Apply to be a <strong style={{ color: COLORS.green }}>Hope Ambassador</strong>. Tell us what you're good at and when you're usually free. An admin reads each application.
+              {t('Want to help regularly? Apply to be a')} <strong style={{ color: COLORS.green }}>{t('Hope Ambassador')}</strong>. {t("Tell us what you're good at and when you're usually free. An admin reads each application.")}
             </p>
           </div>
         </section>
 
         {/* No account needed */}
         <section style={sectionStyle}>
-          <div style={eyebrow}>No account needed</div>
-          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>Look around first</h2>
+          <div style={eyebrow}>{t('No account needed')}</div>
+          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>{t('Look around first')}</h2>
           <p style={{ margin: '0 0 1.25rem', color: COLORS.textDim, lineHeight: 1.6 }}>
-            Anyone, of any age, can find local help and see what is happening nearby. No sign-up needed.
+            {t('Anyone, of any age, can find local help and see what is happening nearby. No sign-up needed.')}
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <Link to="/resources" style={btnSecondary}>Find local resources</Link>
-            <Link to="/calendar/embed" style={btnSecondary}>See the community calendar</Link>
+            <Link to="/resources" style={btnSecondary}>{t('Find local resources')}</Link>
+            <Link to="/calendar/embed" style={btnSecondary}>{t('See the community calendar')}</Link>
           </div>
         </section>
 
         {/* Safety */}
         <section style={sectionStyle}>
-          <div style={eyebrow}>Safety &amp; trust</div>
-          <h2 style={{ margin: '0 0 1.25rem', fontSize: '1.4rem' }}>How we keep it safe</h2>
+          <div style={eyebrow}>{t('Safety & trust')}</div>
+          <h2 style={{ margin: '0 0 1.25rem', fontSize: '1.4rem' }}>{t('How we keep it safe')}</h2>
           <div style={cardStyle}>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
               {SAFETY_POINTS.map((point, i) => (
                 <li key={point} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', padding: '0.6rem 0', borderTop: i === 0 ? 'none' : `1px solid ${COLORS.border}` }}>
                   <span aria-hidden="true" style={{ color: COLORS.green, fontWeight: 700, flexShrink: 0 }}>&#10003;</span>
-                  <span style={{ color: COLORS.textDim, fontSize: '0.9rem', lineHeight: 1.55 }}>{point}</span>
+                  <span style={{ color: COLORS.textDim, fontSize: '0.9rem', lineHeight: 1.55 }}>{t(point)}</span>
                 </li>
               ))}
             </ul>
@@ -298,9 +305,9 @@ export default function Welcome() {
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
               <span aria-hidden="true" style={{ fontSize: '1.4rem' }}><Icon name="bolt" /></span>
               <div>
-                <h2 style={{ margin: '0 0 0.4rem', fontSize: '1.05rem', color: COLORS.orangeText }}>Urgent situation?</h2>
+                <h2 style={{ margin: '0 0 0.4rem', fontSize: '1.05rem', color: COLORS.orangeText }}>{t('Urgent situation?')}</h2>
                 <p style={{ margin: 0, color: COLORS.textDim, fontSize: '0.9rem', lineHeight: 1.6 }}>
-                  For anything life-threatening, call 911 first. Storm damage, flooding, or a safety concern that needs neighbors right away goes through a separate emergency feature that alerts nearby helpers. Everyday requests, like a leaky faucet or a ride to an appointment, use the regular request system.
+                  {t('For anything life-threatening, call 911 first. Storm damage, flooding, or a safety concern that needs neighbors right away goes through a separate emergency feature that alerts nearby helpers. Everyday requests, like a leaky faucet or a ride to an appointment, use the regular request system.')}
                 </p>
               </div>
             </div>
@@ -309,8 +316,8 @@ export default function Welcome() {
 
         {/* FAQ */}
         <section style={sectionStyle}>
-          <div style={eyebrow}>Questions</div>
-          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>Frequently asked questions</h2>
+          <div style={eyebrow}>{t('Questions')}</div>
+          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>{t('Frequently asked questions')}</h2>
           <div style={{ ...cardStyle, padding: '0.25rem 1.5rem' }}>
             {FAQS.map((item, index) => (
               <FaqItem
@@ -326,9 +333,9 @@ export default function Welcome() {
 
         {/* Final CTA */}
         <section style={{ ...sectionStyle, textAlign: 'center' }}>
-          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>Ready to meet your neighbors?</h2>
-          <p style={{ margin: '0 0 1.25rem', color: COLORS.textMuted }}>It takes a couple of minutes to get started.</p>
-          <Link to="/login?mode=signup" style={btnPrimary}>Sign up</Link>
+          <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>{t('Ready to meet your neighbors?')}</h2>
+          <p style={{ margin: '0 0 1.25rem', color: COLORS.textMuted }}>{t('It takes a couple of minutes to get started.')}</p>
+          <Link to="/login?mode=signup" style={btnPrimary}>{t('Sign up')}</Link>
         </section>
         </>)}
       </main>
@@ -338,7 +345,7 @@ export default function Welcome() {
           <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.green, fontSize: '0.85rem', textDecoration: 'none' }}>
             villagewithoutborders.org &#8599;
           </a>
-          <p style={{ margin: '0.5rem 0 0', color: COLORS.textMuted, fontSize: '0.8125rem' }}>A project of neighbors, for neighbors.</p>
+          <p style={{ margin: '0.5rem 0 0', color: COLORS.textMuted, fontSize: '0.8125rem' }}>{t('A project of neighbors, for neighbors.')}</p>
         </div>
       </footer>
     </div>

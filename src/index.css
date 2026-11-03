@@ -393,6 +393,8 @@ body {
 .form-field textarea {
   resize: vertical;
 }
+/* Nov 3 (Jade's screenshot): typing boxes use the app's letters, not the browser's typewriter font. */
+textarea { font-family: inherit; }
 
 /* ---------- Password Strength ---------- */
 .password-strength {
@@ -5548,6 +5550,9 @@ button[aria-label^="Back"], button[aria-label^="Go back"], button[aria-label^="C
 /* Welcome: short page first (Welcome.jsx) */
 .welcome-short-actions { display: flex; flex-direction: column; gap: 0.75rem; align-items: stretch; max-width: 320px; margin: 0 auto; }
 .welcome-short-actions a { text-align: center; min-height: 48px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.welcome-lang { min-height: 44px; padding: 0 0.9rem; border-radius: 22px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font: inherit; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+.login-lang { display: flex; justify-content: flex-end; margin: 0 0 0.25rem; }
+.welcome-lang:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .welcome-more { min-height: 48px; background: none; border: 0; color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .welcome-more:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
 
@@ -6285,6 +6290,10 @@ html.text-largest { font-size: 165%; --tab-height: 92px; }
 .tab-label { font-size: 0.875rem; }
 @media (max-width: 479px) { .header-nav .header-btn-label { font-size: 0.8rem; } }
 @media (max-width: 359px) { .header-nav .header-btn-label { font-size: 0.75rem; } }
+/* Spanish words run longer ("Herramientas"). Small phones get a little smaller labels (Nov 3). */
+@media (max-width: 479px) { html[lang="es"] .header-nav .header-my { display: none; } }
+@media (max-width: 419px) { html[lang="es"]:not(.simple) .header-nav .header-btn-label { font-size: 0.7rem; letter-spacing: -0.01em; } }
+@media (max-width: 359px) { html[lang="es"]:not(.simple) .header-nav .header-btn-label { font-size: 0.64rem; } }
 .field-hint, .urgency-badge, .btn-sm { font-size: 0.9rem; }
 .btn-sm { min-height: 44px; }
 .convo-input { font-size: 1rem; }
@@ -6601,7 +6610,10 @@ html.calm-motion .nr-card:active { transform: none; }
 .cs-bg.on { border-color: var(--accent); }
 .cs-bg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .cs-bg img { width: 100%; max-width: 96px; height: auto; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 8px; }
-.fs-page { max-width: 640px; margin: 0 auto; padding: 1rem; box-sizing: border-box; }
+.fs-page { max-width: 640px; margin: 0 auto; padding: 0; box-sizing: border-box; }
+/* Setup has no top or bottom bar (Nov 3, Jade), so the page starts near the top.
+   The page frame already pads the sides; .fs-page adds none of its own (Nov 3). */
+.app-main.app-main-focus { padding-top: calc(env(safe-area-inset-top, 0px) + 1rem); padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 2rem); }
 .fs-page h1 { font-size: 1.5rem; margin: 0.5rem 0 0.35rem; }
 .fs-page h1:focus { outline: none; }
 .fs-sub { margin: 0 0 1rem; color: var(--text-secondary); font-size: 1rem; line-height: 1.45; }
@@ -6636,7 +6648,6 @@ html.calm-motion .nr-card:active { transform: none; }
 @media (prefers-reduced-motion: reduce) { .today-slim:active { transform: none; } }
 
 /* Printed resource list (Nov 3, PrintResourceList.jsx). Hidden on screen. */
-.fh-print-btn { min-height: 48px; margin: 0 0 1rem; }
 .print-sheet { display: none; }
 @media print {
   body.vwb-print-list > *:not(.print-sheet) { display: none !important; }

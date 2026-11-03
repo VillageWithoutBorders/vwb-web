@@ -13,7 +13,7 @@ function safeLink(url) {
   return /^https?:\/\//i.test(url) ? url : 'https://' + url
 }
 
-export default function ResourceSuggestionsReview({ onAdd, refreshKey = 0 }) {
+export default function ResourceSuggestionsReview({ onAdd, refreshKey = 0, onClose }) {
   const [show, setShow] = useState('new')
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
@@ -53,7 +53,10 @@ export default function ResourceSuggestionsReview({ onAdd, refreshKey = 0 }) {
 
   return (
     <section className="sr-review" ref={boxRef} aria-labelledby="sr-review-h">
-      <h2 id="sr-review-h">Suggestions from neighbors{rows && show === 'new' && rows.length ? ' (' + rows.length + ')' : ''}</h2>
+      <div className="sr-head">
+        <h2 id="sr-review-h">Suggestions from neighbors{rows && show === 'new' && rows.length ? ' (' + rows.length + ')' : ''}</h2>
+        {onClose && <button type="button" className="sr-close" onClick={onClose} aria-label="Close suggestions">&#10005;</button>}
+      </div>
       <p className="sr-note">Resources people know about, and kinds of help their area is missing. Only Hope Ambassadors and VWB admins see this.</p>
       <div className="sr-tabs" role="group" aria-label="Which suggestions">
         <button type="button" aria-pressed={show === 'new'} onClick={() => setShow('new')}>New</button>
