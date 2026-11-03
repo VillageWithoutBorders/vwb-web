@@ -117,6 +117,14 @@ function lazyPage(load) {
     load().then(
       (m) => { try { sessionStorage.removeItem('vwb_chunk_reload') } catch { /* private mode */ } return m },
       (err) => {
+        // No signal (Nov 3): this screen isn't on the phone yet. Wait for the signal,
+        // then reload, instead of reloading into the browser's "no internet" page.
+        // (A browser won't try the same screen file twice, so a reload is the retry.)
+        if (navigator.onLine === false) {
+          return new Promise(() => {
+            window.addEventListener('online', () => { window.location.reload() }, { once: true })
+          })
+        }
         let again = false
         try { again = !sessionStorage.getItem('vwb_chunk_reload'); if (again) sessionStorage.setItem('vwb_chunk_reload', '1') } catch { /* private mode */ }
         if (again) { window.location.reload(); return new Promise(() => {}) }
@@ -127,7 +135,21 @@ function lazyPage(load) {
 }
 
 function PageLoading() {
-  return <div className="cal-page"><p className="cal-empty" role="status">Loading...</p></div>
+  const [online, setOnline] = useState(() => navigator.onLine !== false)
+  useEffect(() => {
+    const up = () => setOnline(true)
+    const down = () => setOnline(false)
+    window.addEventListener('online', up)
+    window.addEventListener('offline', down)
+    return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down) }
+  }, [])
+  return (
+    <div className="cal-page">
+      <p className="cal-empty" role="status">
+        {online ? 'Loading...' : 'No signal right now. This page will open when your phone has signal.'}
+      </p>
+    </div>
+  )
 }
 
 function ProfileWait() {

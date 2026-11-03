@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { ensureDeviceKeypair, flushOutbox } from '../lib/e2ee'
 import { peekReturnTo } from '../utils/returnTo'
 import { tell } from '../components/AdminDialog'
+import { clearAllPendingAsks } from '../utils/pendingAsks'
 
 const AuthContext = createContext({})
 
@@ -347,6 +348,8 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
+    // Requests saved with no signal stay on this phone only while signed in.
+    clearAllPendingAsks()
     const { error } = await supabase.auth.signOut()
     if (error) console.error('[AuthContext] signOut', error)
     setUser(null)

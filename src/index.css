@@ -6670,3 +6670,25 @@ html.calm-motion .nr-card:active { transform: none; }
 /* The part being read gets a soft outline, so people can follow along. */
 [data-reading] { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
 @media (prefers-reduced-motion: reduce) { .read-aloud:active { transform: none; } .read-aloud-stop:active { transform: translateX(-50%); } }
+
+/* Asks saved with no signal (Nov 3). */
+.ask-offline { margin: 0 0 1rem; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--gold); background: var(--surface); color: var(--text); line-height: 1.45; }
+.pending-asks { margin: 8px 0 12px; padding: 14px; border-radius: 14px; border: 2px solid var(--gold); background: var(--surface); }
+.pa-title { margin: 0 0 4px; font-size: 1.1rem; color: var(--text-strong); overflow-wrap: anywhere; }
+.pa-text { margin: 0 0 8px; color: var(--text-secondary); line-height: 1.45; }
+.pa-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pa-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--border); }
+.pa-what { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 10rem; }
+.pa-what b { color: var(--text-strong); overflow-wrap: anywhere; }
+.pa-what small { color: var(--text-secondary); }
+.pa-what .pa-problem { color: var(--danger); font-weight: 600; }
+.pa-remove { min-height: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid var(--border-strong); background: none; color: var(--text); font: inherit; cursor: pointer; }
+.pa-remove.sure { border-color: var(--danger); color: var(--danger); font-weight: 700; }
+.pa-send { width: 100%; min-height: 48px; margin-top: 10px; }
+.pa-sent { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pa-sent span { flex: 1 1 10rem; font-weight: 600; color: var(--text-strong); }
+.pa-ok { min-height: 44px; min-width: 64px; border-radius: 22px; border: 1px solid var(--border-strong); background: none; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }
+.pa-remove:focus-visible, .pa-ok:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.pa-remove:active, .pa-ok:active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) { .pa-remove:active, .pa-ok:active { transform: none; } }
+.pa-nosignal { margin: 8px 0 12px; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--gold); background: var(--surface); color: var(--text); line-height: 1.45; }

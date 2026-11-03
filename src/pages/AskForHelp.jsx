@@ -10,6 +10,7 @@ import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
 import { useGoBack } from '../components/BackLink'
 import { isSimpleView } from '../utils/simpleView'
+import { savePendingAsk, isNoSignal } from '../utils/pendingAsks'
 
 // Each choice also sets when the request closes on its own (set by the database):
 // now = 6 hours, today = midnight Eastern (at least 3 hours), this_week = 7 days.
@@ -83,6 +84,16 @@ export default function AskForHelp() {
     // Bumped when the person sets or changes their area, to re-read it.
     const [, setLocTick] = useState(0)
     const myLoc = getMyLocation(profile)
+    // No signal (Nov 3): the form still works. The request is saved on this phone
+    // and sends by itself when the signal comes back.
+    const [online, setOnline] = useState(() => navigator.onLine !== false)
+    useEffect(() => {
+        const up = () => setOnline(true)
+        const down = () => setOnline(false)
+        window.addEventListener('online', up)
+        window.addEventListener('offline', down)
+        return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down) }
+    }, [])
 
     useEffect(() => {
         async function loadSkills() {
@@ -119,6 +130,7 @@ export default function AskForHelp() {
         setError('')
         const clean = forZip.replace(/[^0-9]/g, '')
         if (clean.length !== 5) { setError('Zip codes have 5 numbers.'); return }
+        if (navigator.onLine === false) { setError("No signal right now, so we can't look up zip codes. Choose \"Near me\", or try again when you have signal."); return }
         setZipBusy(true)
         const found = await lookupZip(clean)
         setZipBusy(false)
@@ -194,6 +206,7 @@ export default function AskForHelp() {
             setSubmitting(false)
             if (editError) {
                 console.error(editError)
+                if (isNoSignal(editError)) { setError('No signal right now. Your changes are still here. Try Save again when you have signal.'); return }
                 setError(editError.message && editError.message.length < 140 ? editError.message : 'Something went wrong. Please try again.')
                 return
             }
@@ -216,25 +229,50 @@ export default function AskForHelp() {
         const lat = where.lat
         const lng = where.lng
 
+        const row = {
+            requester_id: user.id,
+            skill_needed: skillNeeded,
+            description: description.trim(),
+            urgency,
+            max_helpers: maxHelpers,
+            neighborhood: neighborhood.trim(),
+            latitude: lat || null,
+            longitude: lng || null,
+            organization_id: postAs || null,
+            audience,
+            audience_org_id: audience === 'everyone' ? null : groupId,
+            for_name: forOther ? forName.trim() : null,
+            for_consent: forOther ? forConsent : false,
+        }
+        // No signal: keep it on this phone and send it later.
+        function saveForLater() {
+            if (!savePendingAsk(user.id, { ...row, open_hours: openHours })) {
+                setError("No signal right now, and this phone can't save the request for later. Please try again when you have signal.")
+                setSubmitting(false)
+                return
+            }
+            // The note at the top of the page says it is waiting, then that it was sent.
+            // Simple view goes Home. The full view stays here (Tasks may not be on the
+            // phone yet with no signal), with the form cleared so it isn't posted twice.
+            if (isSimpleView()) { navigate('/'); return }
+            setSubmitting(false)
+            setDescription('')
+            setSkillNeeded('')
+            setForWho('')
+            setForName('')
+            setForConsent(false)
+            window.scrollTo(0, 0)
+        }
+        if (navigator.onLine === false) { saveForLater(); return }
+
         const { error: insertError } = await supabase
             .from('help_requests')
             .insert({
-                requester_id: user.id,
-                skill_needed: skillNeeded,
-                description: description.trim(),
-                urgency,
-                max_helpers: maxHelpers,
-                neighborhood: neighborhood.trim(),
-                latitude: lat || null,
-                longitude: lng || null,
-                organization_id: postAs || null,
-                audience,
-                audience_org_id: audience === 'everyone' ? null : groupId,
+                ...row,
                 opens_to_all_at: audience === 'everyone' ? null : new Date(Date.now() + Number(openHours) * 3600 * 1000).toISOString(),
-                for_name: forOther ? forName.trim() : null,
-                for_consent: forOther ? forConsent : false,
             })
 
+        if (insertError && isNoSignal(insertError) && insertError.code !== 'PGRST301') { console.error(insertError); saveForLater(); return }
         if (insertError) {
             const plain = insertError.message && insertError.message.length < 140 && (/group/i.test(insertError.message) || ['P0001', '42501'].includes(insertError.code))
             setError(plain ? insertError.message : 'Something went wrong. Please try again.')
@@ -262,6 +300,12 @@ export default function AskForHelp() {
                     ? 'Tell us what ' + theirName + ' needs. Helpers will talk with you, and you pass things along. Never share their address here.'
                     : 'Tell us what you need. Neighbors and Hope Ambassadors near you will see it, with your name and town. Never your address.'}
             </p>
+
+            {!online && (
+                <p className="ask-offline" role="status">
+                    <b>No signal right now.</b> You can still fill this out. We will save it on this phone and send it when you have signal.
+                </p>
+            )}
 
             {editId && editForName && (
                 <p className="ask-intro"><span className="for-chip">For {editForName}</span> Helpers talk with you about this request.</p>
