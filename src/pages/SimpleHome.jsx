@@ -73,6 +73,15 @@ export default function SimpleHome() {
   const first = (profile?.display_name || '').trim().split(/\s+/)[0]
   const waiting = unreadCount > 0 || (mine && mine.length > 0)
 
+  const hasVillage = !!profile?.home_village_id
+  const villageRow = (
+    <button type="button" className={'sh-row sh-village' + (hasVillage ? '' : ' sh-start')} onClick={() => navigate(hasVillage ? '/village/' + profile.home_village_id : '/find-village')}>
+      <Icon name="houses" size={32} />
+      <span><b>{hasVillage ? 'My village' : 'Start here: find your village'}</b><small>{hasVillage ? 'Your neighbors and your village chat' : 'Meet neighbors near your zip code'}</small></span>
+      <span className="sh-arrow" aria-hidden="true">&#8250;</span>
+    </button>
+  )
+
   return (
     <div className="sh-page">
       <h1 className="sh-hello">{hello()}{first ? ', ' + first : ''}.</h1>
@@ -85,6 +94,8 @@ export default function SimpleHome() {
           <button type="button" className="sh-done-x" onClick={() => setDone('')}>OK</button>
         </div>
       )}
+
+      {!hasVillage && villageRow}
 
       <div className="sh-buttons" data-tour="simple-buttons">
         <button type="button" className="sh-big sh-big-ask" onClick={() => navigate('/ask?skip=1')}>
@@ -105,10 +116,20 @@ export default function SimpleHome() {
         </button>
       </div>
 
-      {/* Your home village (Oct 22): one plain button straight to it. */}
-      <button type="button" className="sh-row sh-village" onClick={() => navigate(profile?.home_village_id ? '/village/' + profile.home_village_id : '/find-village')}>
-        <Icon name="houses" size={32} />
-        <span><b>{profile?.home_village_id ? 'My village' : 'Find my village'}</b><small>{profile?.home_village_id ? 'Your neighbors and your village chat' : 'Neighbors near your zip code'}</small></span>
+      {/* Your home village (Oct 22): one plain button straight to it.
+          No village yet (Nov 3, flow map): it moves to the top as the first step. */}
+      {hasVillage && villageRow}
+
+      {/* Events and offers (Nov 3, flow map): Simple view had no way to the Calendar
+          or to offer something of your own. */}
+      <button type="button" className="sh-row" onClick={() => navigate('/calendar')}>
+        <Icon name="calendar" size={32} />
+        <span><b>Events near me</b><small>Things to join, and shifts to help with</small></span>
+        <span className="sh-arrow" aria-hidden="true">&#8250;</span>
+      </button>
+      <button type="button" className="sh-row" onClick={() => navigate('/post-offer')}>
+        <Icon name="gift" size={32} />
+        <span><b>Share something I have</b><small>A ride, a tool, your time, or a skill</small></span>
         <span className="sh-arrow" aria-hidden="true">&#8250;</span>
       </button>
 

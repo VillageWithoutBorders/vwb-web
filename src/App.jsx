@@ -158,8 +158,11 @@ function ProfileWait() {
 
 function ProtectedRoute({ children }) {
   const { user, profile, loading, refreshProfile, mfaRequired } = useAuth()
+  const { pathname } = useLocation()
   if (loading) return null
-  if (!user) return <Navigate to="/login" replace />
+  // Signed out (Nov 3, flow map): the front door shows the short Welcome page,
+  // so new people see Sign up first. Links to a page inside the app still go to Sign in.
+  if (!user) return <Navigate to={pathname === '/' ? '/welcome' : '/login'} replace />
   // Two-step login: nothing shows until the authenticator code is entered.
   if (mfaRequired === null) return null
   if (mfaRequired) return <MfaChallenge />
