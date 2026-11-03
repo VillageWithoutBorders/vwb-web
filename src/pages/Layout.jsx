@@ -9,6 +9,7 @@ import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView
 import SimpleOffer from '../components/SimpleOffer'
 import ReadAloud from '../components/ReadAloud'
 import PendingAsks from '../components/PendingAsks'
+import { useT } from '../utils/lang'
 import BottomTabs from '../components/BottomTabs'
 import MeButton, { MyCornerButton } from '../components/MeButton'
 import MyToolsButton from '../components/MyToolsButton'
@@ -31,6 +32,7 @@ export default function Layout() {
   const tools = useMyTools()
   const { total: adminWaiting, urgent: adminUrgent } = useAdminInbox()
   const simple = useSimpleView()
+  const t = useT()
   // The account says which view to use. Follow it on this phone too.
   useEffect(() => {
     const v = profile?.simple_view
@@ -121,24 +123,28 @@ export default function Layout() {
     return () => { cancelAnimationFrame(raf); vv.removeEventListener('resize', follow); vv.removeEventListener('scroll', follow); root.classList.remove('vv-zoomed') }
   }, [])
 
+  // Setup (Nov 3, Jade): no top or bottom bar, so nobody taps away halfway through.
+  // The steps have their own Back and "Skip setup for now".
+  const focus = pathname === '/setup'
+
   // The Admin page gets a wider column on a computer for its side menu.
   const isAdminPage = pathname === '/admin'
 
   return (
     <div className="app-shell">
-      <header className="app-header">
+      {!focus && <header className="app-header">
         {/* Oct 25 (Jade): top bar, left to right: My World, My Village, My Cottage,
             My Corner (profile, account, settings), and My Tools (alerts and role tools).
             The bottom bar is actions: Ask for Help, Offer Help, Calendar, Messages. */}
         <nav className="app-header-inner header-nav" aria-label="Top menu">
           {!simple && (<>
-          <Link to="/world" className={'header-btn' + (pathname === '/world' ? ' on' : '')} aria-current={pathname === '/world' ? 'page' : undefined} aria-label="My World: your networks on the globe" data-tour="top-home">
+          <Link to="/world" className={'header-btn' + (pathname === '/world' ? ' on' : '')} aria-current={pathname === '/world' ? 'page' : undefined} aria-label={t('My World: your networks on the globe')} data-tour="top-home">
             <img className="header-btn-logo" src="/images/vwb_header-v2.png" alt="" width="26" height="26" />
-            <span className="header-btn-label" aria-hidden="true"><span className="header-my">My </span>World</span>
+            <span className="header-btn-label" aria-hidden="true"><span className="header-my">{t('My ')}</span>{t('World')}</span>
           </Link>
-          <Link to="/village" className={'header-btn' + (villageHere ? ' on' : '')} aria-current={villageHere ? 'page' : undefined} aria-label="My Village: your home village" data-tour="top-village">
+          <Link to="/village" className={'header-btn' + (villageHere ? ' on' : '')} aria-current={villageHere ? 'page' : undefined} aria-label={t('My Village: your home village')} data-tour="top-village">
             <Icon name="houses" size={26} className="header-btn-pic" />
-            <span className="header-btn-label" aria-hidden="true"><span className="header-my">My </span>Village</span>
+            <span className="header-btn-label" aria-hidden="true"><span className="header-my">{t('My ')}</span>{t('Village')}</span>
           </Link>
           <MeButton />
           <MyCornerButton />
@@ -150,8 +156,8 @@ export default function Layout() {
           {simple && <MyToolsButton tools={tools} adminWaiting={adminWaiting} adminUrgent={adminUrgent} />}
           {simple && <MeButton />}
         </nav>
-      </header>
-      <main className={'app-main' + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '')}>
+      </header>}
+      <main className={'app-main' + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '') + (focus ? ' app-main-focus' : '')}>
         {/* Read this to me (Nov 3, barriers review): Simple view pages, next to Back.
             Not on chats or the maps. */}
         {showBack
@@ -163,7 +169,7 @@ export default function Layout() {
           <Outlet />
         </PageBackContext.Provider>
       </main>
-      <BottomTabs />
+      {!focus && <BottomTabs />}
       <SimpleOffer />
       <AppTour />
       <KeyRestorePrompt />

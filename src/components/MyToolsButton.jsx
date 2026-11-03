@@ -7,7 +7,7 @@ import { markNotificationRead } from '../utils/notificationHelpers'
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
 import { personalAlertLink } from '../utils/alertLink'
 import { useAuth } from '../context/AuthContext'
-import { useT } from '../utils/lang'
+import { useT, getLang } from '../utils/lang'
 
 // My Tools in the top bar (Oct 25, Jade). Alerts and your tools in one button.
 // Opens your 5 newest alerts (with See all alerts), then the tools for your role
@@ -70,7 +70,7 @@ export default function MyToolsButton({ tools, adminWaiting = 0, adminUrgent = f
     <>
       <button type="button" className={'header-btn' + (on ? ' on' : '')} aria-label={label} aria-haspopup="dialog" aria-expanded={open} data-tour={plain ? 'alerts' : 'top-tools'} onClick={openSheet}>
         <Icon name={plain ? 'bell' : 'toolbox'} size={26} className="header-btn-pic" />
-        <span className="header-btn-label" aria-hidden="true">{plain ? t('Alerts') : <><span className="header-my">My </span>Tools</>}</span>
+        <span className="header-btn-label" aria-hidden="true">{plain ? t('Alerts') : <><span className="header-my">{getLang() === 'es' ? 'Mis ' : 'My '}</span>{t('Tools')}</>}</span>
         {total > 0 && <span className={'bell-badge' + (calm ? ' admin-badge-calm' : '')} aria-hidden="true">{total > 9 ? '9+' : total}</span>}
       </button>
       {open && (
