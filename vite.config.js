@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'node:url'
+import { readFileSync } from 'node:fs'
 export default defineConfig({
   resolve: {
     alias: {
@@ -86,9 +87,26 @@ export default defineConfig({
           'assets/jsx-runtime-*.js',
           'assets/chunk-*.js',
           'assets/AuthContext-*.js',
-          'assets/simpleView-*.js'
-        ]
+          'assets/simpleView-*.js',
+          // Nov 3: plus every file the first page itself loads (react-dom, the
+          // Supabase client, ...). Their names change from build to build, so they
+          // are read from the built index.html below instead of listed here.
+          'assets/*.{js,css}'
+        ],
+        manifestTransforms: [firstScreenOnly]
       }
     })
   ]
 })
+
+// Keeps the lighter first visit (Nov 3): of all the app files, save up front only
+// the ones the first page loads (named in the built index.html) and the short list
+// above. Without the first page's own files, the app could not open with no signal.
+const FIRST_SCREEN = /^assets\/(index|rolldown-runtime|jsx-runtime|chunk|AuthContext|simpleView)-/
+function firstScreenOnly(entries) {
+  let html = ''
+  try { html = readFileSync(fileURLToPath(new URL('./dist/index.html', import.meta.url)), 'utf8') } catch { /* no built page yet */ }
+  const used = new Set([...html.matchAll(/(?:src|href)="\/(assets\/[^"]+)"/g)].map((m) => m[1]))
+  const manifest = entries.filter((e) => !e.url.startsWith('assets/') || used.has(e.url) || FIRST_SCREEN.test(e.url))
+  return { manifest, warnings: html ? [] : ['index.html not found; only the short list is saved up front'] }
+}

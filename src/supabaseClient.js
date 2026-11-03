@@ -27,3 +27,15 @@ export function setKeepSignedIn(keep) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, { auth: { storage: authStorage } })
+
+// The sign-in saved on this phone, read straight from storage (Nov 3). With no
+// signal, an hour-old sign-in can't be renewed, so Supabase reports nobody
+// signed in even though the sign-in is still here. The app uses this to keep
+// the person in until the signal comes back and it renews. Null if none.
+export function savedSignIn() {
+  try {
+    const raw = authStorage.getItem(supabase.auth.storageKey)
+    const s = raw ? JSON.parse(raw) : null
+    return s && s.user && s.refresh_token ? s : null
+  } catch { return null }
+}
