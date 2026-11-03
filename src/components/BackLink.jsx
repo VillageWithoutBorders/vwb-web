@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { isSimpleView } from '../utils/simpleView'
+import { useT } from '../utils/lang'
 
 // The app frame (Layout) shows a Back button at the top of every page (Oct 22, Jade).
 // A page that has its own BackLink tells the frame, so there is only ever one.
@@ -9,6 +10,7 @@ export const PageBackContext = createContext(null)
 // Goes back to the page the person came from. If they opened this page
 // directly (a link, a bookmark, a refresh), it goes to the fallback instead.
 export default function BackLink({ fallback = '/', fallbackLabel = 'Home', className = 'hub-back' }) {
+  const t = useT()
   const navigate = useNavigate()
   const location = useLocation()
   const cameFromApp = location.key !== 'default'
@@ -24,7 +26,7 @@ export default function BackLink({ fallback = '/', fallbackLabel = 'Home', class
       className={className}
       onClick={cameFromApp ? (e) => { e.preventDefault(); navigate(-1) } : undefined}
     >
-      &#8592; {cameFromApp ? 'Back' : fallbackLabel}
+      &#8592; {t(cameFromApp ? 'Back' : fallbackLabel)}
     </Link>
   )
 }
@@ -59,13 +61,14 @@ export function useGoBack() {
 
 // The Back button the app frame shows on pages without their own.
 export function FrameBack({ world, children }) {
+  const t = useT()
   const navigate = useNavigate()
   const location = useLocation()
   const cameFromApp = location.key !== 'default'
   return (
     <div className={'app-back-row' + (world ? ' app-back-world' : '')}>
       <Link to={isSimpleView() ? '/' : '/world'} className="app-back" onClick={cameFromApp ? (e) => { e.preventDefault(); navigate(-1) } : undefined}>
-        <span aria-hidden="true">&#8592;</span> {cameFromApp ? 'Back' : 'Home'}
+        <span aria-hidden="true">&#8592;</span> {t(cameFromApp ? 'Back' : 'Home')}
       </Link>
       {children}
     </div>

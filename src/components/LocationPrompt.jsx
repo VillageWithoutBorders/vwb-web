@@ -2,11 +2,13 @@ import Icon from './Icon'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { lookupZip, saveZip, setVisitZip, forgetVisitLocation } from '../utils/location'
+import { useT } from '../utils/lang'
 
 // Asks "where should we look?" with a zip code. We never guess a location.
 // Shown wherever a page needs a location and doesn't have one yet.
 // onDone() is called once a location is set, so the page can reload.
 export function LocationPrompt({ onDone, onCancel, title = 'Where should we look?', intro }) {
+  const t = useT()
   const { user, refreshProfile } = useAuth()
   const [zip, setZip] = useState('')
   const [place, setPlace] = useState(null)
@@ -18,11 +20,11 @@ export function LocationPrompt({ onDone, onCancel, title = 'Where should we look
     e.preventDefault()
     setError('')
     const clean = zip.replace(/[^0-9]/g, '')
-    if (clean.length !== 5) { setError('Zip codes have 5 numbers.'); return }
+    if (clean.length !== 5) { setError(t('Zip codes have 5 numbers.')); return }
     setBusy(true)
     const found = await lookupZip(clean)
     setBusy(false)
-    if (!found) { setError("We couldn't find that zip code. Try the zip code where you live."); return }
+    if (!found) { setError(t("We couldn't find that zip code. Try the zip code where you live.")); return }
     setPlace(found)
   }
 
@@ -31,7 +33,7 @@ export function LocationPrompt({ onDone, onCancel, title = 'Where should we look
     setBusy(true)
     if (remember && user) {
       const msg = await saveZip(user.id, place.zip)
-      if (msg) { setBusy(false); setError(msg); return }
+      if (msg) { setBusy(false); setError(t(msg)); return }
       forgetVisitLocation()
       await refreshProfile()
     } else {
@@ -42,15 +44,15 @@ export function LocationPrompt({ onDone, onCancel, title = 'Where should we look
   }
 
   return (
-    <div className="location-prompt" role="region" aria-label="Choose your area">
-      <h2 className="location-prompt-title">{title}</h2>
+    <div className="location-prompt" role="region" aria-label={t('Choose your area')}>
+      <h2 className="location-prompt-title">{t(title)}</h2>
       <p className="location-prompt-text">
-        {intro || 'Enter your zip code to see neighbors near you. We never guess where you are.'}
+        {t(intro || 'Enter your zip code to see neighbors near you. We never guess where you are.')}
       </p>
 
       {!place ? (
         <form onSubmit={handleFind} className="location-prompt-row">
-          <label htmlFor="locZip" className="sr-only">Zip code</label>
+          <label htmlFor="locZip" className="sr-only">{t('Zip code')}</label>
           <input
             id="locZip"
             className="location-prompt-input"
@@ -59,31 +61,31 @@ export function LocationPrompt({ onDone, onCancel, title = 'Where should we look
             autoComplete="postal-code"
             pattern="[0-9]*"
             maxLength={5}
-            placeholder="Zip code"
+            placeholder={t('Zip code')}
             value={zip}
             onChange={(e) => { setZip(e.target.value.replace(/[^0-9]/g, '')); setError('') }}
             aria-invalid={!!error}
             aria-describedby={error ? 'locZipError' : undefined}
           />
-          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Looking...' : 'Find'}</button>
+          <button type="submit" className="btn btn-primary" disabled={busy}>{t(busy ? 'Looking...' : 'Find')}</button>
         </form>
       ) : (
         <div className="location-prompt-found">
           <p className="location-prompt-place">
             <span aria-hidden="true"><Icon name="pin" /></span> {place.label}
-            <button type="button" className="link-button" onClick={() => { setPlace(null); setError('') }}>Change</button>
+            <button type="button" className="link-button" onClick={() => { setPlace(null); setError('') }}>{t('Change')}</button>
           </p>
           {user && (
             <label className="checkbox-field location-prompt-remember">
               <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
               <span>
-                Remember my zip code.
-                <span className="location-prompt-fine"> Only you and VWB admins can see it. Neighbors only ever see your town.</span>
+                {t('Remember my zip code.')}
+                <span className="location-prompt-fine"> {t('Only you and VWB admins can see it. Neighbors only ever see your town.')}</span>
               </span>
             </label>
           )}
           <button type="button" className="btn btn-primary btn-full" onClick={handleUse} disabled={busy}>
-            {busy ? 'Saving...' : 'Use ' + place.label}
+            {busy ? t('Saving...') : t('Use {place}', { place: place.label })}
           </button>
         </div>
       )}
@@ -92,10 +94,10 @@ export function LocationPrompt({ onDone, onCancel, title = 'Where should we look
 
       <div className="location-prompt-alt">
         {onCancel && (
-          <button type="button" className="link-button" onClick={onCancel}>Cancel</button>
+          <button type="button" className="link-button" onClick={onCancel}>{t('Cancel')}</button>
         )}
       </div>
-      <p className="location-prompt-fine">Your phone's location is rounded to about half a mile and only kept until you close the app.</p>
+      <p className="location-prompt-fine">{t("Your phone's location is rounded to about half a mile and only kept until you close the app.")}</p>
     </div>
   )
 }
@@ -103,6 +105,7 @@ export function LocationPrompt({ onDone, onCancel, title = 'Where should we look
 // A small line like "Near Ringgold, GA · Change". Tapping Change opens the
 // prompt in place.
 export function LocationBar({ loc, onChanged, prefix = 'Near' }) {
+  const t = useT()
   const { profile } = useAuth()
   const [editing, setEditing] = useState(false)
   // Using a travel spot (phone or a zip for this visit) while a home zip is saved.
@@ -113,11 +116,11 @@ export function LocationBar({ loc, onChanged, prefix = 'Near' }) {
   return (
     <div className="location-bar">
       <span className="location-dot" aria-hidden="true" />
-      <span className="location-bar-text">{prefix} {loc.label}</span>
-      <button type="button" className="link-button location-bar-change" onClick={() => setEditing(true)}>Change</button>
+      <span className="location-bar-text">{t(prefix)} {loc.label}</span>
+      <button type="button" className="link-button location-bar-change" onClick={() => setEditing(true)}>{t('Change')}</button>
       {away && (
         <button type="button" className="link-button location-bar-change" onClick={() => { forgetVisitLocation(); onChanged?.() }}>
-          Back to my home area
+          {t('Back to my home area')}
         </button>
       )}
     </div>
