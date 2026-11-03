@@ -7,6 +7,7 @@ import { firstRunPaused } from '../utils/firstVillage'
 import { useAuth } from '../context/AuthContext'
 import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView'
 import SimpleOffer from '../components/SimpleOffer'
+import ReadAloud from '../components/ReadAloud'
 import BottomTabs from '../components/BottomTabs'
 import MeButton, { MyCornerButton } from '../components/MeButton'
 import MyToolsButton from '../components/MyToolsButton'
@@ -136,7 +137,11 @@ export default function Layout() {
         </nav>
       </header>
       <main className={'app-main' + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '')}>
-        {showBack && <FrameBack world={isWorld} />}
+        {/* Read this to me (Nov 3, barriers review): Simple view pages, next to Back.
+            Not on chats or the maps. */}
+        {showBack
+          ? <FrameBack world={isWorld}>{simple && !isChat && !isWorld && <ReadAloud />}</FrameBack>
+          : simple && !isChat && !isWorld && <div className="app-back-row read-aloud-row"><ReadAloud /></div>}
         <PageBackContext.Provider value={tellFrame}>
           <Outlet />
         </PageBackContext.Provider>
