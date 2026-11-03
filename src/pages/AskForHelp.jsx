@@ -11,6 +11,7 @@ import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
 import { useGoBack } from '../components/BackLink'
 import { isSimpleView } from '../utils/simpleView'
 import { savePendingAsk, isNoSignal } from '../utils/pendingAsks'
+import { useT } from '../utils/lang'
 
 // Each choice also sets when the request closes on its own (set by the database):
 // now = 6 hours, today = midnight Eastern (at least 3 hours), this_week = 7 days.
@@ -30,6 +31,7 @@ const HELPER_COUNT_OPTIONS = [
 ]
 
 export default function AskForHelp() {
+    const t = useT()
     const { user, profile, organizations } = useAuth()
     const [searchParams] = useSearchParams()
     // "Ask again" from an old task: the details come along, but it posts as a brand new request.
@@ -77,7 +79,7 @@ export default function AskForHelp() {
     // Can I post for someone else? Filled from my_ask_for_others_status().
     const [forStatus, setForStatus] = useState(null)
     const forOther = !editId && forWho === 'other'
-    const theirName = forName.trim() || 'them'
+    const theirName = forName.trim() || t('them')
 
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')
@@ -170,7 +172,7 @@ export default function AskForHelp() {
     const groupId = audienceOrg || postAs || organizations[0]?.id || ''
     // With more than one group and none picked yet, don't name one at random.
     const groupPicked = Boolean(audienceOrg || postAs) || organizations.length === 1
-    const groupName = groupPicked ? ((organizations.find((o) => o.id === groupId) || {}).name || 'your group') : 'your group'
+    const groupName = groupPicked ? ((organizations.find((o) => o.id === groupId) || {}).name || t('your group')) : t('your group')
 
     async function handleSubmit(e) {
         e.preventDefault()
@@ -292,104 +294,104 @@ export default function AskForHelp() {
     return (
         <div className="ask-page">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0, minWidth: 44, minHeight: 44 }}>&#8592;</button>
-                <h1 style={{ margin: 0 }}>{editId ? 'Edit your request' : 'Ask for Help'}</h1>
+                <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0, minWidth: 44, minHeight: 44 }}>&#8592;</button>
+                <h1 style={{ margin: 0 }}>{t(editId ? 'Edit your request' : 'Ask for Help')}</h1>
             </div>
             <p className="ask-intro">
                 {forOther
-                    ? 'Tell us what ' + theirName + ' needs. Helpers will talk with you, and you pass things along. Never share their address here.'
-                    : 'Tell us what you need. Neighbors and Hope Ambassadors near you will see it, with your name and town. Never your address.'}
+                    ? t('Tell us what {name} needs. Helpers will talk with you, and you pass things along. Never share their address here.', { name: theirName })
+                    : t('Tell us what you need. Neighbors and Hope Ambassadors near you will see it, with your name and town. Never your address.')}
             </p>
 
             {!online && (
                 <p className="ask-offline" role="status">
-                    <b>No signal right now.</b> You can still fill this out. We will save it on this phone and send it when you have signal.
+                    <b>{t('No signal right now.')}</b> {t('You can still fill this out. We will save it on this phone and send it when you have signal.')}
                 </p>
             )}
 
             {editId && editForName && (
-                <p className="ask-intro"><span className="for-chip">For {editForName}</span> Helpers talk with you about this request.</p>
+                <p className="ask-intro"><span className="for-chip">{t('For {name}', { name: editForName })}</span> {t('Helpers talk with you about this request.')}</p>
             )}
 
             {!editId && (
                 <fieldset className="form-field ask-who" style={{ border: 'none', padding: 0, margin: '0 0 1rem' }}>
-                    <legend className="ask-who-q">Who is this for?</legend>
+                    <legend className="ask-who-q">{t('Who is this for?')}</legend>
                     <div className="urgency-options ask-who-row">
                         <label className={'urgency-option' + (forWho === 'me' ? ' active' : '')}>
                             <input type="radio" name="forWho" className="sr-only" checked={forWho === 'me'} onChange={() => { setForWho('me'); setError('') }} />
-                            <span className="urgency-label">Me</span>
+                            <span className="urgency-label">{t('Me')}</span>
                         </label>
                         <label className={'urgency-option' + (forWho === 'other' ? ' active' : '')}>
                             <input type="radio" name="forWho" className="sr-only" checked={forWho === 'other'} onChange={() => { setForWho('other'); setError('') }} />
-                            <span className="urgency-label">Someone else</span>
-                            <span className="urgency-desc">A family member or neighbor who doesn't use the app</span>
+                            <span className="urgency-label">{t('Someone else')}</span>
+                            <span className="urgency-desc">{t("A family member or neighbor who doesn't use the app")}</span>
                         </label>
                     </div>
                 </fieldset>
             )}
 
             {!editId && !forWho && (
-                <p className="field-hint" style={{ fontSize: '0.9375rem' }}>Choose one to keep going.</p>
+                <p className="field-hint" style={{ fontSize: '0.9375rem' }}>{t('Choose one to keep going.')}</p>
             )}
 
             {forOther && forBlocked && (
-                <p className="form-error" role="alert">{forBlocked}</p>
+                <p className="form-error" role="alert">{t(forBlocked)}</p>
             )}
 
             {repost && !editId && (
-                <p className="ask-intro">Filled in from your earlier request. Change anything you like, then post. This is a new request, so neighbors see it fresh.</p>
+                <p className="ask-intro">{t('Filled in from your earlier request. Change anything you like, then post. This is a new request, so neighbors see it fresh.')}</p>
             )}
 
             {editId && (
-                <p className="ask-intro">Change anything below. If someone already said they can help, we'll let them know it changed.</p>
+                <p className="ask-intro">{t("Change anything below. If someone already said they can help, we'll let them know it changed.")}</p>
             )}
 
             {(editId || (forWho && !(forOther && forBlocked))) && (<>
             {forOther && (
                 <div className="ask-for-box">
                     <div className="form-field">
-                        <label htmlFor="forName">Their first name</label>
+                        <label htmlFor="forName">{t('Their first name')}</label>
                         <input id="forName" type="text" value={forName} maxLength={30} autoComplete="off" autoCapitalize="words"
-                            onChange={(e) => setForName(e.target.value)} placeholder="Like Ruth" />
-                        <span className="field-hint">First name only. No last name, phone, or address.</span>
+                            onChange={(e) => setForName(e.target.value)} placeholder={t('Like Ruth')} />
+                        <span className="field-hint">{t('First name only. No last name, phone, or address.')}</span>
                     </div>
 
                     <fieldset className="form-field" style={{ border: 'none', padding: 0, margin: '0 0 1rem' }}>
-                        <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>Where do they live?</legend>
+                        <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>{t('Where do they live?')}</legend>
                         <div className="urgency-options">
                             <label className={'urgency-option' + (forWhere === 'near' ? ' active' : '')}>
                                 <input type="radio" name="forWhere" className="sr-only" checked={forWhere === 'near'} onChange={() => { setForWhere('near'); setForPlace(null); if (profile?.neighborhood) setNeighborhood(profile.neighborhood) }} />
-                                <span className="urgency-label">Near me</span>
-                                <span className="urgency-desc">Use my area</span>
+                                <span className="urgency-label">{t('Near me')}</span>
+                                <span className="urgency-desc">{t('Use my area')}</span>
                             </label>
                             <label className={'urgency-option' + (forWhere === 'zip' ? ' active' : '')}>
                                 <input type="radio" name="forWhere" className="sr-only" checked={forWhere === 'zip'} onChange={() => setForWhere('zip')} />
-                                <span className="urgency-label">Somewhere else</span>
-                                <span className="urgency-desc">Type their zip code</span>
+                                <span className="urgency-label">{t('Somewhere else')}</span>
+                                <span className="urgency-desc">{t('Type their zip code')}</span>
                             </label>
                         </div>
                         {forWhere === 'zip' && (forPlace ? (
-                            <p className="ask-zip-found">Near {forPlace.label}{' '}
-                                <button type="button" className="link-button" onClick={() => { setForPlace(null); setForZip('') }}>Change</button>
+                            <p className="ask-zip-found">{t('Near')} {forPlace.label}{' '}
+                                <button type="button" className="link-button" onClick={() => { setForPlace(null); setForZip('') }}>{t('Change')}</button>
                             </p>
                         ) : (
                             <div className="ask-zip-row">
-                                <label htmlFor="forZip" className="sr-only">Their zip code</label>
+                                <label htmlFor="forZip" className="sr-only">{t('Their zip code')}</label>
                                 <input id="forZip" type="text" inputMode="numeric" pattern="[0-9]*" maxLength={5} autoComplete="off"
-                                    placeholder="Their zip code" value={forZip}
+                                    placeholder={t('Their zip code')} value={forZip}
                                     onChange={(e) => setForZip(e.target.value.replace(/[^0-9]/g, ''))}
                                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); findTheirZip() } }} />
-                                <button type="button" className="btn btn-primary" disabled={zipBusy} onClick={findTheirZip}>{zipBusy ? 'Looking...' : 'Find'}</button>
+                                <button type="button" className="btn btn-primary" disabled={zipBusy} onClick={findTheirZip}>{t(zipBusy ? 'Looking...' : 'Find')}</button>
                             </div>
                         ))}
-                        <span className="field-hint">Just the zip code. It is never saved to anyone's profile.</span>
+                        <span className="field-hint">{t("Just the zip code. It is never saved to anyone's profile.")}</span>
                     </fieldset>
 
                     <label className="checkbox-field ask-consent">
                         <input type="checkbox" checked={forConsent} onChange={(e) => setForConsent(e.target.checked)} />
-                        <span>{(forName.trim() || 'They') + " said it's okay for me to post this."}</span>
+                        <span>{t("{name} said it's okay for me to post this.", { name: forName.trim() || t('They') })}</span>
                     </label>
-                    <p className="field-hint" style={{ marginTop: 0 }}>Helpers will message you, not {theirName}. You pass things along.</p>
+                    <p className="field-hint" style={{ marginTop: 0 }}>{t('Helpers will message you, not {name}. You pass things along.', { name: theirName })}</p>
                 </div>
             )}
 
@@ -404,7 +406,7 @@ export default function AskForHelp() {
             <form onSubmit={handleSubmit} className="ask-form">
 
                 <div className="form-field">
-                    <label id="skillNeededQ">{forOther ? 'What kind of help does ' + theirName + ' need?' : 'What kind of help do you need?'}</label>
+                    <label id="skillNeededQ">{forOther ? t('What kind of help does {name} need?', { name: theirName }) : t('What kind of help do you need?')}</label>
                     <div role="group" aria-labelledby="skillNeededQ">
                     <GroupedSkillChips selected={skillNeeded ? [skillNeeded] : []} skills={skills} renderChip={(skill) => (
                         <button
@@ -414,29 +416,29 @@ export default function AskForHelp() {
                             className={`skill-chip ${skillNeeded === skill ? 'active' : ''}`}
                             onClick={() => setSkillNeeded(skill)}
                         >
-                            {skill}
+                            {t(skill)}
                         </button>
                     )} />
                     </div>
                     {autoPicked && skillNeeded === autoPicked && (
-                        <p style={{ margin: '0.5rem 0 0', fontSize: '0.95rem', color: 'var(--text-soft)' }}>We picked {autoPicked} from what you chose. Tap another if it fits better.</p>
+                        <p style={{ margin: '0.5rem 0 0', fontSize: '0.95rem', color: 'var(--text-soft)' }}>{t('We picked {skill} from what you chose. Tap another if it fits better.', { skill: t(autoPicked) })}</p>
                     )}
                 </div>
 
                 <div className="form-field">
-                    <label htmlFor="description">What's going on?</label>
+                    <label htmlFor="description">{t("What's going on?")}</label>
                     <textarea
                         id="description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder={forOther ? 'What does ' + theirName + ' need? Leave out their address and anything private.' : "Describe your situation. Be as specific as you're comfortable with."}
+                        placeholder={forOther ? t('What does {name} need? Leave out their address and anything private.', { name: theirName }) : t("Describe your situation. Be as specific as you're comfortable with.")}
                         rows={4}
                         required
                     />
                 </div>
 
                 <div className="form-field">
-                    <label id="urgencyQ">{forOther ? 'How soon do they need help?' : 'How soon do you need help?'}</label>
+                    <label id="urgencyQ">{t(forOther ? 'How soon do they need help?' : 'How soon do you need help?')}</label>
                     <div className="urgency-options" role="radiogroup" aria-labelledby="urgencyQ">
                         {URGENCY_OPTIONS.map((opt) => (
                             <label
@@ -451,16 +453,16 @@ export default function AskForHelp() {
                                     onChange={() => setUrgency(opt.value)}
                                     className="sr-only"
                                 />
-                                <span className="urgency-label">{opt.label}</span>
-                                <span className="urgency-desc">{opt.desc}</span>
+                                <span className="urgency-label">{t(opt.label)}</span>
+                                <span className="urgency-desc">{t(opt.desc)}</span>
                             </label>
                         ))}
                     </div>
-                    <span className="field-hint">An hour before it closes, we ask if you still need help.</span>
+                    <span className="field-hint">{t('An hour before it closes, we ask if you still need help.')}</span>
                 </div>
 
                 <div className="form-field">
-                    <label id="maxHelpersQ">{forOther ? 'How many people do they need?' : 'How many people do you need?'}</label>
+                    <label id="maxHelpersQ">{t(forOther ? 'How many people do they need?' : 'How many people do you need?')}</label>
                     <div className="urgency-options" role="radiogroup" aria-labelledby="maxHelpersQ">
                         {HELPER_COUNT_OPTIONS.map((opt) => (
                             <label
@@ -475,76 +477,76 @@ export default function AskForHelp() {
                                     onChange={() => setMaxHelpers(opt.value)}
                                     className="sr-only"
                                 />
-                                <span className="urgency-label">{opt.label}</span>
+                                <span className="urgency-label">{t(opt.label)}</span>
                             </label>
                         ))}
                     </div>
                 </div>
 
                 <div className="form-field">
-                    <label htmlFor="neighborhood">Town or neighborhood to show (optional)</label>
+                    <label htmlFor="neighborhood">{t('Town or neighborhood to show (optional)')}</label>
                     <input
                         id="neighborhood"
                         type="text"
                         value={neighborhood}
                         onChange={(e) => setNeighborhood(e.target.value)}
-                        placeholder={forOther ? 'Their town or neighborhood' : 'Your town or neighborhood'}
+                        placeholder={t(forOther ? 'Their town or neighborhood' : 'Your town or neighborhood')}
                     />
                     <span className="field-hint">
-                        {forOther ? 'Just their town or neighborhood. Never their address.' : 'Just your town or neighborhood. We never share your exact address.'}
+                        {t(forOther ? 'Just their town or neighborhood. Never their address.' : 'Just your town or neighborhood. We never share your exact address.')}
                     </span>
                 </div>
 
                 {!editId && managedOrgs.length > 0 && (
                     <div className="form-field">
-                        <label htmlFor="postAs">Post as</label>
+                        <label htmlFor="postAs">{t('Post as')}</label>
                         <select id="postAs" value={postAs} onChange={(e) => setPostAs(e.target.value)}>
-                            <option value="">Myself</option>
+                            <option value="">{t('Myself')}</option>
                             {managedOrgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
-                        <span className="field-hint">Posting as your group lists it on your group dashboard.</span>
+                        <span className="field-hint">{t('Posting as your group lists it on your group dashboard.')}</span>
                     </div>
                 )}
 
                 {!editId && organizations.length > 0 && (
                     <fieldset className="form-field" style={{ border: 'none', padding: 0, margin: '0 0 1rem' }}>
-                        <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>Who sees this first?</legend>
+                        <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>{t('Who sees this first?')}</legend>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'everyone'} onChange={() => setAudience('everyone')} style={{ marginTop: '0.3rem' }} />
-                            <span>Everyone nearby</span>
+                            <span>{t('Everyone nearby')}</span>
                         </label>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'group'} onChange={() => setAudience('group')} style={{ marginTop: '0.3rem' }} />
-                            <span>Only {groupName} first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>Members of your group see it right away. Neighbors and Hope Ambassadors see it once it opens to everyone.</small></span>
+                            <span>{t('Only {group} first', { group: groupName })}<small style={{ display: 'block', color: 'var(--text-secondary)' }}>{t('Members of your group see it right away. Neighbors and Hope Ambassadors see it once it opens to everyone.')}</small></span>
                         </label>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'network'} onChange={() => setAudience('network')} style={{ marginTop: '0.3rem' }} />
-                            <span>{groupName} and its network first<small style={{ display: 'block', color: 'var(--text-secondary)' }}>Groups connected to {groupName} can see it too.</small></span>
+                            <span>{t('{group} and its network first', { group: groupName })}<small style={{ display: 'block', color: 'var(--text-secondary)' }}>{t('Groups connected to {group} can see it too.', { group: groupName })}</small></span>
                         </label>
                         {audience !== 'everyone' && (
                             <>
                                 {organizations.length > 1 && !postAs && (
                                     <>
-                                        <label htmlFor="audienceOrg">Which group?</label>
+                                        <label htmlFor="audienceOrg">{t('Which group?')}</label>
                                         <select id="audienceOrg" value={groupId} onChange={(e) => setAudienceOrg(e.target.value)}>
                                             {organizations.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                                         </select>
                                     </>
                                 )}
-                                <label htmlFor="openHours">Then open it to everyone nearby after</label>
+                                <label htmlFor="openHours">{t('Then open it to everyone nearby after')}</label>
                                 <select id="openHours" value={openHours} onChange={(e) => setOpenHours(e.target.value)}>
-                                    <option value="6">6 hours</option>
-                                    <option value="24">1 day</option>
-                                    <option value="72">3 days</option>
-                                    <option value="168">7 days</option>
+                                    <option value="6">{t('6 hours')}</option>
+                                    <option value="24">{t('1 day')}</option>
+                                    <option value="72">{t('3 days')}</option>
+                                    <option value="168">{t('7 days')}</option>
                                 </select>
-                                <span className="field-hint">You can open it sooner from Tasks. If nobody in your group can help, it still reaches your neighbors.</span>
+                                <span className="field-hint">{t('You can open it sooner from Tasks. If nobody in your group can help, it still reaches your neighbors.')}</span>
                             </>
                         )}
                     </fieldset>
                 )}
 
-                {error && <p className="form-error" role="alert">{error}</p>}
+                {error && <p className="form-error" role="alert">{t(error)}</p>}
 
                 <div className="form-row" style={{ marginTop: '0.5rem' }}>
                     <button
@@ -552,7 +554,7 @@ export default function AskForHelp() {
                         className="btn btn-outline"
                         onClick={() => goBack('/')}
                     >
-                        Cancel
+                        {t('Cancel')}
                     </button>
                     <button
                         type="submit"
@@ -560,7 +562,7 @@ export default function AskForHelp() {
                         disabled={submitting}
                         style={{ flex: 1 }}
                     >
-                        {submitting ? (editId ? 'Saving...' : 'Posting...') : (editId ? 'Save changes' : 'Post request')}
+                        {t(submitting ? (editId ? 'Saving...' : 'Posting...') : (editId ? 'Save changes' : 'Post request'))}
                     </button>
                 </div>
             </form>

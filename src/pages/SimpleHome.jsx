@@ -6,17 +6,17 @@ import { supabase } from '../supabaseClient'
 import { saveSimpleView } from '../utils/simpleView'
 import { startPath, setupWaiting } from '../utils/startPath'
 import Icon from '../components/Icon'
-import { forTitle } from '../utils/forSomeone'
 import OrgInvites from '../components/OrgInvites'
 import VillageGuestInvites from '../components/VillageGuestInvites'
 import { orgWords } from '../utils/roleWords'
+import { useT, t as tr } from '../utils/lang'
 
 // Simple view home: four big buttons, your village and groups, what's waiting, and the emergency button.
 // Replaces the globe as the first screen when Simple view is on.
 
 function hello() {
   const h = new Date().getHours()
-  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
+  return tr(h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening')
 }
 
 const STATUS = {
@@ -25,6 +25,7 @@ const STATUS = {
 }
 
 export default function SimpleHome() {
+  const t = useT()
   const { user, profile, refreshProfile, organizations } = useAuth()
   const { unreadCount } = useUnreadCount()
   const navigate = useNavigate()
@@ -77,7 +78,7 @@ export default function SimpleHome() {
   const villageRow = (
     <button type="button" className={'sh-row sh-village' + (hasVillage ? '' : ' sh-start')} onClick={() => navigate(hasVillage ? '/village/' + profile.home_village_id : '/find-village')}>
       <Icon name="houses" size={32} />
-      <span><b>{hasVillage ? 'My village' : 'Start here: find your village'}</b><small>{hasVillage ? 'Your neighbors and your village chat' : 'Meet neighbors near your zip code'}</small></span>
+      <span><b>{t(hasVillage ? 'My village' : 'Start here: find your village')}</b><small>{t(hasVillage ? 'Your neighbors and your village chat' : 'Meet neighbors near your zip code')}</small></span>
       <span className="sh-arrow" aria-hidden="true">&#8250;</span>
     </button>
   )
@@ -85,13 +86,13 @@ export default function SimpleHome() {
   return (
     <div className="sh-page">
       <h1 className="sh-hello">{hello()}{first ? ', ' + first : ''}.</h1>
-      <p className="sh-sub">What would you like to do?</p>
+      <p className="sh-sub">{t('What would you like to do?')}</p>
 
       {done && (
         <div className="sh-done" role="status">
           <Icon name="check" size={32} />
           <span>{done}</span>
-          <button type="button" className="sh-done-x" onClick={() => setDone('')}>OK</button>
+          <button type="button" className="sh-done-x" onClick={() => setDone('')}>{t('OK')}</button>
         </div>
       )}
 
@@ -100,19 +101,19 @@ export default function SimpleHome() {
       <div className="sh-buttons" data-tour="simple-buttons">
         <button type="button" className="sh-big sh-big-ask" onClick={() => navigate('/ask?skip=1')}>
           <Icon name="raise-hand" size={44} />
-          <span><b>Ask for Help</b><small>Tell neighbors what you need. No shame in asking.</small></span>
+          <span><b>{t('Ask for Help')}</b><small>{t('Tell neighbors what you need. No shame in asking.')}</small></span>
         </button>
         <button type="button" className="sh-big" onClick={() => navigate('/community/resources')}>
           <Icon name="heart-hands" size={44} />
-          <span><b>Find food, rides, and more</b><small>Places near you that can help today</small></span>
+          <span><b>{t('Find food, rides, and more')}</b><small>{t('Places near you that can help today')}</small></span>
         </button>
         <button type="button" className="sh-big" onClick={() => navigate('/skillshare')}>
           <Icon name="heart" size={44} />
-          <span><b>Offer Help</b><small>See who needs a hand</small></span>
+          <span><b>{t('Offer Help')}</b><small>{t('See who needs a hand')}</small></span>
         </button>
         <button type="button" className="sh-big" onClick={() => navigate('/messages')}>
           <Icon name="envelope" size={44} />
-          <span><b>My messages</b><small>{unreadCount > 0 ? unreadCount + ' new' : 'Talk with neighbors'}</small></span>
+          <span><b>{t('My messages')}</b><small>{unreadCount > 0 ? t('{n} new', { n: unreadCount }) : t('Talk with neighbors')}</small></span>
         </button>
       </div>
 
@@ -124,26 +125,26 @@ export default function SimpleHome() {
           or to offer something of your own. */}
       <button type="button" className="sh-row" onClick={() => navigate('/calendar')}>
         <Icon name="calendar" size={32} />
-        <span><b>Events near me</b><small>Things to join, and shifts to help with</small></span>
+        <span><b>{t('Events near me')}</b><small>{t('Things to join, and shifts to help with')}</small></span>
         <span className="sh-arrow" aria-hidden="true">&#8250;</span>
       </button>
       <button type="button" className="sh-row" onClick={() => navigate('/post-offer')}>
         <Icon name="gift" size={32} />
-        <span><b>Share something I have</b><small>A ride, a tool, your time, or a skill</small></span>
+        <span><b>{t('Share something I have')}</b><small>{t('A ride, a tool, your time, or a skill')}</small></span>
         <span className="sh-arrow" aria-hidden="true">&#8250;</span>
       </button>
 
       {/* Your groups and emergency crews (Oct 27): one plain button each, straight to it. */}
       {(organizations || []).length > 0 && (
         <section className="sh-groups" aria-labelledby="sh-groups-h">
-          <h2 id="sh-groups-h">My groups</h2>
+          <h2 id="sh-groups-h">{t('My groups')}</h2>
           {organizations.map((o) => {
             const crew = o.kind === 'group'
             const role = orgWords(o).roleLabel[o.role] || 'Member'
             return (
               <button key={o.id} type="button" className="sh-row" onClick={() => navigate('/orgs/' + o.id)}>
                 <Icon name={crew ? 'tent' : 'people'} size={32} />
-                <span><b>{o.name}</b><small>{(crew ? 'Emergency crew' : 'Group') + '. You are ' + (/^[aeiou]/i.test(role) ? 'an ' : 'a ') + role.toLowerCase() + '.'}</small></span>
+                <span><b>{o.name}</b><small>{t(crew ? 'Emergency crew' : 'Group') + '. ' + t(/^[aeiou]/i.test(role) ? 'You are an {role}.' : 'You are a {role}.', { role: t(role).toLowerCase() })}</small></span>
                 <span className="sh-arrow" aria-hidden="true">&#8250;</span>
               </button>
             )
@@ -155,13 +156,13 @@ export default function SimpleHome() {
       <VillageGuestInvites />
 
       <section className="sh-wait" aria-labelledby="sh-wait-h">
-        <h2 id="sh-wait-h">Waiting on you</h2>
-        {mine === null && <p className="sh-note" role="status">Loading...</p>}
-        {mine !== null && !waiting && <p className="sh-note">Nothing right now. All is quiet.</p>}
+        <h2 id="sh-wait-h">{t('Waiting on you')}</h2>
+        {mine === null && <p className="sh-note" role="status">{t('Loading...')}</p>}
+        {mine !== null && !waiting && <p className="sh-note">{t('Nothing right now. All is quiet.')}</p>}
         {unreadCount > 0 && (
           <button type="button" className="sh-row" onClick={() => navigate('/messages')}>
             <Icon name="envelope" size={32} />
-            <span>You have {unreadCount} new {unreadCount === 1 ? 'message' : 'messages'}</span>
+            <span>{t(unreadCount === 1 ? 'You have 1 new message' : 'You have {n} new messages', { n: unreadCount })}</span>
             <span className="sh-arrow" aria-hidden="true">&#8250;</span>
           </button>
         )}
@@ -169,8 +170,8 @@ export default function SimpleHome() {
           <button key={r.id} type="button" className="sh-row" onClick={() => navigate(r.status === 'open' ? '/tasks?tab=requests' : '/tasks?tab=active')}>
             <Icon name="raise-hand" size={32} />
             <span>
-              <b>{forTitle(r, 'Your request')}</b>
-              <small>{STATUS[r.status] || ''}</small>
+              <b>{r.for_name ? t('{skill} for {name}', { skill: t(r.skill_needed || 'Help request'), name: r.for_name.trim() }) : t(r.skill_needed || 'Your request')}</b>
+              <small>{STATUS[r.status] ? t(STATUS[r.status]) : ''}</small>
             </span>
             <span className="sh-arrow" aria-hidden="true">&#8250;</span>
           </button>
@@ -179,32 +180,32 @@ export default function SimpleHome() {
 
       <button type="button" className="sh-emergency" onClick={() => navigate('/emergency')}>
         <Icon name="cat-emergency" size={40} />
-        <span><b>Emergency</b><small>Flood, storm, fire, or outage. In danger? Call 911 first.</small></span>
+        <span><b>{t('Emergency')}</b><small>{t('Flood, storm, fire, or outage. In danger? Call 911 first.')}</small></span>
       </button>
 
       {offerSetup && (
         <section className="sh-setup" aria-labelledby="sh-setup-h">
-          <h2 id="sh-setup-h">Want to set up more?</h2>
+          <h2 id="sh-setup-h">{t('Want to set up more?')}</h2>
           <button type="button" className="sh-row" onClick={() => navigate('/setup')}>
             <Icon name="cottage" size={32} />
-            <span><b>Make your avatar and cottage</b><small>About 10 minutes. This turns on the full app.</small></span>
+            <span><b>{t('Make your avatar and cottage')}</b><small>{t('About 10 minutes. This turns on the full app.')}</small></span>
             <span className="sh-arrow" aria-hidden="true">&#8250;</span>
           </button>
-          <button type="button" className="link-button sh-setup-no" onClick={notNow}>Not now</button>
+          <button type="button" className="link-button sh-setup-no" onClick={notNow}>{t('Not now')}</button>
         </section>
       )}
 
       {/* Settings, easy to find (Oct 27, Jade). */}
       <button type="button" className="sh-row sh-settings" onClick={() => navigate('/settings')}>
         <Icon name="gear" size={32} />
-        <span><b>Settings</b><small>Text size, light or dark, and Simple view</small></span>
+        <span><b>{t('Settings')}</b><small>{t('Language, text size, light or dark, and Simple view')}</small></span>
         <span className="sh-arrow" aria-hidden="true">&#8250;</span>
       </button>
 
       <button type="button" className="sh-everything" disabled={busy} onClick={showEverything}>
-        {busy ? 'Switching...' : 'Show me everything'}
+        {t(busy ? 'Switching...' : 'Show me everything')}
       </button>
-      <p className="sh-note sh-center">This turns off Simple view. You can turn it back on in Settings.</p>
+      <p className="sh-note sh-center">{t('This turns off Simple view. You can turn it back on in Settings.')}</p>
     </div>
   )
 }

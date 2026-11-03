@@ -1,3 +1,4 @@
+import { t, getLang } from './lang'
 // Icons, colors, and "5m ago" text for alerts. Used by the Alerts popout
 // in the top bar and by the full Alerts page, so they always match.
 
@@ -78,11 +79,11 @@ export const TYPE_COLORS = {
 export function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'Just now'
-  if (mins < 60) return mins + 'm ago'
+  if (mins < 1) return t('Just now')
+  if (mins < 60) return t('{n}m ago', { n: mins })
   const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return hrs + 'h ago'
+  if (hrs < 24) return t('{n}h ago', { n: hrs })
   const days = Math.floor(hrs / 24)
-  if (days < 7) return days + 'd ago'
-  return new Date(dateStr).toLocaleDateString()
+  if (days < 7) return t('{n}d ago', { n: days })
+  return new Date(dateStr).toLocaleDateString(getLang() === 'es' ? 'es-US' : undefined)
 }

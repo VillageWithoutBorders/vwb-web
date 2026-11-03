@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useSimpleView } from '../utils/simpleView'
 import Icon from './Icon'
 import MyAvatar from './MyAvatar'
+import { useT } from '../utils/lang'
 
 // Cottage in the top bar. Opens your cottage: your own map, with My Corner under it.
 // Oct 25 (Jade): the top bar shows the cottage icon, the same one as Cottage Chats. Your avatar is on My Corner, next to it.
@@ -9,6 +10,7 @@ import MyAvatar from './MyAvatar'
 export default function MeButton() {
   const { pathname } = useLocation()
   const simple = useSimpleView()
+  const t = useT()
   const to = simple ? '/me' : '/cottage'
   const here = pathname === to
   return (
@@ -16,11 +18,11 @@ export default function MeButton() {
       to={to}
       className={'header-btn me-btn' + (here ? ' on' : '')}
       data-tour="me"
-      aria-label={simple ? 'My Corner: profile, settings, and more' : 'My Cottage: your own map'}
+      aria-label={simple ? t('My Corner: profile, settings, and more') : 'My Cottage: your own map'}
       aria-current={here ? 'page' : undefined}
     >
       {simple ? <MyAvatar size={26} /> : <Icon name="cottage" size={26} className="header-btn-pic" />}
-      <span className="header-btn-label" aria-hidden="true">{simple ? 'My Corner' : <><span className="header-my">My </span>Cottage</>}</span>
+      <span className="header-btn-label" aria-hidden="true">{simple ? t('My Corner') : <><span className="header-my">My </span>Cottage</>}</span>
     </Link>
   )
 }

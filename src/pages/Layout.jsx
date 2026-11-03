@@ -43,7 +43,7 @@ export default function Layout() {
     if (!prefsKey) return
     if (profile.ui_prefs) { applyPrefs(profile.ui_prefs); return }
     const mine = devicePrefs()
-    if (mine.text !== 'normal' || mine.theme !== 'auto' || mine.motion !== 'normal') savePrefs(mine)
+    if (mine.text !== 'normal' || mine.theme !== 'auto' || mine.motion !== 'normal' || mine.lang !== 'en') savePrefs(mine)
   }, [prefsKey]) // eslint-disable-line react-hooks/exhaustive-deps
   // Chats fill the space between the top bar and the tabs, edge to edge,
   // instead of sitting inside the padded page column.

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { saveSimpleView, useSimpleView } from '../utils/simpleView'
+import { useT } from '../utils/lang'
 
 // Settings > Simple view. Saved on the account, so it follows you to any phone.
 export default function SimpleViewPicker() {
+  const t = useT()
   const { refreshProfile } = useAuth()
   const simple = useSimpleView()
   const [note, setNote] = useState('')
@@ -23,20 +25,20 @@ export default function SimpleViewPicker() {
       style={{ minHeight: 64, borderRadius: 12, cursor: 'pointer', font: 'inherit', textAlign: 'left', padding: '0.6rem 0.8rem',
         border: '2px solid ' + (simple === v ? 'var(--accent)' : 'var(--border)'),
         background: simple === v ? 'var(--green-light)' : 'var(--surface-2)', color: 'var(--text)' }}>
-      <b style={{ display: 'block', fontSize: '1rem' }}>{label}</b>
-      <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{desc}</span>
+      <b style={{ display: 'block', fontSize: '1rem' }}>{t(label)}</b>
+      <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{t(desc)}</span>
     </button>
   )
 
   return (
     <div className="profile-details" style={{ marginBottom: '1rem' }}>
-      <div className="detail-section-header" id="simple-h">Simple view</div>
+      <div className="detail-section-header" id="simple-h">{t('Simple view')}</div>
       <div role="radiogroup" aria-labelledby="simple-h" style={{ display: 'grid', gap: '0.5rem', padding: '0.5rem 1rem 0.25rem' }}>
         {opt(true, 'Simple', 'Bigger words and buttons. A plain home page with the main things: get help, give help, messages, and your village.')}
         {opt(false, 'Everything', 'The full app: maps of your village and area, group chats, a calendar, and more.')}
       </div>
       <p role="status" style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-        {note || 'Saved to your account, so it follows you to any phone.'}
+        {t(note || 'Saved to your account, so it follows you to any phone.')}
       </p>
     </div>
   )
