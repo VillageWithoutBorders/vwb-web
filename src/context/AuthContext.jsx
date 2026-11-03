@@ -1,9 +1,36 @@
 import { createContext, useContext, useEffect, useState, useRef } from 'react'
-import { supabase } from '../supabaseClient'
+import { supabase, savedSignIn, keepSignedIn } from '../supabaseClient'
 import { ensureDeviceKeypair, flushOutbox } from '../lib/e2ee'
 import { peekReturnTo } from '../utils/returnTo'
 import { tell } from '../components/AdminDialog'
-import { clearAllPendingAsks } from '../utils/pendingAsks'
+import { clearAllPendingAsks, isNoSignal } from '../utils/pendingAsks'
+
+// Opening VWB with no signal (Nov 3). The last profile and groups that loaded
+// are kept on this phone, in the same place as the sign-in, so the app can open
+// with no signal. Signing out removes them.
+const COPY = 'vwb_profile_copy'
+function copyStore() {
+  try { return keepSignedIn() ? localStorage : sessionStorage } catch { return null }
+}
+function saveCopy(uid, profile, organizations) {
+  try { copyStore()?.setItem(COPY, JSON.stringify({ uid, profile, organizations })) } catch { /* private window */ }
+}
+function readCopy(uid) {
+  try {
+    const c = JSON.parse(copyStore()?.getItem(COPY) || 'null')
+    return c && c.uid === uid && c.profile ? c : null
+  } catch { return null }
+}
+function clearCopy() {
+  try { localStorage.removeItem(COPY); sessionStorage.removeItem(COPY) } catch { /* private window */ }
+}
+// No signal (or a weak one): Supabase can't renew an hour-old sign-in, so it says
+// nobody is signed in, but it keeps the sign-in saved. A sign-in that is truly over
+// (signed out, or turned down by VWB) is removed from the phone, so anything still
+// saved is still good. Keep the person in until the signal comes back.
+function noSignalUser() {
+  return savedSignIn()?.user || null
+}
 
 const AuthContext = createContext({})
 
@@ -93,29 +120,61 @@ export function AuthProvider({ children }) {
   // after an email confirmation link). Share one run so a brand-new account
   // never tries to create its profile twice at the same moment.
   const profileRun = useRef(null)
+  // True while the profile on screen is the copy kept on this phone (no signal).
+  const [fromCopy, setFromCopy] = useState(false)
 
   useEffect(() => {
+    let settled = false
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        ensureProfile(session.user)
+      settled = true
+      const u = session?.user ?? noSignalUser()
+      setUser(u)
+      if (u) {
+        ensureProfile(u)
       }
       setLoading(false)
     })
+    // With no signal, renewing an old sign-in keeps trying for half a minute.
+    // Don't leave a blank screen that long: after 3 seconds, open with the saved sign-in.
+    const slow = setTimeout(() => {
+      if (settled) return
+      const u = noSignalUser()
+      if (!u) return
+      setUser(u)
+      ensureProfile(u)
+      setLoading(false)
+    }, 3000)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          ensureProfile(session.user)
+      async (event, session) => {
+        // A real sign out always signs out. Otherwise, with no signal, keep a saved sign-in.
+        const u = session?.user ?? (event === 'SIGNED_OUT' ? null : noSignalUser())
+        if (event === 'SIGNED_OUT') { clearCopy(); clearAllPendingAsks() }
+        setUser(u)
+        if (u) {
+          ensureProfile(u)
         } else {
           setProfile(null)
         }
       }
     )
 
-    return () => subscription.unsubscribe()
+    // Signal is back: renew the sign-in and load the real profile.
+    function back() {
+      supabase.auth.getSession().then(({ data: { session }, error }) => {
+        if (error) { console.error('[AuthContext] renewing sign-in', error); return }
+        if (session?.user) { setUser(session.user); ensureProfile(session.user) }
+      })
+    }
+    window.addEventListener('online', back)
+
+    return () => { clearTimeout(slow); subscription.unsubscribe(); window.removeEventListener('online', back) }
   }, [])
+
+  // Keep a copy of the profile and groups once they load from VWB.
+  useEffect(() => {
+    if (user?.id && profile && !fromCopy) saveCopy(user.id, profile, organizations)
+  }, [user?.id, profile, organizations, fromCopy])
 
   async function loadOrganizations(userId) {
     const { data, error } = await supabase
@@ -145,23 +204,46 @@ export function AuthProvider({ children }) {
     return promise
   }
 
+  // The profile copy kept on this phone, shown while there is no signal.
+  function showCopy(authUser) {
+    const copy = readCopy(authUser.id)
+    if (!copy) return false
+    setFromCopy(true)
+    setProfile(copy.profile)
+    setOrganizations(copy.organizations || [])
+    return true
+  }
+
   async function ensureProfileOnce(authUser) {
     setProfileError('')
+    // No signal at all: open with the copy right away. The real one loads when the signal is back.
+    if (navigator.onLine === false && showCopy(authUser)) return
+    // A weak signal can take a while (Supabase tries again for several seconds).
+    // After 3 seconds, show the copy while it keeps trying.
+    let loaded = false
+    const slow = setTimeout(() => { if (!loaded) showCopy(authUser) }, 3000)
     const { data: rows, error: fetchErr } = await supabase
       .from('helper_profiles')
       .select('*')
       .eq('user_id', authUser.id)
       .order('created_at', { ascending: true })
       .limit(1)
+    loaded = true
+    clearTimeout(slow)
     const data = rows?.[0] || null
 
     // A real failure (network, permissions). Don't guess that this is a new
     // person and try to create a second profile. Say so instead.
     if (fetchErr) {
       console.error('[AuthContext] ensureProfile fetch', fetchErr)
-      setProfileError("We couldn't load your account. Check your connection and try again.")
+      // No signal: open with the copy kept on this phone. The real one loads when the signal is back.
+      if (isNoSignal(fetchErr) && showCopy(authUser)) return
+      setProfileError(isNoSignal(fetchErr)
+        ? 'No signal right now. VWB will open when your phone has signal.'
+        : "We couldn't load your account. Check your connection and try again.")
       return
     }
+    setFromCopy(false)
 
     // Pending ambassador signup: Login.jsx stashes this in localStorage
     // because the profile row doesn't exist yet at signup time (the account
@@ -348,8 +430,9 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
-    // Requests saved with no signal stay on this phone only while signed in.
+    // Requests saved with no signal, and the profile copy, stay on this phone only while signed in.
     clearAllPendingAsks()
+    clearCopy()
     const { error } = await supabase.auth.signOut()
     if (error) console.error('[AuthContext] signOut', error)
     setUser(null)
@@ -361,7 +444,23 @@ export function AuthProvider({ children }) {
   // its authenticator code, false = fine. A failed check never locks anyone out.
   const [mfaRequired, setMfaRequired] = useState(null)
   async function refreshMfa() {
+    // With no signal this check waits on renewing the sign-in, which can take half a
+    // minute. After 3 seconds, work it out from the sign-in saved on this phone:
+    // a code is needed if the account has an authenticator and this sign-in hasn't
+    // used it yet. The real check still finishes when the signal is back.
+    let done = false
+    const slow = setTimeout(() => {
+      if (done) return
+      const saved = savedSignIn()
+      if (!saved) return
+      const hasCode = (saved.user.factors || []).some((f) => f.status === 'verified')
+      let aal = ''
+      try { aal = JSON.parse(atob(saved.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).aal || '' } catch { /* unreadable */ }
+      setMfaRequired(hasCode && aal !== 'aal2')
+    }, 3000)
     const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    done = true
+    clearTimeout(slow)
     if (error) { console.error('[AuthContext] refreshMfa', error); setMfaRequired(false); return }
     setMfaRequired(data.nextLevel === 'aal2' && data.currentLevel !== 'aal2')
   }
