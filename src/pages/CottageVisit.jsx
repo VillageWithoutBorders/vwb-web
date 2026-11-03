@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import SpotIcon from '../components/SpotIcon'
 import AvatarDisplay from '../components/AvatarDisplay'
-import { COTTAGE_SPOTS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
+import { COTTAGE_SPOTS, GIFT_SPOTS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
 import { useMapBuilder, MapLayers, ToolIcon, sceneProps, zoomLayer, fromSaved, placeLayer } from '../components/MapBuilder'
 import '../village-scene.css'
 
@@ -76,6 +76,13 @@ export default function CottageVisit() {
         <div {...zoomLayer(b)}>
           <img className="vs-ground" src={backgroundSrc(world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
           <MapLayers b={b} />
+          {/* Garden gifts they have grown (Nov 3, Jade), where they put them. Same rule as
+              the visit itself, so anyone who can see the cottage sees its garden. */}
+          {GIFT_SPOTS.filter((g) => data.gifts && data.gifts[g.k.slice(5)] && !isHidden(g.k)).map((g0) => {
+            const g = placed(g0)
+            const style = { left: g.x + '%', top: g.y + '%', '--s': g.s || 1, zIndex: placeLayer(g.z) }
+            return <span key={g.k} className="vs-gift" style={style} aria-hidden="true"><img className={'vs-gift-img' + (g.flip ? ' vs-flip' : '')} src={g.src} alt="" width="64" height="64" draggable="false" /></span>
+          })}
           {COTTAGE_SPOTS.filter((s0) => !isHidden(s0.k)).map((s0) => {
             const s = placed(s0)
             const style = { left: s.x + '%', top: s.y + '%', '--s': s.s || 1, zIndex: placeLayer(s.z) }
@@ -101,6 +108,9 @@ export default function CottageVisit() {
 
       <div className="vs-body">
         <p className="vs-note">This is how {name} arranged their cottage. Their chats, alerts and tasks stay private. Tap their house to see their profile.</p>
+        {data.gifts && Object.values(data.gifts).some(Boolean) && (
+          <p className="vs-note">{name}'s garden: {Object.values(data.gifts).filter(Boolean).length} of 4 gifts grown.</p>
+        )}
         <Link className="btn btn-outline btn-full vs-big" to={'/u/' + userId}>See {name}'s profile</Link>
         <Link className="btn btn-outline btn-full vs-big" to="/cottage">Back to my cottage</Link>
       </div>

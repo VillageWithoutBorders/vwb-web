@@ -9,6 +9,7 @@ import ProfileSafetyActions from '../components/ProfileSafetyActions'
 import { useGoBack } from '../components/BackLink'
 import InviteSheet from '../components/InviteSheet'
 import { tell } from '../components/AdminDialog'
+import Icon from '../components/Icon'
 
 export default function PublicProfile() {
   const { userId } = useParams()
@@ -51,6 +52,21 @@ export default function PublicProfile() {
       if (!alive) return
       if (error) { if (error.code !== 'PGRST202') console.error('Failed to check cottage visits:', error); setCanVisit(false); return }
       setCanVisit(!!(data && data.ok))
+    })
+    return () => { alive = false }
+  }, [user, userId])
+
+  // Their home village (Nov 3, Jade): only when you two are connected and they share
+  // their location. profile_home_village decides; nothing shows otherwise.
+  const [homeVillage, setHomeVillage] = useState(null)
+  useEffect(() => {
+    setHomeVillage(null)
+    if (!user || !userId || user.id === userId) return
+    let alive = true
+    supabase.rpc('profile_home_village', { p_user: userId }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { if (error.code !== 'PGRST202') console.error('Failed to check home village:', error); return }
+      if (data && data.ok && data.village_id) setHomeVillage({ id: data.village_id, name: data.name })
     })
     return () => { alive = false }
   }, [user, userId])
@@ -188,6 +204,11 @@ export default function PublicProfile() {
           </div>
           {profile.show_location && profile.neighborhood && (
             <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{profile.neighborhood}</div>
+          )}
+          {homeVillage && !blockedThem && (
+            <button type="button" onClick={() => navigate('/village/' + homeVillage.id)} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.35rem', minHeight: 44, padding: '0 0.25rem', background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+              <Icon name="houses" /> Home village: {homeVillage.name}
+            </button>
           )}
           {user && user.id !== userId && !blockedThem && (
             <button type="button" onClick={msgStatus === 'pending_in' ? () => navigate('/messages') : messageThem} disabled={messaging || msgStatus === 'pending_out'} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Sending...' : msgStatus === 'open' ? 'Message' : msgStatus === 'pending_out' ? 'Request sent' : msgStatus === 'pending_in' ? 'They asked to message you' : 'Ask to message'}</button>
