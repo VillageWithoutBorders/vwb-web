@@ -111,7 +111,7 @@ export default function AskForHelp() {
 
     // Why "Someone else" can't be used right now, or '' if it can.
     const forBlocked = !forStatus ? ''
-        : !forStatus.allowed ? 'You can ask for someone else after your first 14 days, or once someone vouches for you.'
+        : !forStatus.allowed ? 'You can ask for someone else after your first 14 days, once someone vouches for you, or right away if you run a group.'
         : (!forStatus.unlimited && forStatus.open_count >= 3) ? 'You already have 3 open requests for other people. When one is done, you can post another.'
         : ''
 
