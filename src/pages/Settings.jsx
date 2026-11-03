@@ -11,6 +11,8 @@ import AppearancePicker from '../components/AppearancePicker'
 import SimpleViewPicker from '../components/SimpleViewPicker'
 import TextSizePicker from '../components/TextSizePicker'
 import MotionPicker from '../components/MotionPicker'
+import LanguagePicker from '../components/LanguagePicker'
+import { useT } from '../utils/lang'
 import AreaPicker from '../components/AreaPicker'
 import { placesEnabled } from '../utils/places'
 import Icon from '../components/Icon'
@@ -38,6 +40,7 @@ function reportError(context, error, userMessage) {
 }
 
 export default function Settings() {
+  const t = useT()
   const { user, profile, isAdmin, isFounder, signOut, signOutEverywhere, refreshProfile, refreshMfa } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
@@ -337,40 +340,43 @@ export default function Settings() {
     <div className="profile-page">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
         <button onClick={() => goBack('/me')} aria-label="Back to My Corner" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
-        <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--accent)' }}>Settings &amp; Privacy</h1>
+        <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--accent)' }}>{t('Settings & Privacy')}</h1>
       </div>
 
       <div role="tablist" aria-label="Settings" className="hub-tabs" style={{ marginTop: 0, marginBottom: '1rem' }}>
         <button type="button" role="tab" id="settings-tab-easy" aria-selected={tab === 'easy'} aria-controls="settings-panel" style={tabStyle(tab === 'easy')} onClick={() => pickTab('easy')}>
-          Easy to use
+          {t('Easy to use')}
         </button>
         <button type="button" role="tab" id="settings-tab-account" aria-selected={tab === 'account'} aria-controls="settings-panel" style={tabStyle(tab === 'account')} onClick={() => pickTab('account')}>
-          Account and privacy
+          {t('Account and privacy')}
         </button>
       </div>
 
       <div role="tabpanel" id="settings-panel" aria-labelledby={'settings-tab-' + tab}>
       {tab === 'easy' && (
         <>
-          <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>Make VWB easier to see and use. Changes save right away.</p>
+          <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{t('Make VWB easier to see and use. Changes save right away.')}</p>
 
-          <h2 className="settings-group-h">Seeing</h2>
+          {/* Language first (Nov 3), so someone who can't read English finds it fast. */}
+          <LanguagePicker />
+
+          <h2 className="settings-group-h">{t('Seeing')}</h2>
           <TextSizePicker />
           <AppearancePicker />
 
-          <h2 className="settings-group-h">Using</h2>
+          <h2 className="settings-group-h">{t('Using')}</h2>
           <SimpleViewPicker />
           <MotionPicker />
 
-          <h2 className="settings-group-h">Learning the app</h2>
+          <h2 className="settings-group-h">{t('Learning the app')}</h2>
           <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '48px' }}>
-            <span aria-hidden="true"><Icon name="compass" /></span> Take the app tour again
+            <span aria-hidden="true"><Icon name="compass" /></span> {t('Take the app tour again')}
           </button>
           {/* Nov 1 (Jade): a way back to Full setup, for Quick start people who said Not now. */}
           <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/setup')} style={{ minHeight: '48px', marginTop: '0.75rem' }}>
-            <span aria-hidden="true"><Icon name="cottage" /></span> Set up your avatar and cottage
+            <span aria-hidden="true"><Icon name="cottage" /></span> {t('Set up your avatar and cottage')}
           </button>
-          <p style={{ margin: '0.4rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Make your avatar, pick your skills, and name your cottage. About 10 minutes. Finishing it turns on the full app.</p>
+          <p style={{ margin: '0.4rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{t('Make your avatar, pick your skills, and name your cottage. About 10 minutes. Finishing it turns on the full app.')}</p>
         </>
       )}
 

@@ -13,6 +13,7 @@ import ResetPassword from './pages/ResetPassword'
 import World from './pages/World'
 import SimpleHome from './pages/SimpleHome'
 import { useSimpleView } from './utils/simpleView'
+import { useT } from './utils/lang'
 import Feed from './pages/Feed'
 const Profile = lazyPage(() => import('./pages/Profile'))
 const YourCorner = lazyPage(() => import('./pages/YourCorner'))
@@ -135,6 +136,7 @@ function lazyPage(load) {
 }
 
 function PageLoading() {
+  const tr = useT()
   const [online, setOnline] = useState(() => navigator.onLine !== false)
   useEffect(() => {
     const up = () => setOnline(true)
@@ -146,13 +148,14 @@ function PageLoading() {
   return (
     <div className="cal-page">
       <p className="cal-empty" role="status">
-        {online ? 'Loading...' : 'No signal right now. This page will open when your phone has signal.'}
+        {tr(online ? 'Loading...' : 'No signal right now. This page will open when your phone has signal.')}
       </p>
     </div>
   )
 }
 
 function ProfileWait() {
+  const tr = useT()
   const { profileError, retryProfile, signOut } = useAuth()
   const [slow, setSlow] = useState(false)
   useEffect(() => {
@@ -165,12 +168,12 @@ function ProfileWait() {
         <div className="login-header">
           <h1>Village Without Borders</h1>
         </div>
-        {!profileError && <p className="groups-note">Setting up your account...</p>}
+        {!profileError && <p className="groups-note">{tr('Setting up your account...')}</p>}
         {(profileError || slow) && (
           <>
-            <p className="form-error" role="alert">{profileError || 'This is taking longer than it should.'}</p>
-            <button type="button" className="btn btn-primary btn-full" onClick={() => retryProfile()}>Try again</button>
-            <button type="button" className="btn btn-outline btn-full" style={{ marginTop: '0.5rem' }} onClick={() => signOut()}>Sign out</button>
+            <p className="form-error" role="alert">{tr(profileError || 'This is taking longer than it should.')}</p>
+            <button type="button" className="btn btn-primary btn-full" onClick={() => retryProfile()}>{tr('Try again')}</button>
+            <button type="button" className="btn btn-outline btn-full" style={{ marginTop: '0.5rem' }} onClick={() => signOut()}>{tr('Sign out')}</button>
           </>
         )}
       </div>

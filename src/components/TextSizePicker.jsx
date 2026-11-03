@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { readTextSize as read, applyTextSize } from '../utils/textSize'
 import { savePrefs } from '../utils/uiPrefs'
 import { usePrefsRefresh } from '../hooks/usePrefsRefresh'
+import { useT } from '../utils/lang'
 
 // Settings > Text size (Oct 27, Jade). Saved on this phone and on the account (Nov 1).
 const CHOICES = [
@@ -12,23 +13,24 @@ const CHOICES = [
 ]
 
 export default function TextSizePicker() {
+  const t = useT()
   const [size, setSize] = useState(read())
   usePrefsRefresh(() => setSize(read()))
   function choose(k) { applyTextSize(k); setSize(k); savePrefs({ text: k }) }
   return (
     <div className="profile-details" style={{ marginBottom: '1rem' }}>
-      <div className="detail-section-header" id="textsize-h">Text size</div>
+      <div className="detail-section-header" id="textsize-h">{t('Text size')}</div>
       <div role="radiogroup" aria-labelledby="textsize-h" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(6.5rem, 1fr))', gap: '0.5rem', padding: '0.5rem 1rem 0.25rem' }}>
         {CHOICES.map((c) => (
           <button key={c.k} type="button" role="radio" aria-checked={size === c.k} onClick={() => choose(c.k)}
             style={{ minHeight: 56, borderRadius: 12, cursor: 'pointer', font: 'inherit', fontWeight: 700, fontSize: c.size, padding: '0.4rem',
               border: '2px solid ' + (size === c.k ? 'var(--accent)' : 'var(--border)'),
               background: size === c.k ? 'var(--green-light)' : 'var(--surface-2)', color: 'var(--text)' }}>
-            {c.label}
+            {t(c.label)}
           </button>
         ))}
       </div>
-      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Makes all the words and buttons bigger, everywhere in the app. Saved with your account, so it follows you to any phone.</p>
+      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{t('Makes all the words and buttons bigger, everywhere in the app. Saved with your account, so it follows you to any phone.')}</p>
     </div>
   )
 }

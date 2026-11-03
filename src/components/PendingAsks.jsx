@@ -3,21 +3,23 @@ import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { usePendingAsks, sendPendingAsks, removePendingAsk } from '../utils/pendingAsks'
 import Icon from './Icon'
+import { useT, t } from '../utils/lang'
 
 // Requests saved with no signal (Nov 3). Shows at the top of the page until they
 // send, tries again when the signal comes back, and says when they went out.
 
 function ago(iso) {
   const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
-  if (min < 2) return 'just now'
-  if (min < 60) return min + ' minutes ago'
+  if (min < 2) return t('just now')
+  if (min < 60) return t('{n} minutes ago', { n: min })
   const h = Math.round(min / 60)
-  if (h < 24) return h === 1 ? '1 hour ago' : h + ' hours ago'
+  if (h < 24) return h === 1 ? t('1 hour ago') : t('{n} hours ago', { n: h })
   const d = Math.round(h / 24)
-  return d === 1 ? 'yesterday' : d + ' days ago'
+  return d === 1 ? t('yesterday') : t('{n} days ago', { n: d })
 }
 
 export default function PendingAsks() {
+  useT()
   const { user } = useAuth()
   const { pathname } = useLocation()
   const uid = user?.id
@@ -34,7 +36,7 @@ export default function PendingAsks() {
     setBusy(true)
     const n = await sendPendingAsks(uid)
     setBusy(false)
-    if (n > 0) setSentNote(n === 1 ? 'Your saved request was sent. Neighbors can see it now.' : 'Your ' + n + ' saved requests were sent. Neighbors can see them now.')
+    if (n > 0) setSentNote(n === 1 ? t('Your saved request was sent. Neighbors can see it now.') : t('Your {n} saved requests were sent. Neighbors can see them now.', { n }))
   }
 
   // Try when the page opens, when the signal comes back, when the app comes
@@ -66,7 +68,7 @@ export default function PendingAsks() {
   if (uid && !online && !list.length && pathname !== '/ask') {
     return (
       <p className="pa-nosignal" role="status">
-        <b>No signal right now.</b> You can still ask for help. Some pages open only with signal.
+        <b>{t('No signal right now.')}</b> {t('You can still ask for help. Some pages open only with signal.')}
       </p>
     )
   }
@@ -78,21 +80,21 @@ export default function PendingAsks() {
         <div className="pa-sent" role="status">
           <Icon name="check" size={28} />
           <span id="pa-h">{sentNote}</span>
-          <button type="button" className="pa-ok" onClick={() => setSentNote('')}>OK</button>
+          <button type="button" className="pa-ok" onClick={() => setSentNote('')}>{t('OK')}</button>
         </div>
       )}
       {list.length > 0 && (
         <>
           <h2 id="pa-h" className="pa-title">
-            {waiting === 0 ? 'A saved request needs you'
-              : waiting === 1 ? '1 request is waiting for signal'
-              : waiting + ' requests are waiting for signal'}
+            {waiting === 0 ? t('A saved request needs you')
+              : waiting === 1 ? t('1 request is waiting for signal')
+              : t('{n} requests are waiting for signal', { n: waiting })}
           </h2>
           {waiting > 0 && (
             <p className="pa-text" role="status">
-              {online && busy ? 'Sending now...'
+              {t(online && busy ? 'Sending now...'
                 : online ? 'It will send by itself in a moment.'
-                : 'No signal right now. It will send by itself when your phone has signal. Keep the app open if you can.'}
+                : 'No signal right now. It will send by itself when your phone has signal. Keep the app open if you can.')}
             </p>
           )}
           {sentNote && <p className="pa-text" role="status">{sentNote}</p>}
@@ -100,21 +102,21 @@ export default function PendingAsks() {
             {list.map((a) => (
               <li key={a.key} className="pa-item">
                 <span className="pa-what">
-                  <b>{a.row.for_name ? 'For ' + a.row.for_name + ': ' : ''}{a.row.skill_needed}</b>
-                  <small>Saved {ago(a.saved_at)}</small>
-                  {a.problem && <small className="pa-problem">Not sent: {a.problem}</small>}
+                  <b>{a.row.for_name ? t('For {name}', { name: a.row.for_name }) + ': ' : ''}{t(a.row.skill_needed)}</b>
+                  <small>{t('Saved {when}', { when: ago(a.saved_at) })}</small>
+                  {a.problem && <small className="pa-problem">{t('Not sent:')} {t(a.problem)}</small>}
                 </span>
                 <button type="button" className={'pa-remove' + (sure === a.key ? ' sure' : '')}
                   onClick={() => { if (sure === a.key) { removePendingAsk(uid, a.key); setSure('') } else setSure(a.key) }}
-                  aria-label={(sure === a.key ? 'Tap again to remove the saved request for ' : 'Remove the saved request for ') + a.row.skill_needed}>
-                  {sure === a.key ? 'Tap again to remove' : 'Remove'}
+                  aria-label={t(sure === a.key ? 'Tap again to remove the saved request for {skill}' : 'Remove the saved request for {skill}', { skill: t(a.row.skill_needed) })}>
+                  {t(sure === a.key ? 'Tap again to remove' : 'Remove')}
                 </button>
               </li>
             ))}
           </ul>
           {waiting > 0 && online && (
             <button type="button" className="btn btn-primary pa-send" disabled={busy} onClick={tryNow}>
-              {busy ? 'Sending...' : 'Send now'}
+              {t(busy ? 'Sending...' : 'Send now')}
             </button>
           )}
         </>

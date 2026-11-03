@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { groupSkills } from '../utils/skillGroups'
+import { useT } from '../utils/lang'
 
 // Renders skill chips under small headers ("Everyday Help", "Trades and
 // Trained Skills", ...). Each page keeps its own chip button and selection
@@ -12,14 +13,15 @@ import { groupSkills } from '../utils/skillGroups'
 // header can say how many are picked, and so any section that already has
 // picks starts open. collapsible={false} shows everything open, flat.
 export default function GroupedSkillChips({ skills, renderChip, gridClassName = 'skill-grid', gridStyle, collapsible = true, selected = [] }) {
+  const t = useT()
   const groups = groupSkills(skills)
 
   if (!collapsible) {
     return (
       <div className="skill-groups">
         {groups.map((g) => (
-          <div key={g.group} className="skill-group" role="group" aria-label={g.group}>
-            <p className="skill-group-title">{g.group}</p>
+          <div key={g.group} className="skill-group" role="group" aria-label={t(g.group)}>
+            <p className="skill-group-title">{t(g.group)}</p>
             <div className={gridClassName} style={gridStyle}>
               {g.skills.map((title) => renderChip(title))}
             </div>
@@ -31,7 +33,7 @@ export default function GroupedSkillChips({ skills, renderChip, gridClassName = 
 
   return (
     <div className="skill-groups skill-groups-collapsible">
-      <p className="skill-groups-hint">Tap a group to see what is in it.</p>
+      <p className="skill-groups-hint">{t('Tap a group to see what is in it.')}</p>
       {groups.map((g) => (
         <CollapsibleGroup
           key={g.group}
@@ -48,6 +50,7 @@ export default function GroupedSkillChips({ skills, renderChip, gridClassName = 
 
 function CollapsibleGroup({ group, renderChip, gridClassName, gridStyle, pickedCount }) {
   // Starts open only if something in it is already picked.
+  const t = useT()
   const [open, setOpen] = useState(pickedCount > 0)
   const panelId = 'skill-group-' + group.group.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
@@ -60,14 +63,14 @@ function CollapsibleGroup({ group, renderChip, gridClassName, gridStyle, pickedC
         aria-controls={panelId}
         onClick={() => setOpen(!open)}
       >
-        <span className="skill-group-name">{group.group}</span>
+        <span className="skill-group-name">{t(group.group)}</span>
         <span className="skill-group-meta">
-          {pickedCount > 0 && <span className="skill-group-count">{pickedCount} picked</span>}
+          {pickedCount > 0 && <span className="skill-group-count">{t('{n} picked', { n: pickedCount })}</span>}
           <span className="skill-group-chevron" aria-hidden="true">{open ? '−' : '+'}</span>
         </span>
       </button>
       {open && (
-        <div id={panelId} className={gridClassName + ' skill-group-panel'} style={gridStyle} role="group" aria-label={group.group}>
+        <div id={panelId} className={gridClassName + ' skill-group-panel'} style={gridStyle} role="group" aria-label={t(group.group)}>
           {group.skills.map((title) => renderChip(title))}
         </div>
       )}

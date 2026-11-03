@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useT, t as tr } from '../utils/lang'
 
 // "Read this to me" (Nov 3, barriers review): reads the page out loud with the
 // phone's own voice (the browser's speech, nothing to install, no cost, works
@@ -28,8 +29,8 @@ function shown(el) {
 
 // Buttons that are switched on, picked, or the page you are on.
 function onWord(el) {
-  if (el.getAttribute('aria-pressed') === 'true' || el.getAttribute('aria-checked') === 'true' || el.getAttribute('aria-selected') === 'true') return 'chosen'
-  if (el.getAttribute('aria-current') === 'page') return 'you are here'
+  if (el.getAttribute('aria-pressed') === 'true' || el.getAttribute('aria-checked') === 'true' || el.getAttribute('aria-selected') === 'true') return tr('chosen')
+  if (el.getAttribute('aria-current') === 'page') return tr('you are here')
   return ''
 }
 
@@ -98,16 +99,16 @@ export function readablePieces(root) {
     if (name === 'SELECT') {
       // Read what is picked, not every choice in the list.
       const o = el.options[el.selectedIndex]
-      if (o && o.text) add(blockOf(el), 'Picked: ' + o.text, el)
+      if (o && o.text) add(blockOf(el), tr('Picked: ') + o.text, el)
     } else if (name === 'TEXTAREA') {
-      if (el.value) add(blockOf(el), 'Typed: ' + el.value, el)
+      if (el.value) add(blockOf(el), tr('Typed: ') + el.value, el)
     } else if (name === 'IMG') {
       if (el.alt) add(blockOf(el), el.alt, el)
     } else if (name === 'INPUT') {
       const t = (el.type || 'text').toLowerCase()
-      if (t === 'checkbox') tag(blockOf(el), el.checked ? 'checked' : 'not checked')
-      else if (t === 'radio') tag(blockOf(el), el.checked ? 'chosen' : '')
-      else if (!['hidden', 'password', 'submit', 'button', 'file', 'image', 'reset'].includes(t) && el.value) add(blockOf(el), 'Typed: ' + el.value, el)
+      if (t === 'checkbox') tag(blockOf(el), tr(el.checked ? 'checked' : 'not checked'))
+      else if (t === 'radio') tag(blockOf(el), el.checked ? tr('chosen') : '')
+      else if (!['hidden', 'password', 'submit', 'button', 'file', 'image', 'reset'].includes(t) && el.value) add(blockOf(el), tr('Typed: ') + el.value, el)
     }
   }
   return pieces
@@ -129,6 +130,7 @@ function pickVoice(lang) {
 }
 
 export default function ReadAloud() {
+  const t = useT()
   const { pathname } = useLocation()
   const [reading, setReading] = useState(false)
   const runRef = useRef(0)
@@ -203,11 +205,11 @@ export default function ReadAloud() {
         onClick={reading ? stop : start}
       >
         <SpeakerPic reading={reading} />
-        <span>{reading ? 'Stop reading' : 'Read this to me'}</span>
+        <span>{t(reading ? 'Stop reading' : 'Read this to me')}</span>
       </button>
       {reading && (
         <button type="button" className="read-aloud-stop" onClick={stop}>
-          <span className="read-aloud-square" aria-hidden="true" /> Stop reading
+          <span className="read-aloud-square" aria-hidden="true" /> {t('Stop reading')}
         </button>
       )}
     </>
