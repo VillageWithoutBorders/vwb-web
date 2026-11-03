@@ -1,4 +1,5 @@
-import { precacheAndRoute } from 'workbox-precaching'
+import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching'
+import { NavigationRoute, registerRoute } from 'workbox-routing'
 import { clientsClaim } from 'workbox-core'
 
 // Take over from any previously-installed service worker as soon as this
@@ -10,6 +11,13 @@ self.skipWaiting()
 clientsClaim()
 
 precacheAndRoute(self.__WB_MANIFEST)
+
+// Opening VWB with no signal (Nov 3): every page address (/ask, /village/..., a
+// link from a text message) opens the saved app, which then shows that page.
+// Real files (anything with a dot in its last part, like /privacy.pdf) are left alone.
+registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html'), {
+  denylist: [/\/[^/?]+\.[^/]+$/],
+}))
 
 // Screens and pictures are saved the first time someone opens them (Nov 3),
 // instead of all at once on the first visit. App files have a new name on each
@@ -29,7 +37,10 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return
   const url = new URL(req.url)
   if (url.origin !== self.location.origin) return
-  if (!url.pathname.startsWith('/assets/') && !url.pathname.startsWith('/art/')) return
+  // Nov 3: the logo and app icons too, so the top bar looks right with no signal.
+  if (!['/assets/', '/art/', '/images/', '/icons/', '/splash/'].some((p) => url.pathname.startsWith(p))) return
+  // Videos load in pieces, which can't be saved this way.
+  if (url.pathname.endsWith('.mp4')) return
   event.respondWith((async () => {
     const hit = await caches.match(req)
     if (hit) return hit
