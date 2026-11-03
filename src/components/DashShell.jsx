@@ -69,7 +69,7 @@ export function DashTabs({ tabs, tab, setTab, dots = {} }) {
     refs.current[tabs[j].k]?.focus()
   }
   return (
-    <div className="dash-tabs" role="tablist" aria-label="Dashboard sections">
+    <div className={'dash-tabs' + (tabs.length > 4 ? ' dash-tabs-5' : '')} role="tablist" aria-label="Dashboard sections">
       {tabs.map((t, i) => (
         <button key={t.k} ref={(el) => { refs.current[t.k] = el }} type="button" role="tab"
           id={'dash-tab-' + t.k} aria-controls={'dash-panel-' + t.k} aria-selected={tab === t.k}

@@ -44,6 +44,10 @@
   cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
 }
 .dash-tab-ic { font-size: 1.1rem; line-height: 1; }
+/* Five tabs (Nov 3, group dashboard): two rows of three on a phone, one row on a wider screen. */
+.dash-tabs.dash-tabs-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (min-width: 768px) { .dash-tabs.dash-tabs-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 260px) { .dash-tab-label { overflow-wrap: anywhere; } }
 .dash-tab[aria-selected="true"] { background: var(--green-light); color: var(--text); box-shadow: inset 0 0 0 1px var(--green); }
 .dash-tab:focus-visible, .dash-need:focus-visible, .dash-stat:focus-visible { outline: 3px solid #ffcc66; outline-offset: 2px; }
 .dash-tab:active, .dash-need:active, .dash-stat:active { transform: scale(0.97); }

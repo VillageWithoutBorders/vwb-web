@@ -6331,9 +6331,11 @@ html.calm-motion *, html.calm-motion *::before, html.calm-motion *::after {
 .tools-logout { margin: 0.75rem 0; width: 100%; }
 .tools-logout b { color: var(--danger, #d9503f); }
 
-/* No pinch zoom on the app (Oct 28, Jade). Text size in Settings makes words bigger.
-   Maps have their own Zoom in button. Scrolling still works everywhere. */
-html, body { touch-action: pan-x pan-y; }
+/* Pinch zoom is allowed again (Nov 3, Jade): the accessibility standard asks for it.
+   Text size in Settings still makes words bigger. Maps keep their own Zoom in button. */
+/* Very narrow screens, like 200% zoom on a phone (Nov 3): the bottom bar shows pictures only.
+   The words stay for screen readers. */
+@media (max-width: 240px) { .tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; } }
 
 /* Coming up cards show the day above the time (Oct 28). */
 .cal-card-day { display: block; font-weight: 700; color: var(--text-strong, var(--text)); margin-bottom: 0.1rem; }

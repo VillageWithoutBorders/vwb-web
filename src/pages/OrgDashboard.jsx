@@ -19,13 +19,15 @@ import RoleLog from '../components/RoleLog'
 import PlaceReports, { usePlaceReportCount } from '../components/PlaceReports'
 
 // The organizer's home base for one organization. Needs-you card on top,
-// then four tabs: People, Chats, Events and posts, Settings.
+// then five tabs: People, Chats, Connections, Events and posts, Settings.
 // Only Heads and organizers see this. The database checks that too,
 // so a hidden button is never the only protection.
 
 const TABS = [
   { k: 'people', em: '\u{1F4C7}', label: 'People' },
-  { k: 'chats', em: '\u{1F525}', label: 'Connections' },
+  { k: 'chats', em: '\u{1F525}', label: 'Chats' },
+  // Nov 3 (Jade): connections with other groups get their own tab, so chats are easy to find.
+  { k: 'links', em: '\u{1F517}', label: 'Connections' },
   { k: 'events', em: '\u{1F4C5}', label: 'Events' },
   { k: 'settings', em: '\u2699\uFE0F', label: 'Settings' },
 ]
@@ -252,7 +254,7 @@ export default function OrgDashboard() {
   const needs = loading ? null : [
     reportCount && { k: 'reports', tab: 'people', em: '\u{1F6A9}', text: reportCount === 1 ? 'Someone in your ' + (isGroup ? 'crew' : 'group') + ' was reported' : reportCount + ' reports to look at' },
     asks.length && { k: 'asks', tab: 'people', em: '\u{1F64B}', text: asks.length === 1 ? asks[0].display_name + ' asked to join' : asks.length + ' people asked to join' },
-    linkAsks && { k: 'links', tab: 'chats', em: '\u{1F517}', text: linkAsks === 1 ? 'A group asked to connect' : linkAsks + ' groups asked to connect' },
+    linkAsks && { k: 'links', tab: 'links', em: '\u{1F517}', text: linkAsks === 1 ? 'A group asked to connect' : linkAsks + ' groups asked to connect' },
     !general && chatsReady && { k: 'general', tab: 'chats', em: '\u{1F525}', text: 'Start your general chat so members have a place to talk' },
     soon.length && { k: 'soon', tab: 'events', em: '\u{1F4C5}', text: soon.length === 1 ? soon[0].title + ' is this week' : soon.length + ' events this week' },
   ].filter(Boolean)
@@ -279,7 +281,7 @@ export default function OrgDashboard() {
         <button type="button" className="dash-stat" onClick={() => setTab('events')}><b>{openPosts.length}</b><small>Open needs and offers</small></button>
       </div>
 
-      <DashTabs tabs={TABS} tab={tab} setTab={setTab} dots={{ people: asks.length > 0, chats: linkAsks > 0 }} />
+      <DashTabs tabs={TABS} tab={tab} setTab={setTab} dots={{ people: asks.length > 0, links: linkAsks > 0 }} />
 
       {tab === 'people' && (
         <DashPanel k="people">
@@ -393,7 +395,11 @@ export default function OrgDashboard() {
               <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : !general ? 'Start the general chat' : 'Start the Campfire'}</button>
             </form>
           </section>
+        </DashPanel>
+      )}
 
+      {tab === 'links' && (
+        <DashPanel k="links">
           <OrgConnections orgId={id} orgName={orgName} />
         </DashPanel>
       )}

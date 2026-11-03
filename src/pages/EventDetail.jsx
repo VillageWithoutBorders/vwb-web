@@ -303,11 +303,15 @@ export default function EventDetail() {
     if (!closeReason) return
     setClosingEvent(true)
     const isReporter = event.created_by === user.id
-    const canCloseAlone = isAdmin || isReporter
+    // Nov 3 (Jade): the Hope Ambassador who verified it can close it alone too.
+    const iVerified = !!event.verified_by && event.verified_by === user.id
+    const canCloseAlone = isAdmin || isReporter || iVerified
 
     if (closeReason === 'resolved') {
       if (canCloseAlone) {
-        const { error } = await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
+        const { error } = (isAdmin || isReporter)
+          ? await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'resolved' }).eq('id', id)
+          : await supabase.rpc('close_emergency_i_verified', { p_event: Number(id) })
         setClosingEvent(false)
         if (error) { console.error('Failed to close event:', error); tell('Could not close this event. Try again.', { tone: 'error' }); return }
         navigate('/emergency')
@@ -809,7 +813,7 @@ export default function EventDetail() {
         </>
       )}
 
-      {event.status === 'active' && (mySignup || event.created_by === user.id || isAdmin) && (
+      {event.status === 'active' && (mySignup || event.created_by === user.id || isAdmin || event.verified_by === user.id) && (
         <>
           {closeVotes.length > 0 && !closeVotes.find(v => v.voter_id === user.id) && (
             <div style={{ background: 'var(--warn-bg)', border: '1px solid #5a4a2a', borderRadius: '8px', padding: '0.75rem', marginTop: '1rem', textAlign: 'center' }}>
