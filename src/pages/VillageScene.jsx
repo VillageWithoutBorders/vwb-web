@@ -7,7 +7,7 @@ import SpotIcon from '../components/SpotIcon'
 import { useAuth } from '../context/AuthContext'
 import { useUnreadCount } from '../context/UnreadCountContext'
 import { loadMyTaskOverview } from '../utils/myTasks'
-import { VILLAGE_SPOTS, COTTAGE_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
+import { VILLAGE_SPOTS, COTTAGE_SPOTS, GIFT_SPOTS, LIFE_ART, FIRE_SIZE, FIRE_WORDS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
 import { useMapBuilder, MapLayers, MapToolbar, ToolIcon, sceneProps, zoomLayer, askGoTo, fromSaved, isPlainWorld, mapBody, ScrollCue, placeLayer } from '../components/MapBuilder'
 import { askConfirm } from '../components/AdminDialog'
 import SisterCampfireButton from '../components/SisterCampfireButton'
@@ -27,14 +27,6 @@ import { calmMotion } from '../utils/motion'
 const GATED = ['chat', 'campfires', 'keeper', 'neighbors']
 
 
-// Garden gifts on your cottage map (Oct 22). They can be moved, sized, flipped and hidden
-// like any place, once you have grown them. Saved in your layout as 'gift-<name>'.
-const GIFT_SPOTS = [
-  { k: 'gift-home', label: 'Well (garden gift)', src: '/art/village-build/deco-well.webp', x: 12, y: 80 },
-  { k: 'gift-task', label: 'Flowers (garden gift)', src: '/art/village-build/deco-flowers.webp', x: 40, y: 93 },
-  { k: 'gift-vouch', label: 'Garden lamp (garden gift)', src: '/art/village-build/deco-lamp.webp', x: 10, y: 95 },
-  { k: 'gift-org', label: 'Vegetable garden (garden gift)', src: '/art/village-build/deco-garden.webp', x: 58, y: 70 },
-]
 const COTTAGE_BUILD_SPOTS = [...COTTAGE_SPOTS, ...GIFT_SPOTS]
 
 export default function VillageScene() {
@@ -390,7 +382,8 @@ export default function VillageScene() {
     return () => { alive = false }
   }, [cottage, user?.id, profile?.home_village_id]) // eslint-disable-line react-hooks/exhaustive-deps
   // Lanterns and garden gifts (Oct 22, gamify starters): what is waiting on you, and
-  // small gifts for first steps. Private to you; nothing is ever taken away.
+  // small gifts for first steps. Nothing is ever taken away. Visitors see the gifts too,
+  // under the cottage's own visit rule (Nov 3, Jade); lanterns stay private.
   const [tasks, setTasks] = useState(null)
   const [vouched, setVouched] = useState(false)
   useEffect(() => {
@@ -491,7 +484,7 @@ export default function VillageScene() {
     const got = GIFTS.filter((g) => g.got)
     return <>
       <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><Icon name="sprout" size={36} /></span> Your garden</h2>
-      <p>Small gifts grow in your garden as you take first steps with your neighbors. Only you see them, and they never go away.</p>
+      <p>Small gifts grow in your garden as you take first steps with your neighbors. They never go away. People who can visit your cottage see them too (Name and visitors decides who).</p>
       {/* Oct 28 (Jade): every row does something. A grown gift opens editing with it picked,
           so you can move it. A gift still to grow takes you to the step that grows it. */}
       {got.map((g) => (

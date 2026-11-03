@@ -168,3 +168,13 @@ export const DEFAULT_WORLDS = {
     roads: [[[29, 79], [36, 72], [44, 70], [48, 58], [50, 52]], [[50, 30], [48, 24], [51, 18]], [[57, 48], [64, 56], [70, 70], [73, 78]]],
   },
 }
+
+// Garden gifts on a cottage map (Oct 22). They can be moved, sized, flipped and hidden
+// like any place, once grown. Saved in the layout as 'gift-<name>'. Shown to visitors
+// too (Nov 3, Jade), under the same rule as the cottage itself.
+export const GIFT_SPOTS = [
+  { k: 'gift-home', label: 'Well (garden gift)', src: '/art/village-build/deco-well.webp', x: 12, y: 80 },
+  { k: 'gift-task', label: 'Flowers (garden gift)', src: '/art/village-build/deco-flowers.webp', x: 40, y: 93 },
+  { k: 'gift-vouch', label: 'Garden lamp (garden gift)', src: '/art/village-build/deco-lamp.webp', x: 10, y: 95 },
+  { k: 'gift-org', label: 'Vegetable garden (garden gift)', src: '/art/village-build/deco-garden.webp', x: 58, y: 70 },
+]
