@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../supabaseClient'
+import { supabase, keepSignedIn, setKeepSignedIn } from '../supabaseClient'
 import { peekReturnTo } from '../utils/returnTo'
 import GroupedSkillChips from '../components/GroupedSkillChips'
 import { loadSkillCategories } from '../utils/skillGroups'
@@ -89,6 +89,7 @@ export default function Login() {
   const [resetSent, setResetSent] = useState(false)
 
   const { signIn, signUp } = useAuth()
+  const [keepMe, setKeepMe] = useState(keepSignedIn)
   const [signupZipCode, setSignupZipCode] = useState('')
   const navigate = useNavigate()
 
@@ -117,6 +118,7 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setSubmitting(true)
+    setKeepSignedIn(keepMe)
     const { error } = await signIn(email, password, captcha)
     setCaptchaKey((k) => k + 1)
     if (error) {
@@ -243,6 +245,11 @@ export default function Login() {
               <label htmlFor="password">Password</label>
               <div className="password-input-wrap"><input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required /><button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? 'Hide' : 'Show'}</button></div>
             </div>
+            {/* Nov 3: shared or library computers. Unchecked = signed out when the browser closes. */}
+            <label className="checkbox-field">
+              <input type="checkbox" checked={keepMe} onChange={(e) => setKeepMe(e.target.checked)} />
+              <span>Keep me signed in on this device<small className="field-hint" style={{ display: 'block' }}>Uncheck this on a shared or library computer.</small></span>
+            </label>
             {error && <p className="form-error" role="alert">{error}</p>}
             {message && <p className="form-success" role="status">{message}</p>}
             {resetSent && <p className="form-success" role="status">Password reset email sent. Check your inbox.</p>}
@@ -306,9 +313,10 @@ export default function Login() {
               <input id="displayName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="What should we call you?" autoComplete="name" />
             </div>
             <div className="form-field">
-              <label htmlFor="signupZip">Zip code</label>
-              <input id="signupZip" type="text" inputMode="numeric" autoComplete="postal-code" maxLength={10} value={signupZipCode} onChange={(e) => setSignupZipCode(e.target.value)} placeholder="Where you live, like 30736" required aria-describedby="signupZipHelp" />
-              <small id="signupZipHelp" className="field-hint">We use it to find your village. Only you and VWB admins can see it.</small>
+              {/* Nov 3 (barriers review): not everyone has a home address. Any zip they spend time in works. */}
+              <label htmlFor="signupZip">Zip code where you spend most of your time</label>
+              <input id="signupZip" type="text" inputMode="numeric" autoComplete="postal-code" maxLength={10} value={signupZipCode} onChange={(e) => setSignupZipCode(e.target.value)} placeholder="Like 30736" required aria-describedby="signupZipHelp" />
+              <small id="signupZipHelp" className="field-hint">It finds villages near you. You don't need a home address. Only you and VWB admins can see it.</small>
             </div>
             <div className="form-field">
               <label htmlFor="signupEmail">Email</label>
