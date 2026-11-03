@@ -71,8 +71,7 @@ export default function GroupResponse({ orgId, orgName, isKeeper, villageCount, 
 
       {msg && <p className="vs-note" role="status">{msg}</p>}
 
-      <h3>Past responses</h3>
-      <p className="vs-note">Emergencies this crew helped with will show here.</p>
+      {/* Past responses: left out until there is a list to show (Nov 3, flow map). */}
     </div>
   )
 }
