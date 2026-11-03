@@ -6634,3 +6634,20 @@ html.calm-motion .nr-card:active { transform: none; }
 .today-slim:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .today-slim:active { transform: scale(0.99); }
 @media (prefers-reduced-motion: reduce) { .today-slim:active { transform: none; } }
+
+/* Printed resource list (Nov 3, PrintResourceList.jsx). Hidden on screen. */
+.fh-print-btn { min-height: 48px; margin: 0 0 1rem; }
+.print-sheet { display: none; }
+@media print {
+  body.vwb-print-list > *:not(.print-sheet) { display: none !important; }
+  body.vwb-print-list { background: #fff !important; }
+  body.vwb-print-list .print-sheet { display: block; color: #000; background: #fff; font: 11pt/1.35 Arial, Helvetica, sans-serif; }
+  .print-head { display: flex; justify-content: space-between; gap: 12pt; border-bottom: 1.5pt solid #000; padding-bottom: 6pt; margin-bottom: 8pt; }
+  .print-head h1 { font-size: 18pt; margin: 0 0 4pt; }
+  .print-head p { margin: 0 0 2pt; font-size: 10pt; }
+  .print-cat h2 { font-size: 14pt; margin: 10pt 0 4pt; border-bottom: 0.75pt solid #000; break-after: avoid; }
+  .print-item { margin: 0 0 6pt; break-inside: avoid; }
+  .print-item b { font-size: 11.5pt; }
+  .print-item small { display: block; font-size: 9.5pt; }
+  .print-foot { margin-top: 12pt; border-top: 1pt solid #000; padding-top: 6pt; font-size: 10pt; }
+}

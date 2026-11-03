@@ -21,6 +21,7 @@ import ResourceMergesReview from '../components/ResourceMergesReview'
 import { placesEnabled, getMyPlaces, getVisitorArea, setVisitorArea } from '../utils/places'
 import { findHelpForMe, resourcesForPlace, friendlyError, saysNo } from '../utils/resourceReports'
 import { tell } from '../components/AdminDialog'
+import PrintResourceList from '../components/PrintResourceList'
 
 // Keeps Tab/Shift+Tab cycling inside an open dialog instead of leaking focus
 // out to the page behind it.
@@ -1127,6 +1128,15 @@ export default function CommunityResources() {
           )}
 
           {loadingResources && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Loading...</p>}
+
+          {/* A paper list to hand out (Nov 3): what is shown now, one kind of help or all of them. */}
+          {!visitorNeedsArea && !loadingResources && filteredVerifiedResources.length > 0 && (
+            <PrintResourceList
+              cats={query.trim() || !selectedCat ? orderedCats : grouped[selectedCat] ? [selectedCat] : []}
+              grouped={grouped}
+              title={selectedCat && !query.trim() ? selectedCat + ': places that can help' : 'Places that can help'}
+            />
+          )}
 
           {!wide && !visitorNeedsArea && !loadingResources && !query.trim() && !selectedCat && (
             <div className="fh-grid">
