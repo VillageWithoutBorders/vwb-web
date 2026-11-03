@@ -6651,3 +6651,22 @@ html.calm-motion .nr-card:active { transform: none; }
   .print-item small { display: block; font-size: 9.5pt; }
   .print-foot { margin-top: 12pt; border-top: 1pt solid #000; padding-top: 6pt; font-size: 10pt; }
 }
+
+/* Read this to me (Nov 3, barriers review). Sits to the right of Back in Simple view. */
+.app-back-row:has(.read-aloud) { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.read-aloud-row { justify-content: flex-end; }
+.read-aloud { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px 0 12px; border-radius: 24px;
+  border: 2px solid var(--accent); background: var(--surface); color: var(--text-strong); font: inherit; font-weight: 700; cursor: pointer; margin-left: auto; }
+.read-aloud.on { background: var(--accent); color: var(--on-accent); }
+.read-aloud-pic { flex: none; }
+.read-aloud:active, .read-aloud-stop:active { transform: scale(0.97); }
+.read-aloud:focus-visible, .read-aloud-stop:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* While reading: a Stop button in easy thumb reach, above the bottom bar. */
+.read-aloud-stop { position: fixed; z-index: 900; left: 50%; transform: translateX(-50%); bottom: calc(var(--tab-height) + 12px + env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 22px; border-radius: 28px; border: 2px solid #fff;
+  background: #1f4a47; color: #fff; font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.3); max-width: calc(100vw - 32px); white-space: nowrap; }
+.read-aloud-stop:active { transform: translateX(-50%) scale(0.97); }
+.read-aloud-square { width: 14px; height: 14px; border-radius: 2px; background: currentColor; flex: none; }
+/* The part being read gets a soft outline, so people can follow along. */
+[data-reading] { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) { .read-aloud:active { transform: none; } .read-aloud-stop:active { transform: translateX(-50%); } }
