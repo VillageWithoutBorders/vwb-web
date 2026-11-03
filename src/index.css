@@ -5616,10 +5616,14 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 .sh-big span, .sh-row span:not(.sh-arrow), .sh-emergency span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 .sh-big b { font-size: 1.25rem; color: var(--text-strong); }
 .sh-big small, .sh-row small, .sh-emergency small { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.35; }
+/* 200% zoom on a phone (Nov 3): big buttons put the picture above the words, so nothing runs off the screen. */
+@media (max-width: 260px) { .sh-big, .sh-row, .sh-emergency { flex-direction: column; align-items: flex-start; } .sh-big span, .sh-row span:not(.sh-arrow), .sh-emergency span { width: 100%; } .sh-row .sh-arrow { display: none; } .sh-big b, .sh-big small, .sh-row b, .sh-row small, .sh-emergency small { overflow-wrap: break-word; } }
 .sh-wait { padding: 1rem; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
 .sh-wait h2 { margin: 0 0 0.6rem; font-size: 1.15rem; color: var(--text-strong); }
 .sh-row { min-height: 64px; padding: 0.6rem 0.8rem; margin-top: 0.5rem; border: 1px solid var(--border); background: var(--surface-2); }
 .sh-row b { font-size: 1.05rem; color: var(--text-strong); overflow-wrap: anywhere; }
+/* No village yet (Nov 3): the first step stands out at the top of Simple home. */
+.sh-row.sh-start { border: 2px solid var(--accent); margin: 0 0 0.75rem; }
 .sh-arrow { font-size: 1.6rem; color: var(--text-muted); }
 .sh-emergency { min-height: 76px; padding: 0.8rem 1rem; border: 2px solid var(--warn); background: var(--warn-bg); }
 .sh-emergency b { font-size: 1.15rem; color: var(--gold); }
