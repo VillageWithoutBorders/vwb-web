@@ -58,7 +58,7 @@ export function useGoBack() {
 }
 
 // The Back button the app frame shows on pages without their own.
-export function FrameBack({ world }) {
+export function FrameBack({ world, children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const cameFromApp = location.key !== 'default'
@@ -67,6 +67,7 @@ export function FrameBack({ world }) {
       <Link to={isSimpleView() ? '/' : '/world'} className="app-back" onClick={cameFromApp ? (e) => { e.preventDefault(); navigate(-1) } : undefined}>
         <span aria-hidden="true">&#8592;</span> {cameFromApp ? 'Back' : 'Home'}
       </Link>
+      {children}
     </div>
   )
 }
