@@ -9,6 +9,7 @@ import { useAdminInbox } from '../hooks/useAdminInbox'
 import { useMyTools } from '../hooks/useMyTools'
 import { CalendarEventCard } from './CalendarParts'
 import Icon from './Icon'
+import { useT, getLang } from '../utils/lang'
 
 // The Dashboard as a "today" page (Oct 22). It answers one question:
 // what needs me today? Asking for and giving help live in the Help tab;
@@ -20,6 +21,7 @@ import Icon from './Icon'
 export function NeedsYou({ onCount, children }) {
   const { user } = useAuth()
   const { total: adminWaiting } = useAdminInbox()
+  const t = useT()
   const [tasks, setTasks] = useState(null)
 
   useEffect(() => {
@@ -31,17 +33,17 @@ export function NeedsYou({ onCount, children }) {
 
   const items = []
   if (tasks) {
-    tasks.requests.filter((r) => r.needsYou).forEach((r) => items.push({ key: r.key, icon: 'raise-hand', title: r.note + '. Say yes?', sub: r.title, to: '/tasks?tab=requests' }))
-    tasks.active.filter((t) => t.needsYou).forEach((t) => items.push({ key: t.key, icon: 'handshake', title: t.note, sub: t.title + (t.who ? ' with ' + t.who : ''), to: '/tasks?tab=active' }))
+    tasks.requests.filter((r) => r.needsYou).forEach((r) => items.push({ key: r.key, icon: 'raise-hand', title: t('{note}. Say yes?', { note: t(r.note) }), sub: r.title, to: '/tasks?tab=requests' }))
+    tasks.active.filter((a) => a.needsYou).forEach((a) => items.push({ key: a.key, icon: 'handshake', title: t(a.note), sub: a.who ? t('{title} with {who}', { title: a.title, who: a.who }) : a.title, to: '/tasks?tab=active' }))
   }
-  if (adminWaiting > 0) items.push({ key: 'admin', icon: 'inbox', title: adminWaiting + (adminWaiting === 1 ? ' thing needs' : ' things need') + ' a VWB admin', sub: 'Shared admin inbox', to: '/admin' })
+  if (adminWaiting > 0) items.push({ key: 'admin', icon: 'inbox', title: adminWaiting === 1 ? t('1 thing needs a VWB admin') : t('{n} things need a VWB admin', { n: adminWaiting }), sub: t('Shared admin inbox'), to: '/admin' })
 
   useEffect(() => { if (onCount && tasks) onCount(items.length) }, [items.length, tasks]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <section className="today-needs" aria-labelledby="today-needs-h">
-      <h2 id="today-needs-h" className="today-h">Needs you</h2>
-      {tasks && !tasks.ok && <p className="form-error" role="alert">We couldn't load your tasks. Leave this page and come back to try again.</p>}
+      <h2 id="today-needs-h" className="today-h">{t('Needs you')}</h2>
+      {tasks && !tasks.ok && <p className="form-error" role="alert">{t("We couldn't load your tasks. Leave this page and come back to try again.")}</p>}
       {items.map((it) => (
         <Link key={it.key} to={it.to} className="today-need">
           <span className="today-need-ic" aria-hidden="true"><Icon name={it.icon} size={32} /></span>
@@ -51,7 +53,7 @@ export function NeedsYou({ onCount, children }) {
       ))}
       {/* Invites and nearby needs render themselves, and show nothing when empty. */}
       {children}
-      {tasks && items.length === 0 && <p className="today-empty">Nothing is waiting on you right now.</p>}
+      {tasks && items.length === 0 && <p className="today-empty">{t('Nothing is waiting on you right now.')}</p>}
     </section>
   )
 }
@@ -61,6 +63,7 @@ export function YourPlaces() {
   const { user } = useAuth()
   const { unreadCount } = useUnreadCount()
   const tools = useMyTools()
+  const t = useT()
   const [villageUnread, setVillageUnread] = useState(0)
 
   useEffect(() => {
@@ -74,20 +77,20 @@ export function YourPlaces() {
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const places = [
-    { key: 'village', label: 'My village', icon: 'houses', to: '/village', badge: villageUnread },
-    { key: 'chats', label: 'Messages', icon: 'envelope', to: '/messages', badge: unreadCount },
-    ...tools.map((t) => ({ key: t.key, label: t.name ? t.label + ': ' + t.name : t.label, icon: t.icon, to: t.to })),
+    { key: 'village', label: t('My village'), icon: 'houses', to: '/village', badge: villageUnread },
+    { key: 'chats', label: t('Messages'), icon: 'envelope', to: '/messages', badge: unreadCount },
+    ...tools.map((tl) => ({ key: tl.key, label: tl.name ? t(tl.label) + ': ' + tl.name : t(tl.label), icon: tl.icon, to: tl.to })),
   ]
 
   return (
     <section aria-labelledby="today-places-h">
-      <h2 id="today-places-h" className="today-h">Your places</h2>
+      <h2 id="today-places-h" className="today-h">{t('Your places')}</h2>
       <div className="today-places">
         {places.map((p) => (
           <Link key={p.key} to={p.to} className="today-place">
             <span className="today-place-ic" aria-hidden="true"><Icon name={p.icon} size={32} /></span>
             <span className="today-place-label">{p.label}</span>
-            {p.badge > 0 && <span className="today-badge" aria-label={p.badge + ' new'}>{p.badge > 9 ? '9+' : p.badge}</span>}
+            {p.badge > 0 && <span className="today-badge" aria-label={t('{n} new', { n: p.badge })}>{p.badge > 9 ? '9+' : p.badge}</span>}
           </Link>
         ))}
       </div>
@@ -99,6 +102,7 @@ export function YourPlaces() {
 // slim (Nov 1, Jade): under the cottage map, one thin bar with the next event.
 export function ComingUp({ slim = false }) {
   const { profile } = useAuth()
+  const t = useT()
   const [events, setEvents] = useState(null)
 
   useEffect(() => {
@@ -114,13 +118,13 @@ export function ComingUp({ slim = false }) {
 
   if (slim) {
     const ev = events && events[0]
-    const when = ev ? new Date(ev.starts_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : ''
+    const when = ev ? new Date(ev.starts_at).toLocaleDateString(getLang() === 'es' ? 'es-US' : undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : ''
     return (
-      <Link to="/calendar" className="today-slim" aria-label={ev ? 'Coming up: ' + ev.title + ', ' + when + '. Open the calendar' : 'Open the calendar'}>
+      <Link to="/calendar" className="today-slim" aria-label={ev ? t('Coming up: {title}, {when}. Open the calendar', { title: ev.title, when }) : t('Open the calendar')}>
         <Icon name="calendar" size={28} />
         <span className="today-slim-text">
-          <b>Coming up</b>
-          <small>{events === null ? 'Loading...' : ev ? ev.title + ', ' + when : 'No events nearby yet'}</small>
+          <b>{t('Coming up')}</b>
+          <small>{events === null ? t('Loading...') : ev ? ev.title + ', ' + when : t('No events nearby yet')}</small>
         </span>
         <span className="today-slim-go" aria-hidden="true">&#8250;</span>
       </Link>
@@ -129,11 +133,11 @@ export function ComingUp({ slim = false }) {
 
   return (
     <section aria-labelledby="today-coming-h">
-      <h2 id="today-coming-h" className="today-h">Coming up</h2>
-      {events === null && <p className="today-empty" role="status">Loading events...</p>}
-      {events && events.length === 0 && <p className="today-empty">No events nearby yet.</p>}
+      <h2 id="today-coming-h" className="today-h">{t('Coming up')}</h2>
+      {events === null && <p className="today-empty" role="status">{t('Loading events...')}</p>}
+      {events && events.length === 0 && <p className="today-empty">{t('No events nearby yet.')}</p>}
       {events && events.map((ev) => <CalendarEventCard key={ev.id} ev={ev} showDate />)}
-      <Link to="/calendar" className="today-more">See the calendar</Link>
+      <Link to="/calendar" className="today-more">{t('See the calendar')}</Link>
     </section>
   )
 }

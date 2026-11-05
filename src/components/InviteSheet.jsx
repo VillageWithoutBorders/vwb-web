@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import Icon from './Icon'
+import { useT, t, getLang } from '../utils/lang'
 
 // "Invite to..." from Connections. Lists only the places you can invite this
 // person to. Nobody is added until they say yes.
@@ -13,13 +14,13 @@ const SECTIONS = [
 ]
 
 function doneText(kind, result, name) {
-  if (result === 'nudged') return 'Sent. ' + name + ' lives in this area, so they can join any time.'
-  if (result === 'sent' || result === 'invited') return kind === 'village' ? 'Invited as a guest. They can say yes or no.' : 'Invited. They can say yes or no.'
-  if (result === 'already') return 'They are already here.'
-  if (result === 'declined') return 'They said no not long ago. Try again in a few weeks.'
-  if (result === 'removed') return 'They were removed from this village before.'
-  if (result === 'notallowed') return 'Only Heads and organizers can invite here.'
-  return "We couldn't send that. Try again."
+  if (result === 'nudged') return t('Sent. {name} lives in this area, so they can join any time.', { name })
+  if (result === 'sent' || result === 'invited') return t(kind === 'village' ? 'Invited as a guest. They can say yes or no.' : 'Invited. They can say yes or no.')
+  if (result === 'already') return t('They are already here.')
+  if (result === 'declined') return t('They said no not long ago. Try again in a few weeks.')
+  if (result === 'removed') return t('They were removed from this village before.')
+  if (result === 'notallowed') return t('Only Heads and organizers can invite here.')
+  return t("We couldn't send that. Try again.")
 }
 
 export default function InviteSheet({ person, onClose }) {
@@ -27,8 +28,9 @@ export default function InviteSheet({ person, onClose }) {
   const [failed, setFailed] = useState(false)
   const [busy, setBusy] = useState('')
   const [notes, setNotes] = useState({})
+  useT()
   const headRef = useRef(null)
-  const name = person.display_name || 'this neighbor'
+  const name = person.display_name || t('this neighbor')
 
   async function load() {
     const { data, error } = await supabase.rpc('invite_places', { p_user: person.user_id })
@@ -76,13 +78,13 @@ export default function InviteSheet({ person, onClose }) {
   return (
     <div className="tools-shade" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="tools-sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="inv-h">
-        <h2 id="inv-h" tabIndex={-1} ref={headRef}>Invite {name}</h2>
-        <p className="inv-lead">They get an alert and choose yes or no. No one is added without saying yes.</p>
+        <h2 id="inv-h" tabIndex={-1} ref={headRef}>{t('Invite {name}', { name })}</h2>
+        <p className="inv-lead">{t('They get an alert and choose yes or no. No one is added without saying yes.')}</p>
 
-        {places === null && <p className="inv-note" role="status">Loading...</p>}
-        {failed && <p className="inv-note" role="alert">We couldn't load your places. Try again.</p>}
+        {places === null && <p className="inv-note" role="status">{t('Loading...')}</p>}
+        {failed && <p className="inv-note" role="alert">{t("We couldn't load your places. Try again.")}</p>}
         {places && !failed && !any && (
-          <p className="inv-note">There's nowhere you can invite them yet. You can invite people to your Cottage Chats, your villages, and groups or crews you run.</p>
+          <p className="inv-note">{t("There's nowhere you can invite them yet. You can invite people to your Cottage Chats, your villages, and groups or crews you run.")}</p>
         )}
 
         {any && SECTIONS.map((s) => {
@@ -90,7 +92,7 @@ export default function InviteSheet({ person, onClose }) {
           if (list.length === 0) return null
           return (
             <section key={s.kind} className="inv-sec" aria-labelledby={'inv-' + s.kind}>
-              <h3 id={'inv-' + s.kind}>{s.title}</h3>
+              <h3 id={'inv-' + s.kind}>{t(s.title)}</h3>
               <ul className="inv-list">
                 {list.map((p) => {
                   const key = p.kind + p.place_id
@@ -101,17 +103,17 @@ export default function InviteSheet({ person, onClose }) {
                         <b>{p.name}</b>
                         {notes[key] && <small role="status">{notes[key]}</small>}
                         {!notes[key] && p.state === 'wait' && p.wait_until && (
-                          <small>You can invite by name here starting {new Date(p.wait_until).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}.</small>
+                          <small>{t('You can invite by name here starting {date}.', { date: new Date(p.wait_until).toLocaleDateString(getLang() === 'es' ? 'es-US' : undefined, { month: 'long', day: 'numeric' }) })}</small>
                         )}
                       </span>
                       {p.state === 'ok' && (
-                        <button type="button" className="btn btn-primary inv-btn" disabled={!!busy} onClick={() => invite(p)} aria-label={'Invite ' + name + ' to ' + p.name}>
-                          {busy === key ? 'Sending...' : 'Invite'}
+                        <button type="button" className="btn btn-primary inv-btn" disabled={!!busy} onClick={() => invite(p)} aria-label={t('Invite {name} to {place}', { name, place: p.name })}>
+                          {t(busy === key ? 'Sending...' : 'Invite')}
                         </button>
                       )}
-                      {p.state === 'in' && <span className="inv-state">Already in</span>}
-                      {p.state === 'invited' && <span className="inv-state">Invited</span>}
-                      {p.state === 'wait' && <span className="inv-state">Not yet</span>}
+                      {p.state === 'in' && <span className="inv-state">{t('Already in')}</span>}
+                      {p.state === 'invited' && <span className="inv-state">{t('Invited')}</span>}
+                      {p.state === 'wait' && <span className="inv-state">{t('Not yet')}</span>}
                     </li>
                   )
                 })}
@@ -120,7 +122,7 @@ export default function InviteSheet({ person, onClose }) {
           )
         })}
 
-        <button type="button" className="btn btn-outline btn-full inv-close" onClick={onClose}>Done</button>
+        <button type="button" className="btn btn-outline btn-full inv-close" onClick={onClose}>{t('Done')}</button>
       </div>
     </div>
   )

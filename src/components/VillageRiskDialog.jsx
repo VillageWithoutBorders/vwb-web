@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { useT } from '../utils/lang'
 
 // The warning every neighbor sees, and must agree to, before joining a
 // village chat. The database checks the agreement too (join_village needs
 // p_agreed = true), so this is the friendly front door, not the only lock.
 export default function VillageRiskDialog({ villageName, busy = false, error = '', onAgree, onCancel }) {
+  const t = useT()
   const [checked, setChecked] = useState(false)
   const boxRef = useRef(null)
 
@@ -26,24 +28,24 @@ export default function VillageRiskDialog({ villageName, busy = false, error = '
         onClick={(e) => e.stopPropagation()}
         style={{ width: '100%', maxWidth: '480px', maxHeight: '92vh', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: '16px 16px 0 0', padding: '1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom))', outline: 'none' }}
       >
-        <h2 id="vrd-title" style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', color: 'var(--gold)' }}>Before you join{villageName ? ' ' + villageName : ''}</h2>
-        <p style={{ margin: '0 0 0.5rem', color: 'var(--text)', fontSize: '1rem', lineHeight: 1.5 }}>A village chat is a community chat. Like any community chat, it comes with risk.</p>
+        <h2 id="vrd-title" style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', color: 'var(--gold)' }}>{villageName ? t('Before you join {name}', { name: villageName }) : t('Before you join')}</h2>
+        <p style={{ margin: '0 0 0.5rem', color: 'var(--text)', fontSize: '1rem', lineHeight: 1.5 }}>{t('A village chat is a community chat. Like any community chat, it comes with risk.')}</p>
         <ul style={{ margin: '0 0 0.75rem', paddingLeft: '1.2rem', color: 'var(--text)', fontSize: '1rem', lineHeight: 1.5 }}>
-          <li>Neighbors who join later can read what you post after they join. There is no limit on how many can join.</li>
-          <li>Not everyone is who they say they are. VWB cannot promise that everyone in a chat is safe.</li>
-          <li>Keep your address, your schedule, money details, and anything private out of the chat.</li>
-          <li>You can leave, mute, block, or report at any time.</li>
-          <li>Only people who joined this village chat can open it. VWB admins cannot open it. It is not encrypted like private messages, so keep sensitive details out.</li>
+          <li>{t('Neighbors who join later can read what you post after they join. There is no limit on how many can join.')}</li>
+          <li>{t('Not everyone is who they say they are. VWB cannot promise that everyone in a chat is safe.')}</li>
+          <li>{t('Keep your address, your schedule, money details, and anything private out of the chat.')}</li>
+          <li>{t('You can leave, mute, block, or report at any time.')}</li>
+          <li>{t('Only people who joined this village chat can open it. VWB admins cannot open it. It is not encrypted like private messages, so keep sensitive details out.')}</li>
         </ul>
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', margin: '0 0 0.9rem', color: 'var(--text-strong)', fontSize: '1rem', lineHeight: 1.4, minHeight: '44px', cursor: 'pointer' }}>
           <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} style={{ width: '24px', height: '24px', flexShrink: 0, marginTop: '0.1rem' }} />
-          <span>I understand the risk I am taking by being in a community chat.</span>
+          <span>{t('I understand the risk I am taking by being in a community chat.')}</span>
         </label>
         {error && <p role="alert" style={{ margin: '0 0 0.75rem', color: 'var(--danger)', fontSize: '0.9rem' }}>{error}</p>}
         <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginBottom: '0.5rem' }} disabled={!checked || busy} onClick={() => onAgree?.()}>
-          {busy ? 'Joining...' : 'I agree. Join the chat'}
+          {busy ? t('Joining...') : t('I agree. Join the chat')}
         </button>
-        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '48px' }} disabled={busy} onClick={() => onCancel?.()}>Not now</button>
+        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '48px' }} disabled={busy} onClick={() => onCancel?.()}>{t('Not now')}</button>
       </div>
     </div>
   )

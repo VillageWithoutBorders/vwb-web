@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import Icon from './Icon'
 import { tell } from './AdminDialog'
+import { useT, t } from '../utils/lang'
 
 const BASE = 'https://api.dicebear.com/7.x/avataaars/svg'
 
@@ -82,6 +83,7 @@ function makeSeeds(base, count) {
 export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
+  useT()
   const [mode, setMode] = useState(initialConfig?.custom ? 'customize' : 'pick')
   const [selected, setSelected] = useState(initialConfig?.seed || null)
   const [batch, setBatch] = useState(0)
@@ -137,7 +139,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
     const { error } = await supabase.from('helper_profiles').update({
       avatar_url: url, avatar_config: saveData,
     }).eq('user_id', user.id)
-    if (error) tell('Could not save avatar. Try again.', { tone: 'error' })
+    if (error) tell(t('Could not save avatar. Try again.'), { tone: 'error' })
     else if (onSave) onSave(url, saveData)
     setSaving(false)
   }
@@ -150,20 +152,20 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
   return (
     <div style={{ padding: '1rem', maxWidth: '500px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{mode === 'pick' ? 'Pick Your Avatar' : 'Customize Avatar'}</h2>
-        {onCancel && <button onClick={onCancel} aria-label="Close avatar picker" style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.3rem', cursor: 'pointer' }}>{'✕'}</button>}
+        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{t(mode === 'pick' ? 'Pick Your Avatar' : 'Customize Avatar')}</h2>
+        {onCancel && <button onClick={onCancel} aria-label={t('Close avatar picker')} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.3rem', cursor: 'pointer' }}>{'✕'}</button>}
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button onClick={() => switchMode('pick')} style={tabStyle(mode === 'pick')}>Quick Pick</button>
-        <button onClick={() => switchMode('customize')} style={tabStyle(mode === 'customize')}>Customize</button>
+        <button onClick={() => switchMode('pick')} style={tabStyle(mode === 'pick')}>{t('Quick Pick')}</button>
+        <button onClick={() => switchMode('customize')} style={tabStyle(mode === 'customize')}>{t('Customize')}</button>
       </div>
 
       {mode === 'pick' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
             {seeds.map((seed, seedIndex) => (
-              <button key={seed} type="button" onClick={() => setSelected(seed)} aria-pressed={selected === seed} aria-label={'Avatar option ' + (seedIndex + 1) + (selected === seed ? ', selected' : '')} style={{
+              <button key={seed} type="button" onClick={() => setSelected(seed)} aria-pressed={selected === seed} aria-label={t(selected === seed ? 'Avatar option {n}, selected' : 'Avatar option {n}', { n: seedIndex + 1 })} style={{
                 width: '100%', aspectRatio: '1', borderRadius: '50%', overflow: 'hidden',
                 border: selected === seed ? '3px solid #4ecca3' : '3px solid transparent',
                 background: '#2a2a2a', cursor: 'pointer', padding: 0,
@@ -173,7 +175,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
               </button>
             ))}
           </div>
-          <button onClick={shuffle} style={{ display: 'block', width: '100%', marginBottom: '1rem', padding: '0.6rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.9rem' }}><Icon name="dice" /> Shuffle for more</button>
+          <button onClick={shuffle} style={{ display: 'block', width: '100%', marginBottom: '1rem', padding: '0.6rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.9rem' }}><Icon name="dice" /> {t('Shuffle for more')}</button>
         </>
       )}
 
@@ -183,17 +185,17 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
             <div style={{ width: '120px', height: '120px', margin: '0 auto', borderRadius: '50%', overflow: 'hidden', background: '#2a2a2a', border: '3px solid #4ecca3' }}>
               {previewUrl && <img src={previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
-            <button onClick={randomizeCustom} style={{ marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.8125rem' }}><Icon name="dice" /> Randomize</button>
+            <button onClick={randomizeCustom} style={{ marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.8125rem' }}><Icon name="dice" /> {t('Randomize')}</button>
           </div>
 
           <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.75rem', justifyContent: 'center' }}>
             {sectionKeys.map(key => (
-              <button key={key} style={tabStyle(activeSection === key)} onClick={() => setActiveSection(key)}>{LABELS[key]}</button>
+              <button key={key} style={tabStyle(activeSection === key)} onClick={() => setActiveSection(key)}>{t(LABELS[key])}</button>
             ))}
           </div>
 
           <div style={{ background: '#1e1e1e', borderRadius: '10px', padding: '0.75rem', border: '1px solid #333', marginBottom: '1rem', maxHeight: '200px', overflowY: 'auto' }}>
-            <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: '#ccc', fontSize: '0.85rem' }}>{LABELS[activeSection]}</label>
+            <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: '#ccc', fontSize: '0.85rem' }}>{t(LABELS[activeSection])}</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
               {COLOR_OPTIONS[activeSection] ? (
                 COLOR_OPTIONS[activeSection].map(({ name: colorName, hex }) => {
@@ -207,7 +209,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
                       cursor: 'pointer', fontSize: '0.8125rem', fontWeight: isActive ? 700 : 400,
                     }}>
                       <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#' + hex, border: '1px solid #555', flexShrink: 0 }} />
-                      {colorName}
+                      {t(colorName)}
                     </button>
                   )
                 })
@@ -220,7 +222,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
                       background: !config[activeSection] ? '#1a3a2a' : '#2a2a2a',
                       color: !config[activeSection] ? '#4ecca3' : '#ccc',
                       cursor: 'pointer', fontSize: '0.8125rem', fontWeight: !config[activeSection] ? 700 : 400,
-                    }}>None</button>
+                    }}>{t('None')}</button>
                   )}
                   {OPTIONS[activeSection].map(val => {
                     const isActive = config[activeSection] === val
@@ -242,9 +244,9 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
       )}
 
       <div style={{ display: 'flex', gap: '0.5rem' }}>
-        {onCancel && <button onClick={onCancel} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>}
+        {onCancel && <button onClick={onCancel} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontWeight: 600 }}>{t('Cancel')}</button>}
         <button onClick={handleSave} disabled={saving || !canSave} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '1rem', opacity: saving || !canSave ? 0.5 : 1 }}>
-          {saving ? 'Saving...' : 'Save Avatar'}
+          {t(saving ? 'Saving...' : 'Save Avatar')}
         </button>
       </div>
     </div>
@@ -264,5 +266,5 @@ export function AvatarPreview({ url, size = 40, style = {} }) {
       </div>
     )
   }
-  return <img src={url} alt="Avatar" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, background: '#2a2a2a', ...style }} />
+  return <img src={url} alt={t('Avatar')} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, background: '#2a2a2a', ...style }} />
 }

@@ -14,10 +14,12 @@ import OrgInvites from '../components/OrgInvites'
 import VillageGuestInvites from '../components/VillageGuestInvites'
 import QuickActions from '../components/QuickActions'
 import ZipCard from '../components/ZipCard'
+import { useT } from '../utils/lang'
 
 function VillageAsk() {
   const { profile, refreshProfile } = useAuth()
   const navigate = useNavigate()
+  const t = useT()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   // Only ask people who have not answered yet.
@@ -26,7 +28,7 @@ function VillageAsk() {
   async function answer(yes) {
     setSaving(true); setError('')
     const { error: err } = await supabase.from('helper_profiles').update({ village_opt_in: yes }).eq('user_id', profile.user_id)
-    if (err) { console.error('[VillageAsk]', err); setError('Could not save that. Try again.'); setSaving(false); return }
+    if (err) { console.error('[VillageAsk]', err); setError(t('Could not save that. Try again.')); setSaving(false); return }
     await refreshProfile()
     setSaving(false)
     if (yes && !profile.zip_code) { navigate('/profile'); return }
@@ -35,13 +37,13 @@ function VillageAsk() {
   }
 
   return (
-    <div className="village-ask" role="region" aria-label="Local village chat">
-      <p className="village-ask-title"><span aria-hidden="true" style={{ verticalAlign: "middle" }}><Icon name="houses" /></span> Join a village chat?</p>
-      <p className="village-ask-text">Village chats are for neighbors in your area. We use your zip code to find them. You can join more than one, and you can leave any time from your Profile.</p>
+    <div className="village-ask" role="region" aria-label={t('Local village chat')}>
+      <p className="village-ask-title"><span aria-hidden="true" style={{ verticalAlign: "middle" }}><Icon name="houses" /></span> {t('Join a village chat?')}</p>
+      <p className="village-ask-text">{t('Village chats are for neighbors in your area. We use your zip code to find them. You can join more than one, and you can leave any time from your Profile.')}</p>
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="village-ask-buttons">
-        <button type="button" className="btn btn-primary" disabled={saving} onClick={() => answer(true)}>Yes, join</button>
-        <button type="button" className="btn btn-outline" disabled={saving} onClick={() => answer(false)}>No thanks</button>
+        <button type="button" className="btn btn-primary" disabled={saving} onClick={() => answer(true)}>{t('Yes, join')}</button>
+        <button type="button" className="btn btn-outline" disabled={saving} onClick={() => answer(false)}>{t('No thanks')}</button>
       </div>
     </div>
   )
@@ -52,7 +54,8 @@ export default function Dashboard({ embedded = false }) {
   const { profile, isAdmin, established } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const displayName = profile?.display_name || 'Neighbor'
+  const t = useT()
+  const displayName = profile?.display_name || t('Neighbor')
   const successMessage = location.state?.message
   const [waiting, setWaiting] = useState(null)
 
@@ -77,21 +80,21 @@ export default function Dashboard({ embedded = false }) {
         </p>
       )}
       <div className="welcome-section">
-        {embedded ? <h2>{hello}, {displayName}</h2> : <h1>{hello}, {displayName}</h1>}
+        {embedded ? <h2>{t(hello)}, {displayName}</h2> : <h1>{t(hello)}, {displayName}</h1>}
         {/* Oct 28: under the cottage map, "all caught up" is said once, by Needs you. */}
         {!(embedded && waiting === 0) && <p className="welcome-sub" role="status">
-          {waiting === null ? 'Here is your day.' : waiting === 0 ? "You're all caught up." : waiting + (waiting === 1 ? ' thing needs' : ' things need') + ' you today.'}
+          {waiting === null ? t('Here is your day.') : waiting === 0 ? t("You're all caught up.") : waiting === 1 ? t('1 thing needs you today.') : t('{n} things need you today.', { n: waiting })}
         </p>}
-        {profile?.is_hope_ambassador && <p className="today-role"><Icon name="star" size={20} /> Hope Ambassador</p>}
+        {profile?.is_hope_ambassador && <p className="today-role"><Icon name="star" size={20} /> {t('Hope Ambassador')}</p>}
       </div>
 
       <ZipCard />
 
       {established === false && (
         <section className="new-here" aria-labelledby="new-here-h">
-          <h2 id="new-here-h"><Icon name="sprout" /> You're new here</h2>
-          <p>Right now you can ask for help, offer to help on requests, join your village, and reply to anyone who messages you.</p>
-          <p>Once a neighbor vouches for you, or you finish a task with someone, you can also message people first, post offers, and start chats and emergency crews. It keeps VWB safe from fake accounts.</p>
+          <h2 id="new-here-h"><Icon name="sprout" /> {t("You're new here")}</h2>
+          <p>{t('Right now you can ask for help, offer to help on requests, join your village, and reply to anyone who messages you.')}</p>
+          <p>{t('Once a neighbor vouches for you, or you finish a task with someone, you can also message people first, post offers, and start chats and emergency crews. It keeps VWB safe from fake accounts.')}</p>
         </section>
       )}
 
@@ -124,15 +127,15 @@ export default function Dashboard({ embedded = false }) {
       {embedded ? (
         <button type="button" data-tour="emergency" className="today-slim today-slim-warn" onClick={() => navigate('/emergency')}>
           <Icon name="cat-emergency" size={28} />
-          <span className="today-slim-text"><b>Emergency Response</b><small>Floods, storms, fires, outages</small></span>
+          <span className="today-slim-text"><b>{t('Emergency Response')}</b><small>{t('Floods, storms, fires, outages')}</small></span>
           <span className="today-slim-go" aria-hidden="true">&#8250;</span>
         </button>
       ) : (
       <button data-tour="emergency" onClick={() => navigate('/emergency')} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "1.25rem", padding: "1rem 1.25rem", borderRadius: "12px", border: "2px solid var(--warn)", background: "linear-gradient(135deg, var(--warn-bg), var(--warn-bg))", cursor: "pointer", textAlign: "left" }}>
         <span aria-hidden="true" style={{ flexShrink: 0, display: "flex" }}><Icon name="cat-emergency" size={40} /></span>
         <div>
-          <span style={{ display: "block", color: "var(--gold)", fontWeight: 700, fontSize: "1rem" }}>Emergency Response</span>
-          <span style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>Floods, storms, fires, and outages that hit many neighbors</span>
+          <span style={{ display: "block", color: "var(--gold)", fontWeight: 700, fontSize: "1rem" }}>{t('Emergency Response')}</span>
+          <span style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>{t('Floods, storms, fires, and outages that hit many neighbors')}</span>
         </div>
       </button>
       )}

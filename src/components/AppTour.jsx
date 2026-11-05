@@ -6,6 +6,7 @@ import { useSimpleView } from '../utils/simpleView'
 import Icon from './Icon'
 import { firstRunPaused } from '../utils/firstVillage'
 import { needsFullSetup } from '../utils/startPath'
+import { useT } from '../utils/lang'
 
 // A short walk-through of the app.
 //
@@ -271,18 +272,20 @@ const SAMPLES = {
 }
 
 function SampleCard({ kind }) {
+  const t = useT()
   const [tried, setTried] = useState(false)
   const s = SAMPLES[kind]
   if (!s) return null
+  const tag = t('Sample ' + s.label.toLowerCase())
   return (
-    <div className="tour-sample" role="group" aria-label={'Sample ' + s.label.toLowerCase()}>
-      <span className="tour-sample-tag">Sample {s.label.toLowerCase()}</span>
-      <p className="tour-sample-title">{s.title}</p>
-      <p className="tour-sample-text">{s.text}</p>
+    <div className="tour-sample" role="group" aria-label={tag}>
+      <span className="tour-sample-tag">{tag}</span>
+      <p className="tour-sample-title">{t(s.title)}</p>
+      <p className="tour-sample-text">{t(s.text)}</p>
       {tried ? (
-        <p className="tour-sample-after" role="status">{s.after}</p>
+        <p className="tour-sample-after" role="status">{t(s.after)}</p>
       ) : (
-        <button type="button" className="btn btn-outline tour-sample-btn" onClick={() => setTried(true)}>{s.action}</button>
+        <button type="button" className="btn btn-outline tour-sample-btn" onClick={() => setTried(true)}>{t(s.action)}</button>
       )}
     </div>
   )
@@ -307,6 +310,7 @@ export function startAppTour() {
 }
 
 export default function AppTour() {
+  const t = useT()
   const { user, profile, organizations, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -480,15 +484,15 @@ export default function AppTour() {
       )}
       <div ref={sheetRef} className={'tour-sheet' + (cardAtTop ? ' tour-sheet-top' : '')} role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourBody">
         <div className="tour-top">
-          <span className="tour-count">Step {index + 1} of {STEPS.length}</span>
+          <span className="tour-count">{t('Step {n} of {total}', { n: index + 1, total: STEPS.length })}</span>
           <span className="tour-top-actions">
             {inPractice && (
-              <button type="button" className="tour-skip" onClick={skipPractice}>Skip practice</button>
+              <button type="button" className="tour-skip" onClick={skipPractice}>{t('Skip practice')}</button>
             )}
             {required ? (
-              <button type="button" className="tour-skip" onClick={agree} disabled={saving}>{saving ? 'Saving...' : 'Skip tour'}</button>
+              <button type="button" className="tour-skip" onClick={agree} disabled={saving}>{saving ? t('Saving...') : t('Skip tour')}</button>
             ) : (
-              <button type="button" className="tour-skip" onClick={close}>Close</button>
+              <button type="button" className="tour-skip" onClick={close}>{t('Close')}</button>
             )}
           </span>
         </div>
@@ -498,26 +502,26 @@ export default function AppTour() {
         <div className="tour-card" key={step.title}>
           <div className="tour-head">
             <span className="tour-icon" aria-hidden="true"><Icon name={step.icon} /></span>
-            <h2 id="tourTitle" className="tour-title" tabIndex={-1} ref={headingRef}>{step.title}</h2>
+            <h2 id="tourTitle" className="tour-title" tabIndex={-1} ref={headingRef}>{t(step.title)}</h2>
           </div>
-          <p id="tourBody" className="tour-body">{step.body}</p>
+          <p id="tourBody" className="tour-body">{t(step.body)}</p>
           {step.practice && step.practice !== 'intro' && <SampleCard kind={step.practice} />}
-          {step.target && rect && <p className="tour-hint">Look for the ringed spot on your screen.</p>}
-          {step.last && <p className="tour-hint">{step.last}</p>}
-          {error && <p className="form-error" role="alert">{error}</p>}
+          {step.target && rect && <p className="tour-hint">{t('Look for the ringed spot on your screen.')}</p>}
+          {step.last && <p className="tour-hint">{t(step.last)}</p>}
+          {error && <p className="form-error" role="alert">{t(error)}</p>}
         </div>
 
         <div className="tour-buttons">
           {index > 0 && (
-            <button type="button" className="btn btn-outline tour-btn" onClick={() => setIndex(i => i - 1)}>Back</button>
+            <button type="button" className="btn btn-outline tour-btn" onClick={() => setIndex(i => i - 1)}>{t('Back')}</button>
           )}
           {isLast ? (
             <button type="button" className="btn btn-primary tour-btn tour-btn-main" onClick={agree} disabled={saving}>
-              {saving ? 'Saving...' : 'Done'}
+              {saving ? t('Saving...') : t('Done')}
             </button>
           ) : (
             <button type="button" className="btn btn-primary tour-btn tour-btn-main" onClick={() => setIndex(i => i + 1)}>
-              {index === 0 ? 'Show me around' : step.practice === 'intro' ? 'Try it' : 'Next'}
+              {index === 0 ? t('Show me around') : step.practice === 'intro' ? t('Try it') : t('Next')}
             </button>
           )}
         </div>

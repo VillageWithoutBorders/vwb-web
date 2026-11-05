@@ -15,6 +15,7 @@ import { sendVillagePost, fetchVillageBodies, editVillagePost, fetchVillageEditH
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
 import { calmMotion } from '../utils/motion'
+import { useT, getLang } from '../utils/lang'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar/name shown once) instead of repeating them for every line,
@@ -23,6 +24,7 @@ const GROUP_WINDOW_MS = 5 * 60 * 1000
 const LOCKED_NOTE = '\uD83D\uDD12 This message is locked and this phone cannot open it.'
 
 export default function Campfire() {
+  const t = useT()
   const { user, profile, isAdmin, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
@@ -138,7 +140,7 @@ export default function Campfire() {
     setLeavingSister(true)
     const { data, error } = await supabase.rpc('leave_sister_campfire', { p_board: activeBoard.id })
     setLeavingSister(false)
-    if (error || data !== 'ok') { console.error('Failed to leave the Sister Campfire:', error || data); setBoardError("We couldn't take you out of this Sister Campfire. Try again."); return }
+    if (error || data !== 'ok') { console.error('Failed to leave the Sister Campfire:', error || data); setBoardError(t("We couldn't take you out of this Sister Campfire. Try again.")); return }
     await loadBoards()
     setSearchParams({}, { replace: true })
   }
@@ -166,8 +168,8 @@ export default function Campfire() {
   }
   useEffect(() => {
     loadRemovalRequests()
-    const t = setInterval(loadRemovalRequests, 30000)
-    return () => clearInterval(t)
+    const timer = setInterval(loadRemovalRequests, 30000)
+    return () => clearInterval(timer)
   }, [activeBoard?.village_id, inVillage])
 
   function chooseBoard(id) {
@@ -183,7 +185,7 @@ export default function Campfire() {
     const { data, error } = await supabase.from('campfire_boards').insert({ name, created_by: user.id, sort_order: 50 }).select('id').single()
     if (error) {
       console.error('Failed to add board:', error)
-      setBoardError(/duplicate|unique/i.test(error.message || '') ? 'A board with that name already exists.' : 'Could not add the board. Try again.')
+      setBoardError(/duplicate|unique/i.test(error.message || '') ? t('A board with that name already exists.') : t('Could not add the board. Try again.'))
       return
     }
     setNewBoardName(''); setCreatingBoard(false); setPickerOpen(false)
@@ -202,7 +204,7 @@ export default function Campfire() {
         if (error) { console.error('Failed to load Village Square members:', error); return }
         setNames(prev => {
           const next = { ...prev }
-          for (const m of data || []) next[m.user_id] = { name: m.display_name || 'Neighbor', role: m.role, ambassador: m.is_hope_ambassador, avatar: m.avatar_url || null }
+          for (const m of data || []) next[m.user_id] = { name: m.display_name || t('Neighbor'), role: m.role, ambassador: m.is_hope_ambassador, avatar: m.avatar_url || null }
           return next
         })
       })
@@ -218,8 +220,8 @@ export default function Campfire() {
   useEffect(() => {
     if (!hasAccess) return
     loadUnread()
-    const t = setInterval(loadUnread, 15000)
-    return () => clearInterval(t)
+    const timer = setInterval(loadUnread, 15000)
+    return () => clearInterval(timer)
   }, [hasAccess])
 
   async function toggleSpark(msg) {
@@ -294,7 +296,7 @@ export default function Campfire() {
       { user_id: user.id, board_id: boardId, ...updates, updated_at: new Date().toISOString() },
       { onConflict: 'user_id,board_id' }
     )
-    if (error) { console.error('Failed to save alert setting:', error); tell('Could not save that. Try again.', { tone: 'error' }) }
+    if (error) { console.error('Failed to save alert setting:', error); tell(t('Could not save that. Try again.'), { tone: 'error' }) }
     else await loadAlertSettings()
     setAlertSaving(false)
   }
@@ -302,9 +304,9 @@ export default function Campfire() {
   // Leave the village chat being viewed. You can join again later, but you will not see what was said while you were away.
   async function leaveVillageChat() {
     if (!activeBoard?.village_id) return
-    if (!(await askConfirm('Leave ' + activeBoard.name + '? You can join again later. You will not see what was said while you were away.'))) return
+    if (!(await askConfirm(t('Leave {name}? You can join again later. You will not see what was said while you were away.', { name: activeBoard.name })))) return
     const { error } = await supabase.rpc('leave_village', { p_village: activeBoard.village_id })
-    if (error) { console.error('Failed to leave the village chat:', error); tell('Could not leave. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to leave the village chat:', error); tell(t('Could not leave. Try again.'), { tone: 'error' }); return }
     setShowPeople(false); setShowSettings(false)
     setMessages([]); setLoading(true); resetScroll()
     setSearchParams({}, { replace: true })
@@ -319,8 +321,8 @@ export default function Campfire() {
     if (!memberSet.has(activeBoard.village_id)) return
     introDone.current = true
     if (!messages.some(m => m.user_id === user.id)) {
-      const name = (profile?.display_name || '').trim() || 'a neighbor'
-      setNewMsg("Hi neighbors, I'm " + name + ". I'm glad to be here.\n\nA bit about me: ")
+      const name = (profile?.display_name || '').trim() || t('a neighbor')
+      setNewMsg(t("Hi neighbors, I'm {name}. I'm glad to be here.", { name }) + '\n\n' + t('A bit about me:') + ' ')
       setIntroHint(true)
       setTimeout(() => { const el = inputRef.current; if (el) { el.focus(); try { el.setSelectionRange(el.value.length, el.value.length) } catch {} } }, 80)
     }
@@ -330,14 +332,14 @@ export default function Campfire() {
 
   async function reportMessage(msg) {
     setOpenMsgMenu(null)
-    if (!(await askConfirm('Report this message to the admins?'))) return
+    if (!(await askConfirm(t('Report this message to the admins?')))) return
     const info = names[msg.user_id] || { name: 'Unknown' }
     // Campfire messages are deleted after 30 days, so the report keeps its own
     // copy of the words: the reported message plus the two before it for context.
     const idx = messages.findIndex(m => m.id === msg.id)
     const before = idx > 0 ? messages.slice(Math.max(0, idx - 2), idx) : []
     const line = (m, who) => '[' + new Date(m.created_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC] ' + who + ': ' + String(m.body || '')
-    const clip = (t, n) => (t.length > n ? t.slice(0, n) + '...' : t)
+    const clip = (s, n) => (s.length > n ? s.slice(0, n) + '...' : s)
     const saved = [
       ...before.map(m => clip(line(m, (names[m.user_id] || { name: 'Unknown' }).name), 150)),
       'REPORTED: ' + clip(line(msg, info.name), 600),
@@ -349,8 +351,8 @@ export default function Campfire() {
       details: saved,
       place: activeBoard?.village_id ? { kind: 'village', id: activeBoard.village_id } : null,
     })
-    if (error) { tell(error, { tone: 'error' }); return }
-    tell(activeBoard?.village_id ? 'Report sent. VWB admins and this village\'s keepers will see it, never your name.' : 'Report submitted. An admin will review this message.')
+    if (error) { tell(t(error), { tone: 'error' }); return }
+    tell(activeBoard?.village_id ? t("Report sent. VWB admins and this village's keepers will see it, never your name.") : t('Report submitted. An admin will review this message.'))
   }
 
   // Pinning: admins/founder only (matches AuthContext's isAdmin, which already
@@ -369,7 +371,7 @@ export default function Campfire() {
         .eq('id', msg.id)
     if (error) {
       console.error('Failed to update pin:', error)
-      tell('Could not update the pin on this message. Try again.', { tone: 'error' })
+      tell(t('Could not update the pin on this message. Try again.'), { tone: 'error' })
       return
     }
     await loadMessages()
@@ -423,7 +425,7 @@ export default function Campfire() {
         await Promise.all(unknownIds.map(async (uid) => {
           const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name, role, is_hope_ambassador, avatar_url').eq('user_id', uid).maybeSingle()
           if (profErr) console.error('Failed to load profile for', uid, profErr)
-          newNames[uid] = { name: p?.display_name || 'Neighbor', role: p?.role, ambassador: p?.is_hope_ambassador, avatar: p?.avatar_url || null }
+          newNames[uid] = { name: p?.display_name || t('Neighbor'), role: p?.role, ambassador: p?.is_hope_ambassador, avatar: p?.avatar_url || null }
         }))
         setNames(newNames)
       }
@@ -448,17 +450,17 @@ export default function Campfire() {
           setEditing(null); setNewMsg(''); setSendNote('')
           await loadMessages()
         } else if (result === 'not-allowed') {
-          setSendNote('You can only edit your last message, within 15 minutes of sending it.')
+          setSendNote(t('You can only edit your last message, within 15 minutes of sending it.'))
           setEditing(null); setNewMsg('')
         } else {
-          setSendNote('Could not save your edit. Check your connection and try again.')
+          setSendNote(t('Could not save your edit. Check your connection and try again.'))
         }
         return
       }
       const { error } = await supabase.from('campfire_messages').update({ body: newMsg.trim() }).eq('id', editing.id)
       if (error) {
         console.error('Failed to edit Village Square message:', error)
-        tell('Could not save your edit. Try again.', { tone: 'error' })
+        tell(t('Could not save your edit. Try again.'), { tone: 'error' })
         setSending(false)
         return
       }
@@ -472,7 +474,7 @@ export default function Campfire() {
       const text = newMsg.trim()
       const res = await sendVillagePost({ boardId: activeBoardId, senderId: user.id, text, replyTo: replyTo?.id })
       if (res.status !== 'sent') {
-        tell(res.status === 'not-ready' ? 'Your phone is still getting its lock ready. Try again in a moment.' : 'Could not send your message. Try again.', { tone: 'error' })
+        tell(res.status === 'not-ready' ? t('Your phone is still getting its lock ready. Try again in a moment.') : t('Could not send your message. Try again.'), { tone: 'error' })
         setSending(false)
         return
       }
@@ -488,7 +490,7 @@ export default function Campfire() {
     const { data, error } = await supabase.from('campfire_messages').insert(row).select('id').single()
     if (error) {
       console.error('Failed to send Village Square message:', error)
-      tell('Could not send your message. Try again.', { tone: 'error' })
+      tell(t('Could not send your message. Try again.'), { tone: 'error' })
       setSending(false)
       return
     }
@@ -541,8 +543,8 @@ export default function Campfire() {
   }
 
   function snippet(text) {
-    const t = (text || '').replace(/\s+/g, ' ').trim()
-    return t.length > 90 ? t.slice(0, 90) + '...' : t
+    const s = (text || '').replace(/\s+/g, ' ').trim()
+    return s.length > 90 ? s.slice(0, 90) + '...' : s
   }
 
   // Always a real time, never just "5m ago": today shows the time, other days
@@ -553,7 +555,7 @@ export default function Campfire() {
     const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
     if (d.toDateString() === now.toDateString()) return time
     const y = new Date(now); y.setDate(now.getDate() - 1)
-    if (d.toDateString() === y.toDateString()) return 'Yesterday ' + time
+    if (d.toDateString() === y.toDateString()) return t('Yesterday') + ' ' + time
     const opts = d.getFullYear() === now.getFullYear() ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' }
     return d.toLocaleDateString([], opts) + ' ' + time
   }
@@ -562,9 +564,9 @@ export default function Campfire() {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
         <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}><Icon name="megaphone" /></p>
-        <h2 style={{ color: 'var(--warn)', marginBottom: '0.5rem' }}>Come sit by the fire</h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>The Village Square is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Apply to become a Hope Ambassador. An admin looks over each application so this stays a place people can trust, and once you're in, you'll have a seat.</p>
-        <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>Apply to be a Hope Ambassador</button>
+        <h2 style={{ color: 'var(--warn)', marginBottom: '0.5rem' }}>{t('Come sit by the fire')}</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{t("The Village Square is where Hope Ambassadors and admins swap ideas and look out for each other. You're welcome here too. Apply to become a Hope Ambassador. An admin looks over each application so this stays a place people can trust, and once you're in, you'll have a seat.")}</p>
+        <button onClick={() => navigate('/profile')} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>{t('Apply to be a Hope Ambassador')}</button>
       </div>
     )
   }
@@ -588,26 +590,26 @@ export default function Campfire() {
   return (
     <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--surface)' }}>
       <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack(activeBoard?.village_id ? '/village/' + activeBoard.village_id : '/')} aria-label="Back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
+        <button onClick={() => goBack(activeBoard?.village_id ? '/village/' + activeBoard.village_id : '/')} aria-label={t('Back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span><Icon name={activeBoard?.village_id ? 'chat-bubble' : 'megaphone'} /></span> {activeBoard?.village_id ? activeBoard.name + ' village chat' : 'The Village Square'}
+            <span><Icon name={activeBoard?.village_id ? 'chat-bubble' : 'megaphone'} /></span> {activeBoard?.village_id ? t('{name} village chat', { name: activeBoard.name }) : t('The Village Square')}
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{activeBoard ? (activeBoard.village_id ? 'Part of the Village Square, where all village chats live' : activeBoard.event_id ? 'Response Camp' + (activeBoard.archived ? ', closed' : '') : activeBoard.sister_a ? 'Sister Campfire' + (activeBoard.archived ? ', closed' : '') : activeBoard.name + ' board') : 'Announcements and village chats'}</p>
+          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{activeBoard ? (activeBoard.village_id ? t('Part of the Village Square, where all village chats live') : activeBoard.event_id ? t('Response Camp') + (activeBoard.archived ? t(', closed') : '') : activeBoard.sister_a ? t('Sister Campfire') + (activeBoard.archived ? t(', closed') : '') : t('{name} board', { name: activeBoard.name })) : t('Announcements and village chats')}</p>
         </div>
-        {!isSimpleView() && activeBoard?.village_id && <button onClick={() => navigate('/village/' + activeBoard.village_id)} aria-label="Village page" title="Village page" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}><Icon name="compass" /></button>}
+        {!isSimpleView() && activeBoard?.village_id && <button onClick={() => navigate('/village/' + activeBoard.village_id)} aria-label={t('Village page')} title={t('Village page')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}><Icon name="compass" /></button>}
         {isVillageBoard && inVillage && (
-          <button onClick={() => setShowPeople(true)} aria-label={'People in ' + activeBoard.name + (removalRequests.some(r => r.requested_by !== user.id) ? ', a removal request needs a second member' : '')} title="People" style={{ position: 'relative', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }}>
+          <button onClick={() => setShowPeople(true)} aria-label={t('People in {name}', { name: activeBoard.name }) + (removalRequests.some(r => r.requested_by !== user.id) ? t(', a removal request needs a second member') : '')} title={t('People')} style={{ position: 'relative', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }}>
             <Icon name="people" />
             {removalRequests.some(r => r.requested_by !== user.id) && <span aria-hidden="true" style={{ position: 'absolute', top: '6px', right: '6px', width: '10px', height: '10px', borderRadius: '50%', background: 'var(--warn)' }} />}
           </button>
         )}
-        <button onClick={() => setShowSettings(true)} aria-label="Village Square settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title='Settings'><Icon name="gear" /></button>
+        <button onClick={() => setShowSettings(true)} aria-label={t('Village Square settings')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title={t('Settings')}><Icon name="gear" /></button>
       </div>
 
       <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-        <button type="button" onClick={() => { setPickerOpen(true); setPickerSearch('') }} aria-haspopup="dialog" aria-expanded={pickerOpen} aria-label={'Change chat. Now in ' + (activeBoard?.name || 'no chat')} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid var(--accent)', background: 'var(--success-bg)', color: 'var(--accent)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>
-          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeBoard?.name || 'Pick a chat'}</span>
+        <button type="button" onClick={() => { setPickerOpen(true); setPickerSearch('') }} aria-haspopup="dialog" aria-expanded={pickerOpen} aria-label={t('Change chat. Now in {name}', { name: activeBoard?.name || t('no chat') })} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid var(--accent)', background: 'var(--success-bg)', color: 'var(--accent)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>
+          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeBoard?.name || t('Pick a chat')}</span>
           {otherUnread > 0 && <span role="status" aria-label={otherUnread + ' new in other chats'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{otherUnread > 99 ? '99+' : otherUnread}</span>}
           {orderedBoards.length > 1 && <span style={{ fontWeight: 500, fontSize: '0.8125rem', color: 'var(--accent)' }}>{orderedBoards.length} chats</span>}
           <span aria-hidden="true">&#9662;</span>
@@ -625,45 +627,45 @@ export default function Campfire() {
         ]
         const row = (b) => (
           <button key={b.id} type="button" role="option" aria-selected={b.id === activeBoardId} onClick={() => { setPickerOpen(false); if (b.id !== activeBoardId) chooseBoard(b.id) }} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 0.9rem', marginBottom: '0.4rem', borderRadius: '10px', border: b.id === activeBoardId ? '1px solid var(--accent)' : '1px solid var(--border)', background: b.id === activeBoardId ? 'var(--success-bg)' : 'var(--surface-2)', color: b.id === activeBoardId ? 'var(--accent)' : 'var(--text)', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
-            <span style={{ flex: 1 }}>{b.sister_a && <span aria-hidden="true"><Icon name="campfire" /> </span>}{b.event_id && <span aria-hidden="true"><Icon name="tent" /> </span>}{b.name}{(b.sister_a || b.event_id) && b.archived ? ' (closed)' : ''}</span>
-            {unreadFor(b) > 0 && <span aria-label={unreadFor(b) + ' new'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{unreadFor(b) > 99 ? '99+' : unreadFor(b)}</span>}
+            <span style={{ flex: 1 }}>{b.sister_a && <span aria-hidden="true"><Icon name="campfire" /> </span>}{b.event_id && <span aria-hidden="true"><Icon name="tent" /> </span>}{b.name}{(b.sister_a || b.event_id) && b.archived ? ' ' + t('(closed)') : ''}</span>
+            {unreadFor(b) > 0 && <span aria-label={t('{n} new', { n: unreadFor(b) })} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{unreadFor(b) > 99 ? '99+' : unreadFor(b)}</span>}
             {b.id === activeBoardId && <span aria-hidden="true">&#10003;</span>}
           </button>
         )
         return (
-          <div role="dialog" aria-modal="true" aria-label="Choose a chat" onClick={() => setPickerOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div role="dialog" aria-modal="true" aria-label={t('Choose a chat')} onClick={() => setPickerOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <div onClick={e => e.stopPropagation()} role="listbox" style={{ width: '100%', maxWidth: '32rem', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--surface)', borderTop: '1px solid var(--border-strong)', borderRadius: '16px 16px 0 0', padding: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-strong)', flex: 1 }}>Your chats</h2>
-                <button type="button" onClick={() => setPickerOpen(false)} aria-label="Close" style={{ minWidth: '44px', minHeight: '44px', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer' }}>&#10005;</button>
+                <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-strong)', flex: 1 }}>{t('Your chats')}</h2>
+                <button type="button" onClick={() => setPickerOpen(false)} aria-label={t('Close')} style={{ minWidth: '44px', minHeight: '44px', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer' }}>&#10005;</button>
               </div>
               {orderedBoards.length > 6 && (
                 <>
-                  <label htmlFor="chat-search" className="sr-only">Search your chats</label>
-                  <input id="chat-search" type="search" value={pickerSearch} onChange={e => setPickerSearch(e.target.value)} placeholder="Search your chats" style={{ width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0 0.9rem', marginBottom: '0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem' }} />
+                  <label htmlFor="chat-search" className="sr-only">{t('Search your chats')}</label>
+                  <input id="chat-search" type="search" value={pickerSearch} onChange={e => setPickerSearch(e.target.value)} placeholder={t('Search your chats')} style={{ width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0 0.9rem', marginBottom: '0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem' }} />
                 </>
               )}
               {groups.map(([label, list]) => list.length > 0 && (
                 <div key={label} style={{ marginBottom: '0.5rem' }}>
-                  <p style={{ margin: '0.4rem 0', color: 'var(--text-muted)', fontSize: '0.8125rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
+                  <p style={{ margin: '0.4rem 0', color: 'var(--text-muted)', fontSize: '0.8125rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t(label)}</p>
                   {list.map(row)}
                 </div>
               ))}
-              {q && groups.every(([, l]) => l.length === 0) && <p style={{ color: 'var(--text-secondary)' }}>No chat matches that.</p>}
+              {q && groups.every(([, l]) => l.length === 0) && <p style={{ color: 'var(--text-secondary)' }}>{t('No chat matches that.')}</p>}
               {memberVillages !== null && (
                 <button type="button" onClick={() => { setPickerOpen(false); navigate('/find-village') }} style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontSize: '1rem', cursor: 'pointer' }}>
-                  {memberSet.size > 0 ? '+ Join another village chat' : 'Find your village chat'}
+                  {memberSet.size > 0 ? '+ ' + t('Join another village chat') : t('Find your village chat')}
                 </button>
               )}
               {isAdmin && !creatingBoard && (
-                <button type="button" onClick={() => { setCreatingBoard(true); setBoardError('') }} aria-label="Add a board" style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px dashed var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '1rem', cursor: 'pointer' }}>+ New board</button>
+                <button type="button" onClick={() => { setCreatingBoard(true); setBoardError('') }} aria-label={t('Add a board')} style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px dashed var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '1rem', cursor: 'pointer' }}>+ {t('New board')}</button>
               )}
               {isAdmin && creatingBoard && (
                 <form onSubmit={addBoard} style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                  <label htmlFor="new-board-name" className="sr-only">Board name</label>
-                  <input id="new-board-name" type="text" value={newBoardName} onChange={e => setNewBoardName(e.target.value)} maxLength={40} placeholder="Board name" autoFocus style={{ flex: 1, minWidth: '8rem', minHeight: '48px', boxSizing: 'border-box', padding: '0 0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem' }} />
-                  <button type="submit" disabled={!newBoardName.trim()} style={{ minHeight: '48px', padding: '0 1rem', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: newBoardName.trim() ? 1 : 0.5 }}>Add</button>
-                  <button type="button" onClick={() => { setCreatingBoard(false); setNewBoardName(''); setBoardError('') }} style={{ minHeight: '48px', padding: '0 0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+                  <label htmlFor="new-board-name" className="sr-only">{t('Board name')}</label>
+                  <input id="new-board-name" type="text" value={newBoardName} onChange={e => setNewBoardName(e.target.value)} maxLength={40} placeholder={t('Board name')} autoFocus style={{ flex: 1, minWidth: '8rem', minHeight: '48px', boxSizing: 'border-box', padding: '0 0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem' }} />
+                  <button type="submit" disabled={!newBoardName.trim()} style={{ minHeight: '48px', padding: '0 1rem', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: newBoardName.trim() ? 1 : 0.5 }}>{t('Add')}</button>
+                  <button type="button" onClick={() => { setCreatingBoard(false); setNewBoardName(''); setBoardError('') }} style={{ minHeight: '48px', padding: '0 0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>{t('Cancel')}</button>
                 </form>
               )}
               {boardError && <p role="alert" style={{ color: 'var(--danger)', fontSize: '0.85rem' }}>{boardError}</p>}
@@ -679,10 +681,10 @@ export default function Campfire() {
           <p style={{ margin: 0, flex: '1 1 12rem' }}>
             <span aria-hidden="true"><Icon name="campfire" /> </span>
             {sisterClosed
-              ? 'This Sister Campfire is closed. The villages are no longer sisters. You can read it until ' + sisterGoneOn + '. Then it is deleted for good and cannot be brought back.'
-              : 'Sister Campfire. Anyone in either village can join. Members only, not scrambled. Messages delete after 30 days.'}
+              ? t('This Sister Campfire is closed. The villages are no longer sisters. You can read it until {date}. Then it is deleted for good and cannot be brought back.', { date: sisterGoneOn })
+              : t('Sister Campfire. Anyone in either village can join. Members only, not scrambled. Messages delete after 30 days.')}
           </p>
-          <button type="button" onClick={leaveSister} disabled={leavingSister} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '10px', border: '1px solid currentColor', background: 'none', color: 'inherit', fontSize: '0.9rem', cursor: 'pointer' }}>{leavingSister ? 'Leaving...' : 'Leave'}</button>
+          <button type="button" onClick={leaveSister} disabled={leavingSister} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '10px', border: '1px solid currentColor', background: 'none', color: 'inherit', fontSize: '0.9rem', cursor: 'pointer' }}>{leavingSister ? t('Leaving...') : t('Leave')}</button>
         </div>
       )}
       {isCamp && (
@@ -690,15 +692,15 @@ export default function Campfire() {
           <p style={{ margin: 0, flex: '1 1 12rem' }}>
             <span aria-hidden="true"><Icon name="tent" /> </span>
             {campClosed
-              ? 'This Response Camp is closed because the emergency is closed. You can read it until ' + campGoneOn + '. Then it is deleted for good and cannot be brought back.'
-              : 'Response Camp. Everyone signed up to help with this emergency is here. Members only, not scrambled. Messages delete after 30 days.'}
+              ? t('This Response Camp is closed because the emergency is closed. You can read it until {date}. Then it is deleted for good and cannot be brought back.', { date: campGoneOn })
+              : t('Response Camp. Everyone signed up to help with this emergency is here. Members only, not scrambled. Messages delete after 30 days.')}
           </p>
-          <button type="button" onClick={() => navigate('/emergency/' + activeBoard.event_id)} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '10px', border: '1px solid currentColor', background: 'none', color: 'inherit', fontSize: '0.9rem', cursor: 'pointer' }}>Event page</button>
+          <button type="button" onClick={() => navigate('/emergency/' + activeBoard.event_id)} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '10px', border: '1px solid currentColor', background: 'none', color: 'inherit', fontSize: '0.9rem', cursor: 'pointer' }}>{t('Event page')}</button>
         </div>
       )}
       {isVillageBoard && inVillage && removalRequests.some(r => r.requested_by !== user.id) && (
         <button type="button" onClick={() => setShowPeople(true)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.6rem 1rem', minHeight: '44px', background: 'var(--warn-bg)', border: 'none', borderBottom: '1px solid var(--warn-bg)', color: 'var(--gold)', fontSize: '0.9rem', cursor: 'pointer' }}>
-          <Icon name="cat-emergency" /> A member asked to remove someone. A second member is needed. Tap to look.
+          <Icon name="cat-emergency" /> {t('A member asked to remove someone. A second member is needed. Tap to look.')}
         </button>
       )}
 
@@ -709,11 +711,11 @@ export default function Campfire() {
               <span style={{ fontSize: '1.5rem', lineHeight: 1, color: 'var(--warn)', flexShrink: 0 }}><Icon name="cat-emergency" /></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, color: 'var(--gold)', fontWeight: 700, fontSize: '0.9rem' }}>{ev.title}</p>
-                <p style={{ margin: '0.1rem 0 0', color: 'var(--danger)', fontSize: '0.8125rem' }}>{ev.location_name || 'Location not given'} &middot; Active emergency</p>
+                <p style={{ margin: '0.1rem 0 0', color: 'var(--danger)', fontSize: '0.8125rem' }}>{ev.location_name || t('Location not given')} &middot; {t('Active emergency')}</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
-                <button onClick={() => navigate('/emergency/' + ev.id)} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer' }}>Organize help</button>
-                <button onClick={() => dismissEmergency(ev.id)} style={{ padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '0.8125rem', cursor: 'pointer' }}>Dismiss</button>
+                <button onClick={() => navigate('/emergency/' + ev.id)} style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer' }}>{t('Organize help')}</button>
+                <button onClick={() => dismissEmergency(ev.id)} style={{ padding: '0.3rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '0.8125rem', cursor: 'pointer' }}>{t('Dismiss')}</button>
               </div>
             </div>
           ))}
@@ -726,7 +728,7 @@ export default function Campfire() {
             onClick={() => setShowPinned(p => !p)}
             style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', background: 'none', border: 'none', color: 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}
           >
-            <Icon name="pushpin" /> {pinnedMessages.length} {isVillageBoard ? 'announcement' : 'pinned message'}{pinnedMessages.length !== 1 ? 's' : ''}
+            <Icon name="pushpin" /> {pinnedMessages.length} {isVillageBoard ? t(pinnedMessages.length !== 1 ? 'announcements' : 'announcement') : t(pinnedMessages.length !== 1 ? 'pinned messages' : 'pinned message')}
             <span style={{ marginLeft: 'auto' }}>{showPinned ? '▲' : '▼'}</span>
           </button>
           {showPinned && (
@@ -734,10 +736,10 @@ export default function Campfire() {
               {pinnedMessages.map(m => (
                 <div key={m.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0.5rem 0.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--warn)' }}>{names[m.user_id]?.name || 'Neighbor'}</span>
-                    {canPin && <button onClick={() => togglePin(m)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0 0.25rem', minHeight: '44px', margin: '-0.375rem 0' }}>Unpin</button>}
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--warn)' }}>{names[m.user_id]?.name || t('Neighbor')}</span>
+                    {canPin && <button onClick={() => togglePin(m)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0 0.25rem', minHeight: '44px', margin: '-0.375rem 0' }}>{t('Unpin')}</button>}
                   </div>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.4 }}>{m.body}</p>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--text)', lineHeight: 1.4 }}>{m.body === LOCKED_NOTE ? t(LOCKED_NOTE) : m.body}</p>
                 </div>
               ))}
             </div>
@@ -745,21 +747,21 @@ export default function Campfire() {
         </div>
       )}
 
-      <div ref={containerRef} onScroll={onScroll} className="hide-scrollbar" role="log" aria-live="polite" aria-relevant="additions" aria-label="Village Square messages" style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
-        {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</p>}
+      <div ref={containerRef} onScroll={onScroll} className="hide-scrollbar" role="log" aria-live="polite" aria-relevant="additions" aria-label={t('Village Square messages')} style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+        {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{t('Loading...')}</p>}
 
         {!loading && visibleMessages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
             <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}><Icon name="megaphone" /></p>
             {isVillageBoard
-              ? <><p>Nothing here yet. Say hello to your neighbors.</p><p style={{ fontSize: '0.8125rem', marginTop: '0.5rem' }}>You see what is said after you joined. People who join later will not see your older messages.</p></>
-              : <p>The fire is lit. Be the first to speak.</p>}
+              ? <><p>{t('Nothing here yet. Say hello to your neighbors.')}</p><p style={{ fontSize: '0.8125rem', marginTop: '0.5rem' }}>{t('You see what is said after you joined. People who join later will not see your older messages.')}</p></>
+              : <p>{t('The fire is lit. Be the first to speak.')}</p>}
           </div>
         )}
 
         {visibleMessages.map((msg, idx) => {
           const isMe = msg.user_id === user.id
-          const info = names[msg.user_id] || { name: 'Neighbor' }
+          const info = names[msg.user_id] || { name: t('Neighbor') }
           const prevMsg = visibleMessages[idx - 1]
           const nextMsg = visibleMessages[idx + 1]
           const isGroupStart = !prevMsg || prevMsg.user_id !== msg.user_id || (new Date(msg.created_at) - new Date(prevMsg.created_at)) > GROUP_WINDOW_MS
@@ -782,9 +784,9 @@ export default function Campfire() {
                   {info.role
                     ? <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.8125rem', fontWeight: 700, color: info.role === 'founder' ? 'var(--purple)' : info.role === 'admin' ? 'var(--info)' : 'var(--accent)' }} />
                     : <UserName userId={msg.user_id} name={info.name} style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-muted)' }} />}
-                  {info.role === 'founder' && <span style={{ fontSize: '0.8125rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
-                  {info.role === 'admin' && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
-                  {info.ambassador && <span style={{ fontSize: '0.8125rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
+                  {info.role === 'founder' && <span style={{ fontSize: '0.8125rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '0 4px', borderRadius: '3px' }}>{t('Founder')}</span>}
+                  {info.role === 'admin' && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>{t('VWB admin')}</span>}
+                  {info.ambassador && <span style={{ fontSize: '0.8125rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>{t('Ambassador')}</span>}
                 </div>
               )}
               <div
@@ -798,26 +800,26 @@ export default function Campfire() {
               >
                 {msg.reply_to && (() => {
                   const orig = messages.find(m => m.id === msg.reply_to)
-                  const origName = orig ? (orig.user_id === user.id ? 'You' : (names[orig.user_id]?.name || 'Neighbor')) : ''
+                  const origName = orig ? (orig.user_id === user.id ? t('You') : (names[orig.user_id]?.name || t('Neighbor'))) : ''
                   return (
-                    <button type="button" onClick={(e) => { e.stopPropagation(); if (orig) jumpToMessage(orig.id) }} aria-label={orig ? 'Replying to ' + origName + ': ' + snippet(orig.body) + '. Jump to it.' : 'Replying to an earlier message'} style={{ display: 'block', width: '100%', textAlign: 'left', margin: '0 0 0.35rem', padding: '0.25rem 0.5rem', borderRadius: '6px', border: 'none', borderLeft: '3px solid ' + (isMe ? '#1a1a1a' : 'var(--accent)'), background: isMe ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.06)', color: 'inherit', font: 'inherit', fontSize: '0.8125rem', cursor: orig ? 'pointer' : 'default', opacity: 0.9 }}>
-                      {orig ? (<><strong>{origName}</strong><br />{snippet(orig.body)}</>) : <em>Earlier message</em>}
+                    <button type="button" onClick={(e) => { e.stopPropagation(); if (orig) jumpToMessage(orig.id) }} aria-label={orig ? t('Replying to {name}: {text}. Jump to it.', { name: origName, text: snippet(orig.body) }) : t('Replying to an earlier message')} style={{ display: 'block', width: '100%', textAlign: 'left', margin: '0 0 0.35rem', padding: '0.25rem 0.5rem', borderRadius: '6px', border: 'none', borderLeft: '3px solid ' + (isMe ? '#1a1a1a' : 'var(--accent)'), background: isMe ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.06)', color: 'inherit', font: 'inherit', fontSize: '0.8125rem', cursor: orig ? 'pointer' : 'default', opacity: 0.9 }}>
+                      {orig ? (<><strong>{origName}</strong><br />{snippet(orig.body)}</>) : <em>{t('Earlier message')}</em>}
                     </button>
                   )
                 })()}
-                <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.4, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{msg.body}</p>
+                <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.4, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{msg.body === LOCKED_NOTE ? t(LOCKED_NOTE) : msg.body}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
-                  {msg.pinned && <span title="Pinned"><Icon name="pushpin" /></span>}
-                  <span style={{ fontSize: '0.8125rem', opacity: 0.75 }} title={fullTime}>{formatTime(msg.created_at)}{msg.edited_at && !msg.locked ? ' \u00b7 edited' : ''}</span>
+                  {msg.pinned && <span title={t('Pinned')}><Icon name="pushpin" /></span>}
+                  <span style={{ fontSize: '0.8125rem', opacity: 0.75 }} title={fullTime}>{formatTime(msg.created_at)}{msg.edited_at && !msg.locked ? ' \u00b7 ' + t('edited') : ''}</span>
                   {msg.locked && msg.edit_count > 0 && (
-                    <button type="button" onClick={(e) => { e.stopPropagation(); showHistory(msg) }} style={{ background: 'none', border: 'none', color: 'inherit', opacity: 0.85, textDecoration: 'underline', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.5rem 0.35rem', margin: '-0.5rem -0.35rem' }}>{'\u00b7 edited'}</button>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); showHistory(msg) }} style={{ background: 'none', border: 'none', color: 'inherit', opacity: 0.85, textDecoration: 'underline', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.5rem 0.35rem', margin: '-0.5rem -0.35rem' }}>{'\u00b7 ' + t('edited')}</button>
                   )}
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); toggleSpark(msg) }}
                     aria-pressed={!!sparks[msg.id]?.mine}
-                    aria-label={SPARK_NAME + ': ' + SPARK_HINT + (sparks[msg.id]?.n ? '. ' + sparks[msg.id].n + ' so far' : '')}
-                    title={SPARK_NAME + ': ' + SPARK_HINT}
+                    aria-label={t(SPARK_NAME) + ': ' + t(SPARK_HINT) + (sparks[msg.id]?.n ? '. ' + t('{n} so far', { n: sparks[msg.id].n }) : '')}
+                    title={t(SPARK_NAME) + ': ' + t(SPARK_HINT)}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', minWidth: '44px', minHeight: '44px', margin: '-0.775rem 0', padding: '0 0.3rem', justifyContent: 'center', borderRadius: '999px', border: 'none', background: sparks[msg.id]?.mine ? 'rgba(255,200,60,0.28)' : 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.8125rem', opacity: sparks[msg.id]?.mine || sparks[msg.id]?.n ? 1 : 0.55 }}
                   ><span aria-hidden="true" style={{ filter: sparks[msg.id]?.mine ? 'none' : 'grayscale(1)' }}><Icon name="star" /></span>{sparks[msg.id]?.n > 0 && <span>{sparks[msg.id].n}</span>}</button>
                   {(
@@ -828,7 +830,7 @@ export default function Campfire() {
                         setOpenMsgMenu(closing ? null : msg.id)
                         if (!closing) positionMsgMenu(e, isMe ? 'right' : 'left')
                       }}
-                      aria-label="Message options"
+                      aria-label={t('Message options')}
                       style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1rem', padding: 0, marginLeft: 'auto', lineHeight: 1, minWidth: '44px', minHeight: '44px', margin: '-0.775rem -0.5rem -0.775rem auto' }}
                     >&#8943;</button>
                   )}
@@ -841,22 +843,22 @@ export default function Campfire() {
                   >
                     {canPost && (
                     <button onClick={() => startReply(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                      Reply
+                      {t('Reply')}
                     </button>
                     )}
                     {isMe && (activeBoard?.scrambled ? canEditScrambled(msg) : true) && (
                       <button onClick={() => startEdit(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.65rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                        Edit
+                        {t('Edit')}
                       </button>
                     )}
                     {canPin && (
                       <button onClick={() => togglePin(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8125rem' }}>
-                        {msg.pinned ? 'Unpin' : isVillageBoard ? <><Icon name="pushpin" /> Make an announcement</> : <><Icon name="pushpin" /> Pin message</>}
+                        {msg.pinned ? t('Unpin') : isVillageBoard ? <><Icon name="pushpin" /> {t('Make an announcement')}</> : <><Icon name="pushpin" /> {t('Pin message')}</>}
                       </button>
                     )}
                     {!isMe && (
                       <button onClick={() => reportMessage(msg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8125rem' }}>
-                        Report
+                        {t('Report')}
                       </button>
                     )}
                   </div>
@@ -870,7 +872,7 @@ export default function Campfire() {
           )
         })}
         {showNew && (
-          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
+          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>{t('New messages')} &#8595;</button>
         )}
       </div>
 
@@ -878,23 +880,23 @@ export default function Campfire() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem', borderTop: '1px solid var(--border)', background: 'var(--surface-2)' }}>
           <div style={{ flex: 1, minWidth: 0, borderLeft: '3px solid var(--warn)', paddingLeft: '0.5rem' }}>
             <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--warn)' }}>
-              {editing ? 'Editing your message' : 'Replying to ' + (replyTo.user_id === user.id ? 'yourself' : (names[replyTo.user_id]?.name || 'Neighbor'))}
+              {editing ? t('Editing your message') : t('Replying to {name}', { name: replyTo.user_id === user.id ? t('yourself') : (names[replyTo.user_id]?.name || t('Neighbor')) })}
             </div>
             <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{snippet((editing || replyTo).body)}</div>
           </div>
-          <button type="button" onClick={cancelComposeMode} aria-label={editing ? 'Cancel editing' : 'Cancel reply'} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.2rem', cursor: 'pointer', minWidth: '44px', minHeight: '44px' }}>&#10005;</button>
+          <button type="button" onClick={cancelComposeMode} aria-label={editing ? t('Cancel editing') : t('Cancel reply')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.2rem', cursor: 'pointer', minWidth: '44px', minHeight: '44px' }}>&#10005;</button>
         </div>
       )}
       {canPost ? (
       <>
       {activeBoard?.scrambled && (
         <p style={{ margin: 0, padding: '0.4rem 1rem 0', borderTop: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--accent)', fontSize: '0.8125rem', lineHeight: 1.4 }}>
-          <Icon name="lock" /> Scrambled test: only people in this village chat can read these messages. VWB cannot.{sendNote ? ' ' + sendNote : ''}
+          <Icon name="lock" /> {t('Scrambled test: only people in this village chat can read these messages. VWB cannot.')}{sendNote ? ' ' + sendNote : ''}
         </p>
       )}
       {introHint && !editing && (
         <p style={{ margin: 0, padding: '0.5rem 1rem 0', borderTop: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--accent)', fontSize: '0.9rem', lineHeight: 1.4 }}>
-          Say hello. Add what you like doing and how you would like to be involved in your community.
+          {t('Say hello. Add what you like doing and how you would like to be involved in your community.')}
         </p>
       )}
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', padding: '0.75rem 1rem', borderTop: introHint && !editing ? 'none' : '1px solid var(--border)', background: 'var(--surface)' }}>
@@ -909,8 +911,8 @@ export default function Campfire() {
             if (e.key === 'Enter' && !e.shiftKey && !touch) sendMessage(e)
             if (e.key === 'Escape') cancelComposeMode()
           }}
-          placeholder={editing ? 'Edit your message...' : 'Say something to ' + (activeBoard ? (activeBoard.village_id ? activeBoard.name : 'the ' + activeBoard.name + ' board') : 'the group') + '...'}
-          aria-label={editing ? 'Edit your message' : 'Message the Village Square'}
+          placeholder={editing ? t('Edit your message...') : (activeBoard ? (activeBoard.village_id ? t('Say something to {name}...', { name: activeBoard.name }) : t('Say something to the {name} board...', { name: activeBoard.name })) : t('Say something to the group...'))}
+          aria-label={editing ? t('Edit your message') : t('Message the Village Square')}
           disabled={sending}
           style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', minHeight: '44px', maxHeight: '40vh', padding: '0.6rem 0.875rem', borderRadius: '1.25rem', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', lineHeight: 1.35, outline: 'none', resize: 'none', fontFamily: 'inherit' }}
         />
@@ -919,17 +921,17 @@ export default function Campfire() {
           disabled={!newMsg.trim() || sending}
           style={{ minHeight: '44px', padding: '0 1.25rem', borderRadius: '1.5rem', background: 'var(--warn)', color: '#fff', border: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', opacity: (!newMsg.trim() || sending) ? 0.5 : 1 }}
         >
-          {editing ? 'Save' : 'Send'}
+          {editing ? t('Save') : t('Send')}
         </button>
       </div>
       </>
       ) : (
         <div style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)', padding: '0.75rem 1rem', textAlign: 'center' }}>
         {activeBoard && activeBoard.village_id && memberVillages !== null && !memberSet.has(activeBoard.village_id) && (
-          <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginBottom: '0.6rem' }} onClick={() => navigate('/find-village?join=' + activeBoard.village_id)}>Join this village chat</button>
+          <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginBottom: '0.6rem' }} onClick={() => navigate('/find-village?join=' + activeBoard.village_id)}>{t('Join this village chat')}</button>
         )}
         <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-          {activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : activeBoard && activeBoard.village_id ? 'You are not in this village chat. Join it from the map to read and post.' : activeBoard && activeBoard.event_id ? 'This Response Camp is closed. You can read it, but no one can post.' : activeBoard && activeBoard.sister_a ? 'This Sister Campfire is closed. You can read it, but no one can post.' : 'You can read this board. You cannot post here.'}
+          {t(activeBoard && activeBoard.is_general ? 'Everyone can read Announcements. Only Ambassadors and admins can post here.' : activeBoard && activeBoard.village_id ? 'You are not in this village chat. Join it from the map to read and post.' : activeBoard && activeBoard.event_id ? 'This Response Camp is closed. You can read it, but no one can post.' : activeBoard && activeBoard.sister_a ? 'This Sister Campfire is closed. You can read it, but no one can post.' : 'You can read this board. You cannot post here.')}
         </p>
         </div>
       )}
@@ -937,14 +939,14 @@ export default function Campfire() {
       {showSettings && <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />}
       <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Village Square Settings</h2>
-          <button onClick={() => setShowSettings(false)} aria-label="Close Village Square settings" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('Village Square Settings')}</h2>
+          <button onClick={() => setShowSettings(false)} aria-label={t('Close Village Square settings')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
-        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>About</div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>Announcements are open for every member to read, and only Ambassadors and admins can post there. Village chats are for neighbors near you. Anyone with an account can join, and there is no limit on size. You can join more than one. New members only see what is said after they join. Only people who joined a village chat can read it, and VWB admins cannot open village chats. Everyone in a chat can read it, so keep sensitive details out.</p>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>{t('About')}</div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>{t('Announcements are open for every member to read, and only Ambassadors and admins can post there. Village chats are for neighbors near you. Anyone with an account can join, and there is no limit on size. You can join more than one. New members only see what is said after they join. Only people who joined a village chat can read it, and VWB admins cannot open village chats. Everyone in a chat can read it, so keep sensitive details out.')}</p>
 
-        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Notifications</div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0 0 0.5rem' }}>You get one notification after a chat goes quiet, not one for every message. Choose for each chat.</p>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>{t('Notifications')}</div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0 0 0.5rem' }}>{t('You get one notification after a chat goes quiet, not one for every message. Choose for each chat.')}</p>
         {orderedBoards.map(b => {
           const on = alertsOn(b)
           const muted = on && alertsMuted(b)
@@ -952,23 +954,23 @@ export default function Campfire() {
             <div key={b.id} style={{ padding: '0.6rem 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{b.name}</span>
-                <button type="button" role="switch" aria-checked={on} aria-label={'Notifications for ' + b.name} disabled={alertSaving} onClick={() => saveAlert(b.id, on ? { alerts: 'off' } : { alerts: 'all', muted_until: null })} style={{ width: '40px', height: '22px', borderRadius: '11px', background: on ? 'var(--accent)' : '#444', border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0, padding: 0 }}>
+                <button type="button" role="switch" aria-checked={on} aria-label={t('Notifications for {name}', { name: b.name })} disabled={alertSaving} onClick={() => saveAlert(b.id, on ? { alerts: 'off' } : { alerts: 'all', muted_until: null })} style={{ width: '40px', height: '22px', borderRadius: '11px', background: on ? 'var(--accent)' : '#444', border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0, padding: 0 }}>
                   <span style={{ position: 'absolute', top: '2px', left: on ? '20px' : '2px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
                 </button>
               </div>
               {muted && (
                 <p style={{ margin: '0.35rem 0 0', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-                  Muted{new Date(alertMap[b.id].muted_until).getFullYear() > 2090 ? ' until you turn it back on' : ' until ' + new Date(alertMap[b.id].muted_until).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.{' '}
-                  <button type="button" disabled={alertSaving} onClick={() => saveAlert(b.id, { alerts: 'all', muted_until: null })} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: '0 0.25rem', minHeight: '44px', fontSize: '0.8125rem' }}>Unmute</button>
+                  {new Date(alertMap[b.id].muted_until).getFullYear() > 2090 ? t('Muted until you turn it back on') : t('Muted until {date}', { date: new Date(alertMap[b.id].muted_until).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) })}.{' '}
+                  <button type="button" disabled={alertSaving} onClick={() => saveAlert(b.id, { alerts: 'all', muted_until: null })} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: '0 0.25rem', minHeight: '44px', fontSize: '0.8125rem' }}>{t('Unmute')}</button>
                 </p>
               )}
               {on && !muted && (
                 <>
-                  <button type="button" aria-expanded={muteOpenFor === b.id} onClick={() => setMuteOpenFor(muteOpenFor === b.id ? null : b.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0 0.25rem 0 0', minHeight: '44px', fontSize: '0.8125rem' }}><Icon name="moon" /> Mute &#9656;</button>
+                  <button type="button" aria-expanded={muteOpenFor === b.id} onClick={() => setMuteOpenFor(muteOpenFor === b.id ? null : b.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0 0.25rem 0 0', minHeight: '44px', fontSize: '0.8125rem' }}><Icon name="moon" /> {t('Mute')} &#9656;</button>
                   {muteOpenFor === b.id && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.25rem' }}>
                       {MUTE_OPTIONS.map((opt, k) => (
-                        <button key={k} type="button" disabled={alertSaving} onClick={async () => { await saveAlert(b.id, { alerts: 'all', muted_until: opt.ms === null ? '2099-01-01T00:00:00Z' : new Date(Date.now() + opt.ms).toISOString() }); setMuteOpenFor(null) }} style={{ minHeight: '44px', padding: '0 0.85rem', borderRadius: '999px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', cursor: 'pointer', fontSize: '0.8125rem' }}>{opt.label}</button>
+                        <button key={k} type="button" disabled={alertSaving} onClick={async () => { await saveAlert(b.id, { alerts: 'all', muted_until: opt.ms === null ? '2099-01-01T00:00:00Z' : new Date(Date.now() + opt.ms).toISOString() }); setMuteOpenFor(null) }} style={{ minHeight: '44px', padding: '0 0.85rem', borderRadius: '999px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text)', cursor: 'pointer', fontSize: '0.8125rem' }}>{t(opt.label)}</button>
                       ))}
                     </div>
                   )}
@@ -978,25 +980,25 @@ export default function Campfire() {
           )
         })}
 
-        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Actions</div>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>{t('Actions')}</div>
         <button onClick={() => navigate('/find-village')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--accent)', padding: '0.6rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
-          <Icon name="houses" /> Find or join a village chat
+          <Icon name="houses" /> {t('Find or join a village chat')}
         </button>
         {isVillageBoard && inVillage && (
         <button onClick={leaveVillageChat} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', padding: '0.6rem 0.75rem', minHeight: '44px', cursor: 'pointer', fontSize: '0.85rem' }}>
-          <Icon name="door" /> Leave {activeBoard.name}
+          <Icon name="door" /> {t('Leave {name}', { name: activeBoard.name })}
         </button>
         )}
 
         {isStaff && !isVillageBoard && (<>
-        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>People here ({Object.keys(names).length})</div>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>{t('People here ({n})', { n: Object.keys(names).length })}</div>
         {Object.keys(names).length > 8 && (
           <input
             type="text"
             value={memberSearch}
             onChange={(e) => setMemberSearch(e.target.value)}
-            placeholder="Search members..."
-            aria-label="Search members"
+            placeholder={t('Search members...')}
+            aria-label={t('Search members')}
             style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', fontSize: '0.85rem' }}
           />
         )}
@@ -1011,35 +1013,35 @@ export default function Campfire() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
                   <UserName userId={uid} name={info.name} style={{ color: 'var(--text-strong)', fontSize: '0.85rem', fontWeight: 600 }} />
-                  {info.role === 'founder' && <span style={{ fontSize: '0.8125rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '0 4px', borderRadius: '3px' }}>Founder</span>}
-                  {info.role === 'admin' && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>Admin</span>}
-                  {info.ambassador && <span style={{ fontSize: '0.8125rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>Ambassador</span>}
+                  {info.role === 'founder' && <span style={{ fontSize: '0.8125rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '0 4px', borderRadius: '3px' }}>{t('Founder')}</span>}
+                  {info.role === 'admin' && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '0 4px', borderRadius: '3px' }}>{t('VWB admin')}</span>}
+                  {info.ambassador && <span style={{ fontSize: '0.8125rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '0 4px', borderRadius: '3px' }}>{t('Ambassador')}</span>}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                  {info.joined && <span>Joined {new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>}
+                  {info.joined && <span>{t('Joined {date}', { date: new Date(info.joined).toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { month: 'short', year: 'numeric' }) })}</span>}
                 </div>
               </div>
             </div>
           ))}
           {memberSearch.trim() && Object.entries(names).filter(([, info]) => (info.name || 'Neighbor').toLowerCase().includes(memberSearch.trim().toLowerCase())).length === 0 && (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', textAlign: 'center', padding: '0.75rem 0' }}>No members match "{memberSearch.trim()}".</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', textAlign: 'center', padding: '0.75rem 0' }}>{t('No members match "{q}".', { q: memberSearch.trim() })}</p>
           )}
         </div>
         </>)}
       </div>
       {history && (
         <>
-          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setHistory(null)} />
+          <button type="button" className="app-dialog-scrim" aria-label={t('Close')} tabIndex={-1} onClick={() => setHistory(null)} />
           <div role="dialog" aria-modal="true" aria-labelledby="cf-history-title" className="edit-history">
-            <h3 id="cf-history-title">Edit history</h3>
-            {history.versions.length === 0 && <p>The earlier versions can't be opened on this phone.</p>}
+            <h3 id="cf-history-title">{t('Edit history')}</h3>
+            {history.versions.length === 0 && <p>{t("The earlier versions can't be opened on this phone.")}</p>}
             {history.versions.map((v, i) => (
               <div key={v.version} className="edit-history-row">
-                <strong>{i === history.versions.length - 1 ? 'Now' : (i === 0 ? 'Original' : 'Edit ' + i)}</strong>
+                <strong>{i === history.versions.length - 1 ? t('Now') : (i === 0 ? t('Original') : t('Edit {n}', { n: i }))}</strong>
                 <p>{v.text}</p>
               </div>
             ))}
-            <button type="button" className="btn btn-outline btn-full" onClick={() => setHistory(null)}>Close</button>
+            <button type="button" className="btn btn-outline btn-full" onClick={() => setHistory(null)}>{t('Close')}</button>
           </div>
         </>
       )}

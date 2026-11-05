@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
+import { useT } from '../utils/lang'
 
 export default function InstallBanner() {
   const { canInstall, isStandalone, isIOS, promptInstall } = useInstallPrompt()
+  const t = useT()
   const [dismissedRecently, setDismissedRecently] = useState(true)
 
   useEffect(() => {
@@ -38,22 +40,22 @@ export default function InstallBanner() {
       <div className="install-banner-content">
         <span className="install-banner-icon">&#x1F4F2;</span>
         <div className="install-banner-text">
-          <strong>Install VWB</strong>
+          <strong>{t('Install VWB')}</strong>
           {isIOS ? (
-            <p>Tap the share button <span style={{ fontSize: '1.1em' }}>&#x2B06;&#xFE0F;</span> then "Add to Home Screen" to install.</p>
+            <p>{t('Tap the share button')} <span style={{ fontSize: '1.1em' }}>&#x2B06;&#xFE0F;</span> {t('then "Add to Home Screen" to install.')}</p>
           ) : (
-            <p>Add Village Without Borders to your home screen for quick access.</p>
+            <p>{t('Add Village Without Borders to your home screen for quick access.')}</p>
           )}
         </div>
       </div>
       <div className="install-banner-actions">
         {!isIOS && (
           <button className="btn btn-primary btn-sm" onClick={handleInstall}>
-            Install
+            {t('Install')}
           </button>
         )}
         <button className="install-banner-dismiss" onClick={handleDismiss}>
-          {isIOS ? 'Got it' : 'Not now'}
+          {isIOS ? t('Got it') : t('Not now')}
         </button>
       </div>
     </div>

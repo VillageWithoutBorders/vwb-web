@@ -12,11 +12,12 @@ import AvailabilityPicker, { availabilityDisplayString } from '../components/Ava
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
 import { ADMIN_REQUESTS_OPEN } from '../data/adminTeam'
+import { useT, t } from '../utils/lang'
 
 function reportError(context, error, userMessage) {
   if (!error) return false
   console.error(`[Profile:${context}]`, error)
-  if (userMessage) tell(userMessage, { tone: 'error' })
+  if (userMessage) tell(t(userMessage), { tone: 'error' })
   return true
 }
 
@@ -29,6 +30,7 @@ export default function Profile() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [showAvatarBuilder, setShowAvatarBuilder] = useState(false)
+  const t = useT()
 
   const [displayName, setDisplayName] = useState('')
   const [zipCode, setZipCode] = useState('')
@@ -42,7 +44,7 @@ export default function Profile() {
     supabase.rpc('nearby_towns', { p_zip: zipCode, p_miles: 10 }).then(({ data, error }) => {
       if (!alive) return
       if (error) { console.error('nearby_towns', error); setTownOptions([]); return }
-      setTownOptions((data || []).map((t) => t.city + ', ' + t.state))
+      setTownOptions((data || []).map((tw) => tw.city + ', ' + tw.state))
     })
     return () => { alive = false }
   }, [zipCode])
@@ -158,7 +160,7 @@ export default function Profile() {
     // Turning it on goes to the list of villages, where you read the warning and join.
     // Turning it off leaves every village chat.
     if (on) { setVillageSaving(false); navigate('/find-village'); return }
-    if (!(await askConfirm('Leave all your village chats? You can join again any time.'))) { setVillageSaving(false); return }
+    if (!(await askConfirm(t('Leave all your village chats? You can join again any time.')))) { setVillageSaving(false); return }
     const { error: vErr } = await supabase.rpc('leave_all_villages')
     reportError('toggleVillage', vErr)
     if (!vErr) await refreshProfile()
@@ -166,7 +168,7 @@ export default function Profile() {
   }
 
   async function handleSave() {
-    if (!displayName.trim()) { setError('Name is required.'); return }
+    if (!displayName.trim()) { setError(t('Name is required.')); return }
     setSaving(true); setError(''); setMessage('')
     const updates = {
       display_name: displayName.trim(),
@@ -183,17 +185,17 @@ export default function Profile() {
     reportError('handleSave', profileError)
     if (profileError) {
       // 22023 = the database's "we couldn't find that zip code" message.
-      setError(profileError.code === '22023' ? profileError.message : 'Could not save profile. Try again.')
+      setError(profileError.code === '22023' ? profileError.message : t('Could not save profile. Try again.'))
       setSaving(false)
       return
     }
     await refreshProfile()
-    setMessage('Profile saved.'); setEditing(false); setSaving(false)
+    setMessage(t('Profile saved.')); setEditing(false); setSaving(false)
   }
 
   async function handleAmbassadorSignup() {
-    if (ambSignupSkills.length === 0) { setAmbSignupError('Pick at least one skill you can help with.'); return }
-    if (!ambSignupHowKnown.trim()) { setAmbSignupError('Tell us how you know this community, or who can vouch for you.'); return }
+    if (ambSignupSkills.length === 0) { setAmbSignupError(t('Pick at least one skill you can help with.')); return }
+    if (!ambSignupHowKnown.trim()) { setAmbSignupError(t('Tell us how you know this community, or who can vouch for you.')); return }
     setAmbSignupSaving(true); setAmbSignupError('')
     // Details about you save right away. The Ambassador badge does not: an
     // admin hands it out when they approve the application, and the database
@@ -204,17 +206,17 @@ export default function Profile() {
       campfire_notifications_enabled: ambSignupCampfireNotify,
     }).eq('user_id', user.id)
     reportError('handleAmbassadorSignup', updateError)
-    if (updateError) { setAmbSignupError('Something went wrong. Try again.'); setAmbSignupSaving(false); return }
+    if (updateError) { setAmbSignupError(t('Something went wrong. Try again.')); setAmbSignupSaving(false); return }
     const { data: waiting, error: waitingError } = await supabase.from('ambassador_applications').select('id').eq('user_id', user.id).eq('status', 'pending').limit(1).maybeSingle()
     reportError('handleAmbassadorSignup:existing', waitingError)
     if (!waiting) {
       const { data: app, error: appError } = await supabase.from('ambassador_applications').insert({ user_id: user.id, how_known: ambSignupHowKnown.trim() }).select('id, status, created_at').single()
       reportError('handleAmbassadorSignup:apply', appError)
-      if (appError) { setAmbSignupError('Something went wrong sending your application. Try again.'); setAmbSignupSaving(false); return }
+      if (appError) { setAmbSignupError(t('Something went wrong sending your application. Try again.')); setAmbSignupSaving(false); return }
       setAmbApplication(app)
     }
     await refreshProfile()
-    setShowAmbassadorSignup(false); setMessage('Application sent. An admin will look it over, and you will get a notification when there is an answer.'); setAmbSignupSaving(false)
+    setShowAmbassadorSignup(false); setMessage(t('Application sent. An admin will look it over, and you will get a notification when there is an answer.')); setAmbSignupSaving(false)
   }
 
   async function loadAdminAppStatus() {
@@ -234,7 +236,7 @@ export default function Profile() {
     const { error: statusError } = await supabase.from('admin_applications').update({ status: newStatus }).eq('id', adminAppId)
     reportError('respondToAdminInvite:status', statusError)
     if (statusError) {
-      setError('Could not save your response. Try again.')
+      setError(t('Could not save your response. Try again.'))
       setAdminAppSaving(false)
       return
     }
@@ -251,26 +253,26 @@ export default function Profile() {
       if (reportError('respondToAdminInvite:notify', notifyError)) notifyFailed = true
     }
     setAdminAppStatus(newStatus)
-    setMessage(
+    setMessage(t(
       accept
         ? notifyFailed
           ? 'Thanks! We saved your acceptance, but could not notify the admin who invited you. Let them know directly.'
           : 'Thanks! Your acceptance was sent back for final confirmation.'
         : 'Invitation declined.'
-    )
+    ))
     setAdminAppSaving(false)
   }
 
   // Coverage uses the center of the admin's home zip code area. VWB never asks the phone where it is.
   function captureCoverageLocation() {
     setCoverageError('')
-    if (profile?.latitude == null || profile?.longitude == null) { setCoverageError('Add your zip code to your profile first.'); return }
+    if (profile?.latitude == null || profile?.longitude == null) { setCoverageError(t('Add your zip code to your profile first.')); return }
     setCoverageLat(Number(profile.latitude)); setCoverageLng(Number(profile.longitude))
   }
 
   async function saveCoverageArea() {
-    if (!coverageRegion.trim()) { setCoverageError('Add a region name first.'); return }
-    if (coverageLat == null || coverageLng == null) { setCoverageError('Tap Use my zip code area first.'); return }
+    if (!coverageRegion.trim()) { setCoverageError(t('Add a region name first.')); return }
+    if (coverageLat == null || coverageLng == null) { setCoverageError(t('Tap Use my zip code area first.')); return }
     setCoverageSaving(true); setCoverageError('')
     const { error: covErr } = await supabase.from('helper_profiles').update({
       admin_region_name: coverageRegion.trim(),
@@ -278,19 +280,19 @@ export default function Profile() {
       admin_longitude: coverageLng,
     }).eq('user_id', user.id)
     reportError('saveCoverageArea', covErr)
-    if (covErr) { setCoverageError('Could not save. Try again.'); setCoverageSaving(false); return }
+    if (covErr) { setCoverageError(t('Could not save. Try again.')); setCoverageSaving(false); return }
     await refreshProfile()
-    setMessage('Your coverage area is set. Reports can now route to you.')
+    setMessage(t('Your coverage area is set. Reports can now route to you.'))
     setCoverageSaving(false)
   }
 
   function handleAvatarSaved() {
     setShowAvatarBuilder(false)
-    setMessage('Avatar saved!')
+    setMessage(t('Avatar saved!'))
     refreshProfile()
   }
 
-  const name = profile?.display_name || 'Neighbor'
+  const name = profile?.display_name || t('Neighbor')
 
   if (showAvatarBuilder) {
     return (
@@ -306,7 +308,7 @@ export default function Profile() {
     return (
       <div className="profile-page">
         <div className="profile-header-section">
-          <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label="Change avatar" style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
+          <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label={t('Change avatar')} style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
             <AvatarPreview url={profile?.avatar_url} size={80} />
             <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8125rem', color: 'var(--on-accent)', fontWeight: 700, border: '2px solid #1a1a1a' }}>
               <Icon name="pencil" />
@@ -314,11 +316,11 @@ export default function Profile() {
           </button>
           <h1>{name}</h1>
           {profile?.is_hope_ambassador && (
-            <span className="ambassador-badge">Hope Ambassador</span>
+            <span className="ambassador-badge">{t('Hope Ambassador')}</span>
           )}
                    <p className="profile-email">{user?.email}</p>
           <button type="button" className="btn btn-outline profile-edit-btn" onClick={startEditing}>
-            <span aria-hidden="true"><Icon name="pencil" /></span> Edit my profile
+            <span aria-hidden="true"><Icon name="pencil" /></span> {t('Edit my profile')}
           </button>
         </div>
 
@@ -327,34 +329,34 @@ export default function Profile() {
         <label className="checkbox-field" style={{ alignItems: 'flex-start', margin: '0.75rem 0' }}>
           <input type="checkbox" checked={profile?.village_opt_in === true} disabled={villageSaving} onChange={(e) => toggleVillage(e.target.checked)} />
           <span>
-            <strong style={{ display: 'block' }}>I am in a village chat</strong>
-            Turn this on to find village chats near your zip code. Turn it off to leave all of them.
+            <strong style={{ display: 'block' }}>{t('I am in a village chat')}</strong>
+            {t('Turn this on to find village chats near your zip code. Turn it off to leave all of them.')}
           </span>
         </label>
-        <p style={{ margin: '0 0 0.75rem' }}><Link to="/find-village">Find or start a village chat</Link></p>
+        <p style={{ margin: '0 0 0.75rem' }}><Link to="/find-village">{t('Find or start a village chat')}</Link></p>
 
         <div className="profile-details">
           <div className="detail-row">
-            <span className="detail-label">Zip code</span>
-            <span className="detail-value">{profile?.zip_code || 'Not set'}</span>
+            <span className="detail-label">{t('Zip code')}</span>
+            <span className="detail-value">{profile?.zip_code || t('Not set')}</span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Neighborhood</span>
-            <span className="detail-value">{profile?.neighborhood || 'Not set'}</span>
+            <span className="detail-label">{t('Neighborhood')}</span>
+            <span className="detail-value">{profile?.neighborhood || t('Not set')}</span>
           </div>
           <HomeVillageRow />
           <div className="detail-row detail-row-stack">
-            <span className="detail-label">Skills</span>
+            <span className="detail-label">{t('Skills')}</span>
             <span className="detail-value">
-              {profile?.skills?.length > 0 ? profile.skills.join(', ') : 'None yet'}
+              {profile?.skills?.length > 0 ? profile.skills.map((s) => t(s)).join(', ') : t('None yet')}
             </span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Help radius</span>
-            <span className="detail-value">{profile?.radius_miles || 10} miles</span>
+            <span className="detail-label">{t('Help radius')}</span>
+            <span className="detail-value">{t('{n} miles', { n: profile?.radius_miles || 10 })}</span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Tasks completed</span>
+            <span className="detail-label">{t('Tasks completed')}</span>
             <span className="detail-value">{profile?.tasks_completed || 0}</span>
           </div>
         </div>
@@ -363,20 +365,20 @@ export default function Profile() {
 
         {profile?.is_hope_ambassador && (
           <div className="profile-details" style={{ marginTop: '1rem' }}>
-            <div className="detail-section-header">Ambassador Details</div>
+            <div className="detail-section-header">{t('Ambassador Details')}</div>
             <div className="detail-row">
-              <span className="detail-label">Availability</span>
+              <span className="detail-label">{t('Availability')}</span>
               <span className="detail-value">{availabilityDisplayString(profile.availability)}</span>
             </div>
             <div className="detail-row">
-              <span className="detail-label">About me</span>
-              <span className="detail-value">{profile.interests || 'Not set'}</span>
+              <span className="detail-label">{t('About me')}</span>
+              <span className="detail-value">{profile.interests || t('Not set')}</span>
             </div>
             <div className="detail-row">
-              <span className="detail-label">Status</span>
+              <span className="detail-label">{t('Status')}</span>
               <span className="detail-value">
                 <span className={`status-dot ${profile.is_available !== false ? 'active' : 'inactive'}`} />
-                {profile.is_available !== false ? 'Active' : 'Inactive'}
+                {t(profile.is_available !== false ? 'Active' : 'Inactive')}
               </span>
             </div>
           </div>
@@ -385,10 +387,9 @@ export default function Profile() {
         {!profile?.is_hope_ambassador && ambApplication?.status === 'pending' && (
           <div className="amb-signup-card">
             <div className="amb-signup-icon" aria-hidden="true"><Icon name="leaf" /></div>
-            <h2 className="amb-signup-title">Your application is in</h2>
+            <h2 className="amb-signup-title">{t('Your application is in')}</h2>
             <p className="amb-signup-desc">
-              An admin will look it over and let you know. Until then you can ask
-              for help, offer help, and look around.
+              {t('An admin will look it over and let you know. Until then you can ask for help, offer help, and look around.')}
             </p>
           </div>
         )}
@@ -396,15 +397,13 @@ export default function Profile() {
         {!profile?.is_hope_ambassador && ambApplication?.status !== 'pending' && !showAmbassadorSignup && (
           <div className="amb-signup-card">
             <div className="amb-signup-icon" aria-hidden="true"><Icon name="leaf" /></div>
-            <h2 className="amb-signup-title">Become a Hope Ambassador</h2>
+            <h2 className="amb-signup-title">{t('Become a Hope Ambassador')}</h2>
             <p className="amb-signup-desc">
-              Hope Ambassadors are neighbors who volunteer their time and skills
-              to help others in the community. An admin looks over each application
-              so this stays a community people can trust.
-              {ambApplication?.status === 'declined' && ' Your last application was not approved. You can apply again, or reach out to an admin.'}
+              {t('Hope Ambassadors are neighbors who volunteer their time and skills to help others in the community. An admin looks over each application so this stays a community people can trust.')}
+              {ambApplication?.status === 'declined' && ' ' + t('Your last application was not approved. You can apply again, or reach out to an admin.')}
             </p>
             <button className="btn btn-primary btn-full" onClick={() => setShowAmbassadorSignup(true)}>
-              Apply
+              {t('Apply')}
             </button>
           </div>
         )}
@@ -413,54 +412,54 @@ export default function Profile() {
           <button onClick={() => setShowAmbassadorSignup(true)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", marginTop: "0.75rem", padding: "0.75rem", background: "linear-gradient(135deg, var(--warn-bg), var(--warn-bg))", border: "2px solid var(--warn)", borderRadius: "12px", cursor: "pointer", textAlign: "left" }}>
             <span style={{ fontSize: "1.5rem" }}><Icon name="megaphone" /></span>
             <div>
-              <span style={{ display: "block", color: "var(--warn)", fontWeight: 700, fontSize: "0.95rem" }}>Become a Hope Ambassador</span>
-              <span style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>Post in Announcements and join the Ambassadors board. Apply above &#8594;</span>
+              <span style={{ display: "block", color: "var(--warn)", fontWeight: 700, fontSize: "0.95rem" }}>{t('Become a Hope Ambassador')}</span>
+              <span style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>{t('Post in Announcements and join the Ambassadors board. Apply above')} &#8594;</span>
             </div>
           </button>
         )}
 
         {!profile?.is_hope_ambassador && showAmbassadorSignup && (
           <div className="amb-signup-form">
-            <h2 className="amb-signup-title">Hope Ambassador Application</h2>
+            <h2 className="amb-signup-title">{t('Hope Ambassador Application')}</h2>
             <p className="amb-signup-desc" style={{ marginBottom: '1rem' }}>
-              Tell us a little about how you can help.
+              {t('Tell us a little about how you can help.')}
             </p>
             <div className="later-note">
               <span className="later-note-icon" aria-hidden="true"><Icon name="sprout" /></span>
-              <span>No need to get it perfect. Pick at least one skill to start. You can change your skills anytime by editing your Profile.</span>
+              <span>{t('No need to get it perfect. Pick at least one skill to start. You can change your skills anytime by editing your Profile.')}</span>
             </div>
             <div className="form-field">
-              <label>What skills can you offer?</label>
+              <label>{t('What skills can you offer?')}</label>
               <GroupedSkillChips selected={ambSignupSkills} skills={skillOptions} renderChip={(skill) => (
                 <button key={skill} type="button" className={`skill-chip ${ambSignupSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleAmbSignupSkill(skill)}>
-                  {skill}
+                  {t(skill)}
                 </button>
               )} />
             </div>
             <div className="form-field">
-              <label>When are you usually available?</label>
+              <label>{t('When are you usually available?')}</label>
               <AvailabilityPicker value={ambSignupAvailability} onChange={setAmbSignupAvailability} />
             </div>
             <div className="form-field">
-              <label htmlFor="ambAbout">Anything else you want neighbors to know?</label>
-              <textarea id="ambAbout" value={ambSignupInterests} onChange={(e) => setAmbSignupInterests(e.target.value)} placeholder="Your experience, why you want to help, or anything else" rows={3} />
+              <label htmlFor="ambAbout">{t('Anything else you want neighbors to know?')}</label>
+              <textarea id="ambAbout" value={ambSignupInterests} onChange={(e) => setAmbSignupInterests(e.target.value)} placeholder={t('Your experience, why you want to help, or anything else')} rows={3} />
             </div>
             <div className="form-field">
-              <label htmlFor="ambHowKnown">How do you know this community, or who can vouch for you?</label>
-              <textarea id="ambHowKnown" value={ambSignupHowKnown} onChange={(e) => setAmbSignupHowKnown(e.target.value)} placeholder="A neighbor, a group, an event, or a name an admin can reach out to" rows={2} />
+              <label htmlFor="ambHowKnown">{t('How do you know this community, or who can vouch for you?')}</label>
+              <textarea id="ambHowKnown" value={ambSignupHowKnown} onChange={(e) => setAmbSignupHowKnown(e.target.value)} placeholder={t('A neighbor, a group, an event, or a name an admin can reach out to')} rows={2} />
             </div>
             <label className="checkbox-field" style={{ background: 'var(--green-light)', borderRadius: '10px', padding: '0.75rem 1rem', alignItems: 'flex-start' }}>
               <input type="checkbox" checked={ambSignupCampfireNotify} onChange={(e) => setAmbSignupCampfireNotify(e.target.checked)} />
               <span>
-                <strong style={{ display: 'block', marginBottom: '0.15rem' }}>Notify me about Village Square messages</strong>
-                The Village Square holds Announcements, the Ambassadors board, and your village chat. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Village Square's settings.
+                <strong style={{ display: 'block', marginBottom: '0.15rem' }}>{t('Notify me about Village Square messages')}</strong>
+                {t("The Village Square holds Announcements, the Ambassadors board, and your village chat. Leave this unchecked and you can still read it anytime, you just won't get a push for every message. Change this later from Village Square's settings.")}
               </span>
             </label>
             {ambSignupError && <p className="form-error" role="alert">{ambSignupError}</p>}
             <div className="form-row" style={{ marginTop: '0.5rem' }}>
-              <button type="button" className="btn btn-outline" onClick={() => { setShowAmbassadorSignup(false); setAmbSignupSkills([]); setAmbSignupAvailability(''); setAmbSignupInterests(''); setAmbSignupCampfireNotify(false); setAmbSignupError('') }} disabled={ambSignupSaving}>Cancel</button>
+              <button type="button" className="btn btn-outline" onClick={() => { setShowAmbassadorSignup(false); setAmbSignupSkills([]); setAmbSignupAvailability(''); setAmbSignupInterests(''); setAmbSignupCampfireNotify(false); setAmbSignupError('') }} disabled={ambSignupSaving}>{t('Cancel')}</button>
               <button type="button" className="btn btn-primary" onClick={handleAmbassadorSignup} disabled={ambSignupSaving} style={{ flex: 1 }}>
-                {ambSignupSaving ? 'Sending...' : 'Send application'}
+                {t(ambSignupSaving ? 'Sending...' : 'Send application')}
               </button>
             </div>
           </div>
@@ -471,45 +470,45 @@ export default function Profile() {
 
         {isAdmin && !profile?.admin_latitude && (
           <div style={{ background: 'linear-gradient(135deg, var(--info-bg), var(--info-bg))', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
-            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>Set up your coverage area</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Emergency dispute reviews (a false alarm or duplicate flag) route to the nearest admin, so add your area and use your zip code area to catch the ones near you. Reports about a person or message go to every admin right away, wherever they're located.</p>
+            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>{t('Set up your coverage area')}</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>{t("Emergency dispute reviews (a false alarm or duplicate flag) route to the nearest admin, so add your area and use your zip code area to catch the ones near you. Reports about a person or message go to every admin right away, wherever they're located.")}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <input type="text" placeholder="What area do you cover? (towns or counties)" value={coverageRegion} onChange={e => setCoverageRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
+              <input type="text" placeholder={t('What area do you cover? (towns or counties)')} value={coverageRegion} onChange={e => setCoverageRegion(e.target.value)} maxLength={100} style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
               <button type="button" className="btn btn-outline" onClick={captureCoverageLocation} style={{ borderColor: 'var(--info)', color: 'var(--info)' }}>
-                {coverageLat != null ? '✓ Using your zip code area' : 'Use my zip code area'}
+                {coverageLat != null ? '✓ ' + t('Using your zip code area') : t('Use my zip code area')}
               </button>
               {coverageError && <p className="form-error" role="alert">{coverageError}</p>}
               <button type="button" className="btn btn-primary" onClick={saveCoverageArea} disabled={coverageSaving || !coverageRegion.trim() || coverageLat == null} style={{ marginTop: '0.25rem' }}>
-                {coverageSaving ? 'Saving...' : 'Save coverage area'}
+                {t(coverageSaving ? 'Saving...' : 'Save coverage area')}
               </button>
             </div>
           </div>
         )}
         {ADMIN_REQUESTS_OPEN && profile?.is_hope_ambassador && !isAdmin && !adminAppStatus && (
           <div style={{ background: 'linear-gradient(135deg, var(--info-bg), var(--info-bg))', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
-            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>Become an admin for your village</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Admins help coordinate responses in their region and keep the community safe.</p>
-            <Link className="btn btn-outline btn-full" to="/become-admin" style={{ borderColor: 'var(--info)', color: 'var(--info)', minHeight: '44px' }}>See if you're ready</Link>
+            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>{t('Become an admin for your village')}</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>{t('Admins help coordinate responses in their region and keep the community safe.')}</p>
+            <Link className="btn btn-outline btn-full" to="/become-admin" style={{ borderColor: 'var(--info)', color: 'var(--info)', minHeight: '44px' }}>{t("See if you're ready")}</Link>
           </div>
         )}
         {adminAppStatus === 'invited' && (
           <div style={{ background: 'linear-gradient(135deg, var(--info-bg), var(--info-bg))', border: '1px solid var(--info)', borderRadius: '10px', padding: '1rem', marginTop: '0.75rem' }}>
-            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>You've been invited to become an Admin</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>An admin thinks you'd be a good fit to help coordinate responses in your area. Accepting sends this back to them for final confirmation.</p>
+            <h2 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--info)' }}>{t("You've been invited to become an Admin")}</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>{t("An admin thinks you'd be a good fit to help coordinate responses in your area. Accepting sends this back to them for final confirmation.")}</p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="btn btn-outline" onClick={() => respondToAdminInvite(false)} disabled={adminAppSaving} style={{ flex: 1 }}>Decline</button>
-              <button className="btn btn-primary" onClick={() => respondToAdminInvite(true)} disabled={adminAppSaving} style={{ flex: 1 }}>Accept</button>
+              <button className="btn btn-outline" onClick={() => respondToAdminInvite(false)} disabled={adminAppSaving} style={{ flex: 1 }}>{t('Decline')}</button>
+              <button className="btn btn-primary" onClick={() => respondToAdminInvite(true)} disabled={adminAppSaving} style={{ flex: 1 }}>{t('Accept')}</button>
             </div>
           </div>
         )}
         {adminAppStatus === 'pending' && (
           <div style={{ background: 'var(--info-bg)', border: '1px solid var(--info)', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
-            <p style={{ color: 'var(--info)', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your admin application is under review</p>
+            <p style={{ color: 'var(--info)', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>{t('Your admin application is under review')}</p>
           </div>
         )}
         {adminAppStatus === 'declined' && (
           <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: '10px', padding: '0.75rem', marginTop: '0.75rem', textAlign: 'center' }}>
-            <p style={{ color: 'var(--danger)', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Your application was not approved at this time</p>
+            <p style={{ color: 'var(--danger)', fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>{t('Your application was not approved at this time')}</p>
           </div>
         )}
 
@@ -517,16 +516,16 @@ export default function Profile() {
           <img src="/images/vwb_header-v2.png" alt="VWB" style={{ height: '40px', borderRadius: '50%' }} />
           <div>
             <span style={{ display: 'block', color: 'var(--accent)', fontWeight: 700, fontSize: '0.95rem' }}>Village Without Borders</span>
-            <span style={{ color: 'var(--accent)', fontSize: '0.8125rem' }}>Visit our website &#8599;</span>
+            <span style={{ color: 'var(--accent)', fontSize: '0.8125rem' }}>{t('Visit our website')} &#8599;</span>
           </div>
         </a>
 
         <button onClick={() => navigate('/connections')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid var(--accent)', borderRadius: '10px', padding: '0.6rem', minHeight: '44px', marginTop: '0.75rem', color: 'var(--accent)', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
-          My Connections
+          {t('My Connections')}
         </button>
 
         <button onClick={() => navigate('/help')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid var(--border-strong)', borderRadius: '10px', padding: '0.6rem', marginTop: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', cursor: 'pointer' }}>
-          App guide and feedback
+          {t('App guide and feedback')}
         </button>
       </div>
     )
@@ -535,30 +534,30 @@ export default function Profile() {
   return (
     <div className="profile-page">
       <div className="profile-header-section">
-        <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label="Change avatar" style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
+        <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label={t('Change avatar')} style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
           <AvatarPreview url={profile?.avatar_url} size={80} />
           <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8125rem', color: 'var(--on-accent)', fontWeight: 700, border: '2px solid #1a1a1a' }}>
             <Icon name="pencil" />
           </div>
         </button>
-        <h1>Edit profile</h1>
+        <h1>{t('Edit profile')}</h1>
       </div>
       <div className="edit-form">
         <div className="form-field">
-          <label htmlFor="editName">Name or nickname</label>
-          <input id="editName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="What should we call you?" />
+          <label htmlFor="editName">{t('Name or nickname')}</label>
+          <input id="editName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t('What should we call you?')} />
         </div>
         <div className="form-field">
-          <label htmlFor="editZip">Zip code</label>
-          <input id="editZip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" value={zipCode} onChange={(e) => setZipCode(e.target.value.replace(/[^0-9]/g, ''))} placeholder="e.g., 30736" maxLength={5} />
-          <span className="field-hint">Used to show neighbors near you. Only you and VWB admins can see it. Leave it blank if you'd rather not say, and the app will ask when it needs an area.</span>
+          <label htmlFor="editZip">{t('Zip code')}</label>
+          <input id="editZip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" value={zipCode} onChange={(e) => setZipCode(e.target.value.replace(/[^0-9]/g, ''))} placeholder={t('e.g., 30736')} maxLength={5} />
+          <span className="field-hint">{t("Used to show neighbors near you. Only you and VWB admins can see it. Leave it blank if you'd rather not say, and the app will ask when it needs an area.")}</span>
         </div>
         <div className="form-field">
-          <label htmlFor="editHood">Neighborhood or area</label>
+          <label htmlFor="editHood">{t('Neighborhood or area')}</label>
           {townOptions.length === 0 ? (
             <>
-              <input id="editHood" type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Your town or neighborhood" />
-              <span className="field-hint">Enter your zip code above and we'll list the towns near you.</span>
+              <input id="editHood" type="text" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder={t('Your town or neighborhood')} />
+              <span className="field-hint">{t("Enter your zip code above and we'll list the towns near you.")}</span>
             </>
           ) : (
             <>
@@ -571,53 +570,53 @@ export default function Profile() {
                   else { setHoodOther(false); setNeighborhood(v) }
                 }}
               >
-                <option value="">Choose your area</option>
-                {townOptions.map((t) => <option key={t} value={t}>{t}</option>)}
-                <option value="__other">Somewhere else (type it)</option>
+                <option value="">{t('Choose your area')}</option>
+                {townOptions.map((tw) => <option key={tw} value={tw}>{tw}</option>)}
+                <option value="__other">{t('Somewhere else (type it)')}</option>
               </select>
               {(hoodOther || (neighborhood && !townOptions.includes(neighborhood))) && (
-                <input type="text" aria-label="Type your neighborhood or area" style={{ marginTop: '0.5rem' }} value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Your neighborhood or subdivision" />
+                <input type="text" aria-label={t('Type your neighborhood or area')} style={{ marginTop: '0.5rem' }} value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder={t('Your neighborhood or subdivision')} />
               )}
               {!hoodOther && neighborhood && !townOptions.includes(neighborhood) && (
-                <span className="field-hint">"{neighborhood}" isn't one of the towns near this zip code. Pick a town from the list, or keep it if it's right.</span>
+                <span className="field-hint">{t("\"{name}\" isn't one of the towns near this zip code. Pick a town from the list, or keep it if it's right.", { name: neighborhood })}</span>
               )}
               {(!neighborhood || townOptions.includes(neighborhood)) && !hoodOther && (
-                <span className="field-hint">Towns near {zipCode}. Only you and VWB admins see your zip. The area shows on posts you make.</span>
+                <span className="field-hint">{t('Towns near {zip}. Only you and VWB admins see your zip. The area shows on posts you make.', { zip: zipCode })}</span>
               )}
             </>
           )}
         </div>
         <div className="form-field">
-          <label>Skills</label>
+          <label>{t('Skills')}</label>
           <GroupedSkillChips selected={selectedSkills} skills={skillOptions} renderChip={(skill) => (
             <button key={skill} type="button" className={`skill-chip ${selectedSkills.includes(skill) ? 'active' : ''}`} onClick={() => toggleSkill(skill)}>
-              {skill}
+              {t(skill)}
             </button>
           )} />
         </div>
         <div className="form-field">
-          <label htmlFor="editRadius">How far can you help? ({radiusMiles} miles)</label>
+          <label htmlFor="editRadius">{t('How far can you help? ({n} miles)', { n: radiusMiles })}</label>
           <input id="editRadius" type="range" min="1" max="50" value={radiusMiles} onChange={(e) => setRadiusMiles(Number(e.target.value))} className="range-input" />
           <div className="range-labels"><span>1 mi</span><span>25 mi</span><span>50 mi</span></div>
         </div>
         {profile?.is_hope_ambassador && (
           <>
-            <div className="edit-section-divider"><span>Ambassador Details</span></div>
+            <div className="edit-section-divider"><span>{t('Ambassador Details')}</span></div>
             <div className="form-field">
-              <label>Availability</label>
+              <label>{t('Availability')}</label>
               <AvailabilityPicker value={ambAvailability} onChange={setAmbAvailability} />
             </div>
             <div className="form-field">
-              <label htmlFor="editInterests">About you</label>
-              <textarea id="editInterests" value={ambInterests} onChange={(e) => setAmbInterests(e.target.value)} placeholder="Your interests, experience, or why you help" rows={3} />
+              <label htmlFor="editInterests">{t('About you')}</label>
+              <textarea id="editInterests" value={ambInterests} onChange={(e) => setAmbInterests(e.target.value)} placeholder={t('Your interests, experience, or why you help')} rows={3} />
             </div>
           </>
         )}
         {error && <p className="form-error" role="alert">{error}</p>}
         <div className="form-row" style={{ marginTop: '0.5rem' }}>
-          <button type="button" className="btn btn-outline" onClick={cancelEditing} disabled={saving}>Cancel</button>
+          <button type="button" className="btn btn-outline" onClick={cancelEditing} disabled={saving}>{t('Cancel')}</button>
           <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ flex: 1 }}>
-            {saving ? 'Saving...' : 'Save'}
+            {t(saving ? 'Saving...' : 'Save')}
           </button>
         </div>
       </div>

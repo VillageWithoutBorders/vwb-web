@@ -10,6 +10,7 @@ import { useGoBack } from '../components/BackLink'
 import InviteSheet from '../components/InviteSheet'
 import { tell } from '../components/AdminDialog'
 import Icon from '../components/Icon'
+import { useT, getLang } from '../utils/lang'
 
 export default function PublicProfile() {
   const { userId } = useParams()
@@ -31,6 +32,7 @@ export default function PublicProfile() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [completedCount, setCompletedCount] = useState(0)
+  const t = useT()
 
   // Show "Invite to..." only when there is somewhere to invite them.
   useEffect(() => {
@@ -154,24 +156,24 @@ export default function PublicProfile() {
     setMessaging(true)
     const { id, error, notice } = await startConversation(user.id, userId)
     setMessaging(false)
-    if (notice) { tell(notice); setMsgStatus('pending_out'); return }
-    if (error) { tell(error, { tone: 'error' }); return }
+    if (notice) { tell(t(notice)); setMsgStatus('pending_out'); return }
+    if (error) { tell(t(error), { tone: 'error' }); return }
     navigate('/conversation/' + id)
   }
 
   function formatDate(dateStr) {
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    return new Date(dateStr).toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { month: 'short', year: 'numeric' })
   }
 
   if (loading) {
-    return <div className="feed-loading"><div className="feed-loading-spinner" /><p>Loading profile...</p></div>
+    return <div className="feed-loading"><div className="feed-loading-spinner" /><p>{t('Loading profile...')}</p></div>
   }
 
   if (!profile) {
     return (
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
-        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>This profile isn't available.</div>
+        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>{t("This profile isn't available.")}</div>
       </div>
     )
   }
@@ -181,7 +183,7 @@ export default function PublicProfile() {
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
-      <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', marginBottom: '0.5rem' }}>&#8592;</button>
+      <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', marginBottom: '0.5rem' }}>&#8592;</button>
 
       {/* Profile header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
@@ -192,32 +194,32 @@ export default function PublicProfile() {
         />
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <h1 style={{ margin: 0, fontSize: '1.4rem' }}>{profile.display_name || 'Neighbor'}</h1>
+            <h1 style={{ margin: 0, fontSize: '1.4rem' }}>{profile.display_name || t('Neighbor')}</h1>
             {profile.is_hope_ambassador && (
               <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
-                Hope Ambassador
+                {t('Hope Ambassador')}
               </span>
             )}
           </div>
           <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-            Member since {formatDate(profile.created_at)}
+            {t('Member since {date}', { date: formatDate(profile.created_at) })}
           </div>
           {profile.show_location && profile.neighborhood && (
             <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{profile.neighborhood}</div>
           )}
           {homeVillage && !blockedThem && (
             <button type="button" onClick={() => navigate('/village/' + homeVillage.id)} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.35rem', minHeight: 44, padding: '0 0.25rem', background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'underline', textUnderlineOffset: 3 }}>
-              <Icon name="houses" /> Home village: {homeVillage.name}
+              <Icon name="houses" /> {t('Home village: {name}', { name: homeVillage.name })}
             </button>
           )}
           {user && user.id !== userId && !blockedThem && (
-            <button type="button" onClick={msgStatus === 'pending_in' ? () => navigate('/messages') : messageThem} disabled={messaging || msgStatus === 'pending_out'} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Sending...' : msgStatus === 'open' ? 'Message' : msgStatus === 'pending_out' ? 'Request sent' : msgStatus === 'pending_in' ? 'They asked to message you' : 'Ask to message'}</button>
+            <button type="button" onClick={msgStatus === 'pending_in' ? () => navigate('/messages') : messageThem} disabled={messaging || msgStatus === 'pending_out'} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{t(messaging ? 'Sending...' : msgStatus === 'open' ? 'Message' : msgStatus === 'pending_out' ? 'Request sent' : msgStatus === 'pending_in' ? 'They asked to message you' : 'Ask to message')}</button>
           )}
           {canInvite && !blockedThem && (
-            <button type="button" onClick={() => setInviting(true)} style={{ marginTop: '0.6rem', marginLeft: '0.5rem', minHeight: 44, padding: '0.5rem 1.1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>Invite to...</button>
+            <button type="button" onClick={() => setInviting(true)} style={{ marginTop: '0.6rem', marginLeft: '0.5rem', minHeight: 44, padding: '0.5rem 1.1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{t('Invite to...')}</button>
           )}
           {canVisit && !blockedThem && (
-            <button type="button" onClick={() => navigate('/u/' + userId + '/cottage')} style={{ marginTop: '0.6rem', marginLeft: '0.5rem', minHeight: 44, padding: '0.5rem 1.1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>Visit their cottage</button>
+            <button type="button" onClick={() => navigate('/u/' + userId + '/cottage')} style={{ marginTop: '0.6rem', marginLeft: '0.5rem', minHeight: 44, padding: '0.5rem 1.1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{t('Visit their cottage')}</button>
           )}
           {inviting && <InviteSheet person={{ user_id: userId, display_name: profile.display_name }} onClose={() => setInviting(false)} />}
           <ProfileSafetyActions userId={userId} name={profile.display_name} myId={user?.id} onBlockChange={setBlockedThem} openWith={location.state?.safety} onOpened={() => navigate(location.pathname, { replace: true, state: {} })} />
@@ -226,38 +228,38 @@ export default function PublicProfile() {
 
       {/* Vouches */}
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem', padding: '0.75rem 1rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-        <VouchButton userId={userId} name={profile.display_name || 'this neighbor'} size="sm" showCount={true} allowPersonal={!blockedThem} />
+        <VouchButton userId={userId} name={profile.display_name || t('this neighbor')} size="sm" showCount={true} allowPersonal={!blockedThem} />
         <KnowsVouchList userId={userId} />
-        <p className="vouch-caution">Vouches show that neighbors trust this person. They aren't a background check. Meet somewhere public the first time, and trust your own judgment.</p>
+        <p className="vouch-caution">{t("Vouches show that neighbors trust this person. They aren't a background check. Meet somewhere public the first time, and trust your own judgment.")}</p>
       </div>
 
       {!canSeeHistory && (
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>Request and event history is shared once you are connected.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>{t('Request and event history is shared once you are connected.')}</p>
       )}
 
       {canSeeHistory && (<>
       {/* Tabs */}
       <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
         <button className={'tasks-tab' + (tab === 'requests' ? ' tasks-tab-active' : '')} onClick={() => setTab('requests')}>
-          Requests {completedCount > 0 && <span style={{ marginLeft: "0.3rem", background: "var(--success-bg)", color: "var(--accent)", fontSize: "0.8125rem", fontWeight: 700, padding: "1px 6px", borderRadius: "8px" }}>{completedCount} completed</span>}
+          {t('Requests')} {completedCount > 0 && <span style={{ marginLeft: "0.3rem", background: "var(--success-bg)", color: "var(--accent)", fontSize: "0.8125rem", fontWeight: 700, padding: "1px 6px", borderRadius: "8px" }}>{t('{n} completed', { n: completedCount })}</span>}
         </button>
         <button className={'tasks-tab' + (tab === 'events' ? ' tasks-tab-active' : '')} onClick={() => setTab('events')}>
-          Events
+          {t('Events')}
         </button>
       </div>
 
       {/* Requests tab */}
       {tab === 'requests' && (
         requests.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No completed requests yet</div>
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>{t('No completed requests yet')}</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {requests.map((r, i) => (
               <div key={r.id + '-' + r.role + '-' + i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }}>{r.skill_needed}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }}>{t(r.skill_needed)}</div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                    {r.role === 'helper' ? 'Helped' : 'Requested'} &middot; {formatDate(r.created_at)}
+                    {t(r.role === 'helper' ? 'Helped' : 'Requested')} &middot; {formatDate(r.created_at)}
                   </div>
                 </div>
                 <span style={{
@@ -265,7 +267,7 @@ export default function PublicProfile() {
                   background: r.status === 'completed' ? 'var(--success-bg)' : 'var(--warn-bg)',
                   color: r.status === 'completed' ? 'var(--accent)' : 'var(--gold)',
                 }}>
-                  {r.status === 'completed' ? 'Completed' : r.status}
+                  {r.status === 'completed' ? t('Completed') : t(r.status)}
                 </span>
               </div>
             ))}
@@ -276,7 +278,7 @@ export default function PublicProfile() {
       {/* Events tab */}
       {tab === 'events' && (
         events.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No event participation yet</div>
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>{t('No event participation yet')}</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {events.map((e, i) => (
@@ -284,7 +286,7 @@ export default function PublicProfile() {
                 <div>
                   <div style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }}>{e.title}</div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                    {e.event_type} &middot; {formatDate(e.created_at)}
+                    {t(e.event_type)} &middot; {formatDate(e.created_at)}
                   </div>
                 </div>
                 <span style={{
@@ -292,7 +294,7 @@ export default function PublicProfile() {
                   background: e.status === 'closed' ? 'var(--success-bg)' : 'var(--warn-bg)',
                   color: e.status === 'closed' ? 'var(--accent)' : 'var(--gold)',
                 }}>
-                  {e.status === 'closed' ? 'Resolved' : 'Active'}
+                  {t(e.status === 'closed' ? 'Resolved' : 'Active')}
                 </span>
               </div>
             ))}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { useT, t } from '../utils/lang'
 
 // Your home village, on your profile (Oct 22). Everyone has one home village,
 // set from the zip code on their profile. When more than one village covers
@@ -11,11 +12,12 @@ export default function HomeVillageRow() {
   const [home, setHome] = useState(null)
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState('')
+  useT()
 
   useEffect(() => {
     let alive = true
     supabase.rpc('my_home_village').then(({ data, error }) => {
-      if (error) { console.error('Failed to load your home village:', error); if (alive) setNote("We couldn't load your home village."); return }
+      if (error) { console.error('Failed to load your home village:', error); if (alive) setNote(t("We couldn't load your home village.")); return }
       if (alive) setHome((data || [])[0] || { village_id: null, name: null, choices: [] })
     })
     return () => { alive = false }
@@ -28,10 +30,10 @@ export default function HomeVillageRow() {
     setSaving(false)
     if (error || (data !== 'ok' && data !== 'same')) {
       console.error('Failed to change your home village:', error || data)
-      setNote("We couldn't change your home village. Try again.")
+      setNote(t("We couldn't change your home village. Try again."))
       return
     }
-    setNote('Saved. Your other villages are guest links now.')
+    setNote(t('Saved. Your other villages are guest links now.'))
     await refreshProfile()
   }
 
@@ -39,12 +41,12 @@ export default function HomeVillageRow() {
 
   return (
     <div className="detail-row detail-row-stack">
-      <span className="detail-label">Home village</span>
-      {home === null && !note && <span className="detail-value">Loading...</span>}
+      <span className="detail-label">{t('Home village')}</span>
+      {home === null && !note && <span className="detail-value">{t('Loading...')}</span>}
       {home && !home.village_id && (
         <span className="detail-value">
-          {profile?.zip_code ? 'No village covers your zip code yet. ' : 'Add your zip code to get a home village. '}
-          <Link to="/find-village">Find or start a village</Link>
+          {t(profile?.zip_code ? 'No village covers your zip code yet.' : 'Add your zip code to get a home village.')}{' '}
+          <Link to="/find-village">{t('Find or start a village')}</Link>
         </span>
       )}
       {home && home.village_id && choices.length <= 1 && (
@@ -52,8 +54,8 @@ export default function HomeVillageRow() {
       )}
       {home && home.village_id && choices.length > 1 && (
         <>
-          <span className="detail-value">More than one village covers your zip code. Pick your home:</span>
-          <select className="home-village-select" value={home.village_id} disabled={saving} onChange={(e) => choose(e.target.value)} aria-label="Your home village">
+          <span className="detail-value">{t('More than one village covers your zip code. Pick your home:')}</span>
+          <select className="home-village-select" value={home.village_id} disabled={saving} onChange={(e) => choose(e.target.value)} aria-label={t('Your home village')}>
             {choices.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </>

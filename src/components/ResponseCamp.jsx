@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import Icon from './Icon'
+import { useT } from '../utils/lang'
 
 // The Response Camp on an emergency event page.
 // The camp chat opens by itself when the event is verified. Everyone signed up
@@ -14,6 +15,7 @@ function day(iso) {
 
 // part: 'chat' (the camp chat only), 'groups' (groups responding and the keeper question), or both.
 export default function ResponseCamp({ eventId, verified, closed, refreshKey, part = 'all' }) {
+  const t = useT()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const callFor = searchParams.get('call')
@@ -44,20 +46,20 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey, pa
     setBusy(org.org_id); setMsg('')
     const { data, error } = await supabase.rpc('answer_group_call', { p_event: Number(eventId), p_org: org.org_id, p_yes: yes })
     setBusy(null)
-    if (error) { console.error('Failed to answer for the group:', error); setMsg("We couldn't save that. Try again."); return }
-    if (data === 'responding') setMsg(org.name + ' is listed as responding. Its members were asked to sign up.')
-    else if (data === 'declined') setMsg('Saved. ' + org.name + ' is not responding this time.')
-    else if (data === 'closed') setMsg('This emergency is closed.')
-    else if (data === 'notapproved') setMsg(org.name + ' needs approval to respond first.')
-    else setMsg("We couldn't save that.")
+    if (error) { console.error('Failed to answer for the group:', error); setMsg(t("We couldn't save that. Try again.")); return }
+    if (data === 'responding') setMsg(t('{name} is listed as responding. Its members were asked to sign up.', { name: org.name }))
+    else if (data === 'declined') setMsg(t('Saved. {name} is not responding this time.', { name: org.name }))
+    else if (data === 'closed') setMsg(t('This emergency is closed.'))
+    else if (data === 'notapproved') setMsg(t('{name} needs approval to respond first.', { name: org.name }))
+    else setMsg(t("We couldn't save that."))
     load()
   }
 
   if (!verified) {
     return (
       <section className="rc-box" aria-labelledby="rc-title">
-        <h2 id="rc-title" className="rc-title"><Icon name="tent" /> Response Camp</h2>
-        <p className="rc-note">A camp chat opens once this emergency is verified. Everyone who signs up to help joins it.</p>
+        <h2 id="rc-title" className="rc-title"><Icon name="tent" /> {t('Response Camp')}</h2>
+        <p className="rc-note">{t('A camp chat opens once this emergency is verified. Everyone who signs up to help joins it.')}</p>
       </section>
     )
   }
@@ -68,30 +70,30 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey, pa
 
   return (
     <section className="rc-box" aria-labelledby="rc-title">
-      <h2 id="rc-title" className="rc-title"><Icon name="tent" /> {part === 'groups' ? 'Crews responding' : 'Response Camp' + (campClosed ? ', closed' : '')}</h2>
+      <h2 id="rc-title" className="rc-title"><Icon name="tent" /> {part === 'groups' ? t('Crews responding') : campClosed ? t('Response Camp, closed') : t('Response Camp')}</h2>
 
       {part !== 'groups' && (camp?.i_am_in && camp.board_id ? (
         <>
           <p className="rc-note">
             {campClosed
-              ? 'This emergency is closed. You can read the camp chat until ' + day(camp.deletes_at) + '. Then it is deleted for good.'
-              : (camp.member_count === 1 ? 'You are the first one here.' : camp.member_count + ' people helping are in the camp chat.') + ' Members only, not scrambled. Messages delete after 30 days.'}
+              ? t('This emergency is closed. You can read the camp chat until {date}. Then it is deleted for good.', { date: day(camp.deletes_at) })
+              : (camp.member_count === 1 ? t('You are the first one here.') : t('{n} people helping are in the camp chat.', { n: camp.member_count })) + ' ' + t('Members only, not scrambled. Messages delete after 30 days.')}
           </p>
           <button type="button" className="btn btn-primary btn-full rc-btn" onClick={() => navigate('/village-square?board=' + camp.board_id)}>
-            <Icon name="campfire" /> {campClosed ? 'Read the camp chat' : 'Open the camp chat'}
+            <Icon name="campfire" /> {campClosed ? t('Read the camp chat') : t('Open the camp chat')}
           </button>
         </>
       ) : campClosed ? (
-        <p className="rc-note">This emergency is closed, so its camp chat is closed too.</p>
+        <p className="rc-note">{t('This emergency is closed, so its camp chat is closed too.')}</p>
       ) : (
         <p className="rc-note">
-          Everyone who taps Offer Help joins the camp chat{camp?.member_count ? ' (' + camp.member_count + ' so far)' : ''}. Neighbors who need help are not added. They check in on this page.
+          {camp?.member_count ? t('Everyone who taps Offer Help joins the camp chat ({n} so far).', { n: camp.member_count }) : t('Everyone who taps Offer Help joins the camp chat.')} {t('Neighbors who need help are not added. They check in on this page.')}
         </p>
       ))}
 
-      {part === 'all' && <h3 className="rc-sub">Crews responding</h3>}
+      {part === 'all' && <h3 className="rc-sub">{t('Crews responding')}</h3>}
       {part !== 'chat' && (responding.length === 0
-        ? <p className="rc-note">No crew has taken this on yet.</p>
+        ? <p className="rc-note">{t('No crew has taken this on yet.')}</p>
         : (
           <ul className="rc-groups">
             {responding.map((g) => (
@@ -108,24 +110,24 @@ export default function ResponseCamp({ eventId, verified, closed, refreshKey, pa
         return (
           <div key={g.org_id} ref={highlight ? callRef : null} className={'rc-call' + (highlight || asked ? ' rc-call-ask' : '')}>
             <p className="rc-call-q">
-              {g.status === 'responding' ? g.name + ' is responding.'
-                : g.status === 'declined' ? g.name + ' said not this time.'
-                : 'Will ' + g.name + ' take it on?'}
+              {g.status === 'responding' ? t('{name} is responding.', { name: g.name })
+                : g.status === 'declined' ? t('{name} said not this time.', { name: g.name })
+                : t('Will {name} take it on?', { name: g.name })}
             </p>
             <p className="rc-note">
-              {g.status === 'responding' ? 'Members who have not signed up were asked to. You can step back if plans change.'
-                : asked ? 'Your crew covers this village. A yes lists your crew here and asks your members to sign up.'
-                : 'You keep this crew. You can step in even if it was not asked.'}
+              {g.status === 'responding' ? t('Members who have not signed up were asked to. You can step back if plans change.')
+                : asked ? t('Your crew covers this village. A yes lists your crew here and asks your members to sign up.')
+                : t('You keep this crew. You can step in even if it was not asked.')}
             </p>
             <div className="rc-actions">
               {g.status !== 'responding' && (
                 <button type="button" className="btn btn-primary rc-btn" disabled={busy === g.org_id} onClick={() => answer(g, true)}>
-                  {busy === g.org_id ? 'Saving...' : 'Yes, we will take it on'}
+                  {busy === g.org_id ? t('Saving...') : t('Yes, we will take it on')}
                 </button>
               )}
               {(g.status === 'responding' || asked) && (
                 <button type="button" className="btn btn-outline rc-btn" disabled={busy === g.org_id} onClick={() => answer(g, false)}>
-                  {g.status === 'responding' ? 'Step back' : 'Not this time'}
+                  {g.status === 'responding' ? t('Step back') : t('Not this time')}
                 </button>
               )}
             </div>

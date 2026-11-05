@@ -7,6 +7,7 @@ import BackLink from '../components/BackLink'
 import SisterVillages from '../components/SisterVillages'
 
 import Icon from '../components/Icon'
+import { t, useT } from '../utils/lang'
 
 // The Village Network, in two tabs.
 // Neighborhoods: zip code villages as a circle map (like the prototype) or a street map. Names, places, and rough sizes only, never people.
@@ -16,16 +17,16 @@ import Icon from '../components/Icon'
 // Organizations pick the neighborhoods they work in. A neighborhood keeper can remove one.
 
 function countText(v) {
-  if (v.just_starting || v.member_count == null) return 'Just getting started'
-  return v.member_count + ' neighbors'
+  if (v.just_starting || v.member_count == null) return t('Just getting started')
+  return t(v.member_count === 1 ? '1 neighbor' : '{n} neighbors', { n: v.member_count })
 }
 
 // Only open web addresses that start with http or https.
 function safeUrl(u) {
   if (!u) return null
-  const t = String(u).trim()
-  if (/^https?:\/\//i.test(t)) return t
-  if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(t)) return 'https://' + t
+  const s = String(u).trim()
+  if (/^https?:\/\//i.test(s)) return s
+  if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(s)) return 'https://' + s
   return null
 }
 
@@ -75,12 +76,13 @@ function nodeRadius(v) { return v.member_count ? Math.min(24, 13 + Math.sqrt(v.m
 // globe's Villages / Organizations / Groups switch choosing what shows here.
 export default function VillageMap({ embedded = false, net = null }) {
   const { profile } = useAuth()
+  const t = useT()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const tab = net ? (net === 'villages' ? 'hoods' : 'orgs') : searchParams.get('tab') === 'orgs' ? 'orgs' : 'hoods'
-  function setTab(t) {
+  function setTab(tb) {
     const next = new URLSearchParams(searchParams)
-    if (t === 'orgs') next.set('tab', 'orgs'); else next.delete('tab')
+    if (tb === 'orgs') next.set('tab', 'orgs'); else next.delete('tab')
     setSearchParams(next, { replace: true })
   }
   const [orgs, setOrgs] = useState(null)
@@ -126,14 +128,14 @@ export default function VillageMap({ embedded = false, net = null }) {
     let alive = true
     supabase.rpc('village_network').then(({ data, error: err }) => {
       if (!alive) return
-      if (err) { console.error('Failed to load villages:', err); setError("We couldn't load the villages. Try again in a moment."); setLoading(false); return }
+      if (err) { console.error('Failed to load villages:', err); setError(t("We couldn't load the villages. Try again in a moment.")); setLoading(false); return }
       const rows = data || []
       setVillages(rows)
       setSelectedId((rows.find((v) => v.is_mine) || rows[0] || {}).id || null)
       setLoading(false)
     })
     return () => { alive = false }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     // The zip codes each village covers (public places, never people).
@@ -157,11 +159,11 @@ export default function VillageMap({ embedded = false, net = null }) {
     let alive = true
     supabase.from('organizations').select('id, name, description, website_url, kind').eq('approved', true).order('name').then(({ data, error: err }) => {
       if (!alive) return
-      if (err) { console.error('Failed to load organizations:', err); setOrgsError("We couldn't load the groups. Try again in a moment."); setOrgs([]); return }
+      if (err) { console.error('Failed to load organizations:', err); setOrgsError(t("We couldn't load the groups. Try again in a moment.")); setOrgs([]); return }
       setOrgs(data || [])
     })
     return () => { alive = false }
-  }, [tab, orgs])
+  }, [tab, orgs, t])
 
   function loadOrgLinks() {
     supabase.rpc('org_village_links').then(({ data, error: err }) => {
@@ -213,8 +215,8 @@ export default function VillageMap({ embedded = false, net = null }) {
   async function confirmRemove() {
     if (!removing || !keeperOf) return
     const { error: err } = await supabase.rpc('remove_org_from_village', { p_org: removing.id, p_village: keeperOf })
-    if (err) { console.error('Failed to remove organization from village:', err); setRemoveNote("We couldn't remove them. Try again."); return }
-    setRemoveNote(removing.name + ' was removed from this neighborhood.')
+    if (err) { console.error('Failed to remove organization from village:', err); setRemoveNote(t("We couldn't remove them. Try again.")); return }
+    setRemoveNote(t('{name} was removed from this neighborhood.', { name: removing.name }))
     setRemoving(null)
     loadOrgLinks()
   }
@@ -242,7 +244,7 @@ export default function VillageMap({ embedded = false, net = null }) {
   async function searchZip(e) {
     e.preventDefault()
     const z = zipText.trim()
-    if (!z) { setZipError('Type a zip code or a town name.'); return }
+    if (!z) { setZipError(t('Type a zip code or a town name.')); return }
     if (!/^\d+$/.test(z)) {
       // A town or village name: look through the list.
       setSearchPoint(null); setZipError('')
@@ -250,21 +252,21 @@ export default function VillageMap({ embedded = false, net = null }) {
       return
     }
     setNameSearch('')
-    if (!/^\d{5}$/.test(z)) { setZipError('A zip code has 5 numbers.'); return }
+    if (!/^\d{5}$/.test(z)) { setZipError(t('A zip code has 5 numbers.')); return }
     setZipBusy(true); setZipError('')
     const { data, error: err } = await supabase.from('zip_codes').select('zip, city, state, latitude, longitude').eq('zip', z).maybeSingle()
     setZipBusy(false)
-    if (err) { console.error('Zip lookup failed:', err); setZipError('We could not look that up. Try again.'); return }
-    if (!data) { setSearchPoint(null); setZipError('We could not find that zip code.'); return }
+    if (err) { console.error('Zip lookup failed:', err); setZipError(t('We could not look that up. Try again.')); return }
+    if (!data) { setSearchPoint(null); setZipError(t('We could not find that zip code.')); return }
     setSearchPoint({ zip: data.zip, city: data.city, state: data.state, latitude: Number(data.latitude), longitude: Number(data.longitude) })
   }
 
   function clearSearch() { setSearchPoint(null); setNameSearch(''); setZipText(''); setZipError('') }
   // Villages whose name, area or towns include the words typed.
   const nameMatches = useMemo(() => {
-    const t = nameSearch.trim().toLowerCase()
-    if (!t) return []
-    return villages.filter((v) => [v.name, v.region_label, v.towns].some((x) => (x || '').toLowerCase().includes(t)))
+    const q = nameSearch.trim().toLowerCase()
+    if (!q) return []
+    return villages.filter((v) => [v.name, v.region_label, v.towns].some((x) => (x || '').toLowerCase().includes(q)))
   }, [nameSearch, villages])
   // The list: your villages first, then ones you can join, then the rest.
   const listOrder = (v) => (v.is_mine ? 0 : covers(v, myZip) ? 1 : 2)
@@ -281,7 +283,7 @@ export default function VillageMap({ embedded = false, net = null }) {
       return
     }
     if (covers(v, myZip)) { navigate('/find-village?join=' + v.id); return }
-    setListNote({ id: v.id, text: myZip ? 'Your zip code is not on this village\u2019s list, so you cannot join it.' : 'Add your zip code on your Profile to join.' })
+    setListNote({ id: v.id, text: myZip ? t('Your zip code is not on this village\u2019s list, so you cannot join it.') : t('Add your zip code on your Profile to join.') })
   }
 
   // The real map. Leaflet loads only when this page opens.
@@ -349,7 +351,7 @@ export default function VillageMap({ embedded = false, net = null }) {
       map.on('zoomend moveend', declutter)
       if (searchPoint) {
         const ll = [searchPoint.latitude, searchPoint.longitude]
-        L.circleMarker(ll, { radius: 7, color: '#fff', weight: 2, fillColor: '#ff8844', fillOpacity: 1 }).addTo(map).bindTooltip('Your search: ' + searchPoint.zip, { direction: 'top' })
+        L.circleMarker(ll, { radius: 7, color: '#fff', weight: 2, fillColor: '#ff8844', fillOpacity: 1 }).addTo(map).bindTooltip(t('Your search: {zip}', { zip: searchPoint.zip }), { direction: 'top' })
         const near = nearSearch.map((x) => [Number(x.v.latitude), Number(x.v.longitude)])
         if (near.length) map.fitBounds([ll, ...near], { padding: [40, 40], maxZoom: 10 })
         else map.setView(ll, 9)
@@ -361,7 +363,7 @@ export default function VillageMap({ embedded = false, net = null }) {
       cancelled = true
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
     }
-  }, [tab, view, placed, searchPoint, nearSearch, pointsByVillage])
+  }, [tab, view, placed, searchPoint, nearSearch, pointsByVillage, t])
 
   // Show which village is picked by giving its circle a thicker ring.
   useEffect(() => {
@@ -379,28 +381,28 @@ export default function VillageMap({ embedded = false, net = null }) {
 
   const shownOrgs = orgs && (net === 'groups' ? orgs.filter((o) => o.kind === 'group') : net === 'orgs' ? orgs.filter((o) => o.kind !== 'group') : orgs)
 
-  if (loading) return <div className="cal-page"><p className="cal-empty">Loading...</p></div>
+  if (loading) return <div className="cal-page"><p className="cal-empty">{t('Loading...')}</p></div>
 
   return (
     <div className={'cal-page hub-page' + (embedded ? ' wd-network' : '')} style={{ overflowX: 'clip' }}>
       <style>{'.vwb-map-label{background:#f6f0e0;color:#0b3b38;border:1.5px solid #0b3b38;border-radius:10px;padding:2px 8px;font-weight:600;font-size:12px;box-shadow:none}.vwb-map-label:before{display:none}'}</style>
       {!embedded && <>
-      <BackLink fallback="/" fallbackLabel="Home" />
-      <h1 className="hub-org-name">The Village Network</h1>
+      <BackLink fallback="/" fallbackLabel={t('Home')} />
+      <h1 className="hub-org-name">{t('The Village Network')}</h1>
 
-      <div role="tablist" aria-label="Village Network" style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0 0.75rem' }}>
-        <button type="button" role="tab" id="tab-hoods" aria-selected={tab === 'hoods'} aria-controls="panel-hoods" className={'btn ' + (tab === 'hoods' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('hoods')}><Icon name="tree" /> Neighborhoods</button>
-        <button type="button" role="tab" id="tab-orgs" aria-selected={tab === 'orgs'} aria-controls="panel-orgs" className={'btn ' + (tab === 'orgs' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('orgs')}><Icon name="people" /> Groups</button>
+      <div role="tablist" aria-label={t('The Village Network')} style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0 0.75rem' }}>
+        <button type="button" role="tab" id="tab-hoods" aria-selected={tab === 'hoods'} aria-controls="panel-hoods" className={'btn ' + (tab === 'hoods' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('hoods')}><Icon name="tree" /> {t('Neighborhoods')}</button>
+        <button type="button" role="tab" id="tab-orgs" aria-selected={tab === 'orgs'} aria-controls="panel-orgs" className={'btn ' + (tab === 'orgs' ? 'btn-primary' : 'btn-outline')} style={{ flex: 1, minHeight: '48px', minWidth: 0 }} onClick={() => setTab('orgs')}><Icon name="people" /> {t('Groups')}</button>
       </div>
       </>}
 
       {tab === 'orgs' && (
         <section id="panel-orgs" role="tabpanel" aria-labelledby="tab-orgs">
-          <p className="cal-sub">Groups working with Village Without Borders, and emergency crews <Icon name="tent" /> that respond when disaster hits. Tap a name to see more.</p>
-          {net !== 'orgs' && <Link className="btn btn-outline btn-full" style={{ minHeight: '48px', marginBottom: '0.75rem' }} to="/start-group"><Icon name="tent" /> Start an emergency crew</Link>}
-          {orgs === null && <p className="cal-empty">Loading...</p>}
+          <p className="cal-sub">{t('Groups working with Village Without Borders, and emergency crews')} <Icon name="tent" /> {t('that respond when disaster hits. Tap a name to see more.')}</p>
+          {net !== 'orgs' && <Link className="btn btn-outline btn-full" style={{ minHeight: '48px', marginBottom: '0.75rem' }} to="/start-group"><Icon name="tent" /> {t('Start an emergency crew')}</Link>}
+          {orgs === null && <p className="cal-empty">{t('Loading...')}</p>}
           {orgsError && <p className="form-error" role="alert">{orgsError}</p>}
-          {shownOrgs && !orgsError && shownOrgs.length === 0 && <p className="cal-empty">{net === 'groups' ? 'No crews yet.' : 'No groups yet.'}</p>}
+          {shownOrgs && !orgsError && shownOrgs.length === 0 && <p className="cal-empty">{net === 'groups' ? t('No crews yet.') : t('No groups yet.')}</p>}
           {shownOrgs && shownOrgs.map((o) => {
             const open = !!openOrgs[o.id]
             const site = safeUrl(o.website_url)
@@ -410,16 +412,16 @@ export default function VillageMap({ embedded = false, net = null }) {
                   <span aria-hidden="true" style={{ flex: 'none', width: '44px', height: '44px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', background: 'rgba(78, 204, 163, 0.15)' }}><Icon name={o.kind === 'group' ? 'tent' : 'people'} /></span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span className="cal-card-title" style={{ display: 'block' }}>{o.name}</span>
-                    <span className="cal-card-meta">{o.kind === 'group' ? 'Emergency crew' : 'Group'}</span>
+                    <span className="cal-card-meta">{o.kind === 'group' ? t('Emergency crew') : t('Group')}</span>
                   </span>
                   <span aria-hidden="true" style={{ flex: 'none', display: 'grid', placeItems: 'center', width: '44px', height: '44px', fontSize: '1.6rem', lineHeight: 1, color: 'var(--accent)', transform: open ? 'rotate(180deg)' : 'none' }}>{'\u25BE'}</span>
                 </button>
                 {open && (
                   <div id={'org-' + o.id} style={{ padding: '0 0.75rem 0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.12)' }}>
-                    {o.description ? <p style={{ margin: '0.6rem 0' }}>{o.description}</p> : <p className="cal-sub" style={{ margin: '0.6rem 0' }}>No description yet.</p>}
-                    {worksIn[o.id] && worksIn[o.id].length > 0 && <p className="cal-sub" style={{ margin: '0 0 0.6rem' }}>Works in: {worksIn[o.id].join(', ')}</p>}
-                    {site && <a className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} href={site} target="_blank" rel="noopener noreferrer">Visit their website</a>}
-                    <Link className="btn btn-primary btn-full" style={{ minHeight: '44px' }} to={'/orgs/' + o.id}>Open {o.name}</Link>
+                    {o.description ? <p style={{ margin: '0.6rem 0' }}>{o.description}</p> : <p className="cal-sub" style={{ margin: '0.6rem 0' }}>{t('No description yet.')}</p>}
+                    {worksIn[o.id] && worksIn[o.id].length > 0 && <p className="cal-sub" style={{ margin: '0 0 0.6rem' }}>{t('Works in: {places}', { places: worksIn[o.id].join(', ') })}</p>}
+                    {site && <a className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} href={site} target="_blank" rel="noopener noreferrer">{t('Visit their website')}</a>}
+                    <Link className="btn btn-primary btn-full" style={{ minHeight: '44px' }} to={'/orgs/' + o.id}>{t('Open {name}', { name: o.name })}</Link>
                   </div>
                 )}
               </div>
@@ -431,42 +433,42 @@ export default function VillageMap({ embedded = false, net = null }) {
       {tab === 'hoods' && (
       <div id="panel-hoods" role="tabpanel" aria-labelledby="tab-hoods">
       <section className="cal-box" aria-labelledby="zip-find" style={{ marginBottom: '0.75rem' }}>
-        <h2 id="zip-find" style={{ marginTop: 0 }}>Find a village by zip code or town</h2>
+        <h2 id="zip-find" style={{ marginTop: 0 }}>{t('Find a village by zip code or town')}</h2>
         <form onSubmit={searchZip} style={{ display: 'flex', gap: '0.5rem', margin: '0.5rem 0' }}>
-          <label htmlFor="map-zip" className="sr-only">Zip code or town</label>
-          <input id="map-zip" type="search" maxLength={60} autoComplete="off" value={zipText} onChange={(e) => setZipText(e.target.value)} placeholder="Example: 30736 or Ringgold" style={{ flex: 1, minWidth: 0, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
-          <button type="submit" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={zipBusy}>{zipBusy ? 'Looking...' : 'Find'}</button>
+          <label htmlFor="map-zip" className="sr-only">{t('Zip code or town')}</label>
+          <input id="map-zip" type="search" maxLength={60} autoComplete="off" value={zipText} onChange={(e) => setZipText(e.target.value)} placeholder={t('Example: 30736 or Ringgold')} style={{ flex: 1, minWidth: 0, minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem' }} />
+          <button type="submit" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={zipBusy}>{zipBusy ? t('Looking...') : t('Find')}</button>
         </form>
-        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>Start a village for my area</button>
+        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>{t('Start a village for my area')}</button>
       </section>
       {zipError && <p className="form-error" role="alert">{zipError}</p>}
 
       {nameSearch && (
         <section className="cal-box" aria-live="polite" aria-labelledby="name-result">
-          <h2 id="name-result">Villages that match &quot;{nameSearch}&quot;</h2>
+          <h2 id="name-result">{t('Villages that match "{words}"', { words: nameSearch })}</h2>
           {nameMatches.length > 0 ? nameMatches.map((v) => (
             <button key={v.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} onClick={() => setSelectedId(v.id)}>
-              <span className="cal-card-title">{v.name}{profile?.home_village_id === v.id ? ' \u00B7 your home' : v.is_mine ? ' \u00B7 you visit' : ''}</span>
+              <span className="cal-card-title">{v.name}{profile?.home_village_id === v.id ? ' \u00B7 ' + t('your home') : v.is_mine ? ' \u00B7 ' + t('you visit') : ''}</span>
               <span className="cal-card-meta">{v.region_label ? v.region_label + ' \u00B7 ' : ''}{countText(v)}</span>
             </button>
-          )) : <p className="cal-sub">No villages match. Try a zip code instead.</p>}
+          )) : <p className="cal-sub">{t('No villages match. Try a zip code instead.')}</p>}
           <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginTop: '0.5rem' }} onClick={clearSearch}>Clear search</button>
         </section>
       )}
 
       {searchPoint && (
         <section className="cal-box" aria-live="polite" aria-labelledby="zip-result">
-          <h2 id="zip-result">Near {searchPoint.zip}{searchPoint.city ? ' (' + searchPoint.city + ', ' + searchPoint.state + ')' : ''}</h2>
+          <h2 id="zip-result">{t('Near {zip}', { zip: searchPoint.zip })}{searchPoint.city ? ' (' + searchPoint.city + ', ' + searchPoint.state + ')' : ''}</h2>
           {nearSearch.length > 0 ? nearSearch.map(({ v, miles }) => (
             <button key={v.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} onClick={() => setSelectedId(v.id)}>
-              <span className="cal-card-title">{v.name}{v.is_mine ? ' \u00B7 joined' : ''}</span>
-              <span className="cal-card-meta">{countText(v)}{' \u00B7 about '}{miles} miles away</span>
+              <span className="cal-card-title">{v.name}{v.is_mine ? ' \u00B7 ' + t('joined') : ''}</span>
+              <span className="cal-card-meta">{countText(v)}{' \u00B7 '}{t(miles === 1 ? 'about 1 mile away' : 'about {n} miles away', { n: miles })}</span>
             </button>
           )) : (
             <>
-              <p className="cal-sub">No village chat covers this zip code yet.</p>
+              <p className="cal-sub">{t('No village chat covers this zip code yet.')}</p>
               {profile?.zip_code === searchPoint.zip && (
-                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>Start a village for my area</button>
+                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>{t('Start a village for my area')}</button>
               )}
             </>
           )}
@@ -476,53 +478,53 @@ export default function VillageMap({ embedded = false, net = null }) {
 
       {error && <p className="form-error" role="alert">{error}</p>}
 
-      {!error && villages.length === 0 && <p className="cal-empty">No villages yet.</p>}
+      {!error && villages.length === 0 && <p className="cal-empty">{t('No villages yet.')}</p>}
 
       {villages.length > 0 && (
         <>
-          {placed.length === 0 && <p className="cal-empty">These villages don't have a location yet, so there's nothing to draw. They're listed below.</p>}
+          {placed.length === 0 && <p className="cal-empty">{t("These villages don't have a location yet, so there's nothing to draw. They're listed below.")}</p>}
 
-          {placed.length > 0 && view === 'street' && <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>Tap a village to see what it has. Tap the dot on a line to see more.</p>}
+          {placed.length > 0 && view === 'street' && <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>{t('Tap a village to see what it has. Tap the dot on a line to see more.')}</p>}
 
           {view === 'street' && placed.length > 0 && (
-            <div ref={mapEl} className="village-map" role="application" aria-label="Street map of villages. The same villages are listed below." />
+            <div ref={mapEl} className="village-map" role="application" aria-label={t('Street map of villages. The same villages are listed below.')} />
           )}
 
           {placed.length > 0 && (
             <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.75rem' }} onClick={() => { setView(view === 'street' ? 'list' : 'street'); setLinkInfo(null) }}>
-              {view === 'street' ? 'Hide the street map' : 'Show on a street map'}
+              {view === 'street' ? t('Hide the street map') : t('Show on a street map')}
             </button>
           )}
 
           {linkInfo && (
             <section className="cal-box" aria-live="polite">
-              <p style={{ margin: 0 }}>{linkInfo.shared ? linkInfo.a + ' and ' + linkInfo.b + ' share ' + linkInfo.shared + ' zip code' + (linkInfo.shared === 1 ? '' : 's') + '. People in a shared zip code can join either village.' : linkInfo.a + ' and ' + linkInfo.b + ' share no zip codes. They are about ' + linkInfo.miles + ' miles apart.'}</p>
-              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginTop: '0.5rem' }} onClick={() => setLinkInfo(null)}>Close</button>
+              <p style={{ margin: 0 }}>{linkInfo.shared ? t(linkInfo.shared === 1 ? '{a} and {b} share 1 zip code. People in a shared zip code can join either village.' : '{a} and {b} share {n} zip codes. People in a shared zip code can join either village.', { a: linkInfo.a, b: linkInfo.b, n: linkInfo.shared }) : t('{a} and {b} share no zip codes. They are about {n} miles apart.', { a: linkInfo.a, b: linkInfo.b, n: linkInfo.miles })}</p>
+              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginTop: '0.5rem' }} onClick={() => setLinkInfo(null)}>{t('Close')}</button>
             </section>
           )}
 
           {selected && (
             <section ref={cardRef} className="cal-box" aria-live="polite" aria-labelledby="village-sel" style={{ scrollMarginTop: 'calc(var(--header-height) + 12px)' }}>
-              <h2 id="village-sel">{selected.name}{profile?.home_village_id === selected.id ? ' (your home)' : selected.is_mine ? ' (you visit)' : ''}</h2>
+              <h2 id="village-sel">{selected.name}{profile?.home_village_id === selected.id ? ' (' + t('your home') + ')' : selected.is_mine ? ' (' + t('you visit') + ')' : ''}</h2>
               {selected.region_label && <p className="cal-sub">{selected.region_label}</p>}
-              <p className="cal-sub">{countText(selected)}{selected.zip_count ? ' \u00B7 covers ' + selected.zip_count + ' zip codes' : ''}</p>
-              {selected.towns && <p className="cal-sub">Towns: {selected.towns}</p>}
+              <p className="cal-sub">{countText(selected)}{selected.zip_count ? ' \u00B7 ' + t(selected.zip_count === 1 ? 'covers 1 zip code' : 'covers {n} zip codes', { n: selected.zip_count }) : ''}</p>
+              {selected.towns && <p className="cal-sub">{t('Towns: {towns}', { towns: selected.towns })}</p>}
               {(workingHere[selected.id] || []).length > 0 && (
                 <div style={{ margin: '0.5rem 0' }}>
-                  <p className="cal-sub" style={{ margin: '0 0 0.25rem' }}>Working here</p>
+                  <p className="cal-sub" style={{ margin: '0 0 0.25rem' }}>{t('Working here')}</p>
                   {(workingHere[selected.id] || []).map((o) => (
                     <div key={o.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', margin: '0.25rem 0' }}>
                       <Link to={'/orgs/' + o.id} className="btn btn-outline" style={{ flex: 1, minWidth: 0, minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem' }}><Icon name="people" /> {o.name}</Link>
-                      {keeperOf === selected.id && <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 'none' }} onClick={() => { setRemoving(o); setRemoveNote('') }} aria-label={'Remove ' + o.name + ' from ' + selected.name}>Remove</button>}
+                      {keeperOf === selected.id && <button type="button" className="btn btn-outline" style={{ minHeight: '44px', flex: 'none' }} onClick={() => { setRemoving(o); setRemoveNote('') }} aria-label={t('Remove {group} from {village}', { group: o.name, village: selected.name })}>{t('Remove')}</button>}
                     </div>
                   ))}
                 </div>
               )}
               {removing && keeperOf === selected.id && (
                 <div role="alertdialog" aria-labelledby="remove-org-q" className="cal-box" style={{ margin: '0.5rem 0' }}>
-                  <p id="remove-org-q" style={{ margin: '0 0 0.5rem' }}>Remove {removing.name} from {selected.name}? They will not be able to add {selected.name} back unless a keeper lets them.</p>
-                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={confirmRemove}>Yes, remove them</button>
-                  <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => setRemoving(null)}>Keep them</button>
+                  <p id="remove-org-q" style={{ margin: '0 0 0.5rem' }}>{t('Remove {group} from {village}? They will not be able to add {village} back unless a keeper lets them.', { group: removing.name, village: selected.name })}</p>
+                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={confirmRemove}>{t('Yes, remove them')}</button>
+                  <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => setRemoving(null)}>{t('Keep them')}</button>
                 </div>
               )}
               {removeNote && <p className="cal-sub" role="status">{removeNote}</p>}
@@ -535,30 +537,30 @@ export default function VillageMap({ embedded = false, net = null }) {
                 onPick={(id) => { setSelectedId(id); setLinkInfo(null) }}
                 onChanged={loadSisters}
               />
-              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={() => navigate('/village/' + selected.id)}><Icon name="houses" /> Step into {selected.name}</button>
+              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={() => navigate('/village/' + selected.id)}><Icon name="houses" /> {t('Step into {name}', { name: selected.name })}</button>
               {selected.is_mine && boardFor(selected) && (
-                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/village-square?board=' + boardFor(selected).id)}>Open this village chat</button>
+                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/village-square?board=' + boardFor(selected).id)}>{t('Open this village chat')}</button>
               )}
               {!selected.is_mine && covers(selected, myZip) && (
-                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village?join=' + selected.id)}>Join this village chat</button>
+                <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village?join=' + selected.id)}>{t('Join this village chat')}</button>
               )}
               {!selected.is_mine && !covers(selected, myZip) && (
-                <p className="cal-sub">{myZip ? 'Your zip code is not on this village\u2019s list.' : 'Add your zip code on your Profile to join.'}</p>
+                <p className="cal-sub">{myZip ? t('Your zip code is not on this village\u2019s list.') : t('Add your zip code on your Profile to join.')}</p>
               )}
-              {!selected.is_mine && <p className="cal-sub" style={{ marginTop: '0.4rem' }}>{profile?.home_village_id ? 'You already have a home village, so you would join this one as a guest. You will read a short warning first.' : 'Neighbors whose zip code is on its list can join. You will read a short warning first.'}</p>}
+              {!selected.is_mine && <p className="cal-sub" style={{ marginTop: '0.4rem' }}>{profile?.home_village_id ? t('You already have a home village, so you would join this one as a guest. You will read a short warning first.') : t('Neighbors whose zip code is on its list can join. You will read a short warning first.')}</p>}
             </section>
           )}
 
-          {view === 'street' && <p className="cal-sub" style={{ margin: '0.5rem 0' }}>Dotted lines join villages that share zip codes. Small dots are zip code areas, never people.</p>}
+          {view === 'street' && <p className="cal-sub" style={{ margin: '0.5rem 0' }}>{t('Dotted lines join villages that share zip codes. Small dots are zip code areas, never people.')}</p>}
 
           <section className="hub-section" aria-labelledby="village-list">
-            <div className="hub-section-head"><h2 id="village-list">All villages ({villages.length})</h2></div>
+            <div className="hub-section-head"><h2 id="village-list">{t('All villages ({n})', { n: villages.length })}</h2></div>
             {[...placed, ...unplaced].sort((a, b) => listOrder(a) - listOrder(b)).map((v) => (
               <div key={v.id}>
                 <button type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px' }} aria-pressed={v.id === selectedId} onClick={() => openVillage(v)}>
-                  <span className="cal-card-title">{v.name}{profile?.home_village_id === v.id ? ' \u00B7 your home' : v.is_mine ? ' \u00B7 you visit' : ''}</span>
+                  <span className="cal-card-title">{v.name}{profile?.home_village_id === v.id ? ' \u00B7 ' + t('your home') : v.is_mine ? ' \u00B7 ' + t('you visit') : ''}</span>
                   <span className="cal-card-meta">{v.region_label ? v.region_label + ' \u00B7 ' : ''}{countText(v)}</span>
-                  {(v.is_mine || covers(v, myZip)) && <span className="cal-card-meta vm-tap">{v.is_mine ? 'Tap to open the chat' : profile?.home_village_id ? 'Tap to join as a guest' : 'Tap to join'}</span>}
+                  {(v.is_mine || covers(v, myZip)) && <span className="cal-card-meta vm-tap">{v.is_mine ? t('Tap to open the chat') : profile?.home_village_id ? t('Tap to join as a guest') : t('Tap to join')}</span>}
                 </button>
                 {listNote && listNote.id === v.id && <p className="cal-sub" role="status" style={{ margin: '0.25rem 0 0.5rem' }}>{listNote.text}</p>}
               </div>

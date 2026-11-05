@@ -6,11 +6,13 @@ import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import { useGoBack } from '../components/BackLink'
 import { tell } from '../components/AdminDialog'
+import { useT } from '../utils/lang'
 
 const VERIFY_THRESHOLD = 2
 
 export default function EmergencyEvents() {
   const { user, profile, isAdmin } = useAuth()
+  const t = useT()
   const navigate = useNavigate()
   const goBack = useGoBack()
   const [events, setEvents] = useState([])
@@ -83,7 +85,7 @@ export default function EmergencyEvents() {
     const ev = events.find(e2 => e2.id === eventId)
     const wasVerified = !!ev?.verified
     const { error: upErr } = await supabase.from('event_upvotes').insert({ event_id: eventId, user_id: user.id })
-    if (upErr) { console.error('Failed to record upvote:', upErr); tell('Could not record your vote. Try again.', { tone: 'error' }); return }
+    if (upErr) { console.error('Failed to record upvote:', upErr); tell(t('Could not record your vote. Try again.'), { tone: 'error' }); return }
     // Count votes straight from event_upvotes (the source of truth) instead of
     // incrementing the number in local component state. Reading a cached
     // count and writing count+1 is a classic read-then-write race: two people
@@ -110,7 +112,7 @@ export default function EmergencyEvents() {
   async function adminVerify(e, eventId) {
     e.stopPropagation()
     const { error } = await supabase.from('emergency_events').update({ verified: true }).eq('id', eventId)
-    if (error) { console.error('Failed to verify event:', error); tell(error.code === 'P0001' ? error.message : 'Could not verify this event. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to verify event:', error); tell(error.code === 'P0001' ? error.message : t('Could not verify this event. Try again.'), { tone: 'error' }); return }
     await notifyAndPost(eventId)
     await loadEvents()
   }
@@ -118,9 +120,9 @@ export default function EmergencyEvents() {
   function timeAgo(ts) {
     const diff = Date.now() - new Date(ts).getTime()
     const hrs = Math.floor(diff / 3600000)
-    if (hrs < 1) return 'Just now'
-    if (hrs < 24) return hrs + 'h ago'
-    return Math.floor(hrs / 24) + 'd ago'
+    if (hrs < 1) return t('Just now')
+    if (hrs < 24) return t('{n}h ago', { n: hrs })
+    return t('{n}d ago', { n: Math.floor(hrs / 24) })
   }
 
   const canVerify = (ev) => isAdmin || (profile?.is_hope_ambassador && checkable.has(ev.id))
@@ -128,39 +130,39 @@ export default function EmergencyEvents() {
   const pending = events.filter(ev => !ev.verified)
 
   const CLOSE_REASON_LABELS = {
-    resolved: 'Resolved',
-    false_alarm: 'False Alarm',
-    duplicate: 'Merged',
+    resolved: t('Resolved'),
+    false_alarm: t('False Alarm'),
+    duplicate: t('Merged'),
   }
 
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--gold)' }}>Emergency Response</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>Events in your area</p>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--gold)' }}>{t('Emergency Response')}</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>{t('Events in your area')}</p>
         </div>
-        <button onClick={() => goBack('/')} aria-label="Back to Dashboard" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label={t('Back to Dashboard')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
       </div>
 
       <button onClick={() => navigate('/emergency/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '1rem', borderRadius: '10px', border: '2px solid var(--warn)', background: 'linear-gradient(135deg, var(--warn-bg), var(--warn-bg))', cursor: 'pointer', textAlign: 'left', marginBottom: '1.25rem' }}>
         <span style={{ fontSize: '1.75rem' }}><Icon name="cat-emergency" /></span>
         <div>
-          <span style={{ display: 'block', color: 'var(--gold)', fontWeight: 700, fontSize: '0.95rem' }}>Report an emergency</span>
-          <span style={{ color: 'var(--danger)', fontSize: '1rem', fontWeight: 700 }}>When many neighbors are hit at once. Someone in danger? Call 911 first.</span>
+          <span style={{ display: 'block', color: 'var(--gold)', fontWeight: 700, fontSize: '0.95rem' }}>{t('Report an emergency')}</span>
+          <span style={{ color: 'var(--danger)', fontSize: '1rem', fontWeight: 700 }}>{t('When many neighbors are hit at once. Someone in danger? Call 911 first.')}</span>
         </div>
       </button>
 
       <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
         <button className={'tasks-tab' + (tab === 'active' ? ' tasks-tab-active' : '')} onClick={() => setTab('active')}>
-          Active {events.length > 0 && <span style={{ fontSize: '0.8125rem', opacity: 0.7 }}>({events.length})</span>}
+          {t('Active')} {events.length > 0 && <span style={{ fontSize: '0.8125rem', opacity: 0.7 }}>({events.length})</span>}
         </button>
         <button className={'tasks-tab' + (tab === 'resolved' ? ' tasks-tab-active' : '')} onClick={() => setTab('resolved')}>
-          Resolved {resolvedEvents.length > 0 && <span style={{ fontSize: '0.8125rem', opacity: 0.7 }}>({resolvedEvents.length})</span>}
+          {t('Resolved')} {resolvedEvents.length > 0 && <span style={{ fontSize: '0.8125rem', opacity: 0.7 }}>({resolvedEvents.length})</span>}
         </button>
       </div>
 
-      {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Loading...</p>}
+      {loading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>{t('Loading...')}</p>}
 
       {/* ========== ACTIVE TAB ========== */}
       {!loading && tab === 'active' && (
@@ -168,23 +170,23 @@ export default function EmergencyEvents() {
           {events.length === 0 && (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}><Icon name="sun" /></p>
-              <p style={{ fontWeight: 700 }}>No active emergencies</p>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>When a disaster or emergency happens, events will appear here.</p>
+              <p style={{ fontWeight: 700 }}>{t('No active emergencies')}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{t('When a disaster or emergency happens, events will appear here.')}</p>
             </div>
           )}
 
           {pending.length > 0 && (
             <>
-              <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Pending verification ({pending.length})</p>
+              <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>{t('Pending verification ({n})', { n: pending.length })}</p>
               {pending.map(ev => {
                 const myRole = mySignups[ev.id]
                 const voted = myUpvotes[ev.id]
                 return (
-                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--warn)', opacity: 0.9 }}>
+                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--warn)', opacity: 0.9 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <span style={{ background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>Unverified</span>
-                        {ev.created_by === user.id && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
+                        <span style={{ background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{t('Unverified')}</span>
+                        {ev.created_by === user.id && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>{t('Your report')}</span>}
                         <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.05rem' }}>{ev.title}</h3>
                       </div>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
@@ -194,11 +196,11 @@ export default function EmergencyEvents() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem' }}>
                       <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid var(--accent)' : '1px solid var(--border-strong)', background: voted ? 'var(--success-bg)' : 'none', color: voted ? 'var(--accent)' : 'var(--text-secondary)', cursor: voted ? 'default' : 'pointer', fontSize: '1rem', fontWeight: 700, minHeight: 48 }}>
                         {/* Oct 27: words on the button, not just an arrow. */}
-                        {voted ? 'You said you see it' : 'I see this too'}
+                        {voted ? t('You said you see it') : t('I see this too')}
                       </button>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{(ev.upvote_count || 0) === 1 ? '1 neighbor sees it' : (ev.upvote_count || 0) + ' neighbors see it'}</span>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{(ev.upvote_count || 0) === 1 ? t('1 neighbor sees it') : t('{n} neighbors see it', { n: ev.upvote_count || 0 })}</span>
                       {canVerify(ev) && !voted && (
-                        <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Verify</button>
+                        <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>{t('Verify')}</button>
                       )}
                     </div>
                   </div>
@@ -209,16 +211,16 @@ export default function EmergencyEvents() {
 
           {verified.length > 0 && (
             <>
-              {pending.length > 0 && <p style={{ color: 'var(--gold)', fontSize: '0.8125rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>Verified emergencies ({verified.length})</p>}
+              {pending.length > 0 && <p style={{ color: 'var(--gold)', fontSize: '0.8125rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1rem', marginBottom: '0.5rem' }}>{t('Verified emergencies ({n})', { n: verified.length })}</p>}
               {verified.map(ev => {
                 const myRole = mySignups[ev.id]
                 return (
-                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--gold)' }}>
+                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--gold)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <span style={{ background: 'var(--gold)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type || 'Emergency'}</span>
-                        <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>&#10003; Verified</span>
-                        {ev.created_by === user.id && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>Your report</span>}
+                        <span style={{ background: 'var(--gold)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type ? t(ev.event_type) : t('Emergency')}</span>
+                        <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>&#10003; {t('Verified')}</span>
+                        {ev.created_by === user.id && <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>{t('Your report')}</span>}
                         <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.1rem' }}>{ev.title}</h3>
                       </div>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{timeAgo(ev.created_at)}</span>
@@ -227,7 +229,7 @@ export default function EmergencyEvents() {
                     {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
                     {myRole && (
                       <span style={{ display: 'inline-block', marginTop: '0.5rem', background: myRole === 'responder' ? 'var(--success-bg)' : myRole === 'coordinator' ? 'var(--info-bg)' : 'var(--warn-bg)', color: myRole === 'responder' ? 'var(--accent)' : myRole === 'coordinator' ? 'var(--info)' : 'var(--warn)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
-                        {myRole === 'responder' ? 'Signed up to help' : myRole === 'coordinator' ? 'Coordinator' : 'Signed up as affected'}
+                        {myRole === 'responder' ? t('Signed up to help') : myRole === 'coordinator' ? t('Coordinator') : t('Signed up as affected')}
                       </span>
                     )}
                   </div>
@@ -244,20 +246,20 @@ export default function EmergencyEvents() {
           {resolvedEvents.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}><Icon name="clipboard" /></p>
-              <p style={{ fontWeight: 700 }}>No resolved events</p>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Closed events will be archived here.</p>
+              <p style={{ fontWeight: 700 }}>{t('No resolved events')}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{t('Closed events will be archived here.')}</p>
             </div>
           ) : (
             resolvedEvents.map(ev => {
               const myRole = mySignups[ev.id]
               return (
-                <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={'Open event: ' + ev.title} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2d6a4f', opacity: 0.8 }}>
+                <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2d6a4f', opacity: 0.8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
-                        {CLOSE_REASON_LABELS[ev.close_reason] || 'Closed'}
+                        {CLOSE_REASON_LABELS[ev.close_reason] || t('Closed')}
                       </span>
-                      {ev.event_type && <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>{ev.event_type}</span>}
+                      {ev.event_type && <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>{t(ev.event_type)}</span>}
                       <h3 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.05rem', color: 'var(--text-soft)' }}>{ev.title}</h3>
                     </div>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
@@ -267,7 +269,7 @@ export default function EmergencyEvents() {
                   {ev.location_name && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
                   {myRole && (
                     <span style={{ display: 'inline-block', marginTop: '0.5rem', background: 'var(--surface-2)', color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px' }}>
-                      {myRole === 'responder' ? 'You helped' : myRole === 'coordinator' ? 'You coordinated' : 'You were affected'}
+                      {myRole === 'responder' ? t('You helped') : myRole === 'coordinator' ? t('You coordinated') : t('You were affected')}
                     </span>
                   )}
                 </div>
