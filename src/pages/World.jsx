@@ -11,6 +11,7 @@ import Icon from '../components/Icon'
 import BringOrg from '../components/BringOrg'
 import { askConfirm } from '../components/AdminDialog'
 import { calmMotion } from '../utils/motion'
+import { useT } from '../utils/lang'
 
 // Oct 22: the Village Network (search, street map, every village and organization)
 // lives under the globe now. /villages opens this page.
@@ -60,6 +61,7 @@ function curve(p, q, bend) {
 }
 
 export default function World() {
+  const t = useT()
   const navigate = useNavigate()
   const { profile, organizations } = useAuth()
   const [params, setParams] = useSearchParams()
@@ -99,7 +101,7 @@ export default function World() {
     let alive = true
     supabase.rpc('village_network').then(({ data, error: err }) => {
       if (!alive) return
-      if (err) { console.error('Failed to load villages:', err); setError("We couldn't load the world. Check your connection and try again."); setVillages([]); return }
+      if (err) { console.error('Failed to load villages:', err); setError(t("We couldn't load the world. Check your connection and try again.")); setVillages([]); return }
       setVillages(data || [])
     })
     supabase.rpc('village_zip_points').then(({ data, error: err }) => {
@@ -245,7 +247,7 @@ export default function World() {
   }
 
   // Leaving the globe asks first (Oct 22), like every map.
-  const askGo = (name) => askConfirm('Go to ' + name + '?', { yes: 'Go there', no: 'Stay here' })
+  const askGo = (name) => askConfirm(t('Go to {name}?', { name }), { yes: t('Go there'), no: t('Stay here') })
   async function tapVillage(v) {
     if (v.is_mine) { if (await askGo(v.name)) zoomTo(v.gx, v.gy, '/village/' + v.id); return }
     openSheet({ kind: 'village', v })
@@ -263,12 +265,12 @@ export default function World() {
 
       <div className="wd-globe-wrap">
         {announceBoard && (
-          <button type="button" className="wd-news" aria-label="Announcements" onClick={() => navigate('/village-square?board=' + announceBoard)}><Icon name="megaphone" /></button>
+          <button type="button" className="wd-news" aria-label={t('Announcements')} onClick={() => navigate('/village-square?board=' + announceBoard)}><Icon name="megaphone" /></button>
         )}
         <div className={'wd-float' + (leaving ? ' wd-leaving' : '')}>
           <div ref={globeRef} className={'wd-globe' + (leaving ? (leaving.spin ? ' wd-spin' : ' wd-zoom') : '')}
             style={leaving ? { transformOrigin: leaving.x + '% ' + leaving.y + '%' } : undefined}>
-            <button type="button" className="wd-sea" aria-label="See every village, below the globe" onClick={seeAll}>
+            <button type="button" className="wd-sea" aria-label={t('See every village, below the globe')} onClick={seeAll}>
               <img src="/art/globe.webp" alt="" width="720" height="720" fetchpriority="high" />
             </button>
             <svg className="wd-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -296,7 +298,7 @@ export default function World() {
             {net === 'villages' && villageMap && villageMap.nodes.map((v) => (
               <button key={v.id} type="button" className={'wd-circle' + (v.is_mine ? ' wd-in' : ' wd-none')}
                 style={{ left: v.gx + '%', top: v.gy + '%', width: (v.gr * 2) + '%' }}
-                aria-label={v.name + (v.is_mine ? ', you are in. Step inside.' : ', not joined yet')}
+                aria-label={v.name + (v.is_mine ? t(', you are in. Step inside.') : t(', not joined yet'))}
                 onClick={() => tapVillage(v)}>
                 {v.is_mine && <span className="wd-em" aria-hidden="true"><Icon name="houses" /></span>}
               </button>
@@ -310,7 +312,7 @@ export default function World() {
             {net !== 'villages' && orgMap.nodes.map((o) => (
               <button key={o.id} type="button" className={'wd-org' + (o.mine ? ' wd-in' : ' wd-none')}
                 style={{ left: o.gx + '%', top: o.gy + '%' }}
-                aria-label={o.name + (o.mine ? ', you belong' : ', not joined yet')}
+                aria-label={o.name + (o.mine ? t(', you belong') : t(', not joined yet'))}
                 onClick={() => tapOrg(o)}>
                 <span className="wd-em" aria-hidden="true"><Icon name={o.kind === 'group' ? 'tent' : 'people'} /></span>
                 <span className="wd-org-tag">{o.mine ? '' : '+ '}{o.name}</span>
@@ -320,13 +322,13 @@ export default function World() {
             {view && view.lines.map((l, i) => (
               <button key={'m' + i} type="button" className={'wd-mid' + (net === 'villages' && !l.mine ? ' wd-faint' : '')}
                 style={{ left: l.x.toFixed(1) + '%', top: l.y.toFixed(1) + '%' }}
-                aria-label={(net === 'villages' ? 'Sister Campfire for ' : 'Shared Campfire for ') + l.a.name + ' and ' + l.b.name}
+                aria-label={t(net === 'villages' ? 'Sister Campfire for {a} and {b}' : 'Shared Campfire for {a} and {b}', { a: l.a.name, b: l.b.name })}
                 onClick={() => openSheet({ kind: net === 'villages' ? 'sister' : 'orglink', a: l.a, b: l.b })}>
                 <Icon name="campfire" />
               </button>
             ))}
             {net === 'groups' && orgMap.nodes.length === 0 && (
-              <p className="wd-empty-globe">No emergency crews yet.<br />Start the first one below.</p>
+              <p className="wd-empty-globe">{t('No emergency crews yet.')}<br />{t('Start the first one below.')}</p>
             )}
           </div>
         </div>
@@ -336,37 +338,37 @@ export default function World() {
           panel scrolls by itself and the globe stays put. On phones the panel is invisible
           and the page reads as before (the switch still comes first). */}
       <div className="wd-panel">
-      <div className="wd-switch" role="group" aria-label="Which network">
-        <button type="button" aria-pressed={net === 'villages'} onClick={() => setNet('villages')}><span aria-hidden="true"><Icon name="houses" /></span> Villages</button>
-        <button type="button" aria-pressed={net === 'orgs' || net === 'groups'} onClick={() => setNet('orgs')}><span aria-hidden="true"><Icon name="people" /></span> Groups</button>
+      <div className="wd-switch" role="group" aria-label={t('Which network')}>
+        <button type="button" aria-pressed={net === 'villages'} onClick={() => setNet('villages')}><span aria-hidden="true"><Icon name="houses" /></span> {t('Villages')}</button>
+        <button type="button" aria-pressed={net === 'orgs' || net === 'groups'} onClick={() => setNet('orgs')}><span aria-hidden="true"><Icon name="people" /></span> {t('Groups')}</button>
         {/* Oct 25: the third button opens the resource hub (the same page as Ask for help).
             Emergency crews are reached from the Groups view. */}
-        <button type="button" onClick={() => navigate('/ask')}><span aria-hidden="true"><Icon name="heart-hands" /></span> Resources</button>
+        <button type="button" onClick={() => navigate('/ask')}><span aria-hidden="true"><Icon name="heart-hands" /></span> {t('Resources')}</button>
       </div>
 
-      {villages === null && <p className="wd-sub" role="status">Loading your world...</p>}
+      {villages === null && <p className="wd-sub" role="status">{t('Loading your world...')}</p>}
       {error && <p className="vs-error" role="alert">{error}</p>}
 
-      <h1 className="wd-hint">{net === 'villages' ? (hasMine || villages === null ? 'Your villages' : 'Start here: find your village') : net === 'groups' ? 'Your emergency crews' : 'Your groups'}</h1>
+      <h1 className="wd-hint">{t(net === 'villages' ? (hasMine || villages === null ? 'Your villages' : 'Start here: find your village') : net === 'groups' ? 'Your emergency crews' : 'Your groups')}</h1>
       <p className="wd-sub">
         {net === 'villages'
-          ? (hasMine ? 'Villages overlap where they share zip codes. A gold line joins sister villages. A dotted path means neighbors from two villages have met in person. Tap your village to step inside.' : 'Your village is your neighbors by zip code. Type your zip code to join. It takes a minute.')
+          ? t(hasMine ? 'Villages overlap where they share zip codes. A gold line joins sister villages. A dotted path means neighbors from two villages have met in person. Tap your village to step inside.' : 'Your village is your neighbors by zip code. Type your zip code to join. It takes a minute.')
           : net === 'groups'
-            ? (myGroups.length ? 'Emergency crews help when disaster hits. Tap your crew to see who is ready and what you bring.' : (orgMap.nodes.length ? 'You are not in a crew yet. Emergency crews help when disaster hits. Tap one to see what it does.' : 'No crews yet. Emergency crews help when disaster hits. You can start one.'))
-            : (myRealOrgs.length ? 'Groups are people working together, not places. A gold line joins two that chose to connect.' : 'You do not belong to a group yet. Tap one to see what it does.')}
+            ? t(myGroups.length ? 'Emergency crews help when disaster hits. Tap your crew to see who is ready and what you bring.' : (orgMap.nodes.length ? 'You are not in a crew yet. Emergency crews help when disaster hits. Tap one to see what it does.' : 'No crews yet. Emergency crews help when disaster hits. You can start one.'))
+            : t(myRealOrgs.length ? 'Groups are people working together, not places. A gold line joins two that chose to connect.' : 'You do not belong to a group yet. Tap one to see what it does.')}
       </p>
 
       <div className="wd-actions">
-        {net === 'villages' && !hasMine && villages !== null && <button type="button" className="btn btn-primary btn-full wd-start" onClick={() => navigate('/find-village')}>Find my village</button>}
-        {net === 'groups' && !myGroups.length && <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/start-group')}>Start an emergency crew</button>}
-        {net === 'orgs' && <button type="button" className="btn btn-outline btn-full" onClick={() => setNet('groups')}><Icon name="tent" /> See emergency crews</button>}
-        {net === 'groups' && <button type="button" className="btn btn-outline btn-full" onClick={() => setNet('orgs')}><Icon name="people" /> Back to groups</button>}
-        <button type="button" className="btn btn-outline btn-full" onClick={seeAll}>{net === 'villages' ? 'Find a village by zip code or town' : net === 'groups' ? 'See every crew' : 'See every group'}</button>
+        {net === 'villages' && !hasMine && villages !== null && <button type="button" className="btn btn-primary btn-full wd-start" onClick={() => navigate('/find-village')}>{t('Find my village')}</button>}
+        {net === 'groups' && !myGroups.length && <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/start-group')}>{t('Start an emergency crew')}</button>}
+        {net === 'orgs' && <button type="button" className="btn btn-outline btn-full" onClick={() => setNet('groups')}><Icon name="tent" /> {t('See emergency crews')}</button>}
+        {net === 'groups' && <button type="button" className="btn btn-outline btn-full" onClick={() => setNet('orgs')}><Icon name="people" /> {t('Back to groups')}</button>}
+        <button type="button" className="btn btn-outline btn-full" onClick={seeAll}>{t(net === 'villages' ? 'Find a village by zip code or town' : net === 'groups' ? 'See every crew' : 'See every group')}</button>
       </div>
 
       {/* The Village Network: search, street map and full lists for the network picked above. */}
-      <section ref={networkRef} className="wd-network-wrap" aria-label={net === 'villages' ? 'Every village' : net === 'groups' ? 'Every crew' : 'Every group'}>
-        <Suspense fallback={<p className="cal-empty">Loading...</p>}>
+      <section ref={networkRef} className="wd-network-wrap" aria-label={t(net === 'villages' ? 'Every village' : net === 'groups' ? 'Every crew' : 'Every group')}>
+        <Suspense fallback={<p className="cal-empty">{t('Loading...')}</p>}>
           <VillageMap embedded net={net} />
         </Suspense>
         {net === 'orgs' && <div className="cal-page wd-network"><BringOrg /></div>}
@@ -378,22 +380,22 @@ export default function World() {
           <div className="vs-sheet" role="dialog" aria-modal="true" aria-labelledby="wd-sheet-title" ref={sheetRef}>
             {sheet.kind === 'village' && <>
               <h2 id="wd-sheet-title"><span aria-hidden="true"><Icon name="houses" /></span> {sheet.v.name}</h2>
-              <p>{sheet.v.member_count ? sheet.v.member_count + ' neighbors' : 'Just getting started'}{sheet.v.towns ? '. ' + sheet.v.towns : ''}</p>
-              <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/find-village?join=' + sheet.v.id)}>Join {sheet.v.name}</button>
-              <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/village/' + sheet.v.id)}>Look around first</button>
-              <p className="vs-note">If your zip code is not in this village, you can join as a guest when a member invites you or when it becomes a sister of your village.</p>
+              <p>{sheet.v.member_count ? t(Number(sheet.v.member_count) === 1 ? '1 neighbor' : '{n} neighbors', { n: sheet.v.member_count }) : t('Just getting started')}{sheet.v.towns ? '. ' + sheet.v.towns : ''}</p>
+              <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/find-village?join=' + sheet.v.id)}>{t('Join {name}', { name: sheet.v.name })}</button>
+              <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/village/' + sheet.v.id)}>{t('Look around first')}</button>
+              <p className="vs-note">{t('If your zip code is not in this village, you can join as a guest when a member invites you or when it becomes a sister of your village.')}</p>
             </>}
             {sheet.kind === 'sister' && <>
-              <h2 id="wd-sheet-title"><span aria-hidden="true"><Icon name="campfire" /></span> {sheet.a.name} and {sheet.b.name}</h2>
-              <p>These are sister villages. They share a Sister Campfire. Anyone in either village can join it.</p>
+              <h2 id="wd-sheet-title"><span aria-hidden="true"><Icon name="campfire" /></span> {t('{a} and {b}', { a: sheet.a.name, b: sheet.b.name })}</h2>
+              <p>{t('These are sister villages. They share a Sister Campfire. Anyone in either village can join it.')}</p>
               <SisterCampfireButton campfire={sisterFires.find((c) => [c.village_a, c.village_b].sort().join('|') === [sheet.a.id, sheet.b.id].sort().join('|'))} />
             </>}
             {sheet.kind === 'orglink' && <>
-              <h2 id="wd-sheet-title"><span aria-hidden="true"><Icon name="campfire" /></span> {sheet.a.name} and {sheet.b.name}</h2>
-              <p>These groups are connected. Their Heads and organizers share a Campfire. Find it under Cottage Chats and Campfires in Messages.</p>
-              <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/messages')}>Open Messages</button>
+              <h2 id="wd-sheet-title"><span aria-hidden="true"><Icon name="campfire" /></span> {t('{a} and {b}', { a: sheet.a.name, b: sheet.b.name })}</h2>
+              <p>{t('These groups are connected. Their Heads and organizers share a Campfire. Find it under Cottage Chats and Campfires in Messages.')}</p>
+              <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/messages')}>{t('Open Messages')}</button>
             </>}
-            <button type="button" className="btn btn-outline btn-full" onClick={closeSheet}>Back to the globe</button>
+            <button type="button" className="btn btn-outline btn-full" onClick={closeSheet}>{t('Back to the globe')}</button>
           </div>
         </div>
       )}

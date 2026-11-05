@@ -5,6 +5,7 @@ import { markNotificationRead } from '../utils/notificationHelpers'
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
 import Icon from './Icon'
 import { personalAlertLink } from '../utils/alertLink'
+import { useT } from '../utils/lang'
 
 // The Alerts button in the top bar. Tapping it opens a small popout with
 // your 5 newest alerts and a "See all alerts" button that opens the full
@@ -14,6 +15,7 @@ import { personalAlertLink } from '../utils/alertLink'
 const SHOW = 5
 
 export default function AlertsMenu() {
+  const t = useT()
   const navigate = useNavigate()
   // badgeCount = new since you last opened Alerts (the same number the top
   // bar has always shown). It clears when the popout opens.
@@ -77,20 +79,20 @@ export default function AlertsMenu() {
         aria-expanded={open}
         aria-controls="alertsMenuList"
         aria-haspopup="true"
-        aria-label={badgeCount > 0 ? 'Alerts, ' + badgeCount + ' new' : 'Alerts'}
+        aria-label={badgeCount > 0 ? t('Alerts, {n} new', { n: badgeCount }) : t('Alerts')}
       >
         <Icon name="bell" size={26} className="header-btn-pic" />
-        <span className="header-btn-label" aria-hidden="true">Alerts</span>
+        <span className="header-btn-label" aria-hidden="true">{t('Alerts')}</span>
         {badgeCount > 0 && <span className="bell-badge" aria-hidden="true">{badgeCount > 9 ? '9+' : badgeCount}</span>}
       </button>
 
       {open && (
         <>
-          <button type="button" className="app-menu-scrim" aria-label="Close alerts" tabIndex={-1} onClick={() => setOpen(false)} />
+          <button type="button" className="app-menu-scrim" aria-label={t('Close alerts')} tabIndex={-1} onClick={() => setOpen(false)} />
           <div id="alertsMenuList" className="app-menu-list alerts-popout" ref={menuRef} style={{ position: 'fixed', top: top + 'px', right: '0.75rem', left: 'auto' }}>
-            <p className="app-menu-heading">Latest alerts</p>
+            <p className="app-menu-heading">{t('Latest alerts')}</p>
             {recent.length === 0 ? (
-              <p className="alerts-popout-empty">You're all caught up.</p>
+              <p className="alerts-popout-empty">{t("You're all caught up.")}</p>
             ) : recent.map(n => {
               const color = TYPE_COLORS[n.type] || '#6b7280'
               return (
@@ -99,19 +101,19 @@ export default function AlertsMenu() {
                     <Icon name={TYPE_ICONS[n.type] || 'bell'} />
                   </span>
                   <span className="alerts-popout-text">
-                    {!n.read && <span className="sr-only">New. </span>}
-                    {n.follow_up && <span className="sr-only">Flagged to follow up. </span>}
-                    <span className="alerts-popout-title">{n.title}</span>
+                    {!n.read && <span className="sr-only">{t('New') + '. '}</span>}
+                    {n.follow_up && <span className="sr-only">{t('Flagged to follow up.') + ' '}</span>}
+                    <span className="alerts-popout-title">{t(n.title)}</span>
                     <span className="alerts-popout-time">
                       {timeAgo(n.created_at)}
-                      {n.follow_up && <span className="alerts-popout-flag" aria-hidden="true"> <Icon name="flag" /> Follow up</span>}
+                      {n.follow_up && <span className="alerts-popout-flag" aria-hidden="true"> <Icon name="flag" /> {t('Follow up')}</span>}
                     </span>
                   </span>
                   {!n.read && <span className="unread-dot" aria-hidden="true" />}
                 </button>
               )
             })}
-            <button type="button" className="alerts-popout-more" onClick={seeAll}>See all alerts</button>
+            <button type="button" className="alerts-popout-more" onClick={seeAll}>{t('See all alerts')}</button>
           </div>
         </>
       )}

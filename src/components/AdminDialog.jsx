@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { calmMotion } from '../utils/motion'
+import { useT } from '../utils/lang'
 
 // In-page "Are you sure?" panels and short notes, in place of the browser's
 // pop-ups. Started in Admin; now used across the app (the host is in App.jsx). The panel sits at the bottom of the screen, where a thumb
@@ -43,6 +44,7 @@ export function tell(message, opts = {}) {
 }
 
 export function AdminDialogHost() {
+  const t = useT()
   const [panel, setPanel] = useState(null)
   const [notes, setNotes] = useState([])
   const [text, setText] = useState('')
@@ -129,8 +131,8 @@ export function AdminDialogHost() {
               </label>
             )}
             <div className="admin-dialog-actions">
-              <button type="button" className="btn btn-outline" onClick={() => finish(null)}>{o.no || 'Cancel'}</button>
-              <button type="button" className={'btn ' + (o.danger ? 'btn-danger admin-dialog-danger' : 'btn-primary')} onClick={() => finish({ text: text.trim() })}>{o.yes || 'Yes'}</button>
+              <button type="button" className="btn btn-outline" onClick={() => finish(null)}>{o.no || t('Cancel')}</button>
+              <button type="button" className={'btn ' + (o.danger ? 'btn-danger admin-dialog-danger' : 'btn-primary')} onClick={() => finish({ text: text.trim() })}>{o.yes || t('Yes')}</button>
             </div>
           </div>
         </div>
@@ -153,6 +155,7 @@ export function AdminDialogHost() {
 // One note that follows a finger sideways and closes when swiped far or fast
 // enough. Taps on its buttons work as before. Mouse drags work too.
 function SwipeNote({ note: n, onClose, onHold, onRelease }) {
+  const t = useT()
   const ref = useRef(null)
   const drag = useRef(null)
   const [dx, setDx] = useState(0)
@@ -217,7 +220,7 @@ function SwipeNote({ note: n, onClose, onHold, onRelease }) {
       {n.action && (
         <button type="button" className="admin-note-action" onClick={() => { onClose(); n.action.run() }}>{n.action.label}</button>
       )}
-      <button type="button" aria-label="Close" onClick={onClose}>&times;</button>
+      <button type="button" aria-label={t('Close')} onClick={onClose}>&times;</button>
     </div>
   )
 }

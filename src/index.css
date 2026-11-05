@@ -2309,6 +2309,7 @@ a:focus:not(:focus-visible) {
 }
 .notifications-filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
 }
@@ -5974,7 +5975,7 @@ a.tr-link:focus-visible, a.tr-link:hover { background: var(--surface-2, transpar
 .qa-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .qa-btn:active { transform: scale(0.97); }
 .qa-btn-icon { display: flex; }
-.qa-btn-label { overflow-wrap: anywhere; }
+.qa-btn-label { overflow-wrap: break-word; hyphens: auto; }
 .qa-simple .qa-btn { min-height: 120px; font-size: 1.15rem; }
 .qa-link {
   display: block; margin: 0.5rem auto 0; min-height: 44px; padding: 0 0.75rem;

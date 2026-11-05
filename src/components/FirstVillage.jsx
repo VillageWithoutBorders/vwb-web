@@ -6,6 +6,7 @@ import { lookupZip, saveZip } from '../utils/location'
 import { peekReturnTo } from '../utils/returnTo'
 import VillageRiskDialog from './VillageRiskDialog'
 import Icon from './Icon'
+import { useT } from '../utils/lang'
 
 // First run, step 2 (after the Community Guidelines, before Simple view and
 // the tour): find your village.
@@ -36,12 +37,13 @@ const WORDS = {
   missing: 'We could not find that village. It may have closed.',
 }
 
-function countText(v) {
-  if (v.just_starting || v.member_count == null) return 'Just getting started'
-  return v.member_count + ' neighbors'
+function countText(v, t) {
+  if (v.just_starting || v.member_count == null) return t('Just getting started')
+  return t(Number(v.member_count) === 1 ? '1 neighbor' : '{n} neighbors', { n: v.member_count })
 }
 
 export default function FirstVillage() {
+  const t = useT()
   const { user, profile, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const [step, setStep] = useState('zip') // zip, list, joined
@@ -73,7 +75,7 @@ export default function FirstVillage() {
     setBusy(false)
     if (err) {
       console.error('First village: failed to find villages:', err)
-      setError('We could not load the villages. Try again in a moment.')
+      setError(t('We could not load the villages. Try again in a moment.'))
       return false
     }
     setVillages(data || [])
@@ -86,13 +88,13 @@ export default function FirstVillage() {
     if (busy) return
     setError('')
     const clean = zip.replace(/[^0-9]/g, '').slice(0, 5)
-    if (clean.length !== 5) { setError('Type the 5 numbers of your zip code.'); return }
+    if (clean.length !== 5) { setError(t('Type the 5 numbers of your zip code.')); return }
     setBusy(true)
     const found = await lookupZip(clean)
-    if (!found) { setBusy(false); setError('We could not find that zip code. Check it and try again.'); return }
+    if (!found) { setBusy(false); setError(t('We could not find that zip code. Check it and try again.')); return }
     const saveErr = await saveZip(user.id, clean)
     setBusy(false)
-    if (saveErr) { setError(saveErr); return }
+    if (saveErr) { setError(t(saveErr)); return }
     setPlace(found.label)
     await loadVillages()
   }
@@ -103,7 +105,7 @@ export default function FirstVillage() {
     setBusy(true); setError('')
     if (optIn !== undefined) {
       const { error: err } = await supabase.from('helper_profiles').update({ village_opt_in: optIn }).eq('user_id', user.id)
-      if (err) { console.error('First village: failed to save answer:', err); setError('Could not save that. Try again.'); setBusy(false); return }
+      if (err) { console.error('First village: failed to save answer:', err); setError(t('Could not save that. Try again.')); setBusy(false); return }
     }
     // Came from a link (a QR code, an event, a chat link)? Go back there first.
     // Already on that page (the confirm email can open it straight away)? Stay.
@@ -134,12 +136,12 @@ export default function FirstVillage() {
     if (err) {
       console.error('First village: failed to join:', err)
       setBusy(false)
-      if (risk) setRiskError('Could not join. Try again.')
-      else setError('Could not join. Try again.')
+      if (risk) setRiskError(t('Could not join. Try again.'))
+      else setError(t('Could not join. Try again.'))
       return
     }
     setRisk(null)
-    if (data !== 'ok') { setBusy(false); setError(WORDS[data] || 'Could not join. Try again.'); return }
+    if (data !== 'ok') { setBusy(false); setError(t(WORDS[data] || 'Could not join. Try again.')); return }
     // The chat for this village.
     let boardId = v.board_id || null
     if (!boardId) {
@@ -166,7 +168,7 @@ export default function FirstVillage() {
       { onConflict: 'user_id,board_id' }
     )
     setBusy(false)
-    if (err) { console.error('First village: failed to save alert choice:', err); setError('Could not save that. Try again.'); return }
+    if (err) { console.error('First village: failed to save alert choice:', err); setError(t('Could not save that. Try again.')); return }
     // Open the village chat with a short hello ready to send.
     finish(undefined, '/village-square?board=' + joined.boardId + '&intro=1')
   }
@@ -187,52 +189,52 @@ export default function FirstVillage() {
 
         {step === 'zip' && (
           <form className="login-form" onSubmit={submitZip} noValidate>
-            <h1 className="fv1-h" tabIndex={-1} ref={headRef}>Find your village</h1>
-            <p className="fv1-text">A village is the neighbors who live near you. Type your zip code and we will show you the village for your area.</p>
+            <h1 className="fv1-h" tabIndex={-1} ref={headRef}>{t('Find your village')}</h1>
+            <p className="fv1-text">{t('A village is the neighbors who live near you. Type your zip code and we will show you the village for your area.')}</p>
             <div className="form-field">
-              <label htmlFor="fv1-zip">Your zip code</label>
+              <label htmlFor="fv1-zip">{t('Your zip code')}</label>
               <input id="fv1-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} placeholder="12345"
                 value={zip} onChange={(e) => { setZip(e.target.value.replace(/[^0-9]/g, '')); setError('') }}
                 aria-describedby={'fv1-zip-note' + (error ? ' fv1-err' : '')} aria-invalid={error ? true : undefined} />
-              <p id="fv1-zip-note" className="fv1-note">Only you and VWB admins can see your zip code. We never show where you live.</p>
+              <p id="fv1-zip-note" className="fv1-note">{t('Only you and VWB admins can see your zip code. We never show where you live.')}</p>
             </div>
             {error && <p id="fv1-err" className="form-error" role="alert">{error}</p>}
-            <button type="submit" className="btn btn-primary btn-full" disabled={busy}>{busy ? 'Looking...' : 'Show my village'}</button>
-            <button type="button" className="btn btn-outline btn-full fv1-gap" disabled={busy} onClick={() => finish(false)}>Not now</button>
-            <p className="fv1-note">You can find your village later. Tap My Village at the top.</p>
+            <button type="submit" className="btn btn-primary btn-full" disabled={busy}>{busy ? t('Looking...') : t('Show my village')}</button>
+            <button type="button" className="btn btn-outline btn-full fv1-gap" disabled={busy} onClick={() => finish(false)}>{t('Not now')}</button>
+            <p className="fv1-note">{t('You can find your village later. Tap My Village at the top.')}</p>
           </form>
         )}
 
         {step === 'list' && (
           <div className="login-form">
             <h1 className="fv1-h" tabIndex={-1} ref={headRef}>
-              {mine.length ? 'You are in a village' : canJoin.length ? 'Your village' + (canJoin.length > 1 ? 's' : '') : 'No village here yet'}
+              {mine.length ? t('You are in a village') : canJoin.length ? t(canJoin.length > 1 ? 'Your villages' : 'Your village') : t('No village here yet')}
             </h1>
-            {where && <p className="fv1-text">Near {where}. <button type="button" className="link-button fv1-link" disabled={busy} onClick={() => { setStep('zip'); setError('') }}>Change zip code</button></p>}
+            {where && <p className="fv1-text">{t('Near {place}.', { place: where })} <button type="button" className="link-button fv1-link" disabled={busy} onClick={() => { setStep('zip'); setError('') }}>{t('Change zip code')}</button></p>}
 
             {mine.length > 0 && (
               <>
                 {mine.map((v) => (
                   <div key={v.id} className="cal-card fv1-village">
                     <span className="cal-card-title">{v.name}</span>
-                    {v.towns && <span className="cal-card-meta fv1-meta">Covers {v.towns}</span>}
+                    {v.towns && <span className="cal-card-meta fv1-meta">{t('Covers {towns}', { towns: v.towns })}</span>}
                   </div>
                 ))}
-                <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => finish(true)}>Continue</button>
+                <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => finish(true)}>{t('Continue')}</button>
               </>
             )}
 
             {!mine.length && canJoin.length > 0 && (
               <>
                 <p className="fv1-text">{canJoin.length > 1
-                  ? 'These villages cover your zip code. Pick one to start. You can join more later.'
-                  : 'This village covers your zip code. Join to meet your neighbors in the village chat.'}</p>
+                  ? t('These villages cover your zip code. Pick one to start. You can join more later.')
+                  : t('This village covers your zip code. Join to meet your neighbors in the village chat.')}</p>
                 {canJoin.map((v) => (
                   <div key={v.id} className="cal-card fv1-village">
                     <span className="cal-card-title">{v.name}</span>
-                    <span className="cal-card-meta fv1-meta">{countText(v)}{v.miles_away != null ? ' · about ' + v.miles_away + ' miles away' : ''}</span>
-                    {v.towns && <span className="cal-card-meta fv1-meta">Covers {v.towns}</span>}
-                    <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => join(v)}>{busy ? 'Joining...' : 'Join ' + v.name}</button>
+                    <span className="cal-card-meta fv1-meta">{countText(v, t)}{v.miles_away != null ? ' · ' + t('about {n} miles away', { n: v.miles_away }) : ''}</span>
+                    {v.towns && <span className="cal-card-meta fv1-meta">{t('Covers {towns}', { towns: v.towns })}</span>}
+                    <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => join(v)}>{busy ? t('Joining...') : t('Join {name}', { name: v.name })}</button>
                   </div>
                 ))}
               </>
@@ -240,38 +242,38 @@ export default function FirstVillage() {
 
             {!mine.length && canJoin.length === 0 && (
               <>
-                <p className="fv1-text">No village covers {where || 'your zip code'} yet. Any neighbor can start one. You pick the name and the zip codes it covers.</p>
+                <p className="fv1-text">{where ? t('No village covers {place} yet.', { place: where }) : t('No village covers your zip code yet.')} {t('Any neighbor can start one. You pick the name and the zip codes it covers.')}</p>
                 {nearby.length > 0 && (
                   <>
-                    <h2 className="fv1-h2">Closest villages</h2>
+                    <h2 className="fv1-h2">{t('Closest villages')}</h2>
                     {nearby.map((v) => (
                       <div key={v.id} className="cal-card fv1-village">
                         <span className="cal-card-title">{v.name}</span>
-                        <span className="cal-card-meta fv1-meta">About {v.miles_away} miles away{v.towns ? ' · covers ' + v.towns : ''}</span>
+                        <span className="cal-card-meta fv1-meta">{t('About {n} miles away', { n: v.miles_away })}{v.towns ? ' · ' + t('covers {towns}', { towns: v.towns }) : ''}</span>
                       </div>
                     ))}
-                    <p className="fv1-note">Your zip code is not on their lists, so you cannot join them yet. A member can invite you as a guest.</p>
+                    <p className="fv1-note">{t('Your zip code is not on their lists, so you cannot join them yet. A member can invite you as a guest.')}</p>
                   </>
                 )}
-                <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => finish(true, '/find-village?start=1')}>Start a village</button>
+                <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => finish(true, '/find-village?start=1')}>{t('Start a village')}</button>
               </>
             )}
 
             {error && <p className="form-error" role="alert">{error}</p>}
-            {!mine.length && <button type="button" className="btn btn-outline btn-full fv1-gap" disabled={busy} onClick={() => finish(false)}>Not now</button>}
+            {!mine.length && <button type="button" className="btn btn-outline btn-full fv1-gap" disabled={busy} onClick={() => finish(false)}>{t('Not now')}</button>}
           </div>
         )}
 
         {step === 'joined' && (
           <div className="login-form">
-            <h1 className="fv1-h" tabIndex={-1} ref={headRef}>You joined {joined?.name}</h1>
+            <h1 className="fv1-h" tabIndex={-1} ref={headRef}>{t('You joined {name}', { name: joined?.name || '' })}</h1>
             {joined?.story && <p className="fv1-story">{joined.story}</p>}
-            <p className="fv1-text">Welcome, neighbor. Your village has its own page: a little map where each picture is a place. The tour will show you around it. First, you can say hi in the village chat. We fill in a short hello for you.</p>
-            <h2 className="fv1-h2">Get a notification for new messages?</h2>
-            <p className="fv1-note">We send one notification after the chat goes quiet, not one for every message. You can change this any time in the chat settings.</p>
+            <p className="fv1-text">{t('Welcome, neighbor. Your village has its own page: a little map where each picture is a place. The tour will show you around it. First, you can say hi in the village chat. We fill in a short hello for you.')}</p>
+            <h2 className="fv1-h2">{t('Get a notification for new messages?')}</h2>
+            <p className="fv1-note">{t('We send one notification after the chat goes quiet, not one for every message. You can change this any time in the chat settings.')}</p>
             {error && <p className="form-error" role="alert">{error}</p>}
-            <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => answerAlerts(true)}>Yes, notify me</button>
-            <button type="button" className="btn btn-outline btn-full fv1-gap" disabled={busy} onClick={() => answerAlerts(false)}>Not now</button>
+            <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => answerAlerts(true)}>{t('Yes, notify me')}</button>
+            <button type="button" className="btn btn-outline btn-full fv1-gap" disabled={busy} onClick={() => answerAlerts(false)}>{t('Not now')}</button>
           </div>
         )}
       </div>

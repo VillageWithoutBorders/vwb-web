@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { askConfirm } from './AdminDialog'
 import { useOwnBack } from './BackLink'
 import { calmMotion } from '../utils/motion'
+import { useT, t } from '../utils/lang'
 
 // The map builder (Oct 22): Arrange and build for every map page.
 // Your cottage, village pages, organization and group pages all use it.
@@ -211,7 +212,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     if (!prev) return
     saveWorld(prev)
     if (picked && picked.startsWith('d:') && !prev.decor.some((d) => d.id === picked.slice(2))) setPicked(null)
-    setLayoutNote('Undone.')
+    setLayoutNote(t('Undone.'))
   }
   const placed = (s) => (layout[s.k] ? { ...s, ...layout[s.k] } : s)
   const isHidden = (k) => !!(layout[k] && layout[k].hide)
@@ -258,7 +259,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
       if (pts.length >= 2) {
         const w = worldRef.current
         const kind = drawKindRef.current === 'stream' ? 'streams' : 'roads'
-        if (w[kind].length >= 30) { setLayoutNote(kind === 'streams' ? 'That is a lot of streams. Take one away to draw another.' : 'That is a lot of roads. Take one away to draw another.'); return }
+        if (w[kind].length >= 30) { setLayoutNote(t(kind === 'streams' ? 'That is a lot of streams. Take one away to draw another.' : 'That is a lot of roads. Take one away to draw another.')); return }
         commit({ ...w, [kind]: [...w[kind], pts] })
       }
       return
@@ -297,7 +298,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     if (!picked) return
     const cur = pickedLayer()
     const next = Math.max(pickedDecor ? LAYER_MIN : PLACE_LAYER_MIN, Math.min(LAYER_MAX, cur + by))
-    if (next === cur) { setLayoutNote(by > 0 ? 'This piece is already in front of everything.' : 'This piece is already behind everything.'); return }
+    if (next === cur) { setLayoutNote(t(by > 0 ? 'This piece is already in front of everything.' : 'This piece is already behind everything.')); return }
     changePicked({ z: next })
   }
   function flipPicked() {
@@ -305,7 +306,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
     changePicked({ flip: !(pickedDecor ? pickedDecor.flip : layout[picked] && layout[picked].flip) })
   }
   function addDecor(piece) {
-    if (world.decor.length >= 80) { setLayoutNote('This map is full. Take a piece away to add another.'); return }
+    if (world.decor.length >= 80) { setLayoutNote(t('This map is full. Take a piece away to add another.')); return }
     const id = Math.random().toString(36).slice(2, 8)
     // Land it in the middle of the part of the map you can see.
     // Oct 28: and never under the tool panel. The open panel covers most of the right
@@ -347,7 +348,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
   function pickByKey(key) { if (tool === 'move') { setPicked(key); setPickTools(true); setToolsHidden(false) } }
   useEffect(() => {
     if (!arrange || !picked || !sceneRef.current) return
-    const t = setTimeout(() => {
+    const tm = setTimeout(() => {
       const el = picked.startsWith('d:') ? sceneRef.current.querySelector('.vs-picked') : sceneRef.current.querySelector('[data-spot="' + picked + '"]')
       if (!el || window.innerWidth >= 1024) return
       // Phones: the tools sit on the right side, so only scroll if the piece is off screen.
@@ -360,7 +361,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
       else if (r.bottom > foot) { window.scrollBy({ top: r.bottom - foot + 24, behavior: how }); mid -= r.bottom - foot + 24 }
       setPanelLow(mid < (head + foot) / 2)
     }, 60)
-    return () => clearTimeout(t)
+    return () => clearTimeout(tm)
   }, [arrange, picked])
   const hiddenCount = spots.filter((v) => isHidden(v.k)).length
   function openArrange(startWorld) {
@@ -556,7 +557,7 @@ export function useMapBuilder({ spots, initial, onSave, base }) {
 // Tapping a place on a map asks first (Oct 22, Jade): "Go to Calendar?" Go there / Stay here.
 // Places that open a box on the same page do not ask: the box is the popup.
 export function askGoTo(spot, sub) {
-  return askConfirm('Go to ' + spot.label + '?' + (sub ? ' ' + sub + '.' : ''), { yes: 'Go there', no: 'Stay here' })
+  return askConfirm(t('Go to {place}?', { place: t(spot.label) }) + (sub ? ' ' + t(sub) + '.' : ''), { yes: t('Go there'), no: t('Stay here') })
 }
 
 export function sceneProps(b, extraClass, onHold) {
@@ -610,6 +611,7 @@ export function zoomLayer(b) {
 // Under the map: show or hide names, and one magnifier (Oct 28, Jade): one tap
 // zooms in, the next tap goes back to the whole map. Drag to look around while zoomed.
 export function NamesToggle({ b, onChange }) {
+  useT()
   const z = b.zoom.z
   return (
     <div className="vs-map-under">
@@ -617,11 +619,11 @@ export function NamesToggle({ b, onChange }) {
         <button type="button" className="vs-names-toggle" aria-pressed={b.namesShowing}
           onClick={() => onChange(b.namesShowing ? 'hide' : 'show')}>
           <ToolIcon name={b.namesShowing ? 'eye' : 'tag'} />
-          <span>{b.namesShowing ? 'Hide names' : 'Show names'}</span>
+          <span>{t(b.namesShowing ? 'Hide names' : 'Show names')}</span>
         </button>
       )}
       <button type="button" className="vs-zoom-btn vs-zoom-one" aria-pressed={z > 1} onClick={() => (z > 1 ? b.zoomReset() : b.zoomBy(2))}>
-        <ToolIcon name={z > 1 ? 'unmagnify' : 'magnify'} /><span>{z > 1 ? 'Whole map' : 'Zoom in'}</span>
+        <ToolIcon name={z > 1 ? 'unmagnify' : 'magnify'} /><span>{t(z > 1 ? 'Whole map' : 'Zoom in')}</span>
       </button>
     </div>
   )
@@ -634,108 +636,109 @@ export function MapToolbar({ b, more }) {
   const { world, layout, spots, tool, setTool, trayOpen, setTrayOpen, trayTab, setTrayTab, picked, setPicked, pickTools,
     panelLow, layoutNote, setLayoutNote, pickedDecor, isHidden, hiddenCount, resize, flipPicked, layerPicked, pickedLayer, removePicked, changePicked,
     nudge, commit, addDecor, canUndo, undo, closeArrange, toolsHidden, setToolsHidden, moving } = b
+  useT()
   if (!b.arrange) return <div className="vs-arrange" />
   return (
     <div className="vs-arrange vs-arrange-on">
       {/* Oct 28 (Jade): Hide tools / Tools lives in the top right corner of the screen,
           outside the sliding rail, so it never moves or hides. */}
       <button type="button" className={'vs-tools-toggle' + (moving ? ' vs-tools-toggle-moving' : '')} aria-expanded={!toolsHidden} onClick={() => setToolsHidden(!toolsHidden)}>
-        <ToolIcon name={toolsHidden ? 'left' : 'right'} /><span>{toolsHidden ? 'Show tools' : 'Hide tools'}</span>
+        <ToolIcon name={toolsHidden ? 'left' : 'right'} /><span>{t(toolsHidden ? 'Show tools' : 'Hide tools')}</span>
       </button>
-      <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked && pickTools) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + ((panelLow && picked && !trayOpen) || tool !== 'move' ? ' vs-toolbar-low' : '') + (tool !== 'move' ? ' vs-toolbar-draw' : '') + (toolsHidden ? ' vs-toolbar-hidden' : '') + (moving ? ' vs-toolbar-moving' : '')} role="region" aria-label="Arrange and build tools">
+      <div className={'vs-toolbar' + (trayOpen || (tool === 'move' && picked && pickTools) || tool !== 'move' || layoutNote ? ' vs-toolbar-wide' : '') + ((panelLow && picked && !trayOpen) || tool !== 'move' ? ' vs-toolbar-low' : '') + (tool !== 'move' ? ' vs-toolbar-draw' : '') + (toolsHidden ? ' vs-toolbar-hidden' : '') + (moving ? ' vs-toolbar-moving' : '')} role="region" aria-label={t('Arrange and build tools')}>
         <div className="vs-toolpanel" inert={toolsHidden}>
         {trayOpen && (
           <button type="button" className="vs-drawer-close" onClick={() => { setTrayOpen(false); setPicked(null) }}>
-            <ToolIcon name="right" /><span>Close Add</span>
+            <ToolIcon name="right" /><span>{t('Close Add')}</span>
           </button>
         )}
         {layoutNote && <p className="vs-tool-note" role="status">{layoutNote}</p>}
-        {!layoutNote && tool === 'move' && !picked && !trayOpen && <p className="vs-tool-note">Drag a place to move it, or tap it for more choices. Tap <b>Add</b> for trees, bridges, and more.</p>}
+        {!layoutNote && tool === 'move' && !picked && !trayOpen && <p className="vs-tool-note">{t('Drag a place to move it, or tap it for more choices. Tap Add for trees, bridges, and more.')}</p>}
 
             {tool === 'move' && picked && pickTools && !trayOpen && (
               <div className="vs-tool-picked">
                 <div className="vs-tool-picked-head">
-                  <b>{pickedDecor ? ((DECOR_PIECES.find((p) => p.k === pickedDecor.k) || {}).label || 'Piece') : (spots.find((v) => v.k === picked) || {}).label}{!pickedDecor && isHidden(picked) ? ' (hidden)' : ''}</b>
-                  <button type="button" className="vs-tool-x" aria-label="Stop changing this" onClick={() => setPicked(null)}><ToolIcon name="close" /></button>
+                  <b>{t(pickedDecor ? ((DECOR_PIECES.find((p) => p.k === pickedDecor.k) || {}).label || 'Piece') : (spots.find((v) => v.k === picked) || {}).label)}{!pickedDecor && isHidden(picked) ? ' ' + t('(hidden)') : ''}</b>
+                  <button type="button" className="vs-tool-x" aria-label={t('Stop changing this')} onClick={() => setPicked(null)}><ToolIcon name="close" /></button>
                 </div>
                 <div className="vs-tool-row">
-                  <button type="button" className="vs-tool" onClick={() => resize(-0.1)}><ToolIcon name="minus" /><span>Smaller</span></button>
-                  <button type="button" className="vs-tool" onClick={() => resize(0.1)}><ToolIcon name="plus" /><span>Bigger</span></button>
-                  <button type="button" className="vs-tool" onClick={flipPicked}><ToolIcon name="flip" /><span>Flip</span></button>
+                  <button type="button" className="vs-tool" onClick={() => resize(-0.1)}><ToolIcon name="minus" /><span>{t('Smaller')}</span></button>
+                  <button type="button" className="vs-tool" onClick={() => resize(0.1)}><ToolIcon name="plus" /><span>{t('Bigger')}</span></button>
+                  <button type="button" className="vs-tool" onClick={flipPicked}><ToolIcon name="flip" /><span>{t('Flip')}</span></button>
                   {pickedDecor
-                    ? <button type="button" className="vs-tool" onClick={removePicked}><ToolIcon name="trash" /><span>Remove</span></button>
-                    : <button type="button" className="vs-tool" onClick={() => changePicked({ hide: !isHidden(picked) })}><ToolIcon name="eye" /><span>{isHidden(picked) ? 'Show' : 'Hide'}</span></button>}
+                    ? <button type="button" className="vs-tool" onClick={removePicked}><ToolIcon name="trash" /><span>{t('Remove')}</span></button>
+                    : <button type="button" className="vs-tool" onClick={() => changePicked({ hide: !isHidden(picked) })}><ToolIcon name="eye" /><span>{t(isHidden(picked) ? 'Show' : 'Hide')}</span></button>}
                 </div>
-                <div className="vs-tool-layer" role="group" aria-label="In front or behind">
-                  <button type="button" className="vs-tool" disabled={pickedLayer() <= (pickedDecor ? LAYER_MIN : PLACE_LAYER_MIN)} onClick={() => layerPicked(-1)}><ToolIcon name="back" /><span>Behind</span></button>
-                  <p className="vs-tool-layer-now" role="status">{pickedDecor ? (pickedLayer() > 0 ? 'In front of places' : 'Behind places') : pickedLayer() === 0 ? 'Usual spot' : pickedLayer() > 0 ? 'Brought forward' : 'Sent back'}</p>
-                  <button type="button" className="vs-tool" disabled={pickedLayer() >= LAYER_MAX} onClick={() => layerPicked(1)}><ToolIcon name="front" /><span>In front</span></button>
+                <div className="vs-tool-layer" role="group" aria-label={t('In front or behind')}>
+                  <button type="button" className="vs-tool" disabled={pickedLayer() <= (pickedDecor ? LAYER_MIN : PLACE_LAYER_MIN)} onClick={() => layerPicked(-1)}><ToolIcon name="back" /><span>{t('Behind')}</span></button>
+                  <p className="vs-tool-layer-now" role="status">{t(pickedDecor ? (pickedLayer() > 0 ? 'In front of places' : 'Behind places') : pickedLayer() === 0 ? 'Usual spot' : pickedLayer() > 0 ? 'Brought forward' : 'Sent back')}</p>
+                  <button type="button" className="vs-tool" disabled={pickedLayer() >= LAYER_MAX} onClick={() => layerPicked(1)}><ToolIcon name="front" /><span>{t('In front')}</span></button>
                 </div>
-                <div className="vs-tool-nudge" role="group" aria-label="Move it a little">
-                  <button type="button" className="vs-tool vs-tool-sm" aria-label="Move left" onClick={() => nudge(-1, 0)}><ToolIcon name="left" /></button>
-                  <button type="button" className="vs-tool vs-tool-sm" aria-label="Move up" onClick={() => nudge(0, -1)}><ToolIcon name="up" /></button>
-                  <button type="button" className="vs-tool vs-tool-sm" aria-label="Move down" onClick={() => nudge(0, 1)}><ToolIcon name="down" /></button>
-                  <button type="button" className="vs-tool vs-tool-sm" aria-label="Move right" onClick={() => nudge(1, 0)}><ToolIcon name="right" /></button>
+                <div className="vs-tool-nudge" role="group" aria-label={t('Move it a little')}>
+                  <button type="button" className="vs-tool vs-tool-sm" aria-label={t('Move left')} onClick={() => nudge(-1, 0)}><ToolIcon name="left" /></button>
+                  <button type="button" className="vs-tool vs-tool-sm" aria-label={t('Move up')} onClick={() => nudge(0, -1)}><ToolIcon name="up" /></button>
+                  <button type="button" className="vs-tool vs-tool-sm" aria-label={t('Move down')} onClick={() => nudge(0, 1)}><ToolIcon name="down" /></button>
+                  <button type="button" className="vs-tool vs-tool-sm" aria-label={t('Move right')} onClick={() => nudge(1, 0)}><ToolIcon name="right" /></button>
                 </div>
               </div>
             )}
 
             {tool !== 'move' && (
               <div className="vs-draw-banner" role="status">
-                <span>{tool === 'road' ? 'Draw a road' : 'Draw a stream'} with your finger.</span>
-                <button type="button" onClick={() => setTool('move')}>Stop</button>
+                <span>{t(tool === 'road' ? 'Draw a road with your finger.' : 'Draw a stream with your finger.')}</span>
+                <button type="button" onClick={() => setTool('move')}>{t('Stop')}</button>
               </div>
             )}
             {tool !== 'move' && (
               <div className="vs-tool-row">
-                <button type="button" className="vs-tool" disabled={!(tool === 'road' ? world.roads : world.streams).length} onClick={() => { const k = tool === 'road' ? 'roads' : 'streams'; commit({ ...world, [k]: world[k].slice(0, -1) }) }}><ToolIcon name="undo" /><span>{tool === 'road' ? 'Last road' : 'Last stream'}</span></button>
-                <button type="button" className="vs-tool" disabled={!(tool === 'road' ? world.roads : world.streams).length} onClick={() => { const k = tool === 'road' ? 'roads' : 'streams'; commit({ ...world, [k]: [] }) }}><ToolIcon name="trash" /><span>{tool === 'road' ? 'All roads' : 'All streams'}</span></button>
+                <button type="button" className="vs-tool" disabled={!(tool === 'road' ? world.roads : world.streams).length} onClick={() => { const k = tool === 'road' ? 'roads' : 'streams'; commit({ ...world, [k]: world[k].slice(0, -1) }) }}><ToolIcon name="undo" /><span>{t(tool === 'road' ? 'Last road' : 'Last stream')}</span></button>
+                <button type="button" className="vs-tool" disabled={!(tool === 'road' ? world.roads : world.streams).length} onClick={() => { const k = tool === 'road' ? 'roads' : 'streams'; commit({ ...world, [k]: [] }) }}><ToolIcon name="trash" /><span>{t(tool === 'road' ? 'All roads' : 'All streams')}</span></button>
               </div>
             )}
 
             {trayOpen && (
               <div className="vs-tray">
-                <div className="vs-tray-tabs" role="tablist" aria-label="Add to your village">
-                  <button type="button" role="tab" id="vs-tab-pieces" aria-controls="vs-panel" aria-selected={trayTab === 'pieces'} className={'vs-tray-tab' + (trayTab === 'pieces' ? ' on' : '')} onClick={() => setTrayTab('pieces')}>Pieces</button>
-                  {(BACKGROUNDS.length > 1 || HAS_SEASONS) && <button type="button" role="tab" id="vs-tab-bg" aria-controls="vs-panel" aria-selected={trayTab === 'bg'} className={'vs-tray-tab' + (trayTab === 'bg' ? ' on' : '')} onClick={() => setTrayTab('bg')}>Backgrounds</button>}
+                <div className="vs-tray-tabs" role="tablist" aria-label={t('Add to your village')}>
+                  <button type="button" role="tab" id="vs-tab-pieces" aria-controls="vs-panel" aria-selected={trayTab === 'pieces'} className={'vs-tray-tab' + (trayTab === 'pieces' ? ' on' : '')} onClick={() => setTrayTab('pieces')}>{t('Pieces')}</button>
+                  {(BACKGROUNDS.length > 1 || HAS_SEASONS) && <button type="button" role="tab" id="vs-tab-bg" aria-controls="vs-panel" aria-selected={trayTab === 'bg'} className={'vs-tray-tab' + (trayTab === 'bg' ? ' on' : '')} onClick={() => setTrayTab('bg')}>{t('Backgrounds')}</button>}
                   <button type="button" role="tab" id="vs-tab-more" aria-controls="vs-panel" aria-selected={trayTab === 'more'} className={'vs-tray-tab' + (trayTab === 'more' ? ' on' : '')} onClick={() => setTrayTab('more')}>
-                    More{hiddenCount > 0 && <span className="vs-tray-count" aria-label={hiddenCount + ' hidden'}>{hiddenCount}</span>}
+                    {t('More')}{hiddenCount > 0 && <span className="vs-tray-count" aria-label={t('{n} hidden', { n: hiddenCount })}>{hiddenCount}</span>}
                   </button>
                 </div>
                 <div id="vs-panel" role="tabpanel" aria-labelledby={'vs-tab-' + trayTab}>
                 {trayTab === 'pieces' && <>
-                <p className="vs-tray-help">Tap a piece to add it. Then drag it where you want it.</p>
+                <p className="vs-tray-help">{t('Tap a piece to add it. Then drag it where you want it.')}</p>
                 <div className="vs-palette">
                   {DECOR_PIECES.map((p) => (
                     <button key={p.k} type="button" className="vs-palette-item" onClick={() => addDecor(p)}>
                       <img src={p.src} alt="" width="56" height="56" loading="lazy" />
-                      <span>{p.label}</span>
+                      <span>{t(p.label)}</span>
                     </button>
                   ))}
                 </div>
                 </>}
-                {trayTab === 'more' && hiddenCount === 0 && <p className="vs-tray-help">No places are hidden. To hide one, tap Move, tap the place, then Hide.</p>}
+                {trayTab === 'more' && hiddenCount === 0 && <p className="vs-tray-help">{t('No places are hidden. To hide one, tap Move, tap the place, then Hide.')}</p>}
                 {trayTab === 'more' && hiddenCount > 0 && <>
-                  <h3 className="vs-arrange-h">Hidden places</h3>
+                  <h3 className="vs-arrange-h">{t('Hidden places')}</h3>
                   <div className="vs-chips-row">
                     {spots.filter((v) => isHidden(v.k)).map((v) => (
-                      <button key={v.k} type="button" className="vs-chip-btn" onClick={() => { commit({ ...world, spots: { ...layout, [v.k]: { ...(layout[v.k] || {}), hide: false } } }); setLayoutNote(v.label + ' is back on the map.') }}>Show {v.label}</button>
+                      <button key={v.k} type="button" className="vs-chip-btn" onClick={() => { commit({ ...world, spots: { ...layout, [v.k]: { ...(layout[v.k] || {}), hide: false } } }); setLayoutNote(t('{place} is back on the map.', { place: t(v.label) })) }}>{t('Show {place}', { place: t(v.label) })}</button>
                     ))}
                   </div>
                 </>}
                 {trayTab === 'bg' && <>
-                <p className="vs-tray-help">Pick the ground your map sits on.</p>
-                <div className="vs-grounds" role="group" aria-label="Backgrounds">
+                <p className="vs-tray-help">{t('Pick the ground your map sits on.')}</p>
+                <div className="vs-grounds" role="group" aria-label={t('Backgrounds')}>
                   {HAS_SEASONS && (
                     <button type="button" className={'vs-ground-card' + (world.bg === 'seasons' ? ' on' : '')} aria-pressed={world.bg === 'seasons'} onClick={() => commit({ ...world, bg: 'seasons' })}>
                       <img src={backgroundSrc('seasons')} alt="" width="72" height="108" loading="lazy" />
-                      <span>Change with the seasons</span>
+                      <span>{t('Change with the seasons')}</span>
                     </button>
                   )}
                   {BACKGROUNDS.map((g) => (
                     <button key={g.k} type="button" className={'vs-ground-card' + ((world.bg || 'seasons') === g.k ? ' on' : '')} aria-pressed={(world.bg || 'seasons') === g.k} onClick={() => commit({ ...world, bg: g.k })}>
                       <img src={g.src} alt="" width="72" height="108" loading="lazy" />
-                      <span>{g.label}</span>
+                      <span>{t(g.label)}</span>
                     </button>
                   ))}
                 </div>
@@ -746,13 +749,13 @@ export function MapToolbar({ b, more }) {
             )}
         </div>
 
-        <div className="vs-tool-main" role="group" aria-label="What to do" inert={toolsHidden}>
-          <button type="button" className={'vs-tool' + (tool === 'move' && !trayOpen ? ' on' : '')} aria-pressed={tool === 'move' && !trayOpen} onClick={() => { setTool('move'); setTrayOpen(false) }}><ToolIcon name="move" /><span>Move</span></button>
-          <button type="button" className={'vs-tool' + (trayOpen ? ' on' : '')} aria-pressed={trayOpen} aria-expanded={trayOpen} onClick={() => { setTrayOpen(!trayOpen); setTool('move') }}><ToolIcon name="add" /><span>Add</span></button>
-          <button type="button" className={'vs-tool' + (tool === 'road' ? ' on' : '')} aria-pressed={tool === 'road'} onClick={() => { setTool('road'); setPicked(null); setTrayOpen(false) }}><ToolIcon name="road" /><span>Road</span></button>
-          <button type="button" className={'vs-tool' + (tool === 'stream' ? ' on' : '')} aria-pressed={tool === 'stream'} onClick={() => { setTool('stream'); setPicked(null); setTrayOpen(false) }}><ToolIcon name="stream" /><span>Stream</span></button>
-          <button type="button" className="vs-tool" disabled={!canUndo} onClick={undo}><ToolIcon name="undo" /><span>Undo</span></button>
-          <button type="button" className="vs-tool vs-tool-done" onClick={closeArrange}><ToolIcon name="check" /><span>Done</span></button>
+        <div className="vs-tool-main" role="group" aria-label={t('What to do')} inert={toolsHidden}>
+          <button type="button" className={'vs-tool' + (tool === 'move' && !trayOpen ? ' on' : '')} aria-pressed={tool === 'move' && !trayOpen} onClick={() => { setTool('move'); setTrayOpen(false) }}><ToolIcon name="move" /><span>{t('Move')}</span></button>
+          <button type="button" className={'vs-tool' + (trayOpen ? ' on' : '')} aria-pressed={trayOpen} aria-expanded={trayOpen} onClick={() => { setTrayOpen(!trayOpen); setTool('move') }}><ToolIcon name="add" /><span>{t('Add')}</span></button>
+          <button type="button" className={'vs-tool' + (tool === 'road' ? ' on' : '')} aria-pressed={tool === 'road'} onClick={() => { setTool('road'); setPicked(null); setTrayOpen(false) }}><ToolIcon name="road" /><span>{t('Road')}</span></button>
+          <button type="button" className={'vs-tool' + (tool === 'stream' ? ' on' : '')} aria-pressed={tool === 'stream'} onClick={() => { setTool('stream'); setPicked(null); setTrayOpen(false) }}><ToolIcon name="stream" /><span>{t('Stream')}</span></button>
+          <button type="button" className="vs-tool" disabled={!canUndo} onClick={undo}><ToolIcon name="undo" /><span>{t('Undo')}</span></button>
+          <button type="button" className="vs-tool vs-tool-done" onClick={closeArrange}><ToolIcon name="check" /><span>{t('Done')}</span></button>
         </div>
       </div>
     </div>
@@ -807,7 +810,7 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
       const { error } = await supabase.rpc(shared ? 'set_map_shared_layout' : 'set_my_map_layout', { p_kind: kind, p_id: id, p_layout: empty ? null : body })
       if (error) {
         console.error('Failed to save the map:', error)
-        b.setLayoutNote(error.code === '42501' ? error.message : error.code === 'PGRST202' ? 'This needs a database update first, so your changes are not saved yet.' : 'Could not save. Try again in a moment.')
+        b.setLayoutNote(error.code === '42501' ? error.message : t(error.code === 'PGRST202' ? 'This needs a database update first, so your changes are not saved yet.' : 'Could not save. Try again in a moment.'))
       }
     }, 800)
   }
@@ -831,19 +834,19 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
 
   async function resetLayout() {
     if (arrangeFor === 'me') {
-      if (!(await askConfirm('Go back to how ' + (name || 'this page') + ' looks by default? Your own view will be taken away.'))) return
+      if (!(await askConfirm(name ? t('Go back to how {name} looks by default? Your own view will be taken away.', { name }) : t('Go back to how this page looks by default? Your own view will be taken away.')))) return
       b.remember()
       b.setWorld({ ...fromSaved(mapLayouts.current.shared, base), labels: b.worldRef.current.labels })
       b.setPicked(null); b.setTrayOpen(false)
       clearTimeout(saveTimer.current)
       const { error } = await supabase.rpc('set_my_map_layout', { p_kind: kind, p_id: id, p_layout: null })
-      if (error) { console.error('Failed to remove your view:', error); b.setLayoutNote('Could not do that. Try again in a moment.'); return }
+      if (error) { console.error('Failed to remove your view:', error); b.setLayoutNote(t('Could not do that. Try again in a moment.')); return }
       mapLayouts.current = { ...mapLayouts.current, own: null }
-      b.setLayoutNote('Back to the default look.')
+      b.setLayoutNote(t('Back to the default look.'))
       return
     }
-    if (!(await askConfirm('Set the default back to the starting map? Personal views stay as they are. You can tap Undo right after.'))) return
-    b.commit(fromSaved(null, base)); b.setPicked(null); b.setTrayOpen(false); b.setLayoutNote('Back to the usual map.')
+    if (!(await askConfirm(t('Set the default back to the starting map? Personal views stay as they are. You can tap Undo right after.')))) return
+    b.commit(fromSaved(null, base)); b.setPicked(null); b.setTrayOpen(false); b.setLayoutNote(t('Back to the usual map.'))
   }
 
   // Has this person arranged their own view? Then a new default does not show for them.
@@ -857,6 +860,7 @@ export function usePageMap({ kind, id, spots, user, accountLayout, refreshProfil
 export function ScrollCue({ b, label = 'More below' }) {
   // Oct 25 (Jade): the map pages have no Back button; the top bar takes you anywhere.
   useOwnBack()
+  useT()
   useEffect(() => {
     function measure() {
       const el = b.outerRef.current
@@ -865,9 +869,9 @@ export function ScrollCue({ b, label = 'More below' }) {
       el.style.setProperty('--vs-fill-top', Math.round(y) + 'px')
     }
     measure()
-    const t = setTimeout(measure, 500)
+    const tm = setTimeout(measure, 500)
     window.addEventListener('resize', measure)
-    return () => { clearTimeout(t); window.removeEventListener('resize', measure) }
+    return () => { clearTimeout(tm); window.removeEventListener('resize', measure) }
   })
   if (b.arrange) return null
   function go() {
@@ -879,7 +883,7 @@ export function ScrollCue({ b, label = 'More below' }) {
   }
   return (
     <button type="button" className="vs-scroll-cue" onClick={go}>
-      {label} <span className="vs-scroll-cue-arrow" aria-hidden="true">&#8595;</span>
+      {t(label)} <span className="vs-scroll-cue-arrow" aria-hidden="true">&#8595;</span>
     </button>
   )
 }

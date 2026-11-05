@@ -5,8 +5,10 @@ import { supabase } from '../supabaseClient'
 import { startAppTour } from '../components/AppTour'
 import { useGoBack } from '../components/BackLink'
 import { tell } from '../components/AdminDialog'
+import { useT } from '../utils/lang'
 
 export default function Help() {
+  const t = useT()
   const { user } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
@@ -19,7 +21,7 @@ export default function Help() {
     setSendingFeedback(true)
     const { error } = await supabase.from('feedback').insert({ user_id: user.id, body: (feedbackKind === 'problem' ? '[Problem] ' : '[Idea] ') + feedbackText.trim() })
     setSendingFeedback(false)
-    if (error) { console.error('Failed to submit feedback:', error); tell('Could not submit your feedback. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to submit feedback:', error); tell(t('Could not submit your feedback. Try again.'), { tone: 'error' }); return }
     setFeedbackSent(true)
     setFeedbackText('')
   }
@@ -27,69 +29,61 @@ export default function Help() {
   return (
     <div className="help-page">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
-        <h1 style={{ margin: 0 }}>App guide and feedback</h1>
+        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+        <h1 style={{ margin: 0 }}>{t('App guide and feedback')}</h1>
       </div>
 
       <div className="help-section help-tour-card">
-        <h2>New here, or feeling lost?</h2>
-        <p>Take a one-minute tour of the app. It shows you where everything is.</p>
-        <button type="button" className="btn btn-primary btn-full" onClick={startAppTour}>Take the tour</button>
+        <h2>{t('New here, or feeling lost?')}</h2>
+        <p>{t('Take a one-minute tour of the app. It shows you where everything is.')}</p>
+        <button type="button" className="btn btn-primary btn-full" onClick={startAppTour}>{t('Take the tour')}</button>
       </div>
 
       <div className="help-section">
-        <h2>About Village Without Borders</h2>
-        <p>
-          We're a mutual aid network serving Northwest Georgia and the
-          Chattanooga Valley. Neighbors helping neighbors with housing,
-          disaster recovery, and daily needs.
-        </p>
+        <h2>{t('About Village Without Borders')}</h2>
+        <p>{t("We're a mutual aid network serving Northwest Georgia and the Chattanooga Valley. Neighbors helping neighbors with housing, disaster recovery, and daily needs.")}</p>
       </div>
 
       <div className="help-section">
-        <h2>How it works</h2>
+        <h2>{t('How it works')}</h2>
         <div className="help-steps">
           <div className="help-step">
             <span className="help-step-num">1</span>
             <div>
-              <strong>Ask for Help</strong>
-              <p>Post what you need. Neighbors see your name and town, never your address.</p>
+              <strong>{t('Ask for Help')}</strong>
+              <p>{t('Post what you need. Neighbors see your name and town, never your address.')}</p>
             </div>
           </div>
           <div className="help-step">
             <span className="help-step-num">2</span>
             <div>
-              <strong>A neighbor offers</strong>
-              <p>Neighbors near you see your request and can offer to help.</p>
+              <strong>{t('A neighbor offers')}</strong>
+              <p>{t('Neighbors near you see your request and can offer to help.')}</p>
             </div>
           </div>
           <div className="help-step">
             <span className="help-step-num">3</span>
             <div>
-              <strong>You say yes</strong>
-              <p>You pick who helps. Then you message each other to set a time.</p>
+              <strong>{t('You say yes')}</strong>
+              <p>{t('You pick who helps. Then you message each other to set a time.')}</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="help-section">
-        <h2>Your privacy</h2>
-        <p>
-          We take privacy seriously. Your exact location is never stored.
-          Encrypted fields protect your personal information.
-          You choose what to share and with whom.
-        </p>
+        <h2>{t('Your privacy')}</h2>
+        <p>{t('We take privacy seriously. Your exact location is never stored. Encrypted fields protect your personal information. You choose what to share and with whom.')}</p>
       </div>
 
       <div className="help-section" id="report-a-problem">
-        <h2>Report a problem or share an idea</h2>
-        <p>Something broken, confusing, or unsafe? Tell us. Your idea about what your community needs is welcome too. To report a person, use the Report button on their profile.</p>
+        <h2>{t('Report a problem or share an idea')}</h2>
+        <p>{t('Something broken, confusing, or unsafe? Tell us. Your idea about what your community needs is welcome too. To report a person, use the Report button on their profile.')}</p>
         {feedbackSent ? (
-          <p style={{ color: 'var(--accent)', fontWeight: 600 }}>Thank you! We got it and an admin will read it.</p>
+          <p style={{ color: 'var(--accent)', fontWeight: 600 }}>{t('Thank you! We got it and an admin will read it.')}</p>
         ) : (
           <>
-            <div role="radiogroup" aria-label="What kind of message is this?" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <div role="radiogroup" aria-label={t('What kind of message is this?')} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
               {[['problem', 'Report a problem'], ['idea', 'Share an idea']].map(([k, label]) => (
                 <button
                   key={k}
@@ -98,14 +92,14 @@ export default function Help() {
                   aria-checked={feedbackKind === k}
                   onClick={() => setFeedbackKind(k)}
                   style={{ flex: 1, minHeight: '44px', padding: '0.5rem', borderRadius: '8px', border: feedbackKind === k ? '2px solid var(--accent)' : '1px solid var(--border-strong)', background: feedbackKind === k ? 'var(--accent)' : 'var(--surface-2)', color: feedbackKind === k ? 'var(--on-accent)' : 'var(--text-strong)', fontWeight: 600, cursor: 'pointer' }}
-                >{label}</button>
+                >{t(label)}</button>
               ))}
             </div>
             <textarea
               value={feedbackText}
               onChange={e => setFeedbackText(e.target.value)}
-              placeholder={feedbackKind === 'problem' ? 'What happened? What were you trying to do?' : 'What would help your community? What should we build next?'}
-              aria-label={feedbackKind === 'problem' ? 'Describe the problem' : 'Describe your idea'}
+              placeholder={feedbackKind === 'problem' ? t('What happened? What were you trying to do?') : t('What would help your community? What should we build next?')}
+              aria-label={feedbackKind === 'problem' ? t('Describe the problem') : t('Describe your idea')}
               rows={4}
               maxLength={2000}
               style={{ display: 'block', width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', resize: 'vertical', marginBottom: '0.5rem', boxSizing: 'border-box' }}
@@ -115,26 +109,21 @@ export default function Help() {
               onClick={submitFeedback}
               style={{ minHeight: '44px', padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: (!feedbackText.trim() || sendingFeedback) ? 0.5 : 1 }}
             >
-              {sendingFeedback ? 'Sending...' : 'Send'}
+              {sendingFeedback ? t('Sending...') : t('Send')}
             </button>
           </>
         )}
       </div>
 
       <div className="help-section">
-        <h2>Who runs this</h2>
-        <p>
-          Village Without Borders is a volunteer-run mutual aid network in
-          Northwest Georgia. It was started by Jade Michalski in Ringgold, GA.
-          It is not part of any political party or campaign, and no one is paid
-          to help you here.
-        </p>
+        <h2>{t('Who runs this')}</h2>
+        <p>{t('Village Without Borders is a volunteer-run mutual aid network in Northwest Georgia. It was started by Jade Michalski in Ringgold, GA. It is not part of any political party or campaign, and no one is paid to help you here.')}</p>
       </div>
 
       <div className="help-section">
-        <h2>Need to talk to someone?</h2>
+        <h2>{t('Need to talk to someone?')}</h2>
         <p>
-          Reach us at{' '}
+          {t('Reach us at')}{' '}
           <a href="mailto:info@villagewithoutborders.org">
             info@villagewithoutborders.org
           </a>

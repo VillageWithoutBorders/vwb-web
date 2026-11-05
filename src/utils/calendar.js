@@ -1,5 +1,9 @@
 import { supabase } from '../supabaseClient'
 import { distanceMiles, getMyLocation, lookupZip } from './location'
+import { t, getLang } from './lang'
+
+// Dates follow the app's language when it is Spanish, otherwise the phone's.
+function loc() { return getLang() === 'es' ? 'es-US' : undefined }
 
 // Where to look for events. Never a guess, and never a fixed town list:
 // people pick a place by zip code (anywhere in the US), share their
@@ -14,7 +18,7 @@ export function memberArea(profile) {
   if (!mine) return null
   // Oct 28: say the town from the profile when there is one ("Ringgold (30736)"), not just "Your area".
   const town = ((profile && profile.neighborhood) || '').trim()
-  return { name: (town || 'Your area') + (mine.label ? ' (' + mine.label + ')' : ''), lat: mine.lat, lng: mine.lng, kind: 'area' }
+  return { name: (town || t('Your area')) + (mine.label ? ' (' + mine.label + ')' : ''), lat: mine.lat, lng: mine.lng, kind: 'area' }
 }
 
 // Where the calendar starts: a place this browser picked before, then the
@@ -109,24 +113,24 @@ export function dayLabel(iso) {
   const today = new Date()
   const tomorrow = new Date()
   tomorrow.setDate(today.getDate() + 1)
-  if (d.toDateString() === today.toDateString()) return 'Today'
-  if (d.toDateString() === tomorrow.toDateString()) return 'Tomorrow'
-  return d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+  if (d.toDateString() === today.toDateString()) return t('Today')
+  if (d.toDateString() === tomorrow.toDateString()) return t('Tomorrow')
+  return d.toLocaleDateString(loc(), { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
 export function timeRange(ev) {
   const opts = { hour: 'numeric', minute: '2-digit' }
-  const start = new Date(ev.starts_at).toLocaleTimeString(undefined, opts)
+  const start = new Date(ev.starts_at).toLocaleTimeString(loc(), opts)
   if (!ev.ends_at) return start
   const end = new Date(ev.ends_at)
   const sameDay = end.toDateString() === new Date(ev.starts_at).toDateString()
   return sameDay
-    ? start + ' to ' + end.toLocaleTimeString(undefined, opts)
-    : start + ' to ' + end.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ', ' + end.toLocaleTimeString(undefined, opts)
+    ? t('{start} to {end}', { start, end: end.toLocaleTimeString(loc(), opts) })
+    : t('{start} to {end}', { start, end: end.toLocaleDateString(loc(), { month: 'short', day: 'numeric' }) + ', ' + end.toLocaleTimeString(loc(), opts) })
 }
 
 export function fullDateTime(ev) {
-  return new Date(ev.starts_at).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + ', ' + timeRange(ev)
+  return new Date(ev.starts_at).toLocaleDateString(loc(), { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + ', ' + timeRange(ev)
 }
 
 export function eventUrl(ev, withToken) {
