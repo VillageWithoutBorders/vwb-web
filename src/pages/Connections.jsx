@@ -5,6 +5,7 @@ import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { useGoBack } from '../components/BackLink'
 import InviteSheet from '../components/InviteSheet'
 import { cottagesICanVisit } from '../utils/cottageVisits'
+import { t as tr, useT, getLang } from '../utils/lang'
 
 const WHY = {
   messaged: 'Messaged',
@@ -26,10 +27,10 @@ const FILTERS = [
 function sinceText(iso) {
   if (!iso) return ''
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
-  if (days < 1) return 'Today'
-  if (days === 1) return 'Yesterday'
-  if (days < 30) return days + ' days ago'
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  if (days < 1) return tr('Today')
+  if (days === 1) return tr('Yesterday')
+  if (days < 30) return tr('{n} days ago', { n: days })
+  return new Date(iso).toLocaleDateString(getLang() === 'es' ? 'es-US' : undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 const chip = (on) => ({
@@ -40,6 +41,7 @@ const chip = (on) => ({
 export default function Connections({ embedded = false }) {
   const navigate = useNavigate()
   const goBack = useGoBack()
+  const t = useT()
   const [rows, setRows] = useState(null)
   const [failed, setFailed] = useState(false)
   const [filter, setFilter] = useState('all')
@@ -70,32 +72,32 @@ export default function Connections({ embedded = false }) {
     <div className="cal-page" style={{ maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}>
       {!embedded && (
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-        <button type="button" onClick={() => goBack('/')} aria-label="Back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
-        <h1 style={{ margin: 0 }}>Connections</h1>
+        <button type="button" onClick={() => goBack('/')} aria-label={t('Back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
+        <h1 style={{ margin: 0 }}>{t('Connections')}</h1>
       </div>
       )}
-      <p className="cal-sub">Neighbors you have met in person, messaged, helped, vouched for, or shared a group with.</p>
-      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 44, margin: '0.25rem 0 0.5rem' }} onClick={() => navigate('/my-code')}>Show my QR code to connect</button>
+      <p className="cal-sub">{t('Neighbors you have met in person, messaged, helped, vouched for, or shared a group with.')}</p>
+      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 44, margin: '0.25rem 0 0.5rem' }} onClick={() => navigate('/my-code')}>{t('Show my QR code to connect')}</button>
 
-      <label htmlFor="conn-search" style={{ display: 'block', fontWeight: 600, margin: '0.75rem 0 0.25rem' }}>Find someone</label>
+      <label htmlFor="conn-search" style={{ display: 'block', fontWeight: 600, margin: '0.75rem 0 0.25rem' }}>{t('Find someone')}</label>
       <input
-        id="conn-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Type a name"
+        id="conn-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Type a name')}
         autoComplete="off"
         style={{ width: '100%', boxSizing: 'border-box', minHeight: 44, fontSize: 16, padding: '0 0.75rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)' }}
       />
 
-      <div role="group" aria-label="Filter connections" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.75rem 0' }}>
+      <div role="group" aria-label={t('Filter connections')} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.75rem 0' }}>
         {FILTERS.map((f) => (
-          <button key={f.key} type="button" aria-pressed={filter === f.key} onClick={() => setFilter(f.key)} style={chip(filter === f.key)}>{f.label}</button>
+          <button key={f.key} type="button" aria-pressed={filter === f.key} onClick={() => setFilter(f.key)} style={chip(filter === f.key)}>{t(f.label)}</button>
         ))}
       </div>
 
-      {rows === null && <p className="cal-empty">Loading...</p>}
-      {failed && <p className="cal-error">We could not load your connections. Check your connection and try again.</p>}
+      {rows === null && <p className="cal-empty">{t('Loading...')}</p>}
+      {failed && <p className="cal-error">{t('We could not load your connections. Check your connection and try again.')}</p>}
       {rows !== null && !failed && rows.length === 0 && (
-        <p className="cal-empty">No connections yet. Show your QR code to a neighbor you meet, or message, help, or vouch for someone, and they will show up here.</p>
+        <p className="cal-empty">{t('No connections yet. Show your QR code to a neighbor you meet, or message, help, or vouch for someone, and they will show up here.')}</p>
       )}
-      {rows !== null && rows.length > 0 && shown.length === 0 && <p className="cal-empty">No one matches.</p>}
+      {rows !== null && rows.length > 0 && shown.length === 0 && <p className="cal-empty">{t('No one matches.')}</p>}
 
       {shown.map((r) => (
         <div key={r.user_id} className="cal-card" style={{ boxSizing: 'border-box', maxWidth: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.6rem' }}>
@@ -104,11 +106,11 @@ export default function Connections({ embedded = false }) {
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.4rem' }}>
                 <UserName userId={r.user_id} name={r.display_name} style={{ fontWeight: 700 }} />
-                {r.is_ambassador && <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: 4 }}>Ambassador</span>}
+                {r.is_ambassador && <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: 4 }}>{t('Ambassador')}</span>}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.3rem' }}>
                 {(r.reasons || []).map((k) => (
-                  <span key={k} style={{ background: 'var(--surface-2)', color: 'var(--text)', fontSize: '0.8125rem', padding: '2px 8px', borderRadius: 10 }}>{WHY[k] || k}</span>
+                  <span key={k} style={{ background: 'var(--surface-2)', color: 'var(--text)', fontSize: '0.8125rem', padding: '2px 8px', borderRadius: 10 }}>{WHY[k] ? t(WHY[k]) : k}</span>
                 ))}
               </div>
               {r.last_at && <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginTop: '0.3rem' }}>{sinceText(r.last_at)}</div>}
@@ -117,21 +119,21 @@ export default function Connections({ embedded = false }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             <button type="button" onClick={() => navigate(r.conversation_id ? '/conversation/' + r.conversation_id : '/u/' + r.user_id)}
               style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>
-              {r.conversation_id ? 'Open messages' : 'Say hello'}
+              {r.conversation_id ? t('Open messages') : t('Say hello')}
             </button>
             <button type="button" onClick={() => navigate('/u/' + r.user_id)}
               style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer' }}>
-              View profile
+              {t('View profile')}
             </button>
             {canVisit.has(r.user_id) && (
               <button type="button" onClick={() => navigate('/u/' + r.user_id + '/cottage')}
                 style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer' }}>
-                Visit cottage
+                {t('Visit cottage')}
               </button>
             )}
             <button type="button" onClick={() => setInviting(r)}
               style={{ minHeight: 44, padding: '0 1rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', cursor: 'pointer' }}>
-              Invite to...
+              {t('Invite to...')}
             </button>
           </div>
         </div>

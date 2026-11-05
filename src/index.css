@@ -1418,6 +1418,8 @@ a:focus:not(:focus-visible) {
   background: var(--bg);
   color: var(--text);
 }
+/* Nov 5: the spaced-out digits made "Código postal" too wide to read at 320px. */
+.location-prompt-input::placeholder { letter-spacing: normal; font-size: 0.9375rem; }
 
 .location-prompt-row .btn {
   min-height: 48px;

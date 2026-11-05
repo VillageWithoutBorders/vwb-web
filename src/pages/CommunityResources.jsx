@@ -22,7 +22,10 @@ import { placesEnabled, getMyPlaces, getVisitorArea, setVisitorArea } from '../u
 import { findHelpForMe, resourcesForPlace, friendlyError, saysNo } from '../utils/resourceReports'
 import { tell } from '../components/AdminDialog'
 import PrintResourceList from '../components/PrintResourceList'
-import { useT } from '../utils/lang'
+import { useT, getLang } from '../utils/lang'
+
+// Edit history shows the database's field names. In Spanish, show the word instead.
+const FIELD_WORD = { name: 'Name', description: 'Description', phone: 'Phone', url: 'Website', address: 'Address', requirements: 'What to bring', neighborhood: 'Town or area', categories: 'Kinds of help' }
 
 // Keeps Tab/Shift+Tab cycling inside an open dialog instead of leaking focus
 // out to the page behind it.
@@ -203,7 +206,7 @@ export default function CommunityResources() {
       const { data, error } = await findHelpForMe()
       if (error) {
         console.error('find_help_for_me failed:', error)
-        setLoadError("We couldn't load Find Help. Pull down to try again.")
+        setLoadError(t("We couldn't load Find Help. Pull down to try again."))
       }
       list = (data || []).map((r) => ({ ...r, verified: true }))
       if (profile?.is_hope_ambassador || isAdmin) {
@@ -219,7 +222,7 @@ export default function CommunityResources() {
       const { data, error } = await resourcesForPlace(visitorArea.id)
       if (error) {
         console.error('resources_for_place failed:', error)
-        setLoadError("We couldn't load Find Help. Try again in a moment.")
+        setLoadError(t("We couldn't load Find Help. Try again in a moment."))
       }
       list = (data || []).map((r) => ({ ...r, verified: true }))
     }
@@ -292,7 +295,7 @@ export default function CommunityResources() {
     setSubmittingReviewFor(null)
     if (error) {
       console.error('Failed to post review:', error)
-      tell('Could not post your review. Try again.', { tone: 'error' })
+      tell(t('Could not post your review. Try again.'), { tone: 'error' })
       return
     }
     setReviewDrafts(prev => ({ ...prev, [resourceId]: '' }))
@@ -348,7 +351,7 @@ export default function CommunityResources() {
     if (!user) return
     const sourceUrl = (editDraft.source_url || '').trim()
     if (!sourceUrl) {
-      tell("Add a link to where you found this: the organization's own website or social post.", { tone: 'error' })
+      tell(t("Add a link to where you found this: the organization's own website or social post."), { tone: 'error' })
       return
     }
     const payload = { p_resource_id: r.id, p_source_url: sourceUrl }
@@ -361,7 +364,7 @@ export default function CommunityResources() {
     if ((editDraft.address || '').trim() !== (r.address || '')) payload.p_address = editDraft.address.trim()
     if ((editDraft.requirements || '').trim() !== (r.requirements || '')) payload.p_requirements = editDraft.requirements.trim()
     if (Object.keys(payload).length <= 2) {
-      tell('Nothing was changed.')
+      tell(t('Nothing was changed.'))
       return
     }
     setSubmittingEdit(true)
@@ -369,11 +372,11 @@ export default function CommunityResources() {
     setSubmittingEdit(false)
     if (error) {
       console.error('Failed to submit resource edit:', error)
-      tell(placesEnabled ? friendlyError(error, 'Could not send your edit. Try again.') : 'Could not save your edit. Try again.', { tone: 'error' })
+      tell(placesEnabled ? friendlyError(error, t('Could not send your edit. Try again.')) : t('Could not save your edit. Try again.'), { tone: 'error' })
       return
     }
     setEditFormFor(null)
-    if (placesEnabled) setCardNotice({ id: r.id, text: 'Thank you. A Hope Ambassador will check your edit. The listing stays the same until then.' })
+    if (placesEnabled) setCardNotice({ id: r.id, text: t('Thank you. A Hope Ambassador will check your edit. The listing stays the same until then.') })
     await Promise.all([loadResources(), loadEditHistory()])
   }
 
@@ -400,22 +403,22 @@ export default function CommunityResources() {
   async function sendFixForReview() {
     if (!fixing) return
     const source = (fix.source || '').trim()
-    if (!source) { tell('Add where you checked this: their website, a call, or a visit.', { tone: 'error' }); document.getElementById('fix-source')?.focus(); return }
+    if (!source) { tell(t('Add where you checked this: their website, a call, or a visit.'), { tone: 'error' }); document.getElementById('fix-source')?.focus(); return }
     const payload = { p_resource_id: fixing.id, p_source_url: source }
     const map = { name: 'p_name', description: 'p_description', phone: 'p_phone', url: 'p_url', address: 'p_address', requirements: 'p_requirements' }
     Object.keys(map).forEach((k) => { if ((fix[k] || '').trim() !== (fixing[k] || '')) payload[map[k]] = (fix[k] || '').trim() })
-    if (Object.keys(payload).length <= 2) { tell('Nothing to send. Kinds of help and town can only be changed by the Hope Ambassadors for that area.'); return }
+    if (Object.keys(payload).length <= 2) { tell(t('Nothing to send. Kinds of help and town can only be changed by the Hope Ambassadors for that area.')); return }
     setSavingFix(true)
     const { error } = await supabase.rpc('submit_resource_edit', payload)
     setSavingFix(false)
     if (error) {
       console.error('Failed to send resource edit for review:', error)
-      tell(error.message && error.message.length < 160 ? error.message : 'Could not send your changes. Try again.', { tone: 'error' })
+      tell(error.message && error.message.length < 160 ? error.message : t('Could not send your changes. Try again.'), { tone: 'error' })
       return
     }
     const id = fixing.id
     setFixing(null)
-    setCardNotice({ id, text: 'Sent. A Hope Ambassador for this area will check it. The listing stays the same until then.' })
+    setCardNotice({ id, text: t('Sent. A Hope Ambassador for this area will check it. The listing stays the same until then.') })
     await Promise.all([loadResources(), loadEditHistory()])
   }
 
@@ -426,7 +429,7 @@ export default function CommunityResources() {
     if (q.length < 2) { setDupResults([]); setDupSearching(false); return }
     let stale = false
     setDupSearching(true)
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       const { data, error } = await supabase
         .from('community_resources')
         .select('id, name, address, phone, neighborhood, hidden_reason, verified')
@@ -438,13 +441,13 @@ export default function CommunityResources() {
       setDupSearching(false)
       if (error) {
         console.error('Duplicate search failed:', error)
-        tell("Couldn't search right now. Try again.", { tone: 'error' })
+        tell(t("Couldn't search right now. Try again."), { tone: 'error' })
         return
       }
       setDupResults((data || []).filter((x) => !x.hidden_reason))
     }, 300)
-    return () => { stale = true; clearTimeout(t) }
-  }, [dupQuery, dupOpen, fixing?.id])
+    return () => { stale = true; clearTimeout(timer) }
+  }, [dupQuery, dupOpen, fixing?.id, t])
 
   // Likely matches: same phone, same street address, or shared name words.
   function likelyDuplicates(r) {
@@ -473,10 +476,10 @@ export default function CommunityResources() {
     const { error } = await supabase.rpc('undo_resource_duplicate', { p_duplicate: dupId })
     if (error) {
       console.error('Failed to undo merge:', error)
-      tell(error.message && error.message.length < 160 ? error.message : "Couldn't undo the merge. Try again.", { tone: 'error' })
+      tell(error.message && error.message.length < 160 ? error.message : t("Couldn't undo the merge. Try again."), { tone: 'error' })
       return
     }
-    tell('Undone. Both listings are back.')
+    tell(t('Undone. Both listings are back.'))
     await Promise.all([loadResources(), loadEditHistory()])
   }
 
@@ -489,21 +492,21 @@ export default function CommunityResources() {
     setMerging(false)
     if (error) {
       console.error('Failed to mark duplicate:', error)
-      tell(error.code === 'PGRST202' ? 'This needs a quick database update first (vwb-resource-duplicates.sql).'
-        : error.message && error.message.length < 160 ? error.message : "Couldn't merge these. Try again.", { tone: 'error' })
+      tell(error.code === 'PGRST202' ? t('This needs a quick database update first (vwb-resource-duplicates.sql).')
+        : error.message && error.message.length < 160 ? error.message : t("Couldn't merge these. Try again."), { tone: 'error' })
       return
     }
     setFixing(null)
-    setCardNotice({ id: keep.id, text: 'Merged. ' + copy.name + ' is now part of this listing.' })
-    tell('Merged into ' + keep.name + '.', { action: { label: 'Undo', run: () => undoDuplicate(copy.id) } })
+    setCardNotice({ id: keep.id, text: t('Merged. {name} is now part of this listing.', { name: copy.name }) })
+    tell(t('Merged into {name}.', { name: keep.name }), { action: { label: t('Undo'), run: () => undoDuplicate(copy.id) } })
     await Promise.all([loadResources(), loadEditHistory()])
   }
 
   async function saveFix() {
     if (!fixing) return
     if (fixNow === false) { sendFixForReview(); return }
-    if (!fix.name.trim()) { tell('A resource needs a name.', { tone: 'error' }); return }
-    if (!fix.categories.length) { tell('Pick at least one kind of help.', { tone: 'error' }); return }
+    if (!fix.name.trim()) { tell(t('A resource needs a name.'), { tone: 'error' }); return }
+    if (!fix.categories.length) { tell(t('Pick at least one kind of help.'), { tone: 'error' }); return }
     const fields = {}
     ;['name', 'description', 'phone', 'url', 'address', 'neighborhood', 'requirements'].forEach((k) => {
       if ((fix[k] || '').trim() !== (fixing[k] || '')) fields[k] = (fix[k] || '').trim()
@@ -519,18 +522,18 @@ export default function CommunityResources() {
     if (error && error.code === '42501') {
       // Outside your area after all. Keep everything typed, and offer to send it for review.
       setFixNow(false)
-      tell('This listing is outside your area, so the change goes to that area\'s Hope Ambassadors. Add where you checked it, then tap Send for review.')
+      tell(t("This listing is outside your area, so the change goes to that area's Hope Ambassadors. Add where you checked it, then tap Send for review."))
       return
     }
     if (error) {
       console.error('Failed to save resource changes:', error)
-      tell(error.code === 'PGRST202' ? 'This needs a quick database update first (vwb-resource-direct-edit.sql).'
-        : error.message && error.message.length < 160 ? error.message : 'Could not save your changes. Try again.', { tone: 'error' })
+      tell(error.code === 'PGRST202' ? t('This needs a quick database update first (vwb-resource-direct-edit.sql).')
+        : error.message && error.message.length < 160 ? error.message : t('Could not save your changes. Try again.'), { tone: 'error' })
       return
     }
     const id = fixing.id
     setFixing(null)
-    setCardNotice({ id, text: 'Saved. The listing is updated.' })
+    setCardNotice({ id, text: t('Saved. The listing is updated.') })
     await Promise.all([loadResources(), loadEditHistory()])
   }
 
@@ -553,7 +556,7 @@ export default function CommunityResources() {
     setRevertingId(null)
     if (error) {
       console.error('Failed to undo resource edit:', error)
-      tell('Could not undo this edit. Try again.', { tone: 'error' })
+      tell(t('Could not undo this edit. Try again.'), { tone: 'error' })
       return
     }
     await Promise.all([loadResources(), loadEditHistory()])
@@ -583,12 +586,12 @@ export default function CommunityResources() {
     setSubmitting(false)
     if (error) {
       console.error('Failed to submit resource:', error)
-      tell('Could not submit this resource. Try again.', { tone: 'error' })
+      tell(t('Could not submit this resource. Try again.'), { tone: 'error' })
       return
     }
     if (fromSuggestion) {
       const { error: markErr } = await supabase.rpc('set_resource_suggestion_status', { p_id: fromSuggestion.id, p_status: 'added' })
-      if (markErr) { console.error('Failed to mark suggestion added:', markErr); tell('The resource was added, but we could not mark the suggestion. Tap Already in the library on it.', { tone: 'error' }) }
+      if (markErr) { console.error('Failed to mark suggestion added:', markErr); tell(t('The resource was added, but we could not mark the suggestion. Tap Already in the library on it.'), { tone: 'error' }) }
       setSuggestionsKey((k) => k + 1)
     }
     setSubmitted(true)
@@ -599,7 +602,7 @@ export default function CommunityResources() {
 
   async function verifyResource(id) {
     const { error } = await supabase.from('community_resources').update({ verified: true, verified_by: user.id }).eq('id', id)
-    if (error) { console.error('Failed to verify resource:', error); tell('Could not verify this resource. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to verify resource:', error); tell(t('Could not verify this resource. Try again.'), { tone: 'error' }); return }
     await loadResources()
   }
 
@@ -677,7 +680,7 @@ export default function CommunityResources() {
   const toggleAccess = (f) => setAccessFilter((prev) => prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f])
   const managesOrg = (oid) => !!oid && (isAdmin || (myOrgs || []).some((o) => o.id === oid && (o.role === 'admin' || o.role === 'organizer')))
   const visitorNeedsArea = placesEnabled && !user && !visitorArea
-  const orgName = (oid) => (allOrgs.find((o) => o.id === oid) || {}).name || 'Group'
+  const orgName = (oid) => (allOrgs.find((o) => o.id === oid) || {}).name || t('Group')
 
   const submitOrgOptions = isAdmin ? allOrgs : (myOrgs || [])
 
@@ -738,10 +741,10 @@ export default function CommunityResources() {
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                           {user && (<>
-<button onClick={() => castVote(r.id, 1)} title="This checked out for me" aria-pressed={myVotes[r.id] === 1} aria-label={'This checked out for me, ' + (voteCounts[r.id]?.upvotes || 0) + ' people agree' + (myVotes[r.id] === 1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '44px', background: myVotes[r.id] === 1 ? 'rgba(78,204,163,0.15)' : 'none', border: '1px solid ' + (myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>
+<button onClick={() => castVote(r.id, 1)} title={t('This checked out for me')} aria-pressed={myVotes[r.id] === 1} aria-label={t('This checked out for me') + ', ' + t('{n} people agree', { n: voteCounts[r.id]?.upvotes || 0 }) + (myVotes[r.id] === 1 ? ', ' + t('selected') : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '44px', background: myVotes[r.id] === 1 ? 'rgba(78,204,163,0.15)' : 'none', border: '1px solid ' + (myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === 1 ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>
                             <Icon name="check" /> {voteCounts[r.id]?.upvotes || 0}
                           </button>
-                          <button onClick={() => castVote(r.id, -1)} title="This didn't work out for me" aria-pressed={myVotes[r.id] === -1} aria-label={"This didn't work out for me, " + (voteCounts[r.id]?.downvotes || 0) + ' people agree' + (myVotes[r.id] === -1 ? ', selected' : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '44px', background: myVotes[r.id] === -1 ? 'rgba(255,90,90,0.12)' : 'none', border: '1px solid ' + (myVotes[r.id] === -1 ? '#ff5a5a' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === -1 ? 'var(--danger)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>
+                          <button onClick={() => castVote(r.id, -1)} title={t("This didn't work out for me")} aria-pressed={myVotes[r.id] === -1} aria-label={t("This didn't work out for me") + ', ' + t('{n} people agree', { n: voteCounts[r.id]?.downvotes || 0 }) + (myVotes[r.id] === -1 ? ', ' + t('selected') : '')} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minHeight: '44px', background: myVotes[r.id] === -1 ? 'rgba(255,90,90,0.12)' : 'none', border: '1px solid ' + (myVotes[r.id] === -1 ? '#ff5a5a' : 'var(--border-strong)'), borderRadius: '14px', padding: '0.45rem 0.75rem', color: myVotes[r.id] === -1 ? 'var(--danger)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>
                             <Icon name="cross" /> {voteCounts[r.id]?.downvotes || 0}
                           </button>
 </>)}
@@ -761,9 +764,9 @@ export default function CommunityResources() {
                               <div key={rev.id} style={{ marginBottom: '0.5rem' }}>
                                 <p style={{ color: 'var(--text-soft)', fontSize: '0.8125rem', margin: 0, lineHeight: 1.4 }}>{rev.body}</p>
                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                                  {t('Anonymous')} &middot; {new Date(rev.created_at).toLocaleDateString()}
+                                  {t('Anonymous')} &middot; {new Date(rev.created_at).toLocaleDateString(getLang() === 'es' ? 'es' : undefined)}
                                   {rev.user_id === user?.id && (
-                                    <> &middot; <button onClick={() => deleteMyReview(r.id, rev.id)} aria-label="Delete your review" style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.35rem 0.25rem', minHeight: '44px' }}>delete</button></>
+                                    <> &middot; <button onClick={() => deleteMyReview(r.id, rev.id)} aria-label={t('Delete your review')} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.35rem 0.25rem', minHeight: '44px' }}>{t('delete')}</button></>
                                   )}
                                 </span>
                               </div>
@@ -795,16 +798,16 @@ export default function CommunityResources() {
                               <div key={ed.id} style={{ marginBottom: '0.5rem', opacity: ed.reverted ? 0.5 : 1 }}>
                                 {Object.entries(ed.changes || {}).map(([field, diff]) => (
                                   <p key={field} style={{ color: 'var(--text-soft)', fontSize: '0.8125rem', margin: '0.1rem 0', lineHeight: 1.4 }}>
-                                    <span style={{ color: 'var(--text-muted)', textTransform: 'capitalize' }}>{field}:</span>{' '}
-                                    {diff?.old ? diff.old : '(blank)'} &rarr; {diff?.new ? diff.new : '(blank)'}
+                                    <span style={{ color: 'var(--text-muted)', textTransform: 'capitalize' }}>{getLang() === 'es' && FIELD_WORD[field] ? t(FIELD_WORD[field]) : field}:</span>{' '}
+                                    {diff?.old ? diff.old : t('(blank)')} &rarr; {diff?.new ? diff.new : t('(blank)')}
                                   </p>
                                 ))}
                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                                  {ed.edited_by_name || 'A neighbor'}{ed.edited_by_is_ambassador ? ' (Hope Ambassador)' : ''} &middot; {new Date(ed.created_at).toLocaleDateString()}
-                                  {ed.source_url && <> &middot; <a href={ed.source_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--info)' }}>source</a></>}
-                                  {ed.reverted && <> &middot; undone{ed.reverted_by_name ? ' by ' + ed.reverted_by_name : ''}</>}
+                                  {ed.edited_by_name || t('A neighbor')}{ed.edited_by_is_ambassador ? ' (' + t('Hope Ambassador') + ')' : ''} &middot; {new Date(ed.created_at).toLocaleDateString(getLang() === 'es' ? 'es' : undefined)}
+                                  {ed.source_url && <> &middot; <a href={ed.source_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--info)' }}>{t('source')}</a></>}
+                                  {ed.reverted && <> &middot; {ed.reverted_by_name ? t('undone by {name}', { name: ed.reverted_by_name }) : t('undone')}</>}
                                   {!ed.reverted && canVerify && (
-                                    <> &middot; <button onClick={() => revertEdit(ed.id)} disabled={revertingId === ed.id} aria-label="Undo this edit" style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.35rem 0.25rem', minHeight: '44px' }}>{revertingId === ed.id ? 'undoing...' : 'undo'}</button></>
+                                    <> &middot; <button onClick={() => revertEdit(ed.id)} disabled={revertingId === ed.id} aria-label={t('Undo this edit')} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.8125rem', cursor: 'pointer', padding: '0.35rem 0.25rem', minHeight: '44px' }}>{revertingId === ed.id ? t('undoing...') : t('undo')}</button></>
                                   )}
                                 </span>
                               </div>
@@ -812,45 +815,45 @@ export default function CommunityResources() {
                             {(mergesByResource[r.id] || []).map((m) => (
                               <div key={'m' + m.merge_id} style={{ marginBottom: '0.5rem', opacity: m.undone_at ? 0.6 : 1 }}>
                                 <p style={{ color: 'var(--text-soft)', fontSize: '0.8125rem', margin: '0.1rem 0', lineHeight: 1.4 }}>
-                                  {m.is_kept ? <>Merged with <b>{m.other_name}</b>. This listing was kept.</> : <>Merged into <b>{m.other_name}</b> as a copy.</>}
+                                  {m.is_kept ? <>{t('Merged with')} <b>{m.other_name}</b>. {t('This listing was kept.')}</> : <>{t('Merged into')} <b>{m.other_name}</b> {t('as a copy.')}</>}
                                 </p>
                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                                  {m.merged_by_name} &middot; {new Date(m.merged_at).toLocaleDateString()}
-                                  {m.undone_at && <> &middot; undone by {m.undone_by_name}, {new Date(m.undone_at).toLocaleDateString()}</>}
+                                  {m.merged_by_name} &middot; {new Date(m.merged_at).toLocaleDateString(getLang() === 'es' ? 'es' : undefined)}
+                                  {m.undone_at && <> &middot; {t('undone by {name}', { name: m.undone_by_name })}, {new Date(m.undone_at).toLocaleDateString(getLang() === 'es' ? 'es' : undefined)}</>}
                                 </span>
                               </div>
                             ))}
                             {(editHistoryByResource[r.id] || []).length === 0 && (mergesByResource[r.id] || []).length === 0 && (
-                              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.4rem' }}>No edits yet.</p>
+                              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.4rem' }}>{t('No edits yet.')}</p>
                             )}
 
                             {user && editFormFor !== r.id && (
                               <button onClick={() => openEditForm(r)} style={{ padding: '0.5rem 0.8rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer' }}>
-                                Suggest an edit
+                                {t('Suggest an edit')}
                               </button>
                             )}
 
                             {editFormFor === r.id && (
                               <div style={{ marginTop: '0.4rem', padding: '0.6rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px' }}>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.5rem', lineHeight: 1.4 }}>Fix anything that's out of date. Change only what's wrong -- everything else stays as-is.</p>
-                                <label htmlFor={`edit-${r.id}-name`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>Name</label>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.5rem', lineHeight: 1.4 }}>{t("Fix anything that's out of date. Change only what's wrong -- everything else stays as-is.")}</p>
+                                <label htmlFor={`edit-${r.id}-name`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>{t('Name')}</label>
                                 <input id={`edit-${r.id}-name`} value={editDraft.name} onChange={e => setEditDraft(prev => ({ ...prev, name: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-desc`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>Description</label>
+                                <label htmlFor={`edit-${r.id}-desc`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>{t('Description')}</label>
                                 <textarea id={`edit-${r.id}-desc`} value={editDraft.description} onChange={e => setEditDraft(prev => ({ ...prev, description: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', minHeight: '50px', resize: 'vertical', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-phone`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>Phone</label>
+                                <label htmlFor={`edit-${r.id}-phone`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>{t('Phone')}</label>
                                 <input id={`edit-${r.id}-phone`} value={editDraft.phone} onChange={e => setEditDraft(prev => ({ ...prev, phone: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-url`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>Website</label>
+                                <label htmlFor={`edit-${r.id}-url`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>{t('Website')}</label>
                                 <input id={`edit-${r.id}-url`} value={editDraft.url} onChange={e => setEditDraft(prev => ({ ...prev, url: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-address`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>Address</label>
+                                <label htmlFor={`edit-${r.id}-address`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>{t('Address')}</label>
                                 <input id={`edit-${r.id}-address`} value={editDraft.address} onChange={e => setEditDraft(prev => ({ ...prev, address: e.target.value }))} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-requirements`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>What to bring / barriers to know about</label>
-                                <textarea id={`edit-${r.id}-requirements`} value={editDraft.requirements} onChange={e => setEditDraft(prev => ({ ...prev, requirements: e.target.value }))} placeholder="e.g. Photo ID and proof of address required, appointment needed, cash only" style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', minHeight: '45px', resize: 'vertical', boxSizing: 'border-box' }} />
-                                <label htmlFor={`edit-${r.id}-source`} style={{ display: 'block', color: 'var(--accent)', fontSize: '0.8125rem', marginBottom: '0.15rem', fontWeight: 600 }}>Where did you confirm this? (required)</label>
-                                <input id={`edit-${r.id}-source`} value={editDraft.source_url} onChange={e => setEditDraft(prev => ({ ...prev, source_url: e.target.value }))} placeholder="The organization's own website or social post" style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box' }} />
+                                <label htmlFor={`edit-${r.id}-requirements`} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '0.15rem' }}>{t('What to bring / barriers to know about')}</label>
+                                <textarea id={`edit-${r.id}-requirements`} value={editDraft.requirements} onChange={e => setEditDraft(prev => ({ ...prev, requirements: e.target.value }))} placeholder={t('e.g. Photo ID and proof of address required, appointment needed, cash only')} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.4rem', minHeight: '45px', resize: 'vertical', boxSizing: 'border-box' }} />
+                                <label htmlFor={`edit-${r.id}-source`} style={{ display: 'block', color: 'var(--accent)', fontSize: '0.8125rem', marginBottom: '0.15rem', fontWeight: 600 }}>{t('Where did you confirm this? (required)')}</label>
+                                <input id={`edit-${r.id}-source`} value={editDraft.source_url} onChange={e => setEditDraft(prev => ({ ...prev, source_url: e.target.value }))} placeholder={t("The organization's own website or social post")} style={{ display: 'block', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box' }} />
                                 <div style={{ display: 'flex', gap: '0.4rem' }}>
-                                  <button onClick={cancelEditForm} style={{ padding: '0.55rem 0.9rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer' }}>Cancel</button>
+                                  <button onClick={cancelEditForm} style={{ padding: '0.55rem 0.9rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer' }}>{t('Cancel')}</button>
                                   <button onClick={() => submitResourceEdit(r)} disabled={!editDraft.source_url?.trim() || submittingEdit} style={{ padding: '0.55rem 0.9rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', opacity: (!editDraft.source_url?.trim() || submittingEdit) ? 0.5 : 1 }}>
-                                    {submittingEdit ? 'Saving...' : 'Save correction'}
+                                    {submittingEdit ? t('Saving...') : t('Save correction')}
                                   </button>
                                 </div>
                               </div>
@@ -910,10 +913,10 @@ export default function CommunityResources() {
                   title={selectedCat && !query.trim() ? t(selectedCat) + ': ' + t('places that can help') : t('Places that can help')}
                 />
               )}
-              {orgFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setOrgFilter('all')} aria-label={'Remove filter: ' + orgName(orgFilter)}>{orgName(orgFilter)} <span aria-hidden="true">&#10005;</span></button>}
-              {regionFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRegionFilter('all')} aria-label={'Remove filter: ' + regionFilter}>{regionFilter} <span aria-hidden="true">&#10005;</span></button>}
+              {orgFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setOrgFilter('all')} aria-label={t('Remove filter: {name}', { name: orgName(orgFilter) })}>{orgName(orgFilter)} <span aria-hidden="true">&#10005;</span></button>}
+              {regionFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRegionFilter('all')} aria-label={t('Remove filter: {name}', { name: regionFilter })}>{regionFilter} <span aria-hidden="true">&#10005;</span></button>}
               {radiusFilter !== 'all' && <button type="button" className="fh-chip" onClick={() => setRadiusFilter('all')} aria-label={t('Remove filter: within {n} miles', { n: radiusFilter })}>{t('Within {n} mi', { n: radiusFilter })} <span aria-hidden="true">&#10005;</span></button>}
-              {accessFilter.map((f) => <button key={f} type="button" className="fh-chip" onClick={() => toggleAccess(f)} aria-label={'Remove filter: ' + accessLabel(f)}>{accessLabel(f)} <span aria-hidden="true">&#10005;</span></button>)}
+              {accessFilter.map((f) => <button key={f} type="button" className="fh-chip" onClick={() => toggleAccess(f)} aria-label={t('Remove filter: {name}', { name: accessLabel(f) })}>{accessLabel(f)} <span aria-hidden="true">&#10005;</span></button>)}
             </div>
           )}
 
@@ -941,12 +944,12 @@ export default function CommunityResources() {
           {showFilters && (
             <div className="fh-shade" onClick={(e) => { if (e.target === e.currentTarget) setShowFilters(false) }}>
               <div className="fh-sheet" role="dialog" aria-modal="true" aria-labelledby="fh-filters-h">
-                <h2 id="fh-filters-h">Filters</h2>
+                <h2 id="fh-filters-h">{t('Filters')}</h2>
           {allOrgs.length > 0 && (
             <>
-            <h3 className="fh-sheet-h">Who shares it</h3>
+            <h3 className="fh-sheet-h">{t('Who shares it')}</h3>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-              <button onClick={() => setOrgFilter('all')} aria-pressed={orgFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: orgFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: orgFilter === 'all' ? 'var(--accent)' : 'none', color: orgFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All groups</button>
+              <button onClick={() => setOrgFilter('all')} aria-pressed={orgFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: orgFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: orgFilter === 'all' ? 'var(--accent)' : 'none', color: orgFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{t('All groups')}</button>
               {allOrgs.map(o => (
                 <button key={o.id} onClick={() => setOrgFilter(o.id)} aria-pressed={orgFilter === o.id} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: orgFilter === o.id ? 'none' : '1px solid var(--border-strong)', background: orgFilter === o.id ? 'var(--accent)' : 'none', color: orgFilter === o.id ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{o.name}</button>
               ))}
@@ -956,9 +959,9 @@ export default function CommunityResources() {
 
           {allRegions.length > 1 && (
             <>
-            <h3 className="fh-sheet-h">Area</h3>
+            <h3 className="fh-sheet-h">{t('Area')}</h3>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-              <button onClick={() => setRegionFilter('all')} aria-pressed={regionFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: regionFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: regionFilter === 'all' ? 'var(--accent)' : 'none', color: regionFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>All areas</button>
+              <button onClick={() => setRegionFilter('all')} aria-pressed={regionFilter === 'all'} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: regionFilter === 'all' ? 'none' : '1px solid var(--border-strong)', background: regionFilter === 'all' ? 'var(--accent)' : 'none', color: regionFilter === 'all' ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{t('All areas')}</button>
               {allRegions.map(reg => (
                 <button key={reg} onClick={() => setRegionFilter(reg)} aria-pressed={regionFilter === reg} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: regionFilter === reg ? 'none' : '1px solid var(--border-strong)', background: regionFilter === reg ? 'var(--accent)' : 'none', color: regionFilter === reg ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{reg}</button>
               ))}
@@ -968,18 +971,18 @@ export default function CommunityResources() {
 
           {myLocation && (
             <>
-            <h3 className="fh-sheet-h">How far</h3>
+            <h3 className="fh-sheet-h">{t('How far')}</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
               
               {[['all', 'All'], [10, '10 mi'], [25, '25 mi'], [50, '50 mi']].map(([val, label]) => (
-                <button key={String(val)} onClick={() => setRadiusFilter(val)} aria-pressed={radiusFilter === val} style={{ padding: '0.5rem 0.8rem', minHeight: '44px', borderRadius: '16px', border: radiusFilter === val ? 'none' : '1px solid var(--border-strong)', background: radiusFilter === val ? 'var(--accent)' : 'none', color: radiusFilter === val ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{label}</button>
+                <button key={String(val)} onClick={() => setRadiusFilter(val)} aria-pressed={radiusFilter === val} style={{ padding: '0.5rem 0.8rem', minHeight: '44px', borderRadius: '16px', border: radiusFilter === val ? 'none' : '1px solid var(--border-strong)', background: radiusFilter === val ? 'var(--accent)' : 'none', color: radiusFilter === val ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{t(label)}</button>
               ))}
             </div>
           </>
           )}
           {hasCrn && (
             <>
-            <h3 className="fh-sheet-h">How to get it</h3>
+            <h3 className="fh-sheet-h">{t('How to get it')}</h3>
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
               {['no_appt', 'no_referral', ...deliveryMethods.map((d) => 'how:' + d)].map((f) => (
                 <button key={f} type="button" onClick={() => toggleAccess(f)} aria-pressed={accessFilter.includes(f)} style={{ padding: '0.5rem 0.85rem', minHeight: '44px', borderRadius: '16px', border: accessFilter.includes(f) ? 'none' : '1px solid var(--border-strong)', background: accessFilter.includes(f) ? 'var(--accent)' : 'none', color: accessFilter.includes(f) ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>{accessLabel(f)}</button>
@@ -988,7 +991,7 @@ export default function CommunityResources() {
             </>
           )}
                 <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48, marginTop: '0.5rem' }} onClick={() => setShowFilters(false)}>
-                  Show {filteredVerifiedResources.length} {filteredVerifiedResources.length === 1 ? 'place' : 'places'}
+                  {t(filteredVerifiedResources.length === 1 ? 'Show 1 place' : 'Show {n} places', { n: filteredVerifiedResources.length })}
                 </button>
               </div>
             </div>
@@ -1007,49 +1010,49 @@ export default function CommunityResources() {
             <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowSubmit(false)}>
               <div ref={submitModalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="submit-resource-title" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', maxWidth: '400px', width: '90%', maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <h3 id="submit-resource-title" style={{ margin: 0, color: 'var(--accent)' }}>{fromSuggestion ? 'Add a suggested resource' : 'Submit a Resource'}</h3>
-                  <button onClick={() => setShowSubmit(false)} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
+                  <h3 id="submit-resource-title" style={{ margin: 0, color: 'var(--accent)' }}>{fromSuggestion ? t('Add a suggested resource') : t('Submit a Resource')}</h3>
+                  <button onClick={() => setShowSubmit(false)} aria-label={t('Close')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
                 </div>
                 {submitted ? (
                   <p role="status" style={{ color: 'var(--accent)', fontWeight: 600, margin: 0 }}>{fromSuggestion
-                    ? 'Added. It is waiting under Pending review on this page. Tap Verify there to make it live for neighbors.'
-                    : 'Thank you! Your resource has been submitted for review.'}</p>
+                    ? t('Added. It is waiting under Pending review on this page. Tap Verify there to make it live for neighbors.')
+                    : t('Thank you! Your resource has been submitted for review.')}</p>
                 ) : (
                   <>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>{fromSuggestion
-                      ? 'Filled in from ' + (fromSuggestion.suggested_by || 'a neighbor') + "'s suggestion. Check it, fix anything that is off, then add it. Pick at least one category."
-                      : 'Share a resource with your community. Hope Ambassadors will verify submissions.'}</p>
+                      ? t("Filled in from {name}'s suggestion. Check it, fix anything that is off, then add it. Pick at least one category.", { name: fromSuggestion.suggested_by || t('a neighbor') })
+                      : t('Share a resource with your community. Hope Ambassadors will verify submissions.')}</p>
                     {submitOrgOptions.length > 0 && (
                       <>
-                        <label htmlFor="sub-org" style={labelStyle}>Group</label>
+                        <label htmlFor="sub-org" style={labelStyle}>{t('Group')}</label>
                         <select id="sub-org" style={fieldStyle} value={subOrgId} onChange={e => setSubOrgId(e.target.value)}>
-                          <option value="">{isAdmin ? 'No group (post as VWB)' : 'Choose your group'}</option>
+                          <option value="">{isAdmin ? t('No group (post as VWB)') : t('Choose your group')}</option>
                           {submitOrgOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
                       </>
                     )}
-                    <label id="sub-cat-label" style={labelStyle}>Category (required, choose one or more)</label>
+                    <label id="sub-cat-label" style={labelStyle}>{t('Category (required, choose one or more)')}</label>
                     <div role="group" aria-labelledby="sub-cat-label" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
                       {CATEGORIES.map(c => (
-                        <button key={c} type="button" onClick={() => setSubCats(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])} aria-pressed={subCats.includes(c)} style={{ padding: '0.5rem 0.75rem', minHeight: '44px', borderRadius: '16px', border: subCats.includes(c) ? 'none' : '1px solid var(--border-strong)', background: subCats.includes(c) ? 'var(--accent)' : 'none', color: subCats.includes(c) ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
+                        <button key={c} type="button" onClick={() => setSubCats(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])} aria-pressed={subCats.includes(c)} style={{ padding: '0.5rem 0.75rem', minHeight: '44px', borderRadius: '16px', border: subCats.includes(c) ? 'none' : '1px solid var(--border-strong)', background: subCats.includes(c) ? 'var(--accent)' : 'none', color: subCats.includes(c) ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}>{t(c)}</button>
                       ))}
                     </div>
-                    <label htmlFor="sub-name" style={labelStyle}>Resource name (required)</label>
-                    <input id="sub-name" style={fieldStyle} placeholder="e.g. Ringgold Community Food Pantry" value={subName} onChange={e => setSubName(e.target.value)} maxLength={120} required />
-                    <label htmlFor="sub-desc" style={labelStyle}>What do they offer?</label>
-                    <textarea id="sub-desc" style={{ ...fieldStyle, minHeight: '60px', resize: 'vertical' }} placeholder="Who is it for? Anything people should know? Like: Free groceries every Tuesday, no ID needed" value={subDesc} onChange={e => setSubDesc(e.target.value)} maxLength={500} />
-                    <label htmlFor="sub-phone" style={labelStyle}>Phone number (optional)</label>
-                    <input id="sub-phone" style={fieldStyle} placeholder="e.g. (706) 555-0100" value={subPhone} onChange={e => setSubPhone(e.target.value)} />
-                    <label htmlFor="sub-url" style={labelStyle}>Website (optional)</label>
-                    <input id="sub-url" style={fieldStyle} placeholder="e.g. https://example.org" value={subUrl} onChange={e => setSubUrl(e.target.value)} />
-                    <label htmlFor="sub-address" style={labelStyle}>Address (optional)</label>
-                    <input id="sub-address" style={fieldStyle} placeholder="e.g. 123 Main St, Ringgold, GA" value={subAddress} onChange={e => setSubAddress(e.target.value)} />
-                    <label htmlFor="sub-hood" style={labelStyle}>Neighborhood or area (optional)</label>
-                    <input id="sub-hood" style={fieldStyle} placeholder="Town or county" value={subHood} onChange={e => setSubHood(e.target.value)} />
-                    <label htmlFor="sub-requirements" style={labelStyle}>What to bring or know before you go (optional)</label>
-                    <textarea id="sub-requirements" style={{ ...fieldStyle, minHeight: '50px', resize: 'vertical' }} placeholder="e.g. Photo ID and proof of address, first-come-first-served, no appointment needed" value={subRequirements} onChange={e => setSubRequirements(e.target.value)} maxLength={300} />
+                    <label htmlFor="sub-name" style={labelStyle}>{t('Resource name (required)')}</label>
+                    <input id="sub-name" style={fieldStyle} placeholder={t('e.g. Ringgold Community Food Pantry')} value={subName} onChange={e => setSubName(e.target.value)} maxLength={120} required />
+                    <label htmlFor="sub-desc" style={labelStyle}>{t('What do they offer?')}</label>
+                    <textarea id="sub-desc" style={{ ...fieldStyle, minHeight: '60px', resize: 'vertical' }} placeholder={t('Who is it for? Anything people should know? Like: Free groceries every Tuesday, no ID needed')} value={subDesc} onChange={e => setSubDesc(e.target.value)} maxLength={500} />
+                    <label htmlFor="sub-phone" style={labelStyle}>{t('Phone number (optional)')}</label>
+                    <input id="sub-phone" style={fieldStyle} placeholder={t('e.g. (706) 555-0100')} value={subPhone} onChange={e => setSubPhone(e.target.value)} />
+                    <label htmlFor="sub-url" style={labelStyle}>{t('Website (optional)')}</label>
+                    <input id="sub-url" style={fieldStyle} placeholder={t('e.g. https://example.org')} value={subUrl} onChange={e => setSubUrl(e.target.value)} />
+                    <label htmlFor="sub-address" style={labelStyle}>{t('Address (optional)')}</label>
+                    <input id="sub-address" style={fieldStyle} placeholder={t('e.g. 123 Main St, Ringgold, GA')} value={subAddress} onChange={e => setSubAddress(e.target.value)} />
+                    <label htmlFor="sub-hood" style={labelStyle}>{t('Neighborhood or area (optional)')}</label>
+                    <input id="sub-hood" style={fieldStyle} placeholder={t('Town or county')} value={subHood} onChange={e => setSubHood(e.target.value)} />
+                    <label htmlFor="sub-requirements" style={labelStyle}>{t('What to bring or know before you go (optional)')}</label>
+                    <textarea id="sub-requirements" style={{ ...fieldStyle, minHeight: '50px', resize: 'vertical' }} placeholder={t('e.g. Photo ID and proof of address, first-come-first-served, no appointment needed')} value={subRequirements} onChange={e => setSubRequirements(e.target.value)} maxLength={300} />
                     <button onClick={submitResource} disabled={!subName.trim() || !subCats.length || submitting} style={{ padding: '0.75rem 1.25rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: (!subName.trim() || !subCats.length || submitting) ? 0.5 : 1 }}>
-                      {submitting ? 'Saving...' : fromSuggestion ? 'Add to the library' : 'Submit Resource'}
+                      {submitting ? t('Saving...') : fromSuggestion ? t('Add to the library') : t('Submit Resource')}
                     </button>
                   </>
                 )}
@@ -1061,23 +1064,23 @@ export default function CommunityResources() {
             <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setFixing(null)}>
               <div ref={fixModalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="fix-title" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem', maxWidth: '440px', width: '92%', maxHeight: '88vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <h3 id="fix-title" style={{ margin: 0, color: 'var(--accent)' }}>Edit {fixing.name}</h3>
-                  <button type="button" onClick={() => setFixing(null)} aria-label="Close" style={{ minWidth: 44, minHeight: 44, background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
+                  <h3 id="fix-title" style={{ margin: 0, color: 'var(--accent)' }}>{t('Edit {name}', { name: fixing.name })}</h3>
+                  <button type="button" onClick={() => setFixing(null)} aria-label={t('Close')} style={{ minWidth: 44, minHeight: 44, background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.25rem', cursor: 'pointer' }}>&#10005;</button>
                 </div>
                 {fixNow === false ? (
                   <p role="status" style={{ color: 'var(--text)', fontSize: '0.95rem', margin: '0 0 0.75rem', lineHeight: 1.45, padding: '0.6rem 0.75rem', borderRadius: '10px', border: '2px solid var(--gold)' }}>
                     {myAreaCount === 0
-                      ? <>You haven't chosen your area yet, so changes go to a Hope Ambassador for review. <Link to="/settings?tab=account" style={{ color: 'var(--accent)', fontWeight: 600 }}>Choose your area</Link> to fix listings near you right away. Kinds of help and town can't be sent this way.</>
-                      : <>This listing is outside your area. Your changes go to the Hope Ambassadors there for review. Kinds of help and town can't be sent this way.</>}
+                      ? <>{t("You haven't chosen your area yet, so changes go to a Hope Ambassador for review.")} <Link to="/settings?tab=account" style={{ color: 'var(--accent)', fontWeight: 600 }}>{t('Choose your area')}</Link> {t("to fix listings near you right away. Kinds of help and town can't be sent this way.")}</>
+                      : <>{t("This listing is outside your area. Your changes go to the Hope Ambassadors there for review. Kinds of help and town can't be sent this way.")}</>}
                   </p>
                 ) : (
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.75rem', lineHeight: 1.45 }}>Changes show right away. They go in the edit history, so they can be undone.</p>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.75rem', lineHeight: 1.45 }}>{t('Changes show right away. They go in the edit history, so they can be undone.')}</p>
                 )}
-                <label id="fix-cat-label" style={labelStyle}>Kinds of help (pick at least one)</label>
+                <label id="fix-cat-label" style={labelStyle}>{t('Kinds of help (pick at least one)')}</label>
                 <div role="group" aria-labelledby="fix-cat-label" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
                   {CATEGORIES.map((c) => {
                     const on = fix.categories.includes(c)
-                    return <button key={c} type="button" aria-pressed={on} disabled={fixNow === false} onClick={() => setFix((f) => ({ ...f, categories: on ? f.categories.filter((x) => x !== c) : [...f.categories, c] }))} style={{ opacity: fixNow === false ? 0.55 : 1, padding: '0.5rem 0.75rem', minHeight: '44px', borderRadius: '16px', border: on ? 'none' : '1px solid var(--border-strong)', background: on ? 'var(--accent)' : 'none', color: on ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>{c}</button>
+                    return <button key={c} type="button" aria-pressed={on} disabled={fixNow === false} onClick={() => setFix((f) => ({ ...f, categories: on ? f.categories.filter((x) => x !== c) : [...f.categories, c] }))} style={{ opacity: fixNow === false ? 0.55 : 1, padding: '0.5rem 0.75rem', minHeight: '44px', borderRadius: '16px', border: on ? 'none' : '1px solid var(--border-strong)', background: on ? 'var(--accent)' : 'none', color: on ? 'var(--on-accent)' : 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>{t(c)}</button>
                   })}
                 </div>
                 {[
@@ -1090,32 +1093,32 @@ export default function CommunityResources() {
                   ['requirements', 'What to bring or know before you go', 'area'],
                 ].map(([k, label, kind, mode]) => (
                   <div key={k}>
-                    <label htmlFor={'fix-' + k} style={labelStyle}>{label}</label>
+                    <label htmlFor={'fix-' + k} style={labelStyle}>{t(label)}</label>
                     {kind === 'area'
                       ? <textarea id={'fix-' + k} style={{ ...fieldStyle, fontSize: '1rem', minHeight: '64px', resize: 'vertical' }} value={fix[k]} onChange={(e) => setFix((f) => ({ ...f, [k]: e.target.value }))} maxLength={k === 'requirements' ? 300 : 1000} />
                       : <input id={'fix-' + k} type={mode === 'url' ? 'url' : mode === 'tel' ? 'tel' : 'text'} inputMode={mode || undefined} disabled={k === 'neighborhood' && fixNow === false} style={{ ...fieldStyle, fontSize: '1rem', opacity: k === 'neighborhood' && fixNow === false ? 0.55 : 1 }} value={fix[k]} onChange={(e) => setFix((f) => ({ ...f, [k]: e.target.value }))} maxLength={k === 'name' ? 120 : 300} />}
                   </div>
                 ))}
-                <label htmlFor="fix-source" style={labelStyle}>{fixNow === false ? 'Where did you check this? (needed)' : 'Where did you check this? (optional)'}</label>
-                <input id="fix-source" style={{ ...fieldStyle, fontSize: '1rem' }} placeholder="Their website, a call, a visit" value={fix.source} onChange={(e) => setFix((f) => ({ ...f, source: e.target.value }))} maxLength={500} />
+                <label htmlFor="fix-source" style={labelStyle}>{fixNow === false ? t('Where did you check this? (needed)') : t('Where did you check this? (optional)')}</label>
+                <input id="fix-source" style={{ ...fieldStyle, fontSize: '1rem' }} placeholder={t('Their website, a call, a visit')} value={fix.source} onChange={(e) => setFix((f) => ({ ...f, source: e.target.value }))} maxLength={500} />
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  <button type="button" className="btn btn-outline" style={{ flex: 1, minHeight: 48 }} onClick={() => setFixing(null)}>Cancel</button>
-                  <button type="button" className="btn btn-primary" style={{ flex: 1, minHeight: 48 }} disabled={savingFix || fixNow === null} onClick={saveFix}>{savingFix ? (fixNow === false ? 'Sending...' : 'Saving...') : fixNow === false ? 'Send for review' : 'Save'}</button>
+                  <button type="button" className="btn btn-outline" style={{ flex: 1, minHeight: 48 }} onClick={() => setFixing(null)}>{t('Cancel')}</button>
+                  <button type="button" className="btn btn-primary" style={{ flex: 1, minHeight: 48 }} disabled={savingFix || fixNow === null} onClick={saveFix}>{savingFix ? (fixNow === false ? t('Sending...') : t('Saving...')) : fixNow === false ? t('Send for review') : t('Save')}</button>
                 </div>
 
                 {/* Oct 28: the same place listed twice. */}
                 <div style={{ borderTop: '1px solid var(--border)', marginTop: '1rem', paddingTop: '0.75rem' }}>
                   {!dupOpen ? (
                     <button type="button" className="btn btn-outline" aria-expanded="false" onClick={() => setDupOpen(true)} style={{ width: '100%', minHeight: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                      <Icon name="flag" /> Mark as duplicate
+                      <Icon name="flag" /> {t('Mark as duplicate')}
                     </button>
                   ) : !dupPick ? (
                     <div>
-                      <h4 style={{ margin: '0 0 0.25rem', color: 'var(--text-strong)' }}>Mark as duplicate</h4>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.6rem', lineHeight: 1.45 }}>Is this place listed twice? Pick the other listing.</p>
+                      <h4 style={{ margin: '0 0 0.25rem', color: 'var(--text-strong)' }}>{t('Mark as duplicate')}</h4>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.6rem', lineHeight: 1.45 }}>{t('Is this place listed twice? Pick the other listing.')}</p>
                       {dupLikely.length > 0 && !dupQuery.trim() && (
                         <>
-                          <p id="dup-likely" style={labelStyle}>Could be one of these</p>
+                          <p id="dup-likely" style={labelStyle}>{t('Could be one of these')}</p>
                           <ul aria-labelledby="dup-likely" style={{ listStyle: 'none', margin: '0 0 0.6rem', padding: 0, display: 'grid', gap: '0.5rem' }}>
                             {dupLikely.map((x) => (
                               <li key={x.id}>
@@ -1128,38 +1131,38 @@ export default function CommunityResources() {
                           </ul>
                         </>
                       )}
-                      <label htmlFor="dup-search" style={labelStyle}>Search by name</label>
-                      <input id="dup-search" type="search" inputMode="search" autoComplete="off" style={{ ...fieldStyle, fontSize: '1rem' }} placeholder="Type part of the name" value={dupQuery} onChange={(e) => setDupQuery(e.target.value)} maxLength={80} />
+                      <label htmlFor="dup-search" style={labelStyle}>{t('Search by name')}</label>
+                      <input id="dup-search" type="search" inputMode="search" autoComplete="off" style={{ ...fieldStyle, fontSize: '1rem' }} placeholder={t('Type part of the name')} value={dupQuery} onChange={(e) => setDupQuery(e.target.value)} maxLength={80} />
                       <div role="status" aria-live="polite" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', minHeight: '1.2em' }}>
-                        {dupSearching ? 'Looking...' : dupQuery.trim().length >= 2 && dupResults.length === 0 ? 'No listings with that name.' : ''}
+                        {dupSearching ? t('Looking...') : dupQuery.trim().length >= 2 && dupResults.length === 0 ? t('No listings with that name.') : ''}
                       </div>
                       {dupResults.length > 0 && (
-                        <ul aria-label="Matching listings" style={{ listStyle: 'none', margin: '0.25rem 0 0.6rem', padding: 0, display: 'grid', gap: '0.5rem' }}>
+                        <ul aria-label={t('Matching listings')} style={{ listStyle: 'none', margin: '0.25rem 0 0.6rem', padding: 0, display: 'grid', gap: '0.5rem' }}>
                           {dupResults.map((x) => (
                             <li key={x.id}>
                               <button type="button" onClick={() => setDupPick(x)} style={{ width: '100%', minHeight: 48, textAlign: 'left', padding: '0.55rem 0.75rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', cursor: 'pointer', fontSize: '1rem' }}>
                                 <strong style={{ display: 'block' }}>{x.name}</strong>
                                 {(x.address || x.phone || x.neighborhood) && <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{x.address || x.phone || x.neighborhood}</span>}
-                                {x.verified === false && <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Waiting for review</span>}
+                                {x.verified === false && <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{t('Waiting for review')}</span>}
                               </button>
                             </li>
                           ))}
                         </ul>
                       )}
-                      <button type="button" className="btn btn-outline" style={{ width: '100%', minHeight: 48 }} onClick={() => { setDupOpen(false); setDupQuery('') }}>Never mind</button>
+                      <button type="button" className="btn btn-outline" style={{ width: '100%', minHeight: 48 }} onClick={() => { setDupOpen(false); setDupQuery('') }}>{t('Never mind')}</button>
                     </div>
                   ) : (
                     <div role="group" aria-labelledby="dup-confirm-title">
-                      <h4 id="dup-confirm-title" style={{ margin: '0 0 0.4rem', color: 'var(--text-strong)' }}>Merge these two?</h4>
-                      <p style={{ margin: '0 0 0.2rem', fontSize: '0.95rem' }}><strong>Stays:</strong> {dupKeepThis ? fixing.name : dupPick.name}</p>
-                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}><strong>Hidden as a copy:</strong> {dupKeepThis ? dupPick.name : fixing.name}</p>
+                      <h4 id="dup-confirm-title" style={{ margin: '0 0 0.4rem', color: 'var(--text-strong)' }}>{t('Merge these two?')}</h4>
+                      <p style={{ margin: '0 0 0.2rem', fontSize: '0.95rem' }}><strong>{t('Stays:')}</strong> {dupKeepThis ? fixing.name : dupPick.name}</p>
+                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}><strong>{t('Hidden as a copy:')}</strong> {dupKeepThis ? dupPick.name : fixing.name}</p>
                       <button type="button" onClick={() => setDupKeepThis((v) => !v)} style={{ minHeight: 44, padding: '0 0.2rem', background: 'none', border: 'none', color: 'var(--info)', fontWeight: 600, fontSize: '0.9rem', textDecoration: 'underline', cursor: 'pointer' }}>
-                        Keep the other one instead
+                        {t('Keep the other one instead')}
                       </button>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0.4rem 0 0.75rem', lineHeight: 1.45 }}>Anything the one that stays is missing, like a phone, website, address, or map pin, gets filled in from the copy. Reviews and votes move over too. Nothing is deleted, and you can undo it.</p>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0.4rem 0 0.75rem', lineHeight: 1.45 }}>{t('Anything the one that stays is missing, like a phone, website, address, or map pin, gets filled in from the copy. Reviews and votes move over too. Nothing is deleted, and you can undo it.')}</p>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button type="button" className="btn btn-outline" style={{ flex: 1, minHeight: 48 }} onClick={() => { setDupPick(null); setDupKeepThis(false) }}>Pick again</button>
-                        <button type="button" className="btn btn-primary" style={{ flex: 1, minHeight: 48 }} disabled={merging} onClick={markDuplicate}>{merging ? 'Merging...' : 'Yes, merge'}</button>
+                        <button type="button" className="btn btn-outline" style={{ flex: 1, minHeight: 48 }} onClick={() => { setDupPick(null); setDupKeepThis(false) }}>{t('Pick again')}</button>
+                        <button type="button" className="btn btn-primary" style={{ flex: 1, minHeight: 48 }} disabled={merging} onClick={markDuplicate}>{merging ? t('Merging...') : t('Yes, merge')}</button>
                       </div>
                     </div>
                   )}
@@ -1176,18 +1179,18 @@ export default function CommunityResources() {
 
           {canVerify && pendingResources.length > 0 && (
             <details className="fh-pending" open={!!fromSuggestion || undefined}>
-              <summary>Waiting for review ({pendingResources.length})</summary>
+              <summary>{t('Waiting for review')} ({pendingResources.length})</summary>
               {pendingResources.map(r => (
                 <div key={r.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '0.6rem', marginBottom: '0.35rem', borderLeft: '3px solid var(--warn)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{r.name}</span>
                     <span style={{ display: 'flex', gap: '0.4rem' }}>
-                      <button type="button" onClick={() => openFix(r)} style={{ padding: '0.3rem 0.9rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Edit</button>
-                      <button onClick={() => verifyResource(r.id)} style={{ padding: '0.3rem 0.9rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Verify</button>
+                      <button type="button" onClick={() => openFix(r)} style={{ padding: '0.3rem 0.9rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>{t('Edit')}</button>
+                      <button onClick={() => verifyResource(r.id)} style={{ padding: '0.3rem 0.9rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>{t('Verify')}</button>
                     </span>
                   </div>
                   {r.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{r.description}</p>}
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{resourceCats(r).join(' · ')}{r.organizations ? ' · ' + r.organizations.name : ''}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{resourceCats(r).map((c) => t(c)).join(' · ')}{r.organizations ? ' · ' + r.organizations.name : ''}</span>
                 </div>
               ))}
             </details>

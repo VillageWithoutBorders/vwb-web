@@ -4,10 +4,12 @@ import { firstRunPaused } from '../utils/firstVillage'
 import { useAuth } from '../context/AuthContext'
 import { saveSimpleView, phoneUsesLargeText, isSimpleView } from '../utils/simpleView'
 import { startPath } from '../utils/startPath'
+import { useT } from '../utils/lang'
 
 // Asked once: Simple view or everything. Shows when the account has never
 // answered (simple_view is empty). The tour waits until this is answered.
 export default function SimpleOffer() {
+  const t = useT()
   const { user, profile, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -44,17 +46,17 @@ export default function SimpleOffer() {
   return (
     <div className="tools-shade so-shade">
       <div className="tools-sheet so-sheet" role="dialog" aria-modal="true" aria-labelledby="so-h">
-        <h2 id="so-h" tabIndex={-1} ref={headRef}>How would you like the app to look?</h2>
-        {large && <p className="so-text">Your phone uses large text, so Simple view may feel easier.</p>}
+        <h2 id="so-h" tabIndex={-1} ref={headRef}>{t('How would you like the app to look?')}</h2>
+        {large && <p className="so-text">{t('Your phone uses large text, so Simple view may feel easier.')}</p>}
         <button type="button" className="so-choice so-choice-simple" disabled={busy} onClick={() => pick(true)}>
-          <b>Simple</b>
-          <span>Bigger words and buttons. A plain home page with the main things: get help, give help, and messages.</span>
+          <b>{t('Simple')}</b>
+          <span>{t('Bigger words and buttons. A plain home page with the main things: get help, give help, and messages.')}</span>
         </button>
         <button type="button" className="so-choice" disabled={busy} onClick={() => pick(false)}>
-          <b>Everything</b>
-          <span>The full app: maps of your village and area, group chats, a calendar, and more.</span>
+          <b>{t('Everything')}</b>
+          <span>{t('The full app: maps of your village and area, group chats, a calendar, and more.')}</span>
         </button>
-        <p className="so-text">You can change this any time in Settings.</p>
+        <p className="so-text">{t('You can change this any time in Settings.')}</p>
       </div>
     </div>
   )

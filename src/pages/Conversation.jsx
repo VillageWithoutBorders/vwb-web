@@ -18,6 +18,7 @@ import { sendPrivateMessage, flushOutbox, getQueuedMessages, cancelQueuedMessage
 import { useGoBack } from '../components/BackLink'
 import { askConfirm, tell } from '../components/AdminDialog'
 import { cottagesICanVisit } from '../utils/cottageVisits'
+import { useT } from '../utils/lang'
 
 // Consecutive messages from the same person within this window are grouped
 // visually (avatar shown once, tighter spacing) instead of repeating the
@@ -50,6 +51,7 @@ export default function Conversation({ convoId, pane = false, openReport = false
   const { user } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
+  const t = useT()
   const blockedBy = useBlockedBy()
   const location = useLocation()
   const { refreshUnread } = useUnreadCount()
@@ -59,7 +61,7 @@ export default function Conversation({ convoId, pane = false, openReport = false
   const [newMsg, setNewMsg] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [otherName, setOtherName] = useState('Neighbor')
+  const [otherName, setOtherName] = useState(() => t('Neighbor'))
   const [otherAvatar, setOtherAvatar] = useState(null)
   const [otherUserId, setOtherUserId] = useState(null)
   const [myAvatar, setMyAvatar] = useState(null)
@@ -147,7 +149,7 @@ export default function Conversation({ convoId, pane = false, openReport = false
     const { data: otherProfile, error: otherErr } = await supabase.from('helper_profiles_public').select('display_name, avatar_url').eq('user_id', otherId).maybeSingle()
     if (otherErr) console.error("Failed to load the other participant's profile:", otherErr)
     setOtherUserId(otherId)
-    if (otherProfile) { setOtherName(otherProfile.display_name || 'Neighbor'); setOtherAvatar(otherProfile.avatar_url || null) }
+    if (otherProfile) { setOtherName(otherProfile.display_name || t('Neighbor')); setOtherAvatar(otherProfile.avatar_url || null) }
     const { data: myProfile, error: myErr } = await supabase.from('helper_profiles').select('avatar_url, read_receipts_enabled').eq('user_id', user.id).maybeSingle()
     if (myErr) console.error('Failed to load your profile:', myErr)
     if (myProfile) { setMyAvatar(myProfile.avatar_url || null); setMyReceipts(myProfile.read_receipts_enabled !== false) }
@@ -229,9 +231,9 @@ export default function Conversation({ convoId, pane = false, openReport = false
     const withPlaintext = await Promise.all(data.map(async (msg) => {
       if (msg.body) return { ...msg, displayBody: msg.body }
       const copy = copiesByMessage[msg.id]
-      if (!copy) return { ...msg, displayBody: '[Unable to decrypt this message]' }
+      if (!copy) return { ...msg, displayBody: t('[Unable to decrypt this message]') }
       const plaintext = await decryptFromSender(copy.ciphertext, copy.nonce, msg.sender_id)
-      return { ...msg, displayBody: plaintext ?? '[Unable to decrypt this message]' }
+      return { ...msg, displayBody: plaintext ?? t('[Unable to decrypt this message]') }
     }))
     const queued = (await getQueuedMessages(user.id, id)).map(q => ({
       id: 'queued-' + q.id,
@@ -258,7 +260,7 @@ export default function Conversation({ convoId, pane = false, openReport = false
   }
 
   async function cancelWaiting(msg) {
-    if (!(await askConfirm('Take back this message? It has not been sent yet.'))) return
+    if (!(await askConfirm(t('Take back this message? It has not been sent yet.')))) return
     await cancelQueuedMessage(msg.localId)
     loadMessages()
   }
@@ -302,14 +304,14 @@ export default function Conversation({ convoId, pane = false, openReport = false
       if (text === (editing.displayBody ?? '')) { cancelEdit(); setSending(false); return }
       const result = await editPrivateMessage({ messageId: editing.id, senderId: user.id, recipientId, text })
       if (result === 'edited') { setEditing(null); setNewMsg(''); await loadMessages() }
-      else if (result === 'not-allowed') { setSendNote('You can only edit your last message, within 15 minutes of sending it.'); setEditing(null); setNewMsg('') }
-      else setSendNote('Could not save your edit. Check your connection and try again.')
+      else if (result === 'not-allowed') { setSendNote(t('You can only edit your last message, within 15 minutes of sending it.')); setEditing(null); setNewMsg('') }
+      else setSendNote(t('Could not save your edit. Check your connection and try again.'))
       setSending(false)
       return
     }
     const result = await sendPrivateMessage({ conversationId: id, senderId: user.id, recipientId, text })
     if (result === 'failed') {
-      setSendNote('Could not send your message. Check your connection and try again.')
+      setSendNote(t('Could not send your message. Check your connection and try again.'))
     } else {
       if (result === 'sent') {
         createNotification({ userId: recipientId, type: 'message', title: 'New message from ' + (convo.helper_id === user.id ? 'your helper' : 'your neighbor'), body: 'You have a new message.', link: '/conversation/' + id })
@@ -324,8 +326,8 @@ export default function Conversation({ convoId, pane = false, openReport = false
     const d = new Date(ts)
     const now = new Date()
     const diff = now - d
-    if (diff < 60000) return 'Just now'
-    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago'
+    if (diff < 60000) return t('Just now')
+    if (diff < 3600000) return t('{n}m ago', { n: Math.floor(diff / 60000) })
     if (diff < 86400000) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
   }
@@ -349,7 +351,7 @@ export default function Conversation({ convoId, pane = false, openReport = false
   }
 
   async function submitConversationReport() {
-    if (!reportReason) { setReportError('Pick the closest reason.'); return }
+    if (!reportReason) { setReportError(t('Pick the closest reason.')); return }
     setReportBusy(true)
     setReportError('')
     let details = reportDetails.trim()
@@ -359,7 +361,7 @@ export default function Conversation({ convoId, pane = false, openReport = false
     }
     const { error } = await submitUserReport({ reporterId: user.id, reportedUserId: otherUserId, source: 'conversation', reason: reportReason, details })
     setReportBusy(false)
-    if (error) { setReportError('Could not send your report. Try again.'); return }
+    if (error) { setReportError(t('Could not send your report. Try again.')); return }
     setReportDialog('reported')
   }
 
@@ -371,7 +373,7 @@ export default function Conversation({ convoId, pane = false, openReport = false
   if (loading) {
     return (
       <div className={pageClass}>
-        <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>Loading...</p>
+        <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>{t('Loading...')}</p>
       </div>
     )
   }
@@ -379,10 +381,10 @@ export default function Conversation({ convoId, pane = false, openReport = false
   if (!convo) {
     return (
       <div className={pageClass}>
-        <p style={{ textAlign: 'center', padding: '2rem' }}>Conversation not found.</p>
+        <p style={{ textAlign: 'center', padding: '2rem' }}>{t('Conversation not found.')}</p>
         {pane
-          ? <button className="btn btn-outline btn-full" onClick={() => onClose?.()}>Close</button>
-          : <button className="btn btn-outline btn-full" onClick={() => navigate(-1)}>Back to Tasks</button>}
+          ? <button className="btn btn-outline btn-full" onClick={() => onClose?.()}>{t('Close')}</button>
+          : <button className="btn btn-outline btn-full" onClick={() => navigate(-1)}>{t('Back to Tasks')}</button>}
       </div>
     )
   }
@@ -393,23 +395,23 @@ export default function Conversation({ convoId, pane = false, openReport = false
   const lastMine = [...messages].reverse().find(m => m.sender_id === user.id && !m.queued)
   const readMessageId = (myReceipts && otherReceipt && lastMine && new Date(otherReceipt) >= new Date(lastMine.created_at)) ? lastMine.id : null
 
-  const urgencyLabel = request?.urgency === 'now' ? 'Right now'
+  const urgencyLabel = t(request?.urgency === 'now' ? 'Right now'
     : request?.urgency === 'today' ? 'Today'
     : request?.urgency === 'this_week' ? 'This week'
-    : 'Flexible'
+    : 'Flexible')
 
   return (
     <div className={pageClass}>
       <div className="convo-header">
-        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; const { error } = await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id); if (error) console.error('Failed to mark conversation read:', error); refreshUnread() } if (pane) onClose?.(); else goBack('/') }} aria-label={pane ? 'Close chat' : 'Back'}>
+        <button className="convo-back" onClick={async () => { if (convo) { const readCol = convo.helper_id === user.id ? "last_read_helper" : "last_read_requester"; const { error } = await supabase.from("conversations").update({ [readCol]: new Date().toISOString() }).eq("id", convo.id); if (error) console.error('Failed to mark conversation read:', error); refreshUnread() } if (pane) onClose?.(); else goBack('/') }} aria-label={pane ? t('Close chat') : t('Back')}>
           {pane ? '\u2715' : '\u2190'}
         </button>
         <AvatarDisplay url={otherAvatar} userId={otherUserId} size={36} />
         <div className="convo-header-info">
           <Title><UserName userId={otherUserId} name={otherName} /></Title>
-          {request && <p className="convo-context">{request.skill_needed}{request.for_name ? ' for ' + request.for_name : ''}</p>}
+          {request && <p className="convo-context">{t(request.skill_needed)}{request.for_name ? ' ' + t('for {name}', { name: request.for_name }) : ''}</p>}
         </div>
-        <button onClick={() => setShowSettings(true)} aria-label="Chat settings" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: 44, minHeight: 44 }} title='Settings'><Icon name="gear" /></button>
+        <button onClick={() => setShowSettings(true)} aria-label={t('Chat settings')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: 44, minHeight: 44 }} title={t('Settings')}><Icon name="gear" /></button>
 
 
 
@@ -419,28 +421,28 @@ export default function Conversation({ convoId, pane = false, openReport = false
       {request && (
         <div className="convo-request-banner">
           <span className={'urgency-badge urgency-' + request.urgency}>{urgencyLabel}</span>
-          <span className="convo-request-skill">{request.skill_needed}</span>
+          <span className="convo-request-skill">{t(request.skill_needed)}</span>
           {request.for_name && (
             <p className="for-line">{convo.requester_id === user.id
-              ? 'For ' + request.for_name + '. You pass things along.'
-              : 'For ' + request.for_name + ', posted by ' + (otherName || 'a neighbor') + '. You talk with ' + (otherName || 'them') + ' here.'}</p>
+              ? t('For {name}. You pass things along.', { name: request.for_name })
+              : t('For {name}, posted by {poster}. You talk with {poster} here.', { name: request.for_name, poster: otherName || t('a neighbor') })}</p>
           )}
           <p className="convo-request-desc">{request.description}</p>
           {accepted && (
-            <p className="convo-request-status">&#10003; {convo.helper_id === user.id ? 'You were accepted to help with this' : otherName + ' was accepted to help with this'}</p>
+            <p className="convo-request-status">&#10003; {convo.helper_id === user.id ? t('You were accepted to help with this') : t('{name} was accepted to help with this', { name: otherName })}</p>
           )}
         </div>
       )}
       {!request && offer && (
         <div className="convo-request-banner">
-          <span className="convo-request-skill">{convo.helper_id === user.id ? 'About your offer' : 'About their offer'}: {offer.title}</span>
+          <span className="convo-request-skill">{convo.helper_id === user.id ? t('About your offer') : t('About their offer')}: {offer.title}</span>
           {offer.description && <p className="convo-request-desc">{offer.description}</p>}
         </div>
       )}
 
       <div className="convo-messages" ref={containerRef} onScroll={onScroll}>
         {messages.length === 0 && (
-          <p className="convo-empty">No messages yet. Say hello!</p>
+          <p className="convo-empty">{t('No messages yet. Say hello!')}</p>
         )}
         {messages.map((msg, idx) => {
   const isMe = msg.sender_id === user.id
@@ -451,9 +453,9 @@ export default function Conversation({ convoId, pane = false, openReport = false
       {!isMe && (isGroupStart
         ? <AvatarDisplay url={otherAvatar} userId={otherUserId} size={24} />
         : <div style={{ width: '24px', flexShrink: 0 }} />)}
-      <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs') + (msg.queued ? ' queued' : '')} onClick={() => msg.queued ? cancelWaiting(msg) : setSelectedMessage(msg)} role="button" tabIndex={0} aria-label={msg.queued ? 'Waiting to send. Tap to take it back.' : 'Message actions'} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (msg.queued) cancelWaiting(msg); else setSelectedMessage(msg) } }}>
+      <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs') + (msg.queued ? ' queued' : '')} onClick={() => msg.queued ? cancelWaiting(msg) : setSelectedMessage(msg)} role="button" tabIndex={0} aria-label={msg.queued ? t('Waiting to send. Tap to take it back.') : t('Message actions')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (msg.queued) cancelWaiting(msg); else setSelectedMessage(msg) } }}>
         <p className="chat-body">{msg.displayBody ?? msg.body}</p>
-        <span className="chat-time">{msg.queued ? 'Waiting to send' : formatTime(msg.created_at)}{msg.edit_count > 0 ? <> {'\u00b7'} <button type="button" className="chat-edited" onClick={(ev) => { ev.stopPropagation(); showHistory(msg) }}>Edited</button></> : null}{msg.id === readMessageId ? ' \u00b7 Read ' + formatTime(otherReceipt) : ''}</span>
+        <span className="chat-time">{msg.queued ? t('Waiting to send') : formatTime(msg.created_at)}{msg.edit_count > 0 ? <> {'\u00b7'} <button type="button" className="chat-edited" onClick={(ev) => { ev.stopPropagation(); showHistory(msg) }}>{t('Edited')}</button></> : null}{msg.id === readMessageId ? ' \u00b7 ' + t('Read {time}', { time: formatTime(otherReceipt) }) : ''}</span>
         {!msg.queued && msg.id && <SparkButton count={sparks[String(msg.id)]?.n || 0} mine={!!sparks[String(msg.id)]?.mine} onToggle={() => toggleSpark(msg.id)} />}
       </div>
       {isMe && (isGroupStart
@@ -464,29 +466,29 @@ export default function Conversation({ convoId, pane = false, openReport = false
 })}
         {messages.some(m => m.queued) && (
           <p className="convo-waiting-note" role="status">
-            {otherName} hasn't opened VWB since private messages started, so your message is waiting on this device. We let them know. It sends by itself once they open VWB and you have VWB open.
+            {t("{name} hasn't opened VWB since private messages started, so your message is waiting on this device. We let them know. It sends by itself once they open VWB and you have VWB open.", { name: otherName })}
           </p>
         )}
         {showNew && (
-          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>New messages &#8595;</button>
+          <button type="button" onClick={jumpToNewest} style={{ position: 'sticky', bottom: '0.5rem', alignSelf: 'center', padding: '0.4rem 0.9rem', borderRadius: '999px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>{t('New messages')} &#8595;</button>
         )}
       </div>
 
       {sendNote && <p className="convo-send-error" role="alert">{sendNote}</p>}
       {editing && (
         <p className="convo-editing" role="status">
-          Editing your message. Everyone in this chat can see what it said before.
-          {' '}<button type="button" className="chat-edited" onClick={cancelEdit}>Cancel</button>
+          {t('Editing your message. Everyone in this chat can see what it said before.')}
+          {' '}<button type="button" className="chat-edited" onClick={cancelEdit}>{t('Cancel')}</button>
         </p>
       )}
       <div className="convo-input-bar">
         <input
-          aria-label="Write a message"
+          aria-label={t('Write a message')}
           type="text"
           value={newMsg}
           onChange={(e) => setNewMsg(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) sendMessage(e) }}
-          placeholder="Type a message..."
+          placeholder={t('Type a message...')}
           className="convo-input"
           disabled={sending}
         />
@@ -494,9 +496,9 @@ export default function Conversation({ convoId, pane = false, openReport = false
           className="convo-send"
           onClick={sendMessage}
           disabled={!newMsg.trim() || sending}
-          aria-label="Send"
+          aria-label={t('Send')}
         >
-          {editing ? 'Save' : 'Send'}
+          {editing ? t('Save') : t('Send')}
         </button>
       </div>
       {selectedMessage && (
@@ -512,17 +514,17 @@ export default function Conversation({ convoId, pane = false, openReport = false
 
       {history && (
         <>
-          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setHistory(null)} />
+          <button type="button" className="app-dialog-scrim" aria-label={t('Close')} tabIndex={-1} onClick={() => setHistory(null)} />
           <div role="dialog" aria-modal="true" aria-labelledby="edit-history-title" className="edit-history">
-            <h3 id="edit-history-title">Edit history</h3>
-            {history.versions.length === 0 && <p>The earlier versions can't be opened on this device.</p>}
+            <h3 id="edit-history-title">{t('Edit history')}</h3>
+            {history.versions.length === 0 && <p>{t("The earlier versions can't be opened on this device.")}</p>}
             {history.versions.map((v, i) => (
               <div key={v.version} className="edit-history-row">
-                <strong>{i === history.versions.length - 1 ? 'Now' : (i === 0 ? 'Original' : 'Edit ' + i)}</strong>
+                <strong>{i === history.versions.length - 1 ? t('Now') : (i === 0 ? t('Original') : t('Edit {n}', { n: i }))}</strong>
                 <p>{v.text}</p>
               </div>
             ))}
-            <button type="button" className="btn btn-outline btn-full" onClick={() => setHistory(null)}>Close</button>
+            <button type="button" className="btn btn-outline btn-full" onClick={() => setHistory(null)}>{t('Close')}</button>
           </div>
         </>
       )}
@@ -530,41 +532,41 @@ export default function Conversation({ convoId, pane = false, openReport = false
       {showSettings && <div onClick={() => setShowSettings(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999 }} />}
       <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Chat Settings</h2>
-          <button onClick={() => setShowSettings(false)} aria-label="Close chat settings" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('Chat Settings')}</h2>
+          <button onClick={() => setShowSettings(false)} aria-label={t('Close chat settings')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
 
         <button type="button" disabled={blockedBy.has(otherUserId)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'var(--surface-2)', borderRadius: '10px', marginBottom: '1.25rem', cursor: blockedBy.has(otherUserId) ? 'default' : 'pointer', border: 'none', width: '100%', textAlign: 'left' }} onClick={() => { setShowSettings(false); if (!blockedBy.has(otherUserId)) navigate('/u/' + otherUserId) }}>
           <AvatarDisplay url={otherAvatar} userId={otherUserId} size={44} />
           <div>
             <div style={{ fontWeight: 700, color: 'var(--text-strong)' }}>{otherName}</div>
-            {!blockedBy.has(otherUserId) && <div style={{ color: 'var(--accent)', fontSize: '0.8125rem' }}>View profile</div>}
+            {!blockedBy.has(otherUserId) && <div style={{ color: 'var(--accent)', fontSize: '0.8125rem' }}>{t('View profile')}</div>}
           </div>
         </button>
 
-        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Actions</div>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>{t('Actions')}</div>
 
         {!blockedBy.has(otherUserId) && (
         <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="person" /></span> View Profile
+          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="person" /></span> {t('View Profile')}
         </button>
         )}
         {canVisit && !blockedBy.has(otherUserId) && (
         <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId + '/cottage') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', minHeight: 44, textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cottage" /></span> Visit their cottage
+          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cottage" /></span> {t('Visit their cottage')}
         </button>
         )}
         <button onClick={async () => {
-          if (!(await askConfirm('Block ' + otherName + '?'))) return
+          if (!(await askConfirm(t('Block {name}?', { name: otherName })))) return
           const { error } = await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: otherUserId })
           setShowSettings(false)
           if (error) { console.error('Failed to block user:', error); tell('Could not block this user. Try again.', { tone: 'error' }); return }
-          tell('Blocked.')
+          tell(t('Blocked.'))
         }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cross" /></span> Block User
+          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cross" /></span> {t('Block User')}
         </button>
         <button onClick={() => { setShowSettings(false); setReportDialog('report') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="flag" /></span> Report User
+          <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="flag" /></span> {t('Report User')}
         </button>
       </div>
 
@@ -574,36 +576,36 @@ export default function Conversation({ convoId, pane = false, openReport = false
           <div role="dialog" aria-modal="true" aria-labelledby="report-title" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.25rem', zIndex: 1101, width: 'min(360px, calc(100vw - 2rem))', maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
             {reportDialog === 'report' && (
               <>
-                <h2 id="report-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>Report {otherName}</h2>
-                <p style={{ margin: '0 0 0.75rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>Only admins see your report. Messages here are end-to-end encrypted, so admins cannot read this conversation themselves -- if you want them to see what was said, attach it below.</p>
+                <h2 id="report-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>{t('Report {name}', { name: otherName })}</h2>
+                <p style={{ margin: '0 0 0.75rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>{t('Only admins see your report. Messages here are end-to-end encrypted, so admins cannot read this conversation themselves -- if you want them to see what was said, attach it below.')}</p>
                 <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-                  <legend style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>What happened?</legend>
+                  <legend style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>{t('What happened?')}</legend>
                   {REASONS.map((r) => (
                     <label key={r} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0', minHeight: '44px', color: 'var(--text)', fontSize: '0.9rem', cursor: 'pointer' }}>
                       <input type="radio" name="report-reason" value={r} checked={reportReason === r} onChange={() => { setReportReason(r); setReportError('') }} style={{ width: '18px', height: '18px', accentColor: 'var(--accent)' }} />
-                      {r}
+                      {t(r)}
                     </label>
                   ))}
                 </fieldset>
-                <label htmlFor="report-details" style={{ display: 'block', color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.75rem 0 0.3rem' }}>Anything else we should know? (optional)</label>
+                <label htmlFor="report-details" style={{ display: 'block', color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.75rem 0 0.3rem' }}>{t('Anything else we should know? (optional)')}</label>
                 <textarea id="report-details" value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} maxLength={500} rows={3} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.9rem', resize: 'vertical' }} />
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '0.75rem', color: 'var(--text)', fontSize: '0.85rem', cursor: 'pointer' }}>
                   <input type="checkbox" checked={includeEvidence} onChange={(e) => setIncludeEvidence(e.target.checked)} style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: 'var(--accent)', flexShrink: 0 }} />
-                  <span>Attach the last few messages from this conversation, so an admin has something to go on</span>
+                  <span>{t('Attach the last few messages from this conversation, so an admin has something to go on')}</span>
                 </label>
                 {reportError && <p role="alert" style={{ margin: '0.6rem 0 0', color: 'var(--danger)', fontSize: '0.85rem' }}>{reportError}</p>}
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                  <button type="button" onClick={closeReportDialog} style={{ flex: 1, padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>Cancel</button>
-                  <button type="button" onClick={submitConversationReport} disabled={reportBusy} style={{ flex: 1, padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{reportBusy ? 'Sending...' : 'Send report'}</button>
+                  <button type="button" onClick={closeReportDialog} style={{ flex: 1, padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>{t('Cancel')}</button>
+                  <button type="button" onClick={submitConversationReport} disabled={reportBusy} style={{ flex: 1, padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{reportBusy ? t('Sending...') : t('Send report')}</button>
                 </div>
               </>
             )}
 
             {reportDialog === 'reported' && (
               <>
-                <h2 id="report-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>Thank you</h2>
-                <p style={{ margin: '0 0 1rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>An admin will look at this.</p>
-                <button type="button" onClick={closeReportDialog} style={{ width: '100%', padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>Done</button>
+                <h2 id="report-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>{t('Thank you')}</h2>
+                <p style={{ margin: '0 0 1rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>{t('An admin will look at this.')}</p>
+                <button type="button" onClick={closeReportDialog} style={{ width: '100%', padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>{t('Done')}</button>
               </>
             )}
           </div>

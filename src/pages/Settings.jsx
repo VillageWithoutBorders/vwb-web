@@ -12,7 +12,7 @@ import SimpleViewPicker from '../components/SimpleViewPicker'
 import TextSizePicker from '../components/TextSizePicker'
 import MotionPicker from '../components/MotionPicker'
 import LanguagePicker from '../components/LanguagePicker'
-import { useT } from '../utils/lang'
+import { useT, getLang } from '../utils/lang'
 import AreaPicker from '../components/AreaPicker'
 import { placesEnabled } from '../utils/places'
 import Icon from '../components/Icon'
@@ -109,8 +109,8 @@ export default function Settings() {
   // The Admin page links here (/settings#two-step) when two-step login is off.
   useEffect(() => {
     if (window.location.hash !== '#two-step') return
-    const t = setTimeout(() => document.getElementById('two-step')?.scrollIntoView({ block: 'start' }), 300)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => document.getElementById('two-step')?.scrollIntoView({ block: 'start' }), 300)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -141,7 +141,7 @@ export default function Settings() {
         const names = await Promise.all(data.map(async (b) => {
           const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', b.blocked_id).maybeSingle()
           if (profErr) console.error('[Settings:loadBlockedUsers]', profErr)
-          return { ...b, name: p?.display_name || 'Unknown' }
+          return { ...b, name: p?.display_name || t('Unknown') }
         }))
         setBlockedUsers(names)
       } else {
@@ -152,12 +152,12 @@ export default function Settings() {
   }, [user?.id])
 
   async function handleEmailChange() {
-    if (!newEmail.trim() || !newEmail.includes('@')) { setEmailError('Enter a valid email address.'); return }
+    if (!newEmail.trim() || !newEmail.includes('@')) { setEmailError(t('Enter a valid email address.')); return }
     setEmailSaving(true); setEmailError(''); setEmailMessage('')
     const { error: updateError } = await supabase.auth.updateUser({ email: newEmail.trim() })
     reportError('handleEmailChange', updateError)
     if (updateError) { setEmailError(updateError.message); setEmailSaving(false); return }
-    setEmailMessage('Check your old and new email for confirmation links. Your login email updates once you confirm.')
+    setEmailMessage(t('Check your old and new email for confirmation links. Your login email updates once you confirm.'))
     setEmailSaving(false)
     setShowEmailChange(false)
     setNewEmail('')
@@ -168,13 +168,13 @@ export default function Settings() {
   // Jade's own quick way to reset an account she's testing with. Founder
   // accounts are never affected (resetAccountToBase guards this too).
   async function handleResetToBase() {
-    if (!(await askConfirm('Reset your account back to a plain Neighbor? This clears your Ambassador status, skills, availability, and any admin coverage area.'))) return
+    if (!(await askConfirm(t('Reset your account back to a plain Neighbor? This clears your Ambassador status, skills, availability, and any admin coverage area.')))) return
     setResetting(true); setResetErrorMsg(''); setResetMessage('')
     const { error: resetErr } = await resetAccountToBase(user.id, { currentRole: profile?.role })
     reportError('handleResetToBase', resetErr)
-    if (resetErr) { setResetErrorMsg('Could not reset your account. Try again.'); setResetting(false); return }
+    if (resetErr) { setResetErrorMsg(t('Could not reset your account. Try again.')); setResetting(false); return }
     await refreshProfile()
-    setResetMessage('Your account has been reset to Neighbor status.')
+    setResetMessage(t('Your account has been reset to Neighbor status.'))
     setResetting(false)
   }
 
@@ -188,30 +188,30 @@ export default function Settings() {
     const v = !readReceipts
     setReadReceipts(v)
     const ok = await savePrivacyPref('read_receipts_enabled', v)
-    if (!ok) { setReadReceipts(!v); tell('Could not save this setting. Try again.', { tone: 'error' }) }
+    if (!ok) { setReadReceipts(!v); tell(t('Could not save this setting. Try again.'), { tone: 'error' }) }
   }
 
   async function toggleSafetyCheckins() {
     const v = !safetyCheckins
     setSafetyCheckins(v)
     const ok = await savePrivacyPref('safety_checkins_enabled', v)
-    if (!ok) { setSafetyCheckins(!v); tell('Could not save this setting. Try again.', { tone: 'error' }) }
+    if (!ok) { setSafetyCheckins(!v); tell(t('Could not save this setting. Try again.'), { tone: 'error' }) }
   }
 
   async function unblockUser(blockId) {
     const { error } = await supabase.from('blocks').delete().eq('id', blockId)
-    if (error) { console.error('[Settings:unblockUser]', error); tell('Could not unblock this user. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('[Settings:unblockUser]', error); tell(t('Could not unblock this user. Try again.'), { tone: 'error' }); return }
     setBlockedUsers((prev) => prev.filter((b) => b.id !== blockId))
   }
 
   async function removeDevice(d) {
-    if (!(await askConfirm('Remove ' + (d.label || 'this device') + '? New private messages will stop being sent to it. Messages already on it stay readable there.'))) return
+    if (!(await askConfirm(t('Remove {name}? New private messages will stop being sent to it. Messages already on it stay readable there.', { name: d.label || t('this device') })))) return
     setRemovingDevice(d.deviceId); setDeviceNote('')
     const ok = await removeMyDevice(user.id, d.deviceId)
     setRemovingDevice(null)
-    if (!ok) { setDeviceNote("We couldn't remove that device. Try again."); return }
+    if (!ok) { setDeviceNote(t("We couldn't remove that device. Try again.")); return }
     setDevices((prev) => prev.filter((x) => x.deviceId !== d.deviceId))
-    setDeviceNote('Removed.')
+    setDeviceNote(t('Removed.'))
   }
 
   useEffect(() => {
@@ -236,7 +236,7 @@ export default function Settings() {
     setTwoStepBusy(false)
     if (error || !data) {
       console.error('[Settings:enroll]', error)
-      setTwoStepError("We couldn't start two-step login. Try again in a moment.")
+      setTwoStepError(t("We couldn't start two-step login. Try again in a moment."))
       return
     }
     setEnroll({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret })
@@ -247,19 +247,19 @@ export default function Settings() {
     e.preventDefault()
     setTwoStepError('')
     const clean = twoStepCode.replace(/\s/g, '')
-    if (!/^\d{6}$/.test(clean)) { setTwoStepError('Enter the 6-digit code from your authenticator app.'); return }
+    if (!/^\d{6}$/.test(clean)) { setTwoStepError(t('Enter the 6-digit code from your authenticator app.')); return }
     setTwoStepBusy(true)
     const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: enroll.id, code: clean })
     if (error) {
       setTwoStepBusy(false)
       console.error('[Settings:verifyTwoStep]', error)
-      setTwoStepError('That code did not work. Try the newest one.')
+      setTwoStepError(t('That code did not work. Try the newest one.'))
       return
     }
     const { data } = await supabase.auth.mfa.listFactors()
     setTwoStep(data?.totp?.[0] || null)
     setEnroll(null); setTwoStepCode(''); setTwoStepBusy(false)
-    setTwoStepMessage('Two-step login is on. You will enter a code each time you sign in.')
+    setTwoStepMessage(t('Two-step login is on. You will enter a code each time you sign in.'))
     await refreshMfa()
   }
 
@@ -269,71 +269,71 @@ export default function Settings() {
   }
 
   async function turnOffTwoStep() {
-    if (!(await askConfirm('Turn off two-step login? Your account will be protected by your password alone.'))) return
+    if (!(await askConfirm(t('Turn off two-step login? Your account will be protected by your password alone.')))) return
     setTwoStepError(''); setTwoStepMessage(''); setTwoStepBusy(true)
     const { error } = await supabase.auth.mfa.unenroll({ factorId: twoStep.id })
     setTwoStepBusy(false)
     if (error) {
       console.error('[Settings:unenroll]', error)
-      setTwoStepError("We couldn't turn it off. Sign out, sign in with your code, and try again.")
+      setTwoStepError(t("We couldn't turn it off. Sign out, sign in with your code, and try again."))
       return
     }
     setTwoStep(null)
-    setTwoStepMessage('Two-step login is off.')
+    setTwoStepMessage(t('Two-step login is off.'))
   }
 
   // Shows the database's own short message when it is plain, otherwise a general one.
   function plainError(err, fallback) {
-    if (err?.code === 'PGRST202') return 'This needs a quick database update first (vwb-security.sql).'
+    if (err?.code === 'PGRST202') return t('This needs a quick database update first (vwb-security.sql).')
     return err?.message && err.message.length < 160 ? err.message : fallback
   }
 
   async function handleChangePassword(e) {
     e.preventDefault()
     setPwError(''); setPwMessage('')
-    if (!currentPw) { setPwError('Enter your current password.'); return }
-    if (newPw.length < 8) { setPwError('Your new password needs at least 8 characters.'); return }
-    if (newPw !== confirmPw) { setPwError('The new passwords do not match.'); return }
-    if (newPw === currentPw) { setPwError('Choose a password different from your current one.'); return }
+    if (!currentPw) { setPwError(t('Enter your current password.')); return }
+    if (newPw.length < 8) { setPwError(t('Your new password needs at least 8 characters.')); return }
+    if (newPw !== confirmPw) { setPwError(t('The new passwords do not match.')); return }
+    if (newPw === currentPw) { setPwError(t('Choose a password different from your current one.')); return }
     setPwSaving(true)
     const { data: ok, error: checkErr } = await supabase.rpc('verify_my_password', { p_password: currentPw })
-    if (checkErr) { setPwSaving(false); console.error('[Settings:verifyPassword]', checkErr); setPwError(plainError(checkErr, "We couldn't check your password. Try again.")); return }
-    if (!ok) { setPwSaving(false); setPwError('That is not your current password.'); return }
+    if (checkErr) { setPwSaving(false); console.error('[Settings:verifyPassword]', checkErr); setPwError(plainError(checkErr, t("We couldn't check your password. Try again."))); return }
+    if (!ok) { setPwSaving(false); setPwError(t('That is not your current password.')); return }
     const { error } = await supabase.auth.updateUser({ password: newPw })
-    if (error) { setPwSaving(false); console.error('[Settings:changePassword]', error); setPwError(plainError(error, "We couldn't change your password. Try again.")); return }
+    if (error) { setPwSaving(false); console.error('[Settings:changePassword]', error); setPwError(plainError(error, t("We couldn't change your password. Try again."))); return }
     // Every other device has to sign in again with the new password.
     const { error: othersErr } = await supabase.auth.signOut({ scope: 'others' })
     if (othersErr) console.error('[Settings:signOutOthers]', othersErr)
     setPwSaving(false)
     setCurrentPw(''); setNewPw(''); setConfirmPw(''); setShowPasswordForm(false)
-    setPwMessage('Password changed. Your other devices were signed out.')
+    setPwMessage(t('Password changed. Your other devices were signed out.'))
   }
 
   async function handleDeleteAccount(e) {
     e.preventDefault()
     setDeleteError('')
-    if (!deletePw) { setDeleteError('Enter your password.'); return }
-    if (deleteWord !== 'DELETE') { setDeleteError('Type DELETE in capital letters to confirm.'); return }
+    if (!deletePw) { setDeleteError(t('Enter your password.')); return }
+    if (deleteWord !== 'DELETE') { setDeleteError(t('Type DELETE in capital letters to confirm.')); return }
     setDeleting(true)
     const { data: ok, error: checkErr } = await supabase.rpc('verify_my_password', { p_password: deletePw })
-    if (checkErr) { setDeleting(false); console.error('[Settings:verifyPassword]', checkErr); setDeleteError(plainError(checkErr, "We couldn't check your password. Try again.")); return }
-    if (!ok) { setDeleting(false); setDeleteError('That is not your password.'); return }
+    if (checkErr) { setDeleting(false); console.error('[Settings:verifyPassword]', checkErr); setDeleteError(plainError(checkErr, t("We couldn't check your password. Try again."))); return }
+    if (!ok) { setDeleting(false); setDeleteError(t('That is not your password.')); return }
     const { error } = await supabase.rpc('delete_my_account', { p_confirm: deleteWord })
-    if (error) { setDeleting(false); console.error('[Settings:deleteAccount]', error); setDeleteError(plainError(error, "We couldn't delete your account. Nothing was changed.")); return }
+    if (error) { setDeleting(false); console.error('[Settings:deleteAccount]', error); setDeleteError(plainError(error, t("We couldn't delete your account. Nothing was changed."))); return }
     await signOut()
     navigate('/welcome', { replace: true })
   }
 
   async function handleSignOutEverywhere() {
-    if (!(await askConfirm('Sign out of every device, including this one? You will need to sign in again on each of them.'))) return
+    if (!(await askConfirm(t('Sign out of every device, including this one? You will need to sign in again on each of them.')))) return
     setSigningOutAll(true); setSignOutAllError('')
     const ok = await signOutEverywhere()
     setSigningOutAll(false)
-    if (!ok) setSignOutAllError("We couldn't sign you out everywhere. Check your connection and try again.")
+    if (!ok) setSignOutAllError(t("We couldn't sign you out everywhere. Check your connection and try again."))
   }
 
   function shortDate(iso) {
-    return iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null
+    return iso ? new Date(iso).toLocaleDateString(getLang() === 'es' ? 'es' : undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : null
   }
 
   return (
@@ -386,24 +386,24 @@ export default function Settings() {
 
       <div className="profile-details">
         <div className="detail-row">
-          <span className="detail-label">Email</span>
+          <span className="detail-label">{t('Email')}</span>
           <span className="detail-value">{user?.email}</span>
         </div>
         {!showEmailChange ? (
           <div style={{ textAlign: 'right', padding: '0 1rem 0.75rem' }}>
             <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => { setShowEmailChange(true); setEmailError(''); setEmailMessage('') }}>
-              Change email
+              {t('Change email')}
             </button>
           </div>
         ) : (
           <div className="form-field" style={{ padding: '0 1rem 0.75rem' }}>
-            <label htmlFor="newEmail">New email address</label>
+            <label htmlFor="newEmail">{t('New email address')}</label>
             <input id="newEmail" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="you@example.com" />
             {emailError && <p className="form-error" role="alert">{emailError}</p>}
             <div className="form-row" style={{ marginTop: '0.5rem' }}>
-              <button type="button" className="btn btn-outline" onClick={() => { setShowEmailChange(false); setNewEmail(''); setEmailError('') }} disabled={emailSaving}>Cancel</button>
+              <button type="button" className="btn btn-outline" onClick={() => { setShowEmailChange(false); setNewEmail(''); setEmailError('') }} disabled={emailSaving}>{t('Cancel')}</button>
               <button type="button" className="btn btn-primary" onClick={handleEmailChange} disabled={emailSaving} style={{ flex: 1 }}>
-                {emailSaving ? 'Sending...' : 'Send confirmation'}
+                {emailSaving ? t('Sending...') : t('Send confirmation')}
               </button>
             </div>
           </div>
@@ -412,38 +412,38 @@ export default function Settings() {
       </div>
 
       <div className="profile-details" style={{ marginTop: '1rem' }}>
-        <div className="detail-section-header">Password</div>
+        <div className="detail-section-header">{t('Password')}</div>
         {!showPasswordForm ? (
           <div className="detail-row">
-            <span className="detail-value" style={{ textAlign: 'left' }}>Use a password you don't use anywhere else.</span>
+            <span className="detail-value" style={{ textAlign: 'left' }}>{t("Use a password you don't use anywhere else.")}</span>
             <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => { setShowPasswordForm(true); setPwError(''); setPwMessage('') }}>
-              Change password
+              {t('Change password')}
             </button>
           </div>
         ) : (
           <form onSubmit={handleChangePassword} className="form-field" style={{ padding: '0 1rem 0.75rem' }} noValidate>
-            <label htmlFor="currentPw">Current password</label>
+            <label htmlFor="currentPw">{t('Current password')}</label>
             <input id="currentPw" type={showPw ? 'text' : 'password'} value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} autoComplete="current-password" />
-            <label htmlFor="newPw" style={{ marginTop: '0.75rem' }}>New password</label>
+            <label htmlFor="newPw" style={{ marginTop: '0.75rem' }}>{t('New password')}</label>
             <input id="newPw" type={showPw ? 'text' : 'password'} value={newPw} onChange={(e) => setNewPw(e.target.value)} autoComplete="new-password" aria-describedby="newPwStrength" />
             {newPw && (
               <div id="newPwStrength" style={{ marginTop: '0.4rem' }}>
                 <div style={{ height: '6px', borderRadius: '3px', background: 'var(--surface-3)', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: (passwordStrength(newPw).level + 1) * 25 + '%', background: ['var(--danger)', 'var(--warn)', 'var(--accent)', 'var(--accent)'][passwordStrength(newPw).level] }} />
                 </div>
-                <span className="field-hint">{passwordStrength(newPw).label}</span>
+                <span className="field-hint">{t(passwordStrength(newPw).label)}</span>
               </div>
             )}
-            <label htmlFor="confirmPw" style={{ marginTop: '0.75rem' }}>Type the new password again</label>
+            <label htmlFor="confirmPw" style={{ marginTop: '0.75rem' }}>{t('Type the new password again')}</label>
             <input id="confirmPw" type={showPw ? 'text' : 'password'} value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} autoComplete="new-password" />
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', minHeight: '44px' }}>
-              <input type="checkbox" checked={showPw} onChange={(e) => setShowPw(e.target.checked)} /> Show passwords
+              <input type="checkbox" checked={showPw} onChange={(e) => setShowPw(e.target.checked)} /> {t('Show passwords')}
             </label>
-            <span className="field-hint">When you change it, every other device is signed out.</span>
+            <span className="field-hint">{t('When you change it, every other device is signed out.')}</span>
             {pwError && <p className="form-error" role="alert">{pwError}</p>}
             <div className="form-row" style={{ marginTop: '0.5rem' }}>
-              <button type="button" className="btn btn-outline" onClick={() => { setShowPasswordForm(false); setCurrentPw(''); setNewPw(''); setConfirmPw(''); setPwError('') }} disabled={pwSaving}>Cancel</button>
-              <button type="submit" className="btn btn-primary" disabled={pwSaving} style={{ flex: 1 }}>{pwSaving ? 'Saving...' : 'Change password'}</button>
+              <button type="button" className="btn btn-outline" onClick={() => { setShowPasswordForm(false); setCurrentPw(''); setNewPw(''); setConfirmPw(''); setPwError('') }} disabled={pwSaving}>{t('Cancel')}</button>
+              <button type="submit" className="btn btn-primary" disabled={pwSaving} style={{ flex: 1 }}>{pwSaving ? t('Saving...') : t('Change password')}</button>
             </div>
           </form>
         )}
@@ -451,36 +451,36 @@ export default function Settings() {
       </div>
 
       <div className="profile-details" id="two-step" style={{ marginTop: '1rem', scrollMarginTop: 'calc(var(--header-height) + 1rem)' }}>
-        <div className="detail-section-header">Two-Step Login</div>
+        <div className="detail-section-header">{t('Two-Step Login')}</div>
         {twoStepLoaded && !enroll && !twoStep && (
           <div className="detail-row">
-            <span className="detail-value" style={{ textAlign: 'left' }}>Add a code from an authenticator app to sign in. Strongly recommended for admins.</span>
+            <span className="detail-value" style={{ textAlign: 'left' }}>{t('Add a code from an authenticator app to sign in. Strongly recommended for admins.')}</span>
             <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={startTwoStep} disabled={twoStepBusy}>
-              {twoStepBusy ? 'Starting...' : 'Turn on'}
+              {twoStepBusy ? t('Starting...') : t('Turn on')}
             </button>
           </div>
         )}
         {twoStepLoaded && !enroll && twoStep && (
           <div className="detail-row">
-            <span className="detail-value" style={{ textAlign: 'left' }}>On. You enter a 6-digit code each time you sign in.</span>
+            <span className="detail-value" style={{ textAlign: 'left' }}>{t('On. You enter a 6-digit code each time you sign in.')}</span>
             <button type="button" className="link-button" style={{ fontSize: '0.8125rem', color: 'var(--danger)' }} onClick={turnOffTwoStep} disabled={twoStepBusy}>
-              Turn off
+              {t('Turn off')}
             </button>
           </div>
         )}
         {enroll && (
           <form onSubmit={confirmTwoStep} className="form-field" style={{ padding: '0 1rem 0.75rem' }} noValidate>
-            <p className="field-hint">1. Open an authenticator app (Google Authenticator, Microsoft Authenticator, Authy, or your password manager) and scan this picture.</p>
-            <img src={enroll.qr} alt="QR code to scan with your authenticator app" width={180} height={180} style={{ background: '#fff', padding: '8px', borderRadius: '8px', display: 'block', margin: '0.5rem 0', maxWidth: '100%', height: 'auto' }} />
-            <p className="field-hint">Can't scan it? Type this key into the app instead:</p>
+            <p className="field-hint">{t('1. Open an authenticator app (Google Authenticator, Microsoft Authenticator, Authy, or your password manager) and scan this picture.')}</p>
+            <img src={enroll.qr} alt={t('QR code to scan with your authenticator app')} width={180} height={180} style={{ background: '#fff', padding: '8px', borderRadius: '8px', display: 'block', margin: '0.5rem 0', maxWidth: '100%', height: 'auto' }} />
+            <p className="field-hint">{t("Can't scan it? Type this key into the app instead:")}</p>
             <code style={{ display: 'block', wordBreak: 'break-all', padding: '0.5rem', background: 'var(--surface)', borderRadius: '6px', fontSize: '0.85rem' }}>{enroll.secret}</code>
-            <p className="field-hint" style={{ marginTop: '0.75rem' }}>2. Enter the 6-digit code the app shows.</p>
-            <label htmlFor="twoStepCode" className="sr-only">6-digit code</label>
+            <p className="field-hint" style={{ marginTop: '0.75rem' }}>{t('2. Enter the 6-digit code the app shows.')}</p>
+            <label htmlFor="twoStepCode" className="sr-only">{t('6-digit code')}</label>
             <input id="twoStepCode" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={7} value={twoStepCode} onChange={(e) => setTwoStepCode(e.target.value)} />
-            <p className="field-hint">Keep your phone safe. If you lose it, an admin can reset this for you after you email info@villagewithoutborders.org.</p>
+            <p className="field-hint">{t('Keep your phone safe. If you lose it, an admin can reset this for you after you email info@villagewithoutborders.org.')}</p>
             <div className="form-row" style={{ marginTop: '0.5rem' }}>
-              <button type="button" className="btn btn-outline" onClick={cancelTwoStep} disabled={twoStepBusy}>Cancel</button>
-              <button type="submit" className="btn btn-primary" disabled={twoStepBusy} style={{ flex: 1 }}>{twoStepBusy ? 'Checking...' : 'Turn on'}</button>
+              <button type="button" className="btn btn-outline" onClick={cancelTwoStep} disabled={twoStepBusy}>{t('Cancel')}</button>
+              <button type="submit" className="btn btn-primary" disabled={twoStepBusy} style={{ flex: 1 }}>{twoStepBusy ? t('Checking...') : t('Turn on')}</button>
             </div>
           </form>
         )}
@@ -489,17 +489,17 @@ export default function Settings() {
       </div>
 
       <div className="profile-details" style={{ marginTop: '1rem' }}>
-        <div className="detail-section-header">Privacy &amp; Safety</div>
+        <div className="detail-section-header">{t('Privacy and Safety')}</div>
         <div className="privacy-toggle-row">
           <div>
-            <span className="privacy-toggle-label">Read receipts</span>
-            <p className="privacy-toggle-desc">Show when you have read a message. If you turn this off, you won't see when others read yours either.</p>
+            <span className="privacy-toggle-label">{t('Read receipts')}</span>
+            <p className="privacy-toggle-desc">{t("Show when you have read a message. If you turn this off, you won't see when others read yours either.")}</p>
           </div>
           <button
             type="button"
             role="switch"
             aria-checked={readReceipts}
-            aria-label="Read receipts"
+            aria-label={t('Read receipts')}
             className={`toggle-switch${readReceipts ? ' on' : ''}`}
             onClick={toggleReadReceipts}
           >
@@ -508,14 +508,14 @@ export default function Settings() {
         </div>
         <div className="privacy-toggle-row">
           <div>
-            <span className="privacy-toggle-label">Safety check-ins</span>
-            <p className="privacy-toggle-desc">Receive periodic check-in prompts during active help sessions</p>
+            <span className="privacy-toggle-label">{t('Safety check-ins')}</span>
+            <p className="privacy-toggle-desc">{t('Receive periodic check-in prompts during active help sessions')}</p>
           </div>
           <button
             type="button"
             role="switch"
             aria-checked={safetyCheckins}
-            aria-label="Safety check-ins"
+            aria-label={t('Safety check-ins')}
             className={`toggle-switch${safetyCheckins ? ' on' : ''}`}
             onClick={toggleSafetyCheckins}
           >
@@ -523,25 +523,25 @@ export default function Settings() {
           </button>
         </div>
         <div className="detail-row">
-          <span className="detail-label">More message settings</span>
+          <span className="detail-label">{t('More message settings')}</span>
           <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => navigate('/messages')}>
-            Open Messages
+            {t('Open Messages')}
           </button>
         </div>
       </div>
 
       <div className="profile-details" style={{ marginTop: '0.75rem' }}>
-        <div className="detail-section-header">Blocked Neighbors</div>
+        <div className="detail-section-header">{t('Blocked Neighbors')}</div>
         {blockedUsers.length === 0 ? (
           <div className="detail-row">
-            <span className="detail-value" style={{ textAlign: 'left' }}>You haven't blocked anyone</span>
+            <span className="detail-value" style={{ textAlign: 'left' }}>{t("You haven't blocked anyone")}</span>
           </div>
         ) : (
           blockedUsers.map((b) => (
             <div key={b.id} className="blocked-user-row">
               <span className="privacy-toggle-label">{b.name}</span>
               <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => unblockUser(b.id)}>
-                Unblock
+                {t('Unblock')}
               </button>
             </div>
           ))
@@ -551,15 +551,15 @@ export default function Settings() {
       <RecoveryKeySection />
 
       <div className="profile-details" style={{ marginTop: '0.75rem' }}>
-        <div className="detail-section-header">Your Devices</div>
+        <div className="detail-section-header">{t('Your Devices')}</div>
         <div className="detail-row">
           <span className="detail-value" style={{ textAlign: 'left', fontSize: '0.8125rem' }}>
-            Private messages are locked separately for each device. Open VWB once on each device you use so it can read new messages. A new device can't read messages sent before it was added.
+            {t("Private messages are locked separately for each device. Open VWB once on each device you use so it can read new messages. A new device can't read messages sent before it was added.")}
           </span>
         </div>
         {devicesLoaded && devices.length === 0 && (
           <div className="detail-row">
-            <span className="detail-value" style={{ textAlign: 'left' }}>No devices found yet</span>
+            <span className="detail-value" style={{ textAlign: 'left' }}>{t('No devices found yet')}</span>
           </div>
         )}
         {devices.map((d) => {
@@ -568,16 +568,16 @@ export default function Settings() {
           return (
             <div key={d.deviceId} className="blocked-user-row">
               <div>
-                <span className="privacy-toggle-label">{d.label || 'Device (name not saved yet)'}{mine ? ' (this device)' : ''}</span>
+                <span className="privacy-toggle-label">{d.label || t('Device (name not saved yet)')}{mine ? ' (' + t('this device') + ')' : ''}</span>
                 <p className="privacy-toggle-desc">
-                  Added {shortDate(d.addedAt)}
-                  {d.lastSeen ? ' \u00b7 Last used ' + shortDate(d.lastSeen) : ''}
-                  {stale ? ' \u00b7 Not used in a while' : ''}
+                  {t('Added {date}', { date: shortDate(d.addedAt) })}
+                  {d.lastSeen ? ' \u00b7 ' + t('Last used {date}', { date: shortDate(d.lastSeen) }) : ''}
+                  {stale ? ' \u00b7 ' + t('Not used in a while') : ''}
                 </p>
               </div>
               {!mine && (
                 <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => removeDevice(d)} disabled={removingDevice === d.deviceId}>
-                  {removingDevice === d.deviceId ? 'Removing...' : 'Remove'}
+                  {removingDevice === d.deviceId ? t('Removing...') : t('Remove')}
                 </button>
               )}
             </div>
@@ -586,37 +586,37 @@ export default function Settings() {
         {deviceNote && <p className="form-success" role="status" style={{ padding: '0 1rem 0.75rem' }}>{deviceNote}</p>}
         <div style={{ padding: '0 1rem 1rem' }}>
           <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={handleSignOutEverywhere} disabled={signingOutAll}>
-            {signingOutAll ? 'Signing out...' : 'Sign out of all devices'}
+            {signingOutAll ? t('Signing out...') : t('Sign out of all devices')}
           </button>
           <p className="privacy-toggle-desc" style={{ marginTop: '0.5rem' }}>
-            Use this if you lost a device or think someone else got into your account. Other devices are signed out within about an hour. Your private message history stays on each device.
+            {t('Use this if you lost a device or think someone else got into your account. Other devices are signed out within about an hour. Your private message history stays on each device.')}
           </p>
           {signOutAllError && <p className="form-error" role="alert">{signOutAllError}</p>}
         </div>
       </div>
 
       <div className="profile-details" style={{ marginTop: '0.75rem' }}>
-        <div className="detail-section-header">Delete My Account</div>
+        <div className="detail-section-header">{t('Delete My Account')}</div>
         {!showDelete ? (
           <div className="detail-row">
-            <span className="detail-value" style={{ textAlign: 'left' }}>Leave Village Without Borders for good.</span>
+            <span className="detail-value" style={{ textAlign: 'left' }}>{t('Leave Village Without Borders for good.')}</span>
             <button type="button" className="link-button" style={{ fontSize: '0.8125rem', color: 'var(--danger)' }} onClick={() => { setShowDelete(true); setDeleteError('') }}>
-              Delete account
+              {t('Delete account')}
             </button>
           </div>
         ) : (
           <form onSubmit={handleDeleteAccount} className="form-field" style={{ padding: '0 1rem 0.75rem' }} noValidate>
             <p className="field-hint" style={{ marginBottom: '0.5rem' }}>
-              This removes your account and cannot be undone. Your profile, messages, and sign-ups go with it. If you lead a group that has other members, hand leadership to someone first.
+              {t('This removes your account and cannot be undone. Your profile, messages, and sign-ups go with it. If you lead a group that has other members, hand leadership to someone first.')}
             </p>
-            <label htmlFor="deletePw">Your password</label>
+            <label htmlFor="deletePw">{t('Your password')}</label>
             <input id="deletePw" type="password" value={deletePw} onChange={(e) => setDeletePw(e.target.value)} autoComplete="current-password" />
-            <label htmlFor="deleteWord" style={{ marginTop: '0.75rem' }}>Type DELETE to confirm</label>
+            <label htmlFor="deleteWord" style={{ marginTop: '0.75rem' }}>{t('Type DELETE to confirm')}</label>
             <input id="deleteWord" type="text" value={deleteWord} onChange={(e) => setDeleteWord(e.target.value)} autoComplete="off" autoCapitalize="characters" />
             {deleteError && <p className="form-error" role="alert">{deleteError}</p>}
             <div className="form-row" style={{ marginTop: '0.5rem' }}>
-              <button type="button" className="btn btn-outline" onClick={() => { setShowDelete(false); setDeletePw(''); setDeleteWord(''); setDeleteError('') }} disabled={deleting}>Cancel</button>
-              <button type="submit" className="btn btn-outline" style={{ flex: 1, color: 'var(--danger)', borderColor: 'var(--danger)' }} disabled={deleting}>{deleting ? 'Deleting...' : 'Delete my account'}</button>
+              <button type="button" className="btn btn-outline" onClick={() => { setShowDelete(false); setDeletePw(''); setDeleteWord(''); setDeleteError('') }} disabled={deleting}>{t('Cancel')}</button>
+              <button type="submit" className="btn btn-outline" style={{ flex: 1, color: 'var(--danger)', borderColor: 'var(--danger)' }} disabled={deleting}>{deleting ? t('Deleting...') : t('Delete my account')}</button>
             </div>
           </form>
         )}
@@ -626,10 +626,10 @@ export default function Settings() {
       {resetError && <p className="form-error" role="alert" style={{ marginTop: '1rem' }}>{resetError}</p>}
 
       <div className="form-row" style={{ marginTop: '1.5rem' }}>
-        <button className="btn btn-outline" style={{ flex: 1 }} onClick={signOut}>Sign out</button>
+        <button className="btn btn-outline" style={{ flex: 1 }} onClick={signOut}>{t('Sign out')}</button>
         {!isFounder && (profile?.is_hope_ambassador || isAdmin || (profile?.skills?.length > 0)) && (
           <button className="btn btn-outline" style={{ flex: 1, borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }} onClick={handleResetToBase} disabled={resetting}>
-            {resetting ? 'Resetting...' : 'Reset to Neighbor'}
+            {resetting ? t('Resetting...') : t('Reset to Neighbor')}
           </button>
         )}
       </div>

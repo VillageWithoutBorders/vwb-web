@@ -14,6 +14,7 @@ import NewMessage from '../components/NewMessage'
 import { decryptFromSender, getDeviceId, flushOutbox, getQueuedMessages } from '../lib/e2ee'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
+import { useT, getLang } from '../utils/lang'
 
 const DISAPPEAR_STEPS = [
   { label: 'Off', mins: 0 },
@@ -31,6 +32,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
   const { user } = useAuth()
   const { refreshUnread } = useUnreadCount()
   const navigate = useNavigate()
+  const t = useT()
   const blockedBy = useBlockedBy()
   const location = useLocation()
   const [convos, setConvos] = useState([])
@@ -156,7 +158,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
 
       return {
         ...match,
-        helper_name: helperProfile?.display_name || 'A neighbor',
+        helper_name: helperProfile?.display_name || t('A neighbor'),
         is_ambassador: helperProfile?.is_hope_ambassador || false,
         member_since: helperProfile?.created_at || null,
         avatar_url: helperProfile?.avatar_url || null,
@@ -176,7 +178,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     setProcessingOffer(offer.id)
     const { ok, convoId } = await acceptHelpOffer(offer, user.id)
     if (!ok) {
-      tell('Could not accept this offer. Try again.', { tone: 'error' })
+      tell(t('Could not accept this offer. Try again.'), { tone: 'error' })
       setProcessingOffer(null)
       return
     }
@@ -184,14 +186,14 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     await loadPendingOffers()
     // Open the chat right away so the two of you can plan.
     if (convoId) { if (onOpen) onOpen(convoId); else navigate('/conversation/' + convoId); return }
-    tell('You accepted this offer, but the chat could not be opened. Find it under Messages in a moment.', { tone: 'error' })
+    tell(t('You accepted this offer, but the chat could not be opened. Find it under Messages in a moment.'), { tone: 'error' })
     await loadConversations()
   }
 
   async function declineOffer(offer) {
     setProcessingOffer(offer.id)
     const ok = await declineHelpOffer(offer)
-    if (!ok) tell('Could not decline this offer. Try again.', { tone: 'error' })
+    if (!ok) tell(t('Could not decline this offer. Try again.'), { tone: 'error' })
     setProcessingOffer(null)
     if (ok) await loadPendingOffers()
   }
@@ -233,7 +235,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
         ...match,
         skill_needed: req.skill_needed,
         for_name: req.for_name || null,
-        requester_name: p?.display_name || 'A neighbor',
+        requester_name: p?.display_name || t('A neighbor'),
       }
     }))
 
@@ -244,7 +246,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     const { error } = await supabase.rpc('withdraw_offer', { p_match_id: matchId })
     if (error) {
       console.error('Failed to withdraw offer:', error)
-      tell(error.code === '55000' || error.code === 'P0002' ? error.message : 'Could not withdraw your offer. Try again.', { tone: 'error' })
+      tell(error.code === '55000' || error.code === 'P0002' ? t(error.message) : t('Could not withdraw your offer. Try again.'), { tone: 'error' })
     }
     await loadMyOutgoingOffers()
   }
@@ -275,28 +277,28 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     const previous = disappearDefault
     setDisappearDefault(mins)
     const ok = await savePref('disappear_default_mins', mins)
-    if (!ok) { setDisappearDefault(previous); tell('Could not save this setting. Try again.', { tone: 'error' }) }
+    if (!ok) { setDisappearDefault(previous); tell(t('Could not save this setting. Try again.'), { tone: 'error' }) }
   }
 
   async function toggleReadReceipts() {
     const v = !readReceipts
     setReadReceipts(v)
     const ok = await savePref('read_receipts_enabled', v)
-    if (!ok) { setReadReceipts(!v); tell('Could not save this setting. Try again.', { tone: 'error' }) }
+    if (!ok) { setReadReceipts(!v); tell(t('Could not save this setting. Try again.'), { tone: 'error' }) }
   }
 
   async function toggleHidePushDetails() {
     const v = !hidePushDetails
     setHidePushDetails(v)
     const ok = await savePref('hide_push_details', v)
-    if (!ok) { setHidePushDetails(!v); tell('Could not save this setting. Try again.', { tone: 'error' }) }
+    if (!ok) { setHidePushDetails(!v); tell(t('Could not save this setting. Try again.'), { tone: 'error' }) }
   }
 
   async function toggleSafetyCheckins() {
     const v = !safetyCheckins
     setSafetyCheckins(v)
     const ok = await savePref('safety_checkins_enabled', v)
-    if (!ok) { setSafetyCheckins(!v); tell('Could not save this setting. Try again.', { tone: 'error' }) }
+    if (!ok) { setSafetyCheckins(!v); tell(t('Could not save this setting. Try again.'), { tone: 'error' }) }
   }
 
   async function saveHelpMsg() {
@@ -305,7 +307,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     setDefaultHelpMsg(trimmed)
     setEditingHelpMsg(false)
     const ok = await savePref('default_help_message', trimmed)
-    if (!ok) { setDefaultHelpMsg(previous); setEditingHelpMsg(true); tell('Could not save your message. Try again.', { tone: 'error' }) }
+    if (!ok) { setDefaultHelpMsg(previous); setEditingHelpMsg(true); tell(t('Could not save your message. Try again.'), { tone: 'error' }) }
   }
 
   function getSliderIndex() {
@@ -333,7 +335,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     }
     if (error) {
       console.error('Failed to save conversation setting:', error)
-      tell('Could not save that. Try again.', { tone: 'error' })
+      tell(t('Could not save that. Try again.'), { tone: 'error' })
       return false
     }
     await loadConvoSettings()
@@ -378,12 +380,12 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     const { data: last, error } = await supabase.from('campfire_messages').select('id, user_id, body, created_at').order('created_at', { ascending: false }).limit(1).maybeSingle()
     if (error) { console.error('Failed to load Village Square preview:', error); setCampfire({ last: null, name: null, unread: false }); return }
     if (!last) { setCampfire({ last: null, name: null, unread: false }); return }
-    if (last.body === '') last.body = '\uD83D\uDD12 New scrambled message'
-    let name = 'You'
+    if (last.body === '') last.body = '\uD83D\uDD12 ' + t('New scrambled message')
+    let name = t('You')
     if (last.user_id !== user.id) {
       const { data: p, error: pErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', last.user_id).maybeSingle()
       if (pErr) console.error('Failed to load Village Square sender name:', pErr)
-      name = p?.display_name || 'Neighbor'
+      name = p?.display_name || t('Neighbor')
     }
     let lastRead = null
     try { lastRead = localStorage.getItem('vwb_campfire_last_read') } catch {}
@@ -403,7 +405,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     setOpenMenu(null)
     const readCol = convo.helper_id === user.id ? 'last_read_helper' : 'last_read_requester'
     const { error } = await supabase.from('conversations').update({ [readCol]: new Date().toISOString() }).eq('id', convo.id)
-    if (error) { console.error('Failed to mark conversation read:', error); tell('Could not mark that as read. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to mark conversation read:', error); tell(t('Could not mark that as read. Try again.'), { tone: 'error' }); return }
     setConvos(prev => prev.map(cv => cv.id === convo.id ? { ...cv, hasUnread: false } : cv))
     if (convoSettings[convo.id]?.marked_unread) await upsertConvoSetting(convo.id, { marked_unread: false })
     refreshUnread()
@@ -433,7 +435,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
       const names = await Promise.all(data.map(async (b) => {
         const { data: p, error: profErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', b.blocked_id).maybeSingle()
         if (profErr) console.error('Failed to load blocked user profile:', profErr)
-        return { ...b, name: p?.display_name || 'Unknown' }
+        return { ...b, name: p?.display_name || t('Unknown') }
       }))
       setBlockedUsers(names)
     } else { setBlockedUsers([]) }
@@ -441,7 +443,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
 
   async function unblockUser(blockId) {
     const { error } = await supabase.from('blocks').delete().eq('id', blockId)
-    if (error) { console.error('Failed to unblock user:', error); tell('Could not unblock this user. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to unblock user:', error); tell(t('Could not unblock this user. Try again.'), { tone: 'error' }); return }
     await loadBlocked()
   }
 
@@ -504,14 +506,14 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
             if (copyErr) console.error('Failed to load encrypted preview:', copyErr)
             if (copy) lastMessageText = await decryptFromSender(copy.ciphertext, copy.nonce, lastMsg.sender_id)
           }
-          if (!lastMessageText) lastMessageText = '[Encrypted message]'
+          if (!lastMessageText) lastMessageText = t('[Encrypted message]')
         }
         const lastRead = c.helper_id === user.id ? c.last_read_helper : c.last_read_requester
         const hasUnread = lastMsg && (!lastRead || new Date(lastMsg.created_at) > new Date(lastRead))
         // A message still waiting on this device is always the newest one.
         const queued = waiting.filter(q => q.conversationId === c.id).pop()
-        if (queued) return { ...c, otherId, otherName: p?.display_name || 'Neighbor', otherAvatar: p?.avatar_url || null, lastMessage: 'Waiting to send: ' + queued.text, lastMessageAt: queued.createdAt, hasUnread }
-        return { ...c, otherId, otherName: p?.display_name || 'Neighbor', otherAvatar: p?.avatar_url || null, lastMessage: lastMessageText, lastMessageAt: lastMsg?.created_at || c.created_at, hasUnread }
+        if (queued) return { ...c, otherId, otherName: p?.display_name || t('Neighbor'), otherAvatar: p?.avatar_url || null, lastMessage: t('Waiting to send: {text}', { text: queued.text }), lastMessageAt: queued.createdAt, hasUnread }
+        return { ...c, otherId, otherName: p?.display_name || t('Neighbor'), otherAvatar: p?.avatar_url || null, lastMessage: lastMessageText, lastMessageAt: lastMsg?.created_at || c.created_at, hasUnread }
       }))
       const shown = withNames.filter(Boolean)
       shown.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))
@@ -523,7 +525,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     const name = newFolderName.trim()
     if (!name) return
     const { error } = await supabase.from('message_folders').insert({ user_id: user.id, name, sort_order: folders.length })
-    if (error) { console.error('Failed to create folder:', error); tell('Could not create that folder. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to create folder:', error); tell(t('Could not create that folder. Try again.'), { tone: 'error' }); return }
     setNewFolderName('')
     await loadFolders()
   }
@@ -532,7 +534,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     const { error: assignErr } = await supabase.from('conversation_folder_assignments').delete().eq('folder_id', folderId).eq('user_id', user.id)
     if (assignErr) console.error('Failed to clear folder assignments:', assignErr)
     const { error: folderErr } = await supabase.from('message_folders').delete().eq('id', folderId).eq('user_id', user.id)
-    if (folderErr) { console.error('Failed to delete folder:', folderErr); tell('Could not delete this folder. Try again.', { tone: 'error' }); return }
+    if (folderErr) { console.error('Failed to delete folder:', folderErr); tell(t('Could not delete this folder. Try again.'), { tone: 'error' }); return }
     if (activeFolder === folderId) setActiveFolder('all')
     await loadFolders()
     await loadAssignments()
@@ -541,12 +543,12 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
   async function assignToFolder(convoId, folderId) {
     if (folderId === 'remove') {
       const { error } = await supabase.from('conversation_folder_assignments').delete().eq('conversation_id', convoId).eq('user_id', user.id)
-      if (error) { console.error('Failed to remove folder assignment:', error); tell('Could not update this conversation. Try again.', { tone: 'error' }); return }
+      if (error) { console.error('Failed to remove folder assignment:', error); tell(t('Could not update this conversation. Try again.'), { tone: 'error' }); return }
     } else {
       const { error: delErr } = await supabase.from('conversation_folder_assignments').delete().eq('conversation_id', convoId).eq('user_id', user.id)
       if (delErr) console.error('Failed to clear previous folder assignment:', delErr)
       const { error: insErr } = await supabase.from('conversation_folder_assignments').insert({ user_id: user.id, conversation_id: convoId, folder_id: folderId })
-      if (insErr) { console.error('Failed to assign folder:', insErr); tell('Could not move this conversation. Try again.', { tone: 'error' }); return }
+      if (insErr) { console.error('Failed to assign folder:', insErr); tell(t('Could not move this conversation. Try again.'), { tone: 'error' }); return }
     }
     setAssigningConvo(null)
     setOpenMenu(null)
@@ -556,15 +558,15 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
   async function deleteConversation(convoId) {
     if (deleteMode === 'me') {
       const { data: msgs, error: msgsErr } = await supabase.from('chat_messages').select('id').eq('conversation_id', convoId)
-      if (msgsErr) { console.error('Failed to load messages to delete:', msgsErr); tell('Could not delete this conversation. Try again.', { tone: 'error' }); return }
+      if (msgsErr) { console.error('Failed to load messages to delete:', msgsErr); tell(t('Could not delete this conversation. Try again.'), { tone: 'error' }); return }
       if (msgs && msgs.length > 0) {
         const inserts = msgs.map(m => ({ message_id: m.id, user_id: user.id }))
         const { error: upsertErr } = await supabase.from('message_deletions').upsert(inserts, { onConflict: 'message_id,user_id' })
-        if (upsertErr) { console.error('Failed to delete conversation for you:', upsertErr); tell('Could not delete this conversation. Try again.', { tone: 'error' }); return }
+        if (upsertErr) { console.error('Failed to delete conversation for you:', upsertErr); tell(t('Could not delete this conversation. Try again.'), { tone: 'error' }); return }
       }
     } else {
       const { error: updErr } = await supabase.rpc('delete_conversation_for_everyone', { p_convo: convoId })
-      if (updErr) { console.error('Failed to delete conversation for everyone:', updErr); tell('Could not delete this conversation. Try again.', { tone: 'error' }); return }
+      if (updErr) { console.error('Failed to delete conversation for everyone:', updErr); tell(t('Could not delete this conversation. Try again.'), { tone: 'error' }); return }
     }
     setShowDeleteConfirm(null)
     setOpenMenu(null)
@@ -572,9 +574,9 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
   }
 
   async function blockUser(otherId, otherName) {
-    if (!(await askConfirm('Block ' + otherName + '? They will not be able to see your profile or send you messages.'))) return
+    if (!(await askConfirm(t('Block {name}? They will not be able to see your profile or send you messages.', { name: otherName })))) return
     const { error } = await supabase.from('blocks').insert({ blocker_id: user.id, blocked_id: otherId })
-    if (error) { console.error('Failed to block user:', error); tell('Could not block this user. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to block user:', error); tell(t('Could not block this user. Try again.'), { tone: 'error' }); return }
     setOpenMenu(null)
     await loadBlocked()
   }
@@ -606,8 +608,8 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     const d = new Date(ts)
     const now = new Date()
     const diff = now - d
-    if (diff < 60000) return 'Just now'
-    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago'
+    if (diff < 60000) return t('Just now')
+    if (diff < 3600000) return t('{n}m ago', { n: Math.floor(diff / 60000) })
     if (diff < 86400000) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
   }
@@ -654,76 +656,76 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
       <div style={overlayStyle} onClick={() => setShowSidebar(false)} />
       <div style={sidebarStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Settings</h2>
-          <button onClick={() => setShowSidebar(false)} aria-label="Close settings" style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('Settings')}</h2>
+          <button onClick={() => setShowSidebar(false)} aria-label={t('Close settings')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
 
-        <div style={sectionTitle}>Folders</div>
+        <div style={sectionTitle}>{t('Folders')}</div>
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <input type="text" placeholder="New folder name" value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createFolder()} maxLength={30} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
-          <button onClick={createFolder} style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Add</button>
+          <input type="text" placeholder={t('New folder name')} value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createFolder()} maxLength={30} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
+          <button onClick={createFolder} style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{t('Add')}</button>
         </div>
         {folders.map(f => (
           <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid var(--border)' }}>
             <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{f.name}</span>
-            <button onClick={async () => { if (await askConfirm('Delete folder "' + f.name + '"? Conversations will move back to All.', { yes: 'Delete folder', danger: true })) deleteFolder(f.id) }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>Delete</button>
+            <button onClick={async () => { if (await askConfirm(t('Delete folder "{name}"? Conversations will move back to All.', { name: f.name }), { yes: t('Delete folder'), danger: true })) deleteFolder(f.id) }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>{t('Delete')}</button>
           </div>
         ))}
 
-        <div style={sectionTitle}>Disappearing Messages</div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>New conversations will auto-delete messages after the chosen time.</p>
+        <div style={sectionTitle}>{t('Disappearing Messages')}</div>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>{t('New conversations will auto-delete messages after the chosen time.')}</p>
         <div style={{ padding: '0 0.25rem' }}>
           {/* Big buttons instead of a slider: easier to hit on a phone, and the words line up. */}
-          <div className="msg-timer" role="group" aria-label="Auto-delete new conversations after">
+          <div className="msg-timer" role="group" aria-label={t('Auto-delete new conversations after')}>
             {DISAPPEAR_STEPS.map((s, i) => (
-              <button key={i} type="button" className={'msg-timer-btn' + (getSliderIndex() === i ? ' on' : '')} aria-pressed={getSliderIndex() === i} onClick={() => saveDisappearPref(s.mins)}>{s.label}</button>
+              <button key={i} type="button" className={'msg-timer-btn' + (getSliderIndex() === i ? ' on' : '')} aria-pressed={getSliderIndex() === i} onClick={() => saveDisappearPref(s.mins)}>{t(s.label)}</button>
             ))}
           </div>
         </div>
 
-        <div style={sectionTitle}>Privacy</div>
+        <div style={sectionTitle}>{t('Privacy')}</div>
         <div style={toggleRow}>
-          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>Read receipts</span>
-          <button role="switch" aria-checked={readReceipts} aria-label="Read receipts" style={toggleDot(readReceipts)} onClick={toggleReadReceipts}><span style={toggleKnob(readReceipts)} /></button>
+          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{t('Read receipts')}</span>
+          <button role="switch" aria-checked={readReceipts} aria-label={t('Read receipts')} style={toggleDot(readReceipts)} onClick={toggleReadReceipts}><span style={toggleKnob(readReceipts)} /></button>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>Show when you have read a message. If you turn this off, you won't see when others read yours either.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>{t("Show when you have read a message. If you turn this off, you won't see when others read yours either.")}</p>
 
-        <div style={sectionTitle}>Safety</div>
+        <div style={sectionTitle}>{t('Safety')}</div>
         <div style={toggleRow}>
-          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>Safety check-ins</span>
-          <button role="switch" aria-checked={safetyCheckins} aria-label="Safety check-ins" style={toggleDot(safetyCheckins)} onClick={toggleSafetyCheckins}><span style={toggleKnob(safetyCheckins)} /></button>
+          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{t('Safety check-ins')}</span>
+          <button role="switch" aria-checked={safetyCheckins} aria-label={t('Safety check-ins')} style={toggleDot(safetyCheckins)} onClick={toggleSafetyCheckins}><span style={toggleKnob(safetyCheckins)} /></button>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>Receive periodic check-in prompts during active help sessions</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>{t('Receive periodic check-in prompts during active help sessions')}</p>
 
         <div style={toggleRow}>
-          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>Hide details on my lock screen</span>
-          <button role="switch" aria-checked={hidePushDetails} aria-label="Hide details on my lock screen" style={toggleDot(hidePushDetails)} onClick={toggleHidePushDetails}><span style={toggleKnob(hidePushDetails)} /></button>
+          <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{t('Hide details on my lock screen')}</span>
+          <button role="switch" aria-checked={hidePushDetails} aria-label={t('Hide details on my lock screen')} style={toggleDot(hidePushDetails)} onClick={toggleHidePushDetails}><span style={toggleKnob(hidePushDetails)} /></button>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>When on, phone alerts only say you have an update. Names and group titles stay inside the app, so nobody glancing at your phone can see them.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>{t('When on, phone alerts only say you have an update. Names and group titles stay inside the app, so nobody glancing at your phone can see them.')}</p>
 
-        <div style={sectionTitle}>Default greeting</div>
+        <div style={sectionTitle}>{t('Default greeting')}</div>
         {editingHelpMsg ? (
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input type="text" value={defaultHelpMsg} onChange={e => setDefaultHelpMsg(e.target.value)} maxLength={200} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
-            <button onClick={saveHelpMsg} style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Save</button>
+            <button onClick={saveHelpMsg} style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{t('Save')}</button>
           </div>
         ) : (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0' }}>
             <span style={{ color: 'var(--text)', fontSize: '0.9rem', fontStyle: 'italic' }}>"{defaultHelpMsg}"</span>
-            <button onClick={() => setEditingHelpMsg(true)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem' }}>Edit</button>
+            <button onClick={() => setEditingHelpMsg(true)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem' }}>{t('Edit')}</button>
           </div>
         )}
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>Auto-sent when you tap "Offer Help" on a request</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>{t('Auto-sent when you tap "Offer Help" on a request')}</p>
 
-        <div style={sectionTitle}>Blocked Users</div>
+        <div style={sectionTitle}>{t('Blocked Users')}</div>
         {blockedUsers.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No blocked users</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('No blocked users')}</p>
         ) : blockedUsers.map(b => (
           <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid var(--border)' }}>
             <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{b.name}</span>
             <span style={{ display: 'flex', gap: '0.75rem' }}>
-              <button onClick={() => navigate('/u/' + b.blocked_id, { state: { safety: 'report' } })} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem', minHeight: '44px' }}>Report</button>
-              <button onClick={() => unblockUser(b.id)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', minHeight: '44px' }}>Unblock</button>
+              <button onClick={() => navigate('/u/' + b.blocked_id, { state: { safety: 'report' } })} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem', minHeight: '44px' }}>{t('Report')}</button>
+              <button onClick={() => unblockUser(b.id)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', minHeight: '44px' }}>{t('Unblock')}</button>
             </span>
           </div>
         ))}
@@ -731,22 +733,22 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
 
       {!embedded && (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <h1 style={{ margin: 0 }}>Messages</h1>
-        <button type="button" onClick={() => setShowSidebar(true)} className="page-top-btn" aria-label="Message settings">
-          <span aria-hidden="true"><Icon name="gear" /></span> Settings
+        <h1 style={{ margin: 0 }}>{t('Messages')}</h1>
+        <button type="button" onClick={() => setShowSidebar(true)} className="page-top-btn" aria-label={t('Message settings')}>
+          <span aria-hidden="true"><Icon name="gear" /></span> {t('Settings')}
         </button>
       </div>
       )}
 
       {!embedded && (<>
       <button type="button" className="groups-row groups-entry" onClick={() => navigate('/connections')}>
-        <span className="groups-row-name"><span aria-hidden="true"><Icon name="handshake" /></span> Connections</span>
-        <span className="groups-row-meta">Everyone you have connected with &#8250;</span>
+        <span className="groups-row-name"><span aria-hidden="true"><Icon name="handshake" /></span> {t('Connections')}</span>
+        <span className="groups-row-meta">{t('Everyone you have connected with')} &#8250;</span>
       </button>
 
       <button type="button" className="groups-row groups-entry" data-tour="cottage-chats" onClick={() => navigate('/groups')}>
-        <span className="groups-row-name"><span aria-hidden="true"><Icon name="people" /></span> Cottage Chats &amp; Campfires</span>
-        <span className="groups-row-meta">Members-only boards &#8250;</span>
+        <span className="groups-row-name"><span aria-hidden="true"><Icon name="people" /></span> {t('Cottage Chats and Campfires')}</span>
+        <span className="groups-row-meta">{t('Members-only boards')} &#8250;</span>
       </button>
       </>)}
 
@@ -754,15 +756,15 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
       {pendingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-            <Icon name="handshake" /> Help Offers ({pendingOffers.length})
+            <Icon name="handshake" /> {t('Help Offers ({n})', { n: pendingOffers.length })}
           </div>
           {pendingOffers.map(offer => (
             <div key={offer.id} style={offerCardStyle}>
               <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                For your request: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{offer.skill_needed}{offer.for_name ? ' for ' + offer.for_name : ''}</span>
+                {t('For your request:')} <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{t(offer.skill_needed)}{offer.for_name ? ' ' + t('for {name}', { name: offer.for_name }) : ''}</span>
                 {offer.max_helpers !== null && (
                   <span style={{ marginLeft: '0.5rem', color: 'var(--text-muted)' }}>
-                    ({offer.accepted_count}/{offer.max_helpers} accepted)
+                    ({t('{n}/{max} accepted', { n: offer.accepted_count, max: offer.max_helpers })})
                   </span>
                 )}
               </div>
@@ -771,23 +773,23 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={offer.avatar_url} userId={offer.helper_id} size={32} /><UserName userId={offer.helper_id} name={offer.helper_name} style={{ fontWeight: 700, color: 'var(--text-strong)', fontSize: '0.95rem' }} /></div>
                 {offer.is_ambassador && (
                   <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
-                    Hope Ambassador
+                    {t('Hope Ambassador')}
                   </span>
                 )}
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                 {offer.vouch_count > 0 && (
-                  <span>&#x1F91D; {offer.vouch_count} vouch{offer.vouch_count !== 1 ? 'es' : ''}</span>
+                  <span>&#x1F91D; {t(offer.vouch_count !== 1 ? '{n} vouches' : '{n} vouch', { n: offer.vouch_count })}</span>
                 )}
                 {offer.member_since && (
-                  <span>Member since {new Date(offer.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                  <span>{t('Member since {date}', { date: new Date(offer.member_since).toLocaleDateString(getLang() === 'es' ? 'es' : 'en-US', { month: 'short', year: 'numeric' }) })}</span>
                 )}
               </div>
 
               {!blockedBy.has(offer.helper_id) && (
                 <button type="button" onClick={() => navigate('/u/' + offer.helper_id)} style={{ display: 'block', width: '100%', minHeight: '44px', marginBottom: '0.5rem', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
-                  View {offer.helper_name}&apos;s profile first
+                  {t("View {name}'s profile first", { name: offer.helper_name })}
                 </button>
               )}
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -796,14 +798,14 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
                   disabled={processingOffer === offer.id}
                   onClick={() => acceptOffer(offer)}
                 >
-                  {processingOffer === offer.id ? 'Saving...' : 'Say yes'}
+                  {processingOffer === offer.id ? t('Saving...') : t('Say yes')}
                 </button>
                 <button
                   style={offerBtnDecline}
                   disabled={processingOffer === offer.id}
                   onClick={() => declineOffer(offer)}
                 >
-                  Not now
+                  {t('Not now')}
                 </button>
               </div>
             </div>
@@ -815,21 +817,21 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
       {myOutgoingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
           <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-            <Icon name="hourglass" /> Your Pending Offers ({myOutgoingOffers.length})
+            <Icon name="hourglass" /> {t('Your Pending Offers ({n})', { n: myOutgoingOffers.length })}
           </div>
           {myOutgoingOffers.map(offer => (
             <div key={offer.id} style={{ background: 'var(--warn-bg)', border: '1px solid #5a4a2a', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div>
-                <div style={{ color: 'var(--text-strong)', fontWeight: 600, fontSize: '0.9rem' }}>{offer.skill_needed}</div>
+                <div style={{ color: 'var(--text-strong)', fontWeight: 600, fontSize: '0.9rem' }}>{t(offer.skill_needed)}</div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                  {offer.for_name ? 'For ' + offer.for_name + ', posted by ' + offer.requester_name : 'For ' + offer.requester_name} &middot; Waiting for response
+                  {offer.for_name ? t('For {name}, posted by {poster}', { name: offer.for_name, poster: offer.requester_name }) : t('For {name}', { name: offer.requester_name })} &middot; {t('Waiting for response')}
                 </div>
               </div>
               <button
-                onClick={async () => { if (await askConfirm('Take back your offer to help?', { yes: 'Take it back' })) withdrawOffer(offer.id) }}
+                onClick={async () => { if (await askConfirm(t('Take back your offer to help?'), { yes: t('Take it back') })) withdrawOffer(offer.id) }}
                 style={{ padding: '0.4rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontSize: '0.8125rem', cursor: 'pointer' }}
               >
-                Withdraw
+                {t('Withdraw')}
               </button>
             </div>
           ))}
@@ -840,48 +842,48 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
       <div className="msg-new-row">
         <div className="msg-new-main"><NewMessage /></div>
         {embedded && (
-          <button type="button" onClick={() => setShowSidebar(true)} className="msg-gear" aria-label="Message settings">
+          <button type="button" onClick={() => setShowSidebar(true)} className="msg-gear" aria-label={t('Message settings')}>
             <Icon name="gear" size={28} />
           </button>
         )}
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
-        <button style={tabStyle(activeFolder === 'unread')} onClick={() => setActiveFolder('unread')}>Unread</button>
-        <button style={{ ...tabStyle(activeFolder === 'all'), outline: dropTarget === 'all' ? '2px solid var(--accent)' : 'none' }} onClick={() => setActiveFolder('all')} onDragOver={(e) => { e.preventDefault(); setDropTarget('all') }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), 'remove'); setDraggingConvo(null) }}>All</button>
+        <button style={tabStyle(activeFolder === 'unread')} onClick={() => setActiveFolder('unread')}>{t('Unread')}</button>
+        <button style={{ ...tabStyle(activeFolder === 'all'), outline: dropTarget === 'all' ? '2px solid var(--accent)' : 'none' }} onClick={() => setActiveFolder('all')} onDragOver={(e) => { e.preventDefault(); setDropTarget('all') }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), 'remove'); setDraggingConvo(null) }}>{t('All')}</button>
         {folders.map(f => (
           <button key={f.id} style={{ ...tabStyle(activeFolder === f.id), outline: dropTarget === f.id ? '2px solid var(--accent)' : 'none' }} onClick={() => setActiveFolder(f.id)} onDragOver={(e) => { e.preventDefault(); setDropTarget(f.id) }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), f.id); setDraggingConvo(null) }}>{f.name}</button>
         ))}
         {(followUpCount > 0 || activeFolder === 'followup') && (
-          <button style={tabStyle(activeFolder === 'followup')} onClick={() => setActiveFolder('followup')}><Icon name="flag" /> Follow up ({followUpCount})</button>
+          <button style={tabStyle(activeFolder === 'followup')} onClick={() => setActiveFolder('followup')}><Icon name="flag" /> {t('Follow up ({n})', { n: followUpCount })}</button>
         )}
         {archivedCount > 0 && (
-          <button style={tabStyle(activeFolder === 'archived')} onClick={() => setActiveFolder('archived')}>Archived ({archivedCount})</button>
+          <button style={tabStyle(activeFolder === 'archived')} onClick={() => setActiveFolder('archived')}>{t('Archived ({n})', { n: archivedCount })}</button>
         )}
       </div>
 
       {activeFolder === 'all' && <MessageRequests />}
 
-      {loading && <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>Loading...</p>}
+      {loading && <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>{t('Loading...')}</p>}
       {!loading && sorted.length === 0 && !showCampfireCard && pendingOffers.length === 0 && myOutgoingOffers.length === 0 && (
         <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{activeFolder === 'all' ? 'No messages yet' : activeFolder === 'archived' ? 'No archived messages' : activeFolder === 'unread' ? 'You\u2019re all caught up' : activeFolder === 'followup' ? 'Nothing to follow up on' : 'No messages in this folder'}</p>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{activeFolder === 'all' ? 'When you help someone or someone helps you, your conversations will show up here.' : activeFolder === 'unread' ? 'No new messages right now.' : activeFolder === 'followup' ? 'Tap \u22EF on a conversation and pick Follow up to save it here.' : 'Tap the menu on a conversation to move it here.'}</p>
+          <p style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{t(activeFolder === 'all' ? 'No messages yet' : activeFolder === 'archived' ? 'No archived messages' : activeFolder === 'unread' ? 'You\u2019re all caught up' : activeFolder === 'followup' ? 'Nothing to follow up on' : 'No messages in this folder')}</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{t(activeFolder === 'all' ? 'When you help someone or someone helps you, your conversations will show up here.' : activeFolder === 'unread' ? 'No new messages right now.' : activeFolder === 'followup' ? 'Tap \u22EF on a conversation and pick Follow up to save it here.' : 'Tap the menu on a conversation to move it here.')}</p>
         </div>
       )}
 
       {showDeleteConfirm && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: 'var(--surface-2)', borderRadius: '12px', padding: '1.5rem', maxWidth: '320px', width: '90%' }}>
-            <h3 style={{ margin: '0 0 0.75rem', color: 'var(--danger)' }}>Delete Conversation</h3>
-            <p style={{ color: 'var(--text-soft)', fontSize: '0.9rem', marginBottom: '1rem' }}>This cannot be undone. These messages will be lost forever.</p>
+            <h3 style={{ margin: '0 0 0.75rem', color: 'var(--danger)' }}>{t('Delete Conversation')}</h3>
+            <p style={{ color: 'var(--text-soft)', fontSize: '0.9rem', marginBottom: '1rem' }}>{t('This cannot be undone. These messages will be lost forever.')}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-              <button onClick={() => setDeleteMode('me')} style={{ ...tabStyle(deleteMode === 'me'), borderRadius: '8px', textAlign: 'left' }}>Delete just for me</button>
-              <button onClick={() => setDeleteMode('everyone')} style={{ ...tabStyle(deleteMode === 'everyone'), borderRadius: '8px', textAlign: 'left' }}>Delete for everyone</button>
+              <button onClick={() => setDeleteMode('me')} style={{ ...tabStyle(deleteMode === 'me'), borderRadius: '8px', textAlign: 'left' }}>{t('Delete just for me')}</button>
+              <button onClick={() => setDeleteMode('everyone')} style={{ ...tabStyle(deleteMode === 'everyone'), borderRadius: '8px', textAlign: 'left' }}>{t('Delete for everyone')}</button>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={() => setShowDeleteConfirm(null)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={() => deleteConversation(showDeleteConfirm)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Delete</button>
+              <button onClick={() => setShowDeleteConfirm(null)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>{t('Cancel')}</button>
+              <button onClick={() => deleteConversation(showDeleteConfirm)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{t('Delete')}</button>
             </div>
           </div>
         </div>
@@ -889,19 +891,19 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
 
       {!loading && showCampfireCard && (
         <div className="message-card" style={{ position: 'relative', borderLeft: '3px solid #e8833a' }}>
-          <div onClick={() => navigate('/village-square')} role="button" tabIndex={0} aria-label={'Open Village Square' + (campfire.unread ? ', new messages' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/village-square') } }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div onClick={() => navigate('/village-square')} role="button" tabIndex={0} aria-label={t('Open Village Square') + (campfire.unread ? ', ' + t('new messages') : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/village-square') } }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <span aria-hidden="true" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--warn-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0 }}><Icon name="megaphone" /></span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="message-card-header">
                 <span className="message-card-name" style={{ fontWeight: campfire.unread ? 800 : 600 }}>
-                  Village Square
+                  {t('Village Square')}
                   {campfire.unread && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent)', marginLeft: '6px' }} />}
                 </span>
                 {campfire.last && <span className="message-card-time" style={{ color: campfire.unread ? 'var(--accent)' : undefined }}>{formatTime(campfire.last.created_at)}</span>}
               </div>
-              <p className="message-card-skill">Announcements and your village chat</p>
+              <p className="message-card-skill">{t('Announcements and your village chat')}</p>
               <p className="message-card-preview" style={{ color: campfire.unread ? 'var(--text)' : undefined, fontWeight: campfire.unread ? 600 : 400 }}>
-                {campfire.noVillage ? 'Add your zip code to join your area\u2019s Village Square.' : campfire.last ? campfire.name + ': ' + ((campfire.last.body || '').length > 70 ? campfire.last.body.slice(0, 70) + '...' : (campfire.last.body || '')) : 'Nothing posted yet.'}
+                {campfire.noVillage ? t('Add your zip code to join your area\u2019s Village Square.') : campfire.last ? campfire.name + ': ' + ((campfire.last.body || '').length > 70 ? campfire.last.body.slice(0, 70) + '...' : (campfire.last.body || '')) : t('Nothing posted yet.')}
               </p>
             </div>
           </div>
@@ -916,20 +918,20 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
         const followUp = convoSettings[c.id]?.follow_up
         return (
         <div key={c.id} className={'message-card' + (selectedId === c.id ? ' message-card-on' : '')} style={{ position: 'relative', cursor: 'grab', opacity: draggingConvo === c.id ? 0.5 : 1, borderLeft: isPinned ? '3px solid var(--accent)' : 'none' }} draggable onDragStart={(e) => { setDraggingConvo(c.id); e.dataTransfer.setData('text/plain', c.id) }} onDragEnd={() => { setDraggingConvo(null); setDropTarget(null) }}>
-          <div onClick={() => openConvo(c)} role="button" tabIndex={0} aria-current={selectedId === c.id ? 'true' : undefined} aria-label={'Open conversation with ' + c.otherName + (unread ? ', unread' : '') + (followUp ? ', marked follow up' : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openConvo(c) } }} style={{ cursor: 'pointer', paddingRight: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div onClick={() => openConvo(c)} role="button" tabIndex={0} aria-current={selectedId === c.id ? 'true' : undefined} aria-label={t('Open conversation with {name}', { name: c.otherName }) + (unread ? ', ' + t('unread') : '') + (followUp ? ', ' + t('marked follow up') : '')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openConvo(c) } }} style={{ cursor: 'pointer', paddingRight: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <AvatarDisplay url={c.otherAvatar} userId={c.otherId} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
             <div className="message-card-header">
               <span className="message-card-name" style={{ fontWeight: unread ? 800 : 600 }}>
-                {isPinned && <span style={{ marginRight: '4px' }} title="Pinned"><Icon name="pushpin" /></span>}
-                {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title="Muted"><Icon name="moon" /></span>}
-                {followUp && <span style={{ marginRight: '4px' }} title="Follow up"><Icon name="flag" /></span>}
+                {isPinned && <span style={{ marginRight: '4px' }} title={t('Pinned')}><Icon name="pushpin" /></span>}
+                {muted && <span style={{ marginRight: '4px', opacity: 0.5 }} title={t('Muted')}><Icon name="moon" /></span>}
+                {followUp && <span style={{ marginRight: '4px' }} title={t('Follow up')}><Icon name="flag" /></span>}
                 <UserName userId={c.otherId} name={c.otherName} />
                 {unread && <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "var(--accent)", marginLeft: "6px", flexShrink: 0 }} />}
               </span>
               <span className="message-card-time" style={{ color: unread ? "var(--accent)" : undefined }}>{formatTime(c.lastMessageAt)}</span>
             </div>
-            {c.help_requests && (<p className="message-card-skill">{c.help_requests.skill_needed}{c.help_requests.for_name ? ' for ' + c.help_requests.for_name : ''}{c.help_requests.neighborhood ? ' in ' + c.help_requests.neighborhood : ''}</p>)}
+            {c.help_requests && (<p className="message-card-skill">{t(c.help_requests.skill_needed)}{c.help_requests.for_name ? ' ' + t('for {name}', { name: c.help_requests.for_name }) : ''}{c.help_requests.neighborhood ? ' ' + t('in {place}', { place: c.help_requests.neighborhood }) : ''}</p>)}
             {c.lastMessage && (<p className="message-card-preview" style={{ color: unread ? "var(--text)" : undefined, fontWeight: unread ? 600 : 400 }}>{c.lastMessage.length > 80 ? c.lastMessage.slice(0, 80) + '...' : c.lastMessage}</p>)}
             </div>
           </div>
@@ -941,59 +943,59 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
               setShowMuteMenu(null)
               if (!closing) positionOptionsMenu(e)
             }}
-            aria-label={'Options for conversation with ' + c.otherName}
+            aria-label={t('Options for conversation with {name}', { name: c.otherName })}
             style={{ position: 'absolute', bottom: '0.6rem', right: '0.6rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.25rem', padding: '4px 6px', lineHeight: 1 }}
-            title="Options">&#8943;</button>
+            title={t('Options')}>&#8943;</button>
 
           {openMenu === c.id && (
             <div ref={optionsMenuRef} onClick={(e) => e.stopPropagation()} style={{ background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: '10px', minWidth: '180px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden', ...optionsMenuStyle }}>
               {unread ? (
                 <button style={menuBtn} onClick={() => markRead(c)}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="envelope" /></span> Mark as read
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="envelope" /></span> {t('Mark as read')}
                 </button>
               ) : (
                 <button style={menuBtn} onClick={() => markUnread(c.id)}>
-                  <span style={{ width: '1.2rem', textAlign: 'center', color: 'var(--accent)' }}>&#9679;</span> Mark as unread
+                  <span style={{ width: '1.2rem', textAlign: 'center', color: 'var(--accent)' }}>&#9679;</span> {t('Mark as unread')}
                 </button>
               )}
               <button style={menuBtn} onClick={() => toggleFollowUp(c.id)}>
-                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="flag" /></span> {followUp ? 'Done following up' : 'Follow up'}
+                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="flag" /></span> {followUp ? t('Done following up') : t('Follow up')}
               </button>
               <button style={menuBtn} onClick={() => togglePin(c.id)}>
-                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="pushpin" /></span> {isPinned ? 'Unpin' : 'Pin to top'}
+                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="pushpin" /></span> {isPinned ? t('Unpin') : t('Pin to top')}
               </button>
               <button style={menuBtn} onClick={() => toggleArchive(c.id)}>
-                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="box" /></span> {isArchived ? 'Unarchive' : 'Archive'}
+                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="box" /></span> {isArchived ? t('Unarchive') : t('Archive')}
               </button>
               {muted ? (
                 <button style={menuBtn} onClick={() => unmuteConvo(c.id)}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="bell" /></span> Unmute
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="bell" /></span> {t('Unmute')}
                 </button>
               ) : (
                 <button style={menuBtn} onClick={(e) => { e.stopPropagation(); setShowMuteMenu(showMuteMenu === c.id ? null : c.id) }}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="moon" /></span> Mute &#9656;
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="moon" /></span> {t('Mute')} &#9656;
                 </button>
               )}
               {showMuteMenu === c.id && (
                 <div style={{ borderTop: '1px solid var(--border-strong)', background: 'var(--surface-3)' }}>
                   {MUTE_OPTIONS.map((opt, i) => (
-                    <button key={i} style={{ ...menuBtn, paddingLeft: '2.5rem', fontSize: '0.8125rem' }} onClick={() => muteConvo(c.id, opt.ms)}>{opt.label}</button>
+                    <button key={i} style={{ ...menuBtn, paddingLeft: '2.5rem', fontSize: '0.8125rem' }} onClick={() => muteConvo(c.id, opt.ms)}>{t(opt.label)}</button>
                   ))}
                 </div>
               )}
               {folders.length > 0 && (
                 <button style={menuBtn} onClick={() => setAssigningConvo(assigningConvo === c.id ? null : c.id)}>
-                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="folder" /></span> Move to folder
+                  <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="folder" /></span> {t('Move to folder')}
                 </button>
               )}
               <button style={menuBtn} onClick={() => reportConversation(c.id)}>
-                <span style={{ width: '1.2rem', textAlign: 'center', color: 'var(--danger)' }}><Icon name="flag" /></span> Report
+                <span style={{ width: '1.2rem', textAlign: 'center', color: 'var(--danger)' }}><Icon name="flag" /></span> {t('Report')}
               </button>
               <button style={menuBtn} onClick={() => blockUser(c.otherId, c.otherName)}>
-                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cross" /></span> Block user
+                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cross" /></span> {t('Block user')}
               </button>
               <button style={menuBtn} onClick={() => { setOpenMenu(null); setShowDeleteConfirm(c.id) }}>
-                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="trash" /></span> Delete
+                <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="trash" /></span> {t('Delete')}
               </button>
             </div>
           )}
@@ -1001,7 +1003,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
           {assigningConvo === c.id && (
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', padding: '0.5rem 0 0.25rem', borderTop: '1px solid var(--border)', marginTop: '0.5rem' }}>
               {folders.map(f => (<button key={f.id} onClick={() => assignToFolder(c.id, f.id)} style={{ ...tabStyle((assignments[c.id] || []).includes(f.id)), fontSize: '0.8125rem', padding: '0.35rem 0.75rem' }}>{f.name}</button>))}
-              {assignments[c.id] && assignments[c.id].length > 0 && (<button onClick={() => assignToFolder(c.id, 'remove')} style={{ ...tabStyle(false), fontSize: '0.8125rem', padding: '0.35rem 0.75rem', color: 'var(--danger)' }}>Remove</button>)}
+              {assignments[c.id] && assignments[c.id].length > 0 && (<button onClick={() => assignToFolder(c.id, 'remove')} style={{ ...tabStyle(false), fontSize: '0.8125rem', padding: '0.35rem 0.75rem', color: 'var(--danger)' }}>{t('Remove')}</button>)}
             </div>
           )}
         </div>

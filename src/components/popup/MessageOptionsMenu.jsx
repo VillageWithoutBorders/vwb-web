@@ -1,7 +1,9 @@
 import { supabase } from '../../supabaseClient'
 import { askConfirm, tell } from '../AdminDialog'
+import { useT } from '../../utils/lang'
 
 export default function MessageOptionsMenu({ message, onClose, currentUserId, canEdit, onEdit }) {
+  const t = useT()
   if (!message) return null
 
   const isMe = message.sender_id === currentUserId
@@ -10,18 +12,18 @@ export default function MessageOptionsMenu({ message, onClose, currentUserId, ca
     const { error } = await supabase.from('message_deletions').upsert({ message_id: message.id, user_id: currentUserId }, { onConflict: 'message_id,user_id' })
     if (error) {
       console.error('[MessageOptionsMenu] deleteForMe', error)
-      tell('Could not delete this message. Please try again.', { tone: 'error' })
+      tell(t('Could not delete this message. Please try again.'), { tone: 'error' })
       return
     }
     onClose()
   }
 
   async function deleteForEveryone() {
-    if (!(await askConfirm('Delete this message for everyone? This cannot be undone.'))) return
+    if (!(await askConfirm(t('Delete this message for everyone? This cannot be undone.')))) return
     const { data: done, error } = await supabase.rpc('delete_message_for_everyone', { p_message: message.id })
     if (error || done === false) {
       console.error('[MessageOptionsMenu] deleteForEveryone', error || 'nothing was changed')
-      tell('Could not delete this message for everyone. Please try again.', { tone: 'error' })
+      tell(t('Could not delete this message for everyone. Please try again.'), { tone: 'error' })
       return
     }
     onClose()
@@ -35,10 +37,10 @@ export default function MessageOptionsMenu({ message, onClose, currentUserId, ca
     <>
       <div style={overlay} onClick={onClose} />
       <div style={menu}>
-        {isMe && canEdit && <button style={btn} onClick={onEdit}>Edit message</button>}
-        <button style={btn} onClick={deleteForMe}>Delete for me</button>
-        {isMe && <button style={{ ...btn, color: 'var(--danger)' }} onClick={deleteForEveryone}>Delete for everyone</button>}
-        <button style={{ ...btn, borderBottom: 'none', color: 'var(--text-secondary)' }} onClick={onClose}>Cancel</button>
+        {isMe && canEdit && <button style={btn} onClick={onEdit}>{t('Edit message')}</button>}
+        <button style={btn} onClick={deleteForMe}>{t('Delete for me')}</button>
+        {isMe && <button style={{ ...btn, color: 'var(--danger)' }} onClick={deleteForEveryone}>{t('Delete for everyone')}</button>}
+        <button style={{ ...btn, borderBottom: 'none', color: 'var(--text-secondary)' }} onClick={onClose}>{t('Cancel')}</button>
       </div>
     </>
   )

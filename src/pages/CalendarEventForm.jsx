@@ -9,6 +9,7 @@ import ShiftsEditor from '../components/ShiftsEditor'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
 import { calmMotion } from '../utils/motion'
+import { useT } from '../utils/lang'
 
 const VWB_HOST = 'vwb'
 
@@ -21,6 +22,7 @@ function combine(date, time) { return date && time ? new Date(date + 'T' + time)
 // can post (the database enforces this too; this page just explains it).
 export default function CalendarEventForm() {
   const { id } = useParams()
+  const t = useT()
   const editing = !!id
   const navigate = useNavigate()
   const { user, isAdmin, organizations } = useAuth()
@@ -37,7 +39,7 @@ export default function CalendarEventForm() {
   // dashboard) unless you pick the app-wide choice on purpose.
   const hostChoices = [
     ...hostOrgs.map((o) => ({ id: o.id, name: o.name })),
-    ...(isAdmin ? [{ id: VWB_HOST, name: 'App-wide (the VWB app itself, not a group)' }] : []),
+    ...(isAdmin ? [{ id: VWB_HOST, name: t('App-wide (the VWB app itself, not a group)') }] : []),
   ]
 
   // Where the event is: the host types the zip code, and we look up the
@@ -87,7 +89,7 @@ export default function CalendarEventForm() {
   useEffect(() => {
     if (!editing) return
     supabase.from('calendar_events').select('*').eq('id', id).maybeSingle().then(({ data, error: err }) => {
-      if (err || !data) { setError("We couldn't open this event for editing. You may not be one of its organizers."); setLoaded(true); return }
+      if (err || !data) { setError(t("We couldn't open this event for editing. You may not be one of its organizers.")); setLoaded(true); return }
       setForm({
         host: data.organization_id || VWB_HOST,
         title: data.title || '',
@@ -129,27 +131,27 @@ export default function CalendarEventForm() {
     return () => { alive = false }
   }, [editing, id])
 
-  function applyTemplate(t) {
-    if (!t) {
+  function applyTemplate(tpl) {
+    if (!tpl) {
       setTemplateKey('blank')
       setDurationMins(0)
       return
     }
     setForm((f) => ({
       ...f,
-      title: t.title,
-      description: t.description,
+      title: tpl.title,
+      description: tpl.description,
       // Members-only needs a group behind it; VWB-hosted falls back to invite-only.
-      visibility: t.visibility === 'members' && f.host === VWB_HOST ? 'invite' : t.visibility,
-      signupEnabled: t.signupEnabled,
-      signupKind: t.signupKind || 'help',
-      signupLimit: t.signupLimit ? String(t.signupLimit) : '',
-      hideAddress: t.hideAddress,
-      radius: t.radius,
-      endTime: f.startTime && !endTouched ? addMinutes(f.startTime, t.durationMins) : f.endTime,
+      visibility: tpl.visibility === 'members' && f.host === VWB_HOST ? 'invite' : tpl.visibility,
+      signupEnabled: tpl.signupEnabled,
+      signupKind: tpl.signupKind || 'help',
+      signupLimit: tpl.signupLimit ? String(tpl.signupLimit) : '',
+      hideAddress: tpl.hideAddress,
+      radius: tpl.radius,
+      endTime: f.startTime && !endTouched ? addMinutes(f.startTime, tpl.durationMins) : f.endTime,
     }))
-    setDurationMins(t.durationMins)
-    setTemplateKey(t.key)
+    setDurationMins(tpl.durationMins)
+    setTemplateKey(tpl.key)
   }
 
   // Fill the form from text copied out of a Facebook event or post.
@@ -172,15 +174,15 @@ export default function CalendarEventForm() {
     }))
     if (p.endTime) setEndTouched(true)
     setPasteNote(p.missing.length
-      ? 'Filled in from your paste. Please add ' + p.missing.join(', ') + ', and check the rest.'
-      : 'Filled in from your paste. Please check each part before you post.')
+      ? t('Filled in from your paste. Please add {missing}, and check the rest.', { missing: p.missing.map((m) => t(m)).join(', ') })
+      : t('Filled in from your paste. Please check each part before you post.'))
     setPasteText('')
     setTemplateKey('blank')
     setDurationMins(0)
   }
 
   async function changeTemplate() {
-    if ((form.title || form.description) && !(await askConfirm('Pick a different kind of event? This replaces the name and description you have now.', { yes: 'Pick a different kind' }))) return
+    if ((form.title || form.description) && !(await askConfirm(t('Pick a different kind of event? This replaces the name and description you have now.'), { yes: t('Pick a different kind') }))) return
     setForm((f) => ({ ...f, title: '', description: '' }))
     setTemplateKey(null)
   }
@@ -242,9 +244,9 @@ export default function CalendarEventForm() {
     e.preventDefault()
     setError('')
     setFieldError(null)
-    if (!form.title.trim()) { fail('ev-title', 'Give your event a name.'); return }
-    if (!form.date) { fail('ev-date', 'Pick the date of the event.'); return }
-    if (!form.startTime) { fail('ev-start', 'Pick a start time.'); return }
+    if (!form.title.trim()) { fail('ev-title', t('Give your event a name.')); return }
+    if (!form.date) { fail('ev-date', t('Pick the date of the event.')); return }
+    if (!form.startTime) { fail('ev-start', t('Pick a start time.')); return }
     const startsAt = combine(form.date, form.startTime)
     let endsAt = form.endTime ? combine(form.date, form.endTime) : null
     if (endsAt && new Date(endsAt) < new Date(startsAt)) {
@@ -252,13 +254,13 @@ export default function CalendarEventForm() {
       const d = new Date(endsAt); d.setDate(d.getDate() + 1); endsAt = d.toISOString()
     }
     const limit = form.signupLimit ? parseInt(form.signupLimit, 10) : null
-    if (form.signupEnabled && form.signupLimit && (!limit || limit < 1)) { fail('ev-limit', 'The number of spots should be 1 or more, or left blank for no limit.'); return }
+    if (form.signupEnabled && form.signupLimit && (!limit || limit < 1)) { fail('ev-limit', t('The number of spots should be 1 or more, or left blank for no limit.')); return }
 
     const shiftRows = []
     for (const sh of shifts) {
       const cap = parseInt(sh.capacity, 10)
-      if (!sh.label.trim()) { fail('ev-submit', 'Every shift needs a name. Fill it in or remove the shift.'); return }
-      if (!cap || cap < 1 || cap > 100) { fail('ev-submit', 'Each shift needs a number of people from 1 to 100.'); return }
+      if (!sh.label.trim()) { fail('ev-submit', t('Every shift needs a name. Fill it in or remove the shift.')); return }
+      if (!cap || cap < 1 || cap > 100) { fail('ev-submit', t('Each shift needs a number of people from 1 to 100.')); return }
       let st = sh.start ? combine(form.date, sh.start) : null
       let en = sh.end ? combine(form.date, sh.end) : null
       if (st && en && new Date(en) < new Date(st)) { const d = new Date(en); d.setDate(d.getDate() + 1); en = d.toISOString() }
@@ -268,9 +270,9 @@ export default function CalendarEventForm() {
 
     let link = form.onlineLink.trim()
     if (form.online) {
-      if (!link) { fail('ev-link', 'Add the link people use to join the online event.'); return }
+      if (!link) { fail('ev-link', t('Add the link people use to join the online event.')); return }
       if (!/^https?:\/\//i.test(link)) link = 'https://' + link
-    } else if (!place) { fail('ev-zip', zip.length === 5 ? "We couldn't find that zip code. Check it and try again." : 'Enter the 5 digit zip code where the event is happening.'); return }
+    } else if (!place) { fail('ev-zip', zip.length === 5 ? t("We couldn't find that zip code. Check it and try again.") : t('Enter the 5 digit zip code where the event is happening.')); return }
     const row = {
       organization_id: form.host === VWB_HOST ? null : form.host,
       title: form.title.trim(),
@@ -304,7 +306,7 @@ export default function CalendarEventForm() {
     setSaving(false)
     if (err || !data) {
       console.error('save calendar event', err)
-      fail('ev-submit', "We couldn't save this event. Check the details and try again.")
+      fail('ev-submit', t("We couldn't save this event. Check the details and try again."))
       return
     }
     if (hasShifts || editing) {
@@ -312,7 +314,7 @@ export default function CalendarEventForm() {
       if (shiftErr) {
         console.error('set_event_shifts', shiftErr)
         // The event is saved. If we stay here, a second save would post it twice.
-        if (shiftErr.message && shiftErr.message.length < 160) tell('The event saved, but the shifts did not: ' + shiftErr.message + ' Open the event and choose Edit to fix the shifts.', { tone: 'error' })
+        if (shiftErr.message && shiftErr.message.length < 160) tell(t('The event saved, but the shifts did not: {why} Open the event and choose Edit to fix the shifts.', { why: shiftErr.message }), { tone: 'error' })
       }
     }
     navigate('/events/' + data.id)
@@ -321,75 +323,75 @@ export default function CalendarEventForm() {
   if (!editing && hostChoices.length === 0) {
     return (
       <div className="cal-page">
-        <h1 style={{ color: 'var(--accent)' }}>Post an event</h1>
-        <p>Events can be posted by organizers of a group that's part of Village Without Borders, and by VWB admins.</p>
-        <p className="cal-sub">If you run a group and want to post events here, reach out to Village Without Borders to get your group set up.</p>
-        <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/calendar')}>Back to the calendar</button>
+        <h1 style={{ color: 'var(--accent)' }}>{t('Post an event')}</h1>
+        <p>{t("Events can be posted by organizers of a group that's part of Village Without Borders, and by VWB admins.")}</p>
+        <p className="cal-sub">{t('If you run a group and want to post events here, reach out to Village Without Borders to get your group set up.')}</p>
+        <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/calendar')}>{t('Back to the calendar')}</button>
       </div>
     )
   }
 
-  if (!loaded) return <p className="cal-empty">Loading...</p>
+  if (!loaded) return <p className="cal-empty">{t('Loading...')}</p>
 
   if (!editing && templateKey === null) {
     return (
       <div className="cal-page">
         <div className="cal-head">
-          <h1>New event</h1>
-          <button type="button" onClick={() => navigate(-1)} className="link-button" style={{ minHeight: '44px' }}>Cancel</button>
+          <h1>{t('New event')}</h1>
+          <button type="button" onClick={() => navigate(-1)} className="link-button" style={{ minHeight: '44px' }}>{t('Cancel')}</button>
         </div>
-        <h2 className="evt-pick-title">What kind of event?</h2>
-        <p className="cal-sub">Pick one to get a head start. You can change anything after.</p>
+        <h2 className="evt-pick-title">{t('What kind of event?')}</h2>
+        <p className="cal-sub">{t('Pick one to get a head start. You can change anything after.')}</p>
         <div className="form-field" style={{ marginBottom: '1.25rem' }}>
-          <label htmlFor="ev-paste"><strong>Already posted on Facebook?</strong> Paste it here.</label>
-          <p className="cal-sub" style={{ margin: '0.25rem 0 0.5rem' }}>Copy the event or post text and paste it. We fill in the name, date, time, and place. You check it before posting.</p>
+          <label htmlFor="ev-paste"><strong>{t('Already posted on Facebook?')}</strong> {t('Paste it here.')}</label>
+          <p className="cal-sub" style={{ margin: '0.25rem 0 0.5rem' }}>{t('Copy the event or post text and paste it. We fill in the name, date, time, and place. You check it before posting.')}</p>
           <textarea id="ev-paste" rows={5} value={pasteText} onChange={(e) => { setPasteText(e.target.value); setPasteEmpty(false) }} style={{ width: '100%', boxSizing: 'border-box', minHeight: '120px', fontSize: '1rem', fontFamily: 'inherit' }} />
-          {pasteEmpty && <p className="cal-field-error" role="alert">Paste some text first.</p>}
-          <button type="button" className="btn btn-outline" onClick={fillFromPaste} style={{ minHeight: '48px', marginTop: '0.5rem' }}>Fill in the form</button>
+          {pasteEmpty && <p className="cal-field-error" role="alert">{t('Paste some text first.')}</p>}
+          <button type="button" className="btn btn-outline" onClick={fillFromPaste} style={{ minHeight: '48px', marginTop: '0.5rem' }}>{t('Fill in the form')}</button>
         </div>
         <div className="evt-pick-grid">
-          {EVENT_TEMPLATES.map((t) => (
-            <button key={t.key} type="button" className="evt-pick" onClick={() => applyTemplate(t)}>
-              <span className="evt-pick-icon" aria-hidden="true"><Icon name={t.icon} /></span>
-              <span className="evt-pick-name">{t.name}</span>
-              <span className="evt-pick-blurb">{t.blurb}</span>
+          {EVENT_TEMPLATES.map((tpl) => (
+            <button key={tpl.key} type="button" className="evt-pick" onClick={() => applyTemplate(tpl)}>
+              <span className="evt-pick-icon" aria-hidden="true"><Icon name={tpl.icon} /></span>
+              <span className="evt-pick-name">{t(tpl.name)}</span>
+              <span className="evt-pick-blurb">{t(tpl.blurb)}</span>
             </button>
           ))}
           <button type="button" className="evt-pick evt-pick-blank" onClick={() => applyTemplate(null)}>
             <span className="evt-pick-icon" aria-hidden="true"><Icon name="pencil" /></span>
-            <span className="evt-pick-name">Start from scratch</span>
-            <span className="evt-pick-blurb">A blank form</span>
+            <span className="evt-pick-name">{t('Start from scratch')}</span>
+            <span className="evt-pick-blurb">{t('A blank form')}</span>
           </button>
         </div>
       </div>
     )
   }
 
-  const chosen = EVENT_TEMPLATES.find((t) => t.key === templateKey)
+  const chosen = EVENT_TEMPLATES.find((tpl) => tpl.key === templateKey)
 
   return (
     <div className="cal-page">
       <div className="cal-head">
-        <h1>{editing ? 'Edit event' : 'New event'}</h1>
-        <button type="button" onClick={() => navigate(-1)} className="link-button" style={{ minHeight: '44px' }}>Cancel</button>
+        <h1>{editing ? t('Edit event') : t('New event')}</h1>
+        <button type="button" onClick={() => navigate(-1)} className="link-button" style={{ minHeight: '44px' }}>{t('Cancel')}</button>
       </div>
 
       {!editing && (
         <p className="evt-chosen">
-          {chosen ? <><span aria-hidden="true"><Icon name={chosen.icon} /></span> {chosen.name}</> : 'Starting from scratch'}
+          {chosen ? <><span aria-hidden="true"><Icon name={chosen.icon} /></span> {t(chosen.name)}</> : t('Starting from scratch')}
           {' · '}
-          <button type="button" className="link-button" onClick={changeTemplate}>Change</button>
+          <button type="button" className="link-button" onClick={changeTemplate}>{t('Change')}</button>
         </p>
       )}
       {pasteNote && <p className="cal-sub" role="status" style={{ fontWeight: 600 }}>{pasteNote}</p>}
-      {chosen && <p className="cal-sub">We filled in a starting outline. Replace the parts after each colon with your details, and delete any lines you don't need.</p>}
+      {chosen && <p className="cal-sub">{t("We filled in a starting outline. Replace the parts after each colon with your details, and delete any lines you don't need.")}</p>}
 
       {error && <p className="cal-error" role="alert">{error}</p>}
 
       <form onSubmit={save} noValidate>
         {hostChoices.length > 1 && (
           <div className="form-field">
-            <label htmlFor="ev-host">Who's hosting?</label>
+            <label htmlFor="ev-host">{t("Who's hosting?")}</label>
             <select id="ev-host" value={form.host} onChange={(e) => set('host', e.target.value)}>
               {hostChoices.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
             </select>
@@ -397,51 +399,51 @@ export default function CalendarEventForm() {
         )}
 
         <div className="form-field">
-          <label htmlFor="ev-title">Event name</label>
-          <input id="ev-title" type="text" maxLength={140} value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="For example: Fall food drive" required aria-invalid={fieldError?.id === 'ev-title' || undefined} aria-describedby={fieldError?.id === 'ev-title' ? 'ev-title-error' : undefined} />
+          <label htmlFor="ev-title">{t('Event name')}</label>
+          <input id="ev-title" type="text" maxLength={140} value={form.title} onChange={(e) => set('title', e.target.value)} placeholder={t('For example: Fall food drive')} required aria-invalid={fieldError?.id === 'ev-title' || undefined} aria-describedby={fieldError?.id === 'ev-title' ? 'ev-title-error' : undefined} />
           {fieldNote('ev-title')}
         </div>
 
         <div className="form-field">
-          <label htmlFor="ev-desc">What's happening? (optional)</label>
-          <textarea id="ev-desc" rows={chosen ? 12 : 4} maxLength={4000} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="What people will do, what to bring, who it's for" />
+          <label htmlFor="ev-desc">{t("What's happening? (optional)")}</label>
+          <textarea id="ev-desc" rows={chosen ? 12 : 4} maxLength={4000} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder={t("What people will do, what to bring, who it's for")} />
         </div>
 
         <div className="form-field">
-          <label htmlFor="ev-date">Date</label>
+          <label htmlFor="ev-date">{t('Date')}</label>
           <input id="ev-date" type="date" value={form.date} onChange={(e) => set('date', e.target.value)} required aria-invalid={fieldError?.id === 'ev-date' || undefined} aria-describedby={fieldError?.id === 'ev-date' ? 'ev-date-error' : undefined} />
           {fieldNote('ev-date')}
         </div>
         <div className="cal-row2">
           <div className="form-field">
-            <label htmlFor="ev-start">Starts</label>
+            <label htmlFor="ev-start">{t('Starts')}</label>
             <input id="ev-start" type="time" value={form.startTime} onChange={(e) => set('startTime', e.target.value)} required aria-invalid={fieldError?.id === 'ev-start' || undefined} aria-describedby={fieldError?.id === 'ev-start' ? 'ev-start-error' : undefined} />
             {fieldNote('ev-start')}
           </div>
           <div className="form-field">
-            <label htmlFor="ev-end">Ends (optional)</label>
+            <label htmlFor="ev-end">{t('Ends (optional)')}</label>
             <input id="ev-end" type="time" value={form.endTime} onChange={(e) => set('endTime', e.target.value)} />
           </div>
         </div>
 
-        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Where is it?</h2>
+        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>{t('Where is it?')}</h2>
         <label className={'cal-choice' + (form.online ? ' is-on' : '')}>
           <input type="checkbox" checked={form.online} onChange={(e) => set('online', e.target.checked)} />
-          <span>This is an online event
-            <small>There is no place to travel to. It shows for people everywhere, so anyone in the country can find it.</small>
+          <span>{t('This is an online event')}
+            <small>{t('There is no place to travel to. It shows for people everywhere, so anyone in the country can find it.')}</small>
           </span>
         </label>
         {form.online && (
           <>
             <div className="form-field">
-              <label htmlFor="ev-link">Link to join</label>
+              <label htmlFor="ev-link">{t('Link to join')}</label>
               <input id="ev-link" type="url" inputMode="url" autoComplete="url" maxLength={500} value={form.onlineLink} onChange={(e) => set('onlineLink', e.target.value)} placeholder="https://" aria-invalid={fieldError?.id === 'ev-link' || undefined} aria-describedby={fieldError?.id === 'ev-link' ? 'ev-link-error' : undefined} />
               {fieldNote('ev-link')}
             </div>
             <label className={'cal-choice' + (form.hideAddress ? ' is-on' : '')}>
               <input type="checkbox" checked={form.hideAddress} onChange={(e) => set('hideAddress', e.target.checked)} />
-              <span>Only show the link to people who sign up
-                <small>Everyone else sees that it is online, but not the link.</small>
+              <span>{t('Only show the link to people who sign up')}
+                <small>{t('Everyone else sees that it is online, but not the link.')}</small>
               </span>
             </label>
           </>
@@ -449,103 +451,103 @@ export default function CalendarEventForm() {
         {!form.online && (
           <>
         <div className="form-field">
-          <label htmlFor="ev-zip">{editing && place ? 'Zip code (to change the town)' : 'Zip code where it\'s happening'}</label>
+          <label htmlFor="ev-zip">{editing && place ? t('Zip code (to change the town)') : t("Zip code where it's happening")}</label>
           <input id="ev-zip" type="text" inputMode="numeric" autoComplete="postal-code" pattern="[0-9]*" maxLength={5} value={zip} onChange={(e) => changeZip(e.target.value)} placeholder="12345" aria-invalid={fieldError?.id === 'ev-zip' || undefined} aria-describedby={'ev-zip-note' + (fieldError?.id === 'ev-zip' ? ' ev-zip-error' : '')} required={!place} />
           <p id="ev-zip-note" className={'evt-zip-note' + (zipState === 'notfound' ? ' is-error' : '')} role="status">
-            {zipState === 'looking' && 'Looking it up...'}
-            {zipState === 'notfound' && "We couldn't find that zip code. Check it and try again."}
-            {!zipState && place && <>&#10003; {place.name}. The calendar shows this town, and measures distance from the middle of the zip code.</>}
-            {!zipState && !place && 'We use it to show the town and to reach people nearby.'}
+            {zipState === 'looking' && t('Looking it up...')}
+            {zipState === 'notfound' && t("We couldn't find that zip code. Check it and try again.")}
+            {!zipState && place && <>&#10003; {place.name}. {t('The calendar shows this town, and measures distance from the middle of the zip code.')}</>}
+            {!zipState && !place && t('We use it to show the town and to reach people nearby.')}
           </p>
           {fieldNote('ev-zip')}
         </div>
         <div className="form-field">
-          <label htmlFor="ev-place">Place name (optional)</label>
-          <input id="ev-place" type="text" value={form.locationName} onChange={(e) => set('locationName', e.target.value)} placeholder="For example: the public library" />
+          <label htmlFor="ev-place">{t('Place name (optional)')}</label>
+          <input id="ev-place" type="text" value={form.locationName} onChange={(e) => set('locationName', e.target.value)} placeholder={t('For example: the public library')} />
         </div>
         <div className="form-field">
-          <label htmlFor="ev-address">Street address (optional)</label>
+          <label htmlFor="ev-address">{t('Street address (optional)')}</label>
           <input id="ev-address" type="text" autoComplete="street-address" value={form.address} onChange={(e) => set('address', e.target.value)} />
         </div>
         <label className={'cal-choice' + (form.hideAddress ? ' is-on' : '')}>
           <input type="checkbox" checked={form.hideAddress} onChange={(e) => set('hideAddress', e.target.checked)} />
-          <span>Only show the place and address to people who sign up
-            <small>Everyone else just sees the town. Good for events at someone's home.</small>
+          <span>{t('Only show the place and address to people who sign up')}
+            <small>{t("Everyone else just sees the town. Good for events at someone's home.")}</small>
           </span>
         </label>
           </>
         )}
 
-        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Who can see it?</h2>
+        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>{t('Who can see it?')}</h2>
         {Object.entries(VISIBILITY).filter(([key]) => key !== 'affiliates' || umbrellaIds.includes(form.host)).map(([key, v]) => {
           const disabled = key === 'members' && form.host === VWB_HOST
           return (
             <label key={key} className={'cal-choice' + (form.visibility === key ? ' is-on' : '') + (disabled ? ' is-disabled' : '')}>
               <input type="radio" name="visibility" value={key} checked={form.visibility === key} disabled={disabled} onChange={() => set('visibility', key)} />
-              <span>{v.label}<small>{disabled ? 'Only for events hosted by a group.' : v.desc}</small></span>
+              <span>{t(v.label)}<small>{disabled ? t('Only for events hosted by a group.') : t(v.desc)}</small></span>
             </label>
           )
         })}
 
         {(form.visibility === 'public' || form.visibility === 'account') && !form.online && (
           <div className="form-field" style={{ marginTop: '0.75rem' }}>
-            <label htmlFor="ev-radius">Show it to people within</label>
+            <label htmlFor="ev-radius">{t('Show it to people within')}</label>
             <select id="ev-radius" value={form.radius} onChange={(e) => set('radius', Number(e.target.value))}>
-              {DISTANCE_OPTIONS.map((m) => <option key={m} value={m}>{m} miles of {place?.name || 'the event'}</option>)}
+              {DISTANCE_OPTIONS.map((m) => <option key={m} value={m}>{t('{n} miles of {place}', { n: m, place: place?.name || t('the event') })}</option>)}
             </select>
           </div>
         )}
 
-        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Who can come?</h2>
-        <p className="cal-sub" style={{ marginTop: 0 }}>Every event is for adults 18 and over unless you tick this. Accounts are for adults, so teens never sign up on their own.</p>
+        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>{t('Who can come?')}</h2>
+        <p className="cal-sub" style={{ marginTop: 0 }}>{t('Every event is for adults 18 and over unless you tick this. Accounts are for adults, so teens never sign up on their own.')}</p>
         <label className={'cal-choice' + (form.allAges ? ' is-on' : '')}>
           <input type="checkbox" checked={form.allAges} onChange={(e) => set('allAges', e.target.checked)} />
-          <span>All ages welcome
-            <small>Kids and teens can come and join in. Show it to anyone looking at the calendar, no account needed.</small>
+          <span>{t('All ages welcome')}
+            <small>{t('Kids and teens can come and join in. Show it to anyone looking at the calendar, no account needed.')}</small>
           </span>
         </label>
         {form.allAges && (
           <label className={'cal-choice' + (form.teensCanHelp ? ' is-on' : '')}>
             <input type="checkbox" checked={form.teensCanHelp} onChange={(e) => set('teensCanHelp', e.target.checked)} />
-            <span>Teens can help, with a parent or guardian
-              <small>A parent or guardian signs up as an adult and brings them. You are not asked for any details about the teen.</small>
+            <span>{t('Teens can help, with a parent or guardian')}
+              <small>{t('A parent or guardian signs up as an adult and brings them. You are not asked for any details about the teen.')}</small>
             </span>
           </label>
         )}
 
-        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>Sign-ups</h2>
+        <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>{t('Sign-ups')}</h2>
         <label className={'cal-choice' + (form.signupEnabled ? ' is-on' : '')}>
           <input type="checkbox" checked={form.signupEnabled} onChange={(e) => set('signupEnabled', e.target.checked)} />
-          <span>Let people sign up
-            <small>You'll see who signed up and any notes they leave.</small>
+          <span>{t('Let people sign up')}
+            <small>{t("You'll see who signed up and any notes they leave.")}</small>
           </span>
         </label>
         {form.signupEnabled && (
           <fieldset className="form-field" style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
-            <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>What are people signing up for?</legend>
+            <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>{t('What are people signing up for?')}</legend>
             <label className={'cal-choice' + (form.signupKind === 'help' ? ' is-on' : '')}>
               <input type="radio" name="ev-signup-kind" checked={form.signupKind === 'help'} onChange={() => set('signupKind', 'help')} />
-              <span>To help<small>Volunteers for a work day, drive, or shift.</small></span>
+              <span>{t('To help')}<small>{t('Volunteers for a work day, drive, or shift.')}</small></span>
             </label>
             <label className={'cal-choice' + (form.signupKind === 'attend' ? ' is-on' : '')}>
               <input type="radio" name="ev-signup-kind" checked={form.signupKind === 'attend'} onChange={() => set('signupKind', 'attend')} />
-              <span>To come<small>Neighbors letting you know they are coming, so you can plan food and seats.</small></span>
+              <span>{t('To come')}<small>{t('Neighbors letting you know they are coming, so you can plan food and seats.')}</small></span>
             </label>
           </fieldset>
         )}
         <div className="form-field">
-          <label htmlFor="ev-needs">What do you still need people to bring? (optional)</label>
-          <textarea id="ev-needs" rows={3} maxLength={600} value={form.needsText} onChange={(e) => set('needsText', e.target.value)} placeholder={'One thing per line. For example:\nNapkins\nPlates\nCups'} />
-          <small>Shows in its own box on the event page, above the sign-up button.</small>
+          <label htmlFor="ev-needs">{t('What do you still need people to bring? (optional)')}</label>
+          <textarea id="ev-needs" rows={3} maxLength={600} value={form.needsText} onChange={(e) => set('needsText', e.target.value)} placeholder={t('One thing per line. For example:\nNapkins\nPlates\nCups')} />
+          <small>{t('Shows in its own box on the event page, above the sign-up button.')}</small>
         </div>
         <div className="form-field">
-          <label htmlFor="ev-extra">Anything else to add? (optional)</label>
-          <textarea id="ev-extra" rows={4} maxLength={1000} value={form.extraText} onChange={(e) => set('extraText', e.target.value)} placeholder="Links, notes, or anything else. For example, a sign-up link." />
-          <small>Shows in its own box on the event page with no title above it. Whatever you type is all people see.</small>
+          <label htmlFor="ev-extra">{t('Anything else to add? (optional)')}</label>
+          <textarea id="ev-extra" rows={4} maxLength={1000} value={form.extraText} onChange={(e) => set('extraText', e.target.value)} placeholder={t('Links, notes, or anything else. For example, a sign-up link.')} />
+          <small>{t('Shows in its own box on the event page with no title above it. Whatever you type is all people see.')}</small>
         </div>
         {form.signupEnabled && (
           <div className="form-field">
-            <label htmlFor="ev-limit">How many spots? (leave blank for no limit)</label>
+            <label htmlFor="ev-limit">{t('How many spots? (leave blank for no limit)')}</label>
             <input id="ev-limit" type="number" inputMode="numeric" min={1} value={form.signupLimit} onChange={(e) => set('signupLimit', e.target.value)} aria-invalid={fieldError?.id === 'ev-limit' || undefined} aria-describedby={fieldError?.id === 'ev-limit' ? 'ev-limit-error' : undefined} />
             {fieldNote('ev-limit')}
           </div>
@@ -555,7 +557,7 @@ export default function CalendarEventForm() {
 
         {fieldNote('ev-submit')}
         <button id="ev-submit" type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginTop: '1rem' }} disabled={saving}>
-          {saving ? 'Saving...' : editing ? 'Save changes' : 'Post event'}
+          {saving ? t('Saving...') : editing ? t('Save changes') : t('Post event')}
         </button>
       </form>
     </div>

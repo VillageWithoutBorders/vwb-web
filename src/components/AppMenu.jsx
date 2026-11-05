@@ -6,6 +6,7 @@ import { startAppTour } from './AppTour'
 import Icon from './Icon'
 import { tell } from './AdminDialog'
 import { useSimpleView } from '../utils/simpleView'
+import { useT } from '../utils/lang'
 
 // The one menu in the top bar. It replaces two hidden menus (tapping the logo,
 // and a separate person icon) that people didn't know were there.
@@ -20,6 +21,7 @@ const SHARE_TEXT = 'Village Without Borders is a mutual aid network where neighb
 
 // inline: shown as a plain list inside My Corner (/me), with no button and no pop-up.
 export default function AppMenu({ inline = false }) {
+  const t = useT()
   const navigate = useNavigate()
   const { signOut, isAdmin } = useAuth()
   const simple = useSimpleView()
@@ -68,7 +70,7 @@ export default function AppMenu({ inline = false }) {
   async function handleNativeShare() {
     if (!navigator.share) return
     try {
-      await navigator.share({ title: 'Village Without Borders', text: SHARE_TEXT, url: APP_URL })
+      await navigator.share({ title: 'Village Without Borders', text: t(SHARE_TEXT), url: APP_URL })
     } catch (err) {
       if (err.name !== 'AbortError') console.error('[AppMenu] share', err)
     }
@@ -76,12 +78,12 @@ export default function AppMenu({ inline = false }) {
 
   async function handleCopyLink() {
     try {
-      await navigator.clipboard.writeText(`${SHARE_TEXT} ${APP_URL}`)
+      await navigator.clipboard.writeText(`${t(SHARE_TEXT)} ${APP_URL}`)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       console.error('[AppMenu] copy', err)
-      tell(`Could not copy automatically. Here's the link: ${APP_URL}`, { tone: 'error' })
+      tell(t("Could not copy automatically. Here's the link: {link}", { link: APP_URL }), { tone: 'error' })
     }
   }
 
@@ -97,10 +99,10 @@ export default function AppMenu({ inline = false }) {
         aria-expanded={open}
         aria-controls="appMenuList"
         aria-haspopup="true"
-        aria-label="Menu"
+        aria-label={t('Menu')}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>
-        <span className="header-btn-label">Menu</span>
+        <span className="header-btn-label">{t('Menu')}</span>
       </button>
       )}
 
@@ -109,58 +111,58 @@ export default function AppMenu({ inline = false }) {
         // so a wide screen can put them side by side (Oct 30). The pop-up keeps one list.
         const account = <>
           <button type="button" className="app-menu-item" onClick={() => go('/profile', { openEdit: true })}>
-            <span aria-hidden="true"><Icon name="person" /></span> Edit my profile
+            <span aria-hidden="true"><Icon name="person" /></span> {t('Edit my profile')}
           </button>
           {!simple && (
             <button type="button" className="app-menu-item" onClick={() => go('/groups')}>
-              <span aria-hidden="true"><Icon name="people" /></span> Cottage Chats &amp; Campfires
+              <span aria-hidden="true"><Icon name="people" /></span> {t('Cottage Chats and Campfires')}
             </button>
           )}
           {/* Oct 30 (Jade): My Corner already has a big Settings button, so the inline list leaves this out. */}
           {!inline && (
             <button type="button" className="app-menu-item" onClick={() => go('/settings')}>
-              <span aria-hidden="true"><Icon name="gear" /></span> Settings and privacy
+              <span aria-hidden="true"><Icon name="gear" /></span> {t('Settings and privacy')}
             </button>
           )}
           {isAdmin && (
             <button type="button" className="app-menu-item" onClick={() => go('/admin')}>
-              <span aria-hidden="true"><Icon name="shield" /></span> Admin panel
+              <span aria-hidden="true"><Icon name="shield" /></span> {t('Admin panel')}
             </button>
           )}
         </>
         const about = <>
           <button type="button" className="app-menu-item" onClick={() => go('/help')}>
-            <span aria-hidden="true"><Icon name="question" /></span> App guide and feedback
+            <span aria-hidden="true"><Icon name="question" /></span> {t('App guide and feedback')}
           </button>
           <button type="button" className="app-menu-item" onClick={() => { setOpen(false); startAppTour() }}>
-            <span aria-hidden="true"><Icon name="compass" /></span> Take the tour
+            <span aria-hidden="true"><Icon name="compass" /></span> {t('Take the tour')}
           </button>
         </>
         const vwb = <>
           <button type="button" className="app-menu-item" onClick={() => { setOpen(false); setPanel('share') }}>
-            <span aria-hidden="true"><Icon name="share" /></span> Share the app
+            <span aria-hidden="true"><Icon name="share" /></span> {t('Share the app')}
           </button>
           {!isStandalone && (
             <button type="button" className="app-menu-item" onClick={handleInstall}>
-              <span aria-hidden="true"><Icon name="phone-add" /></span> Put the app on my home screen
+              <span aria-hidden="true"><Icon name="phone-add" /></span> {t('Put the app on my home screen')}
             </button>
           )}
           <a className="app-menu-item" href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
-            <span aria-hidden="true"><Icon name="globe" /></span> Visit our website
-            <span className="sr-only"> (opens in a new tab)</span>
+            <span aria-hidden="true"><Icon name="globe" /></span> {t('Visit our website')}
+            <span className="sr-only"> {t('(opens in a new tab)')}</span>
           </a>
           <button type="button" className="app-menu-item app-menu-logout" onClick={() => { setOpen(false); setPanel('logout') }}>
-            <span aria-hidden="true"><Icon name="door" /></span> Log out
+            <span aria-hidden="true"><Icon name="door" /></span> {t('Log out')}
           </button>
         </>
         if (inline) {
           return <>
             <section className="app-menu-group app-menu-group-account" aria-labelledby="amg-account">
-              <h2 id="amg-account" className="app-menu-heading">Your account</h2>
+              <h2 id="amg-account" className="app-menu-heading">{t('Your account')}</h2>
               <div className="app-menu-list app-menu-inline">{account}</div>
             </section>
             <section className="app-menu-group app-menu-group-about" aria-labelledby="amg-about">
-              <h2 id="amg-about" className="app-menu-heading">About the app</h2>
+              <h2 id="amg-about" className="app-menu-heading">{t('About the app')}</h2>
               <div className="app-menu-list app-menu-inline">{about}</div>
             </section>
             <section className="app-menu-group app-menu-group-vwb" aria-labelledby="amg-vwb">
@@ -170,11 +172,11 @@ export default function AppMenu({ inline = false }) {
           </>
         }
         return <>
-          <button type="button" className="app-menu-scrim" aria-label="Close menu" tabIndex={-1} onClick={() => setOpen(false)} />
+          <button type="button" className="app-menu-scrim" aria-label={t('Close menu')} tabIndex={-1} onClick={() => setOpen(false)} />
           <div id="appMenuList" className="app-menu-list" ref={menuRef}>
-            <p className="app-menu-heading">Your account</p>
+            <p className="app-menu-heading">{t('Your account')}</p>
             {account}
-            <p className="app-menu-heading">About the app</p>
+            <p className="app-menu-heading">{t('About the app')}</p>
             {about}
             <p className="app-menu-heading">Village Without Borders</p>
             {vwb}
@@ -184,14 +186,14 @@ export default function AppMenu({ inline = false }) {
 
       {panel && (
         <>
-          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={closePanel} />
+          <button type="button" className="app-dialog-scrim" aria-label={t('Close')} tabIndex={-1} onClick={closePanel} />
           {panel === 'share' && (
             <div role="dialog" aria-modal="true" aria-labelledby="shareTitle" className="app-dialog">
-              <h2 id="shareTitle" className="app-dialog-title">Share Village Without Borders</h2>
-              <p className="app-dialog-text">Scan with a phone camera to sign up. It's a plain link. Nothing is tracked.</p>
+              <h2 id="shareTitle" className="app-dialog-title">{t('Share Village Without Borders')}</h2>
+              <p className="app-dialog-text">{t("Scan with a phone camera to sign up. It's a plain link. Nothing is tracked.")}</p>
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=520x520&margin=0&data=${encodeURIComponent(SIGNUP_URL)}`}
-                alt="QR code that opens the Village Without Borders sign-up form"
+                alt={t('QR code that opens the Village Without Borders sign-up form')}
                 width={260}
                 height={260}
                 className="app-dialog-qr"
@@ -199,33 +201,33 @@ export default function AppMenu({ inline = false }) {
               <p className="app-dialog-link">{APP_URL}</p>
               <div className="app-dialog-buttons">
                 {typeof navigator !== 'undefined' && navigator.share && (
-                  <button type="button" className="btn btn-primary btn-full" onClick={handleNativeShare}>Share...</button>
+                  <button type="button" className="btn btn-primary btn-full" onClick={handleNativeShare}>{t('Share...')}</button>
                 )}
-                <button type="button" className="btn btn-outline btn-full" onClick={handleCopyLink}>{copied ? 'Copied!' : 'Copy link'}</button>
-                <button type="button" className="btn btn-outline btn-full" onClick={closePanel} autoFocus>Close</button>
+                <button type="button" className="btn btn-outline btn-full" onClick={handleCopyLink}>{copied ? t('Copied!') : t('Copy link')}</button>
+                <button type="button" className="btn btn-outline btn-full" onClick={closePanel} autoFocus>{t('Close')}</button>
               </div>
             </div>
           )}
           {panel === 'install' && (
             <div role="dialog" aria-modal="true" aria-labelledby="installTitle" className="app-dialog">
-              <h2 id="installTitle" className="app-dialog-title">Put the app on your home screen</h2>
+              <h2 id="installTitle" className="app-dialog-title">{t('Put the app on your home screen')}</h2>
               {isIOS ? (
-                <p className="app-dialog-text">In Safari, tap the Share button (the square with an arrow pointing up) at the bottom of the screen. Then tap "Add to Home Screen."</p>
+                <p className="app-dialog-text">{t('In Safari, tap the Share button (the square with an arrow pointing up) at the bottom of the screen. Then tap "Add to Home Screen."')}</p>
               ) : (
-                <p className="app-dialog-text">Open your browser's menu (the three dots or three lines). Then tap "Install app" or "Add to Home Screen."</p>
+                <p className="app-dialog-text">{t('Open your browser\'s menu (the three dots or three lines). Then tap "Install app" or "Add to Home Screen."')}</p>
               )}
               <div className="app-dialog-buttons">
-                <button type="button" className="btn btn-primary btn-full" onClick={closePanel} autoFocus>Got it</button>
+                <button type="button" className="btn btn-primary btn-full" onClick={closePanel} autoFocus>{t('Got it')}</button>
               </div>
             </div>
           )}
           {panel === 'logout' && (
             <div role="dialog" aria-modal="true" aria-labelledby="logoutTitle" className="app-dialog">
-              <h2 id="logoutTitle" className="app-dialog-title">Log out?</h2>
-              <p className="app-dialog-text">You'll need your email and password to get back in.</p>
+              <h2 id="logoutTitle" className="app-dialog-title">{t('Log out?')}</h2>
+              <p className="app-dialog-text">{t("You'll need your email and password to get back in.")}</p>
               <div className="app-dialog-buttons">
-                <button type="button" className="btn btn-full app-dialog-danger" onClick={() => { setPanel(null); signOut() }}>Log out</button>
-                <button type="button" className="btn btn-outline btn-full" onClick={closePanel} autoFocus>Stay logged in</button>
+                <button type="button" className="btn btn-full app-dialog-danger" onClick={() => { setPanel(null); signOut() }}>{t('Log out')}</button>
+                <button type="button" className="btn btn-outline btn-full" onClick={closePanel} autoFocus>{t('Stay logged in')}</button>
               </div>
             </div>
           )}

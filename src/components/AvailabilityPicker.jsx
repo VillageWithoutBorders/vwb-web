@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
+import { useT, t } from '../utils/lang'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const SPECIAL = ['Flexible', 'Emergencies only']
@@ -31,16 +32,16 @@ function toDisplayString(slots, specials) {
     const times = []
     if (slots[`${day}-AM`]) times.push('AM')
     if (slots[`${day}-PM`]) times.push('PM')
-    if (times.length > 0) parts.push(`${day} ${times.join('/')}`)
+    if (times.length > 0) parts.push(`${t(day)} ${times.join('/')}`)
   })
 
-  specials.forEach((s) => parts.push(s))
+  specials.forEach((s) => parts.push(t(s)))
 
-  return parts.join(', ') || 'Not set'
+  return parts.join(', ') || t('Not set')
 }
 
 export function availabilityDisplayString(str) {
-  if (!str) return 'Not set'
+  if (!str) return t('Not set')
 
   try {
     const parsed = JSON.parse(str)
@@ -54,6 +55,7 @@ export function availabilityDisplayString(str) {
 }
 
 export default function AvailabilityPicker({ value, onChange }) {
+  const tr = useT()
   const initial = parseAvailability(value)
   const [slots, setSlots] = useState(initial.slots)
   const [specials, setSpecials] = useState(initial.specials)
@@ -85,7 +87,7 @@ export default function AvailabilityPicker({ value, onChange }) {
         <div className="avail-header-row">
           <div className="avail-corner" />
           {DAYS.map((day) => (
-            <div key={day} className="avail-day-header">{day}</div>
+            <div key={day} className="avail-day-header">{tr(day)}</div>
           ))}
         </div>
         {['AM', 'PM'].map((period) => (
@@ -100,7 +102,7 @@ export default function AvailabilityPicker({ value, onChange }) {
                   type="button"
                   className={`avail-cell ${active ? 'active' : ''}`}
                   onClick={() => toggleSlot(key)}
-                  aria-label={`${day} ${period}`}
+                  aria-label={`${tr(day)} ${period}`}
                   aria-pressed={active}
                 />
               )
@@ -116,7 +118,7 @@ export default function AvailabilityPicker({ value, onChange }) {
             className={`skill-chip ${specials.includes(label) ? 'active' : ''}`}
             onClick={() => toggleSpecial(label)}
           >
-            {label}
+            {tr(label)}
           </button>
         ))}
       </div>

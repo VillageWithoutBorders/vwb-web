@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useT } from '../utils/lang'
 
 const ROLE = { admin: 'Head', organizer: 'Organizer', member: 'Member' }
 
@@ -9,22 +10,23 @@ const ROLE = { admin: 'Head', organizer: 'Organizer', member: 'Member' }
 export default function HubOrganizations() {
   const { organizations } = useAuth()
   const navigate = useNavigate()
+  const t = useT()
   const list = organizations || []
 
   return (
     <div className="cal-page" style={{ maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}>
-      <p className="cal-sub" style={{ marginTop: 0 }}>Open your group's page, dashboard, and events here. Its Campfire chats are under Cottage Chats &amp; Campfires.</p>
-      {list.length === 0 && <p className="cal-empty">You are not in a group yet.</p>}
+      <p className="cal-sub" style={{ marginTop: 0 }}>{t("Open your group's page, dashboard, and events here. Its Campfire chats are under Cottage Chats and Campfires.")}</p>
+      {list.length === 0 && <p className="cal-empty">{t('You are not in a group yet.')}</p>}
       {list.map((o) => {
         const manages = o.role === 'admin' || o.role === 'organizer'
         return (
           <section key={o.id} className="cal-card" style={{ boxSizing: 'border-box', marginBottom: '0.75rem' }} aria-label={o.name}>
             <div className="cal-card-title">{o.name}</div>
-            <div className="cal-card-meta" style={{ marginBottom: '0.5rem' }}>{ROLE[o.role] || 'Member'}</div>
+            <div className="cal-card-meta" style={{ marginBottom: '0.5rem' }}>{t(ROLE[o.role] || 'Member')}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/orgs/' + o.id)}>Open page</button>
-              {manages && <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/orgs/' + o.id + '/dashboard')}>Dashboard</button>}
-              {manages && <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/calendar/new?org=' + o.id)}>Post an event</button>}
+              <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/orgs/' + o.id)}>{t('Open page')}</button>
+              {manages && <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/orgs/' + o.id + '/dashboard')}>{t('Dashboard')}</button>}
+              {manages && <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => navigate('/calendar/new?org=' + o.id)}>{t('Post an event')}</button>}
             </div>
           </section>
         )
