@@ -16,6 +16,7 @@ import SidechatAdd from '../components/SidechatAdd'
 import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
+import { useT, getLang } from '../utils/lang'
 
 // One group's board: its own private Campfire. Posts are end-to-end
 // encrypted (see e2ee.js sendGroupPost), so only members can read them and
@@ -29,6 +30,7 @@ import { askConfirm, tell } from '../components/AdminDialog'
 // than the one who invited them lets them in (the steward's invites go
 // straight in). All of this is enforced in the database (vwb-groups.sql).
 const GROUP_WINDOW_MS = 5 * 60 * 1000
+const LOCKED_POST = "[This post can't be opened on this device]"
 const POST_LIMIT = 300
 
 const REMOVE_REASONS = [
@@ -51,6 +53,7 @@ const REPORT_REASONS = [
 export default function GroupBoard() {
   const { id } = useParams()
   const { user, organizations } = useAuth()
+  const t = useT()
   const navigate = useNavigate()
   const goBack = useGoBack()
   const location = useLocation()
@@ -189,14 +192,14 @@ export default function GroupBoard() {
       joinedAt: x.joined_at,
       status: x.status,
       addedBy: x.added_by,
-      name: byId[x.user_id]?.display_name || 'Neighbor',
+      name: byId[x.user_id]?.display_name || t('Neighbor'),
       avatar: byId[x.user_id]?.avatar_url || null,
     }))
     const list = everyone.filter(x => x.status === 'active')
       .sort((a, b) => (a.userId === user.id ? -1 : b.userId === user.id ? 1 : a.name.localeCompare(b.name)))
     const waitingList = everyone.filter(x => x.status === 'waiting').map(x => ({
       ...x,
-      addedByName: x.addedBy ? (byId[x.addedBy]?.display_name || 'a member') : null,
+      addedByName: x.addedBy ? (byId[x.addedBy]?.display_name || t('a member')) : null,
     }))
 
     let inviteNames = []
@@ -205,7 +208,7 @@ export default function GroupBoard() {
       const { data: invPeople, error: ipErr } = await supabase
         .from('helper_profiles_public').select('user_id, display_name').in('user_id', inviteIds)
       if (ipErr) console.error('Failed to load invited names:', ipErr)
-      inviteNames = inviteIds.map(uid => ({ userId: uid, name: (invPeople || []).find(p => p.user_id === uid)?.display_name || 'Neighbor' }))
+      inviteNames = inviteIds.map(uid => ({ userId: uid, name: (invPeople || []).find(p => p.user_id === uid)?.display_name || t('Neighbor') }))
     }
 
     setGroup(g)
@@ -257,7 +260,7 @@ export default function GroupBoard() {
     for (const p of rows) {
       const text = opened.get(p.id)
       if (text == null && joinedAt && new Date(p.created_at) < joinedAt) { older = true; continue }
-      visible.push({ ...p, text: text ?? "[This post can't be opened on this device]" })
+      visible.push({ ...p, text: text ?? LOCKED_POST })
     }
     setHiddenOlder(older)
     setPosts(visible)
@@ -274,20 +277,20 @@ export default function GroupBoard() {
       const result = await editGroupPost({ postId: editingPost.id, senderId: user.id, memberIds: members.map(m => m.userId), text })
       setSending(false)
       if (result === 'edited') { setEditingPost(null); setNewPost(''); await loadPosts() }
-      else if (result === 'not-allowed') { setSendNote('You can only edit your last post, within 15 minutes of sending it.'); setEditingPost(null); setNewPost('') }
-      else setSendNote('Could not save your edit. Check your connection and try again.')
+      else if (result === 'not-allowed') { setSendNote(t('You can only edit your last post, within 15 minutes of sending it.')); setEditingPost(null); setNewPost('') }
+      else setSendNote(t('Could not save your edit. Check your connection and try again.'))
       return
     }
     const { status, missed } = await sendGroupPost({ groupId: id, senderId: user.id, memberIds: members.map(m => m.userId), text })
     setSending(false)
     if (status === 'sent') {
       setNewPost('')
-      if (missed > 0) setSendNote(missed === 1 ? "1 member hasn't opened VWB since private boards started, so they can't read this post." : missed + " members haven't opened VWB since private boards started, so they can't read this post.")
+      if (missed > 0) setSendNote(missed === 1 ? t("1 member hasn't opened VWB since private boards started, so they can't read this post.") : t("{n} members haven't opened VWB since private boards started, so they can't read this post.", { n: missed }))
       await loadPosts()
     } else if (status === 'not-ready') {
-      setSendNote("This device can't lock posts yet. Close VWB, open it again, and try once more.")
+      setSendNote(t("This device can't lock posts yet. Close VWB, open it again, and try once more."))
     } else {
-      setSendNote('Could not post. Check your connection and try again.')
+      setSendNote(t('Could not post. Check your connection and try again.'))
     }
   }
 
@@ -297,7 +300,7 @@ export default function GroupBoard() {
     return null
   })()
   function canEditPost(p) {
-    return p.id === lastMinePostId && Date.now() - new Date(p.created_at).getTime() < 15 * 60 * 1000 && !String(p.text).startsWith("[This post can't")
+    return p.id === lastMinePostId && Date.now() - new Date(p.created_at).getTime() < 15 * 60 * 1000 && p.text !== LOCKED_POST
   }
   async function showPostHistory(p) {
     const versions = await fetchEditHistory({ kind: 'post', itemId: p.id, userId: user.id, senderId: p.sender_id })
@@ -305,9 +308,9 @@ export default function GroupBoard() {
   }
 
   async function deletePost(post) {
-    if (!(await askConfirm('Delete this post for everyone?'))) return
+    if (!(await askConfirm(t('Delete this post for everyone?')))) return
     const { error } = await supabase.from('community_group_posts').update({ deleted_at: new Date().toISOString() }).eq('id', post.id)
-    if (error) { console.error('Failed to delete post:', error); tell('Could not delete this post. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to delete post:', error); tell(t('Could not delete this post. Try again.'), { tone: 'error' }); return }
     loadPosts()
   }
 
@@ -316,7 +319,7 @@ export default function GroupBoard() {
   useEffect(() => {
     const q = search.trim()
     if (q.length < 2) { setResults([]); return }
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       // Only people you already know: talked with, vouched for or by, or
       // share a group or organization with. The database decides.
       const { data, error } = await supabase.rpc('search_people_to_invite', { p_group: id, p_query: q.replace(/[%_]/g, '') })
@@ -324,7 +327,7 @@ export default function GroupBoard() {
       const taken = new Set([...members.map(m => m.userId), ...pendingInvites.map(p => p.userId)])
       setResults((data || []).filter(p => !taken.has(p.user_id)))
     }, 300)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timer)
   }, [search, members, pendingInvites])
 
   // Load my settings for this group, and clear the "new post" alert for it
@@ -355,7 +358,7 @@ export default function GroupBoard() {
     if (error) {
       console.error('Failed to save group setting:', error)
       setMySettings(mySettings)
-      setSettingsNote("We couldn't save that. Try again.")
+      setSettingsNote(t("We couldn't save that. Try again."))
     }
   }
 
@@ -431,10 +434,10 @@ export default function GroupBoard() {
     setSharedBusy(false)
     if (error) {
       console.error('Group setting change failed:', error)
-      setSharedNote(error.message && error.code && error.code !== 'PGRST202' && error.message.length < 140 ? error.message : "We couldn't do that. Try again.")
+      setSharedNote(error.message && error.code && error.code !== 'PGRST202' && error.message.length < 140 ? error.message : t("We couldn't do that. Try again."))
       return
     }
-    setSharedNote(data === 'asked' ? 'Asked. A different member has to agree before it changes.' : 'Done.')
+    setSharedNote(data === 'asked' ? t('Asked. A different member has to agree before it changes.') : t('Done.'))
     await loadShared()
     await loadGroup()
   }
@@ -443,7 +446,7 @@ export default function GroupBoard() {
     setSharedBusy(true); setSharedNote('')
     const { error } = await supabase.rpc('answer_community_group_proposal', { p_group: id, p_kind: kind, p_accept: accept })
     setSharedBusy(false)
-    if (error) { console.error('Answering group request failed:', error); setSharedNote(error.code === '42501' && error.message ? error.message : "We couldn't do that. Try again.") }
+    if (error) { console.error('Answering group request failed:', error); setSharedNote(error.code === '42501' && error.message ? error.message : t("We couldn't do that. Try again.")) }
     await loadShared()
     await loadGroup()
   }
@@ -452,7 +455,7 @@ export default function GroupBoard() {
     setSharedBusy(true); setSharedNote('')
     const { error } = await supabase.rpc('cancel_community_group_proposal', { p_group: id, p_kind: kind })
     setSharedBusy(false)
-    if (error) { console.error('Taking back group request failed:', error); setSharedNote("We couldn't do that. Try again.") }
+    if (error) { console.error('Taking back group request failed:', error); setSharedNote(t("We couldn't do that. Try again.")) }
     await loadShared()
   }
 
@@ -461,14 +464,14 @@ export default function GroupBoard() {
     ? { outline: '2px solid var(--accent)', background: 'rgba(78,204,163,0.12)', borderRadius: '8px', padding: '0.5rem', margin: '0.35rem 0' }
     : undefined
   const focusLabel = (key) => focusKey === key
-    ? <span style={{ display: 'block', width: '100%', color: 'var(--accent)', fontWeight: 700, fontSize: '0.8125rem' }}><Icon name="pushpin" /> This is the one you were asked about</span>
+    ? <span style={{ display: 'block', width: '100%', color: 'var(--accent)', fontWeight: 700, fontSize: '0.8125rem' }}><Icon name="pushpin" /> {t('This is the one you were asked about')}</span>
     : null
 
-  const DISAPPEAR_CHOICES = [[0, 'Off (posts stay)'], [1440, '1 day'], [10080, '7 days'], [43200, '30 days']]
+  const DISAPPEAR_CHOICES = [[0, t('Off (posts stay)')], [1440, t('1 day')], [10080, t('7 days')], [43200, t('30 days')]]
 
   async function invite(person) {
     const { error } = await supabase.rpc('invite_to_community_group', { p_group: id, p_invitee: person.user_id })
-    if (error) { console.error('Invite failed:', error); tell(error.code === '42501' && error.message ? error.message : error.message?.includes("can't invite") ? "You can't invite this person." : 'Could not send the invite. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Invite failed:', error); tell(error.code === '42501' && error.message ? error.message : error.message?.includes("can't invite") ? t("You can't invite this person.") : t('Could not send the invite. Try again.'), { tone: 'error' }); return }
     setSearch('')
     setResults([])
     loadGroup()
@@ -476,13 +479,13 @@ export default function GroupBoard() {
 
   async function takeBackInvite(userId) {
     const { error } = await supabase.from('community_group_invites').delete().eq('group_id', id).eq('invitee_id', userId)
-    if (error) { console.error('Failed to take back invite:', error); tell('Could not take back the invite. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to take back invite:', error); tell(t('Could not take back the invite. Try again.'), { tone: 'error' }); return }
     loadGroup()
   }
 
   async function setLink(on) {
     const { error } = await supabase.rpc('set_community_group_link', { p_group: id, p_on: on })
-    if (error) { console.error('Failed to change the join link:', error); tell('Could not change the link. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to change the join link:', error); tell(t('Could not change the link. Try again.'), { tone: 'error' }); return }
     setCopied(false)
     loadGroup()
   }
@@ -490,7 +493,7 @@ export default function GroupBoard() {
   const joinUrl = group?.join_token ? window.location.origin + '/groups/join/' + group.join_token : ''
 
   async function copyLink() {
-    try { await navigator.clipboard.writeText(joinUrl); setCopied(true) } catch { setCopied(false); tell('Copy did not work. Press and hold the link to copy it.', { tone: 'error' }) }
+    try { await navigator.clipboard.writeText(joinUrl); setCopied(true) } catch { setCopied(false); tell(t('Copy did not work. Press and hold the link to copy it.'), { tone: 'error' }) }
   }
 
   // Opening a removal (or the steward removing alone) needs a reason from the
@@ -498,9 +501,9 @@ export default function GroupBoard() {
   async function askRemove(member) {
     const open = removals.find(r => r.target_id === member.userId)
     if (open && group?.steward_id !== user.id) {
-      const why = open.reason ? ' Reason given: ' + open.reason + '.' : ''
-      if (!(await askConfirm('Agree to remove ' + member.name + '?' + why + ' They will be removed from the chat right away.', { yes: 'Agree, remove', danger: true }))) return
-      doRemove(member, null).then(r => { if (r && r.error) tell(r.error.code === '42501' && r.error.message ? r.error.message : 'Could not do that. Try again.', { tone: 'error' }) })
+      const why = open.reason ? ' ' + t('Reason given: {reason}.', { reason: t(open.reason) }) : ''
+      if (!(await askConfirm(t('Agree to remove {name}?', { name: member.name }) + why + ' ' + t('They will be removed from the chat right away.'), { yes: t('Agree, remove'), danger: true }))) return
+      doRemove(member, null).then(r => { if (r && r.error) tell(r.error.code === '42501' && r.error.message ? r.error.message : t('Could not do that. Try again.'), { tone: 'error' }) })
       return
     }
     setRemoveFor(member)
@@ -511,78 +514,78 @@ export default function GroupBoard() {
   async function doRemove(member, reason) {
     const { data, error } = await supabase.rpc('request_community_group_removal', { p_group: id, p_target: member.userId, p_reason: reason })
     if (error) { console.error('Removal request failed:', error); return { error } }
-    if (data === 'removed') tell(member.name + ' was removed from the chat.')
+    if (data === 'removed') tell(t('{name} was removed from the chat.', { name: member.name }))
     loadGroup()
     return {}
   }
 
   async function submitRemove() {
-    if (!removeReason) { setRemoveError('Pick a reason.'); return }
+    if (!removeReason) { setRemoveError(t('Pick a reason.')); return }
     setRemoveBusy(true)
     setRemoveError('')
     const { error } = await doRemove(removeFor, removeReason)
     setRemoveBusy(false)
-    if (error) { setRemoveError(error.code === '42501' && error.message ? error.message : 'Could not do that. Try again.'); return }
+    if (error) { setRemoveError(error.code === '42501' && error.message ? error.message : t('Could not do that. Try again.')); return }
     setRemoveFor(null)
   }
 
   async function letIn(person) {
     const { error } = await supabase.rpc('approve_community_group_member', { p_group: id, p_user: person.userId })
-    if (error) { console.error('Approve failed:', error); tell(error.message?.includes('other than') ? 'Someone other than the person who invited them has to let them in.' : 'Could not let them in. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Approve failed:', error); tell(error.message?.includes('other than') ? t('Someone other than the person who invited them has to let them in.') : t('Could not let them in. Try again.'), { tone: 'error' }); return }
     loadGroup()
   }
 
   async function sayNo(person) {
-    if (!(await askConfirm('Say no to ' + person.name + "? They won't join the chat."))) return
+    if (!(await askConfirm(t("Say no to {name}? They won't join the chat.", { name: person.name })))) return
     const { error } = await supabase.rpc('decline_community_group_member', { p_group: id, p_user: person.userId })
-    if (error) { console.error('Decline failed:', error); tell('Could not do that. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Decline failed:', error); tell(t('Could not do that. Try again.'), { tone: 'error' }); return }
     loadGroup()
   }
 
   // Steward handoff: the steward offers, the other person says yes or no.
   async function offerSteward(member) {
     const msg = member
-      ? 'Ask ' + member.name + " to take over as steward? They'll need to say yes. Until then, you're still steward."
-      : 'Take back your steward offer?'
+      ? t("Ask {name} to take over as steward? They'll need to say yes. Until then, you're still steward.", { name: member.name })
+      : t('Take back your steward offer?')
     if (!(await askConfirm(msg))) return
     const { error } = await supabase.rpc('offer_community_group_steward', { p_group: id, p_user: member ? member.userId : null })
-    if (error) { console.error('Steward offer failed:', error); tell('Could not do that. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Steward offer failed:', error); tell(t('Could not do that. Try again.'), { tone: 'error' }); return }
     loadGroup()
   }
 
   async function answerSteward(accept) {
-    if (accept && !(await askConfirm("Become this chat's steward? You'll control the join link, you can remove someone on your own for safety, and members can't remove you."))) return
+    if (accept && !(await askConfirm(t("Become this chat's steward? You'll control the join link, you can remove someone on your own for safety, and members can't remove you.")))) return
     const { error } = await supabase.rpc('answer_community_group_steward', { p_group: id, p_accept: accept })
     if (error) {
       console.error('Steward answer failed:', error)
       tell(error.message?.includes('head or one of its organizers')
-        ? "Only the group's head or one of its organizers can be steward. Ask the group to make you an organizer first."
-        : 'Could not do that. The offer may have been taken back.', { tone: 'error' })
+        ? t("Only the group's head or one of its organizers can be steward. Ask the group to make you an organizer first.")
+        : t('Could not do that. The offer may have been taken back.'), { tone: 'error' })
     }
     loadGroup()
   }
 
   async function withdrawRemoval(member) {
     const { error } = await supabase.from('community_group_removals').delete().eq('group_id', id).eq('target_id', member.userId).eq('requested_by', user.id)
-    if (error) { console.error('Failed to take back removal request:', error); tell('Could not take it back. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to take back removal request:', error); tell(t('Could not take it back. Try again.'), { tone: 'error' }); return }
     loadGroup()
   }
 
   async function leave() {
     const last = members.length === 1
     const stewardNote = group.steward_id === user.id && !last
-      ? "You're the steward. If you leave, the chat becomes an everyday chat where everyone is equal. To pass the role on instead, use Make steward first (it's offered to the group's head and organizers in the chat). "
+      ? t("You're the steward. If you leave, the chat becomes an everyday chat where everyone is equal. To pass the role on instead, use Make steward first (it's offered to the group's head and organizers in the chat).") + ' '
       : ''
-    if (!(await askConfirm(last ? "You're the last member. Leaving deletes this chat and its whole board. Leave?" : stewardNote + 'Leave ' + group.name + '? You can only come back if someone invites you again.'))) return
+    if (!(await askConfirm(last ? t("You're the last member. Leaving deletes this chat and its whole board. Leave?") : stewardNote + t('Leave {name}? You can only come back if someone invites you again.', { name: group.name })))) return
     const { error } = await supabase.from('community_group_members').delete().eq('group_id', id).eq('user_id', user.id)
-    if (error) { console.error('Failed to leave group:', error); tell('Could not leave the group. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to leave group:', error); tell(t('Could not leave the group. Try again.'), { tone: 'error' }); return }
     navigate('/groups', { replace: true })
   }
 
   // Same idea as reporting a private conversation: admins can't read the
   // board, so the reporter can attach what's on their own screen.
   async function sendReport() {
-    if (!reportReason) { setReportState('Pick the closest reason.'); return }
+    if (!reportReason) { setReportState(t('Pick the closest reason.')); return }
     setReportState('sending')
     let details = reportDetails.trim()
     const theirs = posts.filter(p => p.sender_id === reportFor.userId).slice(-10)
@@ -591,20 +594,20 @@ export default function GroupBoard() {
     }
     const { error } = await submitUserReport({ reporterId: user.id, reportedUserId: reportFor.userId, source: 'group', reason: reportReason, details,
       place: group?.organization_id ? { kind: 'org', id: group.organization_id } : group?.village_id ? { kind: 'village', id: group.village_id } : null })
-    setReportState(error ? 'Could not send your report. Try again.' : 'sent')
+    setReportState(error ? t('Could not send your report. Try again.') : 'sent')
   }
 
   function closeReport() { setReportFor(null); setReportReason(''); setReportDetails(''); setReportState(''); setIncludeEvidence(true) }
 
-  if (loading) return <div className="conversation-page group-page"><p className="groups-empty">Loading...</p></div>
+  if (loading) return <div className="conversation-page group-page"><p className="groups-empty">{t('Loading...')}</p></div>
 
   if (amWaiting && group) {
     return (
       <div className="conversation-page group-page">
         <div className="groups-page">
           <h1>{campfires.has(group.id) ? <><Icon name="campfire" />{' '}</> : ''}{group.name}</h1>
-          <p className="groups-note">You're waiting to be let in. A member of the chat will approve you soon. You'll see the board once they do.</p>
-          <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Back to chats</button>
+          <p className="groups-note">{t("You're waiting to be let in. A member of the chat will approve you soon. You'll see the board once they do.")}</p>
+          <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>{t('Back to chats')}</button>
         </div>
       </div>
     )
@@ -613,8 +616,8 @@ export default function GroupBoard() {
   if (!group) {
     return (
       <div className="conversation-page group-page">
-        <p className="groups-empty">This chat isn't available. You may have left it, or it was removed.</p>
-        <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Back to chats</button>
+        <p className="groups-empty">{t("This chat isn't available. You may have left it, or it was removed.")}</p>
+        <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>{t('Back to chats')}</button>
       </div>
     )
   }
@@ -624,25 +627,26 @@ export default function GroupBoard() {
   const iRunOrg = !!group.organization_id && (organizations || []).some((o) => o.id === group.organization_id && (o.role === 'admin' || o.role === 'organizer'))
   const readOnly = group.is_org_news ? !iRunOrg : !!(group.announcement_only && group.steward_id && !iAmSteward)
   const canChangeLink = !group.steward_id || iAmSteward
-  const nameOf = (uid) => members.find(m => m.userId === uid)?.name || 'Former member'
+  const nameOf = (uid) => members.find(m => m.userId === uid)?.name || t('Former member')
+  const memberWord = members.length === 1 ? t('1 member') : t('{n} members', { n: members.length })
   const avatarOf = (uid) => members.find(m => m.userId === uid)?.avatar || null
 
   return (
     <div className="conversation-page group-page">
       <div className="convo-header">
-        <button className="convo-back" onClick={() => goBack('/groups')} aria-label="Back to chats">&#8592;</button>
+        <button className="convo-back" onClick={() => goBack('/groups')} aria-label={t('Back to chats')}>&#8592;</button>
         <div className="convo-header-info">
           <h1>{campfires.has(group.id) ? <><Icon name="campfire" />{' '}</> : ''}{group.name}</h1>
           <p className="convo-context">{villageRoom
-            ? (villageRoom.kind === 'sidechat' ? 'Sidechat in ' : 'Campfire in ') + villageRoom.village_name + ' · ' + members.length + ' ' + (members.length === 1 ? 'member' : 'members')
-            : <>{isSidechat ? 'Smaller Campfire' + (parentName ? ' inside ' + parentName : '') + ' · ' : (orgName ? 'For ' + orgName + ' · ' : '')}{members.length} {members.length === 1 ? 'member' : 'members'} · {campfires.has(group.id) ? 'Campfire' : 'Cottage Chat'}</>}</p>
+            ? (villageRoom.kind === 'sidechat' ? t('Sidechat in {place}', { place: villageRoom.village_name }) : t('Campfire in {place}', { place: villageRoom.village_name })) + ' · ' + memberWord
+            : <>{isSidechat ? (parentName ? t('Smaller Campfire inside {name}', { name: parentName }) : t('Smaller Campfire')) + ' · ' : (orgName ? t('For {name}', { name: orgName }) + ' · ' : '')}{memberWord} · {campfires.has(group.id) ? t('Campfire') : t('Cottage Chat')}</>}</p>
         </div>
-        <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">Settings{waiting.length > 0 ? ' (' + waiting.length + ' waiting)' : ''}</button>
+        <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">{t('Settings')}{waiting.length > 0 ? ' (' + t('{n} waiting', { n: waiting.length }) + ')' : ''}</button>
       </div>
 
       {sidechats.length > 0 && (
-        <nav aria-label="Smaller Campfires" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
-          <span className="cal-sub" style={{ alignSelf: 'center' }}>Smaller Campfires:</span>
+        <nav aria-label={t('Smaller Campfires')} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
+          <span className="cal-sub" style={{ alignSelf: 'center' }}>{t('Smaller Campfires:')}</span>
           {sidechats.map((s) => (
             <button key={s.id} type="button" className="btn btn-outline group-small-btn" onClick={() => navigate('/groups/' + s.id)}>{'\u21B3 '}{s.name}</button>
           ))}
@@ -650,23 +654,23 @@ export default function GroupBoard() {
       )}
       <VillageRoomPanel groupId={group.id} onInfo={setVillageRoom} onLeave={leave} onChanged={() => loadGroup()} />
       {isSidechat && parentId && (
-        <nav aria-label="Back to the general chat" style={{ padding: '0.4rem 1rem', borderBottom: '1px solid var(--border)' }}>
-          <button type="button" className="group-post-delete" onClick={() => navigate('/groups/' + parentId)}>{'\u2190 '}Back to {parentName || 'the general chat'}</button>
+        <nav aria-label={t('Back to the general chat')} style={{ padding: '0.4rem 1rem', borderBottom: '1px solid var(--border)' }}>
+          <button type="button" className="group-post-delete" onClick={() => navigate('/groups/' + parentId)}>{'\u2190 '}{parentName ? t('Back to {name}', { name: parentName }) : t('Back to the general chat')}</button>
         </nav>
       )}
-      <div className="convo-messages" ref={containerRef} onScroll={onScroll} role="log" aria-live="polite" aria-label={group.name + ' board'}>
-        <p className="group-lock-note"><Icon name="lock" /> Only members can read this board. Not even VWB can.</p>
+      <div className="convo-messages" ref={containerRef} onScroll={onScroll} role="log" aria-live="polite" aria-label={t('{name} board', { name: group.name })}>
+        <p className="group-lock-note"><Icon name="lock" /> {t('Only members can read this board. Not even VWB can.')}</p>
         {group.steward_offer_to === user.id && (
           <div className="group-offer" role="status">
-            <p><strong>{nameOf(group.steward_id)}</strong> asked you to take over as this chat's steward.</p>
+            <p><strong>{nameOf(group.steward_id)}</strong> {t("asked you to take over as this chat's steward.")}</p>
             <div className="groups-actions">
-              <button type="button" className="btn btn-outline" onClick={() => answerSteward(false)}>No thanks</button>
-              <button type="button" className="btn btn-primary" onClick={() => answerSteward(true)}>Become steward</button>
+              <button type="button" className="btn btn-outline" onClick={() => answerSteward(false)}>{t('No thanks')}</button>
+              <button type="button" className="btn btn-primary" onClick={() => answerSteward(true)}>{t('Become steward')}</button>
             </div>
           </div>
         )}
-        {hiddenOlder && <p className="group-lock-note">Posts from before you joined were locked before you were here, so they can't be shown.</p>}
-        {posts.length === 0 && <p className="convo-empty">No posts yet. Say hello!</p>}
+        {hiddenOlder && <p className="group-lock-note">{t("Posts from before you joined were locked before you were here, so they can't be shown.")}</p>}
+        {posts.length === 0 && <p className="convo-empty">{t('No posts yet. Say hello!')}</p>}
         {posts.map((p, idx) => {
           const isMe = p.sender_id === user.id
           const prev = posts[idx - 1]
@@ -676,12 +680,12 @@ export default function GroupBoard() {
               {!isMe && <AvatarDisplay url={avatarOf(p.sender_id)} userId={p.sender_id} size={28} />}
               <div className={'chat-bubble ' + (isMe ? 'mine' : 'theirs')}>
                 {!isMe && start && <p className="group-post-name">{nameOf(p.sender_id)}</p>}
-                <p className="chat-body">{p.text}</p>
+                <p className="chat-body">{p.text === LOCKED_POST ? t(LOCKED_POST) : p.text}</p>
                 <span className="chat-time">
-                  {new Date(p.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                  {p.edit_count > 0 && <> · <button type="button" className="group-post-delete" onClick={() => showPostHistory(p)}>Edited</button></>}
-                  {isMe && canEditPost(p) && <> · <button type="button" className="group-post-delete" onClick={() => { setEditingPost(p); setNewPost(p.text); setSendNote('') }}>Edit</button></>}
-                  {isMe && <> · <button type="button" className="group-post-delete" onClick={() => deletePost(p)}>Delete</button></>}
+                  {new Date(p.created_at).toLocaleString(getLang() === 'es' ? 'es-US' : [], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  {p.edit_count > 0 && <> · <button type="button" className="group-post-delete" onClick={() => showPostHistory(p)}>{t('Edited')}</button></>}
+                  {isMe && canEditPost(p) && <> · <button type="button" className="group-post-delete" onClick={() => { setEditingPost(p); setNewPost(p.text); setSendNote('') }}>{t('Edit')}</button></>}
+                  {isMe && <> · <button type="button" className="group-post-delete" onClick={() => deletePost(p)}>{t('Delete')}</button></>}
                 </span>
                 <SparkButton count={sparks[String(p.id)]?.n || 0} mine={!!sparks[String(p.id)]?.mine} onToggle={() => toggleSpark(p.id)} />
               </div>
@@ -689,70 +693,70 @@ export default function GroupBoard() {
             </div>
           )
         })}
-        {showNew && <button type="button" className="group-new-btn" onClick={jumpToNewest}>New posts &#8595;</button>}
+        {showNew && <button type="button" className="group-new-btn" onClick={jumpToNewest}>{t('New posts')} &#8595;</button>}
       </div>
 
       {sendNote && <p className="convo-send-error" role="status">{sendNote}</p>}
-      {group.disappear_after_mins ? <p className="group-lock-note"><Icon name="hourglass" /> Posts here disappear after {group.disappear_after_mins / 1440} day{group.disappear_after_mins === 1440 ? '' : 's'}.</p> : null}
-      {readOnly && <p className="group-lock-note"><Icon name="megaphone" /> {group.is_org_news ? 'Only Heads and organizers post Announcements. You can read and spark them.' : 'Only the steward posts here. You can still read, and message people outside the group.'}</p>}
+      {group.disappear_after_mins ? <p className="group-lock-note"><Icon name="hourglass" /> {group.disappear_after_mins === 1440 ? t('Posts here disappear after 1 day.') : t('Posts here disappear after {n} days.', { n: group.disappear_after_mins / 1440 })}</p> : null}
+      {readOnly && <p className="group-lock-note"><Icon name="megaphone" /> {group.is_org_news ? t('Only Heads and organizers post Announcements. You can read and spark them.') : t('Only the steward posts here. You can still read, and message people outside the group.')}</p>}
       {!readOnly && (
       <>
       {editingPost && (
         <p className="convo-editing" role="status">
-          Editing your post. Everyone in this group can see what it said before.
-          {' '}<button type="button" className="group-post-delete" onClick={() => { setEditingPost(null); setNewPost('') }}>Cancel</button>
+          {t('Editing your post. Everyone in this group can see what it said before.')}
+          {' '}<button type="button" className="group-post-delete" onClick={() => { setEditingPost(null); setNewPost('') }}>{t('Cancel')}</button>
         </p>
       )}
       <form className="convo-input-bar" onSubmit={send}>
-        <label htmlFor="group-post" className="sr-only">Write a post</label>
-        <input id="group-post" type="text" className="convo-input" value={newPost} onChange={e => setNewPost(e.target.value)} placeholder="Write to the group..." maxLength={2000} disabled={sending} autoComplete="off" />
-        <button type="submit" className="convo-send" disabled={!newPost.trim() || sending}>{sending ? '...' : (editingPost ? 'Save' : 'Send')}</button>
+        <label htmlFor="group-post" className="sr-only">{t('Write a post')}</label>
+        <input id="group-post" type="text" className="convo-input" value={newPost} onChange={e => setNewPost(e.target.value)} placeholder={t('Write to the group...')} maxLength={2000} disabled={sending} autoComplete="off" />
+        <button type="submit" className="convo-send" disabled={!newPost.trim() || sending}>{sending ? '...' : (editingPost ? t('Save') : t('Send'))}</button>
       </form>
       </>
       )}
 
       {postHistory && (
         <>
-          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setPostHistory(null)} />
+          <button type="button" className="app-dialog-scrim" aria-label={t('Close')} tabIndex={-1} onClick={() => setPostHistory(null)} />
           <div role="dialog" aria-modal="true" aria-labelledby="post-history-title" className="edit-history">
-            <h3 id="post-history-title">Edit history</h3>
-            {postHistory.versions.length === 0 && <p>The earlier versions can't be opened on this device.</p>}
+            <h3 id="post-history-title">{t('Edit history')}</h3>
+            {postHistory.versions.length === 0 && <p>{t("The earlier versions can't be opened on this device.")}</p>}
             {postHistory.versions.map((v, i) => (
               <div key={v.version} className="edit-history-row">
-                <strong>{i === postHistory.versions.length - 1 ? 'Now' : (i === 0 ? 'Original' : 'Edit ' + i)}</strong>
+                <strong>{i === postHistory.versions.length - 1 ? t('Now') : (i === 0 ? t('Original') : t('Edit {n}', { n: i }))}</strong>
                 <p>{v.text}</p>
               </div>
             ))}
-            <button type="button" className="btn btn-outline btn-full" onClick={() => setPostHistory(null)}>Close</button>
+            <button type="button" className="btn btn-outline btn-full" onClick={() => setPostHistory(null)}>{t('Close')}</button>
           </div>
         </>
       )}
 
       {panelOpen && (
         <>
-          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setPanelOpen(false)} />
+          <button type="button" className="app-dialog-scrim" aria-label={t('Close')} tabIndex={-1} onClick={() => setPanelOpen(false)} />
           <div role="dialog" aria-modal="true" aria-labelledby="members-title" className="group-panel">
             <div className="group-panel-head">
               <h2 id="members-title">{group.name}</h2>
-              <button type="button" className="group-panel-close" onClick={() => setPanelOpen(false)} aria-label="Close">&#10005;</button>
+              <button type="button" className="group-panel-close" onClick={() => setPanelOpen(false)} aria-label={t('Close')}>&#10005;</button>
             </div>
             {group.description && <p className="groups-card-desc">{group.description}</p>}
 
-            <div role="tablist" aria-label="Group settings" className="group-tabs">
-              <button type="button" role="tab" id="tab-group" aria-selected={panelTab === 'group'} aria-controls="panel-group" tabIndex={panelTab === 'group' ? 0 : -1} className={'group-tab' + (panelTab === 'group' ? ' active' : '')} onClick={() => setPanelTab('group')}>Group</button>
-              <button type="button" role="tab" id="tab-mine" aria-selected={panelTab === 'mine'} aria-controls="panel-mine" tabIndex={panelTab === 'mine' ? 0 : -1} className={'group-tab' + (panelTab === 'mine' ? ' active' : '')} onClick={() => setPanelTab('mine')}>My notifications</button>
+            <div role="tablist" aria-label={t('Group settings')} className="group-tabs">
+              <button type="button" role="tab" id="tab-group" aria-selected={panelTab === 'group'} aria-controls="panel-group" tabIndex={panelTab === 'group' ? 0 : -1} className={'group-tab' + (panelTab === 'group' ? ' active' : '')} onClick={() => setPanelTab('group')}>{t('Group')}</button>
+              <button type="button" role="tab" id="tab-mine" aria-selected={panelTab === 'mine'} aria-controls="panel-mine" tabIndex={panelTab === 'mine' ? 0 : -1} className={'group-tab' + (panelTab === 'mine' ? ' active' : '')} onClick={() => setPanelTab('mine')}>{t('My notifications')}</button>
             </div>
 
             {panelTab === 'mine' && (
             <div role="tabpanel" id="panel-mine" aria-labelledby="tab-mine">
-            <h3 className="groups-section">Alerts from this chat</h3>
-            <p className="groups-note">Only you see these. Nobody else in the chat is told.</p>
-            <label htmlFor="group-alerts" className="groups-note">New post alerts</label>
+            <h3 className="groups-section">{t('Alerts from this chat')}</h3>
+            <p className="groups-note">{t('Only you see these. Nobody else in the chat is told.')}</p>
+            <label htmlFor="group-alerts" className="groups-note">{t('New post alerts')}</label>
             <select id="group-alerts" className="group-search" value={mySettings.alerts} onChange={e => saveSetting({ alerts: e.target.value })}>
-              <option value="all">Tell me about new posts</option>
-              <option value="off">No alerts from this chat</option>
+              <option value="all">{t('Tell me about new posts')}</option>
+              <option value="off">{t('No alerts from this chat')}</option>
             </select>
-            <label htmlFor="group-mute" className="groups-note">Quiet for a while</label>
+            <label htmlFor="group-mute" className="groups-note">{t('Quiet for a while')}</label>
             <select id="group-mute" className="group-search" value={mutedNow ? (mySettings.muted_until >= '2099' ? 'forever' : 'timed') : 'off'} onChange={e => {
               const v = e.target.value
               if (v === 'off') muteFor(null)
@@ -761,16 +765,16 @@ export default function GroupBoard() {
               else if (v === '1w') muteFor(7 * 24 * 60 * 60 * 1000)
               else if (v === 'forever') muteFor(Infinity)
             }}>
-              {mutedNow && mySettings.muted_until < '2099' && <option value="timed">Quiet until {new Date(mySettings.muted_until).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</option>}
-              <option value="off">Not quiet</option>
-              <option value="1h">Quiet for 1 hour</option>
-              <option value="8h">Quiet for 8 hours</option>
-              <option value="1w">Quiet for 1 week</option>
-              <option value="forever">Quiet until I turn it back on</option>
+              {mutedNow && mySettings.muted_until < '2099' && <option value="timed">{t('Quiet until {date}', { date: new Date(mySettings.muted_until).toLocaleString(getLang() === 'es' ? 'es-US' : [], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) })}</option>}
+              <option value="off">{t('Not quiet')}</option>
+              <option value="1h">{t('Quiet for 1 hour')}</option>
+              <option value="8h">{t('Quiet for 8 hours')}</option>
+              <option value="1w">{t('Quiet for 1 week')}</option>
+              <option value="forever">{t('Quiet until I turn it back on')}</option>
             </select>
             <div className="groups-actions">
-              <button type="button" className="btn btn-outline group-small-btn" aria-pressed={mySettings.pinned} onClick={() => saveSetting({ pinned: !mySettings.pinned })}>{mySettings.pinned ? 'Pinned to top' : 'Pin to top'}</button>
-              <button type="button" className="btn btn-outline group-small-btn" aria-pressed={mySettings.archived} onClick={() => saveSetting({ archived: !mySettings.archived })}>{mySettings.archived ? 'Archived (tap to bring back)' : 'Archive'}</button>
+              <button type="button" className="btn btn-outline group-small-btn" aria-pressed={mySettings.pinned} onClick={() => saveSetting({ pinned: !mySettings.pinned })}>{mySettings.pinned ? t('Pinned to top') : t('Pin to top')}</button>
+              <button type="button" className="btn btn-outline group-small-btn" aria-pressed={mySettings.archived} onClick={() => saveSetting({ archived: !mySettings.archived })}>{mySettings.archived ? t('Archived (tap to bring back)') : t('Archive')}</button>
             </div>
             {settingsNote && <p className="groups-error" role="alert">{settingsNote}</p>}
             </div>
@@ -778,59 +782,62 @@ export default function GroupBoard() {
 
             {panelTab === 'group' && (
             <div role="tabpanel" id="panel-group" aria-labelledby="tab-group">
-            {focusGone && <p className="groups-note" role="status">That request isn't open anymore. It was already answered or taken back.</p>}
-            <h3 className="groups-section">Chat settings</h3>
+            {focusGone && <p className="groups-note" role="status">{t("That request isn't open anymore. It was already answered or taken back.")}</p>}
+            <h3 className="groups-section">{t('Chat settings')}</h3>
             <p className="groups-note">{group.steward_id
-              ? (iAmSteward ? 'You are the steward, so you can change these right away. Everyone is told.' : 'Only the steward can change these. Everyone is told when they do.')
-              : 'These change the chat for everyone. You ask, and a different member has to agree. Everyone is told.'}</p>
+              ? (iAmSteward ? t('You are the steward, so you can change these right away. Everyone is told.') : t('Only the steward can change these. Everyone is told when they do.'))
+              : t('These change the chat for everyone. You ask, and a different member has to agree. Everyone is told.')}</p>
             {(group.steward_id ? iAmSteward : true) && (
               <>
-                <label htmlFor="group-name-edit" className="groups-note">Chat name</label>
+                <label htmlFor="group-name-edit" className="groups-note">{t('Chat name')}</label>
                 <input id="group-name-edit" className="group-search" maxLength={80} value={nameDraft ?? group.name} onChange={e => setNameDraft(e.target.value)} />
                 {nameDraft !== null && nameDraft.trim() && nameDraft.trim() !== group.name && (
-                  <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={async () => { await changeSetting('name', nameDraft.trim()); setNameDraft(null) }}>{group.steward_id ? 'Save name' : 'Ask to change name'}</button>
+                  <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={async () => { await changeSetting('name', nameDraft.trim()); setNameDraft(null) }}>{group.steward_id ? t('Save name') : t('Ask to change name')}</button>
                 )}
-                <label htmlFor="group-desc-edit" className="groups-note">Description</label>
+                <label htmlFor="group-desc-edit" className="groups-note">{t('Description')}</label>
                 <textarea id="group-desc-edit" className="group-search" rows={2} maxLength={500} value={descDraft ?? (group.description || '')} onChange={e => setDescDraft(e.target.value)} />
                 {descDraft !== null && descDraft.trim() !== (group.description || '') && (
-                  <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={async () => { await changeSetting('description', descDraft.trim()); setDescDraft(null) }}>{group.steward_id ? 'Save description' : 'Ask to change description'}</button>
+                  <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={async () => { await changeSetting('description', descDraft.trim()); setDescDraft(null) }}>{group.steward_id ? t('Save description') : t('Ask to change description')}</button>
                 )}
-                <label htmlFor="group-disappear" className="groups-note">Posts disappear after</label>
+                <label htmlFor="group-disappear" className="groups-note">{t('Posts disappear after')}</label>
                 <select id="group-disappear" className="group-search" disabled={sharedBusy} value={group.disappear_after_mins || 0} onChange={async e => {
                   const mins = Number(e.target.value)
-                  if (mins > 0 && !(await askConfirm('Posts older than this will be removed for everyone, for good. Turn it on?', { yes: 'Turn it on', danger: true }))) return
+                  if (mins > 0 && !(await askConfirm(t('Posts older than this will be removed for everyone, for good. Turn it on?'), { yes: t('Turn it on'), danger: true }))) return
                   changeSetting('disappear', String(mins))
                 }}>
                   {DISAPPEAR_CHOICES.map(([mins, label]) => <option key={mins} value={mins}>{label}</option>)}
                 </select>
                 {group.steward_id && iAmSteward && !group.is_org_news && (
                   <button type="button" className="btn btn-outline group-small-btn" aria-pressed={!!group.announcement_only} disabled={sharedBusy} onClick={() => changeSetting('announce', group.announcement_only ? 'off' : 'on')}>
-                    {group.announcement_only ? 'Announcement-only is on (tap to turn off)' : 'Make announcement-only (only you post)'}
+                    {group.announcement_only ? t('Announcement-only is on (tap to turn off)') : t('Make announcement-only (only you post)')}
                   </button>
                 )}
               </>
             )}
             {!group.steward_id || iAmSteward ? null : (
               <p className="groups-note">
-                Name: {group.name}. {group.disappear_after_mins ? 'Posts disappear after ' + (group.disappear_after_mins / 1440) + ' day' + (group.disappear_after_mins === 1440 ? '' : 's') + '.' : 'Posts stay until someone deletes them.'}
-                {group.is_org_news ? ' Only Heads and organizers post here.' : group.announcement_only ? ' Only the steward posts here.' : ''}
+                {t('Name: {name}.', { name: group.name })} {group.disappear_after_mins ? (group.disappear_after_mins === 1440 ? t('Posts disappear after 1 day.') : t('Posts disappear after {n} days.', { n: group.disappear_after_mins / 1440 })) : t('Posts stay until someone deletes them.')}
+                {group.is_org_news ? ' ' + t('Only Heads and organizers post here.') : group.announcement_only ? ' ' + t('Only the steward posts here.') : ''}
               </p>
             )}
             {proposals.map(pr => {
-              const who = members.find(m => m.userId === pr.proposed_by)?.name || 'A member'
+              const who = members.find(m => m.userId === pr.proposed_by)?.name || t('A member')
               const mine = pr.proposed_by === user.id
-              const what = pr.kind === 'name' ? 'rename the chat to "' + pr.value + '"'
-                : pr.kind === 'description' ? 'change the description'
-                : (pr.value === '0' ? 'turn off disappearing posts' : 'make posts disappear after ' + (Number(pr.value) / 1440) + ' day' + (pr.value === '1440' ? '' : 's'))
+              const v = { name: who, value: pr.value, n: Number(pr.value) / 1440 }
+              const asked = pr.kind === 'name' ? (mine ? t('You asked to rename the chat to "{value}".', v) : t('{name} asked to rename the chat to "{value}".', v))
+                : pr.kind === 'description' ? (mine ? t('You asked to change the description.') : t('{name} asked to change the description.', v))
+                : pr.value === '0' ? (mine ? t('You asked to turn off disappearing posts.') : t('{name} asked to turn off disappearing posts.', v))
+                : pr.value === '1440' ? (mine ? t('You asked to make posts disappear after 1 day.') : t('{name} asked to make posts disappear after 1 day.', v))
+                : (mine ? t('You asked to make posts disappear after {n} days.', v) : t('{name} asked to make posts disappear after {n} days.', v))
               return (
                 <div key={pr.kind} id={'focus-proposal-' + pr.kind} tabIndex={-1} className="group-member" style={{ flexWrap: 'wrap', ...focusStyle('proposal-' + pr.kind) }}>
                   {focusLabel('proposal-' + pr.kind)}
-                  <span className="group-member-name">{mine ? 'You asked to ' : who + ' asked to '}{what}.{!mine ? ' Needs your answer.' : ''}</span>
+                  <span className="group-member-name">{asked}{!mine ? ' ' + t('Needs your answer.') : ''}</span>
                   {mine
-                    ? <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={() => cancelProposal(pr.kind)}>Take back</button>
+                    ? <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={() => cancelProposal(pr.kind)}>{t('Take back')}</button>
                     : <>
-                        <button type="button" className="btn btn-primary group-small-btn" disabled={sharedBusy} onClick={() => answerProposal(pr.kind, true)}>Agree</button>
-                        <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={() => answerProposal(pr.kind, false)}>No thanks</button>
+                        <button type="button" className="btn btn-primary group-small-btn" disabled={sharedBusy} onClick={() => answerProposal(pr.kind, true)}>{t('Agree')}</button>
+                        <button type="button" className="btn btn-outline group-small-btn" disabled={sharedBusy} onClick={() => answerProposal(pr.kind, false)}>{t('No thanks')}</button>
                       </>}
                 </div>
               )
@@ -838,27 +845,27 @@ export default function GroupBoard() {
             {sharedNote && <p className="groups-note" role="status">{sharedNote}</p>}
             {changes.length > 0 && (
               <>
-                <p className="groups-note">Recent changes:</p>
-                {changes.map(ch => <p key={ch.id} className="groups-note">{ch.summary} <span style={{ opacity: 0.7 }}>({new Date(ch.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })})</span></p>)}
+                <p className="groups-note">{t('Recent changes:')}</p>
+                {changes.map(ch => <p key={ch.id} className="groups-note">{ch.summary} <span style={{ opacity: 0.7 }}>({new Date(ch.created_at).toLocaleDateString(getLang() === 'es' ? 'es-US' : [], { month: 'short', day: 'numeric' })})</span></p>)}
               </>
             )}
 
             {waiting.length > 0 && (
               <>
-                <h3 className="groups-section">Waiting to be let in ({waiting.length})</h3>
-                <p className="groups-note">Any member can let someone in, except the person who invited them. That way it always takes two people.</p>
+                <h3 className="groups-section">{t('Waiting to be let in ({n})', { n: waiting.length })}</h3>
+                <p className="groups-note">{t('Any member can let someone in, except the person who invited them. That way it always takes two people.')}</p>
                 {waiting.map(w => {
                   const blockedByMe = w.addedBy === user.id && !iAmSteward
                   return (
                     <div key={w.userId} id={'focus-waiting-' + w.userId} tabIndex={-1} className="group-member" style={{ flexWrap: 'wrap', ...focusStyle('waiting-' + w.userId) }}>
                       {focusLabel('waiting-' + w.userId)}
                       <AvatarDisplay url={w.avatar} userId={w.userId} size={32} />
-                      <span className="group-member-name"><UserName userId={w.userId} name={w.name} /><span className="group-member-sub">{w.addedByName ? 'Invited by ' + (w.addedBy === user.id ? 'you' : w.addedByName) : 'Joined with the link'}</span></span>
+                      <span className="group-member-name"><UserName userId={w.userId} name={w.name} /><span className="group-member-sub">{w.addedByName ? (w.addedBy === user.id ? t('Invited by you') : t('Invited by {name}', { name: w.addedByName })) : t('Joined with the link')}</span></span>
                       <span className="group-member-actions">
                         {blockedByMe
-                          ? <span className="groups-note group-inline-note">Another member will let them in</span>
-                          : <button type="button" className="btn btn-primary group-small-btn" onClick={() => letIn(w)}>Let in</button>}
-                        <button type="button" className="btn btn-outline group-small-btn" onClick={() => sayNo(w)}>Say no</button>
+                          ? <span className="groups-note group-inline-note">{t('Another member will let them in')}</span>
+                          : <button type="button" className="btn btn-primary group-small-btn" onClick={() => letIn(w)}>{t('Let in')}</button>}
+                        <button type="button" className="btn btn-outline group-small-btn" onClick={() => sayNo(w)}>{t('Say no')}</button>
                       </span>
                     </div>
                   )
@@ -870,69 +877,73 @@ export default function GroupBoard() {
               <SidechatAdd groupId={id} orgId={group.organization_id} memberIds={new Set(members.map(m => m.userId))} isSteward={iAmSteward} onAdded={loadGroup} />
             )}
             {villageRoom && (
-              <p className="groups-note">Only neighbors in {villageRoom.village_name} can be in this {villageRoom.kind === 'sidechat' ? 'sidechat' : 'Campfire'}. Use "Add a neighbor" at the top of the chat{villageRoom.kind === 'campfire' && villageRoom.shown ? ', or neighbors can ask to join from the village page' : ''}.</p>
+              <p className="groups-note">{villageRoom.kind === 'sidechat'
+                ? t('Only neighbors in {place} can be in this sidechat. Use "Add a neighbor" at the top of the chat.', { place: villageRoom.village_name })
+                : villageRoom.shown
+                  ? t('Only neighbors in {place} can be in this Campfire. Use "Add a neighbor" at the top of the chat, or neighbors can ask to join from the village page.', { place: villageRoom.village_name })
+                  : t('Only neighbors in {place} can be in this Campfire. Use "Add a neighbor" at the top of the chat.', { place: villageRoom.village_name })}</p>
             )}
             {!isSidechat && !villageRoom && (<>
-            <h3 className="groups-section">Invite someone</h3>
-            <label htmlFor="invite-search" className="sr-only">Search members by name</label>
+            <h3 className="groups-section">{t('Invite someone')}</h3>
+            <label htmlFor="invite-search" className="sr-only">{t('Search members by name')}</label>
             {inviteUnlock && inviteUnlock > new Date() ? (
-              <p className="groups-note">You can invite people by name starting {inviteUnlock.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}. This keeps groups safe while you are new. You can share the join link now. A member will let people in.</p>
+              <p className="groups-note">{t('You can invite people by name starting {date}. This keeps groups safe while you are new. You can share the join link now. A member will let people in.', { date: inviteUnlock.toLocaleDateString(getLang() === 'es' ? 'es-US' : undefined, { month: 'long', day: 'numeric' }) })}</p>
             ) : (<>
-            <input id="invite-search" type="search" className="group-search" placeholder="Type a name" value={search} onChange={e => setSearch(e.target.value)} autoComplete="off" />
+            <input id="invite-search" type="search" className="group-search" placeholder={t('Type a name')} value={search} onChange={e => setSearch(e.target.value)} autoComplete="off" />
             {results.map(p => (
               <div key={p.user_id} className="group-member">
                 <AvatarDisplay url={p.avatar_url} userId={p.user_id} size={32} />
-                <span className="group-member-name"><UserName userId={p.user_id} name={p.display_name || 'Neighbor'} /></span>
-                <button type="button" className="btn btn-primary group-small-btn" onClick={() => invite(p)}>Invite</button>
+                <span className="group-member-name"><UserName userId={p.user_id} name={p.display_name || t('Neighbor')} /></span>
+                <button type="button" className="btn btn-primary group-small-btn" onClick={() => invite(p)}>{t('Invite')}</button>
               </div>
             ))}
-            {search.trim().length >= 2 && results.length === 0 && <p className="groups-note">No one found by that name. You can search people you have messaged, vouched for, or share a group or chat with.</p>}
+            {search.trim().length >= 2 && results.length === 0 && <p className="groups-note">{t('No one found by that name. You can search people you have messaged, vouched for, or share a group or chat with.')}</p>}
             </>)}
             {pendingInvites.length > 0 && (
               <>
-                <p className="groups-note">Invited, waiting to say yes:</p>
+                <p className="groups-note">{t('Invited, waiting to say yes:')}</p>
                 {pendingInvites.map(p => (
                   <div key={p.userId} className="group-member">
                     <span className="group-member-name">{p.name}</span>
-                    <button type="button" className="btn btn-outline group-small-btn" onClick={() => takeBackInvite(p.userId)}>Take back</button>
+                    <button type="button" className="btn btn-outline group-small-btn" onClick={() => takeBackInvite(p.userId)}>{t('Take back')}</button>
                   </div>
                 ))}
               </>
             )}
 
-            <h3 className="groups-section">Join link</h3>
+            <h3 className="groups-section">{t('Join link')}</h3>
             {group.join_token ? (
               <>
                 <p className="groups-note">
-                  People who use this link wait until a member lets them in. 
-                  {canChangeLink ? (group.steward_id ? 'Only you, as steward, can turn it off or make a new one.' : 'Any member can turn it off or make a new one.') : 'Only the steward can turn it off or make a new one.'}
+                  {t('People who use this link wait until a member lets them in.')}{' '}
+                  {canChangeLink ? (group.steward_id ? t('Only you, as steward, can turn it off or make a new one.') : t('Any member can turn it off or make a new one.')) : t('Only the steward can turn it off or make a new one.')}
                 </p>
                 <p className="group-link">{joinUrl}</p>
-                <QrShare url={joinUrl} title={group.name} hint="Your friend scans this, taps Join, and then waits for a member to let them in." />
+                <QrShare url={joinUrl} title={group.name} hint={t('Your friend scans this, taps Join, and then waits for a member to let them in.')} />
                 <div className="groups-actions">
-                  <button type="button" className="btn btn-primary" onClick={copyLink}>{copied ? 'Copied' : 'Copy link'}</button>
-                  {canChangeLink && <button type="button" className="btn btn-outline" onClick={() => setLink(true)}>New link</button>}
-                  {canChangeLink && <button type="button" className="btn btn-outline" onClick={() => setLink(false)}>Turn off</button>}
+                  <button type="button" className="btn btn-primary" onClick={copyLink}>{copied ? t('Copied') : t('Copy link')}</button>
+                  {canChangeLink && <button type="button" className="btn btn-outline" onClick={() => setLink(true)}>{t('New link')}</button>}
+                  {canChangeLink && <button type="button" className="btn btn-outline" onClick={() => setLink(false)}>{t('Turn off')}</button>}
                 </div>
               </>
             ) : canChangeLink ? (
               <>
-                <p className="groups-note">The join link is off. Turn it on to let people join by opening a link.</p>
-                <button type="button" className="btn btn-outline btn-full" onClick={() => setLink(true)}>Turn on join link</button>
+                <p className="groups-note">{t('The join link is off. Turn it on to let people join by opening a link.')}</p>
+                <button type="button" className="btn btn-outline btn-full" onClick={() => setLink(true)}>{t('Turn on join link')}</button>
               </>
             ) : (
-              <p className="groups-note">The join link is off. In this chat, only the steward can turn it on. You can still invite people by name.</p>
+              <p className="groups-note">{t('The join link is off. In this chat, only the steward can turn it on. You can still invite people by name.')}</p>
             )}
 
             </>)}
 
-            <h3 className="groups-section">Members ({members.length})</h3>
+            <h3 className="groups-section">{t('Members ({n})', { n: members.length })}</h3>
             <p className="groups-note">
               {group.steward_id
-                ? 'Everyone here posts and invites the same way. ' + (iAmSteward ? 'As steward, you can remove someone on your own if it\'s needed for safety. ' : 'The steward can remove someone on their own for safety. ') + 'Other removals take two members: one asks, and a second agrees. The person isn\'t shown the request.'
-                : 'Everyone here is equal. Removing someone takes two members: one asks, and a second agrees. The person isn\'t shown the request.'}
+                ? t('Everyone here posts and invites the same way.') + ' ' + (iAmSteward ? t("As steward, you can remove someone on your own if it's needed for safety.") : t('The steward can remove someone on their own for safety.')) + ' ' + t("Other removals take two members: one asks, and a second agrees. The person isn't shown the request.")
+                : t("Everyone here is equal. Removing someone takes two members: one asks, and a second agrees. The person isn't shown the request.")}
             </p>
-            {iAmSteward && <p className="groups-note">To hand off the steward role, tap Make steward. It only shows for the group's head and organizers who are in the chat, and they have to say yes.</p>}
+            {iAmSteward && <p className="groups-note">{t("To hand off the steward role, tap Make steward. It only shows for the group's head and organizers who are in the chat, and they have to say yes.")}</p>}
             {members.map(m => {
               const isMe = m.userId === user.id
               const isSteward = m.userId === group.steward_id
@@ -942,27 +953,27 @@ export default function GroupBoard() {
                 <div key={m.userId} id={'focus-removal-' + m.userId} tabIndex={-1} className="group-member" style={focusStyle('removal-' + m.userId)}>
                   {focusLabel('removal-' + m.userId)}
                   <AvatarDisplay url={m.avatar} userId={m.userId} size={32} />
-                  <span className="group-member-name"><UserName userId={m.userId} name={m.name} />{isMe ? ' (you)' : ''}{isSteward ? <span className="group-steward-badge">Steward</span> : null}{group.steward_offer_to === m.userId ? <span className="group-member-sub">Asked to take over as steward</span> : null}{open && !isMe ? <span className="group-member-flag">{mine ? ' · you asked to remove' : ' · a member asked to remove'}</span> : null}{open && !isMe && open.reason ? <span className="group-member-sub">Reason: {open.reason}</span> : null}</span>
+                  <span className="group-member-name"><UserName userId={m.userId} name={m.name} />{isMe ? ' ' + t('(you)') : ''}{isSteward ? <span className="group-steward-badge">{t('Steward')}</span> : null}{group.steward_offer_to === m.userId ? <span className="group-member-sub">{t('Asked to take over as steward')}</span> : null}{open && !isMe ? <span className="group-member-flag">{' · ' + (mine ? t('you asked to remove') : t('a member asked to remove'))}</span> : null}{open && !isMe && open.reason ? <span className="group-member-sub">{t('Reason: {reason}', { reason: t(open.reason) })}</span> : null}</span>
                   {!isMe && (
                     <span className="group-member-actions">
                       {isSteward
                         ? null
                         : mine && !iAmSteward
-                          ? <button type="button" className="btn btn-outline group-small-btn" onClick={() => withdrawRemoval(m)}>Take back</button>
-                          : <button type="button" className="btn btn-outline group-small-btn" onClick={() => askRemove(m)}>{iAmSteward ? 'Remove' : open ? 'Agree to remove' : 'Remove'}</button>}
+                          ? <button type="button" className="btn btn-outline group-small-btn" onClick={() => withdrawRemoval(m)}>{t('Take back')}</button>
+                          : <button type="button" className="btn btn-outline group-small-btn" onClick={() => askRemove(m)}>{iAmSteward ? t('Remove') : open ? t('Agree to remove') : t('Remove')}</button>}
                       {iAmSteward && (group.steward_offer_to === m.userId
-                        ? <button type="button" className="btn btn-outline group-small-btn" onClick={() => offerSteward(null)}>Take back steward offer</button>
+                        ? <button type="button" className="btn btn-outline group-small-btn" onClick={() => offerSteward(null)}>{t('Take back steward offer')}</button>
                         : stewardCandidates.includes(m.userId)
-                          ? <button type="button" className="btn btn-outline group-small-btn" onClick={() => offerSteward(m)}>Make steward</button>
+                          ? <button type="button" className="btn btn-outline group-small-btn" onClick={() => offerSteward(m)}>{t('Make steward')}</button>
                           : null)}
-                      <button type="button" className="btn btn-outline group-small-btn group-report-btn" onClick={() => { setPanelOpen(false); setReportFor(m) }}>Report</button>
+                      <button type="button" className="btn btn-outline group-small-btn group-report-btn" onClick={() => { setPanelOpen(false); setReportFor(m) }}>{t('Report')}</button>
                     </span>
                   )}
                 </div>
               )
             })}
 
-            <button type="button" className="btn btn-outline btn-full group-leave-btn" onClick={leave}>Leave chat</button>
+            <button type="button" className="btn btn-outline btn-full group-leave-btn" onClick={leave}>{t('Leave chat')}</button>
             </div>
             )}
           </div>
@@ -971,27 +982,27 @@ export default function GroupBoard() {
 
       {removeFor && (
         <>
-          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setRemoveFor(null)} />
+          <button type="button" className="app-dialog-scrim" aria-label={t('Close')} tabIndex={-1} onClick={() => setRemoveFor(null)} />
           <div role="dialog" aria-modal="true" aria-labelledby="group-remove-title" className="app-dialog">
-            <h2 id="group-remove-title">Remove {removeFor.name}?</h2>
+            <h2 id="group-remove-title">{t('Remove {name}?', { name: removeFor.name })}</h2>
             <p className="groups-note">
               {group?.steward_id === user.id
-                ? 'As steward, you can do this now. Pick the reason.'
-                : 'A second member has to agree before it happens. They will see the reason you pick. ' + removeFor.name + " won't see this request."}
+                ? t('As steward, you can do this now. Pick the reason.')
+                : t("A second member has to agree before it happens. They will see the reason you pick. {name} won't see this request.", { name: removeFor.name })}
             </p>
             <fieldset className="group-fieldset">
-              <legend>Why?</legend>
+              <legend>{t('Why?')}</legend>
               {REMOVE_REASONS.map(r => (
                 <label key={r} className="group-radio">
                   <input type="radio" name="group-remove-reason" value={r} checked={removeReason === r} onChange={() => { setRemoveReason(r); setRemoveError('') }} />
-                  {r}
+                  {t(r)}
                 </label>
               ))}
             </fieldset>
             {removeError && <p className="groups-error" role="alert">{removeError}</p>}
             <div className="groups-actions">
-              <button type="button" className="btn btn-outline" onClick={() => setRemoveFor(null)}>Cancel</button>
-              <button type="button" className="btn btn-primary" onClick={submitRemove} disabled={removeBusy}>{removeBusy ? 'Sending...' : (group?.steward_id === user.id ? 'Remove now' : 'Ask to remove')}</button>
+              <button type="button" className="btn btn-outline" onClick={() => setRemoveFor(null)}>{t('Cancel')}</button>
+              <button type="button" className="btn btn-primary" onClick={submitRemove} disabled={removeBusy}>{removeBusy ? t('Sending...') : (group?.steward_id === user.id ? t('Remove now') : t('Ask to remove'))}</button>
             </div>
           </div>
         </>
@@ -999,37 +1010,37 @@ export default function GroupBoard() {
 
       {reportFor && (
         <>
-          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={closeReport} />
+          <button type="button" className="app-dialog-scrim" aria-label={t('Close')} tabIndex={-1} onClick={closeReport} />
           <div role="dialog" aria-modal="true" aria-labelledby="group-report-title" className="app-dialog">
             {reportState === 'sent' ? (
               <>
-                <h2 id="group-report-title">Thank you</h2>
-                <p className="groups-note">An admin will look at this.</p>
-                <button type="button" className="btn btn-outline btn-full" onClick={closeReport}>Done</button>
+                <h2 id="group-report-title">{t('Thank you')}</h2>
+                <p className="groups-note">{t('An admin will look at this.')}</p>
+                <button type="button" className="btn btn-outline btn-full" onClick={closeReport}>{t('Done')}</button>
               </>
             ) : (
               <>
-                <h2 id="group-report-title">Report {reportFor.name}</h2>
-                <p className="groups-note">Only VWB admins see reports. The board is locked, so admins can't read it themselves.</p>
+                <h2 id="group-report-title">{t('Report {name}', { name: reportFor.name })}</h2>
+                <p className="groups-note">{t("Only VWB admins see reports. The board is locked, so admins can't read it themselves.")}</p>
                 <fieldset className="group-fieldset">
-                  <legend>What happened?</legend>
+                  <legend>{t('What happened?')}</legend>
                   {REPORT_REASONS.map(r => (
                     <label key={r} className="group-radio">
                       <input type="radio" name="group-report-reason" value={r} checked={reportReason === r} onChange={() => { setReportReason(r); setReportState('') }} />
-                      {r}
+                      {t(r)}
                     </label>
                   ))}
                 </fieldset>
-                <label htmlFor="group-report-details" className="group-label">Anything else? (optional)</label>
+                <label htmlFor="group-report-details" className="group-label">{t('Anything else? (optional)')}</label>
                 <textarea id="group-report-details" rows={3} maxLength={500} value={reportDetails} onChange={e => setReportDetails(e.target.value)} />
                 <label className="group-radio">
                   <input type="checkbox" checked={includeEvidence} onChange={e => setIncludeEvidence(e.target.checked)} />
-                  Attach their last few posts from my screen, so an admin has something to go on
+                  {t('Attach their last few posts from my screen, so an admin has something to go on')}
                 </label>
                 {reportState && reportState !== 'sending' && <p className="groups-error" role="alert">{reportState}</p>}
                 <div className="groups-actions">
-                  <button type="button" className="btn btn-outline" onClick={closeReport}>Cancel</button>
-                  <button type="button" className="btn btn-primary" onClick={sendReport} disabled={reportState === 'sending'}>{reportState === 'sending' ? 'Sending...' : 'Send report'}</button>
+                  <button type="button" className="btn btn-outline" onClick={closeReport}>{t('Cancel')}</button>
+                  <button type="button" className="btn btn-primary" onClick={sendReport} disabled={reportState === 'sending'}>{reportState === 'sending' ? t('Sending...') : t('Send report')}</button>
                 </div>
               </>
             )}

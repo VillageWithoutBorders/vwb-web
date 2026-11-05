@@ -17,6 +17,7 @@ import { askConfirm } from '../components/AdminDialog'
 import { orgWords } from '../utils/roleWords'
 import RoleLog from '../components/RoleLog'
 import PlaceReports, { usePlaceReportCount } from '../components/PlaceReports'
+import { getLang, useT } from '../utils/lang'
 
 // The organizer's home base for one organization. Needs-you card on top,
 // then five tabs: People, Chats, Connections, Events and posts, Settings.
@@ -74,6 +75,11 @@ export default function OrgDashboard() {
   const isGroup = (orgInfo?.kind || mine?.kind) === 'group'
   // Role words: groups say Helper and Keeper, organizations say Organizer and Head.
   const W = orgWords({ ...(mine || {}), ...(orgInfo || {}), kind: orgInfo?.kind || mine?.kind })
+  const t = useT()
+  // 'a Head' in English; Spanish needs no article ('Líder'). Titles a group picked stay as written.
+  const art = (aWord, word) => (getLang() === 'es' ? t(word) : aWord)
+  const aHead = art(W.aHead, W.head)
+  const anOrganizer = art(W.anOrganizer, W.organizer)
 
   const load = useCallback(async () => {
     if (!id || !allowed) return
@@ -124,8 +130,8 @@ export default function OrgDashboard() {
   async function startChat(e) {
     e.preventDefault()
     const general = chats.find((c) => c.is_general)
-    const name = (chatName || (!general ? orgName + ' general chat' : '')).trim()
-    if (!name) { setChatNote('Give the Campfire a name.'); return }
+    const name = (chatName || (!general ? t('{name} general chat', { name: orgName }) : '')).trim()
+    if (!name) { setChatNote(t('Give the Campfire a name.')); return }
     setChatBusy(true); setChatNote('')
     const { data: newId, error } = !general
       ? await supabase.rpc('start_org_general_chat', { p_org: id, p_name: name.slice(0, 80) })
@@ -133,7 +139,7 @@ export default function OrgDashboard() {
     setChatBusy(false)
     if (error || !newId) {
       console.error('Failed to start chat:', error)
-      setChatNote(/New accounts can/i.test(error?.message || '') ? NEW_ACCOUNT_NOTE : (error?.message && error.message.length < 140 && error.code && error.code !== 'PGRST202' ? error.message : 'Could not start the chat. Try again.'))
+      setChatNote(/New accounts can/i.test(error?.message || '') ? t(NEW_ACCOUNT_NOTE) : (error?.message && error.message.length < 140 && error.code && error.code !== 'PGRST202' ? t(error.message) : t('Could not start the chat. Try again.')))
       return
     }
     navigate('/groups/' + newId, { state: { justStarted: true } })
@@ -143,7 +149,7 @@ export default function OrgDashboard() {
     setChatBusy(true); setChatNote('')
     const { data: gid, error } = await supabase.rpc('start_org_announcements', { p_org: id })
     setChatBusy(false)
-    if (error || !gid) { console.error('Failed to start Announcements:', error); setChatNote("We couldn't start Announcements. Try again."); return }
+    if (error || !gid) { console.error('Failed to start Announcements:', error); setChatNote(t("We couldn't start Announcements. Try again.")); return }
     navigate('/groups/' + gid, { state: { justStarted: true } })
   }
 
@@ -151,7 +157,7 @@ export default function OrgDashboard() {
     e.preventDefault()
     setNote('')
     const { data, error } = await supabase.rpc('search_people_for_org', { p_org: id, p_query: query })
-    if (error) { console.error('Search failed:', error); setNote("Couldn't search right now. Try again."); return }
+    if (error) { console.error('Search failed:', error); setNote(t("Couldn't search right now. Try again.")); return }
     setFound(data || [])
     setSearched(true)
   }
@@ -162,7 +168,7 @@ export default function OrgDashboard() {
     setBusy(false)
     if (error) {
       console.error('Member change failed:', error)
-      setNote(error.message && error.message.length < 140 ? error.message : "We couldn't save that. Try again.")
+      setNote(error.message && error.message.length < 140 ? t(error.message) : t("We couldn't save that. Try again."))
       return
     }
     setNote(typeof okMsg === 'function' ? okMsg(data) : okMsg)
@@ -173,38 +179,38 @@ export default function OrgDashboard() {
     const r = await supabase.rpc('add_org_member', { p_org: id, p_user: u.user_id })
     if (!r.error) { setFound((f) => f.filter((x) => x.user_id !== u.user_id)); setAsks((l) => l.filter((x) => x.user_id !== u.user_id)) }
     return r
-  }, (r) => ({
-    added: u.display_name + ' was added.',
-    invited: u.display_name + ' was invited. They join when they say yes.',
-    already: u.display_name + ' is already a member.',
-    declined: u.display_name + ' said no not long ago. You can invite them again later.',
-  })[r] || u.display_name + ' was invited.')
+  }, (r) => t(({
+    added: '{name} was added.',
+    invited: '{name} was invited. They join when they say yes.',
+    already: '{name} is already a member.',
+    declined: '{name} said no not long ago. You can invite them again later.',
+  })[r] || '{name} was invited.', { name: u.display_name }))
 
   const setRole = (u, role) => run(
     () => supabase.rpc('set_org_member_role', { p_org: id, p_user: u.user_id, p_role: role }),
-    u.display_name + (role === 'organizer' ? ' is now ' + W.anOrganizer + '.' : ' is now a member.'),
+    role === 'organizer' ? t('{name} is now {role}.', { name: u.display_name, role: anOrganizer }) : t('{name} is now a member.', { name: u.display_name }),
   )
 
   const makeHead = async (u) => {
-    if (!await askConfirm('Make ' + u.display_name + ' ' + W.aHead + ' of ' + orgName + '? ' + W.heads + ' can change anyone\'s role and remove members.')) return
-    run(() => supabase.rpc('make_org_head', { p_org: id, p_user: u.user_id }), u.display_name + ' is now ' + W.aHead + '.')
+    if (!await askConfirm(t("Make {name} {role} of {group}? {heads} can change anyone's role and remove members.", { name: u.display_name, role: aHead, group: orgName, heads: t(W.heads) }))) return
+    run(() => supabase.rpc('make_org_head', { p_org: id, p_user: u.user_id }), t('{name} is now {role}.', { name: u.display_name, role: aHead }))
   }
 
   const stepDown = async () => {
-    if (!await askConfirm('Step down as ' + W.head + ' of ' + orgName + '? You will stay on as ' + W.anOrganizer + '.')) return
-    run(() => supabase.rpc('step_down_org_head', { p_org: id }), 'You are now ' + W.anOrganizer + '.')
+    if (!await askConfirm(t('Step down as {head} of {group}? You will stay on as {role}.', { head: t(W.head), group: orgName, role: anOrganizer }))) return
+    run(() => supabase.rpc('step_down_org_head', { p_org: id }), t('You are now {role}.', { role: anOrganizer }))
   }
 
   const notNow = (u) => run(
     () => supabase.rpc('dismiss_org_join_ask', { p_org: id, p_user: u.user_id }),
-    'Cleared. ' + u.display_name + ' is not told.',
+    t('Cleared. {name} is not told.', { name: u.display_name }),
   )
 
   const headCount = members.filter((x) => x.role === 'admin').length
 
   const removeMember = async (u) => {
-    if (!await askConfirm('Remove ' + u.display_name + ' from ' + orgName + '?')) return
-    run(() => supabase.rpc('remove_org_member', { p_org: id, p_user: u.user_id }), u.display_name + ' was removed.')
+    if (!await askConfirm(t('Remove {name} from {group}?', { name: u.display_name, group: orgName }))) return
+    run(() => supabase.rpc('remove_org_member', { p_org: id, p_user: u.user_id }), t('{name} was removed.', { name: u.display_name }))
   }
 
   // /org-dashboard with no group picked: go straight in if there is only one.
@@ -213,10 +219,10 @@ export default function OrgDashboard() {
     if (managed.length === 1) return <Navigate to={'/orgs/' + managed[0].id + '/dashboard'} replace />
     return (
       <div className="cal-page hub-page dash-page">
-        <BackLink fallback="/" fallbackLabel="Home" />
-        <h1 className="hub-org-name">Group dashboard</h1>
+        <BackLink fallback="/" fallbackLabel={t('Home')} />
+        <h1 className="hub-org-name">{t('Group dashboard')}</h1>
         {choices.length === 0 && (
-          <p className="cal-empty">You don't run a group on VWB yet. You can ask to add yours from the Calendar page.</p>
+          <p className="cal-empty">{t("You don't run a group on VWB yet. You can ask to add yours from the Calendar page.")}</p>
         )}
         {choices.map((o) => (
           <Link key={o.id} to={'/orgs/' + o.id + '/dashboard'} className="btn btn-outline btn-full" style={{ marginBottom: '0.5rem', minHeight: '44px' }}>{o.name}</Link>
@@ -228,8 +234,8 @@ export default function OrgDashboard() {
   if (!allowed) {
     return (
       <div className="cal-page hub-page dash-page">
-        <BackLink fallback="/" fallbackLabel="Home" />
-        <p className="cal-empty">This dashboard is only for this group's organizers.</p>
+        <BackLink fallback="/" fallbackLabel={t('Home')} />
+        <p className="cal-empty">{t("This dashboard is only for this group's organizers.")}</p>
       </div>
     )
   }
@@ -244,7 +250,7 @@ export default function OrgDashboard() {
   const chatRow = (c, nested) => (
     <button key={c.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + c.id)}>
       <span className="groups-row-name">{nested ? '↳ ' : ''}{campfires.has(c.id) ? <><Icon name="campfire" />{' '}</> : ''}{c.name}</span>
-      <span className="groups-row-meta">Open chat &#8250;</span>
+      <span className="groups-row-meta">{t('Open chat')} &#8250;</span>
     </button>
   )
   const openPosts = posts.filter((p) => p.status !== 'closed' && p.status !== 'completed' && p.status !== 'cancelled')
@@ -252,33 +258,33 @@ export default function OrgDashboard() {
   const soon = events.filter((e) => e.status !== 'cancelled' && new Date(e.starts_at).getTime() < weekOut)
 
   const needs = loading ? null : [
-    reportCount && { k: 'reports', tab: 'people', em: '\u{1F6A9}', text: reportCount === 1 ? 'Someone in your ' + (isGroup ? 'crew' : 'group') + ' was reported' : reportCount + ' reports to look at' },
-    asks.length && { k: 'asks', tab: 'people', em: '\u{1F64B}', text: asks.length === 1 ? asks[0].display_name + ' asked to join' : asks.length + ' people asked to join' },
-    linkAsks && { k: 'links', tab: 'links', em: '\u{1F517}', text: linkAsks === 1 ? 'A group asked to connect' : linkAsks + ' groups asked to connect' },
-    !general && chatsReady && { k: 'general', tab: 'chats', em: '\u{1F525}', text: 'Start your general chat so members have a place to talk' },
-    soon.length && { k: 'soon', tab: 'events', em: '\u{1F4C5}', text: soon.length === 1 ? soon[0].title + ' is this week' : soon.length + ' events this week' },
+    reportCount && { k: 'reports', tab: 'people', em: '\u{1F6A9}', text: reportCount === 1 ? (isGroup ? t('Someone in your crew was reported') : t('Someone in your group was reported')) : t('{n} reports to look at', { n: reportCount }) },
+    asks.length && { k: 'asks', tab: 'people', em: '\u{1F64B}', text: asks.length === 1 ? t('{name} asked to join', { name: asks[0].display_name }) : t('{n} people asked to join', { n: asks.length }) },
+    linkAsks && { k: 'links', tab: 'links', em: '\u{1F517}', text: linkAsks === 1 ? t('A group asked to connect') : t('{n} groups asked to connect', { n: linkAsks }) },
+    !general && chatsReady && { k: 'general', tab: 'chats', em: '\u{1F525}', text: t('Start your general chat so members have a place to talk') },
+    soon.length && { k: 'soon', tab: 'events', em: '\u{1F4C5}', text: soon.length === 1 ? t('{title} is this week', { title: soon[0].title }) : t('{n} events this week', { n: soon.length }) },
   ].filter(Boolean)
 
   const shortcut = (em, label, to) => (
-    <button type="button" className="dash-shortcut" onClick={() => navigate(to)}><span aria-hidden="true"><Icon name={em} /></span>{label}</button>
+    <button type="button" className="dash-shortcut" onClick={() => navigate(to)}><span aria-hidden="true"><Icon name={em} /></span>{t(label)}</button>
   )
 
   return (
     <div className="cal-page hub-page dash-page">
-      <BackLink fallback={'/orgs/' + id} fallbackLabel={orgName || 'Group'} />
+      <BackLink fallback={'/orgs/' + id} fallbackLabel={orgName || t('Group')} />
       <div className="dash-head">
         <span className="dash-head-icon" aria-hidden="true"><Icon name="toolbox" /></span>
-        <h1>{orgName || 'Your group'}</h1>
+        <h1>{orgName || t('Your group')}</h1>
       </div>
-      <p className="dash-sub">{W.tools}{isHead ? ' · You are ' + W.aHead : ' · You are ' + W.anOrganizer}</p>
+      <p className="dash-sub">{t(W.tools)} · {t('You are {role}', { role: isHead ? aHead : anOrganizer })}</p>
 
-      {loading && <p className="cal-empty" role="status">Loading...</p>}
+      {loading && <p className="cal-empty" role="status">{t('Loading...')}</p>}
       <NeedsYou items={needs} onGo={setTab} />
 
       <div className="dash-stats">
-        <button type="button" className="dash-stat" onClick={() => setTab('people')}><b>{members.length}</b><small>Members</small></button>
-        <button type="button" className="dash-stat" onClick={() => setTab('events')}><b>{events.length}</b><small>Upcoming events</small></button>
-        <button type="button" className="dash-stat" onClick={() => setTab('events')}><b>{openPosts.length}</b><small>Open needs and offers</small></button>
+        <button type="button" className="dash-stat" onClick={() => setTab('people')}><b>{members.length}</b><small>{t('Members')}</small></button>
+        <button type="button" className="dash-stat" onClick={() => setTab('events')}><b>{events.length}</b><small>{t('Upcoming events')}</small></button>
+        <button type="button" className="dash-stat" onClick={() => setTab('events')}><b>{openPosts.length}</b><small>{t('Open needs and offers')}</small></button>
       </div>
 
       <DashTabs tabs={TABS} tab={tab} setTab={setTab} dots={{ people: asks.length > 0, links: linkAsks > 0 }} />
@@ -287,13 +293,13 @@ export default function OrgDashboard() {
         <DashPanel k="people">
           {asks.length > 0 && (
             <section className="hub-section" aria-labelledby="od-asks">
-              <div className="hub-section-head"><h2 id="od-asks">Asking to join</h2></div>
+              <div className="hub-section-head"><h2 id="od-asks">{t('Asking to join')}</h2></div>
               {asks.map((u) => (
                 <div key={u.user_id} className="dash-row">
-                  <div className="dash-row-main"><strong><UserName userId={u.user_id} name={u.display_name} /></strong><small>Asked {new Date(u.asked_at).toLocaleDateString()}</small></div>
+                  <div className="dash-row-main"><strong><UserName userId={u.user_id} name={u.display_name} /></strong><small>{t('Asked {date}', { date: new Date(u.asked_at).toLocaleDateString() })}</small></div>
                   <div className="dash-btns">
-                    <button type="button" className="btn btn-primary" disabled={busy} onClick={() => addMember(u)}>Add</button>
-                    <button type="button" className="btn btn-outline" disabled={busy} onClick={() => notNow(u)}>Not now</button>
+                    <button type="button" className="btn btn-primary" disabled={busy} onClick={() => addMember(u)}>{t('Add')}</button>
+                    <button type="button" className="btn btn-outline" disabled={busy} onClick={() => notNow(u)}>{t('Not now')}</button>
                   </div>
                 </div>
               ))}
@@ -301,24 +307,24 @@ export default function OrgDashboard() {
           )}
 
           <section className="hub-section" aria-labelledby="od-members">
-            <div className="hub-section-head"><h2 id="od-members">Members ({members.length})</h2></div>
+            <div className="hub-section-head"><h2 id="od-members">{t('Members ({n})', { n: members.length })}</h2></div>
             {members.map((u) => (
               <div key={u.user_id} className="dash-row">
                 <div className="dash-row-main">
                   <strong><UserName userId={u.user_id} name={u.display_name} /></strong>
-                  <small>{W.stepLabel[u.role] || u.role}{u.user_id === user.id ? ' (you)' : ''}</small>
+                  <small>{t(W.stepLabel[u.role] || u.role)}{u.user_id === user.id ? ' ' + t('(you)') : ''}</small>
                 </div>
                 {u.role === 'admin' && u.user_id === user.id && headCount > 1 && (
                   <div className="dash-btns">
-                    <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={stepDown}>Step down as {W.head}</button>
+                    <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={stepDown}>{t('Step down as {head}', { head: t(W.head) })}</button>
                   </div>
                 )}
                 {u.role !== 'admin' && (
                   <div className="dash-btns">
-                    {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => makeHead(u)}>Make {W.head}</button>}
-                    {isHead && u.role === 'member' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'organizer')}>Make {W.Organizer}</button>}
-                    {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'member')}>Make member</button>}
-                    {(isHead || u.role === 'member') && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => removeMember(u)}>Remove</button>}
+                    {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => makeHead(u)}>{t('Make {role}', { role: t(W.head) })}</button>}
+                    {isHead && u.role === 'member' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'organizer')}>{t('Make {role}', { role: t(W.Organizer) })}</button>}
+                    {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'member')}>{t('Make member')}</button>}
+                    {(isHead || u.role === 'member') && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => removeMember(u)}>{t('Remove')}</button>}
                   </div>
                 )}
               </div>
@@ -326,18 +332,18 @@ export default function OrgDashboard() {
           </section>
 
           <section className="hub-section" aria-labelledby="od-add">
-            <div className="hub-section-head"><h2 id="od-add">Invite someone</h2></div>
-            <p className="hub-org-desc">They get an invite and join when they say yes.</p>
+            <div className="hub-section-head"><h2 id="od-add">{t('Invite someone')}</h2></div>
+            <p className="hub-org-desc">{t('They get an invite and join when they say yes.')}</p>
             <form className="hub-search" onSubmit={search} noValidate>
-              <label htmlFor="od-find" className="sr-only">Find a VWB member by name</label>
-              <input id="od-find" type="text" autoComplete="off" placeholder="Find a VWB member by name" value={query} onChange={(e) => { setQuery(e.target.value); setSearched(false) }} />
-              <button type="submit" className="btn btn-primary" disabled={query.trim().length < 2}>Search</button>
+              <label htmlFor="od-find" className="sr-only">{t('Find a VWB member by name')}</label>
+              <input id="od-find" type="text" autoComplete="off" placeholder={t('Find a VWB member by name')} value={query} onChange={(e) => { setQuery(e.target.value); setSearched(false) }} />
+              <button type="submit" className="btn btn-primary" disabled={query.trim().length < 2}>{t('Search')}</button>
             </form>
-            {searched && found.length === 0 && <p className="hub-empty">No one found. They need a VWB account first.</p>}
+            {searched && found.length === 0 && <p className="hub-empty">{t('No one found. They need a VWB account first.')}</p>}
             {found.map((u) => (
               <div key={u.user_id} className="dash-row">
                 <div className="dash-row-main"><strong><UserName userId={u.user_id} name={u.display_name} /></strong></div>
-                <button type="button" className="btn btn-primary group-small-btn" disabled={busy} onClick={() => addMember(u)}>Invite</button>
+                <button type="button" className="btn btn-primary group-small-btn" disabled={busy} onClick={() => addMember(u)}>{t('Invite')}</button>
               </div>
             ))}
           </section>
@@ -349,33 +355,33 @@ export default function OrgDashboard() {
       {tab === 'chats' && (
         <DashPanel k="chats">
           <section className="hub-section" aria-labelledby="od-news">
-            <div className="hub-section-head"><h2 id="od-news"><Icon name="megaphone" /> Announcements</h2></div>
+            <div className="hub-section-head"><h2 id="od-news"><Icon name="megaphone" /> {t('Announcements')}</h2></div>
             {newsBoard
               ? <button type="button" className="groups-row" onClick={() => navigate('/groups/' + newsBoard.id)}>
                   <span className="groups-row-name">{newsBoard.name}</span>
-                  <span className="groups-row-meta">Post news &#8250;</span>
+                  <span className="groups-row-meta">{t('Post news')} &#8250;</span>
                 </button>
               : <>
-                  <p className="hub-org-desc">A board for news to everyone in {orgName || 'your group'}. {W.leads} post. Members read it and get an alert.</p>
-                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} disabled={chatBusy} onClick={startNews}>Start Announcements</button>
+                  <p className="hub-org-desc">{t('A board for news to everyone in {group}. {leads} post. Members read it and get an alert.', { group: orgName || t('your group'), leads: t('{heads} and {organizers}', { heads: t(W.heads), organizers: t(W.isGroup ? W.Organizer + 's' : W.organizers) }) })}</p>
+                  <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} disabled={chatBusy} onClick={startNews}>{t('Start Announcements')}</button>
                 </>}
           </section>
 
           <section className="hub-section" aria-labelledby="od-chats">
-            <div className="hub-section-head"><h2 id="od-chats">Campfires</h2></div>
-            <p className="hub-org-desc">{general ? 'The general chat has everyone in ' + (orgName || 'your group') + '. Start a smaller Campfire under it for one task or topic, and pick who joins. Only the people you pick see it.' : 'Private chats for ' + (orgName || 'your group') + '. The general chat adds everyone in your group automatically.'}</p>
-            {chatsReady && chats.length === 0 && <p className="hub-empty">No chats yet. Start your general chat below.</p>}
+            <div className="hub-section-head"><h2 id="od-chats">{t('Campfires')}</h2></div>
+            <p className="hub-org-desc">{general ? t('The general chat has everyone in {group}. Start a smaller Campfire under it for one task or topic, and pick who joins. Only the people you pick see it.', { group: orgName || t('your group') }) : t('Private chats for {group}. The general chat adds everyone in your group automatically.', { group: orgName || t('your group') })}</p>
+            {chatsReady && chats.length === 0 && <p className="hub-empty">{t('No chats yet. Start your general chat below.')}</p>}
             {general && chatRow(general, false)}
             {sidechats.map((c) => chatRow(c, true))}
             {otherChats.map((c) => chatRow(c, false))}
             <form onSubmit={startChat} noValidate style={{ marginTop: '0.75rem' }}>
-              <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{!general ? 'Name for your general chat' : 'Start a smaller Campfire under ' + general.name}</label>
-              <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={!general ? (orgName || 'Group') + ' general chat' : 'For example, Volunteers or Food drive'} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
+              <label htmlFor="od-chat-name" className="cal-sub" style={{ display: 'block' }}>{!general ? t('Name for your general chat') : t('Start a smaller Campfire under {name}', { name: general.name })}</label>
+              <input id="od-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={!general ? t('{name} general chat', { name: orgName || t('Group') }) : t('For example, Volunteers or Food drive')} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
               {general && (
                 <fieldset style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
-                  <legend className="cal-sub">Who is in it (you are added automatically)</legend>
+                  <legend className="cal-sub">{t('Who is in it (you are added automatically)')}</legend>
                   {people.length > 8 && (
-                    <input type="search" aria-label="Search the group by name" placeholder="Type a name" value={sideFilter} onChange={(e) => setSideFilter(e.target.value)} autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: 44, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
+                    <input type="search" aria-label={t('Search the group by name')} placeholder={t('Type a name')} value={sideFilter} onChange={(e) => setSideFilter(e.target.value)} autoComplete="off" style={{ width: '100%', boxSizing: 'border-box', minHeight: 44, fontSize: 16, margin: '0.25rem 0 0.5rem' }} />
                   )}
                   <div style={{ maxHeight: 260, overflowY: 'auto' }}>
                     {shownPeople.map((u) => (
@@ -384,15 +390,15 @@ export default function OrgDashboard() {
                         <span>{u.display_name}</span>
                       </label>
                     ))}
-                    {people.length === 0 && <p className="hub-empty">No one else is in the group yet.</p>}
+                    {people.length === 0 && <p className="hub-empty">{t('No one else is in the group yet.')}</p>}
                   </div>
                   {people.length > 1 && (
-                    <button type="button" className="btn btn-outline group-small-btn" style={{ marginTop: '0.4rem' }} onClick={() => setSidePicked(sidePicked.length === people.length ? [] : people.map((u) => u.user_id))}>{sidePicked.length === people.length ? 'Clear everyone' : 'Pick everyone'}</button>
+                    <button type="button" className="btn btn-outline group-small-btn" style={{ marginTop: '0.4rem' }} onClick={() => setSidePicked(sidePicked.length === people.length ? [] : people.map((u) => u.user_id))}>{sidePicked.length === people.length ? t('Clear everyone') : t('Pick everyone')}</button>
                   )}
                 </fieldset>
               )}
               {chatNote && <p role="alert" className="groups-error">{chatNote}</p>}
-              <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? 'Starting...' : !general ? 'Start the general chat' : 'Start the Campfire'}</button>
+              <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={chatBusy}>{chatBusy ? t('Starting...') : !general ? t('Start the general chat') : t('Start the Campfire')}</button>
             </form>
           </section>
         </DashPanel>
@@ -414,31 +420,31 @@ export default function OrgDashboard() {
           </div>
 
           <section className="hub-section" aria-labelledby="od-events">
-            <div className="hub-section-head"><h2 id="od-events">Events and sign-ups</h2></div>
-            {!loading && events.length === 0 && <p className="hub-empty">No upcoming events yet.</p>}
+            <div className="hub-section-head"><h2 id="od-events">{t('Events and sign-ups')}</h2></div>
+            {!loading && events.length === 0 && <p className="hub-empty">{t('No upcoming events yet.')}</p>}
             {events.map((e) => (
               <Link key={e.id} to={'/events/' + e.id} className="cal-card" style={{ display: 'block', textDecoration: 'none' }}>
-                <span className="cal-card-title">{e.title}{e.status === 'cancelled' ? ' (cancelled)' : ''}</span>
+                <span className="cal-card-title">{e.title}{e.status === 'cancelled' ? ' ' + t('(cancelled)') : ''}</span>
                 <span className="cal-card-meta">{when(e.starts_at)}</span>
                 <span className="cal-card-meta">
                   {e.signup_enabled
-                    ? e.signup_count + (e.signup_limit ? ' of ' + e.signup_limit : '') + ' signed up'
-                    : 'No sign-up'}
+                    ? (e.signup_limit ? t('{n} of {limit} signed up', { n: e.signup_count, limit: e.signup_limit }) : t('{n} signed up', { n: e.signup_count }))
+                    : t('No sign-up')}
                 </span>
               </Link>
             ))}
           </section>
 
           <section className="hub-section" aria-labelledby="od-posts">
-            <div className="hub-section-head"><h2 id="od-posts">Needs and offers</h2></div>
-            {!loading && posts.length === 0 && <p className="hub-empty">Nothing posted under your group's name yet.</p>}
+            <div className="hub-section-head"><h2 id="od-posts">{t('Needs and offers')}</h2></div>
+            {!loading && posts.length === 0 && <p className="hub-empty">{t("Nothing posted under your group's name yet.")}</p>}
             {posts.map((p) => (
               <div key={p.kind + p.id} className="cal-card">
-                <span className="cal-card-title">{p.kind === 'need' ? 'Need' : 'Offer'}: {p.title}</span>
+                <span className="cal-card-title">{p.kind === 'need' ? t('Need') : t('Offer')}: {p.title}</span>
                 {p.description && <span className="hub-org-desc">{p.description}</span>}
-                <span className="cal-card-meta">{p.status} &middot; {new Date(p.created_at).toLocaleDateString()}</span>
+                <span className="cal-card-meta">{t(p.status)} &middot; {new Date(p.created_at).toLocaleDateString()}</span>
                 {p.kind === 'need' && !['completed', 'cancelled', 'closed', 'archived'].includes(p.status) && (
-                  <Link to={'/ask?edit=' + p.id} className="hub-more">Edit</Link>
+                  <Link to={'/ask?edit=' + p.id} className="hub-more">{t('Edit')}</Link>
                 )}
               </div>
             ))}
@@ -451,8 +457,8 @@ export default function OrgDashboard() {
       {tab === 'settings' && (
         <DashPanel k="settings">
           <section className="hub-section" aria-labelledby="od-public">
-            <div className="hub-section-head"><h2 id="od-public">Your public page</h2></div>
-            <p className="hub-org-desc">Home area, who can see your group, and your contact email are set at the bottom of your group page.</p>
+            <div className="hub-section-head"><h2 id="od-public">{t('Your public page')}</h2></div>
+            <p className="hub-org-desc">{t('Home area, who can see your group, and your contact email are set at the bottom of your group page.')}</p>
             <div className="dash-shortcuts">
               {shortcut('\u{1F3E1}', 'Open our page', '/orgs/' + id)}
               {shortcut('pencil', 'Change how our page looks', '/orgs/' + id + '?look=1')}
@@ -463,9 +469,9 @@ export default function OrgDashboard() {
           <RoleLog kind="org" placeId={id} org={orgInfo} />
           {isHead && headCount > 1 && (
             <section className="hub-section" aria-labelledby="od-step">
-              <div className="hub-section-head"><h2 id="od-step">Your role</h2></div>
-              <p className="hub-org-desc">You are one of {headCount} {headCount === 1 ? W.head : W.heads}. You can step down and stay on as {W.anOrganizer}.</p>
-              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} disabled={busy} onClick={stepDown}>Step down as {W.head}</button>
+              <div className="hub-section-head"><h2 id="od-step">{t('Your role')}</h2></div>
+              <p className="hub-org-desc">{t('You are one of {n} {heads}. You can step down and stay on as {role}.', { n: headCount, heads: t(headCount === 1 ? W.head : W.heads), role: anOrganizer })}</p>
+              <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} disabled={busy} onClick={stepDown}>{t('Step down as {head}', { head: t(W.head) })}</button>
               {note && <p className="dash-note" role="status">{note}</p>}
             </section>
           )}

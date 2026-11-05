@@ -5,8 +5,10 @@ import { supabase } from '../supabaseClient'
 // organization's Head allows it. The database sends nothing when it is off.
 
 import { orgWords } from '../utils/roleWords'
+import { useT } from '../utils/lang'
 
 export default function OrgMemberNames({ orgId, words }) {
+  const t = useT()
   const ROLE_LABEL = (words || orgWords(null)).roleLabel
   const [people, setPeople] = useState([])
 
@@ -23,12 +25,12 @@ export default function OrgMemberNames({ orgId, words }) {
 
   return (
     <section className="cal-box" aria-labelledby="org-people">
-      <h2 id="org-people">Members</h2>
+      <h2 id="org-people">{t('Members')}</h2>
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {people.map((p, i) => (
           <li key={i} style={{ minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
             <span>{p.display_name}</span>
-            <span className="group-member-sub">{ROLE_LABEL[p.role] || p.role}</span>
+            <span className="group-member-sub">{t(ROLE_LABEL[p.role] || p.role)}</span>
           </li>
         ))}
       </ul>

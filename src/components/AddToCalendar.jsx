@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../utils/lang'
 import { addToPhoneCalendar, downloadIcs, googleCalendarLink, outlookCalendarLink } from '../utils/calendar'
 
 // "Add this event to my calendar." The same choices on every device, so
@@ -29,6 +30,7 @@ const smallLink = { ...linkStyle, fontSize: '0.9rem', color: 'var(--text-seconda
 // asButton: a full-width button (children = its label).
 // Otherwise the children (the date) become the tappable link.
 export default function AddToCalendar({ ev, children, asButton = false }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [saved, setSaved] = useState(readSaved)
   const [remember, setRemember] = useState(false)
@@ -61,24 +63,24 @@ export default function AddToCalendar({ ev, children, asButton = false }) {
         <>
           <br />
           <em style={{ color: 'var(--text-secondary)' }}>
-            {usual ? 'Tap the date to add it to ' + usual.label + '.' : 'Tap the date to add it to your calendar.'}
+            {usual ? t('Tap the date to add it to {cal}.', { cal: t(usual.label) }) : t('Tap the date to add it to your calendar.')}
           </em>
         </>
       )}
       {usual && (
         <>
           <br />
-          <button type="button" style={smallLink} onClick={change}>Use a different calendar</button>
+          <button type="button" style={smallLink} onClick={change}>{t('Use a different calendar')}</button>
         </>
       )}
       {open && !usual && (
-        <div className="cal-actions" role="group" aria-label="Choose your calendar" style={{ marginTop: '0.5rem' }}>
+        <div className="cal-actions" role="group" aria-label={t('Choose your calendar')} style={{ marginTop: '0.5rem' }}>
           {OPTIONS.map((o) => (
-            <button key={o.id} type="button" className="btn btn-outline btn-full" onClick={() => choose(o)}>{o.label}</button>
+            <button key={o.id} type="button" className="btn btn-outline btn-full" onClick={() => choose(o)}>{t(o.label)}</button>
           ))}
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minHeight: 44 }}>
             <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ width: 20, height: 20 }} />
-            Use this one every time
+            {t('Use this one every time')}
           </label>
         </div>
       )}

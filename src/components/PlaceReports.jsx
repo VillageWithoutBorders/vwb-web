@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { UserName } from './AvatarDisplay'
+import { useT, getLang } from '../utils/lang'
 
 // Reports made inside one village or organization, for its leaders.
 // The database never sends who made a report, and never a report about the
@@ -11,6 +12,7 @@ const SOURCE = { campfire: 'village chat', group: 'a chat', conversation: 'a pri
 const STATUS = { open: 'VWB admins are reviewing', reviewed: 'VWB admins reviewed it', dismissed: 'VWB admins closed it' }
 
 export default function PlaceReports({ kind, placeId, onCount }) {
+  const t = useT()
   const [rows, setRows] = useState(null)
 
   useEffect(() => {
@@ -28,27 +30,28 @@ export default function PlaceReports({ kind, placeId, onCount }) {
 
   return (
     <section className="hub-section" id="pr-sec" aria-labelledby="pr-head">
-      <div className="hub-section-head"><h2 id="pr-head">Reports here ({rows.length})</h2></div>
+      <div className="hub-section-head"><h2 id="pr-head">{t('Reports here ({n})', { n: rows.length })}</h2></div>
       <p className="hub-org-desc">
-        Reports from the last 30 days. Who made each report is never shown. VWB admins have every report too.
+        {t('Reports from the last 30 days. Who made each report is never shown. VWB admins have every report too.')}
+        {' '}
         {kind === 'village'
-          ? ' You can check in with the person, or ask to remove them from the people list. Two members have to agree.'
-          : ' You can check in with the person, or remove them in the member list above.'}
+          ? t('You can check in with the person, or ask to remove them from the people list. Two members have to agree.')
+          : t('You can check in with the person, or remove them in the member list above.')}
       </p>
       {rows.map((r) => (
         <div key={r.id} className="dash-row" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
           <div className="dash-row-main">
             <strong><UserName userId={r.reported_user_id} name={r.reported_name} /></strong>
             <small>
-              {new Date(r.created_at).toLocaleDateString()}
-              {r.reason ? ' · ' + r.reason : ''}
-              {SOURCE[r.source] ? ' · from ' + SOURCE[r.source] : ''}
-              {' · '}{STATUS[r.status] || r.status}
+              {new Date(r.created_at).toLocaleDateString(getLang() === 'es' ? 'es-US' : undefined)}
+              {r.reason ? ' · ' + t(r.reason) : ''}
+              {SOURCE[r.source] ? ' · ' + t('from ' + SOURCE[r.source]) : ''}
+              {' · '}{STATUS[r.status] ? t(STATUS[r.status]) : r.status}
             </small>
           </div>
           {r.details && (
             <details style={{ marginTop: '0.25rem' }}>
-              <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center', cursor: 'pointer' }}>What the report says</summary>
+              <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center', cursor: 'pointer' }}>{t('What the report says')}</summary>
               <p className="hub-org-desc" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{r.details}</p>
             </details>
           )}

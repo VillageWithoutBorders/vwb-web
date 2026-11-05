@@ -7,6 +7,7 @@ import { canVouch } from '../utils/vouchEligibility'
 import { startConversation } from '../utils/startConversation'
 import { tell } from './AdminDialog'
 import { cottagesICanVisit } from '../utils/cottageVisits'
+import { useT, getLang, t as tNow } from '../utils/lang'
 
 function reportError(context, error) {
   if (!error) return false
@@ -17,6 +18,7 @@ function reportError(context, error) {
 export default function AvatarDisplay({ url, userId, size = 32, label = null, className = '', style: labelStyle = null }) {
   const navigate = useNavigate()
   const blockedBy = useBlockedBy()
+  const t = useT()
   const src = url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId || 'default'}`
   const [showPopup, setShowPopup] = useState(false)
   const [info, setInfo] = useState(null)
@@ -64,7 +66,7 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
       eligible = await canVouch(myId, userId)
     }
     setInfo({
-      name: p?.display_name || 'Neighbor',
+      name: p?.display_name || t('Neighbor'),
       avatar: p?.avatar_url || null,
       ambassador: p?.is_hope_ambassador || false,
       role: p?.role || null,
@@ -152,46 +154,46 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
               <img src={popupSrc} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--surface-2)', border: '2px solid var(--border)' }} />
               <div>
-                <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-strong)' }}>{info?.name || 'Loading...'}</div>
+                <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-strong)' }}>{info?.name || t('Loading...')}</div>
                 <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
-                  {info?.role === 'founder' && <span style={{ fontSize: '0.8125rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Founder</span>}
-                  {info?.role === 'admin' && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Admin</span>}
-                  {info?.ambassador && <span style={{ fontSize: '0.8125rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Hope Ambassador</span>}
+                  {info?.role === 'founder' && <span style={{ fontSize: '0.8125rem', background: 'var(--purple-bg)', color: 'var(--purple)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>{t('Founder')}</span>}
+                  {info?.role === 'admin' && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>{t('VWB admin')}</span>}
+                  {info?.ambassador && <span style={{ fontSize: '0.8125rem', background: 'var(--success-bg)', color: 'var(--accent)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>{t('Hope Ambassador')}</span>}
                 </div>
               </div>
             </div>
             {info && (
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                 {(info.eligible || info.hasVouched) ? (
-                  <button type="button" onClick={toggleVouch} aria-label={info.hasVouched ? 'Remove your vouch' : 'Vouch for this neighbor'} style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: info.hasVouched ? '#1a4a3a' : '#222', borderRadius: '8px', cursor: 'pointer', border: info.hasVouched ? '1px solid #4ecca3' : '1px solid transparent', transition: 'all 0.2s' }}>
+                  <button type="button" onClick={toggleVouch} aria-label={info.hasVouched ? t('Remove your vouch') : t('Vouch for this neighbor')} style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: info.hasVouched ? '#1a4a3a' : '#222', borderRadius: '8px', cursor: 'pointer', border: info.hasVouched ? '1px solid #4ecca3' : '1px solid transparent', transition: 'all 0.2s' }}>
                     <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent)' }}>{info.vouches}</div>
-                    <div style={{ fontSize: '0.8125rem', color: info.hasVouched ? '#4ecca3' : '#888' }}>{info.hasVouched ? 'Vouched' : 'Vouch'}</div>
+                    <div style={{ fontSize: '0.8125rem', color: info.hasVouched ? '#4ecca3' : '#888' }}>{info.hasVouched ? t('Vouched') : t('Vouch')}</div>
                   </button>
                 ) : (
                   <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: 'var(--surface-2)', borderRadius: '8px' }}>
                     <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent)' }}>{info.vouches}</div>
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Vouches</div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{t('Vouches')}</div>
                   </div>
                 )}
                 {info.joined && (
                   <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: 'var(--surface-2)', borderRadius: '8px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.8125rem', color: 'var(--text-strong)' }}>{new Date(info.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</div>
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Joined</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.8125rem', color: 'var(--text-strong)' }}>{new Date(info.joined).toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { month: 'short', year: 'numeric' })}</div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{t('Joined')}</div>
                   </div>
                 )}
               </div>
             )}
             {info?.myId && info.myId !== userId && (
-              <button type="button" onClick={messageThem} disabled={messaging} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.65rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? 'Opening...' : 'Message'}</button>
+              <button type="button" onClick={messageThem} disabled={messaging} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.65rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? t('Opening...') : t('Message')}</button>
             )}
             {/* Nov 1 (Jade): visit their cottage, when they let you. */}
             {info?.canVisit && !blockedBy.has(userId) && (
-              <button type="button" onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId + '/cottage') }} style={{ width: '100%', minHeight: 44, marginBottom: '0.5rem', padding: '0.6rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>Visit their cottage</button>
+              <button type="button" onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId + '/cottage') }} style={{ width: '100%', minHeight: 44, marginBottom: '0.5rem', padding: '0.6rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{t('Visit their cottage')}</button>
             )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Close</button>
+              <button onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>{t('Close')}</button>
               {!blockedBy.has(userId) && (
-                <button onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>View Profile</button>
+                <button onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>{t('View profile')}</button>
               )}
             </div>
           </div>
@@ -204,5 +206,5 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
 // A person's name that opens the same card as their picture.
 // Use it anywhere a name is shown: <UserName userId={id} name={name} />
 export function UserName({ userId, name, className = '', style = null }) {
-  return <AvatarDisplay userId={userId} label={name || 'Neighbor'} className={className} style={style} />
+  return <AvatarDisplay userId={userId} label={name || tNow('Neighbor')} className={className} style={style} />
 }
