@@ -12,8 +12,10 @@ import VouchButton from '../components/VouchButton'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
+import { useT, getLang, t as tNow } from '../utils/lang'
 
 // Reasons for ending a helper's part before the task is finished.
+// Labels go through t() where they are shown.
 const END_REASONS = {
   requester: [
     { value: 'no_show', label: 'They did not show up' },
@@ -30,6 +32,7 @@ const END_REASONS = {
 const ADMIN_SEES = ['no_show', 'felt_off']
 
 export default function ActiveTasks() {
+  const t = useT()
   const { user, organizations } = useAuth()
   const navigate = useNavigate()
   // /tasks?tab=archived opens the Archived tab (Home and Profile link here).
@@ -37,13 +40,13 @@ export default function ActiveTasks() {
   // Mine has four tabs: Requests (nobody has taken them yet), Offers, Active, Archived.
   // /tasks?tab=requests|offers|active|archived opens one directly.
   const [tab, setTabState] = useState(() => {
-    const t = searchParams.get('tab')
-    return ['requests', 'offers', 'active', 'archived'].includes(t) ? t : 'active'
+    const tb = searchParams.get('tab')
+    return ['requests', 'offers', 'active', 'archived'].includes(tb) ? tb : 'active'
   })
-  function setTab(t) {
-    setTabState(t)
+  function setTab(id) {
+    setTabState(id)
     const next = new URLSearchParams(searchParams)
-    next.set('tab', t)
+    next.set('tab', id)
     setSearchParams(next, { replace: true })
   }
   const [myRequests, setMyRequests] = useState([])
@@ -117,7 +120,7 @@ export default function ActiveTasks() {
       // Tell the person when a task has just moved because both have answered.
       if (both && prevBoth.current) {
         const moved = [...both].some(id => !prevBoth.current.has(id))
-        if (moved) setNotice('A task moved to Archived because you both answered. You can still vouch for them there.')
+        if (moved) setNotice(t('A task moved to Archived because you both answered. You can still vouch for them there.'))
       }
       if (both) prevBoth.current = new Set([...(prevBoth.current || []), ...both])
     } finally {
@@ -178,7 +181,7 @@ export default function ActiveTasks() {
         .filter(m => m.request_id === req.id)
         .map(m => ({
           ...m,
-          helper_name: helperProfiles[m.helper_id]?.display_name || 'A neighbor',
+          helper_name: helperProfiles[m.helper_id]?.display_name || tNow('A neighbor'),
           is_ambassador: helperProfiles[m.helper_id]?.is_hope_ambassador || false,
           helper_avatar: helperProfiles[m.helper_id]?.avatar_url || null,
         }))
@@ -187,7 +190,7 @@ export default function ActiveTasks() {
 
       const reqPending = pending
         .filter(m => m.request_id === req.id)
-        .map(m => ({ ...m, helper_name: helperProfiles[m.helper_id]?.display_name || 'A neighbor', is_ambassador: helperProfiles[m.helper_id]?.is_hope_ambassador || false }))
+        .map(m => ({ ...m, helper_name: helperProfiles[m.helper_id]?.display_name || tNow('A neighbor'), is_ambassador: helperProfiles[m.helper_id]?.is_hope_ambassador || false }))
 
       return { ...req, matches: reqMatches, pending: reqPending, allDone }
     })
@@ -237,7 +240,7 @@ export default function ActiveTasks() {
       return {
         ...match,
         request: req,
-        requester_name: requesterProfiles[req.requester_id]?.display_name || 'A neighbor',
+        requester_name: requesterProfiles[req.requester_id]?.display_name || tNow('A neighbor'),
         isDone: match.helper_completed && match.requester_completed,
       }
     }).filter(Boolean)
@@ -296,7 +299,7 @@ export default function ActiveTasks() {
     setFeedbackBusy(false)
     if (error) {
       console.error('Failed to save task feedback:', error)
-      tell(error.code === '55000' ? error.message : 'Could not save this. Try again.', { tone: 'error' })
+      tell(error.code === '55000' ? error.message : t('Could not save this. Try again.'), { tone: 'error' })
       return
     }
     setMyFeedback(prev => ({ ...prev, [matchId]: outcome }))
@@ -305,7 +308,7 @@ export default function ActiveTasks() {
     const both = await refreshRated([matchId])
     if (both && both.has(matchId)) {
       if (prevBoth.current) prevBoth.current.add(matchId)
-      setNotice('Thank you. You both answered, so this task moved to Archived. You can still vouch for them there.')
+      setNotice(t('Thank you. You both answered, so this task moved to Archived. You can still vouch for them there.'))
     }
   }
 
@@ -329,14 +332,14 @@ export default function ActiveTasks() {
     setEndBusy(false)
     if (error) {
       console.error('Failed to end this helper match:', error)
-      tell(error.code === '55000' ? error.message : 'Could not do that. Try again.', { tone: 'error' })
+      tell(error.code === '55000' ? error.message : t('Could not do that. Try again.'), { tone: 'error' })
       return
     }
     const wasRequester = ending.isRequester
     setEnding(null)
     tell(wasRequester
-      ? (reopened ? 'Done. Your request is back on the feed.' : 'Done. Their part has been closed out.')
-      : 'Done. Thank you for letting them know.')
+      ? (reopened ? t('Done. Your request is back on the feed.') : t('Done. Their part has been closed out.'))
+      : t('Done. Thank you for letting them know.'))
     await loadTasks()
   }
 
@@ -354,7 +357,7 @@ export default function ActiveTasks() {
 
     if (updateErr) {
       console.error('Failed to mark your part complete:', updateErr)
-      tell('Could not save this. Try again.', { tone: 'error' })
+      tell(t('Could not save this. Try again.'), { tone: 'error' })
       return
     }
 
@@ -405,12 +408,12 @@ export default function ActiveTasks() {
   // Delete request (soft delete via archived_at)
   // =============================================
   async function deleteRequest(requestId) {
-    if (!(await askConfirm('Archive this request? It will move to your Archived tab.'))) return
+    if (!(await askConfirm(t('Archive this request? It will move to your Archived tab.')))) return
     const { error } = await supabase
       .from('help_requests')
       .update({ archived_at: new Date().toISOString() })
       .eq('id', requestId)
-    if (error) { console.error('Failed to archive request:', error); tell('Could not archive this request. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to archive request:', error); tell(t('Could not archive this request. Try again.'), { tone: 'error' }); return }
     await loadTasks()
   }
 
@@ -427,11 +430,11 @@ export default function ActiveTasks() {
     setStillBusy(false)
     if (error) {
       console.error('Failed to keep request open:', error)
-      setStillNote(error.message && error.message.length < 140 ? error.message : 'Could not keep it open. Try again.')
+      setStillNote(error.message && error.message.length < 140 ? error.message : t('Could not keep it open. Try again.'))
       return
     }
     clearStill()
-    setNotice('Your request stays open until ' + shortWhen(data) + '.')
+    setNotice(t('Your request stays open until {when}.', { when: shortWhen(data) }))
     await loadTasks(true)
   }
   async function closeIt(requestId) {
@@ -441,18 +444,18 @@ export default function ActiveTasks() {
     setStillBusy(false)
     if (error) {
       console.error('Failed to close request:', error)
-      setStillNote(error.message && error.message.length < 140 ? error.message : 'Could not close it. Try again.')
+      setStillNote(error.message && error.message.length < 140 ? error.message : t('Could not close it. Try again.'))
       return
     }
     clearStill()
-    setNotice('Closed. It is in your Archived tab.')
+    setNotice(t('Closed. It is in your Archived tab.'))
     await loadTasks(true)
   }
 
   // Open a group-only request to everyone nearby right now.
   async function openToEveryone(requestId) {
     const { error } = await supabase.rpc('open_request_to_everyone', { p_request: requestId })
-    if (error) { console.error('Failed to open request:', error); tell('Could not open this request. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to open request:', error); tell(t('Could not open this request. Try again.'), { tone: 'error' }); return }
     await loadTasks()
   }
 
@@ -466,11 +469,11 @@ export default function ActiveTasks() {
     setNarrowBusy(false)
     if (error) {
       console.error('Failed to take request back to the group:', error)
-      setNarrowNote(error.message && error.message.length < 140 ? error.message : 'Could not do that. Try again.')
+      setNarrowNote(error.message && error.message.length < 140 ? error.message : t('Could not do that. Try again.'))
       return
     }
     setNarrowing(null)
-    setNotice('Done. Only your group can see this request for now. Neighbors who already said yes keep their spot.')
+    setNotice(t('Done. Only your group can see this request for now. Neighbors who already said yes keep their spot.'))
     await loadTasks(true)
   }
 
@@ -482,7 +485,7 @@ export default function ActiveTasks() {
     setDeleteBusy(false)
     if (error) {
       console.error('Failed to delete request:', error)
-      setDeleteNote(error.message && error.message.length < 160 ? error.message : 'Could not delete this request. Try again.')
+      setDeleteNote(error.message && error.message.length < 160 ? error.message : t('Could not delete this request. Try again.'))
       return
     }
     setDeletingId(null)
@@ -501,7 +504,7 @@ export default function ActiveTasks() {
       .select('id')
       .or('and(helper_id.eq.' + helperId + ',requester_id.eq.' + requesterId + '),and(helper_id.eq.' + requesterId + ',requester_id.eq.' + helperId + ')')
       .maybeSingle()
-    if (existingErr) { console.error('Failed to check for an existing conversation:', existingErr); tell('Something went wrong. Try again.', { tone: 'error' }); return }
+    if (existingErr) { console.error('Failed to check for an existing conversation:', existingErr); tell(t('Something went wrong. Try again.'), { tone: 'error' }); return }
 
     if (existing) {
       // Point the conversation at this request so its banner reflects what
@@ -518,24 +521,24 @@ export default function ActiveTasks() {
         .insert({ request_id: requestId, helper_id: helperId, requester_id: requesterId })
         .select()
         .single()
-      if (newErr || !newConvo) { console.error('Failed to start a conversation:', newErr); tell('Could not start a conversation. Try again.', { tone: 'error' }); return }
+      if (newErr || !newConvo) { console.error('Failed to start a conversation:', newErr); tell(t('Could not start a conversation. Try again.'), { tone: 'error' }); return }
       navigate('/conversation/' + newConvo.id)
     }
   }
 
   // "Thu 4:30 PM", for closing times.
   function shortWhen(ts) {
-    return ts ? new Date(ts).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : ''
+    return ts ? new Date(ts).toLocaleString(getLang() === 'es' ? 'es-US' : 'en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : ''
   }
 
   function timeAgo(dateStr) {
     const diff = Date.now() - new Date(dateStr).getTime()
     const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'Just now'
-    if (mins < 60) return mins + 'm ago'
+    if (mins < 1) return t('Just now')
+    if (mins < 60) return t('{n}m ago', { n: mins })
     const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return hrs + 'h ago'
-    return Math.floor(hrs / 24) + 'd ago'
+    if (hrs < 24) return t('{n}h ago', { n: hrs })
+    return t('{n}d ago', { n: Math.floor(hrs / 24) })
   }
 
   const URGENCY_LABELS = {
@@ -553,17 +556,17 @@ export default function ActiveTasks() {
     setOfferBusy(m.id)
     const { ok, convoId } = await acceptHelpOffer({ id: m.id, helper_id: m.helper_id, request_id: req.id, skill_needed: req.skill_needed, max_helpers: req.max_helpers, accepted_count: req.matches.length }, user.id)
     setOfferBusy(null)
-    if (!ok) { tell('Could not say yes just now. Try again.', { tone: 'error' }); return }
+    if (!ok) { tell(t('Could not say yes just now. Try again.'), { tone: 'error' }); return }
     // Open the chat so the two of you can plan.
     if (convoId) { navigate('/conversation/' + convoId); return }
-    setNotice(m.helper_name + ' is helping now. Find your chat under Messages in a moment.')
+    setNotice(t('{name} is helping now. Find your chat under Messages in a moment.', { name: m.helper_name }))
     loadTasks()
   }
   async function sayNotNow(m) {
     setOfferBusy(m.id)
     const ok = await declineHelpOffer(m)
     setOfferBusy(null)
-    if (!ok) { tell('Could not save that. Try again.', { tone: 'error' }); return }
+    if (!ok) { tell(t('Could not save that. Try again.'), { tone: 'error' }); return }
     loadTasks()
   }
 
@@ -615,37 +618,37 @@ export default function ActiveTasks() {
     return (
       <div style={{ marginTop: '0.6rem', padding: '0.75rem', background: 'var(--surface-2)', border: '1px solid var(--border-strong)', borderRadius: '8px' }}>
         <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.35rem' }}>
-          {isRequester ? 'End ' + otherName + "'s help?" : 'Step back from this task?'}
+          {isRequester ? t("End {name}'s help?", { name: otherName }) : t('Step back from this task?')}
         </div>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0 0 0.5rem' }}>
           {isRequester
-            ? 'Your request goes back on the feed if it still needs helpers. They are told you closed it out, but not why.'
-            : 'The request goes back on the feed so someone else can offer. They are told you can no longer help, but not why.'}
+            ? t('Your request goes back on the feed if it still needs helpers. They are told you closed it out, but not why.')
+            : t('The request goes back on the feed so someone else can offer. They are told you can no longer help, but not why.')}
         </p>
-        <div role="radiogroup" aria-label="Reason" style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+        <div role="radiogroup" aria-label={t('Reason')} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
           {reasons.map(r => (
             <label key={r.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text)', fontSize: '0.85rem', cursor: 'pointer' }}>
               <input type="radio" name={'end-reason-' + matchId} value={r.value} checked={endReason === r.value} onChange={() => setEndReason(r.value)} />
-              {r.label}
+              {t(r.label)}
             </label>
           ))}
         </div>
         {ADMIN_SEES.includes(endReason) && (
-          <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', margin: '0.5rem 0 0' }}>An admin will be told, so they can look into it.</p>
+          <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', margin: '0.5rem 0 0' }}>{t('An admin will be told, so they can look into it.')}</p>
         )}
         <textarea
           value={endNote}
           onChange={e => setEndNote(e.target.value)}
           maxLength={500}
-          placeholder="Anything else you want to share? (optional, only admins see it)"
-          aria-label="Anything else you want to share"
+          placeholder={t('Anything else you want to share? (optional, only admins see it)')}
+          aria-label={t('Anything else you want to share')}
           style={{ width: '100%', marginTop: '0.6rem', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '3.5rem', boxSizing: 'border-box' }}
         />
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
           <button className="btn btn-primary btn-sm" disabled={!endReason || endBusy} onClick={confirmEnd}>
-            {endBusy ? 'Saving...' : isRequester ? 'End their help' : 'Step back'}
+            {endBusy ? t('Saving...') : isRequester ? t('End their help') : t('Step back')}
           </button>
-          <button className="btn btn-outline btn-sm" disabled={endBusy} onClick={() => setEnding(null)}>Cancel</button>
+          <button className="btn btn-outline btn-sm" disabled={endBusy} onClick={() => setEnding(null)}>{t('Cancel')}</button>
         </div>
       </div>
     )
@@ -661,14 +664,14 @@ export default function ActiveTasks() {
     const title = { color: 'var(--text)', fontWeight: 600, fontSize: '0.9rem' }
     const small = { color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.25rem 0 0.5rem' }
     const waiting = ratedReady && !bothRated[matchId]
-      ? <p style={{ ...small, marginBottom: 0, fontStyle: 'italic' }}>Waiting for {otherName} to answer. This task moves to Archived once you have both answered.</p>
+      ? <p style={{ ...small, marginBottom: 0, fontStyle: 'italic' }}>{t('Waiting for {name} to answer. This task moves to Archived once you have both answered.', { name: otherName })}</p>
       : null
 
     if (answer === 'went_well') {
       return (
         <div style={box}>
-          <div style={title}>Thank you. We are glad it went well.</div>
-          <p style={small}>A vouch tells other neighbors they can trust {otherName}.</p>
+          <div style={title}>{t('Thank you. We are glad it went well.')}</div>
+          <p style={small}>{t('A vouch tells other neighbors they can trust {name}.', { name: otherName })}</p>
           <VouchButton userId={otherUserId} size="sm" showCount={true} />
           {waiting}
         </div>
@@ -677,8 +680,8 @@ export default function ActiveTasks() {
     if (answer === 'went_wrong') {
       return (
         <div style={{ ...box, background: 'var(--warn-bg)', border: '1px solid #6b4f2d' }}>
-          <div style={title}>Thank you for telling us.</div>
-          <p style={{ ...small, marginBottom: waiting ? '0.5rem' : 0 }}>An admin will take a look. Only admins see what you shared.</p>
+          <div style={title}>{t('Thank you for telling us.')}</div>
+          <p style={{ ...small, marginBottom: waiting ? '0.5rem' : 0 }}>{t('An admin will take a look. Only admins see what you shared.')}</p>
           {waiting}
         </div>
       )
@@ -686,32 +689,32 @@ export default function ActiveTasks() {
     if (feedbackFor === matchId) {
       return (
         <div style={box}>
-          <div style={title}>What happened?</div>
-          <p style={small}>Only admins see this. {otherName} is not told.</p>
+          <div style={title}>{t('What happened?')}</div>
+          <p style={small}>{t('Only admins see this. {name} is not told.', { name: otherName })}</p>
           <textarea
             value={feedbackNote}
             onChange={e => setFeedbackNote(e.target.value)}
             maxLength={500}
-            placeholder="Tell us in your own words (optional)"
-            aria-label="What happened"
+            placeholder={t('Tell us in your own words (optional)')}
+            aria-label={t('What happened')}
             style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '4rem', boxSizing: 'border-box' }}
           />
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
             <button className="btn btn-primary btn-sm" disabled={feedbackBusy} onClick={() => submitFeedback(matchId, 'went_wrong')}>
-              {feedbackBusy ? 'Saving...' : 'Send to the admins'}
+              {feedbackBusy ? t('Saving...') : t('Send to the admins')}
             </button>
-            <button className="btn btn-outline btn-sm" disabled={feedbackBusy} onClick={() => { setFeedbackFor(null); setFeedbackNote('') }}>Back</button>
+            <button className="btn btn-outline btn-sm" disabled={feedbackBusy} onClick={() => { setFeedbackFor(null); setFeedbackNote('') }}>{t('Back')}</button>
           </div>
         </div>
       )
     }
     return (
       <div style={box}>
-        <div style={title}>How did it go with {otherName}?</div>
-        <p style={small}>This is private. Only admins can see your answer.</p>
+        <div style={title}>{t('How did it go with {name}?', { name: otherName })}</div>
+        <p style={small}>{t('This is private. Only admins can see your answer.')}</p>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <button className="btn btn-primary btn-sm" disabled={feedbackBusy} onClick={() => submitFeedback(matchId, 'went_well')}>It went well</button>
-          <button className="btn btn-outline btn-sm" disabled={feedbackBusy} onClick={() => { setFeedbackFor(matchId); setFeedbackNote('') }}>Something went wrong</button>
+          <button className="btn btn-primary btn-sm" disabled={feedbackBusy} onClick={() => submitFeedback(matchId, 'went_well')}>{t('It went well')}</button>
+          <button className="btn btn-outline btn-sm" disabled={feedbackBusy} onClick={() => { setFeedbackFor(matchId); setFeedbackNote('') }}>{t('Something went wrong')}</button>
         </div>
       </div>
     )
@@ -727,6 +730,7 @@ export default function ActiveTasks() {
     active: takenRequests.length + activeHelping.length,
     archived: archivedRequests.length + archivedHelping.length,
   }
+  // Words go through t() where they are shown.
   const EMPTY = {
     requests: ['No open requests', 'When you ask for help, your request waits here until a neighbor says yes.', 'Ask for Help', '/ask'],
     active: ['No tasks in progress', 'When someone takes your request, or you help a neighbor, it shows here.', 'See who needs help', '/skillshare'],
@@ -750,27 +754,27 @@ export default function ActiveTasks() {
       <div className="tk-left">
       <HelpSwitch />
       <div className="feed-title-row tasks-header">
-        <h1>Your tasks</h1>
+        <h1>{t('Your tasks')}</h1>
         {/* Was a floating button that covered task buttons on phones (Oct 22); now it sits in the page. */}
         <button type="button" className="btn btn-primary feed-title-btn mine-new" onClick={() => navigate(tab === 'offers' ? '/post-offer' : '/ask')}>
-          <span aria-hidden="true">+</span> {tab === 'offers' ? 'Offer something' : 'Ask for Help'}
+          <span aria-hidden="true">+</span> {tab === 'offers' ? t('Offer something') : t('Ask for Help')}
         </button>
       </div>
 
-      <div className="home-tasks-tabs mine-tabs" role="tablist" aria-label="My help">
-        {MINE_TABS.map((t) => (
+      <div className="home-tasks-tabs mine-tabs" role="tablist" aria-label={t('My help')}>
+        {MINE_TABS.map((mt) => (
           <button
-            key={t.id}
+            key={mt.id}
             type="button"
             role="tab"
-            id={'mine-' + t.id}
-            aria-selected={tab === t.id}
-            className={'home-tasks-tab' + (tab === t.id ? ' on' : '')}
-            onClick={() => setTab(t.id)}
+            id={'mine-' + mt.id}
+            aria-selected={tab === mt.id}
+            className={'home-tasks-tab' + (tab === mt.id ? ' on' : '')}
+            onClick={() => setTab(mt.id)}
           >
-            <span aria-hidden="true"><Icon name={t.icon} /></span> {t.label}
-            {counts[t.id] > 0 && <span className="home-tasks-count">{counts[t.id]}</span>}
-            {((t.id === 'active' && activeWaiting > 0) || (t.id === 'requests' && requestsWaiting > 0)) && <span className="home-tasks-dot" aria-label="Something is waiting on you" />}
+            <span aria-hidden="true"><Icon name={mt.icon} /></span> {t(mt.label)}
+            {counts[mt.id] > 0 && <span className="home-tasks-count">{counts[mt.id]}</span>}
+            {((mt.id === 'active' && activeWaiting > 0) || (mt.id === 'requests' && requestsWaiting > 0)) && <span className="home-tasks-dot" aria-label={t('Something is waiting on you')} />}
           </button>
         ))}
       </div>
@@ -782,25 +786,25 @@ export default function ActiveTasks() {
         if (!sr) return null
         const done = sr.archived_at || sr.status !== 'open'
         return (
-          <div role="region" aria-label="Still need help?" style={{ margin: '0 0 1rem', padding: '0.85rem', border: '2px solid var(--accent)', borderRadius: '8px', background: 'var(--surface)' }}>
+          <div role="region" aria-label={t('Still need help?')} style={{ margin: '0 0 1rem', padding: '0.85rem', border: '2px solid var(--accent)', borderRadius: '8px', background: 'var(--surface)' }}>
             {done ? (
               <>
-                <p style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Your request for {sr.skill_needed} is already closed.</p>
-                <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} onClick={clearStill}>OK</button>
+                <p style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>{t('Your request for {skill} is already closed.', { skill: t(sr.skill_needed) })}</p>
+                <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} onClick={clearStill}>{t('OK')}</button>
               </>
             ) : (
               <>
-                <p style={{ margin: '0 0 0.25rem', fontSize: '1.0625rem', fontWeight: 700 }}>Still need help?</p>
+                <p style={{ margin: '0 0 0.25rem', fontSize: '1.0625rem', fontWeight: 700 }}>{t('Still need help?')}</p>
                 <p style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>
-                  Your request for {sr.skill_needed}{sr.for_name ? ' (for ' + sr.for_name + ')' : ''}
-                  {sr.expires_at ? ' closes ' + shortWhen(sr.expires_at) + '.' : ' is still open.'}
+                  {t('Your request for {skill}', { skill: t(sr.skill_needed) })}{sr.for_name ? ' ' + t('(for {name})', { name: sr.for_name }) : ''}
+                  {sr.expires_at ? ' ' + t('closes {when}.', { when: shortWhen(sr.expires_at) }) : ' ' + t('is still open.')}
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} disabled={stillBusy} onClick={() => keepOpen(sr.id)}>
-                    {stillBusy ? 'Saving...' : 'Keep it open'}
+                    {stillBusy ? t('Saving...') : t('Keep it open')}
                   </button>
                   <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} disabled={stillBusy} onClick={() => closeIt(sr.id)}>
-                    Close it
+                    {t('Close it')}
                   </button>
                 </div>
                 {stillNote && <p role="alert" style={{ margin: '0.5rem 0 0', color: 'var(--danger)' }}>{stillNote}</p>}
@@ -812,24 +816,24 @@ export default function ActiveTasks() {
 
       {notice && (
         <p role="status" style={{ margin: '0 0 1rem', padding: '0.75rem', background: 'var(--success-bg)', border: '1px solid #2d6a4f', borderRadius: '8px', color: 'var(--accent)' }}>
-          {notice} <button type="button" onClick={() => setNotice('')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', textDecoration: 'underline', minHeight: 44, cursor: 'pointer', font: 'inherit' }}>Dismiss</button>
+          {notice} <button type="button" onClick={() => setNotice('')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', textDecoration: 'underline', minHeight: 44, cursor: 'pointer', font: 'inherit' }}>{t('Dismiss')}</button>
         </p>
       )}
 
       {tab === 'offers' ? (
         <div role="tabpanel" aria-labelledby="mine-offers">
           <MyOffers />
-          <p className="home-tasks-empty" style={{ margin: '0.25rem 0 0.75rem' }}>Offers are skills, time, or things you can share. Neighbors who are interested send you a message request.</p>
+          <p className="home-tasks-empty" style={{ margin: '0.25rem 0 0.75rem' }}>{t('Offers are skills, time, or things you can share. Neighbors who are interested send you a message request.')}</p>
         </div>
       ) : loading ? (
-        <div className="feed-loading"><div className="feed-loading-spinner" /><p>Loading tasks...</p></div>
+        <div className="feed-loading"><div className="feed-loading-spinner" /><p>{t('Loading tasks...')}</p></div>
       ) : isEmpty ? (
         <div className="feed-empty">
           <span className="feed-empty-icon"></span>
-          <h2>{EMPTY[tab][0]}</h2>
-          <p>{EMPTY[tab][1]}</p>
+          <h2>{t(EMPTY[tab][0])}</h2>
+          <p>{t(EMPTY[tab][1])}</p>
           {EMPTY[tab][2] && (
-            <button className="btn btn-primary" style={{ minHeight: '44px' }} onClick={() => navigate(EMPTY[tab][3])}>{EMPTY[tab][2]}</button>
+            <button className="btn btn-primary" style={{ minHeight: '44px' }} onClick={() => navigate(EMPTY[tab][3])}>{t(EMPTY[tab][2])}</button>
           )}
         </div>
       ) : (
@@ -839,32 +843,33 @@ export default function ActiveTasks() {
           {currentRequests.length > 0 && (
             <>
               <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: '0.25rem' }}>
-                Your Requests
+                {t('Your Requests')}
               </div>
               {currentRequests.map(req => (
                 <div key={req.id} className="task-card" style={{ borderLeft: '3px solid #2d6a4f' }}>
                   <div className="task-card-top">
-                    <span className={'urgency-badge urgency-' + req.urgency}>{URGENCY_LABELS[req.urgency] || 'Flexible'}</span>
+                    <span className={'urgency-badge urgency-' + req.urgency}>{t(URGENCY_LABELS[req.urgency] || 'Flexible')}</span>
                     <span className="feed-card-time">{timeAgo(req.created_at)}</span>
                   </div>
 
-                  <div className="task-card-skill">{req.skill_needed}</div>
-                  {req.for_name && <div className="for-line">For {req.for_name}. Helpers talk with you.</div>}
+                  <div className="task-card-skill">{t(req.skill_needed)}</div>
+                  {req.for_name && <div className="for-line">{t('For {name}. Helpers talk with you.', { name: req.for_name })}</div>}
                   {req.expires_at && req.matches.length === 0 && (
                     req.archived_at
-                      ? (new Date(req.archived_at) >= new Date(req.expires_at) && <div className="task-card-hood">Closed on its own. No one answered in time.</div>)
-                      : req.status === 'open' && <div className="task-card-hood">Open until {shortWhen(req.expires_at)}</div>
+                      ? (new Date(req.archived_at) >= new Date(req.expires_at) && <div className="task-card-hood">{t('Closed on its own. No one answered in time.')}</div>)
+                      : req.status === 'open' && <div className="task-card-hood">{t('Open until {when}', { when: shortWhen(req.expires_at) })}</div>
                   )}
-                  {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
+                  {req.neighborhood && <div className="task-card-hood">{t('in {place}', { place: req.neighborhood })}</div>}
                   <p className="task-card-desc">{req.description}</p>
                   {req.audience && req.audience !== 'everyone' && !req.archived_at && (!req.opens_to_all_at || new Date(req.opens_to_all_at) > new Date()) && (
                     <div style={{ margin: '0.25rem 0 0.5rem', padding: '0.6rem 0.75rem', border: '1px solid var(--info-bg)', borderRadius: '8px' }}>
                       <p style={{ margin: '0 0 0.4rem', fontSize: '0.9rem' }}>
-                        Only {req.audience === 'network' ? 'your group and its network' : 'your group'} can see this
-                        {req.opens_to_all_at ? ' until ' + new Date(req.opens_to_all_at).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : ''}.
-                        Then it opens to everyone nearby.
+                        {req.opens_to_all_at
+                          ? t(req.audience === 'network' ? 'Only your group and its network can see this until {when}.' : 'Only your group can see this until {when}.', { when: new Date(req.opens_to_all_at).toLocaleString(getLang() === 'es' ? 'es-US' : 'en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) })
+                          : t(req.audience === 'network' ? 'Only your group and its network can see this.' : 'Only your group can see this.')}
+                        {' '}{t('Then it opens to everyone nearby.')}
                       </p>
-                      <button className="btn btn-outline btn-sm" style={{ minHeight: '44px' }} onClick={() => openToEveryone(req.id)}>Open to everyone nearby now</button>
+                      <button className="btn btn-outline btn-sm" style={{ minHeight: '44px' }} onClick={() => openToEveryone(req.id)}>{t('Open to everyone nearby now')}</button>
                     </div>
                   )}
 
@@ -872,9 +877,9 @@ export default function ActiveTasks() {
                   {showActive && organizations.length > 0 && req.audience === 'everyone' && !req.archived_at && req.status === 'open' && (
                     narrowing === req.id ? (
                       <div style={{ margin: '0.25rem 0 0.5rem', padding: '0.6rem 0.75rem', border: '1px solid var(--info-bg)', borderRadius: '8px' }}>
-                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>Keep this with your group for a while. Neighbors who already said yes keep their spot. It opens to everyone again on its own.</p>
+                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>{t('Keep this with your group for a while. Neighbors who already said yes keep their spot. It opens to everyone again on its own.')}</p>
                         {organizations.length > 1 && (
-                          <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Which group?
+                          <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{t('Which group?')}
                             <select value={narrowOrg} onChange={e => setNarrowOrg(e.target.value)} style={{ display: 'block', width: '100%', minHeight: 44, fontSize: 16, marginTop: 4 }}>
                               {organizations.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                             </select>
@@ -882,43 +887,43 @@ export default function ActiveTasks() {
                         )}
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minHeight: 44, fontSize: '0.9rem' }}>
                           <input type="checkbox" checked={narrowNetwork} onChange={e => setNarrowNetwork(e.target.checked)} style={{ width: 20, height: 20 }} />
-                          Include my group's network
+                          {t("Include my group's network")}
                         </label>
-                        <label style={{ display: 'block', fontSize: '0.9rem', margin: '0.25rem 0 0.5rem' }}>Open to everyone again after
+                        <label style={{ display: 'block', fontSize: '0.9rem', margin: '0.25rem 0 0.5rem' }}>{t('Open to everyone again after')}
                           <select value={narrowHours} onChange={e => setNarrowHours(e.target.value)} style={{ display: 'block', width: '100%', minHeight: 44, fontSize: 16, marginTop: 4 }}>
-                            <option value="6">6 hours</option>
-                            <option value="24">1 day</option>
-                            <option value="72">3 days</option>
-                            <option value="168">7 days</option>
+                            <option value="6">{t('6 hours')}</option>
+                            <option value="24">{t('1 day')}</option>
+                            <option value="72">{t('3 days')}</option>
+                            <option value="168">{t('7 days')}</option>
                           </select>
                         </label>
                         {narrowNote && <p role="alert" style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: 'var(--warn)' }}>{narrowNote}</p>}
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                          <button className="btn btn-primary btn-sm" disabled={narrowBusy} style={{ flex: 1, minHeight: '44px' }} onClick={() => narrowToGroup(req.id)}>{narrowBusy ? 'Saving...' : 'Keep it with my group'}</button>
-                          <button className="btn btn-outline btn-sm" style={{ flex: 1, minHeight: '44px' }} onClick={() => { setNarrowing(null); setNarrowNote('') }}>Cancel</button>
+                          <button className="btn btn-primary btn-sm" disabled={narrowBusy} style={{ flex: 1, minHeight: '44px' }} onClick={() => narrowToGroup(req.id)}>{narrowBusy ? t('Saving...') : t('Keep it with my group')}</button>
+                          <button className="btn btn-outline btn-sm" style={{ flex: 1, minHeight: '44px' }} onClick={() => { setNarrowing(null); setNarrowNote('') }}>{t('Cancel')}</button>
                         </div>
                       </div>
                     ) : (
                       <button className="btn btn-outline btn-sm" style={{ minHeight: '44px', margin: '0.25rem 0 0.5rem' }}
                         onClick={() => { setNarrowOrg(organizations[0].id); setNarrowNetwork(false); setNarrowHours('24'); setNarrowNote(''); setNarrowing(req.id) }}>
-                        Keep it with my group only
+                        {t('Keep it with my group only')}
                       </button>
                     )
                   )}
 
                   {/* Helper count */}
                   {req.matches.length === 0 && showActive && (req.pending || []).length > 0 && (
-                    <div className="offer-waits" aria-label="Neighbors who offered to help">
+                    <div className="offer-waits" aria-label={t('Neighbors who offered to help')}>
                       {req.pending.map(m => (
                         <div key={m.id} className="offer-wait">
                           <p className="offer-wait-text">
-                            <UserName userId={m.helper_id} name={m.helper_name} style={{ fontWeight: 700, color: 'var(--text-strong)' }} /> offered to help. Say yes?
-                            {m.is_ambassador && <span className="offer-wait-chip">Hope Ambassador</span>}
+                            <UserName userId={m.helper_id} name={m.helper_name} style={{ fontWeight: 700, color: 'var(--text-strong)' }} /> {t('offered to help. Say yes?')}
+                            {m.is_ambassador && <span className="offer-wait-chip">{t('Hope Ambassador')}</span>}
                           </p>
-                          <button type="button" className="offer-wait-profile" onClick={() => navigate('/u/' + m.helper_id)}>See {m.helper_name}&apos;s profile first</button>
+                          <button type="button" className="offer-wait-profile" onClick={() => navigate('/u/' + m.helper_id)}>{t("See {name}'s profile first", { name: m.helper_name })}</button>
                           <div className="offer-wait-btns">
-                            <button type="button" className="btn btn-primary" disabled={offerBusy === m.id} onClick={() => sayYes(req, m)}>{offerBusy === m.id ? 'Saving...' : 'Say yes'}</button>
-                            <button type="button" className="btn btn-outline" disabled={offerBusy === m.id} onClick={() => sayNotNow(m)}>Not now</button>
+                            <button type="button" className="btn btn-primary" disabled={offerBusy === m.id} onClick={() => sayYes(req, m)}>{offerBusy === m.id ? t('Saving...') : t('Say yes')}</button>
+                            <button type="button" className="btn btn-outline" disabled={offerBusy === m.id} onClick={() => sayNotNow(m)}>{t('Not now')}</button>
                           </div>
                         </div>
                       ))}
@@ -926,11 +931,11 @@ export default function ActiveTasks() {
                   )}
                   <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.5rem 0' }}>
                     {req.matches.length === 0
-                      ? ((req.pending || []).length > 0 ? '' : 'Waiting for a neighbor to offer')
-                      : `${req.matches.length} helper${req.matches.length !== 1 ? 's' : ''} accepted`
+                      ? ((req.pending || []).length > 0 ? '' : t('Waiting for a neighbor to offer'))
+                      : t(req.matches.length === 1 ? '1 helper accepted' : '{n} helpers accepted', { n: req.matches.length })
                     }
                     {req.max_helpers !== null && req.matches.length > 0 && (
-                      <span style={{ color: 'var(--text-muted)' }}> (of {req.max_helpers})</span>
+                      <span style={{ color: 'var(--text-muted)' }}> {t('(of {n})', { n: req.max_helpers })}</span>
                     )}
                   </div>
 
@@ -945,18 +950,18 @@ export default function ActiveTasks() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={match.helper_avatar} userId={match.helper_id} size={28} /><UserName userId={match.helper_id} name={match.helper_name} style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }} /></div>
                                 {match.is_ambassador && (
-                                  <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>Hope Ambassador</span>
+                                  <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 5px', borderRadius: '4px' }}>{t('Hope Ambassador')}</span>
                                 )}
                               </div>
                               {bothDone ? (
-                                <span style={{ fontSize: '0.8125rem', color: 'var(--accent)', fontWeight: 600 }}><Icon name="check" /> Complete</span>
+                                <span style={{ fontSize: '0.8125rem', color: 'var(--accent)', fontWeight: 600 }}><Icon name="check" /> {t('Complete')}</span>
                               ) : (
                                 <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
                                   <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
-                                  <span>{match.helper_completed ? 'Helper marked it done' : 'Helper is still working'}</span>
+                                  <span>{match.helper_completed ? t('Helper marked it done') : t('Helper is still working')}</span>
                                   <span style={{ margin: '0 0.15rem' }}>&middot;</span>
                                   <span className={'task-confirm-dot' + (match.requester_completed ? ' confirmed' : '')} />
-                                  <span>{match.requester_completed ? 'You marked it done' : 'You have not marked it done'}</span>
+                                  <span>{match.requester_completed ? t('You marked it done') : t('You have not marked it done')}</span>
                                 </div>
                               )}
                             </div>
@@ -965,14 +970,14 @@ export default function ActiveTasks() {
                               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                                 {!match.requester_completed && (
                                   <button className="btn btn-primary btn-sm" onClick={() => markMyPartComplete(match.id, true, match)}>
-                                    Mark my part complete
+                                    {t('Mark my part complete')}
                                   </button>
                                 )}
                                 <button className="btn btn-outline btn-sm" onClick={() => openConversation(req.id, match.helper_id, user.id)}>
-                                  Message
+                                  {t('Message')}
                                 </button>
                                 <button className="btn btn-outline btn-sm" onClick={() => openEnd(match.id, true)}>
-                                  End their help
+                                  {t('End their help')}
                                 </button>
                               </div>
                             )}
@@ -993,7 +998,7 @@ export default function ActiveTasks() {
                       style={{ marginTop: '0.25rem', marginRight: '0.5rem' }}
                       onClick={() => navigate('/ask?edit=' + req.id)}
                     >
-                      Edit request
+                      {t('Edit request')}
                     </button>
                   )}
 
@@ -1004,7 +1009,7 @@ export default function ActiveTasks() {
                       style={{ color: 'var(--danger)', borderColor: 'var(--danger)', marginTop: '0.25rem' }}
                       onClick={() => deleteRequest(req.id)}
                     >
-                      Archive request
+                      {t('Archive request')}
                     </button>
                   )}
 
@@ -1015,21 +1020,21 @@ export default function ActiveTasks() {
                       style={{ marginTop: '0.25rem', marginRight: '0.5rem', minHeight: '44px' }}
                       onClick={() => navigate('/ask', { state: { repost: { skill_needed: req.skill_needed, description: req.description, urgency: req.urgency, neighborhood: req.neighborhood, max_helpers: req.max_helpers, for_name: req.for_name || '' } } })}
                     >
-                      Ask again
+                      {t('Ask again')}
                     </button>
                   )}
 
                   {/* Delete for good */}
                   {deletingId === req.id ? (
                     <div role="alert" style={{ marginTop: '0.5rem', padding: '0.75rem', border: '1px solid var(--danger)', borderRadius: '8px' }}>
-                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>Delete this request for good? It can't be undone.{' '}
+                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>{t("Delete this request for good? It can't be undone.")}{' '}
                         {req.matches.some(m => m.helper_completed && m.requester_completed)
-                          ? 'This task is finished. Deleting it also removes the record that you helped each other, so you cannot vouch for that person on that basis later. Vouches already given stay.'
-                          : 'Neighbors who said yes will be told it was removed.'}</p>
+                          ? t('This task is finished. Deleting it also removes the record that you helped each other, so you cannot vouch for that person on that basis later. Vouches already given stay.')
+                          : t('Neighbors who said yes will be told it was removed.')}</p>
                       {deleteNote && <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem', color: 'var(--warn)' }}>{deleteNote}</p>}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <button className="btn btn-sm" disabled={deleteBusy} style={{ flex: 1, minHeight: '44px', background: 'var(--error)', color: '#fff', border: 'none' }} onClick={() => deleteRequestForGood(req.id)}>{deleteBusy ? 'Deleting...' : 'Yes, delete'}</button>
-                        <button className="btn btn-outline btn-sm" style={{ flex: 1, minHeight: '44px' }} onClick={() => { setDeletingId(null); setDeleteNote('') }}>Keep it</button>
+                        <button className="btn btn-sm" disabled={deleteBusy} style={{ flex: 1, minHeight: '44px', background: 'var(--error)', color: '#fff', border: 'none' }} onClick={() => deleteRequestForGood(req.id)}>{deleteBusy ? t('Deleting...') : t('Yes, delete')}</button>
+                        <button className="btn btn-outline btn-sm" style={{ flex: 1, minHeight: '44px' }} onClick={() => { setDeletingId(null); setDeleteNote('') }}>{t('Keep it')}</button>
                       </div>
                     </div>
                   ) : (
@@ -1038,7 +1043,7 @@ export default function ActiveTasks() {
                       style={{ color: 'var(--danger)', borderColor: 'var(--danger)', marginTop: '0.25rem', marginLeft: '0.5rem' }}
                       onClick={() => { setDeleteNote(''); setDeletingId(req.id) }}
                     >
-                      Delete request
+                      {t('Delete request')}
                     </button>
                   )}
                 </div>
@@ -1050,7 +1055,7 @@ export default function ActiveTasks() {
           {currentHelping.length > 0 && (
             <>
               <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', marginTop: currentRequests.length > 0 ? '1.25rem' : '0.25rem' }}>
-                Helping Others
+                {t('Helping Others')}
               </div>
               {currentHelping.map(match => {
                 const req = match.request
@@ -1058,14 +1063,14 @@ export default function ActiveTasks() {
                 return (
                   <div key={match.id} className="task-card" style={{ borderLeft: '3px solid var(--gold)' }}>
                     <div className="task-card-top">
-                      <span className={'urgency-badge urgency-' + req.urgency}>{URGENCY_LABELS[req.urgency] || 'Flexible'}</span>
+                      <span className={'urgency-badge urgency-' + req.urgency}>{t(URGENCY_LABELS[req.urgency] || 'Flexible')}</span>
                       <span className="feed-card-time">{timeAgo(match.created_at)}</span>
                     </div>
 
-                    <div className="task-card-skill">{req.skill_needed}</div>
-                    {req.neighborhood && <div className="task-card-hood">in {req.neighborhood}</div>}
+                    <div className="task-card-skill">{t(req.skill_needed)}</div>
+                    {req.neighborhood && <div className="task-card-hood">{t('in {place}', { place: req.neighborhood })}</div>}
                     <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><AvatarDisplay url={null} userId={match.request?.requester_id} size={20} /> {req.for_name ? 'For ' + req.for_name + ', posted by' : 'Requested by'} <UserName userId={match.request?.requester_id} name={match.requester_name} /></span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><AvatarDisplay url={null} userId={match.request?.requester_id} size={20} /> {req.for_name ? t('For {name}, posted by', { name: req.for_name }) : t('Requested by')} <UserName userId={match.request?.requester_id} name={match.requester_name} /></span>
                     </div>
                     {req.for_name && <span className="for-note">{helperNote(req, match.requester_name)}</span>}
                     <p className="task-card-desc">{req.description}</p>
@@ -1073,33 +1078,33 @@ export default function ActiveTasks() {
                     {!bothDone && (
                       <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0.5rem 0' }}>
                         <span className={'task-confirm-dot' + (match.helper_completed ? ' confirmed' : '')} />
-                        <span>{match.helper_completed ? 'You marked it done' : 'You have not marked it done'}</span>
+                        <span>{match.helper_completed ? t('You marked it done') : t('You have not marked it done')}</span>
                         <span style={{ margin: '0 0.15rem' }}>&middot;</span>
                         <span className={'task-confirm-dot' + (match.requester_completed ? ' confirmed' : '')} />
-                        <span>{match.requester_completed ? 'They marked it done' : 'They have not marked it done'}</span>
+                        <span>{match.requester_completed ? t('They marked it done') : t('They have not marked it done')}</span>
                       </div>
                     )}
 
                     {bothDone && (
                       <div style={{ fontSize: '0.8125rem', color: 'var(--accent)', fontWeight: 600, margin: '0.5rem 0' }}>
-                        <Icon name="check" /> Complete
+                        <Icon name="check" /> {t('Complete')}
                       </div>
                     )}
 
                     <div className="task-card-actions">
                       {!bothDone && !match.helper_completed && (
                         <button className="btn btn-primary btn-sm" onClick={() => markMyPartComplete(match.id, false, match)}>
-                          Mark my part complete
+                          {t('Mark my part complete')}
                         </button>
                       )}
                       {!bothDone && (
                         <button className="btn btn-outline btn-sm" onClick={() => openConversation(req.id, user.id, req.requester_id)}>
-                          Message
+                          {t('Message')}
                         </button>
                       )}
                       {!bothDone && (
                         <button className="btn btn-outline btn-sm" onClick={() => openEnd(match.id, false)}>
-                          Step back
+                          {t('Step back')}
                         </button>
                       )}
                     </div>

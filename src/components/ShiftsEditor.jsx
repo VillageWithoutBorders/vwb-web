@@ -1,8 +1,10 @@
 // Organizer side: add shifts to an event, like "Supply table, 10 to 12, 3 people".
 // The parent keeps the list. Times are optional.
+import { useT } from '../utils/lang'
 const input = { display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', fontFamily: 'inherit' }
 
 export default function ShiftsEditor({ shifts, onChange }) {
+  const t = useT()
   function update(i, key, value) {
     onChange(shifts.map((s, j) => (j === i ? { ...s, [key]: value } : s)))
   }
@@ -15,31 +17,31 @@ export default function ShiftsEditor({ shifts, onChange }) {
 
   return (
     <div style={{ margin: '0.5rem 0 1rem' }}>
-      <h3 style={{ fontSize: '1rem', margin: '0 0 0.25rem' }}>Shifts (optional)</h3>
+      <h3 style={{ fontSize: '1rem', margin: '0 0 0.25rem' }}>{t('Shifts (optional)')}</h3>
       <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>
-        Split the work into jobs or time blocks. Volunteers pick a shift instead of one general sign-up. The spots below count for each shift.
+        {t('Split the work into jobs or time blocks. Volunteers pick a shift instead of one general sign-up. The spots below count for each shift.')}
       </p>
       {shifts.map((s, i) => (
-        <div key={s.key || s.id || i} role="group" aria-label={'Shift ' + (i + 1)} style={{ marginBottom: '0.75rem', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '10px', background: 'var(--surface)' }}>
-          <label htmlFor={'shift-label-' + i} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.2rem' }}>What is the shift?</label>
-          <input id={'shift-label-' + i} type="text" maxLength={60} autoComplete="off" value={s.label} onChange={(e) => update(i, 'label', e.target.value)} placeholder="Supply table" style={input} />
+        <div key={s.key || s.id || i} role="group" aria-label={t('Shift {n}', { n: i + 1 })} style={{ marginBottom: '0.75rem', padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '10px', background: 'var(--surface)' }}>
+          <label htmlFor={'shift-label-' + i} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.2rem' }}>{t('What is the shift?')}</label>
+          <input id={'shift-label-' + i} type="text" maxLength={60} autoComplete="off" value={s.label} onChange={(e) => update(i, 'label', e.target.value)} placeholder={t('Supply table')} style={input} />
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <div style={{ flex: 1 }}>
-              <label htmlFor={'shift-start-' + i} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.2rem' }}>From</label>
+              <label htmlFor={'shift-start-' + i} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.2rem' }}>{t('From')}</label>
               <input id={'shift-start-' + i} type="time" value={s.start} onChange={(e) => update(i, 'start', e.target.value)} style={input} />
             </div>
             <div style={{ flex: 1 }}>
-              <label htmlFor={'shift-end-' + i} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.2rem' }}>To</label>
+              <label htmlFor={'shift-end-' + i} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.2rem' }}>{t('To')}</label>
               <input id={'shift-end-' + i} type="time" value={s.end} onChange={(e) => update(i, 'end', e.target.value)} style={input} />
             </div>
           </div>
-          <label htmlFor={'shift-cap-' + i} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.2rem' }}>How many people?</label>
+          <label htmlFor={'shift-cap-' + i} style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.2rem' }}>{t('How many people?')}</label>
           <input id={'shift-cap-' + i} type="number" inputMode="numeric" min={1} max={100} value={s.capacity} onChange={(e) => update(i, 'capacity', e.target.value)} style={input} />
-          <button type="button" onClick={() => remove(i)} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid var(--error)', background: 'none', color: 'var(--danger)', fontSize: '0.95rem', cursor: 'pointer' }}>Remove this shift</button>
+          <button type="button" onClick={() => remove(i)} style={{ minHeight: '44px', padding: '0 1rem', borderRadius: '8px', border: '1px solid var(--error)', background: 'none', color: 'var(--danger)', fontSize: '0.95rem', cursor: 'pointer' }}>{t('Remove this shift')}</button>
         </div>
       ))}
       {shifts.length < 12 && (
-        <button type="button" onClick={add} style={{ minHeight: '48px', padding: '0 1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>+ Add a shift</button>
+        <button type="button" onClick={add} style={{ minHeight: '48px', padding: '0 1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}>{t('+ Add a shift')}</button>
       )}
     </div>
   )

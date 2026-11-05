@@ -10,6 +10,7 @@ import Icon from '../components/Icon'
 import { useWideScreen } from '../hooks/useWideScreen'
 import ChatGuide from '../components/ChatGuide'
 import { useSimpleView } from '../utils/simpleView'
+import { useT } from '../utils/lang'
 
 const Groups = lazy(() => import('./Groups'))
 const Connections = lazy(() => import('./Connections'))
@@ -34,6 +35,7 @@ export default function ConnectHub() {
   const [params, setParams] = useSearchParams()
   const [villageUnread, setVillageUnread] = useState(0)
   const simple = useSimpleView()
+  const t = useT()
 
   // Simple view: just private messages and Cottage Chats.
   const tabs = simple ? [
@@ -50,7 +52,7 @@ export default function ConnectHub() {
   ]
   // Older links said tab=chats: that is the Cottage Chats tab now.
   const asked = params.get('tab') === 'chats' ? 'cottage' : params.get('tab')
-  const active = tabs.some((t) => t.key === asked) ? asked : 'messages'
+  const active = tabs.some((tb) => tb.key === asked) ? asked : 'messages'
 
   // Nov 1 (Jade): on a computer, Messages is side by side. The chat list stays on
   // the left and the chat you pick opens on the right (?c=<id>, so links work).
@@ -79,8 +81,8 @@ export default function ConnectHub() {
       })
     }
     load()
-    const t = setInterval(load, 30000)
-    return () => { alive = false; clearInterval(t) }
+    const timer = setInterval(load, 30000)
+    return () => { alive = false; clearInterval(timer) }
   }, [user?.id])
 
   const chip = (on) => ({
@@ -90,15 +92,15 @@ export default function ConnectHub() {
 
   const head = (
       <div className="hub-head" style={{ maxWidth: '640px', margin: '0 auto', padding: '1rem 1rem 0', boxSizing: 'border-box' }}>
-        <h1 style={{ margin: '0 0 0.25rem' }}>Messages</h1>
-        <p className="cal-sub" style={{ marginTop: 0 }}>{simple ? 'Talk with one neighbor, or with a few people you chose.' : 'Chats, villages, and neighbors, all in one place.'}</p>
-        {established === false && <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE}</p>}
+        <h1 style={{ margin: '0 0 0.25rem' }}>{t('Messages')}</h1>
+        <p className="cal-sub" style={{ marginTop: 0 }}>{simple ? t('Talk with one neighbor, or with a few people you chose.') : t('Chats, villages, and neighbors, all in one place.')}</p>
+        {established === false && <p className="new-account-note" role="status">{t(NEW_ACCOUNT_NOTE)}</p>}
         {!simple && <ChatGuide />}
-        <div role="tablist" aria-label="Where to connect" className="hub-tabs">
-          {tabs.map((t) => (
-            <button key={t.key} type="button" role="tab" id={'hub-tab-' + t.key} aria-selected={active === t.key} aria-controls="hub-panel" style={chip(active === t.key)}
-              onClick={() => setParams(t.key === 'messages' ? {} : { tab: t.key }, { replace: true })}>
-              {t.label}{t.badge > 0 && <span style={{ marginLeft: '0.4rem', background: 'var(--danger)', color: '#fff', borderRadius: '9px', padding: '0 6px', fontSize: '0.8125rem' }}>{t.badge > 9 ? '9+' : t.badge}</span>}
+        <div role="tablist" aria-label={t('Where to connect')} className="hub-tabs">
+          {tabs.map((tb) => (
+            <button key={tb.key} type="button" role="tab" id={'hub-tab-' + tb.key} aria-selected={active === tb.key} aria-controls="hub-panel" style={chip(active === tb.key)}
+              onClick={() => setParams(tb.key === 'messages' ? {} : { tab: tb.key }, { replace: true })}>
+              {t(tb.label)}{tb.badge > 0 && <span style={{ marginLeft: '0.4rem', background: 'var(--danger)', color: '#fff', borderRadius: '9px', padding: '0 6px', fontSize: '0.8125rem' }}>{tb.badge > 9 ? '9+' : tb.badge}</span>}
             </button>
           ))}
         </div>
@@ -114,13 +116,13 @@ export default function ConnectHub() {
             <Messages embedded onOpen={openChat} selectedId={openId} />
           </div>
         </div>
-        <section className="hub-right" aria-label="Open chat">
+        <section className="hub-right" aria-label={t('Open chat')}>
           {openId
             ? <Conversation key={openId} convoId={openId} pane openReport={reportFor} onClose={closeChat} />
             : (
               <div className="hub-pick">
                 <Icon name="chat-bubble" size={40} />
-                <p>Pick a chat on the left to read it here.</p>
+                <p>{t('Pick a chat on the left to read it here.')}</p>
               </div>
             )}
         </section>
@@ -134,7 +136,7 @@ export default function ConnectHub() {
 
       <div role="tabpanel" id="hub-panel" aria-labelledby={'hub-tab-' + active}>
         {active === 'messages' && <Messages embedded />}
-        <Suspense fallback={<p className="cal-empty" style={{ padding: '1rem' }}>Loading...</p>}>
+        <Suspense fallback={<p className="cal-empty" style={{ padding: '1rem' }}>{t('Loading...')}</p>}>
           {active === 'villages' && <HubVillages />}
           {active === 'cottage' && <Groups embedded show={simple ? 'all' : 'cottage'} />}
           {active === 'campfires' && <Groups embedded show="campfires" />}
@@ -143,10 +145,10 @@ export default function ConnectHub() {
         </Suspense>
         {active === 'admin' && isAdmin && (
           <div className="cal-page">
-            <section className="cal-card" aria-label="Admin tools">
-              <div className="cal-card-title">Admin</div>
-              <p className="cal-sub">Reports, removals, appeals, and group approvals.</p>
-              <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/admin')}>Open admin tools</button>
+            <section className="cal-card" aria-label={t('Admin tools')}>
+              <div className="cal-card-title">{t('Admin')}</div>
+              <p className="cal-sub">{t('Reports, removals, appeals, and group approvals.')}</p>
+              <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/admin')}>{t('Open admin tools')}</button>
             </section>
           </div>
         )}

@@ -1,17 +1,19 @@
 import Icon from './Icon'
 import { SPARK_NAME, SPARK_HINT } from '../utils/spark'
+import { useT } from '../utils/lang'
 
 // A small sparkle under a message. Tap once for "I saw this", tap again to take it back.
 // Shows a plain count, never who.
 export default function SparkButton({ count = 0, mine = false, onToggle, align = 'flex-end' }) {
+  const t = useT()
   return (
     <div style={{ display: 'flex', justifyContent: align }}>
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onToggle() }}
         aria-pressed={mine}
-        aria-label={SPARK_NAME + ': ' + SPARK_HINT + (count ? '. ' + count + ' so far' : '')}
-        title={SPARK_NAME + ': ' + SPARK_HINT}
+        aria-label={t(SPARK_NAME) + ': ' + t(SPARK_HINT) + (count ? '. ' + t('{n} so far', { n: count }) : '')}
+        title={t(SPARK_NAME) + ': ' + t(SPARK_HINT)}
         style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem', minWidth: '44px', minHeight: '44px', margin: '-0.575rem 0 -0.775rem', padding: '0 0.4rem', borderRadius: '999px', border: 'none', background: mine ? 'rgba(255,200,60,0.28)' : 'none', color: 'inherit', cursor: 'pointer', fontSize: '0.8125rem', opacity: mine || count ? 1 : 0.55 }}
       >
         <span aria-hidden="true" style={{ filter: mine ? 'none' : 'grayscale(1)' }}><Icon name="star" /></span>

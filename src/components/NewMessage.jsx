@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { startConversation } from '../utils/startConversation'
+import { useT } from '../utils/lang'
 
 // "New message" on the Messages page. Search finds only people you already
 // know on VWB (the database decides, same rule as group invites). Picking
@@ -11,6 +12,7 @@ import { startConversation } from '../utils/startConversation'
 export default function NewMessage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -26,14 +28,14 @@ export default function NewMessage() {
   useEffect(() => {
     const q = query.trim()
     if (!open || q.length < 2) { setResults([]); setSearched(false); return }
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       const { data, error } = await supabase.rpc('search_people_to_message', { p_query: q.replace(/[%_]/g, '') })
       if (error) { console.error('search_people_to_message', error); setNote("We couldn't search just now. Try again."); return }
       setNote('')
       setResults(data || [])
       setSearched(true)
     }, 300)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timer)
   }, [query, open])
 
   function close() {
@@ -58,7 +60,7 @@ export default function NewMessage() {
   if (!open) {
     return (
       <button type="button" onClick={() => setOpen(true)} style={{ width: '100%', minHeight: '48px', marginBottom: '0.75rem', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}>
-        New message
+        {t('New message')}
       </button>
     )
   }
@@ -66,10 +68,10 @@ export default function NewMessage() {
   return (
     <section aria-labelledby="new-msg-title" style={{ margin: '0 0 1rem', padding: '0.75rem', border: '1px solid var(--accent)', borderRadius: '12px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-        <h2 id="new-msg-title" style={{ fontSize: '1rem', margin: 0 }}>New message</h2>
-        <button type="button" onClick={close} style={{ minHeight: '44px', padding: '0 0.75rem', background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1rem', cursor: 'pointer' }}>Cancel</button>
+        <h2 id="new-msg-title" style={{ fontSize: '1rem', margin: 0 }}>{t('New message')}</h2>
+        <button type="button" onClick={close} style={{ minHeight: '44px', padding: '0 0.75rem', background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1rem', cursor: 'pointer' }}>{t('Cancel')}</button>
       </div>
-      <label htmlFor="new-msg-search" style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.35rem' }}>Search for someone you know on Village Without Borders</label>
+      <label htmlFor="new-msg-search" style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.35rem' }}>{t('Search for someone you know on Village Without Borders')}</label>
       <input
         id="new-msg-search"
         ref={inputRef}
@@ -77,7 +79,7 @@ export default function NewMessage() {
         autoComplete="off"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Start typing a name"
+        placeholder={t('Start typing a name')}
         style={{ width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem' }}
       />
       {results.length > 0 && (
@@ -94,10 +96,10 @@ export default function NewMessage() {
       )}
       {searched && results.length === 0 && (
         <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          No match. This search finds people you already know here, such as someone you have messaged, vouched for, or share a group with. To message someone new, open their profile and tap Message.
+          {t('No match. This search finds people you already know here, such as someone you have messaged, vouched for, or share a group with. To message someone new, open their profile and tap Message.')}
         </p>
       )}
-      {note && <p role="status" style={{ margin: '0.5rem 0 0', fontSize: '0.9rem' }}>{note}</p>}
+      {note && <p role="status" style={{ margin: '0.5rem 0 0', fontSize: '0.9rem' }}>{t(note)}</p>}
     </section>
   )
 }

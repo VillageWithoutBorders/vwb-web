@@ -16,6 +16,7 @@ import Icon from '../components/Icon'
 import { forLine, helperNote } from '../utils/forSomeone'
 import { askConfirm, tell } from '../components/AdminDialog'
 import { useSimpleView } from '../utils/simpleView'
+import { useT, getLang, t as tNow } from '../utils/lang'
 
 // Request statuses that mean "not looking for helpers anymore".
 const NO_LONGER_OPEN = ['in_progress', 'matched', 'completed', 'cancelled', 'closed', 'archived']
@@ -48,12 +49,13 @@ async function enrichOffers(items) {
     }
     return items.map(r => ({
         ...r,
-        poster_name: profiles[r.user_id]?.display_name || 'A neighbor',
+        poster_name: profiles[r.user_id]?.display_name || tNow('A neighbor'),
         is_ambassador: profiles[r.user_id]?.is_hope_ambassador || false,
         member_since: profiles[r.user_id]?.created_at || null,
     }))
 }
 
+// Labels go through t() where they are shown.
 const URGENCY_CONFIG = {
     now: { label: 'Right now', className: 'urgency-now' },
     today: { label: 'Today', className: 'urgency-today' },
@@ -64,6 +66,7 @@ const URGENCY_CONFIG = {
 
 export default function Feed() {
     const simple = useSimpleView()
+    const t = useT()
     const { user, profile } = useAuth()
     const navigate = useNavigate()
     const location = useLocation()
@@ -225,12 +228,12 @@ export default function Feed() {
         e.stopPropagation()
 
         // Make sure it was on purpose. The requester is told the moment you offer.
-        if (!(await askConfirm('Offer to help with ' + req.skill_needed + '?\n\nThe person is told right away. You can take your offer back until they say yes.'))) return
+        if (!(await askConfirm(t('Offer to help with {skill}?', { skill: t(req.skill_needed) }) + '\n\n' + t('The person is told right away. You can take your offer back until they say yes.')))) return
 
         // Check if request is already full
         const accepted = acceptedCounts[req.id] || 0
         if (req.max_helpers !== null && accepted >= req.max_helpers) {
-            tell('This request has enough helpers. Thank you for wanting to help!')
+            tell(t('This request has enough helpers. Thank you for wanting to help!'))
             return
         }
 
@@ -241,10 +244,10 @@ export default function Feed() {
 
         if (matchErr) {
             if (matchErr.code === '23505') {
-                tell('You already offered to help with this request.')
+                tell(t('You already offered to help with this request.'))
             } else {
                 console.error('Match error:', matchErr)
-                tell('Something went wrong. Try again.', { tone: 'error' })
+                tell(t('Something went wrong. Try again.'), { tone: 'error' })
             }
             return
         }
@@ -261,13 +264,13 @@ export default function Feed() {
         // Update local state so the card shows "Pending" immediately
         setMyPendingOffers(prev => new Set([...prev, req.id]))
 
-        tell('Your offer has been sent! The requester will review it and get back to you. You can take it back with Withdraw, here or in Messages.')
+        tell(t('Your offer has been sent! The requester will review it and get back to you. You can take it back with Withdraw, here or in Messages.'))
     }
 
     // Take back an offer that has not been answered yet.
     async function handleWithdrawOffer(e, req) {
         e.stopPropagation()
-        if (!(await askConfirm('Take back your offer to help with ' + req.skill_needed + '?'))) return
+        if (!(await askConfirm(t('Take back your offer to help with {skill}?', { skill: t(req.skill_needed) })))) return
 
         const { data: mine, error: findErr } = await supabase
             .from('skill_matches')
@@ -278,14 +281,14 @@ export default function Feed() {
             .maybeSingle()
         if (findErr || !mine) {
             console.error('Failed to find your offer to withdraw:', findErr)
-            tell('Could not find your offer. It may already have been answered. Refresh to see where it stands.', { tone: 'error' })
+            tell(t('Could not find your offer. It may already have been answered. Refresh to see where it stands.'), { tone: 'error' })
             return
         }
 
         const { error } = await supabase.rpc('withdraw_offer', { p_match_id: mine.id })
         if (error) {
             console.error('Failed to withdraw offer:', error)
-            tell(error.code === '55000' || error.code === 'P0002' ? error.message : 'Could not withdraw your offer. Try again.', { tone: 'error' })
+            tell(error.code === '55000' || error.code === 'P0002' ? error.message : t('Could not withdraw your offer. Try again.'), { tone: 'error' })
             return
         }
 
@@ -294,7 +297,7 @@ export default function Feed() {
             next.delete(req.id)
             return next
         })
-        tell('Your offer was withdrawn.')
+        tell(t('Your offer was withdrawn.'))
     }
 
     function getHelperStatus(req) {
@@ -303,9 +306,9 @@ export default function Feed() {
 
         if (max === null) {
             // Unlimited
-            return accepted > 0 ? `${accepted} helper${accepted !== 1 ? 's' : ''} accepted` : 'Looking for help'
+            return accepted > 0 ? t(accepted === 1 ? '1 helper accepted' : '{n} helpers accepted', { n: accepted }) : t('Looking for help')
         }
-        return `${accepted}/${max} helper${max !== 1 ? 's' : ''} accepted`
+        return t(max === 1 ? '{n}/{max} helper accepted' : '{n}/{max} helpers accepted', { n: accepted, max })
     }
 
     function isRequestFull(req) {
@@ -316,11 +319,11 @@ export default function Feed() {
     function timeAgo(dateStr) {
         const diff = Date.now() - new Date(dateStr).getTime()
         const mins = Math.floor(diff / 60000)
-        if (mins < 1) return 'Just now'
-        if (mins < 60) return mins + 'm ago'
+        if (mins < 1) return t('Just now')
+        if (mins < 60) return t('{n}m ago', { n: mins })
         const hrs = Math.floor(mins / 60)
-        if (hrs < 24) return hrs + 'h ago'
-        return Math.floor(hrs / 24) + 'd ago'
+        if (hrs < 24) return t('{n}h ago', { n: hrs })
+        return t('{n}d ago', { n: Math.floor(hrs / 24) })
     }
 
     const URGENCY_ORD = { now: 0, today: 1, this_week: 2, flexible: 3 }
@@ -336,71 +339,71 @@ export default function Feed() {
                     with Offer something beside it, so the top takes less room. */}
                 {!simple && <HelpSwitch />}
                 <div className="feed-title-row">
-                    <h1>Offer Help</h1>
-                    {!simple && <button type="button" className="btn btn-outline feed-title-btn" onClick={() => navigate('/post-offer')}><span aria-hidden="true">+</span> Offer something</button>}
+                    <h1>{t('Offer Help')}</h1>
+                    {!simple && <button type="button" className="btn btn-outline feed-title-btn" onClick={() => navigate('/post-offer')}><span aria-hidden="true">+</span> {t('Offer something')}</button>}
                 </div>
-                <p className="feed-subtitle feed-subtitle-tight">{view === 'offers' ? 'Free things and help your neighbors are sharing.' : 'Neighbors near you who need a hand. Tap Offer Help on one, or tap the card to read more.'}</p>
+                <p className="feed-subtitle feed-subtitle-tight">{view === 'offers' ? t('Free things and help your neighbors are sharing.') : t('Neighbors near you who need a hand. Tap Offer Help on one, or tap the card to read more.')}</p>
             </div>
 
             {successMsg && (
                 <div className="toast toast-success" style={{ marginBottom: '0.75rem' }}>
                     {successMsg}
-                    <button onClick={() => setSuccessMsg(null)} aria-label="Close this note" style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1.3rem', minWidth: 44, minHeight: 44 }}>&times;</button>
+                    <button onClick={() => setSuccessMsg(null)} aria-label={t('Close this note')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1.3rem', minWidth: 44, minHeight: 44 }}>&times;</button>
                 </div>
             )}
 
             <div className="tasks-tabs" style={{ marginBottom: '0.75rem' }}>
-                <button className={'tasks-tab' + (view === 'requests' ? ' tasks-tab-active' : '')} onClick={() => { setView('requests'); setExpandedId(null) }}>Requests</button>
-                <button className={'tasks-tab' + (view === 'offers' ? ' tasks-tab-active' : '')} onClick={() => { setView('offers'); setExpandedId(null) }}>Offers</button>
+                <button className={'tasks-tab' + (view === 'requests' ? ' tasks-tab-active' : '')} onClick={() => { setView('requests'); setExpandedId(null) }}>{t('Requests')}</button>
+                <button className={'tasks-tab' + (view === 'offers' ? ' tasks-tab-active' : '')} onClick={() => { setView('offers'); setExpandedId(null) }}>{t('Offers')}</button>
             </div>
 
             {myLoc
-                ? <LocationBar loc={myLoc} prefix={`Within ${profile?.radius_miles || 10} miles of`} onChanged={loadFeed} />
-                : <LocationPrompt onDone={loadFeed} intro="Enter your zip code to see requests near you. We never guess where you are." />}
+                ? <LocationBar loc={myLoc} prefix={t('Within {n} miles of', { n: profile?.radius_miles || 10 })} onChanged={loadFeed} />
+                : <LocationPrompt onDone={loadFeed} intro={t('Enter your zip code to see requests near you. We never guess where you are.')} />}
 
             <div className="feed-filters">
                 {view === 'requests' ? (
-                    <select className="feed-filter-select" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} aria-label="Filter by skill">
-                        <option value="all">All skills</option>
+                    <select className="feed-filter-select" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} aria-label={t('Filter by skill')}>
+                        <option value="all">{t('All skills')}</option>
                         {groupSkills(skillCategories).map(g => (
-                            <optgroup key={g.group} label={g.group}>
-                                {g.skills.map(s => <option key={s} value={s}>{s}</option>)}
+                            <optgroup key={g.group} label={t(g.group)}>
+                                {g.skills.map(s => <option key={s} value={s}>{t(s)}</option>)}
                             </optgroup>
                         ))}
                     </select>
                 ) : (
-                    <select className="feed-filter-select" value={filterOfferCat} onChange={e => setFilterOfferCat(e.target.value)} aria-label="Filter by category">
-                        <option value="all">All offers</option>
-                        <optgroup label={OFFER_ITEMS_GROUP}>
-                            {OFFER_ITEM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    <select className="feed-filter-select" value={filterOfferCat} onChange={e => setFilterOfferCat(e.target.value)} aria-label={t('Filter by category')}>
+                        <option value="all">{t('All offers')}</option>
+                        <optgroup label={t(OFFER_ITEMS_GROUP)}>
+                            {OFFER_ITEM_CATEGORIES.map(c => <option key={c} value={c}>{t(c)}</option>)}
                         </optgroup>
                         {groupSkills(offerSkillRows(skillCategories)).map(g => (
-                            <optgroup key={g.group} label={g.group}>
-                                {g.skills.map(c => <option key={c} value={c}>{c}</option>)}
+                            <optgroup key={g.group} label={t(g.group)}>
+                                {g.skills.map(c => <option key={c} value={c}>{t(c)}</option>)}
                             </optgroup>
                         ))}
                         {/* Labor was an offer category before skills were used here; kept so older offers can still be found. */}
-                        <optgroup label="Other">
-                            <option value="Other">Other</option>
-                            <option value="Labor">Labor (older posts)</option>
+                        <optgroup label={t('Other')}>
+                            <option value="Other">{t('Other')}</option>
+                            <option value="Labor">{t('Labor (older posts)')}</option>
                         </optgroup>
                     </select>
                 )}
-                <button className="btn btn-sm btn-outline" onClick={loadFeed} aria-label="Refresh feed">&#x21bb; Refresh</button>
-                {!simple && <select className="feed-filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}><option value="urgency">Sort: Urgency</option><option value="newest">Sort: Newest</option></select>}
+                <button className="btn btn-sm btn-outline" onClick={loadFeed} aria-label={t('Refresh feed')}>&#x21bb; {t('Refresh')}</button>
+                {!simple && <select className="feed-filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}><option value="urgency">{t('Sort: Urgency')}</option><option value="newest">{t('Sort: Newest')}</option></select>}
             </div>
 
             </div>
             <div className="feed-scroll">
             {loading ? (
-                <div className="feed-loading"><div className="feed-loading-spinner" /><p>Loading...</p></div>
+                <div className="feed-loading"><div className="feed-loading-spinner" /><p>{t('Loading...')}</p></div>
             ) : view === 'requests' ? (
                 !myLoc ? null : sortedRequests.length === 0 ? (
                     <div className="feed-empty">
                         <span className="feed-empty-icon" aria-hidden="true"><Icon name="sprout" size={64} /></span>
-                        <h2>No requests right now</h2>
-                        <p>{filterSkill !== 'all' ? `No open "${filterSkill}" requests nearby.` : 'No open requests in your area right now.'}</p>
-                        <button className="btn btn-primary" onClick={() => navigate('/ask')}>Post a request</button>
+                        <h2>{t('No requests right now')}</h2>
+                        <p>{filterSkill !== 'all' ? t('No open "{skill}" requests nearby.', { skill: t(filterSkill) }) : t('No open requests in your area right now.')}</p>
+                        <button className="btn btn-primary" onClick={() => navigate('/ask')}>{t('Post a request')}</button>
                     </div>
                 ) : (
                     <div className="feed-list">
@@ -412,37 +415,37 @@ export default function Feed() {
                             const helperStatus = getHelperStatus(req)
 
                             return (
-                                <div key={req.id} className={'feed-card' + (isExpanded ? ' feed-card-expanded' : '')} onClick={() => setExpandedId(isExpanded ? null : req.id)} role="button" tabIndex={0} aria-expanded={isExpanded} aria-label={(isExpanded ? 'Collapse' : 'Expand') + ' request: ' + req.skill_needed} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(isExpanded ? null : req.id) } }}>
+                                <div key={req.id} className={'feed-card' + (isExpanded ? ' feed-card-expanded' : '')} onClick={() => setExpandedId(isExpanded ? null : req.id)} role="button" tabIndex={0} aria-expanded={isExpanded} aria-label={t(isExpanded ? 'Collapse request: {skill}' : 'Expand request: {skill}', { skill: t(req.skill_needed) })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(isExpanded ? null : req.id) } }}>
                                     <div className="feed-card-top">
-                                        <span className={'urgency-badge ' + urg.className}>{urg.label}</span>
+                                        <span className={'urgency-badge ' + urg.className}>{t(urg.label)}</span>
                                         {req.requester_id === user.id && (
-                                            <span className="urgency-badge" style={{ background: 'var(--btn-bg)', color: 'var(--btn-ink)' }}>Your request</span>
+                                            <span className="urgency-badge" style={{ background: 'var(--btn-bg)', color: 'var(--btn-ink)' }}>{t('Your request')}</span>
                                         )}
                                         {req.audience && req.audience !== 'everyone' && (!req.opens_to_all_at || new Date(req.opens_to_all_at) > new Date()) && (
-                                            <span className="urgency-badge" style={{ background: 'var(--info-bg)', color: 'var(--text-strong)' }}>{req.audience === 'network' ? 'From your network' : 'From your group'}</span>
+                                            <span className="urgency-badge" style={{ background: 'var(--info-bg)', color: 'var(--text-strong)' }}>{req.audience === 'network' ? t('From your network') : t('From your group')}</span>
                                         )}
                                         {isPending && (
-                                            <span className="urgency-badge" style={{ background: 'var(--gold)', color: 'var(--on-accent)' }}>Pending</span>
+                                            <span className="urgency-badge" style={{ background: 'var(--gold)', color: 'var(--on-accent)' }}>{t('Pending')}</span>
                                         )}
                                         <span className="feed-card-time">{timeAgo(req.created_at)}</span>
                                     </div>
 
                                     <div className="feed-card-meta">
-                                        <span className="feed-card-skill">{req.skill_needed}</span>
+                                        <span className="feed-card-skill">{t(req.skill_needed)}</span>
                                         {req.distance_miles != null && <span className="feed-card-distance">{req.distance_miles} mi</span>}
                                     </div>
 
                                     <div className="feed-card-who">
-                                        <UserName userId={req.requester_id} name={req.requester_name || 'A neighbor'} className="feed-card-name" />
-                                        {req.neighborhood && <span className="feed-card-hood"> in {req.neighborhood}</span>}
+                                        <UserName userId={req.requester_id} name={req.requester_name || t('A neighbor')} className="feed-card-name" />
+                                        {req.neighborhood && <span className="feed-card-hood"> {t('in {place}', { place: req.neighborhood })}</span>}
                                         {req.is_ambassador && (
                                             <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', marginLeft: '0.35rem' }}>
-                                                Hope Ambassador
+                                                {t('Hope Ambassador')}
                                             </span>
                                         )}
                                         {req.member_since && (
                                             <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', marginLeft: '0.35rem' }}>
-                                                Member since {new Date(req.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                                {t('Member since {date}', { date: new Date(req.member_since).toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { month: 'short', year: 'numeric' }) })}
                                             </span>
                                         )}
                                     </div>
@@ -472,22 +475,22 @@ export default function Feed() {
                                         <div className="feed-card-actions">
                                             {req.requester_id !== user.id && !isPending && !isFull && (
                                                 <button className="btn btn-primary btn-sm" onClick={(e) => handleOfferHelp(e, req)}>
-                                                    Offer Help
+                                                    {t('Offer Help')}
                                                 </button>
                                             )}
                                             {req.requester_id !== user.id && isPending && (
                                                 <>
                                                     <span style={{ fontSize: '0.8125rem', color: 'var(--gold)', fontWeight: 600 }}>
-                                                        <Icon name="hourglass" /> Pending
+                                                        <Icon name="hourglass" /> {t('Pending')}
                                                     </span>
                                                     <button className="btn btn-outline btn-sm" onClick={(e) => handleWithdrawOffer(e, req)}>
-                                                        Withdraw
+                                                        {t('Withdraw')}
                                                     </button>
                                                 </>
                                             )}
                                             {req.requester_id !== user.id && isFull && !isPending && (
                                                 <span style={{ fontSize: '0.8125rem', color: 'var(--accent)', fontWeight: 600 }}>
-                                                    <Icon name="check" /> Full
+                                                    <Icon name="check" /> {t('Full')}
                                                 </span>
                                             )}
                                             {isExpanded && req.requester_id && <VouchButton userId={req.requester_id} size="md" showCount={false} />}
@@ -502,17 +505,17 @@ export default function Feed() {
                 offers.length === 0 ? (
                     <div className="feed-empty">
                         <span className="feed-empty-icon" aria-hidden="true"><Icon name="gift" size={64} /></span>
-                        <h2>No offers right now</h2>
-                        <p>Be the first to share something with your neighbors.</p>
+                        <h2>{t('No offers right now')}</h2>
+                        <p>{t('Be the first to share something with your neighbors.')}</p>
                     </div>
                 ) : (
                     <div className="feed-list">
                         {offers.map(offer => {
                             const isExpanded = expandedId === offer.id
                             return (
-                                <div key={offer.id} className={'feed-card' + (isExpanded ? ' feed-card-expanded' : '')} onClick={() => setExpandedId(isExpanded ? null : offer.id)} role="button" tabIndex={0} aria-expanded={isExpanded} aria-label={(isExpanded ? 'Collapse' : 'Expand') + ' offer: ' + offer.category} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(isExpanded ? null : offer.id) } }}>
+                                <div key={offer.id} className={'feed-card' + (isExpanded ? ' feed-card-expanded' : '')} onClick={() => setExpandedId(isExpanded ? null : offer.id)} role="button" tabIndex={0} aria-expanded={isExpanded} aria-label={t(isExpanded ? 'Collapse offer: {kind}' : 'Expand offer: {kind}', { kind: t(offer.category) })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedId(isExpanded ? null : offer.id) } }}>
                                     <div className="feed-card-top">
-                                        <span className="offer-badge">{offer.category}</span>
+                                        <span className="offer-badge">{t(offer.category)}</span>
                                         <span className="feed-card-time">{timeAgo(offer.created_at)}</span>
                                     </div>
                                     <div className="feed-card-meta">
@@ -524,19 +527,19 @@ export default function Feed() {
                                             <UserName userId={offer.user_id} name={offer.poster_name} className="feed-card-name" />
                                             {offer.is_ambassador && (
                                                 <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
-                                                    Hope Ambassador
+                                                    {t('Hope Ambassador')}
                                                 </span>
                                             )}
                                             {offer.member_since && (
                                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                                                    Member since {new Date(offer.member_since).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                                    {t('Member since {date}', { date: new Date(offer.member_since).toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { month: 'short', year: 'numeric' }) })}
                                                 </span>
                                             )}
                                         </div>
                                     )}
                                     {offer.neighborhood && (
                                         <div className="feed-card-who">
-                                            <span className="feed-card-hood">in {offer.neighborhood}</span>
+                                            <span className="feed-card-hood">{t('in {place}', { place: offer.neighborhood })}</span>
                                         </div>
                                     )}
                                     <p className={'feed-card-desc' + (isExpanded ? '' : ' feed-card-desc-clamp')}>{offer.description}</p>
@@ -552,11 +555,11 @@ export default function Feed() {
                                                         .maybeSingle()
                                                     if (existingErr) {
                                                         console.error('Failed to check for an existing conversation:', existingErr)
-                                                        tell('Something went wrong. Try again.', { tone: 'error' })
+                                                        tell(t('Something went wrong. Try again.'), { tone: 'error' })
                                                         return
                                                     }
                                                     if (existing) { navigate('/conversation/' + existing.id); return }
-                                                    if (!(await askConfirm('Message ' + (offer.poster_name || 'this neighbor') + ' about "' + offer.title + '"?\n\nThis opens a private chat with them.'))) return
+                                                    if (!(await askConfirm(t('Message {name} about "{title}"?', { name: offer.poster_name || t('this neighbor'), title: offer.title }) + '\n\n' + t('This opens a private chat with them.')))) return
                                                     const { data: convo, error: convoErr } = await supabase
                                                         .from('conversations')
                                                         .insert({ helper_id: offer.user_id, requester_id: user.id, offer_id: offer.id })
@@ -565,7 +568,7 @@ export default function Feed() {
                                                     if (convoErr || !convo) {
                                                         if (isNewAccountBlock(convoErr)) { tell(NEW_ACCOUNT_NOTE); return }
                                                         console.error('Failed to start a conversation:', convoErr)
-                                                        tell('Could not start a conversation. Try again.', { tone: 'error' })
+                                                        tell(t('Could not start a conversation. Try again.'), { tone: 'error' })
                                                         return
                                                     }
                                                     // No automatic opening message: it used to be stored as
@@ -573,7 +576,7 @@ export default function Feed() {
                                                     // about (conversations.offer_id), and the person writes
                                                     // their own first message, encrypted like any other.
                                                     navigate('/conversation/' + convo.id)
-                                                }}>I'm interested</button>
+                                                }}>{t("I'm interested")}</button>
                                             )}
                                             <VouchButton userId={offer.user_id} size="md" showCount={true} />
                                         </div>
