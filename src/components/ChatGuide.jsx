@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Icon from './Icon'
+import { useT } from '../utils/lang'
 
 // "Why so many kinds of chat?" A plain guide to the chat rooms in VWB,
 // smallest room first. Shown folded at the top of Messages (and anywhere else
@@ -60,19 +61,20 @@ const ROOMS = [
 export default function ChatGuide({ startOpen = false }) {
   const [open, setOpen] = useState(startOpen)
   const [room, setRoom] = useState(null)
+  const t = useT()
   return (
     <section className="chat-guide" aria-labelledby="chat-guide-h">
       <button type="button" className="chat-guide-toggle" aria-expanded={open} aria-controls="chat-guide-body" onClick={() => setOpen((o) => !o)}>
         <Icon name="question" />
-        <span id="chat-guide-h">Why so many kinds of chat?</span>
+        <span id="chat-guide-h">{t('Why so many kinds of chat?')}</span>
         <span className="chat-guide-caret" aria-hidden="true">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
         <div id="chat-guide-body" className="chat-guide-body">
           <p className="chat-guide-lead">
-            Different talks need different rooms. In one big chat, private things end up in front of strangers and it gets too noisy to follow. So VWB has rooms of different sizes.
+            {t('Different talks need different rooms. In one big chat, private things end up in front of strangers and it gets too noisy to follow. So VWB has rooms of different sizes.')}
           </p>
-          <p className="chat-guide-rule"><b>The bigger the room, the less you share.</b> Not sure? Pick the smallest room that fits. You can always share more later, but you can't take back what a crowd has seen.</p>
+          <p className="chat-guide-rule"><b>{t('The bigger the room, the less you share.')}</b> {t("Not sure? Pick the smallest room that fits. You can always share more later, but you can't take back what a crowd has seen.")}</p>
           <ol className="chat-guide-list">
             {ROOMS.map((r) => {
               // Each room is one short line (name and who). Tap it to see what it is for and how safe it is.
@@ -82,23 +84,23 @@ export default function ChatGuide({ startOpen = false }) {
                   <button type="button" className="chat-guide-room-btn" aria-expanded={isOpen} onClick={() => setRoom(isOpen ? null : r.name)}>
                     <span className="chat-guide-ic" aria-hidden="true"><Icon name={r.icon} size={28} /></span>
                     <span className="chat-guide-text">
-                      <b>{r.name}</b>
-                      <span>{r.who}</span>
+                      <b>{t(r.name)}</b>
+                      <span>{t(r.who)}</span>
                     </span>
                     <span className="chat-guide-more" aria-hidden="true">{isOpen ? '\u2212' : '+'}</span>
                   </button>
                   {isOpen && (
                     <span className="chat-guide-text chat-guide-detail">
-                      <span><span className="chat-guide-label">Use it for:</span> {r.for}</span>
-                      <span><span className="chat-guide-label">Safety:</span> {r.safe}</span>
+                      <span><span className="chat-guide-label">{t('Use it for:')}</span> {t(r.for)}</span>
+                      <span><span className="chat-guide-label">{t('Safety:')}</span> {t(r.safe)}</span>
                     </span>
                   )}
                 </li>
               )
             })}
           </ol>
-          <p className="chat-guide-note">Smallest room at the top, biggest at the bottom. Tap a room to learn more. In every chat you can mute, leave, block, or report.</p>
-          <button type="button" className="btn btn-outline btn-full" onClick={() => setOpen(false)}>Close this guide</button>
+          <p className="chat-guide-note">{t('Smallest room at the top, biggest at the bottom. Tap a room to learn more. In every chat you can mute, leave, block, or report.')}</p>
+          <button type="button" className="btn btn-outline btn-full" onClick={() => setOpen(false)}>{t('Close this guide')}</button>
         </div>
       )}
     </section>

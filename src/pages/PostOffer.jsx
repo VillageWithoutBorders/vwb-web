@@ -7,12 +7,14 @@ import { getMyLocation } from '../utils/location'
 import { LocationPrompt } from '../components/LocationPrompt'
 import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES, OFFER_ITEMS_GROUP } from '../utils/skillGroups'
 import { useGoBack } from '../components/BackLink'
+import { useT } from '../utils/lang'
 
 
 const fieldStyle = { display: 'block', width: '100%', marginBottom: '0.5rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text-strong)', fontSize: '1rem' }
 const labelStyle = { display: 'block', marginBottom: '0.25rem', marginTop: '1rem', fontWeight: 600, color: 'var(--text-soft)' }
 
 export default function PostOffer() {
+  const t = useT()
   const { user, profile, established, organizations } = useAuth()
   const [, setAreaTick] = useState(0)
   const [searchParams] = useSearchParams()
@@ -46,9 +48,9 @@ export default function PostOffer() {
     e.preventDefault()
     setError('')
 
-    if (!category) { setError('Pick a category'); return }
-    if (!title.trim()) { setError('Add a short title'); return }
-    if (!description.trim()) { setError('Describe what you are offering'); return }
+    if (!category) { setError(t('Pick a category')); return }
+    if (!title.trim()) { setError(t('Add a short title')); return }
+    if (!description.trim()) { setError(t('Describe what you are offering')); return }
 
     setSubmitting(true)
 
@@ -58,7 +60,7 @@ export default function PostOffer() {
     const loc = getMyLocation(profile)
     if (loc) { lat = loc.lat; lng = loc.lng }
     // No area, nobody nearby would ever see it (Oct 27). Ask first.
-    if (!loc) { setSubmitting(false); setError('Add your zip code at the top first, so neighbors near you can see your offer.'); window.scrollTo(0, 0); return }
+    if (!loc) { setSubmitting(false); setError(t('Add your zip code at the top first, so neighbors near you can see your offer.')); window.scrollTo(0, 0); return }
 
     const { error: insertErr } = await supabase.from('offers').insert({
       user_id: user.id,
@@ -74,71 +76,71 @@ export default function PostOffer() {
     setSubmitting(false)
 
     if (insertErr) {
-      if (isNewAccountBlock(insertErr)) { setError(NEW_ACCOUNT_NOTE); return }
+      if (isNewAccountBlock(insertErr)) { setError(t(NEW_ACCOUNT_NOTE)); return }
       console.error('Offer insert error:', insertErr)
-      setError('Something went wrong. Please try again.')
+      setError(t('Something went wrong. Please try again.'))
       return
     }
 
-    navigate('/skillshare?tab=offers', { state: { message: 'Your offer is shared. Neighbors near you can see it now.' } })
+    navigate('/skillshare?tab=offers', { state: { message: t('Your offer is shared. Neighbors near you can see it now.') } })
   }
 
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
-        <h1 style={{ color: 'var(--accent)', margin: 0, fontSize: '1.5rem' }}>Share an Offer</h1>
+        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
+        <h1 style={{ color: 'var(--accent)', margin: 0, fontSize: '1.5rem' }}>{t('Share an Offer')}</h1>
       </div>
 
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-        Let your neighbors know what you have to share. Free meals, supplies, labor, rides, anything helps.
+        {t('Let your neighbors know what you have to share. Free meals, supplies, labor, rides, anything helps.')}
       </p>
 
       {/* Oct 27: offers are shown by area, so ask for a zip code up front. */}
-      {!getMyLocation(profile) && <LocationPrompt onDone={() => setAreaTick((n) => n + 1)} intro="Add your zip code so neighbors near you can see your offer. We never guess where you are." />}
+      {!getMyLocation(profile) && <LocationPrompt onDone={() => setAreaTick((n) => n + 1)} intro={t('Add your zip code so neighbors near you can see your offer. We never guess where you are.')} />}
 
       {established === false && (
-        <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE}</p>
+        <p className="new-account-note" role="status">{t(NEW_ACCOUNT_NOTE)}</p>
       )}
 
       <form onSubmit={handleSubmit}>
         {error && <div style={{ background: 'var(--danger-bg)', color: 'var(--danger)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>{error}</div>}
 
-        <label style={labelStyle} htmlFor="offer-category">Category</label>
+        <label style={labelStyle} htmlFor="offer-category">{t('Category')}</label>
         <select id="offer-category" style={fieldStyle} value={category} onChange={e => setCategory(e.target.value)}>
-          <option value="">Choose a category</option>
-          <optgroup label={OFFER_ITEMS_GROUP}>
-            {OFFER_ITEM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          <option value="">{t('Choose a category')}</option>
+          <optgroup label={t(OFFER_ITEMS_GROUP)}>
+            {OFFER_ITEM_CATEGORIES.map(c => <option key={c} value={c}>{t(c)}</option>)}
           </optgroup>
           {groupSkills(skillRows).map(g => (
-            <optgroup key={g.group} label={g.group}>
-              {g.skills.map(c => <option key={c} value={c}>{c}</option>)}
+            <optgroup key={g.group} label={t(g.group)}>
+              {g.skills.map(c => <option key={c} value={c}>{t(c)}</option>)}
             </optgroup>
           ))}
-          <option value="Other">Other</option>
+          <option value="Other">{t('Other')}</option>
         </select>
 
-        <label style={labelStyle} htmlFor="offer-title">What are you offering?</label>
-        <input id="offer-title" style={fieldStyle} type="text" placeholder="e.g. Hot meals Saturday, Free winter coats" value={title} onChange={e => setTitle(e.target.value)} maxLength={120} />
+        <label style={labelStyle} htmlFor="offer-title">{t('What are you offering?')}</label>
+        <input id="offer-title" style={fieldStyle} type="text" placeholder={t('e.g. Hot meals Saturday, Free winter coats')} value={title} onChange={e => setTitle(e.target.value)} maxLength={120} />
 
-        <label style={labelStyle} htmlFor="offer-desc">Details</label>
-        <textarea id="offer-desc" style={{ ...fieldStyle, minHeight: '100px', resize: 'vertical' }} placeholder="How much do you have? When is it available? Can you deliver or should people pick up?" value={description} onChange={e => setDescription(e.target.value)} maxLength={1000} />
+        <label style={labelStyle} htmlFor="offer-desc">{t('Details')}</label>
+        <textarea id="offer-desc" style={{ ...fieldStyle, minHeight: '100px', resize: 'vertical' }} placeholder={t('How much do you have? When is it available? Can you deliver or should people pick up?')} value={description} onChange={e => setDescription(e.target.value)} maxLength={1000} />
 
-        <label style={labelStyle} htmlFor="offer-hood">Neighborhood</label>
-        <input id="offer-hood" style={fieldStyle} type="text" placeholder="Your town or neighborhood" value={neighborhood} onChange={e => setNeighborhood(e.target.value)} maxLength={100} />
+        <label style={labelStyle} htmlFor="offer-hood">{t('Neighborhood')}</label>
+        <input id="offer-hood" style={fieldStyle} type="text" placeholder={t('Your town or neighborhood')} value={neighborhood} onChange={e => setNeighborhood(e.target.value)} maxLength={100} />
 
         {managedOrgs.length > 0 && (
           <>
-            <label style={labelStyle} htmlFor="offer-postas">Post as</label>
+            <label style={labelStyle} htmlFor="offer-postas">{t('Post as')}</label>
             <select id="offer-postas" style={fieldStyle} value={postAs} onChange={e => setPostAs(e.target.value)}>
-              <option value="">Myself</option>
+              <option value="">{t('Myself')}</option>
               {managedOrgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
             </select>
           </>
         )}
 
         <button type="submit" disabled={submitting} style={{ display: 'block', width: '100%', marginTop: '1.5rem', padding: '0.875rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', opacity: submitting ? 0.6 : 1 }}>
-          {submitting ? 'Posting...' : 'Post Offer'}
+          {submitting ? t('Posting...') : t('Post Offer')}
         </button>
       </form>
     </div>

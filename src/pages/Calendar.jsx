@@ -9,8 +9,10 @@ import { hasEnded } from '../utils/calendar'
 import NearbyOrganizers from '../components/NearbyOrganizers'
 import BringOrg from '../components/BringOrg'
 import { calmMotion } from '../utils/motion'
+import { useT } from '../utils/lang'
 
 export default function Calendar() {
+  const t = useT()
   const { isAdmin, organizations, profile } = useAuth()
   const wide = useWideScreen()
   const navigate = useNavigate()
@@ -85,11 +87,11 @@ export default function Calendar() {
   }
 
   const upcoming = visible.filter((e) => !hasEnded(e))
-  const emptyText = canPost ? 'No events nearby yet. Tap "New event" to post the first one.' : 'No events nearby yet. Check back soon, or try a wider distance.'
+  const emptyText = canPost ? t('No events nearby yet. Tap "New event" to post the first one.') : t('No events nearby yet. Check back soon, or try a wider distance.')
   const farBox = yourFarEvents.length > 0 ? (
             <details style={{ margin: '1rem 0' }}>
               <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center', fontWeight: 600, cursor: 'pointer' }}>
-                Your events farther away ({yourFarEvents.length})
+                {t('Your events farther away ({n})', { n: yourFarEvents.length })}
               </summary>
               <CalendarEventList events={yourFarEvents} />
             </details>
@@ -104,8 +106,8 @@ export default function Calendar() {
         <div className="cal-left">
         <div className="cal-head">
           <div>
-            <h1>Calendar</h1>
-            <p className="cal-sub">Gatherings, drives, volunteer shifts, and who is organizing near you</p>
+            <h1>{t('Calendar')}</h1>
+            <p className="cal-sub">{t('Gatherings, drives, volunteer shifts, and who is organizing near you')}</p>
           </div>
         </div>
 
@@ -114,21 +116,21 @@ export default function Calendar() {
             calendar link move under More. Nothing was taken away. */}
         <div className="cal-top-row">
           {canPost && (
-            <button type="button" className="btn btn-primary" onClick={() => navigate('/calendar/new')}>+ New event</button>
+            <button type="button" className="btn btn-primary" onClick={() => navigate('/calendar/new')}>{t('+ New event')}</button>
           )}
           <details className="cal-more">
-            <summary>More</summary>
+            <summary>{t('More')}</summary>
             <div className="cal-more-body">
-              {canPost && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/calendar/import')}>Bring in events</button>}
-              <button type="button" className="btn btn-outline btn-full" onClick={jumpToSubscribe}>Add these events to my phone calendar</button>
+              {canPost && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/calendar/import')}>{t('Bring in events')}</button>}
+              <button type="button" className="btn btn-outline btn-full" onClick={jumpToSubscribe}>{t('Add these events to my phone calendar')}</button>
             </div>
           </details>
         </div>
 
         <details className="cal-filters" open={!origin}>
           <summary>
-            <span className="cal-filters-word">Place and filters</span>
-            <small>{(origin && origin.name ? origin.name + ', ' : '') + 'within ' + miles + ' miles' + (allAgesOnly ? ', all ages only' : '')}</small>
+            <span className="cal-filters-word">{t('Place and filters')}</span>
+            <small>{(origin && origin.name ? origin.name + ', ' : '') + t('within {n} miles', { n: miles }) + (allAgesOnly ? t(', all ages only') : '')}</small>
           </summary>
           <div className="cal-filters-body">
             <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
@@ -139,13 +141,13 @@ export default function Calendar() {
           {!loading && !loadError && <CalendarMonth events={visible} picked={pickedDay} onPick={pickDay} hideDay />}
         </div>
         <div className="cal-right" ref={rightRef}>
-          {loading && <p className="cal-empty">Loading events...</p>}
+          {loading && <p className="cal-empty">{t('Loading events...')}</p>}
           {!loading && loadError && (
-            <p className="cal-error">We couldn't load the calendar right now. Check your connection and try again.</p>
+            <p className="cal-error">{t("We couldn't load the calendar right now. Check your connection and try again.")}</p>
           )}
           {!loading && !loadError && (<>
             <CalendarDay day={pickedDay} events={visible} />
-            <p className="cal-sub" role="status">{upcoming.length === 0 ? 'No upcoming events found for this search. Try more miles.' : upcoming.length + (upcoming.length === 1 ? ' upcoming event found.' : ' upcoming events found.')}</p>
+            <p className="cal-sub" role="status">{upcoming.length === 0 ? t('No upcoming events found for this search. Try more miles.') : t(upcoming.length === 1 ? '1 upcoming event found.' : '{n} upcoming events found.', { n: upcoming.length })}</p>
             {farBox}
             <CalendarEventList events={upcoming} emptyText={emptyText} />
           </>)}
@@ -161,8 +163,8 @@ export default function Calendar() {
     <div className="cal-page">
       <div className="cal-head">
         <div>
-          <h1>Calendar</h1>
-          <p className="cal-sub">Gatherings, drives, volunteer shifts, and who is organizing near you</p>
+          <h1>{t('Calendar')}</h1>
+          <p className="cal-sub">{t('Gatherings, drives, volunteer shifts, and who is organizing near you')}</p>
         </div>
       </div>
 
@@ -171,21 +173,21 @@ export default function Calendar() {
           calendar link move under More. Nothing was taken away. */}
       <div className="cal-top-row">
         {canPost && (
-          <button type="button" className="btn btn-primary" onClick={() => navigate('/calendar/new')}>+ New event</button>
+          <button type="button" className="btn btn-primary" onClick={() => navigate('/calendar/new')}>{t('+ New event')}</button>
         )}
         <details className="cal-more">
-          <summary>More</summary>
+          <summary>{t('More')}</summary>
           <div className="cal-more-body">
-            {canPost && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/calendar/import')}>Bring in events</button>}
-            <button type="button" className="btn btn-outline btn-full" onClick={jumpToSubscribe}>Add these events to my phone calendar</button>
+            {canPost && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/calendar/import')}>{t('Bring in events')}</button>}
+            <button type="button" className="btn btn-outline btn-full" onClick={jumpToSubscribe}>{t('Add these events to my phone calendar')}</button>
           </div>
         </details>
       </div>
 
       <details className="cal-filters" open={!origin}>
         <summary>
-          <span className="cal-filters-word">Place and filters</span>
-          <small>{(origin && origin.name ? origin.name + ', ' : '') + 'within ' + miles + ' miles' + (allAgesOnly ? ', all ages only' : '')}</small>
+          <span className="cal-filters-word">{t('Place and filters')}</span>
+          <small>{(origin && origin.name ? origin.name + ', ' : '') + t('within {n} miles', { n: miles }) + (allAgesOnly ? t(', all ages only') : '')}</small>
         </summary>
         <div className="cal-filters-body">
           <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
@@ -193,9 +195,9 @@ export default function Calendar() {
         </div>
       </details>
 
-      {loading && <p className="cal-empty">Loading events...</p>}
+      {loading && <p className="cal-empty">{t('Loading events...')}</p>}
       {!loading && loadError && (
-        <p className="cal-error">We couldn't load the calendar right now. Check your connection and try again.</p>
+        <p className="cal-error">{t("We couldn't load the calendar right now. Check your connection and try again.")}</p>
       )}
       {!loading && !loadError && (
         <CalendarView
@@ -203,12 +205,12 @@ export default function Calendar() {
           belowTabs={yourFarEvents.length > 0 ? (
             <details style={{ margin: '1rem 0' }}>
               <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center', fontWeight: 600, cursor: 'pointer' }}>
-                Your events farther away ({yourFarEvents.length})
+                {t('Your events farther away ({n})', { n: yourFarEvents.length })}
               </summary>
               <CalendarEventList events={yourFarEvents} />
             </details>
           ) : null}
-          emptyText={canPost ? 'No events nearby yet. Tap "New event" to post the first one.' : 'No events nearby yet. Check back soon, or try a wider distance.'}
+          emptyText={emptyText}
         />
       )}
 

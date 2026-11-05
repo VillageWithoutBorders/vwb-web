@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import Icon from './Icon'
+import { useT } from '../utils/lang'
 
 // The Villages section of the Messages hub: Announcements, the village chats
 // you joined, and the Ambassadors room for people who can open it. The
@@ -15,6 +16,7 @@ export default function HubVillages() {
   const [mine, setMine] = useState(new Set())
   const [unread, setUnread] = useState({})
   const [failed, setFailed] = useState(false)
+  const t = useT()
 
   useEffect(() => {
     let alive = true
@@ -35,8 +37,8 @@ export default function HubVillages() {
       setBoards(b.data || [])
     }
     load()
-    const t = setInterval(load, 30000)
-    return () => { alive = false; clearInterval(t) }
+    const timer = setInterval(load, 30000)
+    return () => { alive = false; clearInterval(timer) }
   }, [user.id])
 
   const general = (boards || []).filter((b) => b.is_general)
@@ -47,8 +49,8 @@ export default function HubVillages() {
     const n = unread[b.id] || 0
     return (
       <button key={b.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px', marginBottom: '0.6rem' }}
-        aria-label={b.name + (n ? ', ' + n + ' new' : '')} onClick={() => navigate('/village-square?board=' + b.id)}>
-        <span className="cal-card-title"><Icon name={icon} /> {b.name}{n > 0 && <span style={{ marginLeft: '0.5rem', color: 'var(--accent)', fontWeight: 700 }}>{n > 9 ? '9+' : n} new</span>}</span>
+        aria-label={b.name + (n ? ', ' + t('{n} new', { n }) : '')} onClick={() => navigate('/village-square?board=' + b.id)}>
+        <span className="cal-card-title"><Icon name={icon} /> {b.name}{n > 0 && <span style={{ marginLeft: '0.5rem', color: 'var(--accent)', fontWeight: 700 }}>{t('{n} new', { n: n > 9 ? '9+' : n })}</span>}</span>
         <span className="cal-card-meta">{note}</span>
       </button>
     )
@@ -56,21 +58,21 @@ export default function HubVillages() {
 
   return (
     <div className="cal-page" style={{ maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}>
-      <p className="cal-sub" style={{ marginTop: 0 }}>Announcements are for everyone. A village chat can be read only by the neighbors who joined it.</p>
-      {boards === null && <p className="cal-empty">Loading...</p>}
-      {failed && <p className="cal-error">We could not load your village chats. Check your connection and try again.</p>}
-      {general.map((b) => card(b, '📣', 'Updates from VWB. Read only.'))}
-      {villages.map((b) => card(b, '🏘️', 'Your village chat'))}
-      {rooms.map((b) => card(b, '🔥', 'A private room for Ambassadors'))}
+      <p className="cal-sub" style={{ marginTop: 0 }}>{t('Announcements are for everyone. A village chat can be read only by the neighbors who joined it.')}</p>
+      {boards === null && <p className="cal-empty">{t('Loading...')}</p>}
+      {failed && <p className="cal-error">{t('We could not load your village chats. Check your connection and try again.')}</p>}
+      {general.map((b) => card(b, '📣', t('Updates from VWB. Read only.')))}
+      {villages.map((b) => card(b, '🏘️', t('Your village chat')))}
+      {rooms.map((b) => card(b, '🔥', t('A private room for Ambassadors')))}
       {boards !== null && !failed && villages.length === 0 && (
-        <p className="cal-empty">{profile?.zip_code ? 'You have not joined a village chat yet.' : 'Add your zip code on your Profile to find your village chat.'}</p>
+        <p className="cal-empty">{profile?.zip_code ? t('You have not joined a village chat yet.') : t('Add your zip code on your Profile to find your village chat.')}</p>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}>
         {!profile?.zip_code && (
-          <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/profile')}>Go to my Profile</button>
+          <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/profile')}>{t('Go to my Profile')}</button>
         )}
-        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>Find, join, or start a village chat</button>
-        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/world')}>See the village map</button>
+        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/find-village')}>{t('Find, join, or start a village chat')}</button>
+        <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => navigate('/world')}>{t('See the village map')}</button>
       </div>
     </div>
   )

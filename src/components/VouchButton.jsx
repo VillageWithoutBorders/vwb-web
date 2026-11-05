@@ -6,6 +6,7 @@ import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
 import { canVouch, HOW_LABELS } from '../utils/vouchEligibility'
 import { askConfirm, tell } from './AdminDialog'
+import { useT } from '../utils/lang'
 
 // Two kinds of vouches (see vwb-personal-vouches.sql):
 //   helped: you finished a task together on VWB. Counts right away.
@@ -14,6 +15,7 @@ import { askConfirm, tell } from './AdminDialog'
 // `allowPersonal` shows the "I know them" option. It's on for profile
 // pages, and off in busy lists like the Feed.
 export default function VouchButton({ userId, name, size = 'sm', showCount = true, allowPersonal = false, onVouchChange }) {
+  const t = useT()
   const { user, profile: myProfile } = useAuth()
   const navigate = useNavigate()
   const [trust, setTrust] = useState(null) // { wentWell, rated } from finished tasks
@@ -27,7 +29,7 @@ export default function VouchButton({ userId, name, size = 'sm', showCount = tru
   const [how, setHow] = useState('')
   const [askError, setAskError] = useState('')
   const isSelf = user?.id === userId
-  const theirName = name || 'this person'
+  const theirName = name || t('this person')
 
   useEffect(() => {
     if (!userId) return
@@ -72,11 +74,11 @@ export default function VouchButton({ userId, name, size = 'sm', showCount = tru
   }
 
   async function removeVouch() {
-    if (!(await askConfirm('Take back your vouch for ' + theirName + '? You can vouch for them again any time.'))) return
+    if (!(await askConfirm(t('Take back your vouch for {name}? You can vouch for them again any time.', { name: theirName })))) return
     setLoading(true)
     const { error } = await supabase.from('vouches').delete().eq('voucher_id', user.id).eq('vouchee_id', userId)
     setLoading(false)
-    if (error) { console.error('Unvouch error:', error); tell('Could not take back your vouch. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Unvouch error:', error); tell(t('Could not take back your vouch. Try again.'), { tone: 'error' }); return }
     setMine(null)
     setJustRemoved(true)
     loadVouchData()
@@ -87,7 +89,7 @@ export default function VouchButton({ userId, name, size = 'sm', showCount = tru
     setLoading(true)
     const { error } = await supabase.from('vouches').insert({ voucher_id: user.id, vouchee_id: userId })
     setLoading(false)
-    if (error && error.code !== '23505') { console.error('Vouch error:', error); tell('Could not vouch. Try again.', { tone: 'error' }); return }
+    if (error && error.code !== '23505') { console.error('Vouch error:', error); tell(t('Could not vouch. Try again.'), { tone: 'error' }); return }
     setJustRemoved(false)
     if (!error) {
       createNotification({ userId, type: 'vouch', title: myName() + ' vouched for you!', body: 'You helped each other on Village Without Borders.', link: '/profile' })
@@ -98,13 +100,13 @@ export default function VouchButton({ userId, name, size = 'sm', showCount = tru
 
   async function sendPersonal(e) {
     e.preventDefault()
-    if (!how) { setAskError('Pick how you know them.'); return }
+    if (!how) { setAskError(t('Pick how you know them.')); return }
     setLoading(true)
     const { error } = await supabase.from('vouch_requests').insert({ voucher_id: user.id, vouchee_id: userId, how })
     setLoading(false)
     if (error && error.code !== '23505') {
       console.error('Personal vouch request failed:', error)
-      setAskError('Could not send this. Try again.')
+      setAskError(t('Could not send this. Try again.'))
       return
     }
     setJustRemoved(false)
@@ -118,79 +120,79 @@ export default function VouchButton({ userId, name, size = 'sm', showCount = tru
     setLoading(true)
     const { error } = await supabase.from('vouch_requests').delete().eq('voucher_id', user.id).eq('vouchee_id', userId)
     setLoading(false)
-    if (error) { console.error('Failed to take back request:', error); tell('Could not take it back. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to take back request:', error); tell(t('Could not take it back. Try again.'), { tone: 'error' }); return }
     setPending(null)
   }
 
   if (isSelf && !showCount) return null
 
   const summary = []
-  if (counts.helped > 0) summary.push(counts.helped + ' helped together')
-  if (counts.knows > 0) summary.push(counts.knows + ' know them personally')
+  if (counts.helped > 0) summary.push(t('{n} helped together', { n: counts.helped }))
+  if (counts.knows > 0) summary.push(t('{n} know them personally', { n: counts.knows }))
 
   return (
     <div className={`vouch-container vouch-${size}`}>
       {showCount && counts.total > 0 && (
-        <span className="vouch-count" title="Vouches from neighbors. A vouch means someone trusts them. It doesn't guarantee they're safe, so use your own judgment too.">
+        <span className="vouch-count" title={t("Vouches from neighbors. A vouch means someone trusts them. It doesn't guarantee they're safe, so use your own judgment too.")}>
           &#10022; {summary.join(' · ')}
         </span>
       )}
       {isSelf && showCount && counts.total === 0 && (
-        <span className="vouch-count vouch-count-empty">No vouches yet</span>
+        <span className="vouch-count vouch-count-empty">{t('No vouches yet')}</span>
       )}
       {showCount && trust && (
-        <span className="trust-count" title="From the private 'How did it go?' answers after finished tasks. Only counted once both people answer.">
-          &#10003; {trust.wentWell} of {trust.rated} finished {trust.rated === 1 ? 'task' : 'tasks'} went well
+        <span className="trust-count" title={t("From the private 'How did it go?' answers after finished tasks. Only counted once both people answer.")}>
+          &#10003; {t(trust.rated === 1 ? '{n} of {total} finished task went well' : '{n} of {total} finished tasks went well', { n: trust.wentWell, total: trust.rated })}
         </span>
       )}
       {justRemoved && !mine && (
         <span className="vouch-removed" role="status">
-          Your vouch is removed. Is something wrong?{' '}
-          <button type="button" className="link-button" onClick={() => navigate('/u/' + userId, { state: { safety: 'block' } })}>Block</button>
+          {t('Your vouch is removed. Is something wrong?')}{' '}
+          <button type="button" className="link-button" onClick={() => navigate('/u/' + userId, { state: { safety: 'block' } })}>{t('Block')}</button>
           {' · '}
-          <button type="button" className="link-button" onClick={() => navigate('/u/' + userId, { state: { safety: 'report' } })}>Report</button>
+          <button type="button" className="link-button" onClick={() => navigate('/u/' + userId, { state: { safety: 'report' } })}>{t('Report')}</button>
         </span>
       )}
 
       {!isSelf && user?.id && mine && (
-        <button type="button" className={`vouch-btn vouch-btn-${size} vouch-btn-done`} onClick={removeVouch} disabled={loading} aria-label={'Take back your vouch for ' + theirName}>
-          {loading ? '...' : '✦ Vouched'}
+        <button type="button" className={`vouch-btn vouch-btn-${size} vouch-btn-done`} onClick={removeVouch} disabled={loading} aria-label={t('Take back your vouch for {name}', { name: theirName })}>
+          {loading ? '...' : '✦ ' + t('Vouched')}
         </button>
       )}
       {!isSelf && user?.id && !mine && eligible && (
-        <button type="button" className={`vouch-btn vouch-btn-${size}`} onClick={helpedVouch} disabled={loading} aria-label={'Vouch for ' + theirName}>
-          {loading ? '...' : '✦ Vouch'}
+        <button type="button" className={`vouch-btn vouch-btn-${size}`} onClick={helpedVouch} disabled={loading} aria-label={t('Vouch for {name}', { name: theirName })}>
+          {loading ? '...' : '✦ ' + t('Vouch')}
         </button>
       )}
       {!isSelf && user?.id && !mine && !eligible && allowPersonal && pending && (
         <span className="vouch-pending">
-          Waiting for {theirName} to confirm ({HOW_LABELS[pending.how]?.toLowerCase()}).{' '}
-          <button type="button" className="link-button" onClick={takeBackRequest} disabled={loading}>Take back</button>
+          {t('Waiting for {name} to confirm ({how}).', { name: theirName, how: t(HOW_LABELS[pending.how] || '').toLowerCase() })}{' '}
+          <button type="button" className="link-button" onClick={takeBackRequest} disabled={loading}>{t('Take back')}</button>
         </span>
       )}
       {!isSelf && user?.id && !mine && !eligible && allowPersonal && !pending && !asking && (
         <button type="button" className={`vouch-btn vouch-btn-${size}`} onClick={() => setAsking(true)}>
-          <Icon name="handshake" /> I know them
+          <Icon name="handshake" /> {t('I know them')}
         </button>
       )}
 
       {asking && (
         <form className="vouch-ask" onSubmit={sendPersonal} noValidate>
           <fieldset>
-            <legend>How do you know {theirName}?</legend>
+            <legend>{t('How do you know {name}?', { name: theirName })}</legend>
             {/* 'met' comes only from scanning a QR code, never picked here. */}
             {Object.entries(HOW_LABELS).filter(([key]) => key !== 'met').map(([key, label]) => (
               <label key={key} className="group-radio">
                 <input type="radio" name="vouch-how" value={key} checked={how === key} onChange={() => { setHow(key); setAskError('') }} />
-                {label}
+                {t(label)}
               </label>
             ))}
           </fieldset>
-          <p className="groups-note">{theirName} will be asked to confirm you know each other. It shows on their profile only after they say yes.</p>
+          <p className="groups-note">{t('{name} will be asked to confirm you know each other. It shows on their profile only after they say yes.', { name: theirName })}</p>
           {askError && <p className="groups-error" role="alert">{askError}</p>}
           <div className="groups-actions">
-            <button type="button" className="btn btn-outline" onClick={() => { setAsking(false); setHow(''); setAskError('') }}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Sending...' : 'Send'}</button>
+            <button type="button" className="btn btn-outline" onClick={() => { setAsking(false); setHow(''); setAskError('') }}>{t('Cancel')}</button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? t('Sending...') : t('Send')}</button>
           </div>
         </form>
       )}
