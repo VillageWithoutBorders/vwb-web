@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import Icon from '../components/Icon'
 import { tell } from '../components/AdminDialog'
+import { useT } from '../utils/lang'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also alert the person and let the caller bail out.
@@ -105,6 +106,7 @@ const CARDS = [
 export default function CommunityGuidelines({ onAgree }) {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const t = useT()
   const [index, setIndex] = useState(0)
   const [agreeing, setAgreeing] = useState(false)
 
@@ -120,14 +122,14 @@ export default function CommunityGuidelines({ onAgree }) {
   }
 
   async function handleAgree() {
-    if (!user) { reportError('handleAgree', { message: 'no user' }, 'Please log in again to continue.'); return }
+    if (!user) { reportError('handleAgree', { message: 'no user' }, t('Please log in again to continue.')); return }
     setAgreeing(true)
     const { error } = await supabase
       .from('helper_profiles')
       .update({ guidelines_accepted_at: new Date().toISOString() })
       .eq('user_id', user.id)
     setAgreeing(false)
-    if (reportError('handleAgree', error, 'Could not save your agreement. Please try again.')) return
+    if (reportError('handleAgree', error, t('Could not save your agreement. Please try again.'))) return
 
     if (onAgree) {
       onAgree()
@@ -146,7 +148,7 @@ export default function CommunityGuidelines({ onAgree }) {
           aria-valuenow={index + 1}
           aria-valuemin={1}
           aria-valuemax={CARDS.length}
-          aria-label={`Step ${index + 1} of ${CARDS.length}`}
+          aria-label={t('Step {n} of {total}', { n: index + 1, total: CARDS.length })}
           style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', marginBottom: '2rem', marginTop: '0.5rem' }}
         >
           {CARDS.map((c, i) => (
@@ -168,26 +170,26 @@ export default function CommunityGuidelines({ onAgree }) {
         <div
           key={card.title}
           role="group"
-          aria-label={`${index + 1} of ${CARDS.length}: ${card.title}`}
+          aria-label={t('{n} of {total}', { n: index + 1, total: CARDS.length }) + ': ' + t(card.title)}
           className="guide-card"
         >
           <div style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1rem' }} aria-hidden="true"><Icon name={card.icon} /></div>
-          <h1 style={{ fontSize: '1.4rem', textAlign: 'center', margin: '0 0 1rem', color: COLORS.text }}>{card.title}</h1>
-          <p style={{ fontSize: '1rem', lineHeight: 1.6, color: COLORS.textDim, margin: '0 0 1rem' }}>{card.body}</p>
+          <h1 style={{ fontSize: '1.4rem', textAlign: 'center', margin: '0 0 1rem', color: COLORS.text }}>{t(card.title)}</h1>
+          <p style={{ fontSize: '1rem', lineHeight: 1.6, color: COLORS.textDim, margin: '0 0 1rem' }}>{t(card.body)}</p>
 
           {card.points && (
             <ul style={{ margin: '0 0 1rem', padding: 0, listStyle: 'none' }}>
               {card.points.map(point => (
                 <li key={point} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', padding: '0.5rem 0', borderTop: `1px solid ${COLORS.border}` }}>
                   <span aria-hidden="true" style={{ color: COLORS.green, fontWeight: 700, flexShrink: 0 }}>&#10003;</span>
-                  <span style={{ color: COLORS.textDim, fontSize: '0.92rem', lineHeight: 1.5 }}>{point}</span>
+                  <span style={{ color: COLORS.textDim, fontSize: '0.92rem', lineHeight: 1.5 }}>{t(point)}</span>
                 </li>
               ))}
             </ul>
           )}
 
           {card.footer && (
-            <p style={{ fontSize: '0.9rem', lineHeight: 1.6, color: COLORS.textMuted, margin: 0 }}>{card.footer}</p>
+            <p style={{ fontSize: '0.9rem', lineHeight: 1.6, color: COLORS.textMuted, margin: 0 }}>{t(card.footer)}</p>
           )}
         </div>
 
@@ -195,7 +197,7 @@ export default function CommunityGuidelines({ onAgree }) {
         {isLast && (
           <p style={{ textAlign: 'center', margin: '1rem 0 0' }}>
             <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.green, fontSize: '0.85rem', textDecoration: 'underline' }}>
-              Read the full Terms of Use
+              {t('Read the full Terms of Use')}
             </a>
           </p>
         )}
@@ -219,7 +221,7 @@ export default function CommunityGuidelines({ onAgree }) {
                 opacity: agreeing ? 0.6 : 1,
               }}
             >
-              Back
+              {t('Back')}
             </button>
           )}
 
@@ -238,7 +240,7 @@ export default function CommunityGuidelines({ onAgree }) {
                 cursor: 'pointer',
               }}
             >
-              Next
+              {t('Next')}
             </button>
           ) : (
             <button
@@ -257,7 +259,7 @@ export default function CommunityGuidelines({ onAgree }) {
                 opacity: agreeing ? 0.7 : 1,
               }}
             >
-              {agreeing ? 'Saving...' : 'I Agree'}
+              {agreeing ? t('Saving...') : t('I Agree')}
             </button>
           )}
         </div>

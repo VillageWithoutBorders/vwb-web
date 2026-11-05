@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useGoBack } from '../components/BackLink'
+import { useT, getLang } from '../utils/lang'
 
 // Public page, reachable at /terms whether or not someone is logged in --
 // linked from the last card of CommunityGuidelines.jsx. Reuses the existing
@@ -9,6 +10,7 @@ import { useGoBack } from '../components/BackLink'
 export default function Terms() {
   const navigate = useNavigate()
   const goBack = useGoBack()
+  const t = useT()
   const location = useLocation()
   const listRef = useRef(null)
 
@@ -30,25 +32,30 @@ export default function Terms() {
   return (
     <div className="help-page" style={{ maxWidth: '720px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack('/')} aria-label="Go back" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
-        <h1 style={{ margin: 0 }}>Terms of Use</h1>
+        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+        <h1 style={{ margin: 0 }}>{t('Terms of Use')}</h1>
       </div>
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 1.5rem' }}>Last updated: September 2026</p>
+      {/* Nov 5: the terms stay in English (legal text). In Spanish, say so up top,
+          and mark the English parts so Read this to me uses an English voice. */}
+      {getLang() === 'es' && (
+        <p className="help-section" role="note" style={{ margin: '0.25rem 0 1rem' }}>Estos términos están en inglés. Si necesita ayuda para entenderlos, escriba a info@villagewithoutborders.org.</p>
+      )}
+      <p lang="en" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 1.5rem' }}>Last updated: September 2026</p>
 
-      <div className="help-section">
+      <div className="help-section" lang="en">
         <p>Welcome to Village Without Borders (VWB). This platform connects neighbors who need help with neighbors who can give it. We are a mutual aid community, not a charity or a government service. By using this app, you agree to the terms below.</p>
         <p>These terms exist to keep our community safe. Please read them carefully. If you have questions, reach out through the Help page in the app.</p>
       </div>
 
       <div className="terms-tools">
-        <p className="terms-tools-note">Tap a section to open it.</p>
+        <p className="terms-tools-note">{t('Tap a section to open it.')}</p>
         <div className="terms-tools-buttons">
-          <button type="button" className="btn btn-outline terms-tool-btn" onClick={() => setAll(true)}>Open all</button>
-          <button type="button" className="btn btn-outline terms-tool-btn" onClick={() => setAll(false)}>Close all</button>
+          <button type="button" className="btn btn-outline terms-tool-btn" onClick={() => setAll(true)}>{t('Open all')}</button>
+          <button type="button" className="btn btn-outline terms-tool-btn" onClick={() => setAll(false)}>{t('Close all')}</button>
         </div>
       </div>
 
-      <div ref={listRef} className="terms-list">
+      <div ref={listRef} className="terms-list" lang="en">
       <details className="help-section terms-section" id="terms-1">
         <summary>
           <span className="terms-summary-title">1. Who can use this platform</span>
@@ -317,7 +324,7 @@ export default function Terms() {
       </details>
       </div>
 
-      <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', margin: '1.5rem 0' }}>
+      <p lang="en" style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', margin: '1.5rem 0' }}>
         Village Without Borders is a mutual aid community. We believe in neighbors helping neighbors, freely and safely. These terms exist to protect that mission and every person who is part of it.
       </p>
     </div>

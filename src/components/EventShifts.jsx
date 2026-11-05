@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { useT, t as tr, getLang } from '../utils/lang'
 
 // Volunteer side: the shifts on an event, with a button to take or give up each.
 // Organizers also see who took each one.
 function clock(iso) {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString(getLang() === 'es' ? 'es-US' : 'en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
 export default function EventShifts({ eventId, token, user, canManage, past, cancelled, onSignIn, onChanged, onLoaded }) {
+  const t = useT()
   const [shifts, setShifts] = useState(null)
   const [people, setPeople] = useState({})
   const [busy, setBusy] = useState(null)
@@ -32,10 +34,10 @@ export default function EventShifts({ eventId, token, user, canManage, past, can
     setBusy(s.id); setMessage('')
     const { data, error } = await supabase.rpc('take_event_shift', { p_shift: s.id, p_token: token || null })
     setBusy(null)
-    if (error) { setMessage(error.message || 'Something went wrong. Try again.'); return }
-    if (data === 'full') setMessage('Sorry, that shift just filled up.')
-    else if (data === 'already') setMessage('You are already on "' + s.label + '".')
-    else setMessage('You took "' + s.label + '". Thank you!')
+    if (error) { setMessage(error.message || tr('Something went wrong. Try again.')); return }
+    if (data === 'full') setMessage(tr('Sorry, that shift just filled up.'))
+    else if (data === 'already') setMessage(tr('You are already on "{shift}".', { shift: s.label }))
+    else setMessage(tr('You took "{shift}". Thank you!', { shift: s.label }))
     await load()
     if (onChanged) onChanged()
   }
@@ -44,8 +46,8 @@ export default function EventShifts({ eventId, token, user, canManage, past, can
     setBusy(s.id); setMessage('')
     const { error } = await supabase.rpc('drop_event_shift', { p_shift: s.id })
     setBusy(null)
-    if (error) { setMessage('Could not give up the shift. Try again.'); return }
-    setMessage('You gave up "' + s.label + '".')
+    if (error) { setMessage(tr('Could not give up the shift. Try again.')); return }
+    setMessage(tr('You gave up "{shift}".', { shift: s.label }))
     await load()
     if (onChanged) onChanged()
   }
@@ -53,10 +55,10 @@ export default function EventShifts({ eventId, token, user, canManage, past, can
   if (!shifts || shifts.length === 0) return null
 
   return (
-    <section className="cal-box" aria-label="Shifts">
-      <h2>Pick a shift</h2>
+    <section className="cal-box" aria-label={t('Shifts')}>
+      <h2>{t('Pick a shift')}</h2>
       {!user && !past && !cancelled && (
-        <p className="cal-sub" style={{ marginTop: 0 }}>Taking a shift needs a free Village Without Borders account, so organizers know who is coming.</p>
+        <p className="cal-sub" style={{ marginTop: 0 }}>{t('Taking a shift needs a free Village Without Borders account, so organizers know who is coming.')}</p>
       )}
       {message && <p role="status" style={{ color: 'var(--accent)' }}>{message}</p>}
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
@@ -66,18 +68,18 @@ export default function EventShifts({ eventId, token, user, canManage, past, can
           return (
             <li key={s.id} style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid ' + (s.mine ? 'var(--accent)' : 'var(--border)'), borderRadius: '10px' }}>
               <div style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{s.label}</div>
-              {s.starts_at && <div style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>{clock(s.starts_at)}{s.ends_at ? ' to ' + clock(s.ends_at) : ''}</div>}
-              <div style={{ fontSize: '0.9rem', color: full ? 'var(--gold)' : 'var(--text-secondary)' }}>{s.taken} of {s.capacity} spots filled{full ? '. Full.' : ''}</div>
+              {s.starts_at && <div style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>{clock(s.starts_at)}{s.ends_at ? ' ' + t('to') + ' ' + clock(s.ends_at) : ''}</div>}
+              <div style={{ fontSize: '0.9rem', color: full ? 'var(--gold)' : 'var(--text-secondary)' }}>{t('{n} of {total} spots filled', { n: s.taken, total: s.capacity })}{full ? '. ' + t('Full.') : ''}</div>
               {canManage && people[s.id] && people[s.id].length > 0 && (
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-soft)', marginTop: '0.2rem', overflowWrap: 'anywhere' }}>Signed up: {people[s.id].join(', ')}</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-soft)', marginTop: '0.2rem', overflowWrap: 'anywhere' }}>{t('Signed up: {names}', { names: people[s.id].join(', ') })}</div>
               )}
               {!past && !cancelled && (
                 !user ? (
-                  <button type="button" className="btn btn-primary" style={{ minHeight: '48px', marginTop: '0.5rem' }} onClick={onSignIn}>Sign up to take this shift</button>
+                  <button type="button" className="btn btn-primary" style={{ minHeight: '48px', marginTop: '0.5rem' }} onClick={onSignIn}>{t('Sign up to take this shift')}</button>
                 ) : s.mine ? (
-                  <button type="button" className="btn btn-outline" style={{ minHeight: '48px', marginTop: '0.5rem' }} disabled={busy === s.id} onClick={() => giveUp(s)}>You are in. Give up this shift</button>
+                  <button type="button" className="btn btn-outline" style={{ minHeight: '48px', marginTop: '0.5rem' }} disabled={busy === s.id} onClick={() => giveUp(s)}>{t('You are in. Give up this shift')}</button>
                 ) : full ? null : (
-                  <button type="button" className="btn btn-primary" style={{ minHeight: '48px', marginTop: '0.5rem' }} disabled={busy === s.id} onClick={() => take(s)}>{busy === s.id ? 'Saving...' : 'Take this shift'}</button>
+                  <button type="button" className="btn btn-primary" style={{ minHeight: '48px', marginTop: '0.5rem' }} disabled={busy === s.id} onClick={() => take(s)}>{busy === s.id ? t('Saving...') : t('Take this shift')}</button>
                 )
               )}
             </li>

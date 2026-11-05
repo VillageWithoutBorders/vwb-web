@@ -13,7 +13,7 @@ import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
 import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
 import { personalAlertLink } from '../utils/alertLink'
-import { useT } from '../utils/lang'
+import { useT, tAlert } from '../utils/lang'
 
 export default function Notifications() {
   const t = useT()
@@ -237,15 +237,15 @@ function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
       // Only react when the card itself has focus, so pressing Enter on the
       // flag or delete button doesn't also open the alert.
       onKeyDown={e => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onTap(notification) } }}
-      aria-label={(notification.read ? '' : t('New') + '. ') + (flagged ? t('Flagged to follow up.') + ' ' : '') + t(notification.title)}
+      aria-label={(notification.read ? '' : t('New') + '. ') + (flagged ? t('Flagged to follow up.') + ' ' : '') + tAlert(notification.title)}
     >
       <div className="notification-icon" aria-hidden="true" style={{ background: color + '26', color: color }}>
         <Icon name={icon} />
       </div>
       <div className="notification-content">
-        <div className="notification-title">{t(notification.title)}</div>
+        <div className="notification-title">{tAlert(notification.title)}</div>
         {notification.body && (
-          <div className="notification-body">{t(notification.body)}</div>
+          <div className="notification-body">{tAlert(notification.body)}</div>
         )}
         <div className="notification-meta">
           <span className="notification-time">{timeAgo(notification.created_at)}</span>

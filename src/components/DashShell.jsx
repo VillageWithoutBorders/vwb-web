@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import '../dashboard.css'
 import Icon from './Icon'
 import { calmMotion } from '../utils/motion'
+import { useT } from '../utils/lang'
 
 // Shared pieces for the Keeper and Organizer dashboards.
 // The open tab lives in the address (?tab=people) so links and the back button land on it.
@@ -10,7 +11,7 @@ import { calmMotion } from '../utils/motion'
 export function useDashTab(tabs) {
   const [params, setParams] = useSearchParams()
   const want = params.get('tab')
-  const tab = tabs.some((t) => t.k === want) ? want : tabs[0].k
+  const tab = tabs.some((tb) => tb.k === want) ? want : tabs[0].k
   function setTab(k) {
     const next = new URLSearchParams(params)
     next.set('tab', k)
@@ -22,6 +23,7 @@ export function useDashTab(tabs) {
 // Needs you now: things waiting on this person. Each row jumps to its tab.
 export function NeedsYou({ items, onGo, calm }) {
   const navigate = useNavigate()
+  const t = useT()
   // A row with `to` opens that page. Otherwise it opens its tab and scrolls
   // there, so it still moves even when that tab is already open.
   function open(it) {
@@ -37,14 +39,14 @@ export function NeedsYou({ items, onGo, calm }) {
   if (!items) return null
   if (items.length === 0) {
     return (
-      <section className="dash-needs is-calm" aria-label="Needs you now">
-        <p className="dash-needs-calm"><span aria-hidden="true"><Icon name="leaf" /></span> {calm || 'Nothing is waiting on you right now.'}</p>
+      <section className="dash-needs is-calm" aria-label={t('Needs you now')}>
+        <p className="dash-needs-calm"><span aria-hidden="true"><Icon name="leaf" /></span> {calm || t('Nothing is waiting on you right now.')}</p>
       </section>
     )
   }
   return (
     <section className="dash-needs" aria-labelledby="dash-needs-h">
-      <h2 id="dash-needs-h">Needs you now</h2>
+      <h2 id="dash-needs-h">{t('Needs you now')}</h2>
       {items.map((it) => (
         <button key={it.k} type="button" className="dash-need" onClick={() => open(it)}>
           <span className="dash-need-ic" aria-hidden="true"><Icon name={it.em} /></span>
@@ -59,6 +61,7 @@ export function NeedsYou({ items, onGo, calm }) {
 // Tab bar. Arrow keys move between tabs.
 export function DashTabs({ tabs, tab, setTab, dots = {} }) {
   const refs = useRef({})
+  const t = useT()
   function onKey(e, i) {
     let j = null
     if (e.key === 'ArrowRight') j = (i + 1) % tabs.length
@@ -69,15 +72,15 @@ export function DashTabs({ tabs, tab, setTab, dots = {} }) {
     refs.current[tabs[j].k]?.focus()
   }
   return (
-    <div className={'dash-tabs' + (tabs.length > 4 ? ' dash-tabs-5' : '')} role="tablist" aria-label="Dashboard sections">
-      {tabs.map((t, i) => (
-        <button key={t.k} ref={(el) => { refs.current[t.k] = el }} type="button" role="tab"
-          id={'dash-tab-' + t.k} aria-controls={'dash-panel-' + t.k} aria-selected={tab === t.k}
-          tabIndex={tab === t.k ? 0 : -1} className="dash-tab"
-          onClick={() => setTab(t.k)} onKeyDown={(e) => onKey(e, i)}>
-          <span className="dash-tab-ic" aria-hidden="true"><Icon name={t.em} /></span>
-          <span className="dash-tab-label">{t.label}</span>
-          {dots[t.k] ? <span className="dash-tab-dot" aria-label="Needs you" /> : null}
+    <div className={'dash-tabs' + (tabs.length > 4 ? ' dash-tabs-5' : '')} role="tablist" aria-label={t('Dashboard sections')}>
+      {tabs.map((tb, i) => (
+        <button key={tb.k} ref={(el) => { refs.current[tb.k] = el }} type="button" role="tab"
+          id={'dash-tab-' + tb.k} aria-controls={'dash-panel-' + tb.k} aria-selected={tab === tb.k}
+          tabIndex={tab === tb.k ? 0 : -1} className="dash-tab"
+          onClick={() => setTab(tb.k)} onKeyDown={(e) => onKey(e, i)}>
+          <span className="dash-tab-ic" aria-hidden="true"><Icon name={tb.em} /></span>
+          <span className="dash-tab-label">{t(tb.label)}</span>
+          {dots[tb.k] ? <span className="dash-tab-dot" aria-label={t('Needs you')} /> : null}
         </button>
       ))}
     </div>

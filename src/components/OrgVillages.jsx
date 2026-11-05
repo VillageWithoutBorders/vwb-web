@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { useT } from '../utils/lang'
 
 // The neighborhoods an organization works in.
 // Everyone signed in sees the list. Organizers pick the neighborhoods.
@@ -15,6 +16,7 @@ export default function OrgVillages({ orgId, orgName, canManage }) {
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState('')
   const [filter, setFilter] = useState('')
+  const t = useT()
 
   async function loadLinks() {
     const { data, error } = await supabase.rpc('org_village_links')
@@ -32,7 +34,7 @@ export default function OrgVillages({ orgId, orgName, canManage }) {
       supabase.rpc('village_network'),
       supabase.rpc('my_org_village_blocks', { p_org: orgId }),
     ])
-    if (vn.error) { console.error('Failed to load villages:', vn.error); setNote("We couldn't load the neighborhoods. Try again."); return }
+    if (vn.error) { console.error('Failed to load villages:', vn.error); setNote(t("We couldn't load the neighborhoods. Try again.")); return }
     if (bl.error) console.error('Failed to load removed neighborhoods:', bl.error)
     setVillages((vn.data || []).slice().sort((a, b) => String(a.name).localeCompare(String(b.name))))
     setBlocked(bl.data || [])
@@ -47,13 +49,13 @@ export default function OrgVillages({ orgId, orgName, canManage }) {
     const ids = Object.keys(picked).filter((k) => picked[k])
     const { data, error } = await supabase.rpc('set_org_villages', { p_org: orgId, p_villages: ids })
     setSaving(false)
-    if (error) { console.error('Failed to save organization neighborhoods:', error); setNote("We couldn't save that. Try again."); return }
+    if (error) { console.error('Failed to save organization neighborhoods:', error); setNote(t("We couldn't save that. Try again.")); return }
     await loadLinks()
     setEditing(false)
     const skipped = Array.isArray(data) ? data : []
     setNote(skipped.length
-      ? 'Saved. ' + skipped.join(', ') + (skipped.length === 1 ? ' was' : ' were') + ' left off because a keeper there removed your group.'
-      : 'Saved. Neighbors will see your group in these neighborhoods.')
+      ? t(skipped.length === 1 ? 'Saved. {names} was left off because a keeper there removed your group.' : 'Saved. {names} were left off because a keeper there removed your group.', { names: skipped.join(', ') })
+      : t('Saved. Neighbors will see your group in these neighborhoods.'))
   }
 
   const blockedIds = useMemo(() => new Set(blocked.map((b) => String(b.village_id))), [blocked])
@@ -67,28 +69,28 @@ export default function OrgVillages({ orgId, orgName, canManage }) {
 
   return (
     <section className="cal-box" aria-labelledby="org-villages">
-      <h2 id="org-villages">{canManage ? 'Neighborhoods you work in' : 'Works in'}</h2>
+      <h2 id="org-villages">{canManage ? t('Neighborhoods you work in') : t('Works in')}</h2>
 
       {!editing && (
         <>
           {links.length > 0
             ? <p style={{ margin: '0 0 0.5rem' }}>{links.map((r) => r.village_name).join(', ')}</p>
-            : <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>No neighborhoods picked yet. Pick the ones you serve so neighbors there can find you.</p>}
-          {!canManage && <Link to="/world" className="hub-more">See them on the World map</Link>}
-          {canManage && <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={startEditing}>{links.length ? 'Change neighborhoods' : 'Pick neighborhoods'}</button>}
+            : <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>{t('No neighborhoods picked yet. Pick the ones you serve so neighbors there can find you.')}</p>}
+          {!canManage && <Link to="/world" className="hub-more">{t('See them on the World map')}</Link>}
+          {canManage && <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={startEditing}>{links.length ? t('Change neighborhoods') : t('Pick neighborhoods')}</button>}
         </>
       )}
 
       {editing && (
         <>
-          <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>Pick every neighborhood {orgName} serves. A keeper of a neighborhood can remove you if it is not a fit.</p>
+          <p className="cal-sub" style={{ margin: '0 0 0.5rem' }}>{t('Pick every neighborhood {name} serves. A keeper of a neighborhood can remove you if it is not a fit.', { name: orgName })}</p>
           {villages.length > 8 && (
             <>
-              <label htmlFor="org-village-filter" className="sr-only">Filter neighborhoods</label>
-              <input id="org-village-filter" type="text" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filter by name" autoComplete="off" style={{ width: '100%', minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem', marginBottom: '0.5rem' }} />
+              <label htmlFor="org-village-filter" className="sr-only">{t('Filter neighborhoods')}</label>
+              <input id="org-village-filter" type="text" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t('Filter by name')} autoComplete="off" style={{ width: '100%', minHeight: '44px', boxSizing: 'border-box', padding: '0 0.75rem', fontSize: '1rem', marginBottom: '0.5rem' }} />
             </>
           )}
-          <div role="group" aria-label="Neighborhoods" style={{ display: 'grid', gap: '0.25rem', maxHeight: '320px', overflowY: 'auto', padding: '6px', margin: '-6px -6px calc(0.5rem - 6px)' }}>
+          <div role="group" aria-label={t('Neighborhoods')} style={{ display: 'grid', gap: '0.25rem', maxHeight: '320px', overflowY: 'auto', padding: '6px', margin: '-6px -6px calc(0.5rem - 6px)' }}>
             {shown.map((v) => {
               const isBlocked = blockedIds.has(String(v.id))
               return (
@@ -97,15 +99,15 @@ export default function OrgVillages({ orgId, orgName, canManage }) {
                   <span>
                     {v.name}
                     {v.region_label && String(v.region_label).trim().toLowerCase() !== String(v.name).trim().toLowerCase() ? <span className="cal-sub" style={{ display: 'block', fontSize: '0.85rem' }}>{v.region_label}</span> : null}
-                    {isBlocked ? <span className="cal-sub" style={{ display: 'block', fontSize: '0.85rem' }}>A keeper here removed your group.</span> : null}
+                    {isBlocked ? <span className="cal-sub" style={{ display: 'block', fontSize: '0.85rem' }}>{t('A keeper here removed your group.')}</span> : null}
                   </span>
                 </label>
               )
             })}
-            {shown.length === 0 && <p className="cal-sub">No neighborhoods match.</p>}
+            {shown.length === 0 && <p className="cal-sub">{t('No neighborhoods match.')}</p>}
           </div>
-          <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save neighborhoods'}</button>
-          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => { setEditing(false); setNote('') }} disabled={saving}>Cancel</button>
+          <button type="button" className="btn btn-primary btn-full" style={{ minHeight: '44px', marginBottom: '0.5rem' }} onClick={save} disabled={saving}>{saving ? t('Saving...') : t('Save neighborhoods')}</button>
+          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px' }} onClick={() => { setEditing(false); setNote('') }} disabled={saving}>{t('Cancel')}</button>
         </>
       )}
 

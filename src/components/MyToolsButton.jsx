@@ -7,7 +7,7 @@ import { markNotificationRead } from '../utils/notificationHelpers'
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
 import { personalAlertLink } from '../utils/alertLink'
 import { useAuth } from '../context/AuthContext'
-import { useT, getLang } from '../utils/lang'
+import { useT, getLang, tAlert } from '../utils/lang'
 
 // My Tools in the top bar (Oct 25, Jade). Alerts and your tools in one button.
 // Opens your 5 newest alerts (with See all alerts), then the tools for your role
@@ -93,7 +93,7 @@ export default function MyToolsButton({ tools, adminWaiting = 0, adminUrgent = f
                   <span className="alerts-popout-text">
                     {!n.read && <span className="sr-only">{t('New.')} </span>}
                     {n.follow_up && <span className="sr-only">Flagged to follow up. </span>}
-                    <span className="alerts-popout-title">{n.title}</span>
+                    <span className="alerts-popout-title">{tAlert(n.title)}</span>
                     <span className="alerts-popout-time">
                       {timeAgo(n.created_at)}
                       {n.follow_up && <span className="alerts-popout-flag" aria-hidden="true"> <Icon name="flag" /> Follow up</span>}
