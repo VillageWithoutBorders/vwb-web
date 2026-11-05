@@ -4,6 +4,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { setReturnTo, clearReturnTo } from '../utils/returnTo'
+import { useT } from '../utils/lang'
 
 // Where a group's join link lands: /groups/join/:token.
 // Logged out: nothing about the group is shown (not even its name). They
@@ -14,6 +15,7 @@ export default function JoinGroup() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const t = useT()
   const [preview, setPreview] = useState(null)
   const [state, setState] = useState('checking') // checking | ready | notfound | joining | error
 
@@ -43,22 +45,22 @@ export default function JoinGroup() {
       <div className="login-card">
         <div className="login-header">
           <h1>Village Without Borders</h1>
-          <p className="login-subtitle">Join a chat</p>
+          <p className="login-subtitle">{t('Join a chat')}</p>
         </div>
 
-        {state === 'checking' && <p className="groups-note">Checking the link...</p>}
+        {state === 'checking' && <p className="groups-note">{t('Checking the link...')}</p>}
 
         {!user && state === 'ready' && (
           <>
-            <p className="groups-note">Someone shared a private chat with you. Log in or make a free account to see it.</p>
-            <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/login')}>Log in or sign up</button>
+            <p className="groups-note">{t('Someone shared a private chat with you. Log in or make a free account to see it.')}</p>
+            <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/login')}>{t('Log in or sign up')}</button>
           </>
         )}
 
         {user && state === 'notfound' && (
           <>
-            <p className="form-error" role="alert">This link isn't working anymore. Ask someone in the chat for a new one.</p>
-            <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>Go to my chats</button>
+            <p className="form-error" role="alert">{t("This link isn't working anymore. Ask someone in the chat for a new one.")}</p>
+            <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>{t('Go to my chats')}</button>
           </>
         )}
 
@@ -66,11 +68,11 @@ export default function JoinGroup() {
           <>
             <h2 className="groups-card-title">{preview.name}</h2>
             {preview.description && <p className="groups-card-desc">{preview.description}</p>}
-            <p className="groups-note">{preview.member_count} {Number(preview.member_count) === 1 ? 'member' : 'members'}. Its board is private to members. A member will need to let you in after you tap Join.</p>
-            {state === 'error' && <p className="form-error" role="alert">Could not join. The link may have just been turned off. Try again, or ask for a new link.</p>}
-            {state === 'newaccount' && <p className="form-error" role="alert">{NEW_ACCOUNT_NOTE} You can also ask someone in the group to invite you by name.</p>}
-            <button type="button" className="btn btn-primary btn-full" onClick={join} disabled={state === 'joining'}>{state === 'joining' ? 'Joining...' : 'Ask to join'}</button>
-            <button type="button" className="btn btn-outline btn-full" style={{ marginTop: '0.5rem' }} onClick={() => navigate('/')}>Not now</button>
+            <p className="groups-note">{Number(preview.member_count) === 1 ? t('1 member') : t('{n} members', { n: preview.member_count })}. {t('Its board is private to members. A member will need to let you in after you tap Join.')}</p>
+            {state === 'error' && <p className="form-error" role="alert">{t('Could not join. The link may have just been turned off. Try again, or ask for a new link.')}</p>}
+            {state === 'newaccount' && <p className="form-error" role="alert">{t(NEW_ACCOUNT_NOTE)} {t('You can also ask someone in the group to invite you by name.')}</p>}
+            <button type="button" className="btn btn-primary btn-full" onClick={join} disabled={state === 'joining'}>{state === 'joining' ? t('Joining...') : t('Ask to join')}</button>
+            <button type="button" className="btn btn-outline btn-full" style={{ marginTop: '0.5rem' }} onClick={() => navigate('/')}>{t('Not now')}</button>
           </>
         )}
       </div>

@@ -8,6 +8,7 @@ import { useSidechatParents } from '../hooks/useSidechatParents'
 import Icon from '../components/Icon'
 import { tell } from '../components/AdminDialog'
 import { isSimpleView } from '../utils/simpleView'
+import { useT } from '../utils/lang'
 
 // Groups: private circles anyone can start. No roles, no one in charge.
 // Every group has its own board (its own Campfire), end-to-end encrypted.
@@ -18,6 +19,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
   const [params] = useSearchParams()
   const asked = params.get('show')
   const show = embedded ? showProp : asked === 'cottage' || asked === 'campfires' ? asked : 'all'
+  const t = useT()
   const { user, organizations, established } = useAuth()
   // Organizations this person heads or is an organizer (trusted liaison)
   // for. They can start a group for one of them and be its steward.
@@ -48,7 +50,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
     ])
     if (mineErr) console.error('Failed to load your groups:', mineErr)
     if (invErr) console.error('Failed to load your group invites:', invErr)
-    if (mineErr || invErr) setLoadError("We couldn't load your groups. Check your connection and try again.")
+    if (mineErr || invErr) setLoadError(t("We couldn't load your groups. Check your connection and try again."))
 
     const myGroups = (mine || []).filter(m => m.status !== 'waiting').map(m => m.community_groups).filter(Boolean)
     setWaitingGroups((mine || []).filter(m => m.status === 'waiting').map(m => m.community_groups).filter(Boolean))
@@ -85,23 +87,23 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
       const { data: people, error: peopleErr } = await supabase
         .from('helper_profiles_public').select('user_id, display_name').in('user_id', inviterIds)
       if (peopleErr) console.error('Failed to load who invited you:', peopleErr)
-      names = Object.fromEntries((people || []).map(p => [p.user_id, p.display_name || 'A neighbor']))
+      names = Object.fromEntries((people || []).map(p => [p.user_id, p.display_name || t('A neighbor')]))
     }
-    setInvites(inviteRows.map(i => ({ ...i.community_groups, invitedBy: names[i.invited_by] || 'A neighbor' })))
+    setInvites(inviteRows.map(i => ({ ...i.community_groups, invitedBy: names[i.invited_by] || t('A neighbor') })))
     setLoading(false)
   }
 
   async function startGroup(e) {
     e.preventDefault()
     const trimmed = name.trim()
-    if (!trimmed) { setStartError('Give your chat a name.'); return }
+    if (!trimmed) { setStartError(t('Give your chat a name.')); return }
     setBusy('start')
     setStartError('')
     const { data: newId, error } = await supabase.rpc('create_community_group', { p_name: trimmed, p_description: description.trim() || null, p_organization: forOrg || null })
     setBusy(null)
     if (error || !newId) {
       console.error('Failed to start group:', error)
-      setStartError(/New accounts can/i.test(error?.message || '') ? NEW_ACCOUNT_NOTE : 'Could not start your chat. Try again.')
+      setStartError(/New accounts can/i.test(error?.message || '') ? t(NEW_ACCOUNT_NOTE) : t('Could not start your chat. Try again.'))
       return
     }
     navigate('/groups/' + newId, { state: { justStarted: true } })
@@ -111,7 +113,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
     setBusy(groupId)
     const { error } = await supabase.rpc('accept_community_group_invite', { p_group: groupId })
     setBusy(null)
-    if (error) { console.error('Failed to accept invite:', error); tell('Could not join this group. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to accept invite:', error); tell(t('Could not join this group. Try again.'), { tone: 'error' }); return }
     navigate('/groups/' + groupId)
   }
 
@@ -119,7 +121,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
     setBusy(groupId)
     const { error } = await supabase.from('community_group_invites').delete().eq('group_id', groupId).eq('invitee_id', user.id)
     setBusy(null)
-    if (error) { console.error('Failed to decline invite:', error); tell('Could not decline. Try again.', { tone: 'error' }); return }
+    if (error) { console.error('Failed to decline invite:', error); tell(t('Could not decline. Try again.'), { tone: 'error' }); return }
     setInvites(list => list.filter(i => i.id !== groupId))
   }
 
@@ -143,65 +145,65 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
     <div className="groups-page">
       <div className="groups-head">
         <div>
-          {!embedded && <h1>{show === 'campfires' ? 'Your Campfires' : show === 'cottage' ? 'Your Cottage Chats' : 'Your group chats'}</h1>}
+          {!embedded && <h1>{show === 'campfires' ? t('Your Campfires') : show === 'cottage' ? t('Your Cottage Chats') : t('Your group chats')}</h1>}
           {isSimpleView()
-            ? <p className="groups-sub">Chats with a few people you chose. Only the people in a chat can read it.</p>
-            : <p className="groups-sub"><Icon name="cottage" /> Cottage Chat: take a seat, let it out. You're safe here. <Icon name="campfire" /> Campfire: gather round and let your voices be heard.</p>}
+            ? <p className="groups-sub">{t('Chats with a few people you chose. Only the people in a chat can read it.')}</p>
+            : <p className="groups-sub"><Icon name="cottage" /> {t("Cottage Chat: take a seat, let it out. You're safe here.")} <Icon name="campfire" /> {t('Campfire: gather round and let your voices be heard.')}</p>}
         </div>
       </div>
 
       {show === 'campfires' ? (
-        <p className="groups-sub">Campfires start in a village or a group. Open your village map and tap Campfires.</p>
+        <p className="groups-sub">{t('Campfires start in a village or a group. Open your village map and tap Campfires.')}</p>
       ) : !showStart ? (
         established === false ? (
-          <p className="new-account-note" role="status">{NEW_ACCOUNT_NOTE} A member can still invite you to their Cottage Chat.</p>
+          <p className="new-account-note" role="status">{t(NEW_ACCOUNT_NOTE)} {t('A member can still invite you to their Cottage Chat.')}</p>
         ) : <button type="button" className="btn btn-primary btn-full groups-start-btn" onClick={() => setShowStart(true)}>
-          + Start a Cottage Chat
+          + {t('Start a Cottage Chat')}
         </button>
       ) : (
         <form className="groups-card" onSubmit={startGroup} noValidate>
-          <h2 className="groups-card-title">{forOrg ? "Start a Campfire" : "Start a Cottage Chat"}</h2>
+          <h2 className="groups-card-title">{forOrg ? t('Start a Campfire') : t('Start a Cottage Chat')}</h2>
           <div className="form-field">
-            <label htmlFor="group-name">Chat name</label>
+            <label htmlFor="group-name">{t('Chat name')}</label>
             <input id="group-name" type="text" value={name} onChange={e => { setName(e.target.value); setStartError('') }} maxLength={80} autoComplete="off" required aria-invalid={!!startError} aria-describedby={startError ? 'group-start-error' : undefined} />
           </div>
           <div className="form-field">
-            <label htmlFor="group-desc">What's it for? (optional)</label>
+            <label htmlFor="group-desc">{t("What's it for? (optional)")}</label>
             <textarea id="group-desc" rows={3} value={description} onChange={e => setDescription(e.target.value)} maxLength={500} />
           </div>
           {orgsIHead.length > 0 && (
             <div className="form-field">
-              <label htmlFor="group-org">Is this a Campfire for a group you lead or organize for?</label>
+              <label htmlFor="group-org">{t('Is this a Campfire for a group you lead or organize for?')}</label>
               <select id="group-org" value={forOrg} onChange={e => setForOrg(e.target.value)}>
-                <option value="">No, it's a Cottage Chat with people I choose</option>
-                {orgsIHead.map(o => <option key={o.id} value={o.id}>Yes, a Campfire for {o.name}</option>)}
+                <option value="">{t("No, it's a Cottage Chat with people I choose")}</option>
+                {orgsIHead.map(o => <option key={o.id} value={o.id}>{t('Yes, a Campfire for {name}', { name: o.name })}</option>)}
               </select>
-              {forOrg && <p className="groups-note">You'll be the group's steward. You can remove someone on your own for safety, you control the join link, and members can't remove you. New people wait until a member other than the one who invited them lets them in.</p>}
+              {forOrg && <p className="groups-note">{t("You'll be the group's steward. You can remove someone on your own for safety, you control the join link, and members can't remove you. New people wait until a member other than the one who invited them lets them in.")}</p>}
             </div>
           )}
-          <p className="groups-note">Only people you invite can see this chat or its board. You can invite people once it's started.</p>
+          <p className="groups-note">{t("Only people you invite can see this chat or its board. You can invite people once it's started.")}</p>
           {startError && <p id="group-start-error" className="groups-error" role="alert">{startError}</p>}
           <div className="groups-actions">
-            <button type="button" className="btn btn-outline" onClick={() => { setShowStart(false); setStartError('') }}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={busy === 'start'}>{busy === 'start' ? 'Starting...' : (forOrg ? 'Start Campfire' : 'Start Cottage Chat')}</button>
+            <button type="button" className="btn btn-outline" onClick={() => { setShowStart(false); setStartError('') }}>{t('Cancel')}</button>
+            <button type="submit" className="btn btn-primary" disabled={busy === 'start'}>{busy === 'start' ? t('Starting...') : (forOrg ? t('Start Campfire') : t('Start Cottage Chat'))}</button>
           </div>
         </form>
       )}
 
-      {loading && <p className="groups-empty">Loading...</p>}
+      {loading && <p className="groups-empty">{t('Loading...')}</p>}
       {!loading && loadError && <p className="groups-error" role="alert">{loadError}</p>}
 
       {!loading && invites.length > 0 && (
         <section aria-labelledby="invites-heading">
-          <h2 id="invites-heading" className="groups-section">Invites</h2>
+          <h2 id="invites-heading" className="groups-section">{t('Invites')}</h2>
           {invites.map(inv => (
             <div key={inv.id} className="groups-card">
               <p className="groups-card-title">{inv.name}</p>
               {inv.description && <p className="groups-card-desc">{inv.description}</p>}
-              <p className="groups-note">{inv.invitedBy} invited you.</p>
+              <p className="groups-note">{t('{name} invited you.', { name: inv.invitedBy })}</p>
               <div className="groups-actions">
-                <button type="button" className="btn btn-outline" disabled={busy === inv.id} onClick={() => decline(inv.id)}>No thanks</button>
-                <button type="button" className="btn btn-primary" disabled={busy === inv.id} onClick={() => accept(inv.id)}>Join</button>
+                <button type="button" className="btn btn-outline" disabled={busy === inv.id} onClick={() => decline(inv.id)}>{t('No thanks')}</button>
+                <button type="button" className="btn btn-primary" disabled={busy === inv.id} onClick={() => accept(inv.id)}>{t('Join')}</button>
               </div>
             </div>
           ))}
@@ -210,11 +212,11 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
 
       {!loading && waitingGroups.length > 0 && (
         <section aria-labelledby="waiting-heading">
-          <h2 id="waiting-heading" className="groups-section">Waiting to be let in</h2>
+          <h2 id="waiting-heading" className="groups-section">{t('Waiting to be let in')}</h2>
           {waitingGroups.map(g => (
             <div key={g.id} className="groups-card">
               <p className="groups-card-title">{g.name}</p>
-              <p className="groups-note">A member will let you in soon. You'll see the board once they do.</p>
+              <p className="groups-note">{t("A member will let you in soon. You'll see the board once they do.")}</p>
             </div>
           ))}
         </section>
@@ -222,23 +224,23 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
 
       {!loading && (
         <section aria-labelledby="mygroups-heading">
-          <h2 id="mygroups-heading" className="groups-section">{!embedded ? 'Your chats' : show === 'campfires' ? 'Your Campfires' : show === 'cottage' ? 'Your Cottage Chats' : 'Your chats'}</h2>
-          {orderedGroups.length === 0 && <p className="groups-empty">{show === 'campfires' ? "You're not at any Campfires yet." : "You're not in any chats yet. Start a Cottage Chat, or ask a friend to invite you."}</p>}
+          <h2 id="mygroups-heading" className="groups-section">{!embedded ? t('Your chats') : show === 'campfires' ? t('Your Campfires') : show === 'cottage' ? t('Your Cottage Chats') : t('Your chats')}</h2>
+          {orderedGroups.length === 0 && <p className="groups-empty">{show === 'campfires' ? t("You're not at any Campfires yet.") : t("You're not in any chats yet. Start a Cottage Chat, or ask a friend to invite you.")}</p>}
           {orderedGroups.map(({ g, nested }) => (
             <button key={g.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + g.id)}>
-              <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? <><Icon name="pushpin" />{' '}</> : ''}{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="campfire" />{' '}</> : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">Steward</span> : null}</span>
-              <span className="groups-row-meta">{g.village_kind === 'sidechat' ? 'Picked by the keeper \u00b7 ' : ''}{g.quiet ? 'Quiet \u00b7 ' : ''}{g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}</span>
+              <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? <><Icon name="pushpin" />{' '}</> : ''}{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="campfire" />{' '}</> : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">{t('Steward')}</span> : null}</span>
+              <span className="groups-row-meta">{g.village_kind === 'sidechat' ? t('Picked by the keeper') + ' \u00b7 ' : ''}{g.quiet ? t('Quiet') + ' \u00b7 ' : ''}{g.memberCount === 1 ? t('1 member') : t('{n} members', { n: g.memberCount })}</span>
             </button>
           ))}
           {archivedGroups.length > 0 && (
             <>
               <button type="button" className="btn btn-outline" aria-expanded={showArchived} onClick={() => setShowArchived(v => !v)}>
-                {showArchived ? 'Hide archived chats' : 'Archived chats (' + archivedGroups.length + ')'}
+                {showArchived ? t('Hide archived chats') : t('Archived chats ({n})', { n: archivedGroups.length })}
               </button>
               {showArchived && archivedGroups.map(g => (
                 <button key={g.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + g.id)}>
                   <span className="groups-row-name">{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="campfire" />{' '}</> : ''}{g.name}</span>
-                  <span className="groups-row-meta">Archived</span>
+                  <span className="groups-row-meta">{t('Archived')}</span>
                 </button>
               ))}
             </>

@@ -11,6 +11,7 @@ import { startPath, leaveSetup } from '../utils/startPath'
 import { pauseFirstRun } from '../utils/firstVillage'
 import { useOwnBack } from '../components/BackLink'
 import Icon from '../components/Icon'
+import { useT } from '../utils/lang'
 
 // Full setup (Nov 1, Jade). For people who picked Full setup when signing up,
 // and for Quick start people who tap "Finish setting up" later. Step 1 is Find
@@ -23,6 +24,7 @@ const TOTAL = STEPS.length + 1
 export default function FullSetup() {
   const { user, profile, refreshProfile } = useAuth()
   const navigate = useNavigate()
+  const t = useT()
   const [params, setParams] = useSearchParams()
   const step = STEPS.includes(params.get('step')) ? params.get('step') : 'avatar'
   const n = STEPS.indexOf(step) + 2
@@ -54,45 +56,45 @@ export default function FullSetup() {
   return (
     <div className="fs-page">
       {STEPS.indexOf(step) > 0 && (
-        <button type="button" className="fs-back" onClick={() => go(STEPS[STEPS.indexOf(step) - 1])}>&#8592; Back</button>
+        <button type="button" className="fs-back" onClick={() => go(STEPS[STEPS.indexOf(step) - 1])}>&#8592; {t('Back')}</button>
       )}
       <div className="step-indicator">
-        <span className="step-text">Step {n} of {TOTAL}</span>
+        <span className="step-text">{t('Step {n} of {total}', { n, total: TOTAL })}</span>
         <div className="step-bar"><div className="step-fill" style={{ width: (n / TOTAL) * 100 + '%' }} /></div>
       </div>
 
       {step === 'avatar' && <>
-        <h1 ref={headRef} tabIndex={-1}>Make your avatar</h1>
-        <p className="fs-sub">This little picture shows next to your name. It is a drawing, never a photo.</p>
+        <h1 ref={headRef} tabIndex={-1}>{t('Make your avatar')}</h1>
+        <p className="fs-sub">{t('This little picture shows next to your name. It is a drawing, never a photo.')}</p>
         <AvatarBuilder initialConfig={profile?.avatar_config || null} onSave={() => { if (refreshProfile) refreshProfile(); go('skills') }} />
-        <button type="button" className="btn btn-outline btn-full fs-skip" onClick={() => go('skills')}>Skip this step</button>
+        <button type="button" className="btn btn-outline btn-full fs-skip" onClick={() => go('skills')}>{t('Skip this step')}</button>
       </>}
 
       {step === 'skills' && <SkillsStep headRef={headRef} onNext={() => go('cottage')} />}
 
       {step === 'cottage' && <>
-        <h1 ref={headRef} tabIndex={-1}>Set up your cottage</h1>
-        <p className="fs-sub">Your cottage is your own little map. It holds everything you are part of: messages, chats, groups and more.</p>
-        <CottageSettings withBackground saveLabel="Save and keep going" onSaved={() => go('done')} onSkip={() => go('done')} skipLabel="Skip this step" />
+        <h1 ref={headRef} tabIndex={-1}>{t('Set up your cottage')}</h1>
+        <p className="fs-sub">{t('Your cottage is your own little map. It holds everything you are part of: messages, chats, groups and more.')}</p>
+        <CottageSettings withBackground saveLabel={t('Save and keep going')} onSaved={() => go('done')} onSkip={() => go('done')} skipLabel={t('Skip this step')} />
       </>}
 
       {step === 'done' && <>
-        <h1 ref={headRef} tabIndex={-1}>Your cottage is ready</h1>
-        <p className="fs-sub">You can move places around, add trees and flowers, and draw roads and streams. Do it now, or later with the Edit cottage button on your map.</p>
+        <h1 ref={headRef} tabIndex={-1}>{t('Your cottage is ready')}</h1>
+        <p className="fs-sub">{t('You can move places around, add trees and flowers, and draw roads and streams. Do it now, or later with the Edit cottage button on your map.')}</p>
         <div className="fs-ends">
           <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => finish('/cottage?arrange=1')}>
-            <Icon name="cottage" /> Arrange my cottage now
+            <Icon name="cottage" /> {t('Arrange my cottage now')}
           </button>
           <button type="button" className="btn btn-outline btn-full" disabled={busy} onClick={() => finish('/')}>
-            Show me around the app first
+            {t('Show me around the app first')}
           </button>
         </div>
-        {quick && <p className="fs-note">This turns on the full app. You can go back to Simple view any time in Settings.</p>}
+        {quick && <p className="fs-note">{t('This turns on the full app. You can go back to Simple view any time in Settings.')}</p>}
       </>}
 
       {step !== 'done' && (
         <button type="button" className="link-button fs-later" disabled={busy} onClick={() => finish('/', true)}>
-          Skip setup for now
+          {t('Skip setup for now')}
         </button>
       )}
     </div>
@@ -105,6 +107,7 @@ function SkillsStep({ headRef, onNext }) {
   const [picked, setPicked] = useState(profile?.skills || [])
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const t = useT()
 
   useEffect(() => { let alive = true; loadSkillCategories().then((s) => { if (alive) setOptions(s) }); return () => { alive = false } }, [])
 
@@ -114,23 +117,23 @@ function SkillsStep({ headRef, onNext }) {
     setBusy(true); setErr('')
     const { error } = await supabase.from('helper_profiles').update({ skills: picked }).eq('user_id', user.id)
     setBusy(false)
-    if (error) { console.error('Failed to save skills:', error); setErr('Could not save your skills. Try again, or skip for now.'); return }
+    if (error) { console.error('Failed to save skills:', error); setErr(t('Could not save your skills. Try again, or skip for now.')); return }
     if (refreshProfile) refreshProfile()
     onNext()
   }
 
   return <>
-    <h1 ref={headRef} tabIndex={-1}>What can you help with?</h1>
-    <p className="fs-sub">Pick anything you are good at or happy to do. Neighbors who need that kind of help can find you. You can change this any time.</p>
+    <h1 ref={headRef} tabIndex={-1}>{t('What can you help with?')}</h1>
+    <p className="fs-sub">{t('Pick anything you are good at or happy to do. Neighbors who need that kind of help can find you. You can change this any time.')}</p>
     {options.length === 0
-      ? <p className="fs-sub" role="status">Loading skills...</p>
+      ? <p className="fs-sub" role="status">{t('Loading skills...')}</p>
       : <GroupedSkillChips selected={picked} skills={options} renderChip={(s) => (
-          <button key={s} type="button" className={'skill-chip' + (picked.includes(s) ? ' active' : '')} aria-pressed={picked.includes(s)} onClick={() => toggle(s)}>{s}</button>
+          <button key={s} type="button" className={'skill-chip' + (picked.includes(s) ? ' active' : '')} aria-pressed={picked.includes(s)} onClick={() => toggle(s)}>{t(s)}</button>
         )} />}
     {err && <p className="form-error" role="alert">{err}</p>}
     <div className="fs-ends">
-      <button type="button" className="btn btn-primary btn-full" disabled={busy || picked.length === 0} onClick={save}>{busy ? 'Saving...' : 'Save and keep going'}</button>
-      <button type="button" className="btn btn-outline btn-full" disabled={busy} onClick={onNext}>Skip this step</button>
+      <button type="button" className="btn btn-primary btn-full" disabled={busy || picked.length === 0} onClick={save}>{busy ? t('Saving...') : t('Save and keep going')}</button>
+      <button type="button" className="btn btn-outline btn-full" disabled={busy} onClick={onNext}>{t('Skip this step')}</button>
     </div>
   </>
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import Icon from './Icon'
+import { t as tr, useT } from '../utils/lang'
 
 // Peer connections between organizations, and Campfires (organizing chats) built on them.
 // Shown on the organization dashboard to Heads and organizers.
@@ -11,7 +12,7 @@ import Icon from './Icon'
 
 function friendly(error, fallback) {
   const msg = error?.message || ''
-  return msg && msg.length < 140 && error?.code && error.code !== 'PGRST202' ? msg : fallback
+  return msg && msg.length < 140 && error?.code && error.code !== 'PGRST202' ? tr(msg) : fallback
 }
 
 export default function OrgConnections({ orgId, orgName }) {
@@ -27,6 +28,7 @@ export default function OrgConnections({ orgId, orgName }) {
   const [chatName, setChatName] = useState('')
   const [picked, setPicked] = useState([])
   const [chatNote, setChatNote] = useState('')
+  const t = useT()
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('my_org_connections', { p_org: orgId })
@@ -41,14 +43,14 @@ export default function OrgConnections({ orgId, orgName }) {
     const term = q.trim()
     if (term.length < 2) { setFound([]); setSearched(false); return }
     let alive = true
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       const { data, error } = await supabase.rpc('search_orgs_to_connect', { p_org: orgId, p_query: term })
       if (!alive) return
-      if (error) { console.error('Organization search failed:', error); setNote("Couldn't search right now. Try again."); return }
+      if (error) { console.error('Organization search failed:', error); setNote(tr("Couldn't search right now. Try again.")); return }
       setFound(data || [])
       setSearched(true)
     }, 250)
-    return () => { alive = false; clearTimeout(t) }
+    return () => { alive = false; clearTimeout(timer) }
   }, [q, orgId])
 
   async function run(key, fn, okText) {
@@ -57,7 +59,7 @@ export default function OrgConnections({ orgId, orgName }) {
     setBusy('')
     if (error) {
       console.error('Connection action failed:', error)
-      setNote(friendly(error, "We couldn't do that. Try again."))
+      setNote(friendly(error, t("We couldn't do that. Try again.")))
       return false
     }
     setNote(okText)
@@ -66,22 +68,22 @@ export default function OrgConnections({ orgId, orgName }) {
     return true
   }
 
-  const ask = (o) => run('ask' + o.id, () => supabase.rpc('request_org_connection', { p_org: orgId, p_other: o.id }), 'Request sent to ' + o.name + '.')
+  const ask = (o) => run('ask' + o.id, () => supabase.rpc('request_org_connection', { p_org: orgId, p_other: o.id }), t('Request sent to {name}.', { name: o.name }))
     .then((ok) => { if (ok) { setQ(''); setFound([]); setSearched(false) } })
-  const answer = (l, accept) => run('ans' + l.other_id, () => supabase.rpc('respond_org_connection', { p_org: orgId, p_other: l.other_id, p_accept: accept }), accept ? 'Connected with ' + l.other_name + '.' : 'Request declined.')
+  const answer = (l, accept) => run('ans' + l.other_id, () => supabase.rpc('respond_org_connection', { p_org: orgId, p_other: l.other_id, p_accept: accept }), accept ? t('Connected with {name}.', { name: l.other_name }) : t('Request declined.'))
   const end = (l, okText) => run('end' + l.other_id, () => supabase.rpc('end_org_connection', { p_org: orgId, p_other: l.other_id }), okText)
 
   async function startChat(e) {
     e.preventDefault()
     const name = chatName.trim()
-    if (!name) { setChatNote('Give the chat a name.'); return }
-    if (picked.length === 0) { setChatNote('Pick at least one connected group.'); return }
+    if (!name) { setChatNote(t('Give the chat a name.')); return }
+    if (picked.length === 0) { setChatNote(t('Pick at least one connected group.')); return }
     setBusy('chat'); setChatNote('')
     const { data, error } = await supabase.rpc('start_coalition_chat', { p_org: orgId, p_name: name.slice(0, 80), p_others: picked })
     setBusy('')
     if (error || !data) {
       console.error('Failed to start Campfire:', error)
-      setChatNote(friendly(error, 'Could not start the chat. Try again.'))
+      setChatNote(friendly(error, t('Could not start the chat. Try again.')))
       return
     }
     navigate('/groups/' + data, { state: { justStarted: true } })
@@ -93,9 +95,9 @@ export default function OrgConnections({ orgId, orgName }) {
   return (
     <>
       <section className="cal-box" aria-labelledby="oc-connections">
-        <h2 id="oc-connections">Connect with other groups</h2>
+        <h2 id="oc-connections">{t('Connect with other groups')}</h2>
         <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
-          Find another group on VWB and ask to connect. Both groups say yes, and either can end it any time. Connected groups can start a Campfire together. They never see your members or your private events.
+          {t('Find another group on VWB and ask to connect. Both groups say yes, and either can end it any time. Connected groups can start a Campfire together. They never see your members or your private events.')}
         </p>
 
         {links.map((l) => {
@@ -105,64 +107,66 @@ export default function OrgConnections({ orgId, orgName }) {
             <div key={key} className="cal-card" style={{ marginBottom: '0.5rem' }}>
               <span className="cal-card-title">{l.other_name}</span>
               <span className="cal-card-meta">
-                {l.status === 'active' ? 'Connected' : needsMyAnswer ? 'Asked to connect with you' : 'Waiting for them to answer'}
+                {l.status === 'active' ? t('Connected') : needsMyAnswer ? t('Asked to connect with you') : t('Waiting for them to answer')}
               </span>
               <div className="cal-actions" style={{ marginTop: '0.5rem' }}>
                 {needsMyAnswer && (
                   <>
-                    <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => answer(l, true)}>Accept</button>
-                    <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => answer(l, false)}>Decline</button>
+                    <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => answer(l, true)}>{t('Accept')}</button>
+                    <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => answer(l, false)}>{t('Decline')}</button>
                   </>
                 )}
                 {l.status === 'pending' && !needsMyAnswer && (
-                  <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => end(l, 'Request withdrawn.')}>Withdraw request</button>
+                  <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => end(l, t('Request withdrawn.'))}>{t('Withdraw request')}</button>
                 )}
                 {l.status === 'active' && confirmEnd !== key && (
-                  <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => setConfirmEnd(key)}>End connection</button>
+                  <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => setConfirmEnd(key)}>{t('End connection')}</button>
                 )}
                 {l.status === 'active' && confirmEnd === key && (
                   <>
-                    <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => end(l, 'Connection ended.')}>Yes, end it</button>
-                    <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => setConfirmEnd('')}>Keep it</button>
+                    <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => end(l, t('Connection ended.'))}>{t('Yes, end it')}</button>
+                    <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={() => setConfirmEnd('')}>{t('Keep it')}</button>
                   </>
                 )}
               </div>
             </div>
           )
         })}
-        {ready && links.length === 0 && <p className="hub-empty">No connections yet. Search for a group below.</p>}
+        {ready && links.length === 0 && <p className="hub-empty">{t('No connections yet. Search for a group below.')}</p>}
 
-        <label htmlFor="oc-search" className="cal-sub" style={{ display: 'block', marginTop: '0.75rem' }}>Find a group by name</label>
+        <label htmlFor="oc-search" className="cal-sub" style={{ display: 'block', marginTop: '0.75rem' }}>{t('Find a group by name')}</label>
         <div className="hub-search">
-          <input id="oc-search" type="text" autoComplete="off" placeholder="Start typing a group name" value={q} onChange={(e) => { setQ(e.target.value); setNote('') }} />
+          <input id="oc-search" type="text" autoComplete="off" placeholder={t('Start typing a group name')} value={q} onChange={(e) => { setQ(e.target.value); setNote('') }} />
         </div>
         {found.map((o) => (
           <div key={o.id} className="cal-card" style={{ marginTop: '0.5rem' }}>
             <span className="cal-card-title">{o.name}</span>
-            {o.link_status === 'active' && <span className="cal-card-meta">Already connected</span>}
-            {o.link_status === 'pending' && <span className="cal-card-meta">Request already open. Check your list above.</span>}
+            {o.link_status === 'active' && <span className="cal-card-meta">{t('Already connected')}</span>}
+            {o.link_status === 'pending' && <span className="cal-card-meta">{t('Request already open. Check your list above.')}</span>}
             {!o.link_status && (
               <div className="cal-actions" style={{ marginTop: '0.5rem' }}>
-                <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => ask(o)}>Ask to connect</button>
+                <button type="button" className="btn btn-primary" style={{ minHeight: '44px' }} disabled={!!busy} onClick={() => ask(o)}>{t('Ask to connect')}</button>
               </div>
             )}
           </div>
         ))}
-        {searched && found.length === 0 && <p className="hub-empty">No group with that name. They may not be on VWB yet, or they chose to stay invisible.</p>}
+        {searched && found.length === 0 && <p className="hub-empty">{t('No group with that name. They may not be on VWB yet, or they chose to stay invisible.')}</p>}
         {note && <p className="hub-note" role="status">{note}</p>}
       </section>
 
       {active.length > 0 && (
         <section className="cal-box" aria-labelledby="oc-chat">
-          <h2 id="oc-chat"><span aria-hidden="true"><Icon name="campfire" /></span> Start a Campfire</h2>
+          <h2 id="oc-chat"><span aria-hidden="true"><Icon name="campfire" /></span> {t('Start a Campfire')}</h2>
           <p className="cal-sub" style={{ marginBottom: '0.75rem' }}>
-            A Campfire is a private, encrypted chat for the Heads and organizers of {orgName || 'your group'} and the groups you pick. When someone becomes an organizer they are added, and when they stop, they are removed.
+            {orgName
+              ? t('A Campfire is a private, encrypted chat for the Heads and organizers of {name} and the groups you pick. When someone becomes an organizer they are added, and when they stop, they are removed.', { name: orgName })
+              : t('A Campfire is a private, encrypted chat for the Heads and organizers of your group and the groups you pick. When someone becomes an organizer they are added, and when they stop, they are removed.')}
           </p>
           <form onSubmit={startChat} noValidate>
-            <label htmlFor="oc-chat-name" className="cal-sub" style={{ display: 'block' }}>Name for the Campfire</label>
-            <input id="oc-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder="For example, Fall food drive" onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.75rem' }} />
+            <label htmlFor="oc-chat-name" className="cal-sub" style={{ display: 'block' }}>{t('Name for the Campfire')}</label>
+            <input id="oc-chat-name" type="text" maxLength={80} autoComplete="off" value={chatName} placeholder={t('For example, Fall food drive')} onChange={(e) => { setChatName(e.target.value); setChatNote('') }} style={{ width: '100%', boxSizing: 'border-box', minHeight: 48, fontSize: 16, margin: '0.25rem 0 0.75rem' }} />
             <fieldset style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
-              <legend className="cal-sub">Groups to include</legend>
+              <legend className="cal-sub">{t('Groups to include')}</legend>
               {active.map((l) => (
                 <label key={l.other_id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minHeight: 44 }}>
                   <input type="checkbox" checked={picked.includes(l.other_id)} onChange={() => { togglePick(l.other_id); setChatNote('') }} style={{ width: 22, height: 22 }} />
@@ -171,7 +175,7 @@ export default function OrgConnections({ orgId, orgName }) {
               ))}
             </fieldset>
             {chatNote && <p role="alert" className="groups-error">{chatNote}</p>}
-            <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={busy === 'chat'}>{busy === 'chat' ? 'Starting...' : <><Icon name="campfire" /> Start a Campfire</>}</button>
+            <button type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px' }} disabled={busy === 'chat'}>{busy === 'chat' ? t('Starting...') : <><Icon name="campfire" /> {t('Start a Campfire')}</>}</button>
           </form>
         </section>
       )}

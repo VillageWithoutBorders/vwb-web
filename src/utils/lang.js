@@ -13,6 +13,8 @@ const subs = new Set()
 let lang = 'en'
 let words = null
 let version = 0
+let patterns = null
+const alertCache = new Map()
 
 function changed() { version += 1; subs.forEach((f) => f()) }
 
@@ -21,14 +23,30 @@ function setPageLang(l) {
 }
 
 async function loadWords(l) {
+  patterns = null
+  alertCache.clear()
   if (l !== 'es') { words = null; return }
+  // The rest of the words (es-more.js, about 3/4 of them) start loading now but don't
+  // hold up the first draw. When they arrive, the screen re-draws in Spanish.
+  const more = import('../data/es-more.js')
   try {
     words = (await import('../data/es.js')).default
   } catch (e) {
     // No signal and never loaded on this phone: stay in English until it can load.
     console.error('Failed to load Spanish words:', e)
     words = null
+    more.catch(() => {})
+    return
   }
+  const core = words
+  more.then((m) => {
+    // Still the same Spanish load (the person didn't switch back to English meanwhile).
+    if (words !== core) return
+    words = { ...core, ...m.default }
+    patterns = null
+    alertCache.clear()
+    changed()
+  }).catch((e) => console.error('Failed to load more Spanish words:', e))
 }
 
 export function getLang() { return lang }
@@ -59,6 +77,51 @@ export function t(en, vars) {
   }
   if (vars) for (const k of Object.keys(vars)) s = s.split('{' + k + '}').join(String(vars[k]))
   return s
+}
+
+// Alerts (Nov 5): most alerts are written in English by the database, often with a
+// name or title inside ("Ruth wants to connect"). tAlert finds the es.js key that has
+// the same shape ('{name} wants to connect') and fills in the Spanish.
+// Only keys with real words around the {spots} are used, so a short key can't
+// grab a whole alert by mistake. A {skill} or {role} spot is translated too, and so are
+// the stand-in words the database uses when a name is missing ("A neighbor").
+const ALERT_FILLERS = new Set(['A neighbor', 'A member', 'Someone', 'someone', 'A group', 'A new group', 'A resource', 'The resource', 'your group', 'your village', 'your organization', 'their name', 'not given', 'village', 'Community Connection'])
+function buildPatterns() {
+  const list = []
+  for (const en of Object.keys(words)) {
+    if (!en.includes('{')) continue
+    const parts = en.split(/(\{\w+\})/)
+    const literal = parts.filter((x) => !/^\{\w+\}$/.test(x)).join('')
+    if (literal.replace(/\W/g, '').length < 4) continue
+    const names = []
+    const src = parts.map((x) => {
+      const m = /^\{(\w+)\}$/.exec(x)
+      if (m) { names.push(m[1]); return '([\\s\\S]+?)' }
+      return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    }).join('')
+    list.push({ re: new RegExp('^' + src + '$'), names, es: words[en], size: literal.length })
+  }
+  return list.sort((a, b) => b.size - a.size)
+}
+
+export function tAlert(text) {
+  if (lang === 'en' || !words || !text) return text
+  if (words[text]) return words[text]
+  if (alertCache.has(text)) return alertCache.get(text)
+  if (!patterns) patterns = buildPatterns()
+  let out = text
+  for (const p of patterns) {
+    const m = p.re.exec(text)
+    if (!m) continue
+    out = p.es
+    p.names.forEach((n, i) => {
+      const v = n === 'skill' || n === 'role' || ALERT_FILLERS.has(m[i + 1]) ? t(m[i + 1]) : m[i + 1]
+      out = out.split('{' + n + '}').join(v)
+    })
+    break
+  }
+  alertCache.set(text, out)
+  return out
 }
 
 // Re-draws the screen when the language changes. Returns t, so a component can write

@@ -1,5 +1,6 @@
 import { isLight } from '../utils/theme'
 import { useEffect, useRef, useState } from 'react'
+import { useT } from '../utils/lang'
 
 // Cloudflare Turnstile: a quick "are you a person?" check that stops
 // automated fake sign-ups. Most people never see a puzzle. Supabase checks
@@ -32,6 +33,7 @@ export default function Turnstile({ onToken, resetKey = 0 }) {
   // If the check can't load (an ad blocker, or a network that blocks
   // Cloudflare), say so, instead of leaving the button grey with no reason.
   const [failed, setFailed] = useState(false)
+  const t = useT()
 
   useEffect(() => {
     if (!TURNSTILE_SITE_KEY) return
@@ -65,10 +67,10 @@ export default function Turnstile({ onToken, resetKey = 0 }) {
   if (!TURNSTILE_SITE_KEY) return null
   return (
     <>
-      <div ref={box} className="turnstile-box" aria-label="Human check" />
+      <div ref={box} className="turnstile-box" aria-label={t('Human check')} />
       {failed && (
         <p className="form-error" role="alert">
-          The quick "are you a person?" check didn't load. If you use an ad blocker, pause it for this site, or try another browser. Still stuck? Email info@villagewithoutborders.org.
+          {t('The quick "are you a person?" check didn\'t load. If you use an ad blocker, pause it for this site, or try another browser. Still stuck? Email info@villagewithoutborders.org.')}
         </p>
       )}
     </>

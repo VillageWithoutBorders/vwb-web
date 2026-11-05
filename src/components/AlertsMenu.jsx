@@ -5,7 +5,7 @@ import { markNotificationRead } from '../utils/notificationHelpers'
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
 import Icon from './Icon'
 import { personalAlertLink } from '../utils/alertLink'
-import { useT } from '../utils/lang'
+import { useT, tAlert } from '../utils/lang'
 
 // The Alerts button in the top bar. Tapping it opens a small popout with
 // your 5 newest alerts and a "See all alerts" button that opens the full
@@ -103,7 +103,7 @@ export default function AlertsMenu() {
                   <span className="alerts-popout-text">
                     {!n.read && <span className="sr-only">{t('New') + '. '}</span>}
                     {n.follow_up && <span className="sr-only">{t('Flagged to follow up.') + ' '}</span>}
-                    <span className="alerts-popout-title">{t(n.title)}</span>
+                    <span className="alerts-popout-title">{tAlert(n.title)}</span>
                     <span className="alerts-popout-time">
                       {timeAgo(n.created_at)}
                       {n.follow_up && <span className="alerts-popout-flag" aria-hidden="true"> <Icon name="flag" /> {t('Follow up')}</span>}

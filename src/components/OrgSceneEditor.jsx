@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 import Icon from './Icon'
+import { useT } from '../utils/lang'
 
 // "How our page looks" (Oct 22). Leaders of an organization or emergency group
 // choose a sign (a picture that stands for them), which places show, and their
@@ -16,28 +17,27 @@ export default function OrgSceneEditor({ org, spots, isGroup, onSaved }) {
   const [names, setNames] = useState(start.names && typeof start.names === 'object' ? start.names : {})
   const [saving, setSaving] = useState(false)
   const [note, setNote] = useState('')
-
-  const kind = isGroup ? 'crew' : 'group'
+  const t = useT()
 
   async function save(reset) {
     setSaving(true); setNote('')
     const scene = reset ? null : { sign: sign || null, hide, names }
     const { data, error } = await supabase.rpc('set_org_scene', { p_org: org.id, p_scene: scene })
     setSaving(false)
-    if (error || data !== 'ok') { console.error('Failed to save the page look:', error || data); setNote("We couldn't save that. Try again."); return }
+    if (error || data !== 'ok') { console.error('Failed to save the page look:', error || data); setNote(t("We couldn't save that. Try again.")); return }
     if (reset) { setSign(''); setHide([]); setNames({}) }
-    setNote(reset ? 'Back to the usual look.' : 'Saved. Everyone sees the new look now.')
+    setNote(reset ? t('Back to the usual look.') : t('Saved. Everyone sees the new look now.'))
     if (onSaved) onSaved()
   }
 
   return (
     <section className="cal-box ose" aria-labelledby="ose-h">
-      <h3 id="ose-h">How our page looks</h3>
-      <p className="cal-sub">Make this {kind} page feel like yours. Everyone who opens it sees your choices.</p>
+      <h3 id="ose-h">{t('How our page looks')}</h3>
+      <p className="cal-sub">{isGroup ? t('Make this crew page feel like yours. Everyone who opens it sees your choices.') : t('Make this group page feel like yours. Everyone who opens it sees your choices.')}</p>
 
-      <h4 className="ose-h">Our sign</h4>
-      <p className="cal-sub">A picture that stands for you. It shows by your name.</p>
-      <div className="ose-signs" role="group" aria-label="Our sign">
+      <h4 className="ose-h">{t('Our sign')}</h4>
+      <p className="cal-sub">{t('A picture that stands for you. It shows by your name.')}</p>
+      <div className="ose-signs" role="group" aria-label={t('Our sign')}>
         {SIGNS.map((s) => {
           const on = (sign || (isGroup ? 'tent' : 'people')) === s
           return (
@@ -48,8 +48,8 @@ export default function OrgSceneEditor({ org, spots, isGroup, onSaved }) {
         })}
       </div>
 
-      <h4 className="ose-h">Places on our map</h4>
-      <p className="cal-sub">Untick a place to hide it. Tap a name to change it (30 letters at most). Leave it empty to keep the usual name.</p>
+      <h4 className="ose-h">{t('Places on our map')}</h4>
+      <p className="cal-sub">{t('Untick a place to hide it. Tap a name to change it (30 letters at most). Leave it empty to keep the usual name.')}</p>
       <ul className="ose-places">
         {spots.filter((s) => s.k !== 'tools').map((s) => {
           const shown = !hide.includes(s.k)
@@ -58,11 +58,11 @@ export default function OrgSceneEditor({ org, spots, isGroup, onSaved }) {
               <label className="ose-show">
                 <input type="checkbox" checked={shown} onChange={() => setHide((h) => (shown ? [...h, s.k] : h.filter((x) => x !== s.k)))} />
                 <span className="ose-ic" aria-hidden="true"><Icon name={s.icon} size={28} /></span>
-                <span className="sr-only">Show {s.label} on our map</span>
+                <span className="sr-only">{t('Show {place} on our map', { place: t(s.label) })}</span>
               </label>
               <label className="ose-name">
-                <span className="sr-only">Name for {s.label}</span>
-                <input type="text" maxLength={30} value={names[s.k] || ''} placeholder={s.label} disabled={!shown}
+                <span className="sr-only">{t('Name for {place}', { place: t(s.label) })}</span>
+                <input type="text" maxLength={30} value={names[s.k] || ''} placeholder={t(s.label)} disabled={!shown}
                   onChange={(e) => setNames((n) => { const next = { ...n }; if (e.target.value.trim()) next[s.k] = e.target.value; else delete next[s.k]; return next })} />
               </label>
             </li>
@@ -72,8 +72,8 @@ export default function OrgSceneEditor({ org, spots, isGroup, onSaved }) {
 
       {note && <p className="hub-note" role="status">{note}</p>}
       <div className="ose-buttons">
-        <button type="button" className="btn btn-primary" disabled={saving} onClick={() => save(false)}>{saving ? 'Saving...' : 'Save our look'}</button>
-        <button type="button" className="btn btn-outline" disabled={saving} onClick={() => save(true)}>Back to the usual look</button>
+        <button type="button" className="btn btn-primary" disabled={saving} onClick={() => save(false)}>{saving ? t('Saving...') : t('Save our look')}</button>
+        <button type="button" className="btn btn-outline" disabled={saving} onClick={() => save(true)}>{t('Back to the usual look')}</button>
       </div>
     </section>
   )

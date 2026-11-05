@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import BackLink from '../components/BackLink'
 import Icon from '../components/Icon'
+import { useT, t as tr, getLang } from '../utils/lang'
 
 // A village's own charter (vwb-village-charter.sql): where the name comes
 // from, what neighbors here care about, and house rules. The VWB Community
@@ -24,15 +25,17 @@ const WORDS = {
 }
 
 function Part({ title, text, empty }) {
+  const t = useT()
   return (
     <section className="ch-part">
-      <h2>{title}</h2>
-      {text ? <p className="ch-text">{text}</p> : <p className="ch-empty">{empty}</p>}
+      <h2>{t(title)}</h2>
+      {text ? <p className="ch-text">{text}</p> : <p className="ch-empty">{t(empty)}</p>}
     </section>
   )
 }
 
 export default function VillageCharter() {
+  const t = useT()
   const { id } = useParams()
   const [name, setName] = useState('')
   const [c, setC] = useState(null)
@@ -47,9 +50,9 @@ export default function VillageCharter() {
 
   async function load() {
     const { data, error: err } = await supabase.rpc('village_charter_get', { p_village: id })
-    if (err) { console.error('village_charter_get failed:', err); setLoadError('We could not load the charter. Check your connection and try again.'); return }
+    if (err) { console.error('village_charter_get failed:', err); setLoadError(tr('We could not load the charter. Check your connection and try again.')); return }
     const row = Array.isArray(data) ? data[0] : data
-    if (!row) { setLoadError('We could not find this village. It may have closed.'); return }
+    if (!row) { setLoadError(tr('We could not find this village. It may have closed.')); return }
     setC(row)
   }
 
@@ -75,10 +78,10 @@ export default function VillageCharter() {
     setBusy(true)
     const { data, error: err } = await supabase.rpc('village_charter_propose', { p_village: id, p_story: story, p_cares: cares, p_rules: rules })
     setBusy(false)
-    if (err) { console.error('village_charter_propose failed:', err); setError('Could not save that. Try again.'); return }
-    if (data !== 'live' && data !== 'waiting') { setError(WORDS[data] || 'Could not save that. Try again.'); return }
+    if (err) { console.error('village_charter_propose failed:', err); setError(tr('Could not save that. Try again.')); return }
+    if (data !== 'live' && data !== 'waiting') { setError(tr(WORDS[data] || 'Could not save that. Try again.')); return }
     setEditing(false)
-    setNote(data === 'live' ? 'The new charter is live.' : 'Saved. Another leader of this village will be asked to say yes before it goes live.')
+    setNote(data === 'live' ? tr('The new charter is live.') : tr('Saved. Another leader of this village will be asked to say yes before it goes live.'))
     load()
   }
 
@@ -87,9 +90,9 @@ export default function VillageCharter() {
     setBusy(true); setError(''); setNote('')
     const { data, error: err } = await supabase.rpc('village_charter_decide', { p_change: c.waiting_id, p_yes: yes })
     setBusy(false)
-    if (err) { console.error('village_charter_decide failed:', err); setError('Could not save your answer. Try again.'); return }
-    if (data !== 'approved' && data !== 'declined') { setError(WORDS[data] || 'Could not save your answer. Try again.'); load(); return }
-    setNote(yes ? 'Thank you. The new charter is live.' : 'Thank you. The change was not used. Talk it over in the village chat if you like.')
+    if (err) { console.error('village_charter_decide failed:', err); setError(tr('Could not save your answer. Try again.')); return }
+    if (data !== 'approved' && data !== 'declined') { setError(tr(WORDS[data] || 'Could not save your answer. Try again.')); load(); return }
+    setNote(yes ? tr('Thank you. The new charter is live.') : tr('Thank you. The change was not used. Talk it over in the village chat if you like.'))
     load()
   }
 
@@ -98,9 +101,9 @@ export default function VillageCharter() {
     setBusy(true); setError(''); setNote('')
     const { data, error: err } = await supabase.rpc('village_charter_withdraw', { p_change: c.waiting_id })
     setBusy(false)
-    if (err) { console.error('village_charter_withdraw failed:', err); setError('Could not take it back. Try again.'); return }
-    if (data !== 'withdrawn') { setError(WORDS[data] || 'Could not take it back. Try again.'); load(); return }
-    setNote('You took the change back.')
+    if (err) { console.error('village_charter_withdraw failed:', err); setError(tr('Could not take it back. Try again.')); return }
+    if (data !== 'withdrawn') { setError(tr(WORDS[data] || 'Could not take it back. Try again.')); load(); return }
+    setNote(tr('You took the change back.'))
     load()
   }
 
@@ -109,11 +112,11 @@ export default function VillageCharter() {
 
   return (
     <div className="cal-page ch-page">
-      <BackLink fallback={'/village/' + id} fallbackLabel="Back to the village" />
-      <h1 className="ch-title"><span aria-hidden="true"><Icon name="scroll" size={32} /></span> {name ? name + ' charter' : 'Village charter'}</h1>
+      <BackLink fallback={'/village/' + id} fallbackLabel={t('Back to the village')} />
+      <h1 className="ch-title"><span aria-hidden="true"><Icon name="scroll" size={32} /></span> {name ? t('{name} charter', { name }) : t('Village charter')}</h1>
 
       {loadError && <p className="form-error" role="alert">{loadError}</p>}
-      {!c && !loadError && <p className="cal-empty">Loading...</p>}
+      {!c && !loadError && <p className="cal-empty">{t('Loading...')}</p>}
       {note && <p className="form-success" role="status">{note}</p>}
       {error && !editing && <p className="form-error" role="alert">{error}</p>}
 
@@ -121,36 +124,36 @@ export default function VillageCharter() {
         <>
           {!hasCharter && (
             <p className="cal-sub">{c.i_lead
-              ? 'This village has no charter yet. As a leader here, you can write the first one.'
-              : 'This village has no charter yet. Its Keeper and Helpers can write one.'}</p>
+              ? t('This village has no charter yet. As a leader here, you can write the first one.')
+              : t('This village has no charter yet. Its Keeper and Helpers can write one.')}</p>
           )}
           {hasCharter && (
             <>
               <Part title="Our story" text={c.story} empty="Not written yet." />
               <Part title="What we care about" text={c.cares} empty="Not written yet." />
               <Part title="Our house rules" text={c.house_rules} empty="Not written yet." />
-              {c.updated_at && <p className="ch-note">Last changed {new Date(c.updated_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}. Every change is in the village's role log.</p>}
+              {c.updated_at && <p className="ch-note">{t("Last changed {date}. Every change is in the village's role log.", { date: new Date(c.updated_at).toLocaleDateString(getLang() === 'es' ? 'es-US' : undefined, { month: 'long', day: 'numeric', year: 'numeric' }) })}</p>}
             </>
           )}
 
           {c.i_lead && c.waiting_id && (
             <section className="cal-box ch-waiting" aria-labelledby="ch-wait">
-              <h2 id="ch-wait">A change is waiting</h2>
-              <p className="cal-sub">{c.waiting_by_me ? 'You wrote this. Another leader needs to say yes.' : (c.waiting_by_name || 'A leader') + ' wrote this change. Read it and say yes or no.'}</p>
+              <h2 id="ch-wait">{t('A change is waiting')}</h2>
+              <p className="cal-sub">{c.waiting_by_me ? t('You wrote this. Another leader needs to say yes.') : t('{name} wrote this change. Read it and say yes or no.', { name: c.waiting_by_name || t('A leader') })}</p>
               <Part title="Our story" text={c.waiting_story} empty="Left empty." />
               <Part title="What we care about" text={c.waiting_cares} empty="Left empty." />
               <Part title="Our house rules" text={c.waiting_rules} empty="Left empty." />
               {c.waiting_by_me
-                ? <button type="button" className="btn btn-outline btn-full" disabled={busy} onClick={withdraw}>Take it back</button>
+                ? <button type="button" className="btn btn-outline btn-full" disabled={busy} onClick={withdraw}>{t('Take it back')}</button>
                 : <>
-                    <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => decide(true)}>Yes, make it live</button>
-                    <button type="button" className="btn btn-outline btn-full ch-gap" disabled={busy} onClick={() => decide(false)}>No, not this one</button>
+                    <button type="button" className="btn btn-primary btn-full" disabled={busy} onClick={() => decide(true)}>{t('Yes, make it live')}</button>
+                    <button type="button" className="btn btn-outline btn-full ch-gap" disabled={busy} onClick={() => decide(false)}>{t('No, not this one')}</button>
                   </>}
             </section>
           )}
 
           {c.i_lead && !c.waiting_id && (
-            <button type="button" className="btn btn-primary btn-full ch-gap" onClick={startEdit}>{hasCharter ? 'Change the charter' : 'Write the charter'}</button>
+            <button type="button" className="btn btn-primary btn-full ch-gap" onClick={startEdit}>{hasCharter ? t('Change the charter') : t('Write the charter')}</button>
           )}
         </>
       )}
@@ -158,36 +161,36 @@ export default function VillageCharter() {
       {c && editing && (
         <form className="ch-form" onSubmit={save} noValidate>
           <p className="cal-sub">{c.one_leader
-            ? 'You are the only leader here, so this goes live when you save. It is written in the role log.'
-            : 'Another leader of this village will be asked to say yes before this goes live.'} Anyone on VWB can read it. Keep addresses and private details out.</p>
+            ? t('You are the only leader here, so this goes live when you save. It is written in the role log.')
+            : t('Another leader of this village will be asked to say yes before this goes live.')} {t('Anyone on VWB can read it. Keep addresses and private details out.')}</p>
 
-          <label htmlFor="ch-story">Our story</label>
-          <p className="ch-help" id="ch-story-help">Where does the village name come from? What is this place like?</p>
+          <label htmlFor="ch-story">{t('Our story')}</label>
+          <p className="ch-help" id="ch-story-help">{t('Where does the village name come from? What is this place like?')}</p>
           <textarea id="ch-story" rows={4} maxLength={LIMITS.story} value={story} onChange={(e) => setStory(e.target.value)} aria-describedby="ch-story-help ch-story-left" />
-          <p className="ch-left" id="ch-story-left">{left(story, LIMITS.story)} letters left</p>
+          <p className="ch-left" id="ch-story-left">{t('{n} letters left', { n: left(story, LIMITS.story) })}</p>
 
-          <label htmlFor="ch-cares">What we care about</label>
-          <p className="ch-help" id="ch-cares-help">What do neighbors here want to do together?</p>
+          <label htmlFor="ch-cares">{t('What we care about')}</label>
+          <p className="ch-help" id="ch-cares-help">{t('What do neighbors here want to do together?')}</p>
           <textarea id="ch-cares" rows={4} maxLength={LIMITS.cares} value={cares} onChange={(e) => setCares(e.target.value)} aria-describedby="ch-cares-help ch-cares-left" />
-          <p className="ch-left" id="ch-cares-left">{left(cares, LIMITS.cares)} letters left</p>
+          <p className="ch-left" id="ch-cares-left">{t('{n} letters left', { n: left(cares, LIMITS.cares) })}</p>
 
-          <label htmlFor="ch-rules">Our house rules</label>
-          <p className="ch-help" id="ch-rules-help">A few rules for this village, on top of the Community Guidelines. One per line works well.</p>
+          <label htmlFor="ch-rules">{t('Our house rules')}</label>
+          <p className="ch-help" id="ch-rules-help">{t('A few rules for this village, on top of the Community Guidelines. One per line works well.')}</p>
           <textarea id="ch-rules" rows={6} maxLength={LIMITS.rules} value={rules} onChange={(e) => setRules(e.target.value)} aria-describedby="ch-rules-help ch-rules-left" />
-          <p className="ch-left" id="ch-rules-left">{left(rules, LIMITS.rules)} letters left</p>
+          <p className="ch-left" id="ch-rules-left">{t('{n} letters left', { n: left(rules, LIMITS.rules) })}</p>
 
           {error && <p className="form-error" role="alert">{error}</p>}
-          <button type="submit" className="btn btn-primary btn-full" disabled={busy}>{busy ? 'Saving...' : c.one_leader ? 'Save and make it live' : 'Save and ask for a yes'}</button>
-          <button type="button" className="btn btn-outline btn-full ch-gap" disabled={busy} onClick={() => { setEditing(false); setError('') }}>Cancel</button>
+          <button type="submit" className="btn btn-primary btn-full" disabled={busy}>{busy ? t('Saving...') : c.one_leader ? t('Save and make it live') : t('Save and ask for a yes')}</button>
+          <button type="button" className="btn btn-outline btn-full ch-gap" disabled={busy} onClick={() => { setEditing(false); setError('') }}>{t('Cancel')}</button>
         </form>
       )}
 
       <section className="cal-box ch-guidelines" aria-labelledby="ch-g">
-        <h2 id="ch-g">Every village follows the Community Guidelines first</h2>
-        <div className="vs-item"><b>We look after each other.</b><small>Help is given freely, and anyone can ask for it.</small></div>
-        <div className="vs-item"><b>We keep private things private.</b><small>Keep addresses and private details out of the village chat.</small></div>
-        <div className="vs-item"><b>Safety is in your hands.</b><small>You can block, report, and vouch for people.</small></div>
-        <Link className="btn btn-outline btn-full" to="/terms">Read the full Community Guidelines</Link>
+        <h2 id="ch-g">{t('Every village follows the Community Guidelines first')}</h2>
+        <div className="vs-item"><b>{t('We look after each other.')}</b><small>{t('Help is given freely, and anyone can ask for it.')}</small></div>
+        <div className="vs-item"><b>{t('We keep private things private.')}</b><small>{t('Keep addresses and private details out of the village chat.')}</small></div>
+        <div className="vs-item"><b>{t('Safety is in your hands.')}</b><small>{t('You can block, report, and vouch for people.')}</small></div>
+        <Link className="btn btn-outline btn-full" to="/terms">{t('Read the full Community Guidelines')}</Link>
       </section>
     </div>
   )
