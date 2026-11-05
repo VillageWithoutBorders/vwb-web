@@ -109,6 +109,8 @@
    so buttons and text inside them use the dark color set. */
 .vs-page {
   color-scheme: dark;
+  /* Nov 5: --bg too, or panels turned cream in light mode under light text. */
+  --bg: #121212;
   --text-strong: #fff; --text: #e8e8e8; --text-soft: #ccc; --text-secondary: #aaa; --text-muted: #8a8a8a;
   --white: #1e1e1e; --surface: #1e1e1e; --surface-2: #222; --surface-3: #333; --surface-sunk: #111;
   --border: #333; --border-strong: #444; --green-light: #1a332a;
@@ -656,6 +658,7 @@ html.simple .app-main.app-main-world { background: var(--bg); }
 html.simple .vs-page-path::before { display: none; }
 html.simple .vs-page {
   color-scheme: normal;
+  --bg: inherit;
   --text-strong: inherit; --text: inherit; --text-soft: inherit; --text-secondary: inherit; --text-muted: inherit;
   --white: inherit; --surface: inherit; --surface-2: inherit; --surface-3: inherit; --surface-sunk: inherit;
   --border: inherit; --border-strong: inherit; --green-light: inherit;
@@ -990,6 +993,10 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
 .vs-today .qa-grid { gap: 0.5rem; }
 .vs-today .qa-btn { flex-direction: row; justify-content: flex-start; gap: 0.6rem; min-height: 56px; padding: 0.4rem 0.8rem; text-align: left; }
 .vs-today .qa-btn-icon .vwb-icon { width: 32px; height: 32px; }
+/* Nov 5: on narrow phones the side-by-side layout split words ("recur-sos"). Stack the picture over the words there. */
+@media (max-width: 400px) {
+  .vs-today .qa-btn { flex-direction: column; justify-content: center; text-align: center; gap: 0.3rem; padding: 0.6rem 0.4rem; }
+}
 .vs-gifts-btn { min-height: 44px; font-size: 0.95rem; }
 @media (min-width: 1024px) { .vs-page-path > .vs-gifts-btn { margin-top: 6px; } }
 

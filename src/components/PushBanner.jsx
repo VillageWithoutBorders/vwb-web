@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { isPushSupported, subscribeToPush } from '../utils/pushUtils'
+import { useT } from '../utils/lang'
 
 export default function PushBanner() {
   const { user } = useAuth()
+  const t = useT()
   const [visible, setVisible] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState(null)
@@ -47,17 +49,17 @@ export default function PushBanner() {
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') {
       setLoading(false)
-      setMessage('Notifications were blocked. You can enable them in your browser settings.')
+      setMessage(t('Notifications were blocked. You can enable them in your browser settings.'))
       return
     }
     const result = await subscribeToPush(user.id)
     setLoading(false)
     if (result.ok) {
       localStorage.setItem('vwb_push_v2', 'true')
-      setMessage('Notifications are on.')
+      setMessage(t('Notifications are on.'))
       setTimeout(() => setVisible(false), 2500)
     } else {
-      setMessage('Could not turn on notifications. Please try again later.')
+      setMessage(t('Could not turn on notifications. Please try again later.'))
       setTimeout(() => setVisible(false), 4000)
     }
   }
@@ -74,16 +76,16 @@ export default function PushBanner() {
       <div className="push-banner-content">
         <span className="push-banner-icon">&#x1F514;</span>
         <div className="push-banner-text">
-          <strong>{message || 'Stay in the loop'}</strong>
-          {!message && <p>Get notified when neighbors need help or someone responds to your request.</p>}
+          <strong>{message || t('Stay in the loop')}</strong>
+          {!message && <p>{t('Get notified when neighbors need help or someone responds to your request.')}</p>}
         </div>
       </div>
       {!message && (
         <div className="push-banner-actions">
           <button className="btn btn-primary btn-sm" onClick={handleEnable} disabled={loading}>
-            {loading ? 'Enabling...' : 'Enable'}
+            {loading ? t('Enabling...') : t('Enable')}
           </button>
-          <button className="push-banner-dismiss" onClick={handleDismiss}>Not now</button>
+          <button className="push-banner-dismiss" onClick={handleDismiss}>{t('Not now')}</button>
         </div>
       )}
     </div>

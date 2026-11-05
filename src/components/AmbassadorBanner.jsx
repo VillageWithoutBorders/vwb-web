@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
+import { useT } from '../utils/lang'
 
 // Encourages any Neighbor who isn't already a Hope Ambassador to become one.
 // Dismissible like InstallBanner/PushBanner, and re-appears after a couple
@@ -10,6 +11,7 @@ import { supabase } from '../supabaseClient'
 export default function AmbassadorBanner() {
   const { profile, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const t = useT()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -39,13 +41,13 @@ export default function AmbassadorBanner() {
       <div className="push-banner-content">
         <span className="push-banner-icon" aria-hidden="true"><Icon name="star" size={28} /></span>
         <div className="push-banner-text">
-          <strong>Apply to be a Hope Ambassador</strong>
-          <p>Share a skill, an hour, or a ride, and we'll match you with neighbors nearby who need one. An admin looks over each application.</p>
+          <strong>{t('Apply to be a Hope Ambassador')}</strong>
+          <p>{t("Share a skill, an hour, or a ride, and we'll match you with neighbors nearby who need one. An admin looks over each application.")}</p>
         </div>
       </div>
       <div className="push-banner-actions">
-        <button className="btn btn-primary btn-sm" onClick={() => navigate('/profile')}>Apply</button>
-        <button className="push-banner-dismiss" onClick={handleDismiss}>Not now</button>
+        <button className="btn btn-primary btn-sm" onClick={() => navigate('/profile')}>{t('Apply')}</button>
+        <button className="push-banner-dismiss" onClick={handleDismiss}>{t('Not now')}</button>
       </div>
     </div>
   )

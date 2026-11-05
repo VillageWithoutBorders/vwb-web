@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { submitUserReport } from '../utils/submitUserReport'
 import { tell } from './AdminDialog'
+import { useT } from '../utils/lang'
 
 // Block and report buttons for someone else's profile.
 //
@@ -27,7 +28,8 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const firstRef = useRef(null)
-  const who = name || 'this neighbor'
+  const t = useT()
+  const who = name || t('this neighbor')
 
   useEffect(() => {
     let cancelled = false
@@ -78,7 +80,7 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
     // 23505 means the block already exists, which is the outcome we wanted.
     if (err && err.code !== '23505') {
       console.error('[ProfileSafetyActions] block failed', err)
-      setError('Could not block this person. Try again.')
+      setError(t('Could not block this person. Try again.'))
       return
     }
     setBlockedBoth(true)
@@ -91,21 +93,21 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
     setBusy(false)
     if (err) {
       console.error('[ProfileSafetyActions] unblock failed', err)
-      tell('Could not unblock this person. Try again.', { tone: 'error' })
+      tell(t('Could not unblock this person. Try again.'), { tone: 'error' })
       return
     }
     setBlockedBoth(false)
   }
 
   async function submitReport() {
-    if (!reason) { setError('Pick the closest reason.'); return }
+    if (!reason) { setError(t('Pick the closest reason.')); return }
     setBusy(true)
     setError('')
     const extra = details.trim().slice(0, 500)
     const { error: err } = await submitUserReport({ reporterId: myId, reportedUserId: userId, source: 'profile', reason, details: extra })
     setBusy(false)
     if (err) {
-      setError('Could not send your report. Try again.')
+      setError(t('Could not send your report. Try again.'))
       return
     }
     setDialog('reported')
@@ -122,13 +124,13 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
   return (
     <>
       {blocked && (
-        <p style={{ margin: '0.6rem 0 0', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>You blocked {who}. You will not see each other in messages or offers.</p>
+        <p style={{ margin: '0.6rem 0 0', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>{t('You blocked {name}. You will not see each other in messages or offers.', { name: who })}</p>
       )}
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.6rem' }}>
         {blocked
-          ? <button type="button" onClick={unblock} disabled={busy} style={ghost}>Unblock</button>
-          : <button type="button" onClick={() => setDialog('block')} style={ghost}>Block</button>}
-        <button type="button" onClick={() => setDialog('report')} style={{ ...ghost, color: 'var(--danger)', borderColor: 'var(--danger)' }}>Report</button>
+          ? <button type="button" onClick={unblock} disabled={busy} style={ghost}>{t('Unblock')}</button>
+          : <button type="button" onClick={() => setDialog('block')} style={ghost}>{t('Block')}</button>}
+        <button type="button" onClick={() => setDialog('report')} style={{ ...ghost, color: 'var(--danger)', borderColor: 'var(--danger)' }}>{t('Report')}</button>
       </div>
 
       {dialog && (
@@ -137,46 +139,46 @@ export default function ProfileSafetyActions({ userId, name, myId, onBlockChange
           <div role="dialog" aria-modal="true" aria-labelledby="psa-title" style={box}>
             {dialog === 'block' && (
               <>
-                <h2 id="psa-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>Block {who}?</h2>
-                <p style={{ margin: '0 0 1rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>You will stop seeing each other in messages and offers. They will not be told. You can undo this anytime on their profile or in Settings.</p>
+                <h2 id="psa-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>{t('Block {name}?', { name: who })}</h2>
+                <p style={{ margin: '0 0 1rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>{t('You will stop seeing each other in messages and offers. They will not be told. You can undo this anytime on their profile or in Settings.')}</p>
                 {error && <p role="alert" style={{ margin: '0 0 0.75rem', color: 'var(--danger)', fontSize: '0.85rem' }}>{error}</p>}
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="button" ref={firstRef} onClick={close} style={quiet}>Cancel</button>
-                  <button type="button" onClick={block} disabled={busy} style={danger}>{busy ? 'Blocking...' : 'Block'}</button>
+                  <button type="button" ref={firstRef} onClick={close} style={quiet}>{t('Cancel')}</button>
+                  <button type="button" onClick={block} disabled={busy} style={danger}>{t(busy ? 'Blocking...' : 'Block')}</button>
                 </div>
               </>
             )}
 
             {dialog === 'report' && (
               <>
-                <h2 id="psa-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>Report {who}</h2>
-                <p style={{ margin: '0 0 0.75rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>Only admins see your report. The person you report is not told.</p>
+                <h2 id="psa-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>{t('Report {name}', { name: who })}</h2>
+                <p style={{ margin: '0 0 0.75rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>{t('Only admins see your report. The person you report is not told.')}</p>
                 <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-                  <legend style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>What happened?</legend>
+                  <legend style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem' }}>{t('What happened?')}</legend>
                   {REASONS.map((r, i) => (
                     <label key={r} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0', minHeight: '44px', color: 'var(--text)', fontSize: '0.9rem', cursor: 'pointer' }}>
                       <input ref={i === 0 ? firstRef : null} type="radio" name="report-reason" value={r} checked={reason === r} onChange={() => { setReason(r); setError('') }} style={{ width: '18px', height: '18px', accentColor: 'var(--accent)' }} />
-                      {r}
+                      {t(r)}
                     </label>
                   ))}
                 </fieldset>
-                <label htmlFor="report-details" style={{ display: 'block', color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.75rem 0 0.3rem' }}>Anything else we should know? (optional)</label>
+                <label htmlFor="report-details" style={{ display: 'block', color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.75rem 0 0.3rem' }}>{t('Anything else we should know? (optional)')}</label>
                 <textarea id="report-details" value={details} onChange={(e) => setDetails(e.target.value)} maxLength={500} rows={3} style={{ width: '100%', padding: '0.5rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.9rem', resize: 'vertical' }} />
                 {error && <p role="alert" style={{ margin: '0.6rem 0 0', color: 'var(--danger)', fontSize: '0.85rem' }}>{error}</p>}
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                  <button type="button" onClick={close} style={quiet}>Cancel</button>
-                  <button type="button" onClick={submitReport} disabled={busy} style={primary}>{busy ? 'Sending...' : 'Send report'}</button>
+                  <button type="button" onClick={close} style={quiet}>{t('Cancel')}</button>
+                  <button type="button" onClick={submitReport} disabled={busy} style={primary}>{t(busy ? 'Sending...' : 'Send report')}</button>
                 </div>
               </>
             )}
 
             {dialog === 'reported' && (
               <>
-                <h2 id="psa-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>Thank you</h2>
-                <p style={{ margin: '0 0 1rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>An admin will look at this. If you do not want to see or hear from {who} in the meantime, you can block them too.</p>
+                <h2 id="psa-title" style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', color: 'var(--text-strong)' }}>{t('Thank you')}</h2>
+                <p style={{ margin: '0 0 1rem', color: 'var(--text-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>{t('An admin will look at this. If you do not want to see or hear from {name} in the meantime, you can block them too.', { name: who })}</p>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="button" ref={firstRef} onClick={close} style={quiet}>Done</button>
-                  {!blocked && <button type="button" onClick={block} disabled={busy} style={danger}>{busy ? 'Blocking...' : 'Block ' + who}</button>}
+                  <button type="button" ref={firstRef} onClick={close} style={quiet}>{t('Done')}</button>
+                  {!blocked && <button type="button" onClick={block} disabled={busy} style={danger}>{busy ? t('Blocking...') : t('Block {name}', { name: who })}</button>}
                 </div>
               </>
             )}

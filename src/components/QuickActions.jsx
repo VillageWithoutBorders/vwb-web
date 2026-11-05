@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { useSimpleView } from '../utils/simpleView'
 import Icon from './Icon'
+import { useT } from '../utils/lang'
 
 // Quick Actions: four big buttons at the top of Home.
 // Each person picks their own four. Saved on the account
@@ -33,6 +34,7 @@ export default function QuickActions() {
   const { profile, established, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const simple = useSimpleView()
+  const t = useT()
   const [editing, setEditing] = useState(false)
   const [picked, setPicked] = useState([])
   const [saving, setSaving] = useState(false)
@@ -48,7 +50,7 @@ export default function QuickActions() {
   async function save(next) {
     setSaving(true); setError('')
     const { error: err } = await supabase.rpc('set_quick_actions', { p_keys: next })
-    if (err) { console.error('[QuickActions] save', err); setError('Could not save your buttons. Try again.'); setSaving(false); return false }
+    if (err) { console.error('[QuickActions] save', err); setError(t('Could not save your buttons. Try again.')); setSaving(false); return false }
     await refreshProfile()
     setSaving(false)
     return true
@@ -64,7 +66,7 @@ export default function QuickActions() {
       if (!(await save(next))) return
     }
     const { error: err } = await supabase.rpc('mark_quick_actions_nudged')
-    if (err) { console.error('[QuickActions] nudge', err); setError('Could not save that. Try again.'); return }
+    if (err) { console.error('[QuickActions] nudge', err); setError(t('Could not save that. Try again.')); return }
     await refreshProfile()
   }
 
@@ -74,13 +76,13 @@ export default function QuickActions() {
     setError('')
     setPicked((p) => {
       if (p.includes(k)) return p.filter((x) => x !== k)
-      if (p.length >= MAX) { setError('You can pick up to 4. Take one off first.'); return p }
+      if (p.length >= MAX) { setError(t('You can pick up to 4. Take one off first.')); return p }
       return [...p, k]
     })
   }
 
   async function saveEdit() {
-    if (!picked.length) { setError('Pick at least one.'); return }
+    if (!picked.length) { setError(t('Pick at least one.')); return }
     if (await save(picked)) setEditing(false)
   }
 
@@ -91,8 +93,8 @@ export default function QuickActions() {
   if (editing) {
     return (
       <section className="qa-edit" aria-labelledby="qa-edit-h">
-        <h2 id="qa-edit-h" className="qa-edit-title">Pick your buttons</h2>
-        <p className="qa-edit-sub">Choose up to 4. They show at the top of Home.</p>
+        <h2 id="qa-edit-h" className="qa-edit-title">{t('Pick your buttons')}</h2>
+        <p className="qa-edit-sub">{t('Choose up to 4. They show at the top of Home.')}</p>
         <div className="qa-edit-list">
           {QUICK_ACTIONS.map((a) => {
             const on = picked.includes(a.key)
@@ -101,26 +103,26 @@ export default function QuickActions() {
                 <input type="checkbox" checked={on} onChange={() => toggle(a.key)} />
                 <span className="qa-edit-icon" aria-hidden="true"><Icon name={a.icon} size={28} /></span>
                 <span className="qa-edit-text">
-                  <span className="qa-edit-label">{a.label}</span>
-                  <span className="qa-edit-desc">{a.desc}</span>
+                  <span className="qa-edit-label">{t(a.label)}</span>
+                  <span className="qa-edit-desc">{t(a.desc)}</span>
                 </span>
               </label>
             )
           })}
         </div>
-        <p className="qa-edit-count" aria-live="polite">{picked.length} of 4 picked</p>
+        <p className="qa-edit-count" aria-live="polite">{t('{n} of 4 picked', { n: picked.length })}</p>
         {error && <p className="form-error" role="alert">{error}</p>}
         <div className="qa-edit-buttons">
-          <button type="button" className="btn btn-primary" disabled={saving} onClick={saveEdit}>{saving ? 'Saving...' : 'Save'}</button>
-          <button type="button" className="btn btn-outline" disabled={saving} onClick={() => { setEditing(false); setError('') }}>Cancel</button>
+          <button type="button" className="btn btn-primary" disabled={saving} onClick={saveEdit}>{saving ? t('Saving...') : t('Save')}</button>
+          <button type="button" className="btn btn-outline" disabled={saving} onClick={() => { setEditing(false); setError('') }}>{t('Cancel')}</button>
         </div>
-        <button type="button" className="qa-link" disabled={saving} onClick={useDefaults}>Go back to the usual buttons</button>
+        <button type="button" className="qa-link" disabled={saving} onClick={useDefaults}>{t('Go back to the usual buttons')}</button>
       </section>
     )
   }
 
   return (
-    <section className={'qa' + (simple ? ' qa-simple' : '')} aria-label="Quick actions">
+    <section className={'qa' + (simple ? ' qa-simple' : '')} aria-label={t('Quick actions')}>
       <div className="qa-grid">
         {actions.map((a, i) => (
           <button
@@ -130,21 +132,21 @@ export default function QuickActions() {
             onClick={() => navigate(a.to)}
           >
             <span className="qa-btn-icon" aria-hidden="true"><Icon name={a.icon} size={simple ? 40 : 32} /></span>
-            <span className="qa-btn-label">{a.label}</span>
+            <span className="qa-btn-label">{t(a.label)}</span>
           </button>
         ))}
       </div>
       {showNudge && (
-        <div className="qa-nudge" role="region" aria-label="New button idea">
-          <p>You're settled in now. Want an <strong>Offer Help</strong> button so you can help neighbors too?</p>
+        <div className="qa-nudge" role="region" aria-label={t('New button idea')}>
+          <p>{t("You're settled in now. Want an")} <strong>{t('Offer Help')}</strong> {t('button so you can help neighbors too?')}</p>
           <div className="qa-edit-buttons">
-            <button type="button" className="btn btn-primary" disabled={saving} onClick={() => answerNudge(true)}>Yes, add it</button>
-            <button type="button" className="btn btn-outline" disabled={saving} onClick={() => answerNudge(false)}>No thanks</button>
+            <button type="button" className="btn btn-primary" disabled={saving} onClick={() => answerNudge(true)}>{t('Yes, add it')}</button>
+            <button type="button" className="btn btn-outline" disabled={saving} onClick={() => answerNudge(false)}>{t('No thanks')}</button>
           </div>
         </div>
       )}
       {error && <p className="form-error" role="alert">{error}</p>}
-      <button type="button" className="qa-link" onClick={startEdit}>Change these buttons</button>
+      <button type="button" className="qa-link" onClick={startEdit}>{t('Change these buttons')}</button>
     </section>
   )
 }

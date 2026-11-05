@@ -17,6 +17,7 @@ import Icon from '../components/Icon'
 import Dashboard from './Dashboard'
 import { useSimpleView } from '../utils/simpleView'
 import { calmMotion } from '../utils/motion'
+import { useT } from '../utils/lang'
 
 // The Village page: one village as a little world. Every element on the
 // hills is a button that goes to its own page. A plain list sits below for
@@ -38,6 +39,7 @@ export default function VillageScene() {
   const navigate = useNavigate()
   const { user, profile, isFounder, refreshProfile, organizations } = useAuth()
   const simple = useSimpleView()
+  const t = useT()
   // In your home village, your house (the 'me' spot) is your cottage.
   const isHome = !cottage && !!id && profile?.home_village_id === id
   // Your cottage shows only in your home village (Oct 22).
@@ -49,8 +51,8 @@ export default function VillageScene() {
   useEffect(() => {
     const spot = window.location.hash.slice(1)
     if (!cottage || spot !== 'today') return
-    const t = setTimeout(() => document.getElementById(spot)?.scrollIntoView({ block: 'start' }), 400)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => document.getElementById(spot)?.scrollIntoView({ block: 'start' }), 400)
+    return () => clearTimeout(timer)
   }, [cottage])
 
   const [village, setVillage] = useState(null)
@@ -166,7 +168,7 @@ export default function VillageScene() {
       const { error } = await supabase.rpc(shared ? 'set_map_shared_layout' : 'set_my_map_layout', { p_kind: 'village', p_id: id, p_layout: empty ? null : body })
       if (error) {
         console.error('Failed to save the village map:', error)
-        setLayoutNote(error.code === '42501' ? error.message : error.code === 'PGRST202' ? 'This needs a database update first, so your changes are not saved yet.' : 'Could not save. Try again in a moment.')
+        setLayoutNote(error.code === '42501' ? t(error.message) : error.code === 'PGRST202' ? t('This needs a database update first, so your changes are not saved yet.') : t('Could not save. Try again in a moment.'))
         return
       }
     }, 800)
@@ -194,7 +196,7 @@ export default function VillageScene() {
       const { error } = await supabase.rpc('set_my_village_layout', { p_layout: empty ? null : next })
       if (error) {
         // Before the database step is run, the layout simply stays on this device.
-        if (error.code !== 'PGRST202') { console.error('Failed to save village layout:', error); setLayoutNote('Saved on this device only. It will try again next time you change something.') }
+        if (error.code !== 'PGRST202') { console.error('Failed to save village layout:', error); setLayoutNote(t('Saved on this device only. It will try again next time you change something.')) }
         return
       }
       if (refreshProfile) refreshProfile()
@@ -208,20 +210,20 @@ export default function VillageScene() {
   }
   async function resetLayout() {
     if (!cottage && arrangeFor === 'me') {
-      if (!(await askConfirm('Go back to how ' + (village ? village.name : 'this village') + ' looks by default? Your own view will be taken away.'))) return
+      if (!(await askConfirm(t('Go back to how {village} looks by default? Your own view will be taken away.', { village: village ? village.name : t('this village') })))) return
       remember()
       const back = { ...fromSaved(mapLayouts.current.shared, BASE), labels: worldRef.current.labels }
       setWorld(back); setPicked(null); setTrayOpen(false)
       clearTimeout(saveTimer.current)
       const { error } = await supabase.rpc('set_my_map_layout', { p_kind: 'village', p_id: id, p_layout: null })
-      if (error) { console.error('Failed to remove your view:', error); setLayoutNote('Could not do that. Try again in a moment.'); return }
+      if (error) { console.error('Failed to remove your view:', error); setLayoutNote(t('Could not do that. Try again in a moment.')); return }
       mapLayouts.current = { ...mapLayouts.current, own: null }
-      setLayoutNote('Back to the default look.')
+      setLayoutNote(t('Back to the default look.'))
       return
     }
-    const msg = !cottage ? 'Set the default back to the starting village? Personal views stay as they are. You can tap Undo right after.' : 'Go back to the usual village? Your pieces, roads and streams will be taken away. You can tap Undo right after if you change your mind.'
+    const msg = !cottage ? t('Set the default back to the starting village? Personal views stay as they are. You can tap Undo right after.') : t('Go back to the usual village? Your pieces, roads and streams will be taken away. You can tap Undo right after if you change your mind.')
     if (!(await askConfirm(msg))) return
-    commit(fromSaved(null, BASE)); setPicked(null); setTrayOpen(false); setLayoutNote('Back to the usual village.')
+    commit(fromSaved(null, BASE)); setPicked(null); setTrayOpen(false); setLayoutNote(t('Back to the usual village.'))
   }
 
   useEffect(() => {
@@ -241,12 +243,12 @@ export default function VillageScene() {
     setVillage(null); setLoadError('')
     supabase.rpc('village_network').then(({ data, error }) => {
       if (!alive) return
-      if (error) { console.error('Failed to load villages:', error); setLoadError("We couldn't load this village. Check your connection and try again."); return }
+      if (error) { console.error('Failed to load villages:', error); setLoadError(t("We couldn't load this village. Check your connection and try again.")); return }
       const rows = data || []
       setAllVillages(rows)
       if (cottage) return
       const v = rows.find((r) => r.id === id)
-      if (!v) { setLoadError("We couldn't find this village. It may have closed."); return }
+      if (!v) { setLoadError(t("We couldn't find this village. It may have closed.")); return }
       setVillage(v)
     })
     return () => { alive = false }
@@ -397,7 +399,7 @@ export default function VillageScene() {
     return () => { alive = false }
   }, [cottage, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const offersWaiting = tasks ? tasks.requests.filter((r) => r.needsYou).length : 0
-  const yourTurn = tasks ? tasks.active.filter((t) => t.needsYou).length : 0
+  const yourTurn = tasks ? tasks.active.filter((a) => a.needsYou).length : 0
   const GIFTS = [
     { k: 'home', got: !!home?.village_id, src: '/art/village-build/deco-well.webp', label: 'A well', why: 'for finding your home village', next: 'Find your home village', x: 12, y: 80 },
     { k: 'task', got: !!(tasks && tasks.archived.length), src: '/art/village-build/deco-flowers.webp', label: 'Flowers', why: 'for finishing your first task with a neighbor', next: 'Finish a task with a neighbor', x: 40, y: 93 },
@@ -407,24 +409,23 @@ export default function VillageScene() {
   const myOrgs = (organizations || []).filter((o) => o.kind !== 'group')
   const myGroups = (organizations || []).filter((o) => o.kind === 'group')
   const visits = allVillages.filter((v) => v.is_mine && v.id !== home?.village_id)
-  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many)
 
   function cottageInfo(k) {
     switch (k) {
-      case 'home': return { sub: home?.village_id ? 'Step into ' + home.name : home ? 'Find or start your home village' : 'Loading...' }
-      case 'visits': return { sub: visits.length ? plural(visits.length, 'village', 'villages') + ' where you are a guest' : 'Villages you visit show up here' }
-      case 'calendar': return { sub: 'Events and sign-ups near you' }
-      case 'orgs': return { sub: myOrgs.length ? plural(myOrgs.length, 'group', 'groups') : 'Find a group near you' }
-      case 'connections': return { sub: 'People you know on VWB' }
-      case 'groups': return { sub: myGroups.length ? plural(myGroups.length, 'emergency crew', 'emergency crews') : 'Crews that help when disaster hits' }
-      case 'cottage': return { sub: 'Private chats with people you chose' }
-      case 'campfires': return { sub: 'Team chats in your groups and villages' }
-      case 'chat': return { sub: chatsNew ? chatsNew + ' new in your villages and Campfires' : 'Your village chats', badge: chatsNew, lantern: chatsNew ? chatsNew + ' new' : '' }
+      case 'home': return { sub: home?.village_id ? t('Step into {village}', { village: home.name }) : home ? t('Find or start your home village') : t('Loading...') }
+      case 'visits': return { sub: visits.length ? (visits.length === 1 ? t('1 village where you are a guest') : t('{n} villages where you are a guest', { n: visits.length })) : t('Villages you visit show up here') }
+      case 'calendar': return { sub: t('Events and sign-ups near you') }
+      case 'orgs': return { sub: myOrgs.length ? (myOrgs.length === 1 ? t('1 group') : t('{n} groups', { n: myOrgs.length })) : t('Find a group near you') }
+      case 'connections': return { sub: t('People you know on VWB') }
+      case 'groups': return { sub: myGroups.length ? (myGroups.length === 1 ? t('1 emergency crew') : t('{n} emergency crews', { n: myGroups.length })) : t('Crews that help when disaster hits') }
+      case 'cottage': return { sub: t('Private chats with people you chose') }
+      case 'campfires': return { sub: t('Team chats in your groups and villages') }
+      case 'chat': return { sub: chatsNew ? t('{n} new in your villages and Campfires', { n: chatsNew }) : t('Your village chats'), badge: chatsNew, lantern: chatsNew ? t('{n} new', { n: chatsNew }) : '' }
       case 'help': return offersWaiting || yourTurn
-        ? { sub: (offersWaiting ? plural(offersWaiting, 'neighbor offered', 'neighbors offered') + ' to help. ' : '') + (yourTurn ? plural(yourTurn, 'task is', 'tasks are') + ' waiting on you.' : ''), badge: offersWaiting + yourTurn, lantern: offersWaiting ? 'Say yes?' : 'Your turn' }
-        : { sub: 'Find resources, ask for help, or help a neighbor' }
-      case 'me': return { sub: 'Your profile, vouches, and settings' }
-      case 'messages': return { sub: unreadCount ? unreadCount + ' unread' : 'Requests and private messages', badge: unreadCount, lantern: unreadCount ? unreadCount + ' new' : '' }
+        ? { sub: [offersWaiting ? (offersWaiting === 1 ? t('1 neighbor offered to help.') : t('{n} neighbors offered to help.', { n: offersWaiting })) : '', yourTurn ? (yourTurn === 1 ? t('1 task is waiting on you.') : t('{n} tasks are waiting on you.', { n: yourTurn })) : ''].filter(Boolean).join(' '), badge: offersWaiting + yourTurn, lantern: offersWaiting ? t('Say yes?') : t('Your turn') }
+        : { sub: t('Find resources, ask for help, or help a neighbor') }
+      case 'me': return { sub: t('Your profile, vouches, and settings') }
+      case 'messages': return { sub: unreadCount ? t('{n} unread', { n: unreadCount }) : t('Requests and private messages'), badge: unreadCount, lantern: unreadCount ? t('{n} new', { n: unreadCount }) : '' }
       default: return { sub: '' }
     }
   }
@@ -454,19 +455,19 @@ export default function VillageScene() {
     )
     switch (k) {
       case 'visits': return <>{title}
-        {visits.length === 0 && <p>You are not a guest in any other village yet. A neighbor can invite you, or you can visit a sister village.</p>}
-        {visits.map((v) => row('/village/' + v.id, 'houses', v.name, 'Guest'))}
-        <Link className="btn btn-outline btn-full" to="/world">See every village</Link>
+        {visits.length === 0 && <p>{t('You are not a guest in any other village yet. A neighbor can invite you, or you can visit a sister village.')}</p>}
+        {visits.map((v) => row('/village/' + v.id, 'houses', v.name, t('Guest')))}
+        <Link className="btn btn-outline btn-full" to="/world">{t('See every village')}</Link>
       </>
       case 'orgs': return <>{title}
-        {myOrgs.length === 0 && <p>You are not in a group yet.</p>}
-        {myOrgs.map((o) => row('/orgs/' + o.id, 'people', o.name, 'Group'))}
-        <Link className="btn btn-outline btn-full" to="/world?tab=orgs">See every group</Link>
+        {myOrgs.length === 0 && <p>{t('You are not in a group yet.')}</p>}
+        {myOrgs.map((o) => row('/orgs/' + o.id, 'people', o.name, t('Group')))}
+        <Link className="btn btn-outline btn-full" to="/world?tab=orgs">{t('See every group')}</Link>
       </>
       case 'groups': return <>{title}
-        {myGroups.length === 0 && <p>You are not in an emergency crew yet. Crews help when disaster hits.</p>}
-        {myGroups.map((o) => row('/orgs/' + o.id, 'tent', o.name, 'Emergency crew'))}
-        <Link className="btn btn-outline btn-full" to="/start-group">Start an emergency crew</Link>
+        {myGroups.length === 0 && <p>{t('You are not in an emergency crew yet. Crews help when disaster hits.')}</p>}
+        {myGroups.map((o) => row('/orgs/' + o.id, 'tent', o.name, t('Emergency crew')))}
+        <Link className="btn btn-outline btn-full" to="/start-group">{t('Start an emergency crew')}</Link>
       </>
       default: return title
     }
@@ -483,20 +484,20 @@ export default function VillageScene() {
   function giftsSheet() {
     const got = GIFTS.filter((g) => g.got)
     return <>
-      <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><Icon name="sprout" size={36} /></span> Your garden</h2>
-      <p>Small gifts grow in your garden as you take first steps with your neighbors. They never go away. People who can visit your cottage see them too (Name and visitors decides who).</p>
+      <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><Icon name="sprout" size={36} /></span> {t('Your garden')}</h2>
+      <p>{t('Small gifts grow in your garden as you take first steps with your neighbors. They never go away. People who can visit your cottage see them too (Name and visitors decides who).')}</p>
       {/* Oct 28 (Jade): every row does something. A grown gift opens editing with it picked,
           so you can move it. A gift still to grow takes you to the step that grows it. */}
       {got.map((g) => (
         <button key={g.k} type="button" className="vs-item vs-gift-row" onClick={() => moveGift(g.k)}>
-          <img src={g.src} alt="" width="48" height="48" /><span><b>{g.label}</b><small>{g.why}. Tap to move it on your map.</small></span>
+          <img src={g.src} alt="" width="48" height="48" /><span><b>{t(g.label)}</b><small>{t(g.why)}. {t('Tap to move it on your map.')}</small></span>
           <span className="vs-gift-go" aria-hidden="true">&#8250;</span>
         </button>
       ))}
-      {got.length < GIFTS.length && <h3 className="vs-arrange-h">Still to grow</h3>}
+      {got.length < GIFTS.length && <h3 className="vs-arrange-h">{t('Still to grow')}</h3>}
       {GIFTS.filter((g) => !g.got).map((g) => (
         <button key={g.k} type="button" className="vs-item vs-gift-row vs-gift-next" onClick={() => { closeSheet(); navigate(GIFT_STEPS[g.k]) }}>
-          <img src={g.src} alt="" width="48" height="48" /><span><b>{g.next}</b><small>A gift will grow when you do. Tap to start.</small></span>
+          <img src={g.src} alt="" width="48" height="48" /><span><b>{t(g.next)}</b><small>{t('A gift will grow when you do. Tap to start.')}</small></span>
           <span className="vs-gift-go" aria-hidden="true">&#8250;</span>
         </button>
       ))}
@@ -510,28 +511,28 @@ export default function VillageScene() {
   }
 
   const mine = !!(village && village.is_mine)
-  const nameOf = (vid) => (allVillages.find((v) => v.id === vid) || {}).name || 'A village'
+  const nameOf = (vid) => (allVillages.find((v) => v.id === vid) || {}).name || t('A village')
 
   function info(k) {
     if (cottage) return cottageInfo(k)
     switch (k) {
-      case 'charter': return { sub: 'Our story, what we care about, and house rules' }
-      case 'sisters': return { sub: sisters.length ? sisters.length + ' sister village' + (sisters.length === 1 ? '' : 's') : 'No sister villages yet' }
-      case 'keeper': return { sub: keeperNames.length ? 'Looked after by ' + keeperNames.join(', ') : life && !life.has_keeper ? 'Keeper wanted: this village needs someone to look after it' : 'The neighbor who looks after this village' }
-      case 'chat': return { sub: mine ? (chatUnread ? chatUnread + ' new since you last looked' : 'Say hello and share news') : 'Join this village to read its chat', badge: mine ? chatUnread : 0 }
+      case 'charter': return { sub: t('Our story, what we care about, and house rules') }
+      case 'sisters': return { sub: sisters.length ? (sisters.length === 1 ? t('1 sister village') : t('{n} sister villages', { n: sisters.length })) : t('No sister villages yet') }
+      case 'keeper': return { sub: keeperNames.length ? t('Looked after by {names}', { names: keeperNames.join(', ') }) : life && !life.has_keeper ? t('Keeper wanted: this village needs someone to look after it') : t('The neighbor who looks after this village') }
+      case 'chat': return { sub: mine ? (chatUnread ? t('{n} new since you last looked', { n: chatUnread }) : t('Say hello and share news')) : t('Join this village to read its chat'), badge: mine ? chatUnread : 0 }
       case 'campfires': {
-        if (!mine) return { sub: life ? FIRE_WORDS[life.fire_level] || 'Join this village to sit at its Campfires' : 'Join this village to sit at its Campfires' }
+        if (!mine) return { sub: life && FIRE_WORDS[life.fire_level] ? t(FIRE_WORDS[life.fire_level]) : t('Join this village to sit at its Campfires') }
         const f = rooms, inF = f.filter((r) => r.i_am_in).length
         const asks = f.reduce((n, r) => n + (r.asks_waiting || 0), 0)
-        return { sub: f.length ? f.length + ' here' + (inF ? ', you are in ' + inF : '') + (asks ? ', ' + asks + ' asking to join' : '') : 'Start the first one', badge: asks }
+        return { sub: f.length ? t('{n} here', { n: f.length }) + (inF ? ', ' + t('you are in {n}', { n: inF }) : '') + (asks ? ', ' + t('{n} asking to join', { n: asks }) : '') : t('Start the first one'), badge: asks }
       }
-      case 'skillshare': return { sub: 'Help nearby: requests and offers' }
-      case 'neighbors': return { sub: village && village.member_count ? village.member_count + ' neighbors live here' : 'A few neighbors so far' }
-      case 'cottage': return { sub: 'Private chats with people you chose' }
-      case 'me': return { sub: isHome ? 'Your house: your own map of everything you are part of' : 'Your profile, vouches, and settings' }
-      case 'messages': return { sub: unreadCount ? unreadCount + ' unread' : 'Requests and private messages', badge: unreadCount }
-      case 'orgs': { const n = orgs.filter((o) => o.kind !== 'group').length; return { sub: n ? n + ' working here' : 'None working here yet' } }
-      case 'groups': { const n = orgs.filter((o) => o.kind === 'group').length; return { sub: n ? n + ' emergency crew' + (n === 1 ? '' : 's') : 'Start a crew for when disaster hits' } }
+      case 'skillshare': return { sub: t('Help nearby: requests and offers') }
+      case 'neighbors': return { sub: village && village.member_count ? t('{n} neighbors live here', { n: village.member_count }) : t('A few neighbors so far') }
+      case 'cottage': return { sub: t('Private chats with people you chose') }
+      case 'me': return { sub: isHome ? t('Your house: your own map of everything you are part of') : t('Your profile, vouches, and settings') }
+      case 'messages': return { sub: unreadCount ? t('{n} unread', { n: unreadCount }) : t('Requests and private messages'), badge: unreadCount }
+      case 'orgs': { const n = orgs.filter((o) => o.kind !== 'group').length; return { sub: n ? t('{n} working here', { n }) : t('None working here yet') } }
+      case 'groups': { const n = orgs.filter((o) => o.kind === 'group').length; return { sub: n ? (n === 1 ? t('1 emergency crew') : t('{n} emergency crews', { n })) : t('Start a crew for when disaster hits') } }
       default: return { sub: '' }
     }
   }
@@ -571,71 +572,71 @@ export default function VillageScene() {
 
   function sheetBody(k) {
     if (cottage && k === 'gifts') return giftsSheet()
-    if (cottage && k === 'name') return <><h2 id="vs-sheet-title">Name and visitors</h2><CottageSettings onSaved={closeSheet} /></>
+    if (cottage && k === 'name') return <><h2 id="vs-sheet-title">{t('Name and visitors')}</h2><CottageSettings onSaved={closeSheet} /></>
     const spot = SPOTS.find((s) => s.k === k)
-    const title = <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><SpotIcon spot={spot} size={36} /></span> {spot.label}</h2>
+    const title = <h2 id="vs-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><SpotIcon spot={spot} size={36} /></span> {t(spot.label)}</h2>
     if (cottage) return cottageSheet(k, title)
     if (spot.soon) {
-      return <>{title}<p>This part of the village is coming soon.</p></>
+      return <>{title}<p>{t('This part of the village is coming soon.')}</p></>
     }
     switch (k) {
       case 'sisters':
         return <>{title}
-          {sisters.length === 0 && <p>This village has no sister villages yet. The keeper can ask another village from the World map.</p>}
+          {sisters.length === 0 && <p>{t('This village has no sister villages yet. The keeper can ask another village from the World map.')}</p>}
           {sisters.map((sid) => (
             <div key={sid} className="vs-sister">
               <button type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/village/' + sid) }}>
-                <span aria-hidden="true"><Icon name="houses" /></span> {nameOf(sid)}<small>Sister village</small>
+                <span aria-hidden="true"><Icon name="houses" /></span> {nameOf(sid)}<small>{t('Sister village')}</small>
               </button>
               <SisterCampfireButton campfire={sisterFires.find((c) => c.village_a === sid || c.village_b === sid)} />
             </div>
           ))}
-          <p className="vs-note">Members of a sister village can join this one as a guest.</p>
+          <p className="vs-note">{t('Members of a sister village can join this one as a guest.')}</p>
         </>
       case 'campfires':
         return <>{title}<VillageRooms villageId={id} isMember={mine} isKeeper={!!(keepers && keepers.i_am_keeper)} onChanged={loadRooms} /></>
       case 'keeper':
         return <>{title}
-          {!mine && <p>Join this village to see who looks after it.</p>}
+          {!mine && <p>{t('Join this village to see who looks after it.')}</p>}
           {mine && keeperNames.length === 0 && (life && !life.has_keeper
-            ? <p>This village has no Keeper right now. If you would like to look after it, tell a Hope Ambassador or a VWB admin. They can ask you to be Keeper.</p>
-            : <p>Loading the keeper...</p>)}
-          {mine && keeperNames.map((n) => <div key={n} className="vs-item"><b>{n}</b><small>Keeper</small></div>)}
+            ? <p>{t('This village has no Keeper right now. If you would like to look after it, tell a Hope Ambassador or a VWB admin. They can ask you to be Keeper.')}</p>
+            : <p>{t('Loading the keeper...')}</p>)}
+          {mine && keeperNames.map((n) => <div key={n} className="vs-item"><b>{n}</b><small>{t('Keeper')}</small></div>)}
           {mine && keepers && keepers.i_am_keeper && <>
-            <p className="vs-note">You are a keeper here. You post announcements in the village chat and can hand the role to another member.</p>
-            <button type="button" className="btn btn-primary btn-full" onClick={() => { setSheet(null); navigate('/village/' + id + '/keeper') }}><Icon name="toolbox" /> Open keeper tools</button>
+            <p className="vs-note">{t('You are a keeper here. You post announcements in the village chat and can hand the role to another member.')}</p>
+            <button type="button" className="btn btn-primary btn-full" onClick={() => { setSheet(null); navigate('/village/' + id + '/keeper') }}><Icon name="toolbox" /> {t('Open keeper tools')}</button>
           </>}
         </>
       case 'chat':
-        return <>{title}<p>We couldn't find this village's chat. Try again in a moment.</p></>
+        return <>{title}<p>{t("We couldn't find this village's chat. Try again in a moment.")}</p></>
       case 'neighbors':
         return <>{title}
           <p>{info('neighbors').sub}.</p>
           {mine && board
-            ? <><p className="vs-note">See who is here, vouch, or send a message request from the People button in the village chat.</p>
-                <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/village-square?board=' + board.id)}>Open the village chat</button></>
-            : <p className="vs-note">Join this village to see who lives here.</p>}
+            ? <><p className="vs-note">{t('See who is here, vouch, or send a message request from the People button in the village chat.')}</p>
+                <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/village-square?board=' + board.id)}>{t('Open the village chat')}</button></>
+            : <p className="vs-note">{t('Join this village to see who lives here.')}</p>}
         </>
       case 'orgs':
         return <>{title}
-          {orgs.filter((o) => o.kind !== 'group').length === 0 && <p>No groups work in this village yet.</p>}
+          {orgs.filter((o) => o.kind !== 'group').length === 0 && <p>{t('No groups work in this village yet.')}</p>}
           {orgs.filter((o) => o.kind !== 'group').map((o) => (
             <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
-              <span aria-hidden="true"><Icon name="people" /></span> {o.name}<small>Group</small>
+              <span aria-hidden="true"><Icon name="people" /></span> {o.name}<small>{t('Group')}</small>
             </button>
           ))}
         </>
       case 'groups': {
         const groups = orgs.filter((o) => o.kind === 'group')
         return <>{title}
-          <p>Emergency crews show up when disaster hits here: flooding, storms, mold, fires. They plan together ahead of time.</p>
-          {groups.length === 0 && <p className="vs-note">No crews cover this village yet.</p>}
+          <p>{t('Emergency crews show up when disaster hits here: flooding, storms, mold, fires. They plan together ahead of time.')}</p>
+          {groups.length === 0 && <p className="vs-note">{t('No crews cover this village yet.')}</p>}
           {groups.map((o) => (
             <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
-              <span aria-hidden="true"><Icon name="tent" /></span> {o.name}<small>Emergency crew</small>
+              <span aria-hidden="true"><Icon name="tent" /></span> {o.name}<small>{t('Emergency crew')}</small>
             </button>
           ))}
-          <Link className="btn btn-outline btn-full" to={'/start-group?village=' + id}>Start a crew for {village ? village.name : 'this village'}</Link>
+          <Link className="btn btn-outline btn-full" to={'/start-group?village=' + id}>{t('Start a crew for {village}', { village: village ? village.name : t('this village') })}</Link>
         </>
       }
       default: return title
@@ -649,17 +650,17 @@ export default function VillageScene() {
     return (
       <button key={s.k} type="button" className={'vs-room' + (s.soon ? ' vs-soon' : '')} onClick={() => tap(s)}>
         <span className="vs-room-ic" aria-hidden="true"><SpotIcon spot={s} size={40} /></span>
-        <span className="vs-room-text"><b>{simple && s.k === 'skillshare' ? 'Help nearby' : s.label}{i.badge > 0 && <span className="vs-dot" aria-label="New" />}</b><small>{simple && s.k === 'skillshare' ? 'Neighbors who need a hand, and free things to share' : i.sub}</small></span>
+        <span className="vs-room-text"><b>{simple && s.k === 'skillshare' ? t('Help nearby') : t(s.label)}{i.badge > 0 && <span className="vs-dot" aria-label={t('New')} />}</b><small>{simple && s.k === 'skillshare' ? t('Neighbors who need a hand, and free things to share') : i.sub}</small></span>
         <span className="vs-go" aria-hidden="true">&#8250;</span>
       </button>
     )
   }
 
   if (loadError) {
-    return <div className="vs-page vs-page-path"><div className="vs-top"><Link className="vs-crumb" to="/world">World</Link></div><p className="vs-error" role="alert">{loadError}</p></div>
+    return <div className="vs-page vs-page-path"><div className="vs-top"><Link className="vs-crumb" to="/world">{t('World')}</Link></div><p className="vs-error" role="alert">{loadError}</p></div>
   }
   if (!cottage && !village) {
-    return <div className="vs-page vs-page-path"><p className="vs-loading" role="status">Loading the village...</p></div>
+    return <div className="vs-page vs-page-path"><p className="vs-loading" role="status">{t('Loading the village...')}</p></div>
   }
 
 
@@ -667,12 +668,12 @@ export default function VillageScene() {
     <div className="vs-page vs-page-path">
       {cottage ? (
         <div className="vs-title">
-          <h1>{profile?.cottage_name || 'My Cottage'}</h1>
-          <p className="vs-cottage-sub">{profile?.cottage_name ? 'My Cottage. ' : ''}{simple ? 'Everything you are part of, in one place.' : 'Everything you are part of, in one place. ' + visitorsLine(profile?.cottage_visitors || 'nobody')}</p>
+          <h1>{profile?.cottage_name || t('My Cottage')}</h1>
+          <p className="vs-cottage-sub">{profile?.cottage_name ? t('My Cottage') + '. ' : ''}{simple ? t('Everything you are part of, in one place.') : t('Everything you are part of, in one place.') + ' ' + visitorsLine(profile?.cottage_visitors || 'nobody')}</p>
           <div className="vs-chips">
             {home?.village_id
-              ? <Link className="vs-chip vs-chip-in vs-chip-link" to={'/village/' + home.village_id}>Home: {home.name}</Link>
-              : home && <Link className="vs-chip vs-chip-link" to="/find-village">Find your home village</Link>}
+              ? <Link className="vs-chip vs-chip-in vs-chip-link" to={'/village/' + home.village_id}>{t('Home: {village}', { village: home.name })}</Link>
+              : home && <Link className="vs-chip vs-chip-link" to="/find-village">{t('Find your home village')}</Link>}
           </div>
         </div>
       ) : (<>
@@ -680,16 +681,16 @@ export default function VillageScene() {
       <div className="vs-title">
         <h1>{village.name}</h1>
         <div className="vs-chips">
-          {mine && !isGuest && (profile?.home_village_id === village.id ? <span className="vs-chip vs-chip-in">Your home village</span> : <span className="vs-chip vs-chip-in">You are in</span>)}
-          {mine && isGuest && <span className="vs-chip vs-chip-guest">Guest</span>}
-          {mine && keepers && keepers.i_am_keeper && <span className="vs-chip vs-chip-in">Keeper</span>}
-          {!mine && <span className="vs-chip">Not joined yet</span>}
-          <span className="vs-chip">{village.member_count ? village.member_count + ' neighbors' : 'Just starting'}</span>
+          {mine && !isGuest && (profile?.home_village_id === village.id ? <span className="vs-chip vs-chip-in">{t('Your home village')}</span> : <span className="vs-chip vs-chip-in">{t('You are in')}</span>)}
+          {mine && isGuest && <span className="vs-chip vs-chip-guest">{t('Guest')}</span>}
+          {mine && keepers && keepers.i_am_keeper && <span className="vs-chip vs-chip-in">{t('Keeper')}</span>}
+          {!mine && <span className="vs-chip">{t('Not joined yet')}</span>}
+          <span className="vs-chip">{village.member_count ? t('{n} neighbors', { n: village.member_count }) : t('Just starting')}</span>
           {village.towns && (() => {
             // Oct 22: the town list folds into one chip so the map starts sooner. Tap to see them all.
-            const n = village.towns.split(',').filter((t) => t.trim()).length
+            const n = village.towns.split(',').filter((tw) => tw.trim()).length
             return n > 1
-              ? <button type="button" className="vs-chip vs-chip-btn-towns" aria-expanded={showTowns} onClick={() => setShowTowns((v) => !v)}>{n} towns {showTowns ? '\u25B4' : '\u25BE'}</button>
+              ? <button type="button" className="vs-chip vs-chip-btn-towns" aria-expanded={showTowns} onClick={() => setShowTowns((v) => !v)}>{t('{n} towns', { n })} {showTowns ? '\u25B4' : '\u25BE'}</button>
               : <span className="vs-chip">{village.towns}</span>
           })()}
         </div>
@@ -700,8 +701,8 @@ export default function VillageScene() {
 
       {keeperAsk && (
         <Link className="vs-ask" to={'/keeper-offer/' + keeperAsk.offer_id}>
-          <b>{keeperAsk.asked_by_name} asked you to be Keeper of {village.name}</b>
-          <small>Tap to say yes or no. Nothing changes until you answer.</small>
+          <b>{t('{name} asked you to be Keeper of {village}', { name: keeperAsk.asked_by_name, village: village.name })}</b>
+          <small>{t('Tap to say yes or no. Nothing changes until you answer.')}</small>
         </Link>
       )}
 
@@ -721,7 +722,7 @@ export default function VillageScene() {
           const style = { left: gs.x + '%', top: gs.y + '%', '--s': gs.s || 1, zIndex: placeLayer(gs.z) }
           return arrange
             ? <button key={gs.k} type="button" data-spot={gs.k} className={'vs-gift vs-gift-edit' + (picked === gs.k ? ' vs-picked' : '') + (isHidden(gs.k) ? ' vs-hidden' : '')} style={style}
-                aria-label={gs.label} onPointerDown={(e) => dragStart(e, gs.k)} onClick={(e) => { if (e.detail === 0) pickByKey(gs.k) }}>{img}</button>
+                aria-label={t(gs.label)} onPointerDown={(e) => dragStart(e, gs.k)} onClick={(e) => { if (e.detail === 0) pickByKey(gs.k) }}>{img}</button>
             : <span key={gs.k} className="vs-gift" style={style}>{img}</span>
         })}
         {SPOTS.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
@@ -731,7 +732,7 @@ export default function VillageScene() {
             <button key={s.k} type="button" data-spot={s.k}
               className={'vs-el' + (s.soon || (!cottage && !mine && GATED.includes(s.k)) ? ' vs-soon' : '') + (s.k === 'campfires' ? ' vs-flame' + (life ? ' vs-fire-' + life.fire_level : '') : '') + (bump === s.k ? ' vs-bump' : '') + (arrange && picked === s.k ? ' vs-picked' : '') + (arrange && isHidden(s.k) ? ' vs-hidden' : '')}
               style={{ left: s.x + '%', top: s.y + '%', '--s': (s.s || 1) * (s.k === 'campfires' && life ? FIRE_SIZE[life.fire_level] || 1 : 1), zIndex: placeLayer(s.z) }}
-              aria-label={s.label + '. ' + i.sub}
+              aria-label={t(s.label) + '. ' + i.sub}
               onPointerDown={(e) => dragStart(e, s.k)}
               onClick={(e) => { if (!arrange) tap(s, true); else if (e.detail === 0) pickByKey(s.k) }}>
               <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true">
@@ -749,7 +750,7 @@ export default function VillageScene() {
                 {!cottage && !mine && GATED.includes(s.k) && <span className="vs-gate"><Icon name="lock" size={22} /></span>}
                 {s.k === 'keeper' && life && !life.has_keeper && <img className="vs-wanted" src={LIFE_ART.sign} alt="" width="48" height="48" draggable="false" />}
               </span>
-              <span className="vs-lab">{s.k === 'keeper' && life && !life.has_keeper ? 'Keeper wanted' : s.short}</span>
+              <span className="vs-lab">{s.k === 'keeper' && life && !life.has_keeper ? t('Keeper wanted') : t(s.short)}</span>
               {cottage && i.lantern
                 ? <span className="vs-lantern-tag" aria-hidden="true">{i.lantern}</span>
                 : i.badge > 0 && <span className="vs-badge" aria-hidden="true">{i.badge > 9 ? '9+' : i.badge}</span>}
@@ -766,26 +767,26 @@ export default function VillageScene() {
           <div className="vs-edit-fab-wrap" onPointerDown={(e) => e.stopPropagation()}>
             <button type="button" className="vs-edit-fab" data-tour="village-arrange" aria-haspopup="menu" aria-expanded={editMenu}
               onClick={() => setEditMenu((v) => !v)}>
-              <ToolIcon name="move" /><span>{cottage ? 'Edit cottage' : 'Edit map'}</span>
+              <ToolIcon name="move" /><span>{cottage ? t('Edit cottage') : t('Edit map')}</span>
             </button>
             {editMenu && (
               <div className="vs-edit-menu" role="menu">
                 <button type="button" role="menuitem" onClick={() => { setEditMenu(false); startArrange('me') }}>
-                  <b>{cottage ? 'Arrange and build' : keeperChoice ? 'My own view' : 'Arrange my view'}</b>
-                  <small>{cottage ? 'Move places, add trees, draw roads and streams.' : 'Only you see it. Move places, add trees, draw roads.'}</small>
+                  <b>{cottage ? t('Arrange and build') : keeperChoice ? t('My own view') : t('Arrange my view')}</b>
+                  <small>{cottage ? t('Move places, add trees, draw roads and streams.') : t('Only you see it. Move places, add trees, draw roads.')}</small>
                 </button>
                 {keeperChoice && (
                   <button type="button" role="menuitem" onClick={() => { setEditMenu(false); startArrange('everyone') }}>
-                    <b>Default for everyone</b><small>New neighbors start with this.{mapLoaded > 0 && mapLayouts.current.own ? ' You see your own view, so you will not see the new default.' : ''}</small>
+                    <b>{t('Default for everyone')}</b><small>{t('New neighbors start with this.')}{mapLoaded > 0 && mapLayouts.current.own ? ' ' + t('You see your own view, so you will not see the new default.') : ''}</small>
                   </button>
                 )}
                 {cottage && Object.prototype.hasOwnProperty.call(profile || {}, 'cottage_visitors') && (
                   <button type="button" role="menuitem" onClick={() => { setEditMenu(false); openSheet({ k: 'name' }) }}>
-                    <b>Name and visitors</b><small>Name your cottage. Choose who can visit it.</small>
+                    <b>{t('Name and visitors')}</b><small>{t('Name your cottage. Choose who can visit it.')}</small>
                   </button>
                 )}
                 <button type="button" role="menuitem" onClick={() => { setEditMenu(false); saveLabels(b.namesShowing ? 'hide' : 'show') }}>
-                  <b>{b.namesShowing ? 'Hide name tags' : 'Show name tags'}</b><small>On every map, for you.</small>
+                  <b>{b.namesShowing ? t('Hide name tags') : t('Show name tags')}</b><small>{t('On every map, for you.')}</small>
                 </button>
               </div>
             )}
@@ -794,7 +795,7 @@ export default function VillageScene() {
         {/* The magnifier floats on the map, top left, so it is always in reach. */}
         <div className="vs-zoom-fab-wrap" onPointerDown={(e) => e.stopPropagation()}>
           <button type="button" className="vs-zoom-btn vs-zoom-one" aria-pressed={b.zoom.z > 1} onClick={() => (b.zoom.z > 1 ? b.zoomReset() : b.zoomBy(2))}>
-            <ToolIcon name={b.zoom.z > 1 ? 'unmagnify' : 'magnify'} /><span>{b.zoom.z > 1 ? 'Whole map' : 'Zoom in'}</span>
+            <ToolIcon name={b.zoom.z > 1 ? 'unmagnify' : 'magnify'} /><span>{b.zoom.z > 1 ? t('Whole map') : t('Zoom in')}</span>
           </button>
         </div>
         <div className="vs-fade" />
@@ -806,45 +807,45 @@ export default function VillageScene() {
 
       {cottage && !arrange && (
         <button type="button" className="vs-gifts-btn" onClick={() => openSheet({ k: 'gifts' })}>
-          <Icon name="sprout" size={28} /> Your garden: {GIFTS.filter((g) => g.got).length} of {GIFTS.length} gifts grown
+          <Icon name="sprout" size={28} /> {t('Your garden: {n} of {total} gifts grown', { n: GIFTS.filter((g) => g.got).length, total: GIFTS.length })}
         </button>
       )}
-      <p className="vs-hint">{arrange ? (cottage ? 'Arrange and build your cottage map. Your changes are saved as you go.' : arrangeFor === 'everyone' ? 'You are setting the default look for ' + village.name + '. Personal views stay as they are. Changes are saved as you go.' : 'You are arranging your own view. Only you see it. Changes are saved as you go.') : cottage ? 'Tap anything on your map to go there.' : 'Tap anything in the village to go there.'}</p>
+      <p className="vs-hint">{arrange ? (cottage ? t('Arrange and build your cottage map. Your changes are saved as you go.') : arrangeFor === 'everyone' ? t('You are setting the default look for {village}. Personal views stay as they are. Changes are saved as you go.', { village: village.name }) : t('You are arranging your own view. Only you see it. Changes are saved as you go.')) : cottage ? t('Tap anything on your map to go there.') : t('Tap anything in the village to go there.')}</p>
 
       <MapToolbar b={b} more={<>
-        <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>{cottage ? 'Back to the usual cottage' : arrangeFor === 'everyone' ? 'Default back to the starting village' : 'Back to the default look'}</button>
-        {cottage && isFounder && <button type="button" className="btn btn-outline btn-full" onClick={copyLayout}>Copy layout for everyone (founder)</button>}
-        <p className="vs-note">{cottage ? 'Your cottage is saved on your account. ' + visitorsLine(profile?.cottage_visitors || 'nobody') : arrangeFor === 'everyone' ? 'This is the default look. Anyone who arranged their own view keeps theirs.' : 'Your view is saved on your account and only you see it.'} Hidden places are still in the list under the map.</p>
+        <button type="button" className="btn btn-outline btn-full" onClick={resetLayout}>{cottage ? t('Back to the usual cottage') : arrangeFor === 'everyone' ? t('Default back to the starting village') : t('Back to the default look')}</button>
+        {cottage && isFounder && <button type="button" className="btn btn-outline btn-full" onClick={copyLayout}>{t('Copy layout for everyone (founder)')}</button>}
+        <p className="vs-note">{cottage ? t('Your cottage is saved on your account.') + ' ' + visitorsLine(profile?.cottage_visitors || 'nobody') : arrangeFor === 'everyone' ? t('This is the default look. Anyone who arranged their own view keeps theirs.') : t('Your view is saved on your account and only you see it.')} {t('Hidden places are still in the list under the map.')}</p>
       </>} />
 
       <div className="vs-body">
-        {!cottage && !mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>Join {village.name}</button>}
-        {!cottage && mine && keepers && keepers.i_am_keeper && <button type="button" data-tour="keeper-tools" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true"><Icon name="toolbox" /></span> Keeper tools</button>}
+        {!cottage && !mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>{t('Join {village}', { village: village.name })}</button>}
+        {!cottage && mine && keepers && keepers.i_am_keeper && <button type="button" data-tour="keeper-tools" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true"><Icon name="toolbox" /></span> {t('Keeper tools')}</button>}
         {/* Your cottage: Today (what needs you, shortcuts, coming up) sits right under the map (Oct 22). */}
-        {cottage && <section id="today" className="vs-panel vs-today" aria-label="Today"><Dashboard embedded /></section>}
+        {cottage && <section id="today" className="vs-panel vs-today" aria-label={t('Today')}><Dashboard embedded /></section>}
         {!cottage && <div className="vs-help">
-          <button type="button" className="vs-big vs-find" onClick={() => navigate('/ask')}>Ask for Help</button>
-          <button type="button" className="vs-big vs-offer" onClick={() => navigate('/skillshare')}>Offer Help</button>
+          <button type="button" className="vs-big vs-find" onClick={() => navigate('/ask')}>{t('Ask for Help')}</button>
+          <button type="button" className="vs-big vs-offer" onClick={() => navigate('/skillshare')}>{t('Offer Help')}</button>
         </div>}
-        <h2 className="vs-pick-h">Or pick from the list</h2>
+        <h2 className="vs-pick-h">{t('Or pick from the list')}</h2>
         {/* Simple view (Oct 27): the main places first, the rest folded under More. */}
         {simple ? <>
           <div className="vs-list">{SPOTS.filter((s) => simpleMain.includes(s.k)).sort((a, b) => simpleMain.indexOf(a.k) - simpleMain.indexOf(b.k)).map(roomRow)}</div>
           {SPOTS.some((s) => !simpleMain.includes(s.k)) && (
             <details className="op-simple-more">
-              <summary>{cottage ? 'More' : 'More about ' + village.name}</summary>
+              <summary>{cottage ? t('More') : t('More about {village}', { village: village.name })}</summary>
               <div className="vs-list">{SPOTS.filter((s) => !simpleMain.includes(s.k)).map(roomRow)}</div>
             </details>
           )}
         </> : <div className="vs-list">{SPOTS.map(roomRow)}</div>}
-        <Link className="btn btn-outline btn-full vs-big" to="/calendar">Events near you</Link>
+        <Link className="btn btn-outline btn-full vs-big" to="/calendar">{t('Events near you')}</Link>
         {/* Oct 28 (Jade): My Corner is no longer repeated under the cottage map. The My Corner button opens it. */}
       </div>
 
       {sheet && (
         <div className="vs-shade" onClick={(e) => { if (e.target === e.currentTarget) closeSheet() }}>
           <div className="vs-sheet" role="dialog" aria-modal="true" aria-labelledby="vs-sheet-title" ref={sheetRef}>
-            <button type="button" className="vs-sheet-close" onClick={closeSheet}><ToolIcon name="down" /><span>Close</span></button>
+            <button type="button" className="vs-sheet-close" onClick={closeSheet}><ToolIcon name="down" /><span>{t('Close')}</span></button>
             {sheetBody(sheet.k)}
           </div>
         </div>

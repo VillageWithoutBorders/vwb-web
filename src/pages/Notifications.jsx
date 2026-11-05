@@ -13,8 +13,10 @@ import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
 import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
 import { personalAlertLink } from '../utils/alertLink'
+import { useT } from '../utils/lang'
 
 export default function Notifications() {
+  const t = useT()
   const { user } = useAuth()
   const { notifications, unreadCount, loading, refresh, markSeen } = useNotifications()
   const navigate = useNavigate()
@@ -51,8 +53,8 @@ export default function Notifications() {
   function showError(err) {
     // 42703 means the follow_up column isn't in the database yet.
     setError(err && err.code === '42703'
-      ? 'Follow up needs a quick database update first (vwb-notification-followup.sql).'
-      : 'Something went wrong. Please try again.')
+      ? t('Follow up needs a quick database update first (vwb-notification-followup.sql).')
+      : t('Something went wrong. Please try again.'))
   }
 
   async function handleTap(notification) {
@@ -99,7 +101,7 @@ export default function Notifications() {
   if (loading) {
     return (
       <div className="notifications-page">
-        <div className="notifications-loading">Loading notifications...</div>
+        <div className="notifications-loading">{t('Loading notifications...')}</div>
       </div>
     )
   }
@@ -118,18 +120,18 @@ export default function Notifications() {
     <div className="notifications-page">
       <div className="notifications-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button onClick={() => goBack('/')} aria-label="Go back" className="notifications-back">&#8592;</button>
-          <h1>Alerts</h1>
+          <button onClick={() => goBack('/')} aria-label={t('Go back')} className="notifications-back">&#8592;</button>
+          <h1>{t('Alerts')}</h1>
         </div>
         <div className="notifications-actions">
           {unreadCount > 0 && (
             <button type="button" className="btn-mark-all-read" onClick={handleMarkAllRead}>
-              Mark all read
+              {t('Mark all read')}
             </button>
           )}
           {clearable.length > 0 && (
             <button type="button" className="btn-mark-all-read btn-clear-all" onClick={() => setConfirmClear(true)}>
-              Clear all
+              {t('Clear all')}
             </button>
           )}
         </div>
@@ -142,7 +144,7 @@ export default function Notifications() {
           className={'filter-chip' + (filter === 'all' ? ' active' : '')}
           onClick={() => setFilter('all')}
         >
-          All
+          {t('All')}
         </button>
         <button
           type="button"
@@ -150,7 +152,7 @@ export default function Notifications() {
           className={'filter-chip' + (filter === 'unread' ? ' active' : '')}
           onClick={() => setFilter('unread')}
         >
-          {'Unread' + (unreadCount > 0 ? ' (' + unreadCount + ')' : '')}
+          {t('Unread') + (unreadCount > 0 ? ' (' + unreadCount + ')' : '')}
         </button>
         <button
           type="button"
@@ -158,7 +160,7 @@ export default function Notifications() {
           className={'filter-chip' + (filter === 'followup' ? ' active' : '')}
           onClick={() => setFilter('followup')}
         >
-          {'Follow up' + (followUps.length > 0 ? ' (' + followUps.length + ')' : '')}
+          {t('Follow up') + (followUps.length > 0 ? ' (' + followUps.length + ')' : '')}
         </button>
       </div>
 
@@ -169,10 +171,10 @@ export default function Notifications() {
           <span className="empty-icon" aria-hidden="true"><Icon name={filter === 'followup' ? 'flag' : 'bell'} /></span>
           <p>
             {filter === 'unread'
-              ? "You're all caught up!"
+              ? t("You're all caught up!")
               : filter === 'followup'
-                ? 'Nothing flagged. Tap the flag on an alert to come back to it later.'
-                : 'No notifications yet'}
+                ? t('Nothing flagged. Tap the flag on an alert to come back to it later.')
+                : t('No notifications yet')}
           </p>
         </div>
       ) : (
@@ -183,13 +185,13 @@ export default function Notifications() {
             <>
               {unread.length > 0 && (
                 <>
-                  <div className="notifications-section-label">New</div>
+                  <div className="notifications-section-label">{t('New')}</div>
                   {unread.map(card)}
                 </>
               )}
               {read.length > 0 && filter === 'all' && (
                 <>
-                  <div className="notifications-section-label">Earlier</div>
+                  <div className="notifications-section-label">{t('Earlier')}</div>
                   {read.map(card)}
                 </>
               )}
@@ -200,18 +202,18 @@ export default function Notifications() {
 
       {confirmClear && (
         <>
-          <button type="button" className="app-dialog-scrim" aria-label="Close" tabIndex={-1} onClick={() => setConfirmClear(false)} />
+          <button type="button" className="app-dialog-scrim" aria-label={t('Close')} tabIndex={-1} onClick={() => setConfirmClear(false)} />
           <div role="dialog" aria-modal="true" aria-labelledby="clearAlertsTitle" className="app-dialog">
-            <h2 id="clearAlertsTitle" className="app-dialog-title">Clear all alerts?</h2>
+            <h2 id="clearAlertsTitle" className="app-dialog-title">{t('Clear all alerts?')}</h2>
             <p className="app-dialog-text">
-              This deletes your alerts for good.
-              {followUps.length > 0 ? ' Alerts you flagged to follow up will stay.' : ''}
+              {t('This deletes your alerts for good.')}
+              {followUps.length > 0 ? ' ' + t('Alerts you flagged to follow up will stay.') : ''}
             </p>
             <div className="app-dialog-buttons">
               <button type="button" className="btn btn-full app-dialog-danger" onClick={handleClearAll} disabled={busy}>
-                {busy ? 'Clearing...' : 'Clear all'}
+                {busy ? t('Clearing...') : t('Clear all')}
               </button>
-              <button type="button" className="btn btn-outline btn-full" onClick={() => setConfirmClear(false)} autoFocus>Cancel</button>
+              <button type="button" className="btn btn-outline btn-full" onClick={() => setConfirmClear(false)} autoFocus>{t('Cancel')}</button>
             </div>
           </div>
         </>
@@ -221,6 +223,7 @@ export default function Notifications() {
 }
 
 function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
+  const t = useT()
   const icon = TYPE_ICONS[notification.type] || '\u{1F514}'
   const color = TYPE_COLORS[notification.type] || '#6b7280'
   const flagged = !!notification.follow_up
@@ -234,20 +237,20 @@ function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
       // Only react when the card itself has focus, so pressing Enter on the
       // flag or delete button doesn't also open the alert.
       onKeyDown={e => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onTap(notification) } }}
-      aria-label={(notification.read ? '' : 'New. ') + (flagged ? 'Flagged to follow up. ' : '') + notification.title}
+      aria-label={(notification.read ? '' : t('New') + '. ') + (flagged ? t('Flagged to follow up.') + ' ' : '') + t(notification.title)}
     >
       <div className="notification-icon" aria-hidden="true" style={{ background: color + '26', color: color }}>
         <Icon name={icon} />
       </div>
       <div className="notification-content">
-        <div className="notification-title">{notification.title}</div>
+        <div className="notification-title">{t(notification.title)}</div>
         {notification.body && (
-          <div className="notification-body">{notification.body}</div>
+          <div className="notification-body">{t(notification.body)}</div>
         )}
         <div className="notification-meta">
           <span className="notification-time">{timeAgo(notification.created_at)}</span>
           {flagged && (
-            <span className="notification-followup-badge"><span aria-hidden="true"><Icon name="flag" /></span> Follow up</span>
+            <span className="notification-followup-badge"><span aria-hidden="true"><Icon name="flag" /></span> {t('Follow up')}</span>
           )}
         </div>
       </div>
@@ -258,7 +261,7 @@ function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
           className="notification-flag"
           aria-pressed={flagged}
           onClick={(e) => onToggleFollowUp(e, notification)}
-          aria-label={flagged ? 'Remove follow up flag' : 'Flag to follow up'}
+          aria-label={flagged ? t('Remove follow up flag') : t('Flag to follow up')}
         >
           <span aria-hidden="true"><Icon name="flag" /></span>
         </button>
@@ -266,7 +269,7 @@ function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
           type="button"
           className="notification-delete"
           onClick={(e) => onDelete(e, notification.id)}
-          aria-label="Delete notification"
+          aria-label={t('Delete notification')}
         >
           &times;
         </button>
