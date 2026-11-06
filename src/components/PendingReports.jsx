@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { usePendingReports, sendPendingReports, removePendingReport, sendReportAnyway } from '../utils/pendingReports'
+import { usePendingEventActions, sendPendingEventActions, removeEventAction } from '../utils/pendingEventActions'
 import Icon from './Icon'
 import { useT, t } from '../utils/lang'
 
-// Emergency reports saved with no signal (Nov 5). Shows at the top of the page until
-// they send, tries again when the signal comes back, and says when they went out.
-// If someone else reported the same thing in the meantime, it asks first.
+// Emergency reports (Nov 5), and check-ins and sign-ups on an emergency (Nov 5),
+// saved with no signal. Shows at the top of the page until they send, tries again
+// when the signal comes back, and says when they went out. If someone else reported
+// the same emergency in the meantime, it asks first.
+
+const STATUS_WORDS = { safe: 'Safe', need_help: 'Needs Help', evacuated: 'Evacuated', sheltering: 'Sheltering' }
 
 function ago(iso) {
   const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
@@ -19,26 +23,43 @@ function ago(iso) {
   return d === 1 ? t('yesterday') : t('{n} days ago', { n: d })
 }
 
+function actionLabel(a) {
+  if (a.kind === 'checkin') return t('Check-in: {status}', { status: t(STATUS_WORDS[a.row.status] || a.row.status) })
+  return a.row.role === 'affected' ? t('Sign up as affected') : t('Sign up to help')
+}
+
+function sentNote(reports, actions) {
+  if (reports.length === 1 && !actions.length) return t('Your saved emergency report was sent. Neighbors can see it now.')
+  if (reports.length > 1 && !actions.length) return t('Your {n} saved emergency reports were sent. Neighbors can see them now.', { n: reports.length })
+  if (!reports.length && actions.length === 1) return actions[0].kind === 'checkin' ? t('Your check-in was sent.') : t('Your sign-up was sent.')
+  return t('Your saved emergency updates were sent.')
+}
+
 export default function PendingReports() {
   useT()
   const { user } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const uid = user?.id
-  const list = usePendingReports(uid)
+  const reports = usePendingReports(uid)
+  const actions = usePendingEventActions(uid)
   const [online, setOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine !== false)
   const [busy, setBusy] = useState(false)
-  const [sent, setSent] = useState([])
-  // Remove takes two taps, so one stray tap never loses a report.
+  const [sent, setSent] = useState(null)
+  // Remove takes two taps, so one stray tap never loses anything.
   const [sure, setSure] = useState('')
-  const waiting = list.filter((r) => !r.problem).length
+  const waitingReports = reports.filter((r) => !r.problem).length
+  const waitingActions = actions.filter((a) => !a.problem).length
+  const waiting = waitingReports + waitingActions
+  const total = reports.length + actions.length
 
   async function tryNow() {
     if (!uid || busy) return
     setBusy(true)
-    const out = await sendPendingReports(uid)
+    const outReports = await sendPendingReports(uid)
+    const outActions = await sendPendingEventActions(uid)
     setBusy(false)
-    if (out.length) setSent(out)
+    if (outReports.length || outActions.length) setSent({ reports: outReports, actions: outActions })
   }
 
   // Try when the page opens, when the signal comes back, when the app comes
@@ -75,25 +96,39 @@ export default function PendingReports() {
     tryNow()
   }
 
+  function removeButton(key, name, remove) {
+    return (
+      <button type="button" className={'pa-remove' + (sure === key ? ' sure' : '')}
+        onClick={() => { if (sure === key) { remove(); setSure('') } else setSure(key) }}
+        aria-label={t(sure === key ? 'Tap again to remove the saved report {title}' : 'Remove the saved report {title}', { title: name })}>
+        {t(sure === key ? 'Tap again to remove' : 'Remove')}
+      </button>
+    )
+  }
+
   // Report an emergency has its own "Saved on your phone" screen.
-  if (!uid || (!list.length && !sent.length) || pathname === '/emergency/create') return null
+  if (!uid || (!total && !sent) || pathname === '/emergency/create') return null
+
+  const note = sent ? sentNote(sent.reports, sent.actions) : ''
+  const onlyReports = !actions.length
+  const openOne = sent && sent.reports.length === 1 && !sent.actions.length ? sent.reports[0].id : null
 
   return (
     <section className="pending-asks pending-reports" aria-labelledby="pr-h">
-      {sent.length > 0 && !list.length && (
+      {sent && !total && (
         <div className="pa-sent" role="status">
           <Icon name="check" size={28} />
-          <span id="pr-h">{sent.length === 1 ? t('Your saved emergency report was sent. Neighbors can see it now.') : t('Your {n} saved emergency reports were sent. Neighbors can see them now.', { n: sent.length })}</span>
-          {sent.length === 1 && <button type="button" className="pa-ok" onClick={() => { const id = sent[0].id; setSent([]); navigate('/emergency/' + id) }}>{t('Open it')}</button>}
-          <button type="button" className="pa-ok" onClick={() => setSent([])}>{t('OK')}</button>
+          <span id="pr-h">{note}</span>
+          {openOne && <button type="button" className="pa-ok" onClick={() => { setSent(null); navigate('/emergency/' + openOne) }}>{t('Open it')}</button>}
+          <button type="button" className="pa-ok" onClick={() => setSent(null)}>{t('OK')}</button>
         </div>
       )}
-      {list.length > 0 && (
+      {total > 0 && (
         <>
           <h2 id="pr-h" className="pa-title">
-            {waiting === 0 ? t('A saved emergency report needs you')
-              : waiting === 1 ? t('1 emergency report is waiting for signal')
-              : t('{n} emergency reports are waiting for signal', { n: waiting })}
+            {waiting === 0 ? (onlyReports ? t('A saved emergency report needs you') : t('A saved emergency update needs you'))
+              : onlyReports ? (waiting === 1 ? t('1 emergency report is waiting for signal') : t('{n} emergency reports are waiting for signal', { n: waiting }))
+              : waiting === 1 ? t('1 emergency update is waiting for signal') : t('{n} emergency updates are waiting for signal', { n: waiting })}
           </h2>
           {waiting > 0 && (
             <p className="pa-text" role="status">
@@ -103,9 +138,9 @@ export default function PendingReports() {
             </p>
           )}
           <p className="pa-text pr-911"><b>{t('Someone in danger right now?')}</b> <a href="tel:911">{t('Call 911')}</a></p>
-          {sent.length > 0 && <p className="pa-text" role="status">{sent.length === 1 ? t('Your saved emergency report was sent. Neighbors can see it now.') : t('Your {n} saved emergency reports were sent. Neighbors can see them now.', { n: sent.length })}</p>}
+          {sent && <p className="pa-text" role="status">{note}</p>}
           <ul className="pa-list">
-            {list.map((r) => (
+            {reports.map((r) => (
               <li key={r.key} className="pa-item">
                 <span className="pa-what">
                   <b>{t(r.row.event_type)}: {r.row.title}</b>
@@ -121,11 +156,18 @@ export default function PendingReports() {
                     <button type="button" className="pa-ok" onClick={() => differentOne(r)}>{t('No, it is different')}</button>
                   </span>
                 )}
-                <button type="button" className={'pa-remove' + (sure === r.key ? ' sure' : '')}
-                  onClick={() => { if (sure === r.key) { removePendingReport(uid, r.key); setSure('') } else setSure(r.key) }}
-                  aria-label={t(sure === r.key ? 'Tap again to remove the saved report {title}' : 'Remove the saved report {title}', { title: r.row.title })}>
-                  {t(sure === r.key ? 'Tap again to remove' : 'Remove')}
-                </button>
+                {removeButton(r.key, r.row.title, () => removePendingReport(uid, r.key))}
+              </li>
+            ))}
+            {actions.map((a) => (
+              <li key={a.key} className="pa-item">
+                <span className="pa-what">
+                  <b>{actionLabel(a)}</b>
+                  {a.event_title && <small>{a.event_title}</small>}
+                  <small>{t('Saved {when}', { when: ago(a.saved_at) })}</small>
+                  {a.problem && <small className="pa-problem">{t('Not sent:')} {t(a.problem)}</small>}
+                </span>
+                {removeButton(a.key, actionLabel(a), () => removeEventAction(uid, a.key))}
               </li>
             ))}
           </ul>
