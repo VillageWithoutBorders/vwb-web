@@ -6717,6 +6717,11 @@ html.calm-motion .nr-card:active { transform: none; }
 .pr-choices { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
 .pr-choices .pa-ok { flex: 1 1 9rem; padding: 0 12px; }
 .pr-911 a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ev-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }
+.ev-stats > div { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 400px) { .ev-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* A check-in or sign-up saved with no signal, on the emergency page (Nov 5). */
+.ev-waiting { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--gold); color: var(--text); font-size: 0.8125rem; font-weight: 600; }
 
 /* Nov 3: page titles wrap instead of running off the edge at very large zoom (250%). */
 .profile-page h1, .fh-head h1, .ask-page h1 { min-width: 0; overflow-wrap: anywhere; }
