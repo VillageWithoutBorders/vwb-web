@@ -6,37 +6,19 @@ import { getMyLocation } from '../utils/location'
 import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
 import { t, useT } from '../utils/lang'
+import { bestMatch } from '../utils/emergencyMatch'
+import { isNoSignal } from '../utils/pendingAsks'
+import { savePendingReport } from '../utils/pendingReports'
 
 // Report an emergency. Two steps:
 //   1. Who this is for: many neighbors hit at once. One household asks for help instead.
 //      Someone in danger calls 911 first. What happens after you report.
 //   2. The form. The reporter is the first coordinator, so they join the
 //      Response Camp chat when the event is verified.
+// No signal (Nov 5): the report is saved on the phone and sends by itself later
+// (utils/pendingReports.js, components/PendingReports.jsx).
 
 const EVENT_TYPES = ['Flood', 'Storm', 'Tornado', 'Fire', 'Ice/Snow', 'Power Outage', 'Housing Crisis', 'Other']
-
-function textSimilarity(a, b) {
-  if (!a && !b) return 1
-  if (!a || !b) return 0
-  a = a.toLowerCase().trim()
-  b = b.toLowerCase().trim()
-  if (a === b) return 1
-  const wordsA = new Set(a.split(/\s+/))
-  const wordsB = new Set(b.split(/\s+/))
-  const intersection = [...wordsA].filter(w => wordsB.has(w)).length
-  const union = new Set([...wordsA, ...wordsB]).size
-  if (union === 0) return 0
-  return intersection / union
-}
-
-function eventSimilarity(draft, existing) {
-  const typeScore = draft.eventType === existing.event_type ? 1 : 0
-  const titleScore = textSimilarity(draft.title, existing.title)
-  const descScore = textSimilarity(draft.description, existing.description)
-  const locationScore = textSimilarity(draft.locationName, existing.location_name)
-  // Weighted: type 30%, title 35%, location 20%, description 15%
-  return (typeScore * 0.30) + (titleScore * 0.35) + (locationScore * 0.20) + (descScore * 0.15)
-}
 
 function timeAgo(ts) {
   const diff = Date.now() - new Date(ts).getTime()
@@ -63,6 +45,17 @@ export default function CreateEvent() {
   const [dupMatch, setDupMatch] = useState(null)
   const [villageName, setVillageName] = useState('')
   const headingRef = useRef(null)
+  const [online, setOnline] = useState(() => navigator.onLine !== false)
+  // 'saved' after a report is kept on the phone to send later.
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    const up = () => setOnline(true)
+    const down = () => setOnline(false)
+    window.addEventListener('online', up)
+    window.addEventListener('offline', down)
+    return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down) }
+  }, [])
 
   // Which village the report goes to (the database picks the reporter's village).
   useEffect(() => {
@@ -77,48 +70,58 @@ export default function CreateEvent() {
   useEffect(() => {
     window.scrollTo(0, 0)
     headingRef.current?.focus()
-  }, [step])
+  }, [step, saved])
 
+  // Returns { match } or { noSignal: true }.
   async function checkDuplicates() {
     const { data: existing, error: dupErr } = await supabase
       .from('emergency_events')
       .select('*')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
-    if (dupErr) { console.error('Failed to check for duplicate events:', dupErr); return null }
-    if (!existing || existing.length === 0) return null
-
-    const draft = { eventType, title: title.trim(), description: description.trim(), locationName: locationName.trim() }
-    let bestMatch = null
-    let bestScore = 0
-    for (const ev of existing) {
-      const score = eventSimilarity(draft, ev)
-      if (score > bestScore) { bestScore = score; bestMatch = ev }
+    if (dupErr) {
+      console.error('Failed to check for duplicate events:', dupErr)
+      return isNoSignal(dupErr) ? { noSignal: true } : { match: null }
     }
-    return bestScore >= 0.70 ? bestMatch : null
+    const draft = { eventType, title: title.trim(), description: description.trim(), locationName: locationName.trim() }
+    return { match: bestMatch(draft, existing) }
   }
 
-  async function createEvent() {
-    setSubmitting(true)
-    // The center of the reporter's zip code area. VWB never asks the phone where it is.
-    let lat = null
-    let lng = null
+  // The center of the reporter's zip code area. VWB never asks the phone where it is.
+  function draftRow() {
     const loc = getMyLocation(profile)
-    if (loc) { lat = loc.lat; lng = loc.lng }
-
-    const { data, error: insertErr } = await supabase.from('emergency_events').insert({
+    return {
       title: title.trim(),
       description: description.trim() || null,
       event_type: eventType,
       location_name: locationName.trim() || null,
-      latitude: lat,
-      longitude: lng,
+      latitude: loc ? loc.lat : null,
+      longitude: loc ? loc.lng : null,
       radius_miles: radius,
+    }
+  }
+
+  // No signal: keep it on this phone. It sends by itself when the signal comes back.
+  function saveForLater() {
+    setSubmitting(false)
+    if (!savePendingReport(user.id, draftRow())) {
+      setError(t("No signal, and this phone can't save the report for later. Try again when you have signal. If someone is in danger, call 911."))
+      return
+    }
+    setSaved(true)
+  }
+
+  async function createEvent() {
+    if (navigator.onLine === false) { saveForLater(); return }
+    setSubmitting(true)
+    const { data, error: insertErr } = await supabase.from('emergency_events').insert({
+      ...draftRow(),
       created_by: user.id,
     }).select().single()
 
     if (insertErr) {
       console.error('Failed to create emergency event:', insertErr)
+      if (isNoSignal(insertErr)) { saveForLater(); return }
       setError(t('Something went wrong. Please try again.'))
       setSubmitting(false)
       return
@@ -155,11 +158,43 @@ export default function CreateEvent() {
     if (Object.keys(errs).length) { showFieldError(errs); return }
     setFieldErrors({})
 
+    if (navigator.onLine === false) { saveForLater(); return }
     setSubmitting(true)
-    const match = await checkDuplicates()
+    const { match, noSignal } = await checkDuplicates()
     setSubmitting(false)
+    if (noSignal) { saveForLater(); return }
     if (match) { setDupMatch(match); return }
     await createEvent()
+  }
+
+  const offlineNote = !online && (
+    <p className="ask-offline" role="status">
+      <b>{t('No signal right now.')}</b> {t('You can still report. It is saved on your phone and sends by itself when you have signal.')}
+    </p>
+  )
+
+  if (saved) {
+    return (
+      <div className="ce-page">
+        <div className="ce-head">
+          <div>
+            <h1 ref={headingRef} tabIndex={-1} className="ce-title">{t('Saved on your phone')}</h1>
+          </div>
+        </div>
+        <section className="ce-card" aria-label={t('Saved on your phone')}>
+          <p>{t('Your report will send by itself when your phone has signal. Keep the app open if you can.')}</p>
+          <p>{t('You will see it at the top of your pages until it sends.')}</p>
+        </section>
+        <section className="ce-card ce-card-danger" aria-labelledby="ce-911-saved">
+          <h2 id="ce-911-saved" className="ce-h2"><Icon name="phone" /> {t('Someone in danger right now?')}</h2>
+          <p>{t('Call 911 first. This app does not reach emergency services.')}</p>
+          <a className="btn ce-btn ce-btn-danger" href="tel:911">{t('Call 911')}</a>
+        </section>
+        <div className="ce-actions">
+          <button type="button" className="btn btn-primary ce-btn ce-btn-go" onClick={() => navigate('/emergency')}>{t('OK')}</button>
+        </div>
+      </div>
+    )
   }
 
   const errFor = (id) => fieldErrors[id] ? <p id={id + '-err'} className="ce-err" role="alert">{fieldErrors[id]}</p> : null
@@ -174,6 +209,8 @@ export default function CreateEvent() {
         </div>
       </div>
       <div className="ce-progress" aria-hidden="true"><span style={{ width: step === 1 ? '50%' : '100%' }} /></div>
+
+      {offlineNote}
 
       {step === 1 && (
         <>
@@ -242,7 +279,7 @@ export default function CreateEvent() {
           <div className="ce-range-labels" aria-hidden="true"><span>5 mi</span><span>25 mi</span><span>50 mi</span></div>
 
           <p className="ce-hint ce-where">
-            {villageName ? t('This goes to {village}.', { village: villageName }) + ' ' : ''}{t('When you tap Report, your phone may ask to share your location. It is rounded to about a mile so the event lands in the right place. You can say no.')}
+            {villageName ? t('This goes to {village}.', { village: villageName }) + ' ' : ''}{t('It is placed at the middle of your zip code area, never at your home.')}
           </p>
 
           <div className="ce-actions">

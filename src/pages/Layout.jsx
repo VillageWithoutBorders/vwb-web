@@ -9,6 +9,7 @@ import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView
 import SimpleOffer from '../components/SimpleOffer'
 import ReadAloud from '../components/ReadAloud'
 import PendingAsks from '../components/PendingAsks'
+import PendingReports from '../components/PendingReports'
 import { useT } from '../utils/lang'
 import BottomTabs from '../components/BottomTabs'
 import MeButton, { MyCornerButton } from '../components/MeButton'
@@ -68,6 +69,9 @@ export default function Layout() {
     if (!user) return
     const t = setTimeout(() => {
       import('./AskForHelp').catch(() => { /* no signal yet; it loads when opened */ })
+      // Reporting an emergency too (Nov 5): storms take the signal down first.
+      import('./EmergencyEvents').catch(() => {})
+      import('./CreateEvent').catch(() => {})
       // The list of kinds of help too, kept on the phone by loadSkillCategories.
       let saved = null
       try { saved = localStorage.getItem('vwb_skill_list') } catch { /* private window */ }
@@ -163,7 +167,8 @@ export default function Layout() {
         {showBack
           ? <FrameBack world={isWorld}>{simple && !isChat && !isWorld && <ReadAloud />}</FrameBack>
           : simple && !isChat && !isWorld && <div className="app-back-row read-aloud-row"><ReadAloud /></div>}
-        {/* Requests saved with no signal (Nov 3): waiting, sending, or sent. */}
+        {/* Emergency reports (Nov 5) and requests (Nov 3) saved with no signal: waiting, sending, or sent. */}
+        {!isChat && !isWorld && <PendingReports />}
         {!isChat && !isWorld && <PendingAsks />}
         <PageBackContext.Provider value={tellFrame}>
           <Outlet />
