@@ -1268,7 +1268,6 @@ const more = {
   'Add Resources Needed': 'Anotar lo que se necesita',
   'Your status:': 'Cómo está usted:',
   'No check-in yet': 'Todavía no dice cómo está',
-  'Optional note (e.g. address, what you need)': 'Nota si quiere (por ejemplo, dónde está o qué necesita)',
   'Update': 'Actualizar',
   'Check in': 'Decir cómo estoy',
   'Switch to affected': 'Cambiar a afectado',

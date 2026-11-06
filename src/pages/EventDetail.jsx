@@ -217,7 +217,18 @@ export default function EventDetail() {
     if (cvotes) setCloseVotes(cvotes)
     snap.closeVotes = cvotes || []
     // Keep a copy on this phone for when the signal is gone (only a page that loaded fully).
-    if (ev && !supsErr && !cinsErr) saveEventCopy(user.id, id, snap)
+    if (ev && !supsErr && !cinsErr) {
+      // Nov 5 (Jade): nothing in the phone's copy should help anyone find where someone is.
+      // Other people's own words (notes, availability) stay off the phone; names and
+      // statuses stay, since this person can already see them on the page.
+      const mineOnly = (row, owner) => (owner === user.id ? row : { ...row, note: null, notes: null, availability: null })
+      saveEventCopy(user.id, id, {
+        ...snap,
+        signups: (snap.signups || []).map((x) => mineOnly(x, x.user_id)),
+        checkIns: (snap.checkIns || []).map((x) => mineOnly(x, x.user_id)),
+        resources: (snap.resources || []).map((x) => mineOnly(x, x.offered_by)),
+      })
+    }
     setLoading(false)
   }
 
@@ -718,7 +729,9 @@ export default function EventDetail() {
                   </button>
                 ))}
               </div>
-              <input type='text' placeholder={t('Optional note (e.g. address, what you need)')} value={statusNote} onChange={e => setStatusNote(e.target.value)} style={fieldStyle} />
+              {/* Nov 5 (Jade): never invite an address. Everyone signed up can read this note. */}
+              <input type='text' aria-describedby='ev-note-hint' placeholder={t('Optional note: what you need (water, a ride, medicine)')} value={statusNote} onChange={e => setStatusNote(e.target.value)} maxLength={300} style={fieldStyle} />
+              <p id='ev-note-hint' style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '-0.25rem 0 0.5rem' }}>{t('Never put your address here. Everyone signed up for this emergency can read it.')}</p>
             </div>
           )}
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>

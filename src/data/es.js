@@ -684,6 +684,8 @@ const es = {
   'A saved emergency update needs you': 'Algo guardado de una emergencia necesita su respuesta',
   '1 emergency update is waiting for signal': '1 cosa de una emergencia está esperando señal',
   '{n} emergency updates are waiting for signal': '{n} cosas de emergencias están esperando señal',
+  'Optional note: what you need (water, a ride, medicine)': 'Nota si quiere: qué necesita (agua, transporte, medicinas)',
+  'Never put your address here. Everyone signed up for this emergency can read it.': 'Nunca ponga su dirección aquí. Todos los que se anotaron en esta emergencia lo pueden leer.',
 }
 
 export default es
