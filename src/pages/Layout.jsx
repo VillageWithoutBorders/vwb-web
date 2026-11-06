@@ -72,6 +72,7 @@ export default function Layout() {
       // Reporting an emergency too (Nov 5): storms take the signal down first.
       import('./EmergencyEvents').catch(() => {})
       import('./CreateEvent').catch(() => {})
+      import('./EventDetail').catch(() => {})
       // The list of kinds of help too, kept on the phone by loadSkillCategories.
       let saved = null
       try { saved = localStorage.getItem('vwb_skill_list') } catch { /* private window */ }

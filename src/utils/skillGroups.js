@@ -83,9 +83,12 @@ SKILL_GROUPS.forEach((g, gi) => {
 const SAVED = 'vwb_skill_list'
 
 export async function loadSkillCategories() {
-  let { data, error } = await supabase.from('skill_categories').select('*')
+  // No signal: use the copy on the phone right away (Nov 5). Each try would otherwise wait several seconds.
+  let { data, error } = typeof navigator !== 'undefined' && navigator.onLine === false
+    ? { data: null, error: { message: 'No signal' } }
+    : await supabase.from('skill_categories').select('*')
   if (error) {
-    console.error('Failed to load skill categories:', error)
+    if (error.message !== 'No signal') console.error('Failed to load skill categories:', error)
     try { data = JSON.parse(localStorage.getItem(SAVED) || 'null') } catch { data = null }
     if (!data || !data.length) data = SKILL_GROUPS.flatMap((g) => g.skills.map((title) => ({ title, group_name: g.name })))
   } else if (data && data.length) {

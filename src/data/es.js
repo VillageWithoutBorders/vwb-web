@@ -670,6 +670,20 @@ const es = {
   'Tap again to remove the saved report {title}': 'Toque otra vez para quitar el reporte guardado {title}',
   'Remove the saved report {title}': 'Quitar el reporte guardado {title}',
   'You can still ask for help or report an emergency. Some pages open only with signal.': 'Puede pedir ayuda o reportar una emergencia de todos modos. Algunas páginas solo abren con señal.',
+
+  // Check-ins and sign-ups on an emergency with no signal (Nov 5).
+  "No signal, and this phone can't save this for later. Try again when you have signal.": 'No hay señal, y este teléfono no puede guardar esto para después. Intente otra vez cuando tenga señal.',
+  'No signal. Saved on your phone. It sends by itself when you have signal.': 'No hay señal. Se guardó en su teléfono. Se envía solo cuando tenga señal.',
+  "This emergency has not been opened on this phone before, so it can't show without signal. It will open when the signal is back.": 'Esta emergencia no se ha abierto antes en este teléfono, así que no se puede mostrar sin señal. Se abrirá cuando vuelva la señal.',
+  'This is what this page showed {when}. Check-ins and sign-ups you make now are saved on your phone and sent when you have signal.': 'Esto es lo que mostraba esta página ({when}). Los reportes de cómo está y las inscripciones que haga ahora se guardan en su teléfono y se envían cuando tenga señal.',
+  'Waiting for signal': 'Esperando señal',
+  'Check-in: {status}': 'Cómo está: {status}',
+  'Your check-in was sent.': 'Se envió cómo está usted.',
+  'Your sign-up was sent.': 'Se envió su inscripción.',
+  'Your saved emergency updates were sent.': 'Se enviaron sus cosas guardadas de la emergencia.',
+  'A saved emergency update needs you': 'Algo guardado de una emergencia necesita su respuesta',
+  '1 emergency update is waiting for signal': '1 cosa de una emergencia está esperando señal',
+  '{n} emergency updates are waiting for signal': '{n} cosas de emergencias están esperando señal',
 }
 
 export default es

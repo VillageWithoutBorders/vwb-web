@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { usePendingAsks, sendPendingAsks, removePendingAsk } from '../utils/pendingAsks'
 import { usePendingReports } from '../utils/pendingReports'
+import { usePendingEventActions } from '../utils/pendingEventActions'
 import Icon from './Icon'
 import { useT, t } from '../utils/lang'
 
@@ -26,7 +27,7 @@ export default function PendingAsks() {
   const uid = user?.id
   const list = usePendingAsks(uid)
   // A saved emergency report has its own note about the signal (PendingReports).
-  const reportsWaiting = usePendingReports(uid).length
+  const reportsWaiting = usePendingReports(uid).length + usePendingEventActions(uid).length
   const [online, setOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine !== false)
   const [busy, setBusy] = useState(false)
   const [sentNote, setSentNote] = useState('')
@@ -67,8 +68,8 @@ export default function PendingAsks() {
   }, [uid, waiting]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // No signal and nothing saved: say so, so a tap that does nothing makes sense.
-  // Ask for Help and Report an emergency have their own notes.
-  if (uid && !online && !list.length && !reportsWaiting && pathname !== '/ask' && pathname !== '/emergency/create') {
+  // Ask for Help and the emergency pages have their own notes.
+  if (uid && !online && !list.length && !reportsWaiting && pathname !== '/ask' && !pathname.startsWith('/emergency')) {
     return (
       <p className="pa-nosignal" role="status">
         <b>{t('No signal right now.')}</b> {t('You can still ask for help or report an emergency. Some pages open only with signal.')}

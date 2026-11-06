@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useBlockedBy } from '../utils/blockedBy'
 import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
@@ -15,7 +15,10 @@ import Icon from '../components/Icon'
 import ResponseCamp from '../components/ResponseCamp'
 import EventUpdates from '../components/EventUpdates'
 import { askConfirm, tell } from '../components/AdminDialog'
-import { useT } from '../utils/lang'
+import { useT, getLang } from '../utils/lang'
+import { isNoSignal } from '../utils/pendingAsks'
+import { saveEventAction, usePendingEventActions, pendingEventActions } from '../utils/pendingEventActions'
+import { saveEventCopy, readEventCopy } from '../utils/eventCopy'
 
 const STATUS_CONFIG = {
   safe:        { label: 'Safe',         color: 'var(--accent)', bg: 'var(--success-bg)', icon: 'check' },
@@ -79,14 +82,86 @@ export default function EventDetail() {
   const [selectedDuplicate, setSelectedDuplicate] = useState(null)
   const [closingEvent, setClosingEvent] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState(null)
+  // No signal (Nov 5): the page shows the copy kept on this phone. offlineAt is when
+  // that copy was made; noCopy means this emergency was never opened on this phone.
+  const [offlineAt, setOfflineAt] = useState(null)
+  const [noCopy, setNoCopy] = useState(false)
+  // Check-ins and sign-ups saved with no signal, for this emergency.
+  const waitingHere = usePendingEventActions(user?.id).filter((a) => String(a.row.event_id) === String(id))
 
   useEffect(() => { loadAll() }, [id])
 
+  // Signal back: load the real page again.
+  useEffect(() => {
+    const up = () => loadAll()
+    window.addEventListener('online', up)
+    return () => window.removeEventListener('online', up)
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A saved check-in or sign-up just went out: show the page as it is now.
+  const waitingCount = waitingHere.filter((a) => !a.problem).length
+  const lastWaiting = useRef(waitingCount)
+  useEffect(() => {
+    const went = waitingCount < lastWaiting.current
+    lastWaiting.current = waitingCount
+    if (went && navigator.onLine !== false) loadAll()
+  }, [waitingCount]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Put this phone's saved check-ins and sign-up on the page, marked as waiting.
+  function withWaiting(sups, cins) {
+    let signupsOut = sups
+    let checkInsOut = cins
+    // Read fresh from the phone: something may have been saved a moment ago.
+    for (const a of pendingEventActions(user.id).filter((x) => String(x.row.event_id) === String(id))) {
+      if (a.problem) continue
+      if (a.kind === 'signup' && !sups.some((x) => x.user_id === user.id)) {
+        signupsOut = [...signupsOut, { id: 'waiting-' + a.key, user_id: user.id, display_name: profile?.display_name || t('Neighbor'), avatar_url: profile?.avatar_url || null, created_at: a.saved_at, waiting: true, ...a.row }]
+      }
+      if (a.kind === 'checkin') {
+        checkInsOut = [{ id: 'waiting-' + a.key, user_id: user.id, display_name: profile?.display_name || t('Neighbor'), avatar_url: profile?.avatar_url || null, created_at: a.saved_at, status: a.row.status, note: a.row.note, waiting: true }, ...checkInsOut]
+      }
+    }
+    return { signupsOut, checkInsOut }
+  }
+
+  function showLists(sups, cins) {
+    const { signupsOut, checkInsOut } = withWaiting(sups, cins)
+    setSignups(signupsOut)
+    setMySignup(signupsOut.find(s => s.user_id === user.id) || null)
+    setCheckIns(checkInsOut)
+    const latest = {}
+    checkInsOut.forEach(c => { if (!latest[c.user_id]) latest[c.user_id] = c })
+    setLatestStatuses(latest)
+  }
+
+  // No signal: show the copy kept on this phone, if there is one.
+  async function showCopy() {
+    const copy = readEventCopy(user.id, id)
+    // The kinds of help are kept on the phone; don't wait on them.
+    loadSkillCategories().then(setSkillCats).catch(() => {})
+    if (!copy) { setEvent(null); setNoCopy(true); setLoading(false); return }
+    setNoCopy(false)
+    setEvent(copy.event)
+    setRoleCounts(copy.roleCounts || [])
+    setResources(copy.resources || [])
+    setCloseVotes(copy.closeVotes || [])
+    showLists(copy.signups || [], copy.checkIns || [])
+    setOfflineAt(copy.saved_at)
+    setLoading(false)
+  }
+
   async function loadAll() {
+    // No signal: the copy on this phone, right away. (Each try would otherwise wait several seconds.)
+    if (navigator.onLine === false) { await showCopy(); return }
     setLoading(true)
+    const snap = {}
     const { data: ev, error: evErr } = await supabase.from('emergency_events').select('*').eq('id', id).single()
     if (evErr) console.error('Failed to load event:', evErr)
+    if (evErr && isNoSignal(evErr)) { await showCopy(); return }
+    setOfflineAt(null)
+    setNoCopy(false)
     if (ev) setEvent(ev)
+    snap.event = ev || null
 
     const { data: sups, error: supsErr } = await supabase.from('event_signups').select('*').eq('event_id', id)
     if (supsErr) console.error('Failed to load signups:', supsErr)
@@ -96,13 +171,13 @@ export default function EventDetail() {
         if (profErr) console.error('Failed to load profile for', s.user_id, profErr)
         return { ...s, display_name: p?.display_name || t('Neighbor'), avatar_url: p?.avatar_url || null }
       }))
-      setSignups(withNames)
-      setMySignup(withNames.find(s => s.user_id === user.id) || null)
+      snap.signups = withNames
     }
 
     const { data: rc, error: rcErr } = await supabase.rpc('event_role_counts', { p_event: Number(id) })
     if (rcErr) console.error('Failed to load role counts:', rcErr)
     setRoleCounts(Array.isArray(rc) ? rc : [])
+    snap.roleCounts = Array.isArray(rc) ? rc : []
 
     setSkillCats(await loadSkillCategories())
 
@@ -116,11 +191,9 @@ export default function EventDetail() {
         if (profErr) console.error('Failed to load profile for', uid, profErr)
         nameMap[uid] = { name: p?.display_name || t('Neighbor'), avatar_url: p?.avatar_url || null }
       }
-      setCheckIns(cins.map(c => ({ ...c, display_name: nameMap[c.user_id]?.name || t('Neighbor'), avatar_url: nameMap[c.user_id]?.avatar_url || null })))
-      const latest = {}
-      cins.forEach(c => { if (!latest[c.user_id]) latest[c.user_id] = c })
-      setLatestStatuses(latest)
+      snap.checkIns = cins.map(c => ({ ...c, display_name: nameMap[c.user_id]?.name || t('Neighbor'), avatar_url: nameMap[c.user_id]?.avatar_url || null }))
     }
+    showLists(snap.signups || [], snap.checkIns || [])
 
     const { data: res, error: resErr } = await supabase.from('event_resources').select('*').eq('event_id', id).order('created_at', { ascending: false })
     if (resErr) console.error('Failed to load resources:', resErr)
@@ -133,7 +206,8 @@ export default function EventDetail() {
         if (profErr) console.error('Failed to load profile for', uid, profErr)
         rNameMap[uid] = p?.display_name || t('Neighbor')
       }
-      setResources(res.map(r => ({ ...r, offered_by_name: rNameMap[r.offered_by] || t('Neighbor'), claimed_by_name: r.claimed_by ? (rNameMap[r.claimed_by] || t('Neighbor')) : null })))
+      snap.resources = res.map(r => ({ ...r, offered_by_name: rNameMap[r.offered_by] || t('Neighbor'), claimed_by_name: r.claimed_by ? (rNameMap[r.claimed_by] || t('Neighbor')) : null }))
+      setResources(snap.resources)
     }
 
 
@@ -141,17 +215,51 @@ export default function EventDetail() {
     const { data: cvotes, error: cvotesErr } = await supabase.from('event_close_votes').select('*').eq('event_id', id)
     if (cvotesErr) console.error('Failed to load close votes:', cvotesErr)
     if (cvotes) setCloseVotes(cvotes)
+    snap.closeVotes = cvotes || []
+    // Keep a copy on this phone for when the signal is gone (only a page that loaded fully).
+    if (ev && !supsErr && !cinsErr) saveEventCopy(user.id, id, snap)
     setLoading(false)
   }
 
+  // No signal: keep a check-in or sign-up on this phone. It sends by itself later.
+  function saveForLater(kind, row) {
+    const item = saveEventAction(user.id, kind, { event_id: Number(id), ...row }, event?.title)
+    if (!item) {
+      tell(t("No signal, and this phone can't save this for later. Try again when you have signal."), { tone: 'error' })
+      return false
+    }
+    tell(t('No signal. Saved on your phone. It sends by itself when you have signal.'))
+    return true
+  }
+
   async function submitCheckIn(status) {
-    setSubmitting(true)
-    const { error } = await supabase.from('event_check_ins').insert({ event_id: Number(id), user_id: user.id, status, note: statusNote.trim() || null })
-    setSubmitting(false)
-    if (error) { console.error('Failed to submit check-in:', error); tell(t('Could not submit your check-in. Try again.'), { tone: 'error' }); return }
+    const row = { status, note: statusNote.trim() || null }
+    let saved = false
+    if (navigator.onLine === false) {
+      saved = saveForLater('checkin', row)
+      if (!saved) return
+    } else {
+      setSubmitting(true)
+      const { error } = await supabase.from('event_check_ins').insert({ event_id: Number(id), user_id: user.id, ...row })
+      setSubmitting(false)
+      if (error && isNoSignal(error)) {
+        console.error('Check-in could not reach VWB, saving it:', error)
+        saved = saveForLater('checkin', row)
+        if (!saved) return
+      } else if (error) { console.error('Failed to submit check-in:', error); tell(t('Could not submit your check-in. Try again.'), { tone: 'error' }); return }
+    }
     setShowStatusPicker(false)
     setStatusNote('')
+    if (saved) { await showCopyOrKeep(); return }
     await loadAll()
+  }
+
+  // After saving with no signal: the waiting item shows on the page right away.
+  async function showCopyOrKeep() {
+    const copy = readEventCopy(user.id, id)
+    if (copy) { await showCopy(); return }
+    // Never kept a copy: add the waiting item to what is on screen now.
+    showLists(signups.filter((s) => !s.waiting), checkIns.filter((c) => !c.waiting))
   }
 
   async function submitResource() {
@@ -202,19 +310,31 @@ export default function EventDetail() {
   }
 
   async function handleSignup(role) {
-    setSubmitting(true)
-    const { error } = await supabase.from('event_signups').insert({
-      event_id: Number(id), user_id: user.id, role,
+    const row = {
+      role,
       skills: role === 'responder' ? selectedSkills : [],
       availability: signupAvail.trim() || null,
       notes: signupNotes.trim() || null,
-    })
-    setSubmitting(false)
-    if (error) { console.error('Failed to sign up:', error); tell(t('Could not sign up. Try again.'), { tone: 'error' }); return }
+    }
+    let saved = false
+    if (navigator.onLine === false) {
+      saved = saveForLater('signup', row)
+      if (!saved) return
+    } else {
+      setSubmitting(true)
+      const { error } = await supabase.from('event_signups').insert({ event_id: Number(id), user_id: user.id, ...row })
+      setSubmitting(false)
+      if (error && isNoSignal(error)) {
+        console.error('Sign-up could not reach VWB, saving it:', error)
+        saved = saveForLater('signup', row)
+        if (!saved) return
+      } else if (error) { console.error('Failed to sign up:', error); tell(t('Could not sign up. Try again.'), { tone: 'error' }); return }
+    }
     setShowSignupForm(null)
     setSignupNotes('')
     setSignupAvail('')
     setSelectedSkills([])
+    if (saved) { await showCopyOrKeep(); return }
     await loadAll()
   }
 
@@ -483,6 +603,12 @@ export default function EventDetail() {
   }
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>{t('Loading...')}</div>
+  if (!event && noCopy) return (
+    <div style={{ padding: '2rem 1rem', maxWidth: '600px', margin: '0 auto' }}>
+      <p className="ask-offline" role="status"><b>{t('No signal right now.')}</b> {t('This emergency has not been opened on this phone before, so it can\'t show without signal. It will open when the signal is back.')}</p>
+      <p style={{ textAlign: 'center' }}><a href="tel:911" className="btn ce-btn ce-btn-danger">{t('Call 911')}</a></p>
+    </div>
+  )
   if (!event) return <div style={{ padding: '2rem', textAlign: 'center' }}>{t('Event not found.')}</div>
 
   const responders = signups.filter(s => s.role === 'responder' || s.role === 'coordinator')
@@ -516,6 +642,11 @@ export default function EventDetail() {
         </div>
       </div>
 
+      {offlineAt && (
+        <p className="ask-offline" role="status">
+          <b>{t('No signal right now.')}</b> {t('This is what this page showed {when}. Check-ins and sign-ups you make now are saved on your phone and sent when you have signal.', { when: new Date(offlineAt).toLocaleString(getLang() === 'es' ? 'es-US' : 'en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) })}
+        </p>
+      )}
       {/* Oct 27: say what happens next, for everyone, right at the top. */}
       {justReported && (
         <div className="ev-wait" role="status">
@@ -536,7 +667,8 @@ export default function EventDetail() {
       )}
       {event.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.5rem' }}>{t('{place} ({n} mile radius)', { place: event.location_name, n: event.radius_miles })}</p>}
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+      {/* Nov 5: two by two on small phones, so "Responders" fits at 320px. */}
+      <div className="ev-stats">
         <div style={{ flex: 1, textAlign: 'center', padding: '0.6rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
           <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--accent)' }}>{responderCount}</div>
           <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{t('Responders')}</div>
@@ -575,6 +707,7 @@ export default function EventDetail() {
             ) : (
               <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{t('No check-in yet')}</span>
             )}
+            {myLatest?.waiting && <span className="ev-waiting">{t('Waiting for signal')}</span>}
           </div>
           {showStatusPicker && (
             <div>
@@ -708,7 +841,7 @@ export default function EventDetail() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><AvatarDisplay url={c.avatar_url} userId={c.user_id} size={22} /><UserName userId={c.user_id} name={c.display_name} style={{ fontWeight: 600, fontSize: '0.9rem' }} /></div>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{timeAgo(c.created_at)}</span>
+                  {c.waiting ? <span className="ev-waiting">{t('Waiting for signal')}</span> : <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{timeAgo(c.created_at)}</span>}
                 </div>
                 <span style={{ color: conf.color, fontSize: '0.8125rem', fontWeight: 600 }}>{t(conf.label)}</span>
                 {c.note && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.2rem 0 0' }}>{c.note}</p>}
