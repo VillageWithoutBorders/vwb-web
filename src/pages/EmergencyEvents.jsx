@@ -7,6 +7,7 @@ import { createNotification } from '../utils/notificationHelpers'
 import { useGoBack } from '../components/BackLink'
 import { tell } from '../components/AdminDialog'
 import { useT } from '../utils/lang'
+import { isNoSignal } from '../utils/pendingAsks'
 
 const VERIFY_THRESHOLD = 2
 
@@ -21,14 +22,26 @@ export default function EmergencyEvents() {
   const [mySignups, setMySignups] = useState({})
   const [myUpvotes, setMyUpvotes] = useState({})
   const [tab, setTab] = useState('active')
+  // Nov 5: when the list can't load (often no signal), say so instead of "No active emergencies".
+  const [loadFailed, setLoadFailed] = useState(false)
 
   useEffect(() => { loadEvents() }, [])
+  // Load again when the signal comes back.
+  useEffect(() => {
+    const up = () => loadEvents()
+    window.addEventListener('online', up)
+    return () => window.removeEventListener('online', up)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [checkable, setCheckable] = useState(() => new Set())
   async function loadEvents() {
+    // No signal: say so right away. (Each try would otherwise wait several seconds.)
+    if (navigator.onLine === false) { setLoadFailed(true); setLoading(false); return }
     setLoading(true)
     const { data: active, error: activeErr } = await supabase.from('emergency_events').select('*').eq('status', 'active').order('created_at', { ascending: false })
     if (activeErr) console.error('Failed to load active events:', activeErr)
+    setLoadFailed(!!activeErr)
+    if (activeErr && isNoSignal(activeErr)) { setLoading(false); return }
     if (active) setEvents(active)
 
     // Hope Ambassadors check emergencies in their own villages (vwb-admin-round3.sql).
@@ -167,7 +180,12 @@ export default function EmergencyEvents() {
       {/* ========== ACTIVE TAB ========== */}
       {!loading && tab === 'active' && (
         <>
-          {events.length === 0 && (
+          {loadFailed && events.length === 0 && (
+            <div className="ask-offline" role="status">
+              <b>{t("We couldn't load emergencies right now.")}</b> {t('Check your signal. You can still report one, and it sends by itself when you have signal.')}
+            </div>
+          )}
+          {!loadFailed && events.length === 0 && (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}><Icon name="sun" /></p>
               <p style={{ fontWeight: 700 }}>{t('No active emergencies')}</p>
