@@ -113,7 +113,6 @@ const es = {
   'Your saved request was sent. Neighbors can see it now.': 'Su pedido guardado se envió. Sus vecinos ya lo pueden ver.',
   'Your {n} saved requests were sent. Neighbors can see them now.': 'Sus {n} pedidos guardados se enviaron. Sus vecinos ya los pueden ver.',
   'No signal right now.': 'No hay señal ahora.',
-  'You can still ask for help. Some pages open only with signal.': 'Todavía puede pedir ayuda. Algunas páginas solo abren con señal.',
   'A saved request needs you': 'Un pedido guardado necesita su atención',
   '1 request is waiting for signal': '1 pedido está esperando señal',
   '{n} requests are waiting for signal': '{n} pedidos están esperando señal',
@@ -650,6 +649,27 @@ const es = {
   'Add the name of the resource.': 'Escriba el nombre del recurso.',
   'Pick the kind of help your area is missing.': 'Elija el tipo de ayuda que falta en su zona.',
   "We couldn't send that. Check your connection and try again.": 'No pudimos enviarlo. Revise su conexión e intente otra vez.',
+
+  // Emergency reports with no signal (Nov 5). Kept here, not in es-more.js, so they
+  // show in Spanish even if the rest of the words never loaded on this phone.
+  "No signal, and this phone can't save the report for later. Try again when you have signal. If someone is in danger, call 911.": 'No hay señal, y este teléfono no puede guardar el reporte para después. Intente otra vez cuando tenga señal. Si alguien está en peligro, llame al 911.',
+  'You can still report. It is saved on your phone and sends by itself when you have signal.': 'Puede reportar de todos modos. Se guarda en su teléfono y se envía solo cuando tenga señal.',
+  'Saved on your phone': 'Guardado en su teléfono',
+  'Your report will send by itself when your phone has signal. Keep the app open if you can.': 'Su reporte se enviará solo cuando su teléfono tenga señal. Deje la aplicación abierta si puede.',
+  'You will see it at the top of your pages until it sends.': 'Lo verá arriba en sus páginas hasta que se envíe.',
+  'It is placed at the middle of your zip code area, never at your home.': 'Se ubica en el centro de la zona de su código postal, nunca en su casa.',
+  "We couldn't load emergencies right now.": 'No pudimos cargar las emergencias ahora.',
+  'Check your signal. You can still report one, and it sends by itself when you have signal.': 'Revise su señal. Puede reportar una de todos modos, y se envía sola cuando tenga señal.',
+  'Your saved emergency report was sent. Neighbors can see it now.': 'Su reporte de emergencia guardado se envió. Sus vecinos ya lo pueden ver.',
+  'Your {n} saved emergency reports were sent. Neighbors can see them now.': 'Sus {n} reportes de emergencia guardados se enviaron. Sus vecinos ya los pueden ver.',
+  'Open it': 'Abrirlo',
+  'A saved emergency report needs you': 'Un reporte de emergencia guardado necesita su respuesta',
+  '1 emergency report is waiting for signal': '1 reporte de emergencia está esperando señal',
+  '{n} emergency reports are waiting for signal': '{n} reportes de emergencia están esperando señal',
+  'While you had no signal, someone reported something like this: {title}. Is it the same emergency?': 'Mientras no tenía señal, alguien reportó algo parecido: {title}. ¿Es la misma emergencia?',
+  'Tap again to remove the saved report {title}': 'Toque otra vez para quitar el reporte guardado {title}',
+  'Remove the saved report {title}': 'Quitar el reporte guardado {title}',
+  'You can still ask for help or report an emergency. Some pages open only with signal.': 'Puede pedir ayuda o reportar una emergencia de todos modos. Algunas páginas solo abren con señal.',
 }
 
 export default es

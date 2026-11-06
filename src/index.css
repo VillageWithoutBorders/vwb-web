@@ -6710,6 +6710,13 @@ html.calm-motion .nr-card:active { transform: none; }
 .pa-remove:active, .pa-ok:active { transform: scale(0.97); }
 @media (prefers-reduced-motion: reduce) { .pa-remove:active, .pa-ok:active { transform: none; } }
 .pa-nosignal { margin: 8px 0 12px; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--gold); background: var(--surface); color: var(--text); line-height: 1.45; }
+/* Emergency reports saved with no signal (Nov 5): same note as saved asks, with a red edge. */
+.pending-reports { border-color: var(--danger); }
+.pr-911 a { color: var(--danger); font-weight: 700; text-decoration: underline; display: inline-block; padding: 12px 4px; margin: -12px 0; }
+.pr-similar { color: var(--text) !important; font-weight: 600; line-height: 1.4; }
+.pr-choices { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.pr-choices .pa-ok { flex: 1 1 9rem; padding: 0 12px; }
+.pr-911 a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* Nov 3: page titles wrap instead of running off the edge at very large zoom (250%). */
 .profile-page h1, .fh-head h1, .ask-page h1 { min-width: 0; overflow-wrap: anywhere; }

@@ -4,6 +4,7 @@ import { ensureDeviceKeypair, flushOutbox } from '../lib/e2ee'
 import { peekReturnTo } from '../utils/returnTo'
 import { tell } from '../components/AdminDialog'
 import { clearAllPendingAsks, isNoSignal } from '../utils/pendingAsks'
+import { clearAllPendingReports } from '../utils/pendingReports'
 
 // Opening VWB with no signal (Nov 3). The last profile and groups that loaded
 // are kept on this phone, in the same place as the sign-in, so the app can open
@@ -149,7 +150,7 @@ export function AuthProvider({ children }) {
       async (event, session) => {
         // A real sign out always signs out. Otherwise, with no signal, keep a saved sign-in.
         const u = session?.user ?? (event === 'SIGNED_OUT' ? null : noSignalUser())
-        if (event === 'SIGNED_OUT') { clearCopy(); clearAllPendingAsks() }
+        if (event === 'SIGNED_OUT') { clearCopy(); clearAllPendingAsks(); clearAllPendingReports() }
         setUser(u)
         if (u) {
           ensureProfile(u)
@@ -432,6 +433,7 @@ export function AuthProvider({ children }) {
   async function signOut() {
     // Requests saved with no signal, and the profile copy, stay on this phone only while signed in.
     clearAllPendingAsks()
+    clearAllPendingReports()
     clearCopy()
     const { error } = await supabase.auth.signOut()
     if (error) console.error('[AuthContext] signOut', error)
