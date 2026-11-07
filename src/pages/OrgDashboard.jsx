@@ -16,6 +16,7 @@ import Icon from '../components/Icon'
 import { askConfirm } from '../components/AdminDialog'
 import { orgWords } from '../utils/roleWords'
 import RoleLog from '../components/RoleLog'
+import GroupDownload from '../components/GroupDownload'
 import PlaceReports, { usePlaceReportCount } from '../components/PlaceReports'
 import { getLang, useT } from '../utils/lang'
 
@@ -467,6 +468,7 @@ export default function OrgDashboard() {
           </section>
           <OrgRules orgId={id} isHead={isHead} org={orgInfo} onTitles={load} />
           <RoleLog kind="org" placeId={id} org={orgInfo} />
+          {isHead && <GroupDownload orgId={id} />}
           {isHead && headCount > 1 && (
             <section className="hub-section" aria-labelledby="od-step">
               <div className="hub-section-head"><h2 id="od-step">{t('Your role')}</h2></div>
