@@ -7,6 +7,9 @@ import { useT, getLang } from '../utils/lang'
 // linked from the last card of CommunityGuidelines.jsx. Reuses the existing
 // .help-page / .help-section classes from index.css rather than introducing
 // new styles.
+
+// Nov 7: the "What changed" note shows until Dec 8, 2026, then goes away by itself.
+const SHOW_CHANGES = new Date() < new Date(Date.UTC(2026, 11, 8))
 export default function Terms() {
   const navigate = useNavigate()
   const goBack = useGoBack()
@@ -40,7 +43,19 @@ export default function Terms() {
       {getLang() === 'es' && (
         <p className="help-section" role="note" style={{ margin: '0.25rem 0 1rem' }}>Estos términos están en inglés. Si necesita ayuda para entenderlos, escriba a info@villagewithoutborders.org.</p>
       )}
-      <p lang="en" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 1.5rem' }}>Last updated: September 2026</p>
+      <p lang="en" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 1rem' }}>Last updated: November 2026</p>
+      {/* Nov 7: a short note about what changed, shown for one month. */}
+      {SHOW_CHANGES && (
+        <div className="help-section" lang="en" role="note" style={{ margin: '0 0 1.5rem' }}>
+          <p style={{ margin: '0 0 0.4rem' }}><strong>What changed in November 2026</strong></p>
+          <ul style={{ margin: 0, paddingLeft: '1.25rem', listStyle: 'disc' }}>
+            <li>Roles now include Keepers and Helpers, Heads and organizers, and VWB admins as the VWB team.</li>
+            <li style={{ marginTop: '0.3rem' }}>VWB never uses your phone&apos;s location. Your neighborhood only shows if you choose to share it.</li>
+            <li style={{ marginTop: '0.3rem' }}>A few village chats are scrambled (end-to-end encrypted).</li>
+            <li style={{ marginTop: '0.3rem' }}>New: who can see the database, and how group downloads, decisions and care circles work.</li>
+          </ul>
+        </div>
+      )}
 
       <div className="help-section" lang="en">
         <p>Welcome to Village Without Borders (VWB). This platform connects neighbors who need help with neighbors who can give it. We are a mutual aid community, not a charity or a government service. By using this app, you agree to the terms below.</p>
@@ -89,14 +104,16 @@ export default function Terms() {
       <details className="help-section terms-section" id="terms-3">
         <summary>
           <span className="terms-summary-title">3. Roles and trust</span>
-          <span className="terms-summary-hint">Neighbor, Hope Ambassador, Admin, and Founder</span>
+          <span className="terms-summary-hint">Neighbors, leaders, Hope Ambassadors, VWB admins, and the founder</span>
         </summary>
         <div className="terms-body">
-        <p>Our community has a trust system with four levels:</p>
+        <p>Our community has these roles:</p>
         <ul>
-          <li><strong>Neighbor.</strong> Any verified member. Can post help requests, browse offers, and send messages.</li>
-          <li><strong>Hope Ambassador.</strong> A neighbor who has applied to actively help others. An admin reviews and approves each application before the Ambassador can post in Announcements.</li>
-          <li><strong>Admin.</strong> A trusted member who helps manage the platform. Earned through an application process reviewed by existing leadership.</li>
+          <li><strong>Neighbor.</strong> Any member. Can ask for help, offer help, join villages and groups, and send messages.</li>
+          <li><strong>Keepers and Helpers.</strong> Neighbors who look after a village or an emergency crew.</li>
+          <li><strong>Heads and organizers.</strong> Members who run a group. Each group can pick its own titles.</li>
+          <li><strong>Hope Ambassador.</strong> A neighbor who applied to help others in their area. A VWB admin approves each one.</li>
+          <li><strong>VWB admin.</strong> A member of the VWB team who keeps the app running and reviews reports.</li>
           <li><strong>Founder.</strong> The creator and steward of VWB.</li>
         </ul>
         <p>Having a higher trust role does not grant anyone the right to demand personal information from you, pressure you into tasks, or override your boundaries.</p>
@@ -114,17 +131,17 @@ export default function Terms() {
           <li>Your display name</li>
           <li>Your avatar</li>
           <li>Skills you choose to list</li>
-          <li>Your neighborhood (general area only)</li>
-          <li>Your role (Neighbor, Hope Ambassador, Admin)</li>
+          <li>Your neighborhood, only if you choose to share it</li>
+          <li>Your roles (for example Hope Ambassador, Keeper, or a group&apos;s Head)</li>
           <li>Posts you make in public spaces (Announcements, village chats, help requests, offers)</li>
         </ul>
         <p><strong>What is never visible to other members:</strong></p>
         <ul>
           <li>Your email address</li>
-          <li>Your precise location (even if you enable location features, coordinates are rounded for privacy)</li>
+          <li>Your location. VWB never uses your phone&apos;s location. Places come from zip codes and town names. Any point on a map is the center of a zip code, never a home.</li>
         </ul>
         <p><strong>Your responsibility:</strong></p>
-        <p>Do not share personal information in public areas of the app. This includes Announcements, village chats, help request descriptions, offer listings, community feed posts, and any other space visible to all members.</p>
+        <p>Do not share personal information in public areas of the app. This includes Announcements, village chats, help request descriptions, offer listings, group pages, and any other space visible to all members.</p>
         <p>Information you should keep out of public posts:</p>
         <ul>
           <li>Your home address or precise location</li>
@@ -210,11 +227,13 @@ export default function Terms() {
           <span className="terms-summary-hint">What stays private and what everyone can see</span>
         </summary>
         <div className="terms-body">
-        <p>Everything you post in public spaces (Announcements, village chats, help requests, offers, the community feed) may be visible to all members.</p>
+        <p>Everything you post in public spaces (Announcements, village chats, help requests, offers, group pages) may be visible to all members.</p>
         <p>Direct messages between two people are end-to-end encrypted. That means only the two people in the conversation can ever read them, not admins, not the founder, not us. If you need to report something from a private conversation, you attach your own copy of the messages you&apos;re reporting, the same way you&apos;d forward a text message.</p>
-        <p>Announcements and village chats work differently. Announcements are open for every member to read, and only Hope Ambassadors and admins can post there. A village chat is for neighbors near a village. Anyone with an account and a zip code within reach can join, there is no limit on how many people can join, and you can join more than one. Before you join, you must agree that you understand the risk of being in a community chat. People who join later cannot read what was said before they joined. Only people who joined a village chat can open it, and VWB admins cannot open village chats in the app. Village chats are not end-to-end encrypted the way private messages are. The words are stored as readable text on our servers, and the app keeps everyone who has not joined out. Everyone in the chat can read it, so keep sensitive details out. Two members of a village chat can ask to have someone removed, and a second member has to agree. You can leave a village chat any time.</p>
+        <p>Announcements and village chats work differently. Announcements are open for every member to read, and only Hope Ambassadors and admins can post there. A village chat is for neighbors near a village. Anyone with an account and a zip code within reach can join, there is no limit on how many people can join, and you can join more than one. Before you join, you must agree that you understand the risk of being in a community chat. People who join later cannot read what was said before they joined. Only people who joined a village chat can open it, and VWB admins cannot open village chats in the app. Most village chats are not end-to-end encrypted the way private messages are. A few villages have scrambled chats, and the chat says so. The words are stored as readable text on our servers, and the app keeps everyone who has not joined out. Everyone in the chat can read it, so keep sensitive details out. Two members of a village chat can ask to have someone removed, and a second member has to agree. You can leave a village chat any time.</p>
         <p><strong>Village keepers.</strong> Every village chat has a keeper. The keeper is the neighbor who started the village, or the member who took over from them. A keeper looks after the village and can post announcements for it. A keeper cannot read anything that other members cannot read. One neighbor can keep up to three villages. A keeper can hand the role to another member at any time. If the keeper leaves or is removed, the role passes to a helper first, then to the member who has been there longest. If a village has no members, the first person who joins becomes its keeper.</p>
         <p>If you choose to make a recovery key, we store a locked backup of your message key that only your recovery key can open. We never see the recovery key, so we cannot open the backup or your messages. If you lose the key, we cannot get it back for you. We do not keep a separate archive of messages. Announcements and village chat messages are deleted automatically after 30 days. Direct messages, Cottage Chats, and group chats are never readable by us, and we do not save copies of them.</p>
+        <p><strong>Who can see the database.</strong> To keep VWB running, a small number of key holders (the founder and up to two trusted people) can open the database itself, outside the app. There they could see things the app hides, like unscrambled chats and who reported whom. They can never read scrambled chats. Key holders only look to fix a problem or keep someone safe. They use two-step sign-in.</p>
+        <p><strong>Groups.</strong> A group&apos;s Heads can download what the group built on VWB, including members&apos; display names and roles, but never chats or contact details. Other leaders are told each time. Group decisions never show who answered what. A group may choose a care circle of 2 to 5 members to read reports instead of its leaders. Who made a report is never shown.</p>
         <p>Cottage Chats and group chats (including general chats and Campfires) are end-to-end encrypted, so only current members can read them. When a chat sets posts to disappear, or when someone deletes a message or post for everyone, the locked text is erased from our servers. Deleting a message for yourself only hides it from you. We can&apos;t take back anything someone already read, copied, or took a screenshot of.</p>
         <p>You are responsible for what you post. Do not post content that is:</p>
         <ul>
