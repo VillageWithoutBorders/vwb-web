@@ -51,7 +51,7 @@ export const ORG_SPOTS = [
   { k: 'news', art: '/art/village-path/spot-news.webp', icon: 'megaphone', label: 'Announcements', short: 'News', em: '\u{1F4E3}', x: 83, y: 35, members: true },
   { k: 'fires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 50, y: 42, s: 1.05, members: true },
   { k: 'members', art: '/art/village-path/spot-members.webp', icon: 'card', label: 'Members', short: 'Members', em: '\u{1F4C7}', x: 83, y: 59, members: true },
-  { k: 'needs', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Needs and offers', short: 'Needs', em: '\u{1F91D}', x: 17, y: 59, members: true },
+  { k: 'needs', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Needs and offers', short: 'Needs', em: '\u{1F91D}', x: 17, y: 59 },
   { k: 'share', art: '/art/village-path/spot-share.webp', icon: 'box', label: 'What we share', short: 'Share', em: '\u{1F4E6}', x: 50, y: 64, s: 0.95 },
   { k: 'involved', art: '/art/village-path/spot-involved.webp', icon: 'raise-hand', label: 'Get involved', short: 'Get involved', em: '\u{1F64B}', x: 25, y: 85, s: 1.1 },
   { k: 'tools', art: '/art/village-path/spot-tools.webp', icon: 'toolbox', label: 'Organizer tools', short: 'Tools', em: '\u{1F9F0}', x: 75, y: 85, s: 1.1, organizers: true },

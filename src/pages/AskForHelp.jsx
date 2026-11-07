@@ -42,6 +42,9 @@ export default function AskForHelp() {
         const want = searchParams.get('org')
         return managedOrgs.some((o) => o.id === want) ? want : ''
     })
+    // Nov 7 (Jade): a group's need can show its details on the group page,
+    // only if the group ticks this. Off unless ticked.
+    const [publicDetails, setPublicDetails] = useState(false)
     const navigate = useNavigate()
     const goBack = useGoBack()
     // /ask?edit=ID opens this same form filled in, to change a request already posted.
@@ -247,6 +250,7 @@ export default function AskForHelp() {
             for_name: forOther ? forName.trim() : null,
             for_consent: forOther ? forConsent : false,
         }
+        if (postAs) row.public_details = !forOther && audience === 'everyone' && publicDetails
         // No signal: keep it on this phone and send it later.
         function saveForLater() {
             if (!savePendingAsk(user.id, { ...row, open_hours: openHours })) {
@@ -507,6 +511,16 @@ export default function AskForHelp() {
                             {managedOrgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
                         <span className="field-hint">{t('Posting as your group lists it on your group dashboard.')}</span>
+                    </div>
+                )}
+
+                {!editId && postAs && !forOther && audience === 'everyone' && (
+                    <div className="form-field">
+                        <label className="checkbox-field">
+                            <input type="checkbox" checked={publicDetails} onChange={(e) => setPublicDetails(e.target.checked)} aria-describedby="publicDetailsHint" />
+                            <span>{t('Show the details on our group page')}</span>
+                        </label>
+                        <span className="field-hint" id="publicDetailsHint">{t('Anyone on VWB can read them there. Only say what is needed, like "diapers, size 4, 2 packs". Never who it is for, where to bring it, or anything about health, family, or legal matters. Left off, the page shows only the kind of help.')}</span>
                     </div>
                 )}
 

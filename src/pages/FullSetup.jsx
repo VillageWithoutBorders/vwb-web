@@ -26,7 +26,10 @@ export default function FullSetup() {
   const navigate = useNavigate()
   const t = useT()
   const [params, setParams] = useSearchParams()
-  const step = STEPS.includes(params.get('step')) ? params.get('step') : 'avatar'
+  // Nov 7: "Anything you can share?" on Simple home opens just the skills step
+  // (/setup?step=skills&only=skills) and comes back home after.
+  const lone = params.get('only') === 'skills'
+  const step = lone ? 'skills' : (STEPS.includes(params.get('step')) ? params.get('step') : 'avatar')
   const n = STEPS.indexOf(step) + 2
   const headRef = useRef(null)
   const [busy, setBusy] = useState(false)
@@ -55,13 +58,18 @@ export default function FullSetup() {
 
   return (
     <div className="fs-page">
-      {STEPS.indexOf(step) > 0 && (
+      {lone && (
+        <button type="button" className="fs-back" onClick={() => navigate('/', { replace: true })}>&#8592; {t('Back')}</button>
+      )}
+      {!lone && STEPS.indexOf(step) > 0 && (
         <button type="button" className="fs-back" onClick={() => go(STEPS[STEPS.indexOf(step) - 1])}>&#8592; {t('Back')}</button>
       )}
-      <div className="step-indicator">
-        <span className="step-text">{t('Step {n} of {total}', { n, total: TOTAL })}</span>
-        <div className="step-bar"><div className="step-fill" style={{ width: (n / TOTAL) * 100 + '%' }} /></div>
-      </div>
+      {!lone && (
+        <div className="step-indicator">
+          <span className="step-text">{t('Step {n} of {total}', { n, total: TOTAL })}</span>
+          <div className="step-bar"><div className="step-fill" style={{ width: (n / TOTAL) * 100 + '%' }} /></div>
+        </div>
+      )}
 
       {step === 'avatar' && <>
         <h1 ref={headRef} tabIndex={-1}>{t('Make your avatar')}</h1>
@@ -70,7 +78,7 @@ export default function FullSetup() {
         <button type="button" className="btn btn-outline btn-full fs-skip" onClick={() => go('skills')}>{t('Skip this step')}</button>
       </>}
 
-      {step === 'skills' && <SkillsStep headRef={headRef} onNext={() => go('cottage')} />}
+      {step === 'skills' && <SkillsStep headRef={headRef} lone={lone} onNext={() => (lone ? navigate('/', { replace: true }) : go('cottage'))} />}
 
       {step === 'cottage' && <>
         <h1 ref={headRef} tabIndex={-1}>{t('Set up your cottage')}</h1>
@@ -92,7 +100,7 @@ export default function FullSetup() {
         {quick && <p className="fs-note">{t('This turns on the full app. You can go back to Simple view any time in Settings.')}</p>}
       </>}
 
-      {step !== 'done' && (
+      {step !== 'done' && !lone && (
         <button type="button" className="link-button fs-later" disabled={busy} onClick={() => finish('/', true)}>
           {t('Skip setup for now')}
         </button>
@@ -101,7 +109,7 @@ export default function FullSetup() {
   )
 }
 
-function SkillsStep({ headRef, onNext }) {
+function SkillsStep({ headRef, onNext, lone }) {
   const { user, profile, refreshProfile } = useAuth()
   const [options, setOptions] = useState([])
   const [picked, setPicked] = useState(profile?.skills || [])
@@ -123,8 +131,8 @@ function SkillsStep({ headRef, onNext }) {
   }
 
   return <>
-    <h1 ref={headRef} tabIndex={-1}>{t('What can you help with?')}</h1>
-    <p className="fs-sub">{t('Pick anything you are good at or happy to do. Neighbors who need that kind of help can find you. You can change this any time.')}</p>
+    <h1 ref={headRef} tabIndex={-1}>{t(lone ? 'Anything you can share?' : 'What can you help with?')}</h1>
+    <p className="fs-sub">{t(lone ? 'Even listening counts. Pick anything you are happy to do. Neighbors who need that kind of help can find you. You can change this any time.' : 'Pick anything you are good at or happy to do. Neighbors who need that kind of help can find you. You can change this any time.')}</p>
     {options.length === 0
       ? <p className="fs-sub" role="status">{t('Loading skills...')}</p>
       : <GroupedSkillChips selected={picked} skills={options} renderChip={(s) => (
@@ -132,8 +140,8 @@ function SkillsStep({ headRef, onNext }) {
         )} />}
     {err && <p className="form-error" role="alert">{err}</p>}
     <div className="fs-ends">
-      <button type="button" className="btn btn-primary btn-full" disabled={busy || picked.length === 0} onClick={save}>{busy ? t('Saving...') : t('Save and keep going')}</button>
-      <button type="button" className="btn btn-outline btn-full" disabled={busy} onClick={onNext}>{t('Skip this step')}</button>
+      <button type="button" className="btn btn-primary btn-full" disabled={busy || picked.length === 0} onClick={save}>{busy ? t('Saving...') : t(lone ? 'Save' : 'Save and keep going')}</button>
+      <button type="button" className="btn btn-outline btn-full" disabled={busy} onClick={onNext}>{t(lone ? 'Not now' : 'Skip this step')}</button>
     </div>
   </>
 }
