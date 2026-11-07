@@ -1500,6 +1500,11 @@ a:focus:not(:focus-visible) {
   min-height: 44px;
 }
 
+/* Take your information with you (Nov 7) */
+.gdl-btn { min-height: 48px; }
+.gdl-sheets { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 0.75rem; }
+.gdl-fine { font-size: 0.9375rem; color: var(--text-secondary); margin: 0.5rem 0; }
+
 /* Deciding together (Nov 7) */
 .gd-rule { border: none; padding: 0; margin: 0 0 0.75rem; }
 .gd-radio { display: flex; align-items: flex-start; gap: 0.6rem; min-height: 44px; padding: 0.25rem 0; }
