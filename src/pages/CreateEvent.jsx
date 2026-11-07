@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import AddressHint from '../components/AddressHint'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -269,10 +270,12 @@ export default function CreateEvent() {
           <input id="ce-area" className={'ce-field' + (fieldErrors['ce-area'] ? ' ce-field-bad' : '')} type="text" placeholder={t('East Ringgold, near the creek')} value={locationName} maxLength={100} autoComplete="address-level2" aria-invalid={!!fieldErrors['ce-area']} aria-describedby={'ce-area-hint' + (fieldErrors['ce-area'] ? ' ce-area-err' : '')}
             onChange={e => { setLocationName(e.target.value); setFieldErrors(f => ({ ...f, 'ce-area': undefined })) }} />
           {errFor('ce-area')}
+          <AddressHint text={locationName} />
 
           <label htmlFor="ce-desc" className="ce-label">{t('What is happening?')} <span className="ce-optional">{t('(optional)')}</span></label>
           <p className="ce-hint" id="ce-desc-hint">{t('What you see, which streets, and what kind of help would make a difference.')}</p>
           <textarea id="ce-desc" className="ce-field ce-area" rows={4} value={description} maxLength={2000} aria-describedby="ce-desc-hint" onChange={e => setDescription(e.target.value)} />
+          <AddressHint text={description} />
 
           <label htmlFor="ce-radius" className="ce-label">{t('How far does it reach?')} <b>{t('{n} miles', { n: radius })}</b></label>
           <input id="ce-radius" className="ce-range" type="range" min={5} max={50} step={5} value={radius} onChange={e => setRadius(parseInt(e.target.value))} aria-valuetext={t('{n} miles', { n: radius })} />

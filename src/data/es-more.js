@@ -4020,6 +4020,8 @@ const more = {
   'Zip code of the town': 'Código postal del pueblo',
   'Up to 5 alerts. No names.': 'Hasta 5 avisos. Sin nombres.',
   'Use this town': 'Usar este pueblo',
+  'A need from': 'Una necesidad de',
+  'This looks like an address. Other people can read this. Take it out, and share it in a private message instead.': 'Esto parece una dirección. Otras personas pueden leer esto. Quítela y compártala en un mensaje privado.',
   'URGENT: new request in {town}': 'URGENTE: pedido nuevo en {town}',
   'Needed today: new request in {town}': 'Para hoy: pedido nuevo en {town}',
   '{skill}. Needed right now. You said you are in {town} today.': '{skill}. Se necesita ahora mismo. Usted dijo que hoy está en {town}.',
