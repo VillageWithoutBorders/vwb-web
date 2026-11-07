@@ -1,24 +1,24 @@
 // The VWB Admin Guide, shown at /admin-guide.
 // Source of truth: the "VWB Admin Guide" doc Jade reviews
-// (https://claude.ai/code/artifact/f84b2af7-1d9c-45e6-b283-1f4ddc94f5d0).
+// (https://claude.ai/artifact/XfJSEjqFNKNZqzR4C4UBsD). Matched Nov 7, 2026.
 // When the doc changes, update this file to match.
 //
 // Block types: p (paragraph, **bold** allowed), h3, ul, ol, table { head, rows }.
 
-export const GUIDE_UPDATED = 'October 20, 2026'
+export const GUIDE_UPDATED = 'November 7, 2026'
 
 export const ADMIN_GUIDE = [
   {
     id: 'what', title: 'What a VWB admin is',
     blocks: [
-      { p: 'A VWB admin is part of the small VWB team that keeps the whole app safe, so neighbors can help each other. You answer reports, approve new groups and Hope Ambassadors, check emergencies, and step in when someone needs help or protection.' },
+      { p: 'A VWB admin is part of the VWB team. You answer reports, approve groups and Hope Ambassadors, check emergencies, and step in when someone needs help or protection.' },
       { p: "You are a neighbor first. Admin tools are there to serve the village, not to run it. Groups and villages make their own decisions. VWB admins step in only when someone breaks the app rules or is unsafe." },
       { p: '**Villages run themselves.** Each village has a Keeper and Helpers, with a Hope Ambassador nearby. You step in when someone breaks the app rules or is unsafe, and you help find a Keeper when a village has none. Your inbox lists villages without a Keeper and a Helper, and villages with no Hope Ambassador.' },
       { h3: 'An admin does' },
       { ul: [
         'Answer what is waiting in the Admin inbox, urgent things first',
-        'Check emergency reports and member reports',
-        'Approve groups, Hope Ambassadors and new admins, together with others',
+        'Check emergency reports and member reports in their villages',
+        'Approve groups, Hope Ambassadors and resource claims',
         'Keep a calm, kind voice, even when someone is upset',
       ] },
       { h3: 'An admin does not' },
@@ -46,6 +46,7 @@ export const ADMIN_GUIDE = [
   {
     id: 'first-30', title: 'Your first 30 days',
     blocks: [
+      { p: '**For now, admin is the VWB team only.** No new admins are being added. This section is for when that opens again.' },
       { p: 'Every new admin starts with 30 days of learning, with a mentor admin beside them. Nothing is wrong if you are in this time. It is how everyone starts.' },
       { h3: 'During your first 30 days' },
       { ul: [
@@ -73,12 +74,12 @@ export const ADMIN_GUIDE = [
         '**Tap the shield in the top bar.** The number shows how many things are waiting. Red means something is urgent. Gold means nothing urgent.',
         '**Start with Needs you.** It is one list shared by every admin. When one of you handles something, it leaves the list for everyone.',
         '**See who is already on it.** When you tap Open, other admins see "Sam opened this" for 30 minutes, so two of you don\'t work the same thing. If someone opened it a minute ago, pick another item or message them.',
-        '**Do the Urgent list first.** Emergency reports to check, member reports, tasks that went wrong, and anything waiting for a second admin.',
-        '**Then the Waiting list.** Applications, groups, claims, Help page messages, and resource reports.',
+        '**Do the Urgent group first.** Emergency reports to check, member reports, tasks that went wrong, and anything waiting for a second admin.',
+        '**Then the Waiting group.** Applications, groups, claims, Help page messages, and resource reports.',
         "**Glance at Latest admin alerts.** These are the same alerts that buzz admins' phones.",
       ] },
       { p: '**Alerts on your phone:** every new admin item sends a push to every admin. Admin work no longer shows in your personal Alerts. If you hid alert details on your lock screen, the push only says something is waiting.' },
-      { p: '**On a phone or a computer:** the phone shows the main sections with big buttons. Villages, SkillShare, CRN Import, the grant report and test tools are in the computer view, because they need more room.' },
+      { p: '**On a phone or a computer:** every admin tool works on both. A computer just gives more room for Villages, SkillShare and CRN Import.' },
     ],
   },
   {
@@ -98,13 +99,13 @@ export const ADMIN_GUIDE = [
           ['Remove an admin', 'No', 'Yes: one asks, another agrees', 'Alone'],
           ['Ban an admin', 'No', 'No', 'Alone'],
           ['Give admins their villages', 'No', 'No', 'Alone'],
-          ['Ask someone to keep a village', 'No (a Hope Ambassador who lives there can, when it has no active Keeper)', 'No', 'Asks anyone; they say yes first'],
+          ['Ask someone to keep a village', 'Yes, from Villages, People and leaders. They say yes first. (A Hope Ambassador who lives there can too, when it has no active Keeper)', 'No', 'Asks anyone; they say yes first'],
           ['Change the founder role', 'No', 'No', 'Only in the database, on purpose'],
         ],
       } },
       { p: 'The person a decision is about can never answer it. You can always step down yourself, in Settings, with Reset to Neighbor.' },
-      { p: '**Hope Ambassadors work in their own villages.** They check emergencies, decide on crews asking to respond, and post emergency updates only in the villages they belong to. VWB admins can do these anywhere. When an Ambassador can\'t act on something outside their village, an admin or an Ambassador there picks it up.' },
-      { p: "**Villages look after themselves.** Each village has a Keeper and up to 2 Helpers. Reports made inside a village or group go to its leaders too, never with the reporter's name. A leader who doesn't open VWB for 60 days gets a check-in. With no answer in 14 days, the role passes on. When a village has no active Keeper, a Hope Ambassador who lives there, or the founder, can ask a neighbor to take it on." },
+      { p: '**Hope Ambassadors work in their own area.** They check emergencies, decide on crews asking to respond, and post emergency updates only in the villages they belong to. They fix resource listings right away only in their own area, which they choose in Settings, Account and privacy. Anywhere else, their changes go to review. VWB admins can do all of this anywhere. When an Ambassador can\'t act on something outside their area, an admin or an Ambassador there picks it up.' },
+      { p: "**Villages look after themselves.** Each village has a Keeper and up to 2 Helpers. Reports made inside a village, group or crew go to its leaders too, never with the reporter's name. A leader who doesn't open VWB for 60 days gets a check-in. With no answer in 14 days, the role passes on. When a village has no active Keeper, a Hope Ambassador who lives there, a VWB admin, or the founder can ask a neighbor to take it on. A group or crew can choose a care circle of 2 to 5 members to read its reports instead of its leaders." },
     ],
   },
   {
@@ -115,7 +116,7 @@ export const ADMIN_GUIDE = [
       { ol: [
         'Read what was reported and where.',
         'Check if it is real: local news, a neighbor you trust, or the reporter.',
-        'Real: tap Verify, so neighbors and crews can respond. Not real or already over: close it.',
+        'Real: tap Verify, so neighbors and emergency crews can respond. Not real or already over: close it. If you verified it, you can close it alone when it is over.',
         'Two reports of the same thing: merge the duplicate into the first one.',
       ] },
       { h3: 'A member report about a person' },
@@ -149,9 +150,9 @@ export const ADMIN_GUIDE = [
         'Message their contact if anything is unclear.',
         "Approve when they are real and fit VWB's rules.",
       ] },
-      { h3: 'A Hope Ambassador or admin application' },
+      { h3: 'A Hope Ambassador application' },
       { ol: [
-        'Read their readiness list and why they want to help.',
+        'Read why they want to help and what they wrote about themselves.',
         'Ask people in their village who know them.',
         'Say yes or no. A no sends them a kind note; they can ask again later.',
       ] },
@@ -185,7 +186,7 @@ export const ADMIN_GUIDE = [
       { ul: [
         "Private messages, Cottage Chats, and scrambled village chats. VWB can't open them.",
         'Full email addresses. Admins see them partly hidden; only the founder sees them in full.',
-        'Where someone lives. Never ask for an address in public, and never share one.',
+        'Where someone lives. VWB never shows anything that could help someone find a person. Never ask for an address in public, and never share one.',
       ] },
       { p: "**Good practice:** talk about a person only with the admins who need to know. Don't take screenshots of someone's details. If you share your screen, close Admin first." },
     ],
@@ -217,7 +218,7 @@ export const ADMIN_GUIDE = [
     blocks: [
       { p: 'You can step down any time, with no reason needed. Thank you for the time you gave.' },
       { ol: [
-        "**Tell your mentor or the founder first**, so your village isn't left without an admin.",
+        '**Tell your mentor or the founder first**, so your work is covered.',
         '**Make sure your villages are covered.** Check that each one has a Keeper, a Helper and a Hope Ambassador nearby.',
         "**Hand off what's open.** Finish or pass on anything you were working on, with a note.",
         '**Step down in Settings** with Reset to Neighbor. You stay a member and keep your friends, chats and history.',
@@ -235,9 +236,9 @@ export const ADMIN_GUIDE = [
           ['Admin log', 'The record of what admins did. Every admin can read it; no one can edit it.'],
           ['Ask to ban / Ask to remove', 'Starts a request that a second admin must agree to.'],
           ['Founder', 'The person who started VWB. Can decide alone where others need two admins.'],
-          ['Hope Ambassador', 'A trusted neighbor who helps others and checks emergencies. The step before admin.'],
-          ['Helper', 'A neighbor the Keeper names to help look after a village or crew.'],
-          ['Keeper', 'The neighbor who looks after a village or a crew.'],
+          ['Hope Ambassador', 'A trusted neighbor who helps in their area, checks emergencies, and approves emergency crews.'],
+          ['Helper', 'A neighbor the Keeper names to help look after a village or an emergency crew.'],
+          ['Keeper', 'The neighbor who looks after a village or an emergency crew.'],
           ['Mentor', 'The admin who guides a new admin through their first 30 days.'],
           ['Needs you', 'The shared list of everything waiting on an admin.'],
           ['Role changes', 'The log of who gained or lost admin access, and who agreed.'],
