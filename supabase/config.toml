@@ -21,3 +21,10 @@ entrypoint = "./functions/archive-group-messages/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/calendar-feed/index.ts"
+
+[functions.csp-report]
+enabled = true
+# Browsers send "this would be blocked" reports without signing in. It keeps
+# no personal details and writes only through log_csp_reports().
+verify_jwt = false
+entrypoint = "./functions/csp-report/index.ts"

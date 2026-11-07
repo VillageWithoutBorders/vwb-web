@@ -1,0 +1,30 @@
+# Security headers for app.villagewithoutborders.org (Cloudflare Pages).
+# Nov 7, 2026. Cloudflare Pages reads this file from the build output; Vite
+# copies everything in public/ there, so this file lives at public/_headers.
+#
+# STEP 1 (now): the content rules (CSP) are REPORT-ONLY. Nothing is blocked.
+# The browser only tells us what WOULD be blocked, through the csp-report
+# function on Supabase. The other headers here are on for real.
+# STEP 3 (after the wait): rename "Content-Security-Policy-Report-Only" to
+# "Content-Security-Policy". See claude/VWB-Security-Headers-Plan in the project.
+#
+# If you change one of the two small scripts at the top of index.html, its
+# 'sha256-...' below must change too, or the browser will report it (and,
+# once enforced, block it). The plan says how to get the new number.
+#
+# Who each outside address is for:
+#   jgabhhobqkuteuqtikpi.supabase.co   the VWB database, sign-in, live chat (wss), pictures, csp-report
+#   challenges.cloudflare.com          the "are you a person?" check on sign-in and sign-up (Turnstile)
+#   tile.openstreetmap.org             street map pictures
+#   api.dicebear.com                   avatar drawings
+#   api.qrserver.com                   the printed QR card in the menu
+
+/*
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-ht39DG5JTE6DMq6sIGfe12uSLA7XL2U4FoRwQd/JM0E=' 'sha256-yOfJAncQYqmrJDU6g7leBLWPE2loLhqSHYspepcOLMo=' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://jgabhhobqkuteuqtikpi.supabase.co https://tile.openstreetmap.org https://api.dicebear.com https://api.qrserver.com; font-src 'self' data:; connect-src 'self' https://jgabhhobqkuteuqtikpi.supabase.co wss://jgabhhobqkuteuqtikpi.supabase.co; frame-src https://challenges.cloudflare.com; worker-src 'self'; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report; report-to csp
+  Reporting-Endpoints: csp="https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report"
+  Report-To: {"group":"csp","max_age":2592000,"endpoints":[{"url":"https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report"}]}
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()
