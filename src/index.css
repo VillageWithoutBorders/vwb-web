@@ -1500,6 +1500,34 @@ a:focus:not(:focus-visible) {
   min-height: 44px;
 }
 
+/* Deciding together (Nov 7) */
+.gd-rule { border: none; padding: 0; margin: 0 0 0.75rem; }
+.gd-radio { display: flex; align-items: flex-start; gap: 0.6rem; min-height: 44px; padding: 0.25rem 0; }
+.gd-radio input { width: 22px; height: 22px; flex-shrink: 0; margin-top: 0.1rem; }
+.gd-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem; margin: 0 0 0.75rem; background: var(--surface); min-width: 0; }
+.gd-title { font-size: 1.05rem; margin: 0 0 0.35rem; overflow-wrap: anywhere; }
+.gd-details, .gd-meta, .gd-mine { margin: 0 0 0.5rem; overflow-wrap: anywhere; }
+.gd-meta { color: var(--text-secondary); font-size: 0.9375rem; }
+.gd-notes { margin: 0 0 0.5rem; padding-left: 1.1rem; }
+.gd-notes li { margin-bottom: 0.25rem; overflow-wrap: anywhere; }
+.gd-answers { border: none; padding: 0; margin: 0 0 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.gd-answer { min-height: 44px; padding: 0.5rem 0.85rem; border-radius: var(--radius); border: 2px solid var(--border); background: transparent; color: var(--text); font-size: 1rem; cursor: pointer; text-align: left; }
+.gd-answer:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.gd-answer.gd-on { border-color: var(--accent); font-weight: 700; }
+.gd-answer.gd-block.gd-on { border-color: var(--danger); }
+.gd-write textarea, .gd-form input, .gd-form textarea, .gd-form select { width: 100%; box-sizing: border-box; font-size: 16px; min-height: 44px; margin: 0 0 0.5rem; }
+.gd-label { display: block; font-weight: 600; margin: 0.25rem 0; }
+.gd-fine { font-size: 0.875rem; color: var(--text-secondary); margin: 0 0 0.5rem; }
+.gd-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem; }
+.gd-actions .btn { min-height: 44px; }
+.gd-withdraw { min-height: 44px; margin-top: 0.25rem; }
+.gd-suggest { min-height: 48px; margin: 0.25rem 0 0.75rem; }
+.gd-form { margin: 0.25rem 0 0.75rem; }
+.gd-past summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.gd-badge { display: inline-block; font-size: 0.8125rem; font-weight: 700; padding: 0.1rem 0.45rem; border-radius: 6px; border: 1px solid var(--border); margin-left: 0.25rem; vertical-align: middle; }
+.gd-badge.gd-passed { border-color: var(--accent); }
+.gd-closed { opacity: 0.95; }
+
 /* Gentle note when typed words look like an address (Nov 7) */
 .address-hint {
   margin: 0 0 0.5rem;
