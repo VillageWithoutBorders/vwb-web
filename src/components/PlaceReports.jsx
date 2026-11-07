@@ -11,7 +11,7 @@ import { useT, getLang } from '../utils/lang'
 const SOURCE = { campfire: 'village chat', group: 'a chat', conversation: 'a private message', profile: 'their profile', event: 'an event' }
 const STATUS = { open: 'VWB admins are reviewing', reviewed: 'VWB admins reviewed it', dismissed: 'VWB admins closed it' }
 
-export default function PlaceReports({ kind, placeId, onCount }) {
+export default function PlaceReports({ kind, placeId, onCount, circle = false }) {
   const t = useT()
   const [rows, setRows] = useState(null)
 
@@ -34,9 +34,11 @@ export default function PlaceReports({ kind, placeId, onCount }) {
       <p className="hub-org-desc">
         {t('Reports from the last 30 days. Who made each report is never shown. VWB admins have every report too.')}
         {' '}
-        {kind === 'village'
-          ? t('You can check in with the person, or ask to remove them from the people list. Two members have to agree.')
-          : t('You can check in with the person, or remove them in the member list above.')}
+        {circle
+          ? t('You can check in with the person, or talk with your care circle and leaders about next steps.')
+          : kind === 'village'
+            ? t('You can check in with the person, or ask to remove them from the people list. Two members have to agree.')
+            : t('You can check in with the person, or remove them in the member list above.')}
       </p>
       {rows.map((r) => (
         <div key={r.id} className="dash-row" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
