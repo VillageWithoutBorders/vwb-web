@@ -1500,6 +1500,61 @@ a:focus:not(:focus-visible) {
   min-height: 44px;
 }
 
+/* "I'm in town today" (Nov 7) */
+.town-today {
+  margin: 0.5rem 0 0.75rem;
+  min-width: 0;
+}
+.town-today-on,
+.town-today-form {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.town-today-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  font-size: 1rem;
+  text-align: left;
+}
+.town-today-line,
+.town-today-text {
+  margin: 0 0 0.5rem;
+  overflow-wrap: anywhere;
+}
+.town-today-title {
+  font-size: 1.1rem;
+  margin: 0 0 0.35rem;
+}
+.town-today-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+.town-today-input {
+  width: 100%;
+  max-width: 12rem;
+  box-sizing: border-box;
+  min-height: 48px;
+  font-size: 16px;
+  margin-bottom: 0.5rem;
+}
+.town-today-check {
+  min-height: 44px;
+  margin: 0.25rem 0 0.5rem;
+}
+.town-today-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.town-today-actions .btn {
+  min-height: 44px;
+}
+
 /* ---------- Feed Filters ---------- */
 .feed-filters {
   display: flex;

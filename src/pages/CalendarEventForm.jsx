@@ -467,12 +467,14 @@ export default function CalendarEventForm() {
         </div>
         <div className="form-field">
           <label htmlFor="ev-address">{t('Street address (optional)')}</label>
-          <input id="ev-address" type="text" autoComplete="street-address" value={form.address} onChange={(e) => set('address', e.target.value)} />
+          <input id="ev-address" type="text" autoComplete="street-address" value={form.address} onChange={(e) => set('address', e.target.value)} aria-describedby="ev-address-hint" />
+          {/* Nov 5 (Jade): never a home address, even for people who sign up. */}
+          <p id="ev-address-hint" className="field-hint">{t("A public place only, like a library, church, or park. Never someone's home. For a gathering at a home, leave this blank and share it in a private message.")}</p>
         </div>
         <label className={'cal-choice' + (form.hideAddress ? ' is-on' : '')}>
           <input type="checkbox" checked={form.hideAddress} onChange={(e) => set('hideAddress', e.target.checked)} />
           <span>{t('Only show the place and address to people who sign up')}
-            <small>{t("Everyone else just sees the town. Good for events at someone's home.")}</small>
+            <small>{t('Everyone else just sees the town.')}</small>
           </span>
         </label>
           </>

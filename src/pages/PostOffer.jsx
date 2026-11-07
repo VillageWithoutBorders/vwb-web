@@ -124,7 +124,9 @@ export default function PostOffer() {
         <input id="offer-title" style={fieldStyle} type="text" placeholder={t('e.g. Hot meals Saturday, Free winter coats')} value={title} onChange={e => setTitle(e.target.value)} maxLength={120} />
 
         <label style={labelStyle} htmlFor="offer-desc">{t('Details')}</label>
-        <textarea id="offer-desc" style={{ ...fieldStyle, minHeight: '100px', resize: 'vertical' }} placeholder={t('How much do you have? When is it available? Can you deliver or should people pick up?')} value={description} onChange={e => setDescription(e.target.value)} maxLength={1000} />
+        <textarea id="offer-desc" style={{ ...fieldStyle, minHeight: '100px', resize: 'vertical' }} placeholder={t('How much do you have? When is it available? Can you deliver or should people pick up?')} value={description} onChange={e => setDescription(e.target.value)} maxLength={1000} aria-describedby="offer-desc-hint" />
+        {/* Nov 5 (Jade): nothing people post should help anyone find where someone is. */}
+        <p id="offer-desc-hint" style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '-0.25rem 0 0.75rem' }}>{t('Never put an address here. Share where to meet in a private message.')}</p>
 
         <label style={labelStyle} htmlFor="offer-hood">{t('Neighborhood')}</label>
         <input id="offer-hood" style={fieldStyle} type="text" placeholder={t('Your town or neighborhood')} value={neighborhood} onChange={e => setNeighborhood(e.target.value)} maxLength={100} />
