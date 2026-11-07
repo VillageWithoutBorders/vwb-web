@@ -7,6 +7,7 @@ import { clearAllPendingAsks, isNoSignal } from '../utils/pendingAsks'
 import { clearAllPendingReports } from '../utils/pendingReports'
 import { clearAllPendingEventActions } from '../utils/pendingEventActions'
 import { clearEventCopies } from '../utils/eventCopy'
+import { setTownToday } from '../utils/location'
 
 // Opening VWB with no signal (Nov 3). The last profile and groups that loaded
 // are kept on this phone, in the same place as the sign-in, so the app can open
@@ -152,7 +153,7 @@ export function AuthProvider({ children }) {
       async (event, session) => {
         // A real sign out always signs out. Otherwise, with no signal, keep a saved sign-in.
         const u = session?.user ?? (event === 'SIGNED_OUT' ? null : noSignalUser())
-        if (event === 'SIGNED_OUT') { clearCopy(); clearAllPendingAsks(); clearAllPendingReports(); clearAllPendingEventActions(); clearEventCopies() }
+        if (event === 'SIGNED_OUT') { clearCopy(); clearAllPendingAsks(); clearAllPendingReports(); clearAllPendingEventActions(); clearEventCopies(); setTownToday(null) }
         setUser(u)
         if (u) {
           ensureProfile(u)
@@ -439,6 +440,7 @@ export function AuthProvider({ children }) {
     clearAllPendingEventActions()
     clearEventCopies()
     clearCopy()
+    setTownToday(null)
     const { error } = await supabase.auth.signOut()
     if (error) console.error('[AuthContext] signOut', error)
     setUser(null)

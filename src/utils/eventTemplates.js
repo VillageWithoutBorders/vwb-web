@@ -12,7 +12,8 @@
 //                            ('members' falls back to 'invite' when VWB
 //                            itself hosts, since members-only needs a group)
 //   signupEnabled, signupLimit
-//   hideAddress              true for events at someone's home
+//   hideAddress              true to show the place only to people who sign up (never use it
+//                            for a home address: that goes by private message, Nov 5)
 //   radius                   miles
 //   description              the outline. Lines ending in ":" are prompts.
 
@@ -93,7 +94,7 @@ export const EVENT_TEMPLATES = [
       '',
       'Staying safe: Take breaks. If you have asthma or a weak immune system, help outside the house instead, like sorting, driving, or bringing food.',
       '',
-      'Where: The address goes only to people who sign up, to protect the family.',
+      'Where: The town only. To protect the family, the organizer sends the address in a private message to each helper after they sign up.',
       '',
       ACCESS,
       '',
