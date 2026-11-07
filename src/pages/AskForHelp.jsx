@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import AddressHint from '../components/AddressHint'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -435,6 +436,7 @@ export default function AskForHelp() {
                         rows={4}
                         required
                     />
+                    <AddressHint text={description} />
                 </div>
 
                 <div className="form-field">

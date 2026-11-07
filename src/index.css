@@ -1500,6 +1500,18 @@ a:focus:not(:focus-visible) {
   min-height: 44px;
 }
 
+/* Gentle note when typed words look like an address (Nov 7) */
+.address-hint {
+  margin: 0 0 0.5rem;
+  color: var(--gold);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.address-hint:empty {
+  margin: 0;
+}
+
 /* "I'm in town today" (Nov 7) */
 .town-today {
   margin: 0.5rem 0 0.75rem;

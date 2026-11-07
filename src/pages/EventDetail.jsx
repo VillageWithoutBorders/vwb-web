@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import AddressHint from '../components/AddressHint'
 import { useBlockedBy } from '../utils/blockedBy'
 import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
@@ -732,6 +733,7 @@ export default function EventDetail() {
               {/* Nov 5 (Jade): never invite an address. Everyone signed up can read this note. */}
               <input type='text' aria-describedby='ev-note-hint' placeholder={t('Optional note: what you need (water, a ride, medicine)')} value={statusNote} onChange={e => setStatusNote(e.target.value)} maxLength={300} style={fieldStyle} />
               <p id='ev-note-hint' style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '-0.25rem 0 0.5rem' }}>{t('Never put your address here. Everyone signed up for this emergency can read it.')}</p>
+              <AddressHint text={statusNote} />
             </div>
           )}
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
@@ -766,6 +768,7 @@ export default function EventDetail() {
           )}
           <textarea placeholder={showSignupForm === 'responder' ? t('Anything else? (truck, chainsaw, generator, etc.)') : t('What do you need? (shelter, food, cleanup, etc.)')} value={signupNotes} onChange={e => setSignupNotes(e.target.value)} rows={3} style={{ ...fieldStyle, resize: 'vertical' }} />
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '-0.25rem 0 0.5rem' }}>{t('Never put your address here. Everyone signed up for this emergency can read it.')}</p>
+          <AddressHint text={signupNotes} />
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button onClick={() => setShowSignupForm(null)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>{t('Cancel')}</button>
             <button onClick={() => handleSignup(showSignupForm)} disabled={submitting} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: showSignupForm === 'responder' ? 'var(--accent)' : 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: submitting ? 0.6 : 1 }}>
@@ -889,7 +892,8 @@ export default function EventDetail() {
                 </div>
               </div>
               <input type="text" placeholder={t('Notes (optional)')} value={resNote} onChange={e => setResNote(e.target.value)} maxLength={500} style={fieldStyle} />
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '-0.25rem 0 0.5rem' }}>t('Never put an address here. Share where to meet in a private message.')</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '-0.25rem 0 0.5rem' }}>{t('Never put an address here. Share where to meet in a private message.')}</p>
+              <AddressHint text={resNote} />
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button onClick={() => setShowResourceForm(null)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>{t('Cancel')}</button>
                 <button onClick={submitResource} disabled={submitting || !resCategory || !resItem.trim()} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: showResourceForm === 'need' ? 'var(--danger)' : 'var(--accent)', color: showResourceForm === 'need' ? 'var(--text-strong)' : 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: submitting || !resCategory || !resItem.trim() ? 0.5 : 1 }}>
