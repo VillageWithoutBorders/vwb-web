@@ -192,7 +192,7 @@ const es = {
   'Saving...': 'Guardando...',
   'Use {place}': 'Usar {place}',
   'Cancel': 'Cancelar',
-  "Your phone's location is rounded to about half a mile and only kept until you close the app.": 'La ubicación de su teléfono se redondea a más o menos media milla y solo se guarda hasta que cierre la aplicación.',
+  "VWB never uses your phone's location. Only zip codes and towns.": 'VWB nunca usa la ubicación de su teléfono. Solo códigos postales y pueblos.',
   'Back to my home area': 'Volver a mi zona',
   'Near': 'Cerca de',
   'Neighbors near': 'Vecinos cerca de',

@@ -765,6 +765,7 @@ export default function EventDetail() {
             </>
           )}
           <textarea placeholder={showSignupForm === 'responder' ? t('Anything else? (truck, chainsaw, generator, etc.)') : t('What do you need? (shelter, food, cleanup, etc.)')} value={signupNotes} onChange={e => setSignupNotes(e.target.value)} rows={3} style={{ ...fieldStyle, resize: 'vertical' }} />
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '-0.25rem 0 0.5rem' }}>{t('Never put your address here. Everyone signed up for this emergency can read it.')}</p>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button onClick={() => setShowSignupForm(null)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>{t('Cancel')}</button>
             <button onClick={() => handleSignup(showSignupForm)} disabled={submitting} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: showSignupForm === 'responder' ? 'var(--accent)' : 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: submitting ? 0.6 : 1 }}>
@@ -888,6 +889,7 @@ export default function EventDetail() {
                 </div>
               </div>
               <input type="text" placeholder={t('Notes (optional)')} value={resNote} onChange={e => setResNote(e.target.value)} maxLength={500} style={fieldStyle} />
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '-0.25rem 0 0.5rem' }}>t('Never put an address here. Share where to meet in a private message.')</p>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button onClick={() => setShowResourceForm(null)} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>{t('Cancel')}</button>
                 <button onClick={submitResource} disabled={submitting || !resCategory || !resItem.trim()} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: showResourceForm === 'need' ? 'var(--danger)' : 'var(--accent)', color: showResourceForm === 'need' ? 'var(--text-strong)' : 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', opacity: submitting || !resCategory || !resItem.trim() ? 0.5 : 1 }}>

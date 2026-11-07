@@ -97,7 +97,7 @@ export function LocationPrompt({ onDone, onCancel, title = 'Where should we look
           <button type="button" className="link-button" onClick={onCancel}>{t('Cancel')}</button>
         )}
       </div>
-      <p className="location-prompt-fine">{t("Your phone's location is rounded to about half a mile and only kept until you close the app.")}</p>
+      <p className="location-prompt-fine">{t("VWB never uses your phone's location. Only zip codes and towns.")}</p>
     </div>
   )
 }
@@ -108,6 +108,15 @@ export function LocationBar({ loc, onChanged, prefix = 'Near' }) {
   const t = useT()
   const { profile } = useAuth()
   const [editing, setEditing] = useState(false)
+  // The town picked for today has its own Change and Stop (TownToday).
+  if (loc.source === 'town-today') {
+    return (
+      <div className="location-bar">
+        <span className="location-dot" aria-hidden="true" />
+        <span className="location-bar-text">{t(prefix)} {loc.label}</span>
+      </div>
+    )
+  }
   // Using a travel spot (phone or a zip for this visit) while a home zip is saved.
   const away = loc.source !== 'zip' && profile?.location_source === 'zip'
   if (editing) {

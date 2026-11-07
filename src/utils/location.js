@@ -16,6 +16,7 @@ import { supabase } from '../supabaseClient'
 const DEVICE_KEY = 'vwb_device_location'
 const SESSION_ZIP_KEY = 'vwb_session_zip'
 const ZIP_LABEL_KEY = 'vwb_zip_label'
+const TOWN_TODAY_KEY = 'vwb_town_today'
 
 function readSession(key) {
   try { return JSON.parse(sessionStorage.getItem(key) || 'null') } catch { return null }
@@ -40,6 +41,31 @@ export function setVisitZip(place) {
   writeSession(SESSION_ZIP_KEY, { lat: place.latitude, lng: place.longitude, label: place.label })
 }
 
+/**
+ * "I'm in town today" (Nov 7). The database keeps the real choice (one town,
+ * until midnight). This is only a copy for this tab so SkillShare can look
+ * from that town. `town` is what my_town_today() / set_town_today() returned,
+ * or null to forget it.
+ */
+export function setTownToday(town) {
+  if (town && town.active !== false && town.lat != null && town.lng != null) {
+    writeSession(TOWN_TODAY_KEY, { lat: town.lat, lng: town.lng, label: town.label, zip: town.zip, alerts: !!town.alerts, expires_at: town.expires_at })
+  } else {
+    writeSession(TOWN_TODAY_KEY, null)
+  }
+}
+
+/** The town picked for today, or null (also null once midnight has passed). */
+export function getTownToday() {
+  const town = readSession(TOWN_TODAY_KEY)
+  if (!town || town.lat == null) return null
+  if (town.expires_at && new Date(town.expires_at).getTime() <= Date.now()) {
+    writeSession(TOWN_TODAY_KEY, null)
+    return null
+  }
+  return town
+}
+
 /** Forget any location shared for this visit (phone or zip). */
 export function forgetVisitLocation() {
   writeSession(DEVICE_KEY, null)
@@ -48,12 +74,15 @@ export function forgetVisitLocation() {
 
 /**
  * Where to look for this person, without asking the phone.
+ * 0. The town they picked for today ("I'm in town today").
  * 1. A zip they chose for this visit without saving it.
  * 2. The center of the zip saved on their profile.
  * 3. Otherwise null. The page should show <LocationPrompt />.
  */
 export function getMyLocation(profile) {
   writeSession(DEVICE_KEY, null)
+  const town = getTownToday()
+  if (town) return { lat: town.lat, lng: town.lng, source: 'town-today', label: town.label }
   const visitZip = readSession(SESSION_ZIP_KEY)
   if (visitZip && visitZip.lat != null) {
     return { lat: visitZip.lat, lng: visitZip.lng, source: 'visit-zip', label: visitZip.label }
