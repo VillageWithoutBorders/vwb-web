@@ -10,6 +10,7 @@ import QrShare from '../components/QrShare'
 import CalendarSubscribe from '../components/CalendarSubscribe'
 import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
+import GroupDecisions from '../components/GroupDecisions'
 import OrgMemberNames from '../components/OrgMemberNames'
 import { ORG_SPOTS, GROUP_SPOTS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
 import { usePageMap, MapLayers, MapToolbar, ToolIcon, sceneProps, zoomLayer, askGoTo, ScrollCue, placeLayer } from '../components/MapBuilder'
@@ -274,6 +275,13 @@ export default function OrgPage() {
   }, [sheet])
 
   function openSheet(s) { lastFocus.current = document.activeElement; setSheet(s) }
+  // Nov 7: alerts link to /orgs/:id?open=rules (a decision to talk over), so open that place.
+  const openParam = params.get('open')
+  const openedFromLink = useRef(false)
+  useEffect(() => {
+    if (openedFromLink.current || loading || !org || !isMember) return
+    if (openParam === 'rules') { openedFromLink.current = true; setSheet({ k: 'rules' }) }
+  }, [openParam, loading, org, isMember])
   function closeSheet() {
     setSheet(null)
     if (lastFocus.current && lastFocus.current.focus) lastFocus.current.focus()
@@ -324,7 +332,7 @@ export default function OrgPage() {
   function info(k) {
     const n = (one, many, count) => t(count === 1 ? one : many, { n: count })
     switch (k) {
-      case 'rules': return { sub: isMember ? t('How this {kind} runs', { kind: kindT }) : t('Members only') }
+      case 'rules': return { sub: isMember ? t('How this {kind} runs and decides together', { kind: kindT }) : t('Members only') }
       case 'where': return { sub: villageCount ? (isGroup ? n('Covers 1 village', 'Covers {n} villages', villageCount) : n('Works in 1 village', 'Works in {n} villages', villageCount)) : t('No villages picked yet') }
       case 'ready': return { sub: org.response_status === 'approved' ? t('Approved to respond to emergencies') : org.response_status === 'asked' ? t('Waiting for approval') : t('Not called to emergencies yet') }
       case 'links': return { sub: links.length ? n('1 connected group', '{n} connected groups', links.length) : t('No connections yet') }
@@ -383,7 +391,7 @@ export default function OrgPage() {
     if (spot.soon) return <>{title}<p>{t('This part of the {kind} is coming soon.', { kind: kindT })}</p></>
     switch (k) {
       case 'rules':
-        return <>{title}<OrgRules orgId={id} isHead={isHead} org={org} onTitles={loadOrg} /></>
+        return <>{title}<OrgRules orgId={id} isHead={isHead} org={org} onTitles={loadOrg} />{isMember && <GroupDecisions orgId={id} />}</>
       case 'where':
         return <>{title}<OrgVillages orgId={id} orgName={org.name} canManage={canManage} /></>
       case 'links':
@@ -556,8 +564,8 @@ export default function OrgPage() {
 
   // Simple view: the few places most people need, in this order. Leaders see their tools first.
   const simpleMain = !isMember ? (isGroup ? ['involved'] : ['needs', 'involved'])
-    : isGroup ? ['tools', 'ready', 'news', 'fires', 'events', 'members']
-    : ['tools', 'news', 'fires', 'events', 'needs', 'members']
+    : isGroup ? ['tools', 'ready', 'news', 'fires', 'events', 'members', 'rules']
+    : ['tools', 'news', 'fires', 'events', 'needs', 'members', 'rules']
   function roomRow(s) {
     const i = info(s.k)
     const lock = locked(s)

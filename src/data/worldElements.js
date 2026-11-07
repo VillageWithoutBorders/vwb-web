@@ -44,7 +44,7 @@ export const COTTAGE_SPOTS = [
 // members: only members can open it (others see it faded with a lock).
 // organizers: only Heads and organizers see it at all.
 export const ORG_SPOTS = [
-  { k: 'rules', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 17, y: 35, members: true },
+  { k: 'rules', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Rules and decisions', short: 'Rules', em: '\u{1F4DC}', x: 17, y: 35, members: true },
   { k: 'where', art: '/art/village-path/spot-where.webp', icon: 'houses', label: 'Where we work', short: 'Where', em: '\u{1F3D8}️', x: 17, y: 13 },
   { k: 'links', art: '/art/village-path/spot-links.webp', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 50, y: 11 },
   { k: 'events', art: '/art/village-path/spot-calendar.webp', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 83, y: 14 },
@@ -60,7 +60,7 @@ export const ORG_SPOTS = [
 // An emergency response Group's page (OrgPage.jsx with kind 'group'). Same roadmap
 // and lots as ORG_SPOTS. Groups say Keeper and Helper where organizations say Head and Organizer.
 export const GROUP_SPOTS = [
-  { k: 'rules', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Our rules', short: 'Rules', em: '\u{1F4DC}', x: 17, y: 35, members: true },
+  { k: 'rules', art: '/art/village-path/spot-charter.webp', icon: 'scroll', label: 'Rules and decisions', short: 'Rules', em: '\u{1F4DC}', x: 17, y: 35, members: true },
   { k: 'where', art: '/art/village-path/spot-where.webp', icon: 'houses', label: 'Where we cover', short: 'Where', em: '\u{1F3D8}', x: 17, y: 13 },
   { k: 'links', art: '/art/village-path/spot-links.webp', icon: 'chain', label: 'Connections', short: 'Connections', em: '\u{1F517}', x: 50, y: 11 },
   { k: 'events', art: '/art/village-path/spot-calendar.webp', icon: 'calendar', label: 'Coming up', short: 'Coming up', em: '\u{1F4C5}', x: 83, y: 14 },
