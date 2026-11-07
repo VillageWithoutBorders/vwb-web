@@ -17,6 +17,7 @@ import { askConfirm } from '../components/AdminDialog'
 import { orgWords } from '../utils/roleWords'
 import RoleLog from '../components/RoleLog'
 import GroupDownload from '../components/GroupDownload'
+import CareCircle from '../components/CareCircle'
 import PlaceReports, { usePlaceReportCount } from '../components/PlaceReports'
 import { getLang, useT } from '../utils/lang'
 
@@ -349,6 +350,7 @@ export default function OrgDashboard() {
             ))}
           </section>
           {note && <p className="dash-note" role="status">{note}</p>}
+          <CareCircle orgId={id} where="dashboard" members={members} />
           <PlaceReports kind="org" placeId={id} />
         </DashPanel>
       )}

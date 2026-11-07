@@ -132,7 +132,7 @@ export default function GroupDecisions({ orgId }) {
   return (
     <section className="hub-section gd" aria-labelledby="gd-h">
       <div className="hub-section-head"><h2 id="gd-h">{t('Deciding together')}</h2></div>
-      <p className="hub-org-desc">{ruleText} {t('At least 3 people need to answer. No names are shown, not even to leaders.')}</p>
+      <p className="cc-text">{ruleText} {t('At least 3 people need to answer. No names are shown, not even to leaders.')}</p>
 
       {data.is_head && (
         <fieldset className="gd-rule" disabled={busy}>

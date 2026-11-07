@@ -11,6 +11,7 @@ import CalendarSubscribe from '../components/CalendarSubscribe'
 import OrgVillages from '../components/OrgVillages'
 import OrgRules from '../components/OrgRules'
 import GroupDecisions from '../components/GroupDecisions'
+import CareCircle from '../components/CareCircle'
 import OrgMemberNames from '../components/OrgMemberNames'
 import { ORG_SPOTS, GROUP_SPOTS, backgroundSrc, DEFAULT_WORLDS } from '../data/worldElements'
 import { usePageMap, MapLayers, MapToolbar, ToolIcon, sceneProps, zoomLayer, askGoTo, ScrollCue, placeLayer } from '../components/MapBuilder'
@@ -391,7 +392,7 @@ export default function OrgPage() {
     if (spot.soon) return <>{title}<p>{t('This part of the {kind} is coming soon.', { kind: kindT })}</p></>
     switch (k) {
       case 'rules':
-        return <>{title}<OrgRules orgId={id} isHead={isHead} org={org} onTitles={loadOrg} />{isMember && <GroupDecisions orgId={id} />}</>
+        return <>{title}<OrgRules orgId={id} isHead={isHead} org={org} onTitles={loadOrg} />{isMember && <GroupDecisions orgId={id} />}{isMember && <CareCircle orgId={id} />}</>
       case 'where':
         return <>{title}<OrgVillages orgId={id} orgName={org.name} canManage={canManage} /></>
       case 'links':
