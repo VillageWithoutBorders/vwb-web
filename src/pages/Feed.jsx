@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useBlockedBy } from '../utils/blockedBy'
 import { NEW_ACCOUNT_NOTE, isNewAccountBlock } from '../utils/newAccount'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES, OFFER_ITEMS_GROUP } from '../utils/skillGroups'
@@ -178,7 +178,7 @@ export default function Feed() {
             if (reqIds.length > 0) {
                 const { data: hrData, error: hrErr } = await supabase
                     .from('help_requests')
-                    .select('id, max_helpers, status, audience, opens_to_all_at, for_name')
+                    .select('id, max_helpers, status, audience, opens_to_all_at, for_name, organization_id')
                     .in('id', reqIds)
                 if (hrErr) console.error('Failed to load helper limits:', hrErr)
                 const maxMap = {}
@@ -188,7 +188,18 @@ export default function Feed() {
                 if (hrData) {
                     for (const hr of hrData) { maxMap[hr.id] = hr.max_helpers; statusMap[hr.id] = hr.status; audMap[hr.id] = { audience: hr.audience, opens_to_all_at: hr.opens_to_all_at }; forMap[hr.id] = hr.for_name || null }
                 }
-                reqs = reqs.map(r => ({ ...r, max_helpers: maxMap[r.id] ?? 1, status: statusMap[r.id] ?? r.status, audience: audMap[r.id]?.audience, opens_to_all_at: audMap[r.id]?.opens_to_all_at, for_name: forMap[r.id] || null }))
+                // Nov 7: a need posted by a group shows the group's name, so neighbors
+                // know it's the pantry or the church asking. A group set to invisible
+                // can't be read here, so its name never shows.
+                const groupOf = {}
+                const groupIds = [...new Set((hrData || []).map(hr => hr.organization_id).filter(Boolean))]
+                if (groupIds.length > 0) {
+                    const { data: groups, error: gErr } = await supabase.from('organizations').select('id, name').in('id', groupIds).eq('approved', true)
+                    if (gErr) console.error('Failed to load group names for needs:', gErr)
+                    const nameOf = Object.fromEntries((groups || []).map(g => [g.id, g.name]))
+                    for (const hr of hrData) if (hr.organization_id && nameOf[hr.organization_id]) groupOf[hr.id] = { id: hr.organization_id, name: nameOf[hr.organization_id] }
+                }
+                reqs = reqs.map(r => ({ ...r, max_helpers: maxMap[r.id] ?? 1, status: statusMap[r.id] ?? r.status, audience: audMap[r.id]?.audience, opens_to_all_at: audMap[r.id]?.opens_to_all_at, for_name: forMap[r.id] || null, group: groupOf[r.id] || null }))
             }
 
             // Once a request has its helpers it is no longer public. The requester
@@ -453,6 +464,12 @@ export default function Feed() {
                                         )}
                                     </div>
 
+                                    {req.group && (
+                                        <span className="for-line">
+                                            <span aria-hidden="true"><Icon name="people" /></span>{' '}
+                                            {t('A need from')} <Link to={'/orgs/' + req.group.id} onClick={(e) => e.stopPropagation()}>{req.group.name}</Link>
+                                        </span>
+                                    )}
                                     {req.for_name && (
                                         <span className="for-line">{forLine(req, req.requester_id === user.id ? 'you' : (req.requester_name || 'a neighbor'))}</span>
                                     )}
