@@ -68,6 +68,7 @@ export default function OrgPage() {
   const [newsNote, setNewsNote] = useState('')
   const [posts, setPosts] = useState(null)
   const [postsError, setPostsError] = useState('')
+  const [needNote, setNeedNote] = useState('')
   const [asked, setAsked] = useState(false)
   const [askNote, setAskNote] = useState('')
   const [asking, setAsking] = useState(false)
@@ -206,6 +207,16 @@ export default function OrgPage() {
       setPosts((data || []).filter((p) => p.status === 'open'))
       return
     }
+    // Nov 7 (Jade): everyone signed in sees what the group needs. Only the kind
+    // of help, unless the group chose to show the details. Never who or where.
+    const pub = await supabase.rpc('group_open_needs', { p_org: id })
+    if (pub.error) console.error('Failed to load open needs:', pub.error)
+    const pubRows = (pub.data || []).map((x) => ({ kind: x.kind, id: x.id, title: x.title, description: x.description, created_at: x.created_at, full: x.full_up, open: true }))
+    if (!isMember) {
+      if (pub.error) setPostsError(t("We couldn't load needs and offers. Try again."))
+      setPosts(pubRows)
+      return
+    }
     const [r, o] = await Promise.all([
       supabase.from('help_requests').select('id, skill_needed, description, status, created_at').eq('organization_id', id).eq('status', 'open').order('created_at', { ascending: false }).limit(30),
       supabase.from('offers').select('id, title, description, is_available, created_at').eq('organization_id', id).eq('is_available', true).order('created_at', { ascending: false }).limit(30),
@@ -213,10 +224,30 @@ export default function OrgPage() {
     if (r.error) console.error('Failed to load needs:', r.error)
     if (o.error) console.error('Failed to load offers:', o.error)
     if (r.error && o.error) setPostsError(t("We couldn't load needs and offers. Try again."))
+    const seen = new Set()
     setPosts([
       ...(r.data || []).map((x) => ({ kind: 'need', id: x.id, title: x.skill_needed, description: x.description, created_at: x.created_at })),
       ...(o.data || []).map((x) => ({ kind: 'offer', id: x.id, title: x.title, description: x.description, created_at: x.created_at })),
-    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
+      ...pubRows,
+    ].filter((p) => { const k = p.kind + p.id; if (seen.has(k)) return false; seen.add(k); return true })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
+  }
+
+  // Offer to help on a need from the group page (works for people who aren't members).
+  async function offerOnNeed(p) {
+    if (!(await askConfirm(t('Offer to help with {skill}?', { skill: t(p.title) }) + '\n\n' + t('The person is told right away. You can take your offer back until they say yes.')))) return
+    setNeedNote('')
+    const { data, error } = await supabase.rpc('offer_help_on_group_need', { p_request: p.id })
+    if (error) { console.error('Failed to offer help:', error); setNeedNote(t('Something went wrong. Try again.')); return }
+    const msg = {
+      sent: 'Your offer has been sent! You can see it, or take it back, in Your tasks.',
+      already: 'You already offered to help with this request.',
+      full: 'This request has enough helpers. Thank you for wanting to help!',
+      mine: 'This is your own request.',
+      gone: 'This need is not open anymore.',
+    }[data] || 'Something went wrong. Try again.'
+    setNeedNote(t(msg))
+    if (data === 'sent' || data === 'full' || data === 'gone') loadPosts()
   }
 
   async function askToJoin() {
@@ -300,7 +331,7 @@ export default function OrgPage() {
       case 'news': return { sub: !isMember ? t('Members only') : news ? t('News from {name}', { name: org.name }) : canManage ? t('Start Announcements for your members') : t('No announcements yet') }
       case 'fires': return { sub: !isMember ? t('Members only') : chats.length ? n('1 Campfire you are in', '{n} Campfires you are in', chats.length) : t('No Campfires yet') }
       case 'events': return { sub: events.length ? t('{n} coming up', { n: events.length }) : t('Nothing on the calendar yet') }
-      case 'needs': return { sub: isMember ? t('What we need and what we offer') : t('Members only') }
+      case 'needs': return { sub: t('What we need and what we offer') }
       case 'share': return { sub: resources.length ? n('1 shared resource', '{n} shared resources', resources.length) : t('Nothing shared yet') }
       case 'members': return { sub: !isMember ? t('Members only') : isGroup ? t('Who is in, and what we bring') : t('Who is part of this group') }
       case 'involved': return { sub: isMember ? t('Share this page with a friend') : asked ? t('You asked to join') : t('Ask to join or reach the {who}', { who: t(W.leadsLower) }) }
@@ -316,7 +347,7 @@ export default function OrgPage() {
     if (s.k === 'tools') { go('/orgs/' + id + '/dashboard'); return }
     if (s.k === 'news' && isMember && news) { go('/groups/' + news.id); return }
     if (s.k === 'fires' && isMember && chats.length === 1) { go('/groups/' + chats[0].id); return }
-    if (s.k === 'needs' && isMember && posts === null) loadPosts()
+    if (s.k === 'needs' && posts === null) loadPosts()
     openSheet({ k: s.k })
   }
 
@@ -413,10 +444,12 @@ export default function OrgPage() {
           {posts === null && <p role="status">{t('Loading...')}</p>}
           {postsError && <p className="vs-note" role="alert">{postsError}</p>}
           {posts && posts.length === 0 && !postsError && <p>{t('No open needs or offers right now.')}</p>}
+          {needNote && <p className="vs-note" role="status">{needNote}</p>}
           {posts && posts.map((p) => (
-            <button key={p.kind + p.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/skillshare') }}>
+            <button key={p.kind + p.id} type="button" className="vs-row" disabled={p.full}
+              onClick={() => { if (p.kind === 'need' && p.open && !canManage) { offerOnNeed(p); return } setSheet(null); navigate(p.kind === 'offer' ? '/skillshare?tab=offers' : '/skillshare') }}>
               <span aria-hidden="true"><Icon name={p.kind === 'need' ? 'heart-hands' : 'gift'} /></span> {p.title ? t(p.title) : (p.kind === 'need' ? t('A need') : t('An offer'))}
-              <small>{p.kind === 'need' ? t('Need') : t('Offer')}{p.description ? ': ' + p.description.slice(0, 90) : ''}</small>
+              <small>{p.kind === 'need' ? t('Need') : t('Offer')}{p.description ? ': ' + p.description.slice(0, 90) : ''}{p.full ? ' (' + t('has enough helpers') + ')' : (p.kind === 'need' && p.open && !canManage ? ' \u00b7 ' + t('Tap to offer help') : '')}</small>
             </button>
           ))}
           <div className="vs-help">
@@ -522,7 +555,7 @@ export default function OrgPage() {
   }
 
   // Simple view: the few places most people need, in this order. Leaders see their tools first.
-  const simpleMain = !isMember ? ['involved']
+  const simpleMain = !isMember ? (isGroup ? ['involved'] : ['needs', 'involved'])
     : isGroup ? ['tools', 'ready', 'news', 'fires', 'events', 'members']
     : ['tools', 'news', 'fires', 'events', 'needs', 'members']
   function roomRow(s) {

@@ -71,6 +71,15 @@ export default function SimpleHome() {
     if (refreshProfile) refreshProfile()
   }
 
+  // "Anything you can share?" (Nov 7). Hidden on this phone once they say not now.
+  const shareKey = 'vwb_share_nudge_off_' + (user?.id || '')
+  const [shareOff, setShareOff] = useState(() => { try { return localStorage.getItem(shareKey) === '1' } catch { return false } })
+  const askShare = !!user && !!profile && Array.isArray(profile.skills) && profile.skills.length === 0 && !shareOff
+  function shareNotNow() {
+    setShareOff(true)
+    try { localStorage.setItem(shareKey, '1') } catch { /* private window: it just shows again next visit */ }
+  }
+
   const first = (profile?.display_name || '').trim().split(/\s+/)[0]
   const waiting = unreadCount > 0 || (mine && mine.length > 0)
 
@@ -182,6 +191,20 @@ export default function SimpleHome() {
         <Icon name="cat-emergency" size={40} />
         <span><b>{t('Emergency')}</b><small>{t('Flood, storm, fire, or outage. In danger? Call 911 first.')}</small></span>
       </button>
+
+      {/* Nov 7 (Jade): asking and offering side by side. People who have not picked
+          anything they can share yet get one gentle nudge, until they pick or say not now. */}
+      {askShare && (
+        <section className="sh-setup" aria-labelledby="sh-share-h">
+          <h2 id="sh-share-h">{t('Anything you can share?')}</h2>
+          <button type="button" className="sh-row" onClick={() => navigate('/setup?step=skills&only=skills')}>
+            <Icon name="heart-hands" size={32} />
+            <span><b>{t('Pick what I can share')}</b><small>{t('Even listening counts.')}</small></span>
+            <span className="sh-arrow" aria-hidden="true">&#8250;</span>
+          </button>
+          <button type="button" className="link-button sh-setup-no" onClick={shareNotNow}>{t('Not now')}</button>
+        </section>
+      )}
 
       {offerSetup && (
         <section className="sh-setup" aria-labelledby="sh-setup-h">
