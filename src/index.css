@@ -6839,3 +6839,33 @@ html.calm-motion .nr-card:active { transform: none; }
 
 /* Nov 3: page titles wrap instead of running off the edge at very large zoom (250%). */
 .profile-page h1, .fh-head h1, .ask-page h1 { min-width: 0; overflow-wrap: anywhere; }
+
+/* ---------- One page frame (Nov 7, Jade) ----------
+   Every page should feel the same as you move around:
+   1. Side by side pages all sit in the same 1240px centered column (Messages,
+      My Corner and Admin already did; Offer Help, Your tasks, Calendar, Find
+      resources, Resources near you and Help used the whole screen).
+   2. Side by side pages split the same way: two even halves.
+   3. Page titles are one size and color (My Corner was green, Messages was bigger).
+   4. Back links ("All help" and the rest) look like the frame's Back button. */
+@media (min-width: 1024px) {
+  html:not(.simple) .app-main:has(.fo-page),
+  html:not(.simple) .app-main:has(.tk-page),
+  .app-main:has(.cal-split),
+  .app-main:has(.fr-page),
+  .app-main:has(.nr-page),
+  .app-main:has(> .doors:not(.doors-simple)) { max-width: 1240px; }
+  .hub-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+.hub-head h1, .messages-page h1, .feed-header h1, .tasks-header h1, .community-page h1,
+.cal-head h1, .help-page h1, .ask-page h1, h1.corner-title, h1.doors-title {
+  font-size: 1.5rem; font-weight: 800; line-height: 1.2; color: var(--text-strong);
+}
+.hub-back {
+  gap: 6px; padding: 0 16px 0 12px; border-radius: 22px; margin-bottom: 0.5rem;
+  background: #1f4a47; color: #fff;
+}
+.hub-back:hover { background: #163936; }
+.hub-back:active { transform: scale(0.97); }
+.hub-back:focus-visible { outline: 3px solid #e8b84a; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .hub-back:active { transform: none; } }
