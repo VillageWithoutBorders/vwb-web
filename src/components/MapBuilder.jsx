@@ -873,7 +873,40 @@ export function ScrollCue({ b, label = 'More below' }) {
     window.addEventListener('resize', measure)
     return () => { clearTimeout(tm); window.removeEventListener('resize', measure) }
   })
+  // Nov 8 (Jade): on a computer the map holds still and the right side scrolls. A soft
+  // fade and a small "More below" button at the bottom of the right side say there is
+  // more. They go away once you start scrolling or when everything already fits.
+  const [deskMore, setDeskMore] = useState(false)
+  useEffect(() => {
+    // Shows only when real content (a button, a card, words) is hidden below the
+    // bottom bar, not just the page's empty padding.
+    function check() {
+      const page = b.outerRef.current && b.outerRef.current.closest('.vs-page-path')
+      if (!page || window.innerWidth < 1024 || window.scrollY >= 40) { setDeskMore(false); return }
+      const bar = document.querySelector('.bottom-tabs')
+      const seen = (bar ? bar.getBoundingClientRect().top : window.innerHeight) - 16
+      let lowest = 0
+      for (const el of page.children) {
+        if (el.matches('.vs-scene-path, .vs-shade, .vs-more-desk, .vs-scroll-cue, .vs-map-under')) continue
+        const r = el.getBoundingClientRect()
+        if (r.height > 0) lowest = Math.max(lowest, r.bottom - (parseFloat(getComputedStyle(el).paddingBottom) || 0))
+      }
+      setDeskMore(lowest > seen + 8)
+    }
+    check()
+    const tm = setTimeout(check, 800)
+    // Check again when the page grows or shrinks (lists finish loading, a section opens).
+    const page = b.outerRef.current && b.outerRef.current.closest('.vs-page-path')
+    const ro = page && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null
+    if (ro) ro.observe(page)
+    window.addEventListener('scroll', check, { passive: true })
+    window.addEventListener('resize', check)
+    return () => { clearTimeout(tm); if (ro) ro.disconnect(); window.removeEventListener('scroll', check); window.removeEventListener('resize', check) }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   if (b.arrange) return null
+  function deskGo() {
+    window.scrollBy({ top: Math.round(window.innerHeight * 0.6), behavior: stillMotion() ? 'auto' : 'smooth' })
+  }
   function go() {
     const el = b.outerRef.current
     if (!el) return
@@ -882,8 +915,17 @@ export function ScrollCue({ b, label = 'More below' }) {
     window.scrollTo({ top: y, behavior: stillMotion() ? 'auto' : 'smooth' })
   }
   return (
-    <button type="button" className="vs-scroll-cue" onClick={go}>
-      {t(label)} <span className="vs-scroll-cue-arrow" aria-hidden="true">&#8595;</span>
-    </button>
+    <>
+      <button type="button" className="vs-scroll-cue" onClick={go}>
+        {t(label)} <span className="vs-scroll-cue-arrow" aria-hidden="true">&#8595;</span>
+      </button>
+      {deskMore && (
+        <div className="vs-more-desk">
+          <button type="button" className="vs-more-desk-btn" onClick={deskGo}>
+            {t(label)} <span aria-hidden="true">&#8595;</span>
+          </button>
+        </div>
+      )}
+    </>
   )
 }
