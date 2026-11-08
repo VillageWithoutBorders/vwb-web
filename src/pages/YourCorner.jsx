@@ -73,7 +73,7 @@ export default function YourCorner({ embedded = false }) {
       {!embedded && (
         <Link to="/settings" className="corner-item corner-settings">
           <span aria-hidden="true"><Icon name="gear" /></span>
-          <span className="corner-item-text">{t('Settings')}<small>{t('Text size, light or dark, Simple view')}</small></span>
+          <span className="corner-item-text">{t('Settings')}<small>{t('Language, text size, light or dark, Simple view, less motion')}</small></span>
           <span className="corner-arrow" aria-hidden="true">›</span>
         </Link>
       )}
@@ -86,7 +86,8 @@ export default function YourCorner({ embedded = false }) {
         <Link to="/my-code" className="corner-item"><span aria-hidden="true"><Icon name="qr-code" /></span> {t('My QR code')}<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/profile" className="corner-item"><span aria-hidden="true"><Icon name="handshake" /></span> {simple ? <span className="corner-item-text">{t('Vouches and trust')}<small>{t('Neighbors who say you can be trusted')}</small></span> : t('Vouches and trust')}<span className="corner-arrow" aria-hidden="true">›</span></Link>
         {/* Oct 22: your cottage is your house in your home village: your own private map. */}
-        {!embedded && !simple && <Link to="/cottage" className="corner-item"><span aria-hidden="true"><Icon name="cottage" /></span> {t('My cottage')}<span className="corner-arrow" aria-hidden="true">›</span></Link>}
+        {/* Nov 7 (Jade): hidden when your cottage shows beside your corner. */}
+        {!embedded && !simple && !split && <Link to="/cottage" className="corner-item"><span aria-hidden="true"><Icon name="cottage" /></span> {t('My cottage')}<span className="corner-arrow" aria-hidden="true">›</span></Link>}
         {!simple && <Link to="/world" className="corner-item"><span aria-hidden="true"><Icon name="houses" /></span> {t('Map of my villages')}<span className="corner-arrow" aria-hidden="true">›</span></Link>}
         {!simple && !organizations.some((o) => o.kind !== 'group') && (
           <Link to="/calendar?bring=org" className="corner-item"><span aria-hidden="true"><Icon name="people" /></span> {t('Bring your group')}<span className="corner-arrow" aria-hidden="true">›</span></Link>

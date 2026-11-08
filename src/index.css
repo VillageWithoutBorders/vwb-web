@@ -6857,7 +6857,7 @@ html.calm-motion .nr-card:active { transform: none; }
   .app-main:has(> .doors:not(.doors-simple)) { max-width: 1240px; }
   .hub-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
-.hub-head h1, .fh-head h1, .messages-page h1, .feed-header h1, .tasks-header h1, .community-page h1,
+.hub-head h1, .fh-head h1, h1.settings-title, .messages-page h1, .feed-header h1, .tasks-header h1, .community-page h1,
 .cal-head h1, .help-page h1, .ask-page h1, h1.corner-title, h1.doors-title {
   font-size: 1.5rem; font-weight: 800; line-height: 1.2; color: var(--text-strong);
 }
@@ -7034,3 +7034,6 @@ html.calm-motion .nr-card:active { transform: none; }
 @keyframes tools-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .tools-sheet { animation: none; } }
 html.calm-motion .tools-sheet { animation: none; }
+
+/* Settings title (Nov 7): same as other page titles, sized above. */
+h1.settings-title { margin: 0 0 1rem; }
