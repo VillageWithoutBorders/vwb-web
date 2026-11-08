@@ -318,7 +318,8 @@ export default function Profile() {
           {profile?.is_hope_ambassador && (
             <span className="ambassador-badge">{t('Hope Ambassador')}</span>
           )}
-                   <p className="profile-email">{user?.email}</p>
+          {/* Nov 7 (Jade): your email is not shown here, so nobody nearby reads it over
+              your shoulder. It is in Settings > Account and privacy. */}
           <button type="button" className="btn btn-outline profile-edit-btn" onClick={startEditing}>
             <span aria-hidden="true"><Icon name="pencil" /></span> {t('Edit my profile')}
           </button>
@@ -326,30 +327,29 @@ export default function Profile() {
 
         <VouchRequestsForMe myId={user?.id} />
 
-        <label className="checkbox-field" style={{ alignItems: 'flex-start', margin: '0.75rem 0' }}>
-          <input type="checkbox" checked={profile?.village_opt_in === true} disabled={villageSaving} onChange={(e) => toggleVillage(e.target.checked)} />
-          <span>
-            <strong style={{ display: 'block' }}>{t('I am in a village chat')}</strong>
-            {t('Turn this on to find village chats near your zip code. Turn it off to leave all of them.')}
-          </span>
-        </label>
-        <p style={{ margin: '0 0 0.75rem' }}><Link to="/find-village">{t('Find or start a village chat')}</Link></p>
-
         <div className="profile-details">
+          {/* Nov 7 (Jade): where you are, on one line (it said Ringgold, GA twice). */}
           <div className="detail-row">
-            <span className="detail-label">{t('Zip code')}</span>
-            <span className="detail-value">{profile?.zip_code || t('Not set')}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">{t('Neighborhood')}</span>
-            <span className="detail-value">{profile?.neighborhood || t('Not set')}</span>
+            <span className="detail-label">{t('Where')}</span>
+            <span className="detail-value">{[profile?.neighborhood, profile?.zip_code].filter(Boolean).join(' \u00b7 ') || t('Not set')}</span>
           </div>
           <HomeVillageRow />
+          {/* Nov 7 (Jade): the village chat choice lives with your village, worded as a choice. */}
+          <div className="detail-row detail-row-stack">
+            <label className="checkbox-field profile-village-choice">
+              <input type="checkbox" checked={profile?.village_opt_in === true} disabled={villageSaving} onChange={(e) => toggleVillage(e.target.checked)} />
+              <span>
+                <strong>{t('Show me village chats near my zip code')}</strong>
+                <small>{t('Turn this off to leave all of them.')}</small>
+              </span>
+            </label>
+            <Link to="/find-village" className="profile-village-link">{t('Find or start a village chat')} &#8250;</Link>
+          </div>
           <div className="detail-row detail-row-stack">
             <span className="detail-label">{t('Skills')}</span>
-            <span className="detail-value">
-              {profile?.skills?.length > 0 ? profile.skills.map((s) => t(s)).join(', ') : t('None yet')}
-            </span>
+            {profile?.skills?.length > 0
+              ? <span className="profile-skill-tags">{profile.skills.map((s) => <span key={s} className="profile-skill-tag">{t(s)}</span>)}</span>
+              : <span className="detail-value">{t('None yet')}</span>}
           </div>
           <div className="detail-row">
             <span className="detail-label">{t('Help radius')}</span>

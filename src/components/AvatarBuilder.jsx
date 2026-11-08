@@ -51,11 +51,45 @@ const COLOR_OPTIONS = {
   ],
 }
 
-const LABELS = {
-  top: 'Hair / Head', accessories: 'Accessories', hairColor: 'Hair Color',
-  facialHair: 'Facial Hair', facialHairColor: 'Facial Hair Color',
-  clothing: 'Clothes', clothesColor: 'Clothes Color',
-  eyes: 'Eyes', eyebrows: 'Eyebrows', mouth: 'Mouth', skinColor: 'Skin Tone',
+// Nov 7 (Jade): plain names, in the order people usually build a face.
+const PART_NAMES = {
+  top: 'Hair and hats', accessories: 'Glasses', hairColor: 'Hair color',
+  facialHair: 'Beard', facialHairColor: 'Beard color',
+  clothing: 'Clothes', clothesColor: 'Clothes color',
+  eyes: 'Eyes', eyebrows: 'Eyebrows', mouth: 'Mouth', skinColor: 'Skin',
+}
+
+// Plain names for DiceBear's choices (it calls them things like "straight01" or "miaWallace").
+const OPTION_NAMES = {
+  bigHair: 'Big hair', bob: 'Bob', bun: 'Bun', curly: 'Curly', curvy: 'Long waves', dreads: 'Locs',
+  frida: 'Flower crown', fro: 'Afro', froBand: 'Afro with band', miaWallace: 'Bob with bangs',
+  longButNotTooLong: 'Medium long', shavedSides: 'Shaved sides', straight01: 'Long straight',
+  straight02: 'Long straight, parted', straightAndStrand: 'Straight with a loose strand',
+  dreads01: 'Short locs', dreads02: 'Locs, shaved sides', frizzle: 'Frizzy', shaggy: 'Shaggy',
+  shaggyMullet: 'Mullet', shortCurly: 'Short curly', shortFlat: 'Short flat', shortRound: 'Short round',
+  shortWaved: 'Short waves', sides: 'Bald on top', theCaesar: 'Buzz cut', theCaesarAndSidePart: 'Short, side part',
+  winterHat1: 'Winter hat', winterHat02: 'Winter hat with ears', winterHat03: 'Beanie with pom',
+  winterHat04: 'Knit cap', hat: 'Hat', hijab: 'Hijab', turban: 'Turban',
+  kurt: 'Round shades', prescription01: 'Glasses', prescription02: 'Wide glasses', round: 'Round glasses',
+  sunglasses: 'Sunglasses', wayfarers: 'Square shades', eyepatch: 'Eye patch',
+  beardLight: 'Light beard', beardMajestic: 'Full beard', beardMedium: 'Medium beard',
+  moustacheFancy: 'Curled moustache', moustacheMagnum: 'Thick moustache',
+  blazerAndShirt: 'Jacket and shirt', blazerAndSweater: 'Jacket and sweater', collarAndSweater: 'Collar and sweater',
+  graphicShirt: 'T-shirt with a picture', hoodie: 'Hoodie', overall: 'Overalls',
+  shirtCrewNeck: 'T-shirt', shirtScoopNeck: 'Scoop neck', shirtVNeck: 'V-neck',
+  closed: 'Closed', cry: 'Teary', default: 'Open', eyeRoll: 'Eye roll', happy: 'Happy', hearts: 'Hearts',
+  side: 'Looking away', squint: 'Squint', surprised: 'Surprised', wink: 'Wink', winkWacky: 'Silly wink', xDizzy: 'Dizzy',
+  angry: 'Cross', angryNatural: 'Cross, natural', defaultNatural: 'Natural', flatNatural: 'Flat',
+  frownNatural: 'Frown', raisedExcited: 'Raised', raisedExcitedNatural: 'Raised, natural',
+  sadConcerned: 'Worried', sadConcernedNatural: 'Worried, natural', unibrowNatural: 'One brow',
+  upDown: 'One up', upDownNatural: 'One up, natural',
+  concerned: 'Worried', disbelief: 'Doubtful', eating: 'Eating', grimace: 'Grimace', sad: 'Sad',
+  screamOpen: 'Shouting', serious: 'Serious', smile: 'Smile', tongue: 'Tongue out', twinkle: 'Little smile', vomit: 'Sick',
+}
+// The eyebrows and mouth share some DiceBear names with the eyes ("default").
+const OPTION_NAMES_BY_PART = { eyebrows: { default: 'Plain' }, mouth: { default: 'Plain' } }
+function optionName(val, part) {
+  return (OPTION_NAMES_BY_PART[part] && OPTION_NAMES_BY_PART[part][val]) || OPTION_NAMES[val] || val
 }
 
 function buildCustomUrl(config) {
@@ -147,68 +181,55 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
   const previewUrl = getPreviewUrl()
   const canSave = mode === 'pick' ? !!selected : Object.keys(config).length > 0
   const sectionKeys = [...Object.keys(OPTIONS), ...Object.keys(COLOR_OPTIONS)]
-  const tabStyle = (active) => ({ padding: '0.4rem 0.65rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, background: active ? '#4ecca3' : '#2a2a2a', color: active ? '#1a1a1a' : '#aaa', whiteSpace: 'nowrap' })
 
+  // Nov 7 (Jade): the builder follows light or dark, has one way out (Cancel), plain
+  // names for every choice, 44px buttons, and on a computer the picture sits on the
+  // left with the choices on the right (classes in index.css, "Avatar builder").
   return (
-    <div style={{ padding: '1rem', maxWidth: '500px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{t(mode === 'pick' ? 'Pick Your Avatar' : 'Customize Avatar')}</h2>
-        {onCancel && <button onClick={onCancel} aria-label={t('Close avatar picker')} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '1.3rem', cursor: 'pointer' }}>{'✕'}</button>}
-      </div>
+    <div className="ab">
+      <h2 className="ab-title">{t(mode === 'pick' ? 'Pick your avatar' : 'Make your avatar')}</h2>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button onClick={() => switchMode('pick')} style={tabStyle(mode === 'pick')}>{t('Quick Pick')}</button>
-        <button onClick={() => switchMode('customize')} style={tabStyle(mode === 'customize')}>{t('Customize')}</button>
+      <div className="ab-modes" role="group" aria-label={t('How to make your avatar')}>
+        <button type="button" className={'ab-mode' + (mode === 'pick' ? ' on' : '')} aria-pressed={mode === 'pick'} onClick={() => switchMode('pick')}>{t('Pick one')}</button>
+        <button type="button" className={'ab-mode' + (mode === 'customize' ? ' on' : '')} aria-pressed={mode === 'customize'} onClick={() => switchMode('customize')}>{t('Make my own')}</button>
       </div>
 
       {mode === 'pick' && (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
+        <div className="ab-pick">
+          <div className="ab-grid">
             {seeds.map((seed, seedIndex) => (
-              <button key={seed} type="button" onClick={() => setSelected(seed)} aria-pressed={selected === seed} aria-label={t(selected === seed ? 'Avatar option {n}, selected' : 'Avatar option {n}', { n: seedIndex + 1 })} style={{
-                width: '100%', aspectRatio: '1', borderRadius: '50%', overflow: 'hidden',
-                border: selected === seed ? '3px solid #4ecca3' : '3px solid transparent',
-                background: '#2a2a2a', cursor: 'pointer', padding: 0,
-                boxShadow: selected === seed ? '0 0 12px rgba(78,204,163,0.4)' : 'none',
-              }}>
-                <img src={BASE + '?seed=' + encodeURIComponent(seed)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <button key={seed} type="button" className={'ab-face' + (selected === seed ? ' on' : '')} onClick={() => setSelected(seed)} aria-pressed={selected === seed} aria-label={t(selected === seed ? 'Avatar option {n}, selected' : 'Avatar option {n}', { n: seedIndex + 1 })}>
+                <img src={BASE + '?seed=' + encodeURIComponent(seed)} alt="" width="96" height="96" loading="lazy" />
               </button>
             ))}
           </div>
-          <button onClick={shuffle} style={{ display: 'block', width: '100%', marginBottom: '1rem', padding: '0.6rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.9rem' }}><Icon name="dice" /> {t('Shuffle for more')}</button>
-        </>
+          <button type="button" className="ab-soft" onClick={shuffle}><Icon name="dice" /> {t('Show me more')}</button>
+        </div>
       )}
 
       {mode === 'customize' && (
-        <>
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-            <div style={{ width: '120px', height: '120px', margin: '0 auto', borderRadius: '50%', overflow: 'hidden', background: '#2a2a2a', border: '3px solid #4ecca3' }}>
-              {previewUrl && <img src={previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+        <div className="ab-make">
+          <div className="ab-preview">
+            <div className="ab-preview-pic">
+              {previewUrl && <img src={previewUrl} alt={t('Your avatar')} width="200" height="200" />}
             </div>
-            <button onClick={randomizeCustom} style={{ marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: '20px', border: '1px solid #666', background: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.8125rem' }}><Icon name="dice" /> {t('Randomize')}</button>
+            <button type="button" className="ab-soft" onClick={randomizeCustom}><Icon name="dice" /> {t('Surprise me')}</button>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.75rem', justifyContent: 'center' }}>
-            {sectionKeys.map(key => (
-              <button key={key} style={tabStyle(activeSection === key)} onClick={() => setActiveSection(key)}>{t(LABELS[key])}</button>
-            ))}
-          </div>
+          <div className="ab-choices">
+            <div className="ab-parts" role="group" aria-label={t('Part to change')}>
+              {sectionKeys.map((key) => (
+                <button key={key} type="button" className={'ab-part' + (activeSection === key ? ' on' : '')} aria-pressed={activeSection === key} onClick={() => setActiveSection(key)}>{t(PART_NAMES[key])}</button>
+              ))}
+            </div>
 
-          <div style={{ background: '#1e1e1e', borderRadius: '10px', padding: '0.75rem', border: '1px solid #333', marginBottom: '1rem', maxHeight: '200px', overflowY: 'auto' }}>
-            <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600, color: '#ccc', fontSize: '0.85rem' }}>{t(LABELS[activeSection])}</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+            <div className="ab-options" role="group" aria-label={t(PART_NAMES[activeSection])}>
               {COLOR_OPTIONS[activeSection] ? (
                 COLOR_OPTIONS[activeSection].map(({ name: colorName, hex }) => {
                   const isActive = config[activeSection] === hex
                   return (
-                    <button key={hex} onClick={() => update(activeSection, hex)} style={{
-                      display: 'flex', alignItems: 'center', gap: '0.35rem',
-                      padding: '0.3rem 0.6rem', borderRadius: '8px',
-                      border: isActive ? '2px solid #4ecca3' : '1px solid #444',
-                      background: isActive ? '#1a3a2a' : '#2a2a2a', color: isActive ? '#4ecca3' : '#ccc',
-                      cursor: 'pointer', fontSize: '0.8125rem', fontWeight: isActive ? 700 : 400,
-                    }}>
-                      <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: '#' + hex, border: '1px solid #555', flexShrink: 0 }} />
+                    <button key={hex} type="button" className={'ab-opt' + (isActive ? ' on' : '')} aria-pressed={isActive} onClick={() => update(activeSection, hex)}>
+                      <span className="ab-swatch" style={{ background: '#' + hex }} aria-hidden="true" />
                       {t(colorName)}
                     </button>
                   )
@@ -216,37 +237,25 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
               ) : (
                 <>
                   {(activeSection === 'accessories' || activeSection === 'facialHair') && (
-                    <button onClick={() => update(activeSection, '')} style={{
-                      padding: '0.35rem 0.6rem', borderRadius: '8px',
-                      border: !config[activeSection] ? '2px solid #4ecca3' : '1px solid #444',
-                      background: !config[activeSection] ? '#1a3a2a' : '#2a2a2a',
-                      color: !config[activeSection] ? '#4ecca3' : '#ccc',
-                      cursor: 'pointer', fontSize: '0.8125rem', fontWeight: !config[activeSection] ? 700 : 400,
-                    }}>{t('None')}</button>
+                    <button type="button" className={'ab-opt' + (!config[activeSection] ? ' on' : '')} aria-pressed={!config[activeSection]} onClick={() => update(activeSection, '')}>{t('None')}</button>
                   )}
-                  {OPTIONS[activeSection].map(val => {
+                  {OPTIONS[activeSection].map((val) => {
                     const isActive = config[activeSection] === val
-                    const label = val.replace(/([A-Z0-9])/g, ' $1').replace(/^\s/, '')
                     return (
-                      <button key={val} onClick={() => update(activeSection, val)} style={{
-                        padding: '0.35rem 0.6rem', borderRadius: '8px',
-                        border: isActive ? '2px solid #4ecca3' : '1px solid #444',
-                        background: isActive ? '#1a3a2a' : '#2a2a2a', color: isActive ? '#4ecca3' : '#ccc',
-                        cursor: 'pointer', fontSize: '0.8125rem', fontWeight: isActive ? 700 : 400,
-                      }}>{label}</button>
+                      <button key={val} type="button" className={'ab-opt' + (isActive ? ' on' : '')} aria-pressed={isActive} onClick={() => update(activeSection, val)}>{t(optionName(val, activeSection))}</button>
                     )
                   })}
                 </>
               )}
             </div>
           </div>
-        </>
+        </div>
       )}
 
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        {onCancel && <button onClick={onCancel} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #444', background: 'none', color: '#aaa', cursor: 'pointer', fontWeight: 600 }}>{t('Cancel')}</button>}
-        <button onClick={handleSave} disabled={saving || !canSave} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '1rem', opacity: saving || !canSave ? 0.5 : 1 }}>
-          {t(saving ? 'Saving...' : 'Save Avatar')}
+      <div className="ab-actions">
+        {onCancel && <button type="button" className="btn btn-outline ab-cancel" onClick={onCancel}>{t('Cancel')}</button>}
+        <button type="button" className="btn btn-primary ab-save" onClick={handleSave} disabled={saving || !canSave}>
+          {t(saving ? 'Saving...' : 'Save my avatar')}
         </button>
       </div>
     </div>

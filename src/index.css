@@ -7103,3 +7103,56 @@ h1.settings-title { margin: 0 0 1rem; }
   }
   .app-main:has(> .read-aloud-row) { --back-h: 0px; }
 }
+
+/* Nov 7 (Jade): profile details. Village chat choice inside the card, skills as tags. */
+.profile-village-choice { align-items: flex-start; margin: 0; }
+.profile-village-choice span { display: flex; flex-direction: column; gap: 0.15rem; }
+.profile-village-choice small { color: var(--text-secondary); font-size: 0.95rem; }
+.profile-village-link { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; color: var(--accent); }
+.profile-skill-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.35rem; }
+.profile-skill-tag { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); font-size: 0.95rem; }
+
+/* ---------- Avatar builder (Nov 7, Jade) ----------
+   Follows light or dark. Big plain buttons. On a computer: the picture on the left,
+   the choices on the right, so nothing hides in a small scrolling box. */
+.ab { max-width: 560px; margin: 0 auto; padding: 0 0 1rem; box-sizing: border-box; }
+.ab-title { margin: 0 0 0.75rem; font-size: 1.4rem; color: var(--text-strong); }
+.ab-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; }
+.ab-mode, .ab-part, .ab-opt {
+  min-height: 44px; padding: 0.35rem 0.75rem; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text); font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; line-height: 1.2;
+}
+.ab-mode { min-height: 48px; border: none; color: var(--text-soft); }
+.ab-mode.on, .ab-part.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.ab-opt.on { border: 2px solid var(--accent); background: var(--green-light); color: var(--text-strong); font-weight: 700; }
+.ab-mode:active, .ab-part:active, .ab-opt:active, .ab-face:active, .ab-soft:active { transform: scale(0.97); }
+.ab-mode:focus-visible, .ab-part:focus-visible, .ab-opt:focus-visible, .ab-face:focus-visible, .ab-soft:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .ab-mode:active, .ab-part:active, .ab-opt:active, .ab-face:active, .ab-soft:active { transform: none; } }
+.ab-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+.ab-face { aspect-ratio: 1; padding: 0; border-radius: 50%; overflow: hidden; border: 3px solid transparent; background: var(--surface-2); cursor: pointer; }
+.ab-face.on { border-color: var(--accent); box-shadow: 0 0 0 3px var(--green-light); }
+.ab-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ab-soft {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; min-height: 44px; padding: 0 1rem; width: 100%;
+  border-radius: 22px; border: 2px solid var(--accent); background: var(--surface); color: var(--text-strong); font: inherit; font-weight: 700; cursor: pointer;
+}
+.ab-preview { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.ab-preview-pic { width: 140px; height: 140px; border-radius: 50%; overflow: hidden; border: 3px solid var(--accent); background: var(--surface-2); }
+.ab-preview-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ab-preview .ab-soft { width: auto; }
+.ab-parts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+.ab-options { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); margin-bottom: 1rem; }
+.ab-opt { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 500; }
+.ab-swatch { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border-strong); flex: none; }
+.ab-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.ab-actions .btn { min-height: 48px; font-weight: 700; }
+.ab-actions .ab-save:only-child { grid-column: 1 / -1; }
+@media (min-width: 1024px) {
+  .ab { max-width: none; }
+  .ab-make { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr); gap: 1.5rem; align-items: start; }
+  .ab-preview { position: sticky; top: calc(var(--header-height) + 1rem); padding: 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .ab-preview-pic { width: 200px; height: 200px; }
+  .ab-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .ab-pick .ab-soft { width: auto; }
+  .ab-modes, .ab-actions { max-width: 560px; }
+}
