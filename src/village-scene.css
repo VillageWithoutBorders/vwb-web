@@ -1098,3 +1098,36 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
   html:not(.simple) .vs-today .dashboard > .today-setup { order: 11; }
 }
 .vs-today .today-needs > .today-h { margin-bottom: 0; }
+
+
+/* ---------- Computers: the map box fits the painting (Nov 8, Jade) ----------
+   The map is as wide as the painting at full height (2 wide by 3 tall), so there
+   are no blurry strips beside it, and the top and bottom are never cut off. It is
+   never more than half the window. The right side gets the extra room. */
+@media (min-width: 1024px) {
+  html:not(.simple) .vs-page.vs-page-path {
+    --vs-map-w: min(calc(var(--vs-map-h) * 2 / 3), calc(50vw - 36px));
+    --vs-right-x: calc(var(--vs-map-w) + 48px);
+    padding-left: var(--vs-right-x);
+  }
+  html:not(.simple) .vs-page.vs-page-path::after { left: var(--vs-right-x); inset: 16px 24px 24px var(--vs-right-x); }
+  html:not(.simple) .vs-page-path > .vs-scene-path,
+  html:not(.simple) .vs-page-path:has(.vs-arrange-on) > .vs-scene-path { width: var(--vs-map-w); }
+  /* Place sheets open in the right side, which now starts where the map ends. */
+  html:not(.simple) .vs-page-path .vs-shade { left: var(--vs-right-x); padding: 0; bottom: calc(var(--tab-height) + 16px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ---------- Computers: places grow with the map (Nov 8, Jade) ----------
+   On phones places stop at 78px wide. On a computer the map is bigger, so places
+   are sized to the map instead (about 25% bigger on a laptop, more on a big
+   screen). Small decorations (the well, lamp posts, flowers, rocks) never get
+   smaller than about two thirds of a place, so they are easy to spot. */
+@media (min-width: 1024px) {
+  html:not(.simple) .vs-page-path .vs-em .vs-art { width: calc(var(--vs-lw) * 0.2 * var(--s, 1)); }
+  html:not(.simple) .vs-page-path .vs-deco-img { width: max(calc(var(--vs-lw) * 0.2 * var(--s, 1)), calc(var(--vs-lw) * 0.13)); }
+  html:not(.simple) .vs-page-path .vs-gift-img { width: calc(var(--vs-lw) * 0.18 * var(--s, 1)); }
+  /* The campfire and the neighbors' cottages are drawn their own way, so they grow here too. */
+  html:not(.simple) .vs-page-path .vs-em .vs-life-fire { width: calc(var(--vs-lw) * 0.16 * var(--s, 1)); }
+  html:not(.simple) .vs-page-path .vs-cot { width: calc(var(--vs-lw) * 0.09 * var(--s, 1)); }
+  html:not(.simple) .vs-page-path .vs-hamlet .vs-cot:nth-child(-n+3) { width: calc(var(--vs-lw) * 0.08 * var(--s, 1)); }
+}
