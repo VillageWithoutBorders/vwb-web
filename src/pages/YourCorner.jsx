@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AppMenu from '../components/AppMenu'
 import Icon from '../components/Icon'
+import CottageMap from '../components/CottageMap'
+import { useWideScreen } from '../hooks/useWideScreen'
+import { supabase } from '../supabaseClient'
 import { useSimpleView } from '../utils/simpleView'
 import { useT } from '../utils/lang'
 
@@ -21,7 +24,25 @@ export default function YourCorner({ embedded = false }) {
   const letter = (name.trim().charAt(0) || '?').toUpperCase()
   const place = profile?.neighborhood || (profile?.zip_code ? t('Zip {zip}', { zip: profile.zip_code }) : '')
 
-  return (
+  // Nov 7 (Jade): My Corner looks like a neighbor's page. Your cottage, the way
+  // visitors see it, sits beside your corner on a computer, and under your card on a phone.
+  const wide = useWideScreen()
+  const showCottage = !embedded && !simple
+  const [cottage, setCottage] = useState(null)
+  useEffect(() => {
+    if (!showCottage || !user) return undefined
+    let alive = true
+    supabase.rpc('get_cottage', { p_user: user.id }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { if (error.code !== 'PGRST202') console.error('Failed to load my cottage:', error); return }
+      setCottage(data && data.ok ? data : null)
+    })
+    return () => { alive = false }
+  }, [showCottage, user])
+  const cottageTitle = (cottage && cottage.cottage_name) || t('My cottage')
+
+  const split = showCottage && wide && !!cottage
+  const page = (
     // Oct 30 (Jade): on a computer, /me is three cards in a row under your card and Settings.
     <div className={'corner-page' + (embedded ? '' : ' corner-page-full')}>
       {embedded ? <h2 className="corner-title">{t('My Corner')}</h2> : <h1 className="corner-title">{t('My Corner')}</h1>}
@@ -37,6 +58,16 @@ export default function YourCorner({ embedded = false }) {
           <span className="corner-see">{t('See my profile')} ›</span>
         </span>
       </Link>
+
+      {showCottage && !wide && cottage && (
+        <section className="pp-cottage-preview corner-cottage-preview" aria-labelledby="corner-cottage-h">
+          <h2 id="corner-cottage-h" className="pp-cottage-h">{cottageTitle}</h2>
+          <Link to="/cottage" className="pp-cottage-link" aria-label={t('Open my cottage')}>
+            <CottageMap data={cottage} name={name} preview />
+            <span className="pp-cottage-open">{t('Open my cottage')} &#8250;</span>
+          </Link>
+        </section>
+      )}
 
       {/* Oct 27 (Jade): Settings first and big, so it's easy to find, in both views. */}
       {!embedded && (
@@ -64,6 +95,19 @@ export default function YourCorner({ embedded = false }) {
       </section>
 
       <AppMenu inline />
+    </div>
+  )
+
+  if (!split) return page
+  return (
+    <div className="corner-split">
+      <div className="corner-split-main">{page}</div>
+      <aside className="pp-cottage" aria-labelledby="corner-cottage-side-h">
+        <h2 id="corner-cottage-side-h" className="pp-cottage-h">{cottageTitle}</h2>
+        <div className="pp-cottage-map"><CottageMap data={cottage} name={name} /></div>
+        <p className="pp-cottage-note">{t('This is how your cottage looks to neighbors who can visit.')}</p>
+        <Link to="/cottage" className="btn btn-primary btn-full pp-cottage-go">{t('Open my cottage')}</Link>
+      </aside>
     </div>
   )
 }

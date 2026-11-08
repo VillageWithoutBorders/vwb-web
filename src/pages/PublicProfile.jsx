@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import VouchButton from '../components/VouchButton'
 import { KnowsVouchList } from '../components/PersonalVouches'
 import { useAuth } from '../context/AuthContext'
 import { startConversation } from '../utils/startConversation'
 import ProfileSafetyActions from '../components/ProfileSafetyActions'
-import { useGoBack } from '../components/BackLink'
+import CottageMap from '../components/CottageMap'
+import { useWideScreen } from '../hooks/useWideScreen'
 import InviteSheet from '../components/InviteSheet'
 import { tell } from '../components/AdminDialog'
 import Icon from '../components/Icon'
@@ -15,7 +16,6 @@ import { useT, getLang } from '../utils/lang'
 export default function PublicProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
-  const goBack = useGoBack()
   const { user } = useAuth()
   // Arriving with { safety: 'block' | 'report' } (after taking back a
   // vouch) opens that dialog right away.
@@ -24,7 +24,10 @@ export default function PublicProfile() {
   const [msgStatus, setMsgStatus] = useState(null)
   const [blockedThem, setBlockedThem] = useState(false)
   const [canInvite, setCanInvite] = useState(false)
-  const [canVisit, setCanVisit] = useState(false)
+  // Their cottage (Nov 7, Jade): get_cottage's answer. On a computer it sits beside
+  // the profile; on a phone a picture of it opens the full map.
+  const [cottage, setCottage] = useState(null)
+  const wide = useWideScreen()
   const [inviting, setInviting] = useState(false)
   const [profile, setProfile] = useState(null)
   const [tab, setTab] = useState('requests')
@@ -46,14 +49,15 @@ export default function PublicProfile() {
     return () => { alive = false }
   }, [user, userId])
 
-  // "Visit their cottage" shows only when they let you (Nov 1, get_cottage).
+  // Their cottage shows only when they let you (Nov 1, get_cottage decides).
   useEffect(() => {
-    if (!user || !userId || user.id === userId) { setCanVisit(false); return }
+    setCottage(null)
+    if (!user || !userId || user.id === userId) return
     let alive = true
     supabase.rpc('get_cottage', { p_user: userId }).then(({ data, error }) => {
       if (!alive) return
-      if (error) { if (error.code !== 'PGRST202') console.error('Failed to check cottage visits:', error); setCanVisit(false); return }
-      setCanVisit(!!(data && data.ok))
+      if (error) { if (error.code !== 'PGRST202') console.error('Failed to load their cottage:', error); return }
+      setCottage(data || null)
     })
     return () => { alive = false }
   }, [user, userId])
@@ -172,7 +176,6 @@ export default function PublicProfile() {
   if (!profile) {
     return (
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
-        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>{t("This profile isn't available.")}</div>
       </div>
     )
@@ -181,9 +184,27 @@ export default function PublicProfile() {
   const canSeeHistory = user?.id === userId || msgStatus === 'open'
   const avatarUrl = profile.avatar_url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId}`
 
+  const name = profile.display_name || t('Neighbor')
+  const showCottage = !!cottage && !blockedThem
+  const cottageTitle = cottage && cottage.ok ? (cottage.cottage_name || t("{name}'s cottage", { name })) : t("{name}'s cottage", { name })
+  const cottageClosed = cottage && !cottage.ok && (cottage.why === 'nobody' ? t('{name} keeps their cottage to themselves.', { name })
+    : cottage.why === 'connections' ? t('{name} lets only people they are connected with visit. Once you two are connected, you can visit.', { name })
+    : '')
+  const gifts = cottage && cottage.ok && cottage.gifts ? Object.values(cottage.gifts).filter(Boolean).length : 0
+  // Phones: a picture of the cottage under the vouches opens the full map.
+  const cottagePreview = showCottage && !wide && cottage.ok && (
+    <section className="pp-cottage-preview" aria-labelledby="pp-cottage-h">
+      <h2 id="pp-cottage-h" className="pp-cottage-h">{cottageTitle}</h2>
+      <Link to={'/u/' + userId + '/cottage'} className="pp-cottage-link" aria-label={t("Open {name}'s cottage map", { name })}>
+        <CottageMap data={cottage} name={name} preview />
+        <span className="pp-cottage-open">{t('Open the full map')} &#8250;</span>
+      </Link>
+    </section>
+  )
+
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1rem' }}>
-      <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', marginBottom: '0.5rem' }}>&#8592;</button>
+    <div className={'pp-page' + (showCottage && wide && (cottage.ok || cottageClosed) ? ' pp-split' : '')}>
+    <div className="pp-main">
 
       {/* Profile header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
@@ -212,17 +233,16 @@ export default function PublicProfile() {
               <Icon name="houses" /> {t('Home village: {name}', { name: homeVillage.name })}
             </button>
           )}
+          <div className="pp-actions">
           {user && user.id !== userId && !blockedThem && (
             <button type="button" onClick={msgStatus === 'pending_in' ? () => navigate('/messages') : messageThem} disabled={messaging || msgStatus === 'pending_out'} style={{ marginTop: '0.6rem', padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{t(messaging ? 'Sending...' : msgStatus === 'open' ? 'Message' : msgStatus === 'pending_out' ? 'Request sent' : msgStatus === 'pending_in' ? 'They asked to message you' : 'Ask to message')}</button>
           )}
           {canInvite && !blockedThem && (
             <button type="button" onClick={() => setInviting(true)} style={{ marginTop: '0.6rem', marginLeft: '0.5rem', minHeight: 44, padding: '0.5rem 1.1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{t('Invite to...')}</button>
           )}
-          {canVisit && !blockedThem && (
-            <button type="button" onClick={() => navigate('/u/' + userId + '/cottage')} style={{ marginTop: '0.6rem', marginLeft: '0.5rem', minHeight: 44, padding: '0.5rem 1.1rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{t('Visit their cottage')}</button>
-          )}
           {inviting && <InviteSheet person={{ user_id: userId, display_name: profile.display_name }} onClose={() => setInviting(false)} />}
           <ProfileSafetyActions userId={userId} name={profile.display_name} myId={user?.id} onBlockChange={setBlockedThem} openWith={location.state?.safety} onOpened={() => navigate(location.pathname, { replace: true, state: {} })} />
+          </div>
         </div>
       </div>
 
@@ -232,6 +252,8 @@ export default function PublicProfile() {
         <KnowsVouchList userId={userId} />
         <p className="vouch-caution">{t("Vouches show that neighbors trust this person. They aren't a background check. Meet somewhere public the first time, and trust your own judgment.")}</p>
       </div>
+
+      {cottagePreview}
 
       {!canSeeHistory && (
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>{t('Request and event history is shared once you are connected.')}</p>
@@ -302,6 +324,18 @@ export default function PublicProfile() {
         )
       )}
       </>)}
+    </div>
+
+    {/* Computers: their cottage beside the profile, as they arranged it. */}
+    {showCottage && wide && (cottage.ok || cottageClosed) && (
+      <aside className="pp-cottage" aria-labelledby="pp-cottage-side-h">
+        <h2 id="pp-cottage-side-h" className="pp-cottage-h">{cottageTitle}</h2>
+        {cottage.ok ? (<>
+          <div className="pp-cottage-map"><CottageMap data={cottage} name={name} /></div>
+          <p className="pp-cottage-note">{t('This is how {name} arranged their cottage. Their chats, alerts and tasks stay private.', { name })}{gifts > 0 ? ' ' + t("{name}'s garden: {n} of 4 gifts grown.", { name, n: gifts }) : ''}</p>
+        </>) : <p className="pp-cottage-note pp-cottage-closed">{cottageClosed}</p>}
+      </aside>
+    )}
     </div>
   )
 }
