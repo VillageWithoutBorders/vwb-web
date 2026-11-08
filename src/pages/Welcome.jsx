@@ -205,7 +205,8 @@ export default function Welcome() {
       <header style={headerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <img src="/images/vwb_header-v2.png" alt="" style={{ height: '36px', borderRadius: '50%' }} />
-          <span style={{ fontWeight: 700, fontSize: '1rem', color: COLORS.text }}>Village Without Borders</span>
+          {/* Nov 7: hidden on small phones, where it took three lines; the big logo below says it. */}
+          <span className="welcome-brand-name" style={{ fontWeight: 700, fontSize: '1rem', color: COLORS.text }}>Village Without Borders</span>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <LangSwitch />

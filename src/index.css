@@ -7156,3 +7156,7 @@ h1.settings-title { margin: 0 0 1rem; }
   .ab-pick .ab-soft { width: auto; }
   .ab-modes, .ab-actions { max-width: 560px; }
 }
+
+/* Nov 7: Welcome on small phones. The name in the top bar wrapped to three lines and
+   pushed Sign up down; the big logo already says Village Without Borders. */
+@media (max-width: 400px) { .welcome-brand-name { display: none; } }
