@@ -6,7 +6,6 @@ import { resetAccountToBase } from '../utils/resetAccount'
 import { startAppTour } from '../components/AppTour'
 import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
 import RecoveryKeySection from '../components/RecoveryKeySection'
-import { useGoBack } from '../components/BackLink'
 import AppearancePicker from '../components/AppearancePicker'
 import SimpleViewPicker from '../components/SimpleViewPicker'
 import TextSizePicker from '../components/TextSizePicker'
@@ -43,7 +42,6 @@ export default function Settings() {
   const t = useT()
   const { user, profile, isAdmin, isFounder, signOut, signOutEverywhere, refreshProfile, refreshMfa } = useAuth()
   const navigate = useNavigate()
-  const goBack = useGoBack()
 
   const [showEmailChange, setShowEmailChange] = useState(false)
   const [newEmail, setNewEmail] = useState('')
@@ -338,10 +336,8 @@ export default function Settings() {
 
   return (
     <div className="profile-page">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button onClick={() => goBack('/me')} aria-label="Back to My Corner" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
-        <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--accent)' }}>{t('Settings & Privacy')}</h1>
-      </div>
+      {/* Nov 7 (Jade): the frame's Back button and the same title as every other page. */}
+      <h1 className="settings-title">{t('Settings & Privacy')}</h1>
 
       <div role="tablist" aria-label="Settings" className="hub-tabs" style={{ marginTop: 0, marginBottom: '1rem' }}>
         <button type="button" role="tab" id="settings-tab-easy" aria-selected={tab === 'easy'} aria-controls="settings-panel" style={tabStyle(tab === 'easy')} onClick={() => pickTab('easy')}>
