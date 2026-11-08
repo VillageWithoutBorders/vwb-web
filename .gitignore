@@ -72,3 +72,6 @@ _to_delete/
 
 desktop.ini
 live-layout.csv
+
+# Accessibility check test build
+dist-check/

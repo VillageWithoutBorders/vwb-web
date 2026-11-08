@@ -206,8 +206,8 @@ export function CalendarMonth({ events, newTab, picked: pickedProp, onPick, hide
         <h2 className="cal-month-title" aria-live="polite">{month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
         <button type="button" className="cal-month-nav" onClick={() => move(1)} aria-label={t('Next month')}>&#8250;</button>
       </div>
-      <div className="cal-month-grid" role="grid" aria-label={t('Month')}>
-        {WEEKDAYS.map((w) => <div key={w} className="cal-month-wd" role="columnheader">{t(w)}</div>)}
+      <div className="cal-month-grid" role="group" aria-label={t('Month')}>
+        {WEEKDAYS.map((w) => <div key={w} className="cal-month-wd" aria-hidden="true">{t(w)}</div>)}
         {cells.map((d, i) => {
           if (!d) return <div key={'b' + i} className="cal-month-blank" />
           const k = dayKey(d)

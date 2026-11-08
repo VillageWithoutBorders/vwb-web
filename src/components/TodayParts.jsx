@@ -122,7 +122,7 @@ export function ComingUp({ slim = false }) {
     const ev = events && events[0]
     const when = ev ? new Date(ev.starts_at).toLocaleDateString(getLang() === 'es' ? 'es-US' : undefined, { weekday: 'short', month: 'short', day: 'numeric' }) : ''
     return (
-      <Link to="/calendar" className="today-slim" aria-label={ev ? t('Coming up: {title}, {when}. Open the calendar', { title: ev.title, when }) : t('Open the calendar')}>
+      <Link to="/calendar" className="today-slim">
         <Icon name="calendar" size={28} />
         <span className="today-slim-text">
           <b>{t('Coming up')}</b>

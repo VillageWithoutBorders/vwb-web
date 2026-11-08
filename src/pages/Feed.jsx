@@ -404,7 +404,7 @@ export default function Feed() {
                     </select>
                 )}
                 <button className="btn btn-sm btn-outline" onClick={loadFeed} aria-label={t('Refresh feed')}>&#x21bb; {t('Refresh')}</button>
-                {!simple && <select className="feed-filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}><option value="urgency">{t('Sort: Urgency')}</option><option value="newest">{t('Sort: Newest')}</option></select>}
+                {!simple && <select className="feed-filter-select" aria-label={t('Sort')} value={sortBy} onChange={e => setSortBy(e.target.value)}><option value="urgency">{t('Sort: Urgency')}</option><option value="newest">{t('Sort: Newest')}</option></select>}
             </div>
 
             </div>

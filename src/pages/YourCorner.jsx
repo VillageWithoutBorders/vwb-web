@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AppMenu from '../components/AppMenu'
 import Icon from '../components/Icon'
-import CornerRoom from '../components/CornerRoom'
+import CornerRoom, { ROOM_READY } from '../components/CornerRoom'
 import { useWideScreen } from '../hooks/useWideScreen'
 import { useSimpleView } from '../utils/simpleView'
 import { useT } from '../utils/lang'
@@ -66,7 +66,7 @@ export default function YourCorner({ embedded = false }) {
         </span>
       </Link>
 
-      {showCottage && !wide && (
+      {showCottage && !wide && ROOM_READY && (
         <section className="corner-room-preview" aria-labelledby="corner-room-h">
           <h2 id="corner-room-h" className="pp-cottage-h">{t('Inside your cottage')}</h2>
           <CornerRoom />
@@ -93,10 +93,12 @@ export default function YourCorner({ embedded = false }) {
   return (
     <div className="corner-split">
       <div className="corner-split-main">{page}</div>
-      <aside className="pp-cottage corner-room-panel" aria-labelledby="corner-room-side-h">
-        <h2 id="corner-room-side-h" className="pp-cottage-h">{t('Inside your cottage')}</h2>
-        <CornerRoom />
-        <p className="pp-cottage-note">{t('Each thing in the room opens part of your corner. Hold your mouse over one to see what it is.')}</p>
+      <aside className={'pp-cottage corner-room-panel' + (ROOM_READY ? '' : ' corner-room-plain')} aria-labelledby={ROOM_READY ? 'corner-room-side-h' : 'corner-things-side'}>
+        {ROOM_READY && <>
+          <h2 id="corner-room-side-h" className="pp-cottage-h">{t('Inside your cottage')}</h2>
+          <CornerRoom />
+          <p className="pp-cottage-note">{t('Each thing in the room opens part of your corner. Hold your mouse over one to see what it is.')}</p>
+        </>}
         <div className="corner-room-things">{thingsList('corner-things-side')}</div>
         <Link to="/cottage" className="btn btn-outline btn-full pp-cottage-go">{t('Step outside to My Cottage')}</Link>
       </aside>

@@ -5587,13 +5587,15 @@ button[aria-label^="Back"], button[aria-label^="Go back"], button[aria-label^="C
 /* Top bar: Home, Calendar, Dashboard, Alerts, You. Always there, same order on every screen. */
 .header-nav { justify-content: space-between; gap: 2px; padding: 0 0.25rem; }
 .header-nav .header-btn { flex: 1 1 0; min-width: 52px; max-width: 96px; text-decoration: none; }
-.header-btn.on { background: rgba(255, 255, 255, 0.18); box-shadow: inset 0 -3px 0 #ffd98a; }
+.header-btn.on { background: rgba(0, 0, 0, 0.22); box-shadow: inset 0 -3px 0 #ffd98a; }
 .header-btn:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
 .header-btn:active { transform: scale(0.96); }
 @media (prefers-reduced-motion: reduce) { .header-btn:active { transform: none; } }
 .header-btn-logo { width: 26px; height: 26px; border-radius: 50%; display: block; }
 .me-btn-img, .me-btn-letter { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box; display: block; background: var(--green-light); object-fit: cover; }
 .me-btn-letter { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8125rem; color: var(--text-strong); }
+/* Nov 8: the letter is drawn, not text, so it does not clash with the button's spoken name. */
+.me-btn-letter::before { content: attr(data-letter); }
 @media (max-width: 359px) { .header-nav .header-btn { min-width: 0; padding: 2px 2px; } .header-nav .header-btn-label { font-size: 0.7rem; } }
 .header-nav > .app-menu { flex: 1 1 0; min-width: 52px; max-width: 96px; display: flex; }
 .header-nav > .app-menu > .header-btn { flex: 1 1 auto; max-width: none; }
@@ -7243,3 +7245,22 @@ html.calm-motion .cr-dot { animation: none; }
 .cr-spot.cr-right .cr-lab { left: auto; right: 0; transform: none; }
 .cr-spot.cr-left .cr-lab { left: 0; transform: none; }
 @media (min-width: 1024px) { .corner-room-panel .pp-cottage-go { margin-top: 0.25rem; } }
+
+/* ============================================================
+   Nov 8 (Jade): Simple view, "Fill the screen" (Settings > Easy to use).
+   Simple view stays narrow and calm on a computer unless someone picks this.
+   Phones are not changed.
+   ============================================================ */
+@media (min-width: 1024px) {
+  html.simple.wide-pages .app-main,
+  html.simple.wide-pages .app-header-inner,
+  html.simple.wide-pages .bottom-tabs-inner { max-width: 1240px; }
+  html.simple.wide-pages .app-main > * { max-width: none; }
+  html.simple.wide-pages .vs-page.vs-page-path,
+  html.simple.wide-pages .app-main-world > .app-back-row { max-width: none; }
+}
+
+/* Nov 8: until Jade's own room picture is in, the right side is just Your things, sized to fit. */
+@media (min-width: 1024px) {
+  .corner-split > .pp-cottage.corner-room-plain { height: auto; align-self: start; }
+}
