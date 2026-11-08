@@ -353,11 +353,13 @@ export default function Settings() {
         <>
           <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{t('Make VWB easier to see and use. Changes save right away.')}</p>
 
-          {/* Nov 7 (Jade): two columns on a computer. Left: language and seeing. Right: using and learning. */}
-          <div className="settings-cols">
-          <div className="settings-col">
           {/* Language first (Nov 3), so someone who can't read English finds it fast. */}
           <LanguagePicker />
+
+          {/* Nov 7 (Jade): two columns on a computer, their tops lined up.
+              Left: seeing. Right: using and learning. */}
+          <div className="settings-cols">
+          <div className="settings-col">
 
           <h2 className="settings-group-h">{t('Seeing')}</h2>
           <TextSizePicker />
