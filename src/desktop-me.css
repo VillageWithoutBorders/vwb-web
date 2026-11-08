@@ -1,0 +1,32 @@
+/* Nov 7 (Jade): your own Profile and All alerts, side by side on a computer.
+   Each side scrolls by itself and the page holds still, like the other two-panel pages.
+   Phones keep one column. */
+
+/* My Connections at the bottom of your profile: the app's own button, everywhere. */
+.me-connections { min-height: 48px; margin-top: 0.75rem; font: inherit; font-weight: 700; gap: 0.4rem; }
+
+@media (min-width: 1024px) {
+  html:not(.simple) .app-main:has(.me-profile),
+  html:not(.simple) .app-main:has(.nt-split) { max-width: 1240px; }
+
+  html:not(.simple) .profile-page.me-profile,
+  html:not(.simple) .notifications-page.nt-split {
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
+    max-width: none; padding-top: 0; padding-bottom: 0;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
+  }
+  html:not(.simple) .me-profile > .me-left,
+  html:not(.simple) .me-profile > .me-right,
+  html:not(.simple) .nt-split > .nt-left,
+  html:not(.simple) .nt-split > .nt-right {
+    min-width: 0; height: var(--fit-h); overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box;
+  }
+  html:not(.simple) .me-profile > .me-left, html:not(.simple) .nt-split > .nt-left { padding: 4px; }
+  html:not(.simple) .me-profile > .me-right,
+  html:not(.simple) .nt-split > .nt-right {
+    padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+  }
+  html:not(.simple) .me-profile > .me-right > :first-child,
+  html:not(.simple) .nt-split > .nt-right > :first-child { margin-top: 0; }
+}
+.nt-none-new { margin: 1rem 0; color: var(--text-secondary); font-size: 1rem; }

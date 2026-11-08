@@ -1,3 +1,4 @@
+import '../desktop-groups.css'
 import { useEffect, useState } from 'react'
 import { NEW_ACCOUNT_NOTE } from '../utils/newAccount'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -142,7 +143,8 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
   const archivedGroups = groups.filter(g => g.archived && fits(g))
 
   return (
-    <div className="groups-page">
+    // Nov 7 (Jade): as its own page on a computer, starting and invites on the left, your chats on the right.
+    <div className={'groups-page' + (embedded ? '' : ' groups-full')}>
       <div className="groups-head">
         <div>
           {!embedded && <h1>{show === 'campfires' ? t('Your Campfires') : show === 'cottage' ? t('Your Cottage Chats') : t('Your group chats')}</h1>}
@@ -223,7 +225,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
       )}
 
       {!loading && (
-        <section aria-labelledby="mygroups-heading">
+        <section className="groups-mine" aria-labelledby="mygroups-heading">
           <h2 id="mygroups-heading" className="groups-section">{!embedded ? t('Your chats') : show === 'campfires' ? t('Your Campfires') : show === 'cottage' ? t('Your Cottage Chats') : t('Your chats')}</h2>
           {orderedGroups.length === 0 && <p className="groups-empty">{show === 'campfires' ? t("You're not at any Campfires yet.") : t("You're not in any chats yet. Start a Cottage Chat, or ask a friend to invite you.")}</p>}
           {orderedGroups.map(({ g, nested }) => (

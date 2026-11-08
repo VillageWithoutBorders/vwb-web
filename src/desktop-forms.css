@@ -1,0 +1,34 @@
+/* ---------- Ask for Help and Share something, side by side (Nov 7, Jade) ----------
+   On a computer (full view): the form on the left, holding still in its own column,
+   and a live preview of the post on the right ("How neighbors will see it").
+   Phones and Simple view keep one column and no preview. */
+.ask-preview { display: none; }
+.ask-preview-h { margin: 0; font-size: 1.15rem; color: var(--text-strong); }
+.ask-preview-card { cursor: default; margin: 0; }
+.ask-preview-card:active { transform: none; }
+.ask-preview-empty { color: var(--text-muted) !important; font-style: italic; }
+.ask-preview-line { margin: 0.4rem 0 0; font-size: 1rem; color: var(--text-secondary); }
+.ask-preview-note { margin: 0; font-size: 1rem; line-height: 1.45; color: var(--text-secondary); }
+.ask-preview .feed-card-desc { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+@media (min-width: 1024px) {
+  html:not(.simple) .app-main:has(.ask-split),
+  html:not(.simple) .app-main:has(.offer-split) { max-width: 1240px; }
+  html:not(.simple) .ask-split,
+  html:not(.simple) .offer-split {
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
+    max-width: none !important; margin: 0 !important; padding: 0 !important;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
+  }
+  html:not(.simple) .ask-split > .ask-left,
+  html:not(.simple) .offer-split > .ask-left {
+    min-width: 0; height: var(--fit-h); overflow-y: auto; overscroll-behavior: contain;
+    padding: 4px 0.5rem 4px 4px; box-sizing: border-box;
+  }
+  html:not(.simple) .ask-split > .ask-preview,
+  html:not(.simple) .offer-split > .ask-preview {
+    display: flex; flex-direction: column; gap: 0.75rem; min-width: 0;
+    height: var(--fit-h); overflow-y: auto; box-sizing: border-box;
+    padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+  }
+}

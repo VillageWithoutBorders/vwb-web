@@ -1,0 +1,30 @@
+/* Nov 7 (Jade): Emergency side by side on computers (full view), like Messages.
+   Left: the list of emergencies. Right: the open emergency in a panel.
+   Each side scrolls by itself and the page holds still. Phones and Simple view
+   never get .em-split, so they keep one column. */
+@media (min-width: 1024px) {
+  .app-main:has(.em-split) { max-width: 1240px; }
+  .em-split {
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
+  }
+  /* The 6px padding with -6px margin keeps focus rings from being cut off at the edge. */
+  .em-split > .em-left {
+    height: var(--fit-h); overflow-y: auto; overscroll-behavior: contain; min-width: 0;
+    padding: 6px !important; margin: -6px !important; box-sizing: content-box;
+  }
+  .em-split > .em-right {
+    height: var(--fit-h); min-width: 0; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box;
+    border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+  }
+  .em-right > .em-detail-embedded { padding: 1rem !important; }
+  .em-pick {
+    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.5rem; padding: 2rem; text-align: center; color: var(--text-secondary); box-sizing: border-box;
+  }
+  .em-pick p { margin: 0; font-size: 1rem; }
+  /* The emergency that is open on the right. */
+  .em-card { cursor: pointer; }
+  .em-card.em-card-on { outline: 3px solid var(--accent); outline-offset: -1px; }
+}
+.em-card:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
