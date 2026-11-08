@@ -147,3 +147,15 @@
 .wd-fire:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 2px; }
 .wd-fire:active { transform: scale(0.98); }
 @media (prefers-reduced-motion: reduce) { .wd-fire:active { transform: none; } }
+
+/* Nov 7 (Jade): in light mode the Villages, Groups and Resources switch matches the app's
+   other tabs (picked one solid mint, not brown), and the Sister Campfire rows are calmer. */
+:root[data-theme="light"] .wd-switch { border: 0; padding: 0; background: none; gap: 8px; }
+:root[data-theme="light"] .wd-switch button { background: var(--surface-2); color: var(--text-soft); }
+:root[data-theme="light"] .wd-switch button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .wd-switch { border: 0; padding: 0; background: none; gap: 8px; }
+  :root:not([data-theme="dark"]) .wd-switch button { background: var(--surface-2); color: var(--text-soft); }
+  :root:not([data-theme="dark"]) .wd-switch button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+}
+.wd-fire { border-width: 1px; }
