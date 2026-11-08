@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
+import HoverTips from './components/HoverTips'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
@@ -312,6 +313,7 @@ export default function App() {
           <NotificationsProvider>
             <AppRoutes />
             <AdminDialogHost />
+            <HoverTips />
           </NotificationsProvider>
         </UnreadCountProvider>
       </AuthProvider>
