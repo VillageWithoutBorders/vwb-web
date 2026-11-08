@@ -69,7 +69,11 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
 
   return (
     <div className="ask-page nr-page">
+      {/* Nov 7 (Jade): on a computer the two sides line up in two rows. Top row: the title
+          on the left, Ask a neighbor on the right. Bottom row: search and tiles on the
+          left, what was found on the right, both starting at the same line. */}
       <div className="nr-left">
+      <div className="nr-head">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0, minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>{t('Resources near you')}</h1>
@@ -81,6 +85,9 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       </div>
 
       <label htmlFor="nr-q" className="nr-label">{t('Search or pick what you need')}</label>
+      </div>
+
+      <div className="nr-pick">
       <input id="nr-q" type="search" inputMode="search" enterKeyHint="search" autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('rent, diapers, ride, mold')} style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '48px', padding: '0.5rem 0.75rem', marginBottom: '0.6rem', borderRadius: '10px', border: '2px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', fontFamily: 'inherit' }} />
 
       <div role="group" aria-label={t('What do you need?')} className="hub-tiles nr-tiles">
@@ -94,8 +101,10 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
 
       {!loc && <p style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>{t('Add your zip code in your profile to see distances and ones near you. Until then you see national resources.')}</p>}
       </div>
+      </div>
 
       <div className="nr-right">
+      <div className="nr-found">
       <div ref={resultsRef} className="nr-results">
       {!picked && <p className="nr-pick-hint">{t('Pick a kind of help or search on the left. What is near you shows up here.')}</p>}
       {rows === null && <p>{t('Loading...')}</p>}
@@ -126,12 +135,15 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
         <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-soft)' }}>{t('Know a place that helps, or is a kind of help missing near you?')}</p>
         <SuggestResource category={query.trim() ? '' : cat} />
       </div>
+      </div>
 
       <div id="nr-ask" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
         <h2 style={{ margin: '0 0 0.3rem', fontSize: '1.15rem' }}>{t("Didn't find what you need?")}</h2>
         <p style={{ margin: '0 0 0.6rem', fontSize: '0.95rem', color: 'var(--text-soft)' }}>{t('Ask your neighbors. Someone nearby may have the skill, the tool, or the time to help.')}</p>
+        <div className="nr-ask-btns">
         <button type="button" onClick={() => onContinue(query.trim() ? '' : currentCategory(cat))} style={{ width: '100%', minHeight: '52px', borderRadius: '10px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, fontSize: '1.05rem', cursor: 'pointer' }}>{t('Ask a neighbor for help')}</button>
         <button type="button" onClick={() => navigate(-1)} style={{ width: '100%', minHeight: '48px', marginTop: '0.5rem', borderRadius: '10px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-soft)', fontSize: '1rem', cursor: 'pointer' }}>{t('I found what I need')}</button>
+        </div>
       </div>
       </div>
     </div>

@@ -6907,3 +6907,30 @@ html.calm-motion .nr-card:active { transform: none; }
 }
 @keyframes hover-tip-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .hover-tip { animation: none; } }
+
+/* Nov 7 (Jade): Resources near you lines up across on a computer. Two rows:
+   top, the title on the left and "Didn't find what you need?" on the right;
+   bottom, search and tiles on the left and what was found on the right, so the
+   search box and the results box start at the same line. Phones stay one column. */
+@media (min-width: 1024px) {
+  .ask-page.nr-page {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr); column-gap: 1.5rem; row-gap: 0;
+    height: var(--fit-h); align-items: stretch;
+  }
+  .nr-page > .nr-left, .nr-page > .nr-right { display: contents; }
+  .nr-head { grid-column: 1; grid-row: 1; align-self: end; min-width: 0; }
+  .nr-head > .nr-label { display: block; margin-bottom: 0.4rem; }
+  .nr-pick { grid-column: 1; grid-row: 2; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .nr-pick > * { flex: 0 0 auto; }
+  .nr-pick > .nr-tiles { flex: 1 1 0; min-height: 0; margin-bottom: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(44px, 150px); align-content: start; overflow-y: auto; }
+  .nr-pick .hub-tile { min-height: 44px; height: 100%; }
+  .nr-pick .hub-tile img { width: clamp(28px, 4.5dvh, 48px); height: clamp(28px, 4.5dvh, 48px); }
+  .nr-page #nr-ask { grid-column: 2; grid-row: 1; align-self: end; min-width: 0; margin: 0 0 0.6rem !important; padding: 0 !important; border: 0 !important; }
+  .nr-ask-btns { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 0.5rem; }
+  .nr-ask-btns > button { margin-top: 0 !important; }
+  .nr-found { grid-column: 2; grid-row: 2; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+  .nr-found > .nr-results { flex: 1 1 0; min-height: 0; overflow-y: auto; margin: 0; padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .nr-found > .nr-results > ul { margin-bottom: 0 !important; }
+  .nr-found > .sr-suggest { flex: 0 0 auto; margin: 0; }
+}
