@@ -22,3 +22,12 @@
 .chat-send:not(:disabled):active, .convo-send:not(:disabled):active { transform: scale(0.97); }
 .chat-send:focus-visible, .convo-send:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .chat-send:not(:disabled):active, .convo-send:not(:disabled):active { transform: none; } }
+
+/* Nov 7 (Jade): on a computer, the chat picker opens over the open chat only, not the
+   whole screen (the list of chats is already on the left). */
+@media (min-width: 1024px) {
+  html:not(.simple) .hub-right { position: relative; }
+  html:not(.simple) .hub-right .chat-picker-shade { position: absolute !important; border-radius: 12px; align-items: flex-start !important; padding-top: 12px; }
+  html:not(.simple) .hub-right .chat-picker { border-radius: 16px !important; border: 1px solid var(--border-strong) !important; max-height: calc(100% - 24px) !important; }
+}
+.chat-picker-head { position: sticky; top: -1rem; z-index: 1; background: var(--surface); padding-top: 0.25rem; }
