@@ -6,6 +6,7 @@ import { useGoBack } from '../components/BackLink'
 import InviteSheet from '../components/InviteSheet'
 import { cottagesICanVisit } from '../utils/cottageVisits'
 import { t as tr, useT, getLang } from '../utils/lang'
+import { openMyQr } from '../utils/qrSheet'
 
 const WHY = {
   messaged: 'Messaged',
@@ -77,7 +78,7 @@ export default function Connections({ embedded = false }) {
       </div>
       )}
       <p className="cal-sub">{t('Neighbors you have met in person, messaged, helped, vouched for, or shared a group with.')}</p>
-      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 44, margin: '0.25rem 0 0.5rem' }} onClick={() => navigate('/my-code')}>{t('Show my QR code to connect')}</button>
+      <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 44, margin: '0.25rem 0 0.5rem' }} onClick={openMyQr}>{t('Show my QR code to connect')}</button>
 
       <label htmlFor="conn-search" style={{ display: 'block', fontWeight: 600, margin: '0.75rem 0 0.25rem' }}>{t('Find someone')}</label>
       <input

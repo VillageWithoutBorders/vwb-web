@@ -7274,3 +7274,29 @@ html.calm-motion .cr-dot { animation: none; }
 .pp-cottage-map .vs-deco-img, .pp-cottage-link .vs-deco-img { width: max(calc(20cqw * var(--s, 1)), 13cqw); }
 .pp-cottage-map .vs-gift-img, .pp-cottage-link .vs-gift-img { width: calc(18cqw * var(--s, 1)); }
 .pp-cottage-map .vs-em .vs-life-fire, .pp-cottage-link .vs-em .vs-life-fire { width: calc(16cqw * var(--s, 1)); }
+
+/* Nov 8 (Jade): Show my QR is a pop-up. Buttons that used to be links look the same as before. */
+.corner-item.corner-item-btn, button.tr-link { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--border); font: inherit; text-align: left; cursor: pointer; }
+button.tr-link { border-bottom: 0; }
+button.tr-link:focus-visible, button.tr-link:hover { background: var(--surface-2, transparent); }
+.corner-item.corner-item-btn:hover { background: var(--surface-2, transparent); }
+.qr-sheet-top { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.25rem; }
+.qr-sheet-top h2 { margin: 0; }
+.qr-sheet-top h2:focus { outline: none; }
+.qr-sheet-close { min-height: 44px; padding: 0 1rem; }
+.mycode-lead { margin: 0.25rem 0 0; color: var(--text-secondary); font-size: 0.95rem; }
+.qr-sheet .mycode-card { margin: 0.75rem 0; }
+.mycode-actions-row .form-success { margin: 0; }
+.mycode-safety-small { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+.mycode-safety-small h2 { font-size: 1rem; margin: 0 0 0.25rem; }
+.mycode-safety-small .cal-sub { font-size: 0.875rem; margin: 0 0 0.25rem; }
+.mycode-new { min-height: 44px; font-size: 0.95rem; }
+@media (min-width: 480px) {
+  .mycode-actions-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); }
+  .mycode-actions-row .form-success { grid-column: 1 / -1; }
+}
+/* On a computer the QR pop-up sits in the middle of the screen, not on the right like My Tools. */
+@media (min-width: 1024px) {
+  .tools-shade.qr-shade { align-items: center; justify-content: center; padding: 1rem; background: rgba(0, 0, 0, 0.55); }
+  .tools-sheet.qr-sheet { max-width: 30rem; height: auto; max-height: calc(100dvh - 2rem); border-radius: 16px; border: 1px solid var(--border-strong); animation: none; }
+}
