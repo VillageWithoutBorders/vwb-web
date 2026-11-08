@@ -335,7 +335,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="profile-page">
+    <div className="profile-page settings-page">
       {/* Nov 7 (Jade): the frame's Back button and the same title as every other page. */}
       <h1 className="settings-title">{t('Settings & Privacy')}</h1>
 
@@ -353,13 +353,18 @@ export default function Settings() {
         <>
           <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{t('Make VWB easier to see and use. Changes save right away.')}</p>
 
+          {/* Nov 7 (Jade): two columns on a computer. Left: language and seeing. Right: using and learning. */}
+          <div className="settings-cols">
+          <div className="settings-col">
           {/* Language first (Nov 3), so someone who can't read English finds it fast. */}
           <LanguagePicker />
 
           <h2 className="settings-group-h">{t('Seeing')}</h2>
           <TextSizePicker />
           <AppearancePicker />
+          </div>
 
+          <div className="settings-col">
           <h2 className="settings-group-h">{t('Using')}</h2>
           <SimpleViewPicker />
           <MotionPicker />
@@ -373,6 +378,8 @@ export default function Settings() {
             <span aria-hidden="true"><Icon name="cottage" /></span> {t('Set up your avatar and cottage')}
           </button>
           <p style={{ margin: '0.4rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{t('Make your avatar, pick your skills, and name your cottage. About 10 minutes. Finishing it turns on the full app.')}</p>
+          </div>
+          </div>
         </>
       )}
 
