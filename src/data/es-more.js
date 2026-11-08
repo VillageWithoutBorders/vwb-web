@@ -4264,6 +4264,10 @@ const more = {
   'Your private chats.': 'Sus chats privados.',
   'Your profile, account, and settings.': 'Su perfil, su cuenta y su configuración.',
   'Your requests, your offers, and the help you said yes to.': 'Sus pedidos, sus ofertas y la ayuda que aceptó.',
+  'My World: see your villages and groups on a map of the world.': 'Mi mundo: vea sus aldeas y grupos en un mapa del mundo.',
+  'My Village: your home village. Its chat, neighbors, groups, rules, and sister villages.': 'Mi aldea: su aldea. Su chat, vecinos, grupos, reglas y aldeas hermanas.',
+  'My Cottage: your own place. Your garden, chats, calendar, groups, connections, and who can visit.': 'Mi casita: su propio lugar. Su jardín, chats, calendario, grupos, conexiones y quién puede visitarla.',
+  'My Corner: your profile, settings, and account.': 'Mi rincón: su perfil, su configuración y su cuenta.',
 }
 
 export default more
