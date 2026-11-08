@@ -1,6 +1,6 @@
 import { isLight } from '../utils/theme'
 import { useEffect, useRef, useState } from 'react'
-import { useT } from '../utils/lang'
+import { useT, getLang } from '../utils/lang'
 
 // Cloudflare Turnstile: a quick "are you a person?" check that stops
 // automated fake sign-ups. Most people never see a puzzle. Supabase checks
@@ -34,6 +34,7 @@ export default function Turnstile({ onToken, resetKey = 0 }) {
   // Cloudflare), say so, instead of leaving the button grey with no reason.
   const [failed, setFailed] = useState(false)
   const t = useT()
+  const lang = getLang() === 'es' ? 'es' : 'en'
 
   useEffect(() => {
     if (!TURNSTILE_SITE_KEY) return
@@ -52,6 +53,8 @@ export default function Turnstile({ onToken, resetKey = 0 }) {
         // (the normal one is 300px wide and pushed the login card off a 320px screen).
         theme: isLight() ? 'light' : 'dark',
         size: box.current.clientWidth < 300 ? 'compact' : 'normal',
+        // Nov 7 (Jade): the box speaks the app's language, not the browser's.
+        language: lang,
         callback: (t) => onToken(t),
         'expired-callback': () => onToken(''),
         'error-callback': () => { onToken(''); setFailed(true) },
@@ -62,7 +65,7 @@ export default function Turnstile({ onToken, resetKey = 0 }) {
       clearTimeout(slow)
       if (widgetId.current != null && window.turnstile) { window.turnstile.remove(widgetId.current); widgetId.current = null }
     }
-  }, [resetKey])
+  }, [resetKey, lang]) // redraw the box when the language changes
 
   if (!TURNSTILE_SITE_KEY) return null
   return (
