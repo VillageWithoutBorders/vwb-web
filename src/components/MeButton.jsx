@@ -18,6 +18,7 @@ export default function MeButton() {
       to={to}
       className={'header-btn me-btn' + (here ? ' on' : '')}
       data-tour="me"
+      data-tip={simple ? t('My Corner: your profile, settings, and account.') : t('My Cottage: your own place. Your garden, chats, calendar, groups, connections, and who can visit.')}
       aria-label={simple ? t('My Corner: profile, settings, and more') : t('My Cottage: your own map')}
       aria-current={here ? 'page' : undefined}
     >
@@ -35,7 +36,7 @@ export function MyCornerButton() {
   const { pathname } = useLocation()
   const here = CORNER.some((p) => pathname === p || pathname.startsWith(p + '/'))
   return (
-    <Link to="/me" className={'header-btn me-btn' + (here ? ' on' : '')} data-tour="corner"
+    <Link to="/me" className={'header-btn me-btn' + (here ? ' on' : '')} data-tour="corner" data-tip={t('My Corner: your profile, settings, and account.')}
       aria-label={t('My Corner: your profile, account, and settings')} aria-current={pathname === '/me' ? 'page' : undefined}>
       <MyAvatar size={26} />
       <span className="header-btn-label" aria-hidden="true"><span className="header-my">{t('My ')}</span>{t('Corner')}</span>

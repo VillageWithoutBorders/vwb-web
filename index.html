@@ -47,11 +47,14 @@
          Lives here (not in React) so it shows the instant the page opens,
          before the app's JavaScript has even downloaded. The background
          matches the video's own dark teal, so the video's edges disappear
-         on any screen shape. */
+         on any screen shape.
+         Nov 7 (Jade): wide screens (computers, tablets turned sideways) get a
+         wide version of the same animation: the globe on the left and the words
+         on the right, instead of a tall phone picture in the middle. */
       #vwb-splash {
         position: fixed; inset: 0; z-index: 9999;
         display: flex; align-items: center; justify-content: center;
-        background: #0b1516;
+        background: #0d1917;
         transition: opacity 0.45s ease;
         cursor: pointer;
       }
@@ -67,9 +70,7 @@
   </head>
   <body>
     <div id="vwb-splash" role="img" aria-label="Village Without Borders. Building community, one neighbor at a time.">
-      <video id="vwb-splash-video" muted playsinline preload="auto" poster="/splash/vwb-splash-v4-start.webp" width="720" height="1280" aria-hidden="true">
-        <source src="/splash/vwb-splash-v4.mp4" type="video/mp4" />
-      </video>
+      <video id="vwb-splash-video" muted playsinline preload="none" width="720" height="1280" aria-hidden="true"></video>
     </div>
     <script>
       // Plays once per visit (a fresh open of the installed app counts as a
@@ -91,23 +92,33 @@
         var embedded = window.self !== window.top || location.pathname.indexOf('/calendar/embed') === 0
         if (seen || embedded) { el.parentNode.removeChild(el); return }
         el.addEventListener('click', hide)
+        var wide = window.matchMedia && window.matchMedia('(orientation: landscape) and (min-width: 700px)').matches
+        var name = wide ? '/splash/vwb-splash-v4-wide' : '/splash/vwb-splash-v4'
+        var w = wide ? 1600 : 720, h = wide ? 900 : 1280
+        video.width = w
+        video.height = h
+        video.poster = name + '-start.webp'
         var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
         if (reduce) {
           // No animation: show the finished logo briefly instead.
           var img = new Image()
-          img.src = '/splash/vwb-splash-v4-end.webp'
+          img.src = name + '-end.webp'
           img.alt = ''
-          img.width = 720
-          img.height = 1280
+          img.width = w
+          img.height = h
           video.parentNode.replaceChild(img, video)
           setTimeout(hide, 1800)
           return
         }
         video.addEventListener('ended', function () { setTimeout(hide, 350) })
-        // Only the last source failing means nothing can play (the browser
-        // quietly moves on to the next source when an earlier one fails).
-        var sources = video.getElementsByTagName('source')
-        sources[sources.length - 1].addEventListener('error', hide)
+        // Pick the tall or wide video here, before anything downloads.
+        var source = document.createElement('source')
+        source.src = name + '.mp4'
+        source.type = 'video/mp4'
+        source.addEventListener('error', hide)
+        video.appendChild(source)
+        video.preload = 'auto'
+        video.load()
         setTimeout(hide, 7000)
         var p = video.play()
         if (p && p.catch) p.catch(hide)
