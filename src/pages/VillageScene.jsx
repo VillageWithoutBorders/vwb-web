@@ -820,7 +820,13 @@ export default function VillageScene() {
 
       <div className="vs-body">
         {!cottage && !mine && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/find-village?join=' + id)}>{t('Join {village}', { village: village.name })}</button>}
-        {!cottage && mine && keepers && keepers.i_am_keeper && <button type="button" data-tour="keeper-tools" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true"><Icon name="toolbox" /></span> {t('Keeper tools')}</button>}
+        {/* Nov 8 (Jade): Events near you moved up beside Keeper tools, so the page fits without scrolling. */}
+        {!cottage && (
+          <div className="vs-top-btns">
+            {mine && keepers && keepers.i_am_keeper && <button type="button" data-tour="keeper-tools" className="btn btn-outline btn-full vs-big" onClick={() => navigate('/village/' + id + '/keeper')}><span aria-hidden="true"><Icon name="toolbox" /></span> {t('Keeper tools')}</button>}
+            <Link className="btn btn-outline btn-full vs-big" to="/calendar"><span aria-hidden="true"><Icon name="calendar" /></span> {t('Events near you')}</Link>
+          </div>
+        )}
         {/* Your cottage: Today (what needs you, shortcuts, coming up) sits right under the map (Oct 22). */}
         {cottage && <section id="today" className="vs-panel vs-today" aria-label={t('Today')}><Dashboard embedded /></section>}
         {!cottage && <div className="vs-help">
@@ -838,7 +844,7 @@ export default function VillageScene() {
             </details>
           )}
         </> : <div className="vs-list">{SPOTS.map(roomRow)}</div>}
-        <Link className="btn btn-outline btn-full vs-big" to="/calendar">{t('Events near you')}</Link>
+        {/* Your cottage already has Calendar in its list, so no separate Events button there (Nov 8). */}
         {/* Oct 28 (Jade): My Corner is no longer repeated under the cottage map. The My Corner button opens it. */}
       </div>
 
