@@ -7266,3 +7266,11 @@ html.calm-motion .cr-dot { animation: none; }
 @media (min-width: 1024px) {
   .corner-split > .pp-cottage.corner-room-plain { height: auto; align-self: start; }
 }
+
+/* Nov 8 (Jade): the small cottage preview on a neighbor's page uses the same sizes as
+   the big maps: every place is a fifth of the map's width, so it looks the same, only smaller. */
+.pp-cottage-map > .vs-scene-path, .pp-cottage-link .vs-scene-path { container-type: inline-size; }
+.pp-cottage-map .vs-em .vs-art, .pp-cottage-link .vs-em .vs-art { width: calc(20cqw * var(--s, 1)); }
+.pp-cottage-map .vs-deco-img, .pp-cottage-link .vs-deco-img { width: max(calc(20cqw * var(--s, 1)), 13cqw); }
+.pp-cottage-map .vs-gift-img, .pp-cottage-link .vs-gift-img { width: calc(18cqw * var(--s, 1)); }
+.pp-cottage-map .vs-em .vs-life-fire, .pp-cottage-link .vs-em .vs-life-fire { width: calc(16cqw * var(--s, 1)); }
