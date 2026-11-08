@@ -7170,3 +7170,22 @@ html.text-larger .header-nav .header-btn, html.text-largest .header-nav .header-
 .fs-page .ab-preview { position: static; }
 .fs-page .ab-modes, .fs-page .ab-actions { max-width: none; }
 .ab-soft { white-space: nowrap; }
+
+/* Nov 7 (Jade): My Corner, tidier.
+   Every row in the cards has the same arrow, and the rows match in height and lines.
+   On a computer with the cottage beside it, Your things and About the app share the left
+   column and Your account and Village Without Borders the right, so they end together. */
+.corner-page .app-menu-inline .app-menu-item:not(.app-menu-logout)::after { content: '\203A'; margin-left: auto; padding-left: 0.5rem; color: var(--text-muted); }
+.corner-page .app-menu-inline .app-menu-item { min-height: 52px; border-bottom: 1px solid var(--border); }
+.corner-page .app-menu-inline .app-menu-item:last-child { border-bottom: 0; }
+.corner-page .app-menu-group { margin-bottom: 0.9rem; }
+@media (min-width: 1024px) {
+  /* Spans let each column stack snugly: no gap under the shorter card. */
+  .corner-split .corner-page-full > .corner-group { grid-column: 1; grid-row: 4 / span 2; }
+  .corner-split .corner-page-full .app-menu-group-about { grid-column: 1; grid-row: 6; }
+  .corner-split .corner-page-full .app-menu-group-account { grid-column: 2; grid-row: 4; }
+  .corner-split .corner-page-full .app-menu-group-vwb { grid-column: 2; grid-row: 5 / span 2; }
+}
+@media (min-width: 1024px) {
+  .corner-split .corner-page-full > .corner-group, .corner-split .corner-page-full .app-menu-group-account { margin-bottom: 0.9rem; }
+}
