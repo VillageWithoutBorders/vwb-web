@@ -4,6 +4,7 @@ import './index.css'
 import App from './App'
 import { startLang } from './utils/lang'
 import { watchForUpdates } from './utils/freshApp'
+import { readWidth, applyWidth } from './utils/pageWidth'
 
 // Nov 7 (Jade): the app lives at app.villagewithoutborders.org. Its behind-the-scenes
 // Cloudflare address (vwb-web.pages.dev) sends people there, keeping the page they
@@ -13,6 +14,9 @@ if (window.location.hostname === 'vwb-web.pages.dev') {
 }
 
 watchForUpdates()
+
+// Nov 8: Fill the screen (Settings > Easy to use), before the app draws.
+applyWidth(readWidth())
 
 // Spanish words load first for people who picked Spanish, so the app opens in Spanish.
 startLang().finally(() => {

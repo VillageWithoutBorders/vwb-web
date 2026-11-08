@@ -8,6 +8,6 @@ export default function MyAvatar({ size = 26, className = 'me-btn-img', letterCl
   const [failed, setFailed] = useState(false)
   const letter = ((profile?.display_name || '').trim().charAt(0) || '?').toUpperCase()
   const src = profile?.avatar_url || 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + (user?.id || 'default')
-  if (failed) return <span className={letterClass} aria-hidden="true" style={{ width: size, height: size }}>{letter}</span>
+  if (failed) return <span className={letterClass} aria-hidden="true" data-letter={letter} style={{ width: size, height: size }} />
   return <img className={className} src={src} alt="" width={size} height={size} onError={() => setFailed(true)} />
 }

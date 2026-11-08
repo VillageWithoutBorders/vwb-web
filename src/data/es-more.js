@@ -4419,6 +4419,13 @@ const more = {
   'A light to find your way': 'Una luz para encontrar el camino',
   'A walk around the app': 'Un paseo por la aplicación',
   'Help your circle grow': 'Ayude a crecer su círculo',
+  // Nov 8: accessibility check fixes
+  'Sort': 'Ordenar',
+  // Nov 8: page width
+  'Page width on a computer': 'Ancho de página en una computadora',
+  'Calm and narrow': 'Tranquilo y angosto',
+  'Fill the screen': 'Llenar la pantalla',
+  'On a big screen, pages can stay narrow and easy to follow, or spread out to use the whole screen. Phones always fit the screen.': 'En una pantalla grande, las páginas pueden quedar angostas y fáciles de seguir, o abrirse para usar toda la pantalla. En el teléfono siempre caben en la pantalla.',
 }
 
 export default more

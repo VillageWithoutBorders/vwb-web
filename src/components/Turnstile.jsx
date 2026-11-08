@@ -70,7 +70,7 @@ export default function Turnstile({ onToken, resetKey = 0 }) {
   if (!TURNSTILE_SITE_KEY) return null
   return (
     <>
-      <div ref={box} className="turnstile-box" aria-label={t('Human check')} />
+      <div ref={box} className="turnstile-box" role="group" aria-label={t('Human check')} />
       {failed && (
         <p className="form-error" role="alert">
           {t('The quick "are you a person?" check didn\'t load. If you use an ad blocker, pause it for this site, or try another browser. Still stuck? Email info@villagewithoutborders.org.')}

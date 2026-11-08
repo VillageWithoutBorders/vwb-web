@@ -8,7 +8,9 @@
     "dev:crn": "vite --mode crndev",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:check": "node scripts/build-check.mjs",
+    "a11y": "node scripts/a11y-check.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",
@@ -20,10 +22,12 @@
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "oxlint": "^1.79.0",
+    "playwright": "^1.65.0",
     "sharp": "^0.35.4",
     "vite": "^8.2.2",
     "vite-plugin-pwa": "^1.3.0"

@@ -7,6 +7,8 @@ import { startAppTour } from '../components/AppTour'
 import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
 import RecoveryKeySection from '../components/RecoveryKeySection'
 import AppearancePicker from '../components/AppearancePicker'
+import WidthPicker from '../components/WidthPicker'
+import { useSimpleView } from '../utils/simpleView'
 import SimpleViewPicker from '../components/SimpleViewPicker'
 import TextSizePicker from '../components/TextSizePicker'
 import MotionPicker from '../components/MotionPicker'
@@ -40,6 +42,7 @@ function reportError(context, error, userMessage) {
 
 export default function Settings() {
   const t = useT()
+  const simpleOn = useSimpleView()
   const { user, profile, isAdmin, isFounder, signOut, signOutEverywhere, refreshProfile, refreshMfa } = useAuth()
   const navigate = useNavigate()
 
@@ -380,6 +383,7 @@ export default function Settings() {
           <div className="settings-col">
           <h2 className="settings-group-h">{t('Using')}</h2>
           <SimpleViewPicker />
+          {simpleOn && <WidthPicker />}
           <MotionPicker />
 
           </div>
