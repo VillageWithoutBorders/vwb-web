@@ -28,7 +28,7 @@ export default function CornerRoom() {
       <img className="cr-pic" src="/art/corner/corner-room.webp" srcSet="/art/corner/corner-room-800.webp 800w, /art/corner/corner-room.webp 1600w"
         sizes="(min-width: 1024px) 700px, 100vw" alt="" width="1600" height="859" loading="lazy" />
       {SPOTS.map((s) => (
-        <button key={s.k} type="button" className="cr-spot" style={{ left: s.x + '%', top: s.y + '%' }}
+        <button key={s.k} type="button" className={'cr-spot' + (s.x > 75 ? ' cr-right' : s.x < 20 ? ' cr-left' : '')} style={{ left: s.x + '%', top: s.y + '%' }}
           aria-label={t(s.label) + '. ' + t(s.sub)} data-tip={t(s.label) + '. ' + t(s.sub)}
           onClick={() => (s.tour ? startAppTour() : navigate(s.to))}>
           <span className="cr-dot" aria-hidden="true" />
