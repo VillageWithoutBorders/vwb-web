@@ -14,6 +14,7 @@ import { useT } from '../utils/lang'
 import BottomTabs from '../components/BottomTabs'
 import MeButton, { MyCornerButton } from '../components/MeButton'
 import MyToolsButton from '../components/MyToolsButton'
+import QrSheetHost from '../components/QrSheet'
 import { useMyTools } from '../hooks/useMyTools'
 import { useAdminInbox } from '../hooks/useAdminInbox'
 import AppTour from '../components/AppTour'
@@ -171,6 +172,7 @@ export default function Layout() {
         {/* Emergency reports (Nov 5) and requests (Nov 3) saved with no signal: waiting, sending, or sent. */}
         {!isChat && !isWorld && <PendingReports />}
         {!isChat && !isWorld && <PendingAsks />}
+        <QrSheetHost />
         <PageBackContext.Provider value={tellFrame}>
           <Outlet />
         </PageBackContext.Provider>
