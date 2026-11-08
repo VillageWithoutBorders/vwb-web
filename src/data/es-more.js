@@ -4276,6 +4276,12 @@ const more = {
   'This is how your cottage looks to neighbors who can visit.': 'Así ven su casita los vecinos que pueden visitarla.',
   'Easier to see and use': 'Más fácil de ver y usar',
   'Language, text size, light or dark, Simple view, less motion': 'Idioma, tamaño de letra, claro u oscuro, Vista sencilla, menos movimiento',
+  // When a page can't load (Nov 7).
+  'VWB was just updated': 'VWB se acaba de actualizar',
+  'This page had a problem': 'Esta página tuvo un problema',
+  'Tap the button to open the newest version. Nothing you saved is lost.': 'Toque el botón para abrir la versión más nueva. No se pierde nada de lo que guardó.',
+  'Tap the button to try again. If it keeps happening, tell us in App guide and feedback.': 'Toque el botón para intentar otra vez. Si sigue pasando, avísenos en Guía y comentarios.',
+  'Open the newest version': 'Abrir la versión más nueva',
 }
 
 export default more

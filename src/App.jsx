@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import HoverTips from './components/HoverTips'
+import PageErrorBoundary from './components/PageErrorBoundary'
+import { reloadFresh, hasUpdate } from './utils/freshApp'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
@@ -127,9 +129,16 @@ function lazyPage(load) {
             window.addEventListener('online', () => { window.location.reload() }, { once: true })
           })
         }
+        // Nov 7: most often this is a screen from before an update. Fetch the new
+        // version and reload, at most once a minute so it can never loop. Otherwise
+        // PageErrorBoundary shows a button instead of a blank page.
         let again = false
-        try { again = !sessionStorage.getItem('vwb_chunk_reload'); if (again) sessionStorage.setItem('vwb_chunk_reload', '1') } catch { /* private mode */ }
-        if (again) { window.location.reload(); return new Promise(() => {}) }
+        try {
+          const last = Number(sessionStorage.getItem('vwb_chunk_reload') || 0)
+          again = Date.now() - last > 60000
+          if (again) sessionStorage.setItem('vwb_chunk_reload', String(Date.now()))
+        } catch { /* private mode */ }
+        if (again) { reloadFresh(); return new Promise(() => {}) }
         throw err
       }
     )
@@ -223,8 +232,24 @@ function PublicRoute({ children }) {
   return user ? <Navigate to={peekReturnTo() || '/'} replace /> : children
 }
 
+// Nov 7 (Jade): when a new version arrived while the app was open, the next move to
+// another page loads that page fresh, so it never asks for screen files that are gone.
+function FreshOnMove() {
+  const { pathname } = useLocation()
+  const [first, setFirst] = useState(pathname)
+  useEffect(() => {
+    if (pathname === first) return
+    setFirst(pathname)
+    if (hasUpdate()) window.location.reload()
+  }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
+  return null
+}
+
 function AppRoutes() {
+  const { pathname } = useLocation()
   return (
+    <PageErrorBoundary resetKey={pathname}>
+    <FreshOnMove />
     <Suspense fallback={<PageLoading />}>
     <Routes>
       <Route path="/welcome" element={<PublicRoute><Welcome /></PublicRoute>} />
@@ -302,6 +327,7 @@ function AppRoutes() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </Suspense>
+    </PageErrorBoundary>
   )
 }
 
