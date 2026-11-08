@@ -7053,3 +7053,16 @@ h1.settings-title { margin: 0 0 1rem; }
   .settings-cols [aria-labelledby="textsize-h"] { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
   html.text-larger .settings-cols [aria-labelledby="textsize-h"], html.text-largest .settings-cols [aria-labelledby="textsize-h"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
+
+/* Nov 7 (Jade): the Simple view home on a computer uses the wide column instead of a
+   thin strip. The four big buttons sit two by two; the rest sit two across under them,
+   so most of the page fits on one screen. Phones keep one column. */
+@media (min-width: 1024px) {
+  .app-main:has(.sh-page) { max-width: 1240px; }
+  .sh-page { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem 1.5rem; align-items: start; }
+  .sh-page > .sh-hello, .sh-page > .sh-sub, .sh-page > .sh-done, .sh-page > .sh-buttons,
+  .sh-page > .sh-start, .sh-page > .sh-everything, .sh-page > .sh-center { grid-column: 1 / -1; }
+  .sh-page > .sh-buttons { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem 1.5rem; }
+  .sh-page > .sh-row, .sh-page > .sh-village { margin: 0; }
+  .sh-page > .sh-everything { justify-self: center; max-width: 480px; }
+}
