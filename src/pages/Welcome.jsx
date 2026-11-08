@@ -209,7 +209,9 @@ export default function Welcome() {
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <LangSwitch />
-          <Link to="/login" style={{ ...btnSecondary, padding: '0.5rem 1rem', fontSize: '0.9rem' }}>{t('Log In')}</Link>
+          {/* Nov 7 (Jade): only once the page is long ("Learn more" opened). Before that,
+              Log in is right there in the middle, so two of them was one too many. */}
+          {more && <Link to="/login" style={{ ...btnSecondary, padding: '0.5rem 1rem', fontSize: '0.9rem' }}>{t('Log in')}</Link>}
         </div>
       </header>
 
