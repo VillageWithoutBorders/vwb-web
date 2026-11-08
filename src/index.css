@@ -6934,3 +6934,28 @@ html.calm-motion .nr-card:active { transform: none; }
   .nr-found > .nr-results > ul { margin-bottom: 0 !important; }
   .nr-found > .sr-suggest { flex: 0 0 auto; margin: 0; }
 }
+
+/* Nov 7 (Jade): Suggest a resource moves up too, under Ask a neighbor, so the
+   results box runs from the search line to the bottom of the tiles.
+   Three rows on the right: Ask, Suggest, results. The title block spans the top two. */
+@media (min-width: 1024px) {
+  .ask-page.nr-page { grid-template-rows: auto auto minmax(0, 1fr); }
+  .nr-page .nr-found { display: contents; }
+  .nr-head { grid-row: 1 / span 2; }
+  .nr-pick { grid-row: 3; }
+  .nr-page #nr-ask { grid-row: 1; margin: 0 0 0.5rem !important; }
+  .nr-found > .sr-suggest {
+    grid-column: 2; grid-row: 2; align-self: end; margin: 0 0 0.6rem;
+    display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 0.5rem; align-items: center;
+  }
+  .nr-found > .sr-suggest > p { font-size: 0.95rem; line-height: 1.35; }
+  .nr-found > .nr-results { grid-column: 2; grid-row: 3; min-width: 0; height: 100%; box-sizing: border-box; }
+}
+
+/* Nov 7 (Jade): Find resources and Your tasks on a computer fit the screen with no page scrollbar.
+   The 80px of room under the page (for phones) made the page taller than the screen. */
+@media (min-width: 1024px) {
+  .community-page.fr-page { padding-bottom: 0; }
+  /* Same for Your tasks. */
+  html:not(.simple) .tasks-page.tk-page { padding-bottom: 0; }
+}
