@@ -7039,7 +7039,7 @@ html.calm-motion .tools-sheet { animation: none; }
 h1.settings-title { margin: 0 0 1rem; }
 /* Nov 7 (Jade): Settings fills the page column on a computer, so it lines up with
    the Back button like the other pages instead of sitting narrower in the middle. */
-@media (min-width: 860px) { .profile-page.settings-page { max-width: none; } }
+@media (min-width: 860px) { .profile-page { max-width: none; } }
 /* On a big screen Settings uses the wide column, with Easy to use in two columns.
    Account and privacy stays one comfortable column of forms. */
 @media (min-width: 1024px) {
