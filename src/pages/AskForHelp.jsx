@@ -9,7 +9,6 @@ import { skillsForCategory } from '../utils/resourceCategories'
 import { getMyLocation, lookupZip } from '../utils/location'
 import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
-import { useGoBack } from '../components/BackLink'
 import { isSimpleView } from '../utils/simpleView'
 import { savePendingAsk, isNoSignal } from '../utils/pendingAsks'
 import { useT } from '../utils/lang'
@@ -50,7 +49,6 @@ export default function AskForHelp() {
     // only if the group ticks this. Off unless ticked.
     const [publicDetails, setPublicDetails] = useState(false)
     const navigate = useNavigate()
-    const goBack = useGoBack()
     // /ask?edit=ID opens this same form filled in, to change a request already posted.
     const editId = searchParams.get('edit')
     // First screen: look at nearby resources before asking a neighbor. Skipped
@@ -311,7 +309,6 @@ export default function AskForHelp() {
         <div className="ask-page ask-split">
             <div className="ask-left">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0, minWidth: 44, minHeight: 44 }}>&#8592;</button>
                 <h1 style={{ margin: 0 }}>{t(editId ? 'Edit your request' : 'Ask for Help')}</h1>
             </div>
             <p className="ask-intro">
@@ -580,7 +577,7 @@ export default function AskForHelp() {
                     <button
                         type="button"
                         className="btn btn-outline"
-                        onClick={() => goBack('/')}
+                        onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
                     >
                         {t('Cancel')}
                     </button>

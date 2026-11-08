@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { isSimpleView } from '../utils/simpleView'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation, Navigate } from 'react-router-dom'
 import { useChatScroll } from '../hooks/useChatScroll'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -10,7 +10,8 @@ import { submitUserReport } from '../utils/submitUserReport'
 import { MUTE_OPTIONS } from '../utils/muteOptions'
 import { SPARK_NAME, SPARK_HINT } from '../utils/spark'
 import VillagePeople, { VillageNewMembers } from '../components/VillagePeople'
-import { useGoBack } from '../components/BackLink'
+import { useWideScreen } from '../hooks/useWideScreen'
+import '../desktop-chats.css'
 import { sendVillagePost, fetchVillageBodies, editVillagePost, fetchVillageEditHistory } from '../lib/e2ee'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
@@ -23,12 +24,32 @@ import { useT, getLang } from '../utils/lang'
 const GROUP_WINDOW_MS = 5 * 60 * 1000
 const LOCKED_NOTE = '\uD83D\uDD12 This message is locked and this phone cannot open it.'
 
-export default function Campfire() {
+// Nov 7 (Jade): pane = shown on the right side of Messages on a computer, beside the
+// list of village chats. There the board lives in Messages' own address
+// (?tab=villages&open=<board id>, 'square' for the main board), and there is no back arrow.
+export default function Campfire({ pane = false }) {
   const t = useT()
   const { user, profile, isAdmin, refreshProfile } = useAuth()
   const navigate = useNavigate()
-  const goBack = useGoBack()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+  // Chat pages draw their own way back (the frame shows no Back on chats).
+  const goBack = (fallback) => (location.key !== 'default' ? navigate(-1) : navigate(fallback))
+  const wide = useWideScreen()
+  const [rawParams, setRawParams] = useSearchParams()
+  // In the pane, read and write the board through Messages' ?open= instead of ?board=.
+  const searchParams = pane ? (() => {
+    const q = new URLSearchParams()
+    const o = rawParams.get('open')
+    if (o && o !== 'square') q.set('board', o)
+    if (rawParams.get('intro')) q.set('intro', rawParams.get('intro'))
+    return q
+  })() : rawParams
+  const setSearchParams = pane ? (next, opts) => {
+    const q = new URLSearchParams(next)
+    const out = { tab: 'villages', open: q.get('board') || 'square' }
+    if (q.get('intro')) out.intro = q.get('intro')
+    setRawParams(out, opts)
+  } : setRawParams
   const [boards, setBoards] = useState([])
   const [creatingBoard, setCreatingBoard] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -560,6 +581,13 @@ export default function Campfire() {
     return d.toLocaleDateString([], opts) + ' ' + time
   }
 
+  // A village chat opened on a computer shows inside Messages, beside the list (Nov 7).
+  if (!pane && wide && !isSimpleView()) {
+    const q = new URLSearchParams({ tab: 'villages', open: rawParams.get('board') || 'square' })
+    if (rawParams.get('intro')) q.set('intro', rawParams.get('intro'))
+    return <Navigate to={'/messages?' + q.toString()} replace />
+  }
+
   if (!hasAccess) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
@@ -590,7 +618,7 @@ export default function Campfire() {
   return (
     <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--surface)' }}>
       <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack(activeBoard?.village_id ? '/village/' + activeBoard.village_id : '/')} aria-label={t('Back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
+        {!pane && <button onClick={() => goBack(activeBoard?.village_id ? '/village/' + activeBoard.village_id : '/')} aria-label={t('Back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>}
         <div>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span><Icon name={activeBoard?.village_id ? 'chat-bubble' : 'megaphone'} /></span> {activeBoard?.village_id ? t('{name} village chat', { name: activeBoard.name }) : t('The Village Square')}
@@ -919,7 +947,7 @@ export default function Campfire() {
         <button
           onClick={sendMessage}
           disabled={!newMsg.trim() || sending}
-          style={{ minHeight: '44px', padding: '0 1.25rem', borderRadius: '1.5rem', background: 'var(--warn)', color: '#fff', border: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', opacity: (!newMsg.trim() || sending) ? 0.5 : 1 }}
+          className="chat-send"
         >
           {editing ? t('Save') : t('Send')}
         </button>

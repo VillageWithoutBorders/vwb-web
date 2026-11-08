@@ -114,7 +114,7 @@ function makeSeeds(base, count) {
   return seeds
 }
 
-export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
+export default function AvatarBuilder({ onSave, onCancel, initialConfig, hideTitle = false }) {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
   useT()
@@ -187,7 +187,8 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig }) {
   // left with the choices on the right (classes in index.css, "Avatar builder").
   return (
     <div className="ab">
-      <h2 className="ab-title">{t(mode === 'pick' ? 'Pick your avatar' : 'Make your avatar')}</h2>
+      {/* Setup already says "Make your avatar" above it (Nov 7). */}
+      {!hideTitle && <h2 className="ab-title">{t(mode === 'pick' ? 'Pick your avatar' : 'Make your avatar')}</h2>}
 
       <div className="ab-modes" role="group" aria-label={t('How to make your avatar')}>
         <button type="button" className={'ab-mode' + (mode === 'pick' ? ' on' : '')} aria-pressed={mode === 'pick'} onClick={() => switchMode('pick')}>{t('Pick one')}</button>

@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
-import { useGoBack } from '../components/BackLink'
 import { tell } from '../components/AdminDialog'
 import { useT } from '../utils/lang'
 import { isNoSignal } from '../utils/pendingAsks'
@@ -19,7 +18,6 @@ export default function EmergencyEvents() {
   const { user, profile, isAdmin } = useAuth()
   const t = useT()
   const navigate = useNavigate()
-  const goBack = useGoBack()
   const [events, setEvents] = useState([])
   const [resolvedEvents, setResolvedEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -175,10 +173,9 @@ export default function EmergencyEvents() {
     <div className={split ? 'em-left' : undefined} style={{ padding: '1rem', maxWidth: split ? 'none' : '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--gold)' }}>{t('Emergency Response')}</h1>
+          <h1 style={{ margin: 0 }}>{t('Emergency Response')}</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>{t('Events in your area')}</p>
         </div>
-        <button onClick={() => goBack('/')} aria-label={t('Back to Dashboard')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
       </div>
 
       <button onClick={() => navigate('/emergency/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '1rem', borderRadius: '10px', border: '2px solid var(--warn)', background: 'linear-gradient(135deg, var(--warn-bg), var(--warn-bg))', cursor: 'pointer', textAlign: 'left', marginBottom: '1.25rem' }}>

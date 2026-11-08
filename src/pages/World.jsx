@@ -57,7 +57,9 @@ function fitToLand(lay) {
 function curve(p, q, bend) {
   const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2, dx = q.x - p.x, dy = q.y - p.y, len = Math.hypot(dx, dy) || 1
   const cx = mx - (dy / len) * bend, cy = my + (dx / len) * bend
-  return { d: `M${p.x.toFixed(1)} ${p.y.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${q.x.toFixed(1)} ${q.y.toFixed(1)}`, x: 0.25 * p.x + 0.5 * cx + 0.25 * q.x, y: 0.25 * p.y + 0.5 * cy + 0.25 * q.y }
+  // at(t): a point along the curve, so a campfire can move along its own line (Nov 7).
+  const at = (t) => ({ x: (1 - t) * (1 - t) * p.x + 2 * (1 - t) * t * cx + t * t * q.x, y: (1 - t) * (1 - t) * p.y + 2 * (1 - t) * t * cy + t * t * q.y })
+  return { d: `M${p.x.toFixed(1)} ${p.y.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${q.x.toFixed(1)} ${q.y.toFixed(1)}`, x: 0.25 * p.x + 0.5 * cx + 0.25 * q.x, y: 0.25 * p.y + 0.5 * cy + 0.25 * q.y, at }
 }
 
 export default function World() {
@@ -178,10 +180,12 @@ export default function World() {
     const fit = fitToLand(lay)
     const byId = {}
     shown.forEach((v, i) => { byId[v.id] = { ...v, ...fit.nodes[i], ...fit.labels[i] } })
+    // Nov 7 (Jade): tidier. Each sister line runs from the middle of one village to the
+    // middle of the other, drawn under the circles, so overlapping villages don't get
+    // lines poking out at odd angles. Its campfire sits on that line.
     const lines = sisters.filter((s) => byId[s.village_a] && byId[s.village_b]).map((s) => {
-      const a = byId[s.village_a], b = byId[s.village_b], dx = b.gx - a.gx, dy = b.gy - a.gy, len = Math.hypot(dx, dy) || 1
-      const p = { x: a.gx + (dx / len) * a.gr, y: a.gy + (dy / len) * a.gr }, q = { x: b.gx - (dx / len) * b.gr, y: b.gy - (dy / len) * b.gr }
-      return { a, b, mine: a.is_mine || b.is_mine, both: a.is_mine && b.is_mine, ...curve(p, q, 5) }
+      const a = byId[s.village_a], b = byId[s.village_b]
+      return { a, b, mine: a.is_mine || b.is_mine, both: a.is_mine && b.is_mine, ...curve({ x: a.gx, y: a.gy }, { x: b.gx, y: b.gy }, 3) }
     })
     const sisterKey = new Set(sisters.map((s) => [s.village_a, s.village_b].sort().join('|')))
     const paths = footpaths
@@ -191,20 +195,21 @@ export default function World() {
         const p = { x: a.gx + (dx / len) * a.gr, y: a.gy + (dy / len) * a.gr }, q = { x: b.gx - (dx / len) * b.gr, y: b.gy - (dy / len) * b.gr }
         return { a, b, strength: f.strength, ...curve(p, q, -4) }
       })
-    // Keep each Sister Campfire off the village name tags. When villages sit close
-    // together the campfire can land on a name; slide it sideways until it is clear.
+    // Keep each Sister Campfire off the name tags, the houses in the middle of your
+    // villages, and the other campfires, by moving it along its own line (never off it).
     const nodes = shown.map((v) => byId[v.id])
+    const placed = []
+    const clear = (pt) => !nodes.some((n) => {
+      const tx = n.lx != null ? n.lx : n.gx, ty = n.ly != null ? n.ly : n.gy, half = Math.min(23, 3 + (n.name || '').length * 1.1)
+      const onTag = Math.abs(pt.x - tx) < half + 3 && Math.abs(pt.y - ty) < 5
+      const onHouse = n.is_mine && Math.hypot(pt.x - n.gx, pt.y - n.gy) < 5
+      return onTag || onHouse
+    }) && !placed.some((o) => Math.hypot(o.x - pt.x, o.y - pt.y) < 5)
     lines.forEach((l) => {
-      l.ox = l.x; l.oy = l.y
-      for (let tries = 0; tries < 3; tries++) {
-        const hit = nodes.find((n) => {
-          const tx = n.gx, ty = n.gy + (n.is_mine ? 7 : 0), half = Math.min(23, 3 + (n.name || '').length * 1.1)
-          return Math.abs(l.x - tx) < half + 6 && Math.abs(l.y - ty) < 7
-        })
-        if (!hit) break
-        const half = Math.min(23, 3 + (hit.name || '').length * 1.1)
-        l.x = l.x >= hit.gx && hit.gx + half + 7 < 94 ? hit.gx + half + 7 : Math.max(6, hit.gx - half - 7)
-      }
+      let best = l.at(0.5)
+      for (const tt of [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74]) { const pt = l.at(tt); if (clear(pt)) { best = pt; break } }
+      l.x = best.x; l.y = best.y
+      placed.push(best)
     })
     return { nodes, lines, paths }
   }, [shown, pointsByVillage, sisters, footpaths])
@@ -274,6 +279,11 @@ export default function World() {
               <img src="/art/globe.webp" alt="" width="720" height="720" fetchpriority="high" />
             </button>
             <svg className="wd-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              {/* Nov 7: sister lines first, so the village circles sit on top of them. */}
+              {view && view.lines.map((l, i) => (
+                <path key={i} d={l.d} fill="none" stroke="#f2c763" strokeOpacity={l.both === false && net === 'villages' ? 0.45 : 1}
+                  strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ strokeWidth: l.both === false && net === 'villages' ? '3px' : '4px' }} />
+              ))}
               {net === 'villages' && villageMap && villageMap.nodes.slice().sort((a, b) => (a.is_mine ? 1 : 0) - (b.is_mine ? 1 : 0)).map((v) => (
                 <circle key={v.id} cx={v.gx} cy={v.gy} r={v.gr}
                   fill={v.is_mine ? '#7fdcc0' : '#bfeee0'} fillOpacity={v.is_mine ? 0.55 : 0.12}
@@ -283,15 +293,6 @@ export default function World() {
               {net === 'villages' && villageMap && villageMap.paths.map((l, i) => (
                 <path key={'f' + i} d={l.d} fill="none" stroke="#f6f0e0" strokeOpacity={0.55 + 0.15 * l.strength}
                   strokeDasharray="0.1 2.4" strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ strokeWidth: (2 + l.strength) + 'px' }} />
-              ))}
-              {/* A campfire slid aside to keep names clear stays tied to its line by a short gold tether. */}
-              {net === 'villages' && view && view.lines.filter((l) => l.ox != null && (Math.abs(l.ox - l.x) > 1 || Math.abs(l.oy - l.y) > 1)).map((l, i) => (
-                <path key={'tether' + i} d={'M' + l.ox.toFixed(1) + ' ' + l.oy.toFixed(1) + ' L' + l.x.toFixed(1) + ' ' + l.y.toFixed(1)} fill="none" stroke="#f2c763"
-                  strokeDasharray="1 1.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ strokeWidth: '3px' }} />
-              ))}
-              {view && view.lines.map((l, i) => (
-                <path key={i} d={l.d} fill="none" stroke="#f2c763" strokeOpacity={l.both === false && net === 'villages' ? 0.45 : 1}
-                  strokeLinecap="round" vectorEffect="non-scaling-stroke" style={{ strokeWidth: l.both === false && net === 'villages' ? '3px' : '5px' }} />
               ))}
             </svg>
 
@@ -363,7 +364,7 @@ export default function World() {
         {net === 'groups' && !myGroups.length && <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/start-group')}>{t('Start an emergency crew')}</button>}
         {net === 'orgs' && <button type="button" className="btn btn-outline btn-full" onClick={() => setNet('groups')}><Icon name="tent" /> {t('See emergency crews')}</button>}
         {net === 'groups' && <button type="button" className="btn btn-outline btn-full" onClick={() => setNet('orgs')}><Icon name="people" /> {t('Back to groups')}</button>}
-        <button type="button" className="btn btn-outline btn-full" onClick={seeAll}>{t(net === 'villages' ? 'Find a village by zip code or town' : net === 'groups' ? 'See every crew' : 'See every group')}</button>
+        <button type="button" className="btn btn-outline btn-full wd-seeall" onClick={seeAll}>{t(net === 'villages' ? 'Find a village by zip code or town' : net === 'groups' ? 'See every crew' : 'See every group')}</button>
       </div>
 
       {/* The Village Network: search, street map and full lists for the network picked above. */}

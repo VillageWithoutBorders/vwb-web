@@ -7153,3 +7153,20 @@ h1.settings-title { margin: 0 0 1rem; }
 /* Nov 7: Welcome on small phones. The name in the top bar wrapped to three lines and
    pushed Sign up down; the big logo already says Village Without Borders. */
 @media (max-width: 400px) { .welcome-brand-name { display: none; } }
+
+/* ---------- Nov 7 (Jade): gaps found checking pages ----------
+   Every button and field uses the app's font (some showed a plain system font). */
+button, input, select, textarea { font-family: inherit; }
+/* Top bar: with bigger text the names no longer spill out of the highlighted box. */
+html.text-larger .header-nav .header-btn, html.text-largest .header-nav .header-btn, html.text-large .header-nav .header-btn { max-width: none; padding-left: 10px; padding-right: 10px; }
+.header-btn-label { white-space: nowrap; }
+/* Messages (phones and Simple view): the chat list lines up with the title and tabs. */
+#hub-panel > .messages-page { max-width: none; padding-left: 1rem; padding-right: 1rem; }
+/* My World on a computer: the search is right there, so no button to scroll to it. */
+@media (min-width: 1024px) { .wd-seeall { display: none; } }
+/* Setup: the avatar builder is one column inside the narrow setup page, and its buttons
+   are as wide as the rest. "Surprise me" stays on one line. */
+.fs-page .ab-make { display: block; }
+.fs-page .ab-preview { position: static; }
+.fs-page .ab-modes, .fs-page .ab-actions { max-width: none; }
+.ab-soft { white-space: nowrap; }

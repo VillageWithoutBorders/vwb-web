@@ -74,7 +74,7 @@ export default function FullSetup() {
       {step === 'avatar' && <>
         <h1 ref={headRef} tabIndex={-1}>{t('Make your avatar')}</h1>
         <p className="fs-sub">{t('This little picture shows next to your name. It is a drawing, never a photo.')}</p>
-        <AvatarBuilder initialConfig={profile?.avatar_config || null} onSave={() => { if (refreshProfile) refreshProfile(); go('skills') }} />
+        <AvatarBuilder hideTitle initialConfig={profile?.avatar_config || null} onSave={() => { if (refreshProfile) refreshProfile(); go('skills') }} />
         <button type="button" className="btn btn-outline btn-full fs-skip" onClick={() => go('skills')}>{t('Skip this step')}</button>
       </>}
 

@@ -9,7 +9,8 @@ import { useT } from '../utils/lang'
 // you joined, and the Ambassadors room for people who can open it. The
 // database decides which boards a person can read, so this lists only what
 // comes back. Nothing here shows who is in a village.
-export default function HubVillages() {
+// Nov 7 (Jade): onOpen (computers, inside Messages) opens the chat beside the list.
+export default function HubVillages({ onOpen, selectedId }) {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
   const [boards, setBoards] = useState(null)
@@ -48,8 +49,9 @@ export default function HubVillages() {
   function card(b, icon, note) {
     const n = unread[b.id] || 0
     return (
-      <button key={b.id} type="button" className="cal-card" style={{ width: '100%', textAlign: 'left', minHeight: '44px', marginBottom: '0.6rem' }}
-        aria-label={b.name + (n ? ', ' + t('{n} new', { n }) : '')} onClick={() => navigate('/village-square?board=' + b.id)}>
+      <button key={b.id} type="button" className={'cal-card' + (selectedId && (selectedId === b.id || (selectedId === 'square' && b.is_general)) ? ' hub-row-on' : '')} style={{ width: '100%', textAlign: 'left', minHeight: '44px', marginBottom: '0.6rem' }}
+        aria-current={selectedId === b.id ? 'true' : undefined}
+        aria-label={b.name + (n ? ', ' + t('{n} new', { n }) : '')} onClick={() => (onOpen ? onOpen(b.id) : navigate('/village-square?board=' + b.id))}>
         <span className="cal-card-title"><Icon name={icon} /> {b.name}{n > 0 && <span style={{ marginLeft: '0.5rem', color: 'var(--accent)', fontWeight: 700 }}>{t('{n} new', { n: n > 9 ? '9+' : n })}</span>}</span>
         <span className="cal-card-meta">{note}</span>
       </button>
