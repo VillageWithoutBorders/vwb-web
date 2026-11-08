@@ -7189,3 +7189,50 @@ html.text-larger .header-nav .header-btn, html.text-largest .header-nav .header-
 @media (min-width: 1024px) {
   .corner-split .corner-page-full > .corner-group, .corner-split .corner-page-full .app-menu-group-account { margin-bottom: 0.9rem; }
 }
+
+/* ---------- Inside your cottage, on My Corner (Nov 7, Jade) ----------
+   A cozy room; each object is a button. A soft glowing dot marks each one, and its name
+   shows on hover or focus. On a computer the room fills the right panel's width (never
+   cropped) and that side is a little wider. */
+.cr-room { position: relative; width: 100%; aspect-ratio: 1600 / 859; border-radius: 12px; overflow: hidden; background: #2a2236; }
+.cr-pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.cr-spot {
+  position: absolute; transform: translate(-50%, -50%); min-width: 44px; min-height: 44px; padding: 0;
+  display: grid; place-items: center; border: 0; background: none; cursor: pointer; border-radius: 50%;
+}
+.cr-dot {
+  width: 18px; height: 18px; border-radius: 50%; background: rgba(255, 230, 170, 0.9);
+  box-shadow: 0 0 0 4px rgba(255, 210, 120, 0.35), 0 0 14px 6px rgba(255, 200, 110, 0.45);
+  animation: cr-glow 2.6s ease-in-out infinite;
+}
+@keyframes cr-glow { 0%, 100% { transform: scale(0.9); opacity: 0.85; } 50% { transform: scale(1.1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cr-dot { animation: none; } }
+html.calm-motion .cr-dot { animation: none; }
+.cr-lab {
+  position: absolute; left: 50%; top: calc(50% + 18px); transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+  padding: 4px 10px; border-radius: 999px; background: rgba(20, 24, 30, 0.85); color: #fff; font-size: 0.9rem; font-weight: 700;
+  opacity: 0; transition: opacity 0.15s;
+}
+.cr-spot:hover .cr-lab, .cr-spot:focus-visible .cr-lab { opacity: 1; }
+.cr-spot:focus-visible { outline: 3px solid #ffd27a; outline-offset: 2px; }
+.cr-spot:active .cr-dot { transform: scale(0.85); }
+/* Touch screens have no hover, so the names show all the time, small. */
+@media (hover: none) { .cr-lab { opacity: 1; font-size: 0.75rem; padding: 2px 7px; top: calc(50% + 14px); } }
+.corner-room-preview { margin: 0 0 0.9rem; }
+@media (min-width: 1024px) {
+  .corner-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
+  .corner-room-panel { justify-content: flex-start; gap: 0.75rem; }
+  .corner-room-panel .pp-cottage-go { margin-top: auto; }
+}
+/* Nov 7: on a computer Your things sits under the room (they are the room's things), and the
+   left side holds you, Settings, and the account and app cards. */
+@media (min-width: 1024px) {
+  .corner-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+  .corner-room-things .corner-group { margin: 0; }
+  .corner-room-things .corner-list { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .corner-room-things .corner-item { border-right: 1px solid var(--border); }
+  .corner-room-things .corner-item:nth-child(2n) { border-right: 0; }
+  .corner-split .corner-page-full .app-menu-group-account { grid-column: 1; grid-row: 4; }
+  .corner-split .corner-page-full .app-menu-group-about { grid-column: 1; grid-row: 5; }
+  .corner-split .corner-page-full .app-menu-group-vwb { grid-column: 2; grid-row: 4 / span 2; }
+}
