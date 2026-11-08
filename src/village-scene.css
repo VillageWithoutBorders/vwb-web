@@ -1160,3 +1160,13 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
 .vs-top-btns { display: grid; gap: 10px; }
 @media (min-width: 480px) { .vs-top-btns:has(> :nth-child(2)) { grid-template-columns: 1fr 1fr; } }
 html.simple .vs-top-btns { grid-template-columns: 1fr !important; }
+
+/* ---------- Computers: no stray scroll on map pages (Nov 8, Jade) ----------
+   The right panel kept 24px under it while the map kept 16px, so a page that just
+   fit still scrolled a few pixels, and the panel's bottom edge sat lower than the
+   map's. Both use 16px now. */
+@media (min-width: 1024px) {
+  html:not(.simple) .vs-page.vs-page-path { padding-bottom: 16px; }
+  html:not(.simple) .vs-page.vs-page-path::after { bottom: 16px; inset: 16px 24px 16px var(--vs-right-x); }
+  html:not(.simple) .vs-page-path > .vs-body { padding-bottom: 16px; }
+}
