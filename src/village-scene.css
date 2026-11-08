@@ -1006,3 +1006,13 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
   .vs-shade { align-items: center; padding: 24px; }
   .vs-sheet { border: 2px solid var(--vs-line); border-radius: 22px; max-height: 100%; padding-bottom: 18px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45); }
 }
+
+/* Nov 7 (Jade): Simple view on a computer. The Oct 28 rule above makes room for a fixed
+   map on the left (padding-left: 50vw), but Simple view has no map, so the page was
+   squeezed into a sliver on the right. One centered column instead, and the Back
+   button lines up with it. */
+@media (min-width: 1024px) {
+  html.simple .vs-page.vs-page-path { display: block; padding: 16px 24px 24px; max-width: 760px; margin-left: auto; margin-right: auto; }
+  html.simple .vs-page.vs-page-path > * { margin-left: 0 !important; margin-right: 0 !important; }
+  html.simple .app-main-world > .app-back-row { width: 100%; max-width: 760px; margin: 0 auto; padding: 8px 24px 0; box-sizing: border-box; }
+}
