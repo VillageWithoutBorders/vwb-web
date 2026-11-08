@@ -126,43 +126,27 @@ export default function SimpleHome() {
         </button>
       </div>
 
+      {/* Nov 7 (Jade): two columns on a computer that each stack on their own, so a tall
+          box on one side never leaves a gap on the other. On a phone these wrappers
+          step aside and everything shows in the usual order (see .sh-cols in index.css). */}
+      <div className="sh-cols">
+      <div className="sh-col">
       {/* Your home village (Oct 22): one plain button straight to it.
           No village yet (Nov 3, flow map): it moves to the top as the first step. */}
       {hasVillage && villageRow}
 
       {/* Events and offers (Nov 3, flow map): Simple view had no way to the Calendar
           or to offer something of your own. */}
-      <button type="button" className="sh-row" onClick={() => navigate('/calendar')}>
+      <button type="button" className="sh-row sh-events" onClick={() => navigate('/calendar')}>
         <Icon name="calendar" size={32} />
         <span><b>{t('Events near me')}</b><small>{t('Things to join, and shifts to help with')}</small></span>
         <span className="sh-arrow" aria-hidden="true">&#8250;</span>
       </button>
-      <button type="button" className="sh-row" onClick={() => navigate('/post-offer')}>
+      <button type="button" className="sh-row sh-share" onClick={() => navigate('/post-offer')}>
         <Icon name="gift" size={32} />
         <span><b>{t('Share something I have')}</b><small>{t('A ride, a tool, your time, or a skill')}</small></span>
         <span className="sh-arrow" aria-hidden="true">&#8250;</span>
       </button>
-
-      {/* Your groups and emergency crews (Oct 27): one plain button each, straight to it. */}
-      {(organizations || []).length > 0 && (
-        <section className="sh-groups" aria-labelledby="sh-groups-h">
-          <h2 id="sh-groups-h">{t('My groups')}</h2>
-          {organizations.map((o) => {
-            const crew = o.kind === 'group'
-            const role = orgWords(o).roleLabel[o.role] || 'Member'
-            return (
-              <button key={o.id} type="button" className="sh-row" onClick={() => navigate('/orgs/' + o.id)}>
-                <Icon name={crew ? 'tent' : 'people'} size={32} />
-                <span><b>{o.name}</b><small>{t(crew ? 'Emergency crew' : 'Group') + '. ' + t(/^[aeiou]/i.test(role) ? 'You are an {role}.' : 'You are a {role}.', { role: t(role).toLowerCase() })}</small></span>
-                <span className="sh-arrow" aria-hidden="true">&#8250;</span>
-              </button>
-            )
-          })}
-        </section>
-      )}
-
-      <OrgInvites />
-      <VillageGuestInvites />
 
       <section className="sh-wait" aria-labelledby="sh-wait-h">
         <h2 id="sh-wait-h">{t('Waiting on you')}</h2>
@@ -186,6 +170,36 @@ export default function SimpleHome() {
           </button>
         ))}
       </section>
+
+      {/* Settings, easy to find (Oct 27, Jade). */}
+      <button type="button" className="sh-row sh-settings" onClick={() => navigate('/settings')}>
+        <Icon name="gear" size={32} />
+        <span><b>{t('Settings')}</b><small>{t('Language, text size, light or dark, and Simple view')}</small></span>
+        <span className="sh-arrow" aria-hidden="true">&#8250;</span>
+      </button>
+
+      </div>
+      <div className="sh-col">
+      {/* Your groups and emergency crews (Oct 27): one plain button each, straight to it. */}
+      {(organizations || []).length > 0 && (
+        <section className="sh-groups" aria-labelledby="sh-groups-h">
+          <h2 id="sh-groups-h">{t('My groups')}</h2>
+          {organizations.map((o) => {
+            const crew = o.kind === 'group'
+            const role = orgWords(o).roleLabel[o.role] || 'Member'
+            return (
+              <button key={o.id} type="button" className="sh-row" onClick={() => navigate('/orgs/' + o.id)}>
+                <Icon name={crew ? 'tent' : 'people'} size={32} />
+                <span><b>{o.name}</b><small>{t(crew ? 'Emergency crew' : 'Group') + '. ' + t(/^[aeiou]/i.test(role) ? 'You are an {role}.' : 'You are a {role}.', { role: t(role).toLowerCase() })}</small></span>
+                <span className="sh-arrow" aria-hidden="true">&#8250;</span>
+              </button>
+            )
+          })}
+        </section>
+      )}
+
+      <OrgInvites />
+      <VillageGuestInvites />
 
       <button type="button" className="sh-emergency" onClick={() => navigate('/emergency')}>
         <Icon name="cat-emergency" size={40} />
@@ -218,12 +232,8 @@ export default function SimpleHome() {
         </section>
       )}
 
-      {/* Settings, easy to find (Oct 27, Jade). */}
-      <button type="button" className="sh-row sh-settings" onClick={() => navigate('/settings')}>
-        <Icon name="gear" size={32} />
-        <span><b>{t('Settings')}</b><small>{t('Language, text size, light or dark, and Simple view')}</small></span>
-        <span className="sh-arrow" aria-hidden="true">&#8250;</span>
-      </button>
+      </div>
+      </div>
 
       <button type="button" className="sh-everything" disabled={busy} onClick={showEverything}>
         {t(busy ? 'Switching...' : 'Show me everything')}
