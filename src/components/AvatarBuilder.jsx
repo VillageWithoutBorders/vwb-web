@@ -49,6 +49,23 @@ const COLOR_OPTIONS = {
     { name: 'Tanned', hex: 'fd9841' }, { name: 'Yellow', hex: 'f8d25c' }, { name: 'Pale', hex: 'ffdbb4' }, { name: 'Light', hex: 'edb98a' },
     { name: 'Brown', hex: 'd08b5b' }, { name: 'Dark Brown', hex: 'ae5d29' }, { name: 'Black', hex: '614335' },
   ],
+  // Nov 8 (Jade): hat color and glasses color. Every color part also has "Any color".
+  hatColor: [
+    { name: 'Black', hex: '262e33' }, { name: 'Gray', hex: '929598' }, { name: 'White', hex: 'ffffff' },
+    { name: 'Red', hex: 'ff5c5c' }, { name: 'Coral', hex: 'f28b6b' }, { name: 'Orange', hex: 'f5a142' },
+    { name: 'Gold', hex: 'f2c14e' }, { name: 'Pastel Yellow', hex: 'ffffb1' }, { name: 'Green', hex: '4caf6e' },
+    { name: 'Forest', hex: '2f6f5e' }, { name: 'Teal', hex: '3fb59e' }, { name: 'Blue', hex: '65c9ff' },
+    { name: 'Navy', hex: '5199e4' }, { name: 'Dark Blue', hex: '25557c' }, { name: 'Purple', hex: '8e6bbf' },
+    { name: 'Plum', hex: '6b4a7a' }, { name: 'Pink', hex: 'ff488e' }, { name: 'Pastel Pink', hex: 'f59797' },
+    { name: 'Brown', hex: '724133' }, { name: 'Tan', hex: 'c9a27e' },
+  ],
+  accessoriesColor: [
+    { name: 'Black', hex: '262e33' }, { name: 'Gray', hex: '929598' }, { name: 'Silver', hex: 'c0c4c8' },
+    { name: 'Gold', hex: 'd4a73c' }, { name: 'Tortoise', hex: '7a4a2a' }, { name: 'Brown', hex: '724133' },
+    { name: 'Red', hex: 'ff5c5c' }, { name: 'Pink', hex: 'ff488e' }, { name: 'Purple', hex: '8e6bbf' },
+    { name: 'Blue', hex: '65c9ff' }, { name: 'Navy', hex: '25557c' }, { name: 'Green', hex: '4caf6e' },
+    { name: 'Teal', hex: '3fb59e' }, { name: 'White', hex: 'ffffff' },
+  ],
   // Nov 8 (Jade): the color behind your avatar. None shows the app's own soft green.
   backgroundColor: [
     { name: 'Sky', hex: 'b6e3f4' }, { name: 'Lavender', hex: 'c0aede' }, { name: 'Periwinkle', hex: 'd1d4f9' },
@@ -56,8 +73,18 @@ const COLOR_OPTIONS = {
     { name: 'Mint', hex: 'c7f0d8' }, { name: 'Sage', hex: '9fc5a8' }, { name: 'Teal', hex: '3fb59e' },
     { name: 'Gold', hex: 'f2c14e' }, { name: 'Coral', hex: 'f28b6b' }, { name: 'Forest', hex: '2f6f5e' },
     { name: 'Plum', hex: '6b4a7a' }, { name: 'Night', hex: '262e33' },
+    { name: 'White', hex: 'ffffff' }, { name: 'Cream', hex: 'f6efdc' }, { name: 'Rose', hex: 'e8a0b4' },
+    { name: 'Red', hex: 'ff5c5c' }, { name: 'Orange', hex: 'f5a142' }, { name: 'Green', hex: '4caf6e' },
+    { name: 'Blue', hex: '65c9ff' }, { name: 'Navy', hex: '25557c' }, { name: 'Purple', hex: '8e6bbf' },
+    { name: 'Pink', hex: 'ff488e' }, { name: 'Gray', hex: '929598' }, { name: 'Brown', hex: '724133' },
   ],
 }
+
+// Nov 8 (Jade): clothes get the same wide set of colors as hats.
+COLOR_OPTIONS.clothesColor = [
+  ...COLOR_OPTIONS.clothesColor,
+  ...COLOR_OPTIONS.hatColor.filter((c) => !COLOR_OPTIONS.clothesColor.some((d) => d.hex === c.hex || d.name === c.name)),
+]
 
 // Nov 7 (Jade): plain names, in the order people usually build a face.
 const PART_NAMES = {
@@ -65,6 +92,7 @@ const PART_NAMES = {
   facialHair: 'Beard', facialHairColor: 'Beard color',
   clothing: 'Clothes', clothesColor: 'Clothes color',
   eyes: 'Eyes', eyebrows: 'Eyebrows', mouth: 'Mouth', skinColor: 'Skin',
+  hatColor: 'Hat color', accessoriesColor: 'Glasses color',
   backgroundColor: 'Background',
 }
 
@@ -243,12 +271,25 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig, hideTit
                 {COLOR_OPTIONS[activeSection].map(({ name: colorName, hex }) => {
                   const isActive = config[activeSection] === hex
                   return (
-                    <button key={hex} type="button" className={'ab-opt' + (isActive ? ' on' : '')} aria-pressed={isActive} onClick={() => update(activeSection, hex)}>
+                    <button key={hex} type="button" className={'ab-opt ab-opt-color' + (isActive ? ' on' : '')} aria-pressed={isActive} data-tip={t(colorName)} onClick={() => update(activeSection, hex)}>
                       <span className="ab-swatch" style={{ background: '#' + hex }} aria-hidden="true" />
-                      {t(colorName)}
+                      <span className="ab-opt-name">{t(colorName)}</span>
                     </button>
                   )
                 })}
+                {/* Nov 8 (Jade): any color at all, from the device's own color picker. */}
+                {(() => {
+                  const cur = config[activeSection]
+                  const custom = cur && !COLOR_OPTIONS[activeSection].some((c) => c.hex === cur)
+                  return (
+                    <label className={'ab-opt ab-any' + (custom ? ' on' : '')} data-tip={t('Any color')}>
+                      <span className="ab-swatch ab-swatch-any" style={custom ? { background: '#' + cur } : undefined} aria-hidden="true" />
+                      {t('Any color')}
+                      <input type="color" className="ab-any-input" value={'#' + (cur && /^[0-9a-f]{6}$/i.test(cur) ? cur : '888888')}
+                        onChange={(e) => update(activeSection, e.target.value.replace('#', '').toLowerCase())} />
+                    </label>
+                  )
+                })()}
               </>) : (
                 <>
                   {(activeSection === 'accessories' || activeSection === 'facialHair') && (
