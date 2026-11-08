@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { useNavigate, useParams, useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
@@ -13,7 +13,9 @@ import { useCampfireIds } from '../hooks/useCampfireIds'
 import { useSidechatParents } from '../hooks/useSidechatParents'
 import VillageRoomPanel from '../components/VillageRoomPanel'
 import SidechatAdd from '../components/SidechatAdd'
-import { useGoBack } from '../components/BackLink'
+import { useWideScreen } from '../hooks/useWideScreen'
+import { useSimpleView } from '../utils/simpleView'
+import '../desktop-chats.css'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
 import { useT, getLang } from '../utils/lang'
@@ -50,13 +52,22 @@ const REPORT_REASONS = [
   'Something else',
 ]
 
-export default function GroupBoard() {
-  const { id } = useParams()
+// Nov 7 (Jade): pane = shown on the right side of Messages on a computer (like a private
+// chat). There it takes boardId, has no back arrow (the list is right beside it), and
+// moving to another chat (onOpen) or out of this one (onClose) stays inside Messages.
+export default function GroupBoard({ pane = false, boardId = null, onOpen, onClose }) {
+  const routeParams = useParams()
+  const id = pane ? boardId : routeParams.id
   const { user, organizations } = useAuth()
   const t = useT()
   const navigate = useNavigate()
-  const goBack = useGoBack()
   const location = useLocation()
+  // Chat pages draw their own way back (the frame shows no Back on chats).
+  const goBack = (fallback) => (location.key !== 'default' ? navigate(-1) : navigate(fallback))
+  const goChat = (gid) => (pane && onOpen ? onOpen(gid) : navigate('/groups/' + gid))
+  const toList = () => (pane && onClose ? onClose() : navigate('/groups'))
+  const wide = useWideScreen()
+  const simple = useSimpleView()
   const campfires = useCampfireIds()
   // Set when this chat is a village Campfire or Sidechat (VillageRoomPanel tells us).
   const [villageRoom, setVillageRoom] = useState(null)
@@ -380,11 +391,11 @@ export default function GroupBoard() {
     if (el) {
       focusDone.current = true
       setTimeout(() => { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus?.({ preventScroll: true }) }, 150)
-      navigate(location.pathname, { replace: true })
+      navigate(location.pathname + location.search, { replace: true })
     } else if (isRemoval || proposalsLoaded) {
       focusDone.current = true
       setFocusGone(true)
-      navigate(location.pathname, { replace: true })
+      navigate(location.pathname + location.search, { replace: true })
     }
   }, [focusKey, group, loading, focusReady, panelOpen, panelTab, members, removals, proposals]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -579,7 +590,7 @@ export default function GroupBoard() {
     if (!(await askConfirm(last ? t("You're the last member. Leaving deletes this chat and its whole board. Leave?") : stewardNote + t('Leave {name}? You can only come back if someone invites you again.', { name: group.name })))) return
     const { error } = await supabase.from('community_group_members').delete().eq('group_id', id).eq('user_id', user.id)
     if (error) { console.error('Failed to leave group:', error); tell(t('Could not leave the group. Try again.'), { tone: 'error' }); return }
-    navigate('/groups', { replace: true })
+    if (pane && onClose) onClose(); else navigate('/groups', { replace: true })
   }
 
   // Same idea as reporting a private conversation: admins can't read the
@@ -599,15 +610,20 @@ export default function GroupBoard() {
 
   function closeReport() { setReportFor(null); setReportReason(''); setReportDetails(''); setReportState(''); setIncludeEvidence(true) }
 
-  if (loading) return <div className="conversation-page group-page"><p className="groups-empty">{t('Loading...')}</p></div>
+  if (!pane && wide && !simple && group && !amWaiting) {
+    // A chat page opened on a computer shows inside Messages, beside the list.
+    return <Navigate to={'/messages?tab=' + (group.organization_id || campfires.has(group.id) ? 'campfires' : 'cottage') + '&open=' + encodeURIComponent(group.id)} replace state={location.state} />
+  }
+
+  if (loading) return <div className={'conversation-page group-page' + (pane ? ' convo-pane' : '')}><p className="groups-empty">{t('Loading...')}</p></div>
 
   if (amWaiting && group) {
     return (
-      <div className="conversation-page group-page">
+      <div className={'conversation-page group-page' + (pane ? ' convo-pane' : '')}>
         <div className="groups-page">
           <h1>{campfires.has(group.id) ? <><Icon name="campfire" />{' '}</> : ''}{group.name}</h1>
           <p className="groups-note">{t("You're waiting to be let in. A member of the chat will approve you soon. You'll see the board once they do.")}</p>
-          <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>{t('Back to chats')}</button>
+          <button type="button" className="btn btn-outline btn-full" onClick={toList}>{t('Back to chats')}</button>
         </div>
       </div>
     )
@@ -615,9 +631,9 @@ export default function GroupBoard() {
 
   if (!group) {
     return (
-      <div className="conversation-page group-page">
+      <div className={'conversation-page group-page' + (pane ? ' convo-pane' : '')}>
         <p className="groups-empty">{t("This chat isn't available. You may have left it, or it was removed.")}</p>
-        <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/groups')}>{t('Back to chats')}</button>
+        <button type="button" className="btn btn-outline btn-full" onClick={toList}>{t('Back to chats')}</button>
       </div>
     )
   }
@@ -632,9 +648,9 @@ export default function GroupBoard() {
   const avatarOf = (uid) => members.find(m => m.userId === uid)?.avatar || null
 
   return (
-    <div className="conversation-page group-page">
+    <div className={'conversation-page group-page' + (pane ? ' convo-pane' : '')}>
       <div className="convo-header">
-        <button className="convo-back" onClick={() => goBack('/groups')} aria-label={t('Back to chats')}>&#8592;</button>
+        {!pane && <button className="convo-back" onClick={() => goBack('/groups')} aria-label={t('Back to chats')}>&#8592;</button>}
         <div className="convo-header-info">
           <h1>{campfires.has(group.id) ? <><Icon name="campfire" />{' '}</> : ''}{group.name}</h1>
           <p className="convo-context">{villageRoom
@@ -648,14 +664,14 @@ export default function GroupBoard() {
         <nav aria-label={t('Smaller Campfires')} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
           <span className="cal-sub" style={{ alignSelf: 'center' }}>{t('Smaller Campfires:')}</span>
           {sidechats.map((s) => (
-            <button key={s.id} type="button" className="btn btn-outline group-small-btn" onClick={() => navigate('/groups/' + s.id)}>{'\u21B3 '}{s.name}</button>
+            <button key={s.id} type="button" className="btn btn-outline group-small-btn" onClick={() => goChat(s.id)}>{'\u21B3 '}{s.name}</button>
           ))}
         </nav>
       )}
       <VillageRoomPanel groupId={group.id} onInfo={setVillageRoom} onLeave={leave} onChanged={() => loadGroup()} />
       {isSidechat && parentId && (
         <nav aria-label={t('Back to the general chat')} style={{ padding: '0.4rem 1rem', borderBottom: '1px solid var(--border)' }}>
-          <button type="button" className="group-post-delete" onClick={() => navigate('/groups/' + parentId)}>{'\u2190 '}{parentName ? t('Back to {name}', { name: parentName }) : t('Back to the general chat')}</button>
+          <button type="button" className="group-post-delete" onClick={() => goChat(parentId)}>{'\u2190 '}{parentName ? t('Back to {name}', { name: parentName }) : t('Back to the general chat')}</button>
         </nav>
       )}
       <div className="convo-messages" ref={containerRef} onScroll={onScroll} role="log" aria-live="polite" aria-label={t('{name} board', { name: group.name })}>

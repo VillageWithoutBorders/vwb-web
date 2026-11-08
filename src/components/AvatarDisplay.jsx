@@ -34,7 +34,7 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
     const margin = 8
     const vw = window.innerWidth
     const vh = window.innerHeight
-    const width = Math.min(280, vw - margin * 2)
+    const width = Math.min(340, vw - margin * 2) // Nov 7: wider, so badges and buttons don't wrap
     const height = Math.min(cardRef.current.offsetHeight, vh - margin * 2)
     let left = Math.min(Math.max(anchor.left, margin), vw - width - margin)
     let top = anchor.bottom + margin
@@ -150,7 +150,7 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
       {showPopup && createPortal(
         <>
           <div onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1100 }} />
-          <div ref={cardRef} onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: pos ? pos.top + 'px' : 0, left: pos ? pos.left + 'px' : 0, visibility: pos ? 'visible' : 'hidden', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.25rem', zIndex: 1101, width: pos ? pos.width + 'px' : 'min(280px, calc(100vw - 16px))', maxHeight: pos ? pos.maxHeight + 'px' : undefined, overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+          <div ref={cardRef} onClick={(e) => e.stopPropagation()} style={{ position: 'fixed', top: pos ? pos.top + 'px' : 0, left: pos ? pos.left + 'px' : 0, visibility: pos ? 'visible' : 'hidden', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '1.25rem', zIndex: 1101, width: pos ? pos.width + 'px' : 'min(340px, calc(100vw - 16px))', maxHeight: pos ? pos.maxHeight + 'px' : undefined, overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
               <img src={popupSrc} alt="" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--surface-2)', border: '2px solid var(--border)' }} />
               <div>
@@ -165,13 +165,13 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
             {info && (
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                 {(info.eligible || info.hasVouched) ? (
-                  <button type="button" onClick={toggleVouch} aria-label={info.hasVouched ? t('Remove your vouch') : t('Vouch for this neighbor')} style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: info.hasVouched ? '#1a4a3a' : '#222', borderRadius: '8px', cursor: 'pointer', border: info.hasVouched ? '1px solid #4ecca3' : '1px solid transparent', transition: 'all 0.2s' }}>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent)' }}>{info.vouches}</div>
-                    <div style={{ fontSize: '0.8125rem', color: info.hasVouched ? '#4ecca3' : '#888' }}>{info.hasVouched ? t('Vouched') : t('Vouch')}</div>
+                  <button type="button" onClick={toggleVouch} aria-label={info.hasVouched ? t('Remove your vouch') : t('Vouch for this neighbor')} style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: info.hasVouched ? 'var(--green-light)' : 'var(--surface)', borderRadius: '8px', cursor: 'pointer', border: info.hasVouched ? '2px solid var(--accent)' : '1px solid var(--border)', transition: 'all 0.2s' }}>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-strong)' }}>{info.vouches}</div>
+                    <div style={{ fontSize: '0.8125rem', color: info.hasVouched ? 'var(--text-strong)' : 'var(--text-secondary)' }}>{info.hasVouched ? t('Vouched') : t('Vouch')}</div>
                   </button>
                 ) : (
                   <div style={{ flex: 1, textAlign: 'center', padding: '0.5rem', background: 'var(--surface-2)', borderRadius: '8px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--accent)' }}>{info.vouches}</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-strong)' }}>{info.vouches}</div>
                     <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{t('Vouches')}</div>
                   </div>
                 )}

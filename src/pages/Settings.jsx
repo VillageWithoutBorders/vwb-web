@@ -364,13 +364,8 @@ export default function Settings() {
           <h2 className="settings-group-h">{t('Seeing')}</h2>
           <TextSizePicker />
           <AppearancePicker />
-          </div>
 
-          <div className="settings-col">
-          <h2 className="settings-group-h">{t('Using')}</h2>
-          <SimpleViewPicker />
-          <MotionPicker />
-
+          {/* Nov 7 (Jade): Learning the app sits under Seeing so the two columns end closer together. */}
           <h2 className="settings-group-h">{t('Learning the app')}</h2>
           <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '48px' }}>
             <span aria-hidden="true"><Icon name="compass" /></span> {t('Take the app tour again')}
@@ -380,6 +375,13 @@ export default function Settings() {
             <span aria-hidden="true"><Icon name="cottage" /></span> {t('Set up your avatar and cottage')}
           </button>
           <p style={{ margin: '0.4rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{t('Make your avatar, pick your skills, and name your cottage. About 10 minutes. Finishing it turns on the full app.')}</p>
+          </div>
+
+          <div className="settings-col">
+          <h2 className="settings-group-h">{t('Using')}</h2>
+          <SimpleViewPicker />
+          <MotionPicker />
+
           </div>
           </div>
         </>
