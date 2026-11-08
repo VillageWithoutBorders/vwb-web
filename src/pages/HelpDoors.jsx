@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import Icon from '../components/Icon'
+import Icon, { iconSrc, iconClass } from '../components/Icon'
 import { useSimpleView } from '../utils/simpleView'
 import { useWaitingOffers } from '../hooks/useWaitingOffers'
 import { CAT_ICON_FILES } from '../utils/resourceCategories'
@@ -48,7 +48,7 @@ export default function HelpDoors() {
         <div className="hub-tiles">
           {TOP_KINDS.map((cat) => (
             <Link key={cat} className="hub-tile" to={'/community/resources?cat=' + encodeURIComponent(cat)}>
-              <img className="hub-tile-icon" src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="40" height="40" />
+              <img className={iconClass((CAT_ICON_FILES[cat] || 'cat-other'), 'hub-tile-icon')} src={iconSrc((CAT_ICON_FILES[cat] || 'cat-other'))} alt="" width="40" height="40" />
               <span>{t(cat)}</span>
             </Link>
           ))}
