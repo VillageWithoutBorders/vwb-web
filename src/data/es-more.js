@@ -4405,6 +4405,20 @@ const more = {
   'Saved with your account, so it follows you to any phone. The maps keep their painted colors.': 'Se guarda en su cuenta, así que le sigue a cualquier teléfono. Los mapas mantienen sus colores pintados.',
   "Food, bills, rides, hotlines, and more near you. Can't find it? Ask a neighbor.": 'Comida, facturas, transporte, líneas de ayuda y más cerca de usted. ¿No lo encuentra? Pregunte a un vecino.',
   'Nothing found nearby. A neighbor may be able to help. Tap Ask a neighbor for help.': 'No se encontró nada cerca. Un vecino quizás pueda ayudar. Toque Pedir ayuda a un vecino.',
+  // Inside your cottage, in My Corner (Nov 7).
+  'Inside your cottage': 'Dentro de su casita',
+  'Tap something in the room.': 'Toque algo en el cuarto.',
+  'Each thing in the room opens part of your corner. Hold your mouse over one to see what it is.': 'Cada cosa del cuarto abre una parte de su rincón. Ponga el ratón encima de una para ver qué es.',
+  'Step outside to My Cottage': 'Salir a Mi casita',
+  'Gather by the fire': 'Reúnase junto al fuego',
+  'Get comfortable': 'Póngase cómodo',
+  'The stories so far': 'Las historias hasta ahora',
+  'Where you have been': 'Donde ha estado',
+  'Look out at your world': 'Mire hacia su mundo',
+  'Friends who know you': 'Amigos que lo conocen',
+  'A light to find your way': 'Una luz para encontrar el camino',
+  'A walk around the app': 'Un paseo por la aplicación',
+  'Help your circle grow': 'Ayude a crecer su círculo',
 }
 
 export default more
