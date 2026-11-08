@@ -2,8 +2,18 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'node:url'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
+// Nov 8: Jade's watercolor button pictures. Any <name>.webp in public/art/icons is
+// used in place of <name>.svg (see Icon.jsx). The list is read when the app is built
+// or `npm run dev` starts, so restart dev after adding a new painting.
+function paintedIcons() {
+  try {
+    return readdirSync(fileURLToPath(new URL('./public/art/icons', import.meta.url)))
+      .filter((f) => f.endsWith('.webp')).map((f) => f.slice(0, -5))
+  } catch { return [] }
+}
 export default defineConfig({
+  define: { __PAINTED_ICONS__: JSON.stringify(paintedIcons()) },
   resolve: {
     alias: {
       // libsodium-wrappers' own ESM build (dist/modules-esm/libsodium-wrappers.mjs)
