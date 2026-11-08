@@ -1,0 +1,20 @@
+# Nov 8 (Jade): automatic accessibility check on every push.
+# Builds a test copy with fake Supabase keys, then checks the main pages with axe.
+name: Accessibility check
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  a11y:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:check
+      - run: npm run a11y
