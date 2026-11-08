@@ -51,9 +51,11 @@ export function NeedsYou({ onCount, children }) {
           <span className="today-go" aria-hidden="true">&#8250;</span>
         </Link>
       ))}
+      {/* Nov 7 (Jade): your own "nothing waiting" line first, then what's open nearby,
+          so the two quiet lines read in order instead of one under the other backwards. */}
+      {tasks && items.length === 0 && <p className="today-empty">{t('Nothing is waiting on you right now.')}</p>}
       {/* Invites and nearby needs render themselves, and show nothing when empty. */}
       {children}
-      {tasks && items.length === 0 && <p className="today-empty">{t('Nothing is waiting on you right now.')}</p>}
     </section>
   )
 }
