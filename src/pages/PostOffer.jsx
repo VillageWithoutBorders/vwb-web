@@ -7,7 +7,6 @@ import { supabase } from '../supabaseClient'
 import { getMyLocation } from '../utils/location'
 import { LocationPrompt } from '../components/LocationPrompt'
 import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES, OFFER_ITEMS_GROUP } from '../utils/skillGroups'
-import { useGoBack } from '../components/BackLink'
 import { useT } from '../utils/lang'
 import '../desktop-forms.css'
 
@@ -26,7 +25,6 @@ export default function PostOffer() {
     return managedOrgs.some((o) => o.id === want) ? want : ''
   })
   const navigate = useNavigate()
-  const goBack = useGoBack()
 
   const [category, setCategory] = useState('')
   const [skillRows, setSkillRows] = useState([])
@@ -93,10 +91,8 @@ export default function PostOffer() {
   return (
     <div className="offer-split" style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
       <div className="ask-left">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
-        <h1 style={{ color: 'var(--accent)', margin: 0, fontSize: '1.5rem' }}>{t('Share an Offer')}</h1>
-      </div>
+      {/* Nov 7 (Jade): the frame's Back pill and the same title as every other page. */}
+      <h1 className="page-title-std" style={{ margin: '0 0 0.5rem' }}>{t('Share an Offer')}</h1>
 
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
         {t('Let your neighbors know what you have to share. Free meals, supplies, labor, rides, anything helps.')}

@@ -15,7 +15,9 @@ import { useT } from '../utils/lang'
 // Every group has its own board (its own Campfire), end-to-end encrypted.
 // See vwb-groups.sql for the rules the database enforces.
 // show: 'all' (the /groups page), 'cottage' or 'campfires' (the Messages tabs, Oct 22).
-export default function Groups({ embedded = false, show: showProp = 'all' }) {
+// Nov 7 (Jade): onOpen (computers, inside Messages) opens a chat beside the list
+// instead of on its own page; selectedId marks the open one.
+export default function Groups({ embedded = false, show: showProp = 'all', onOpen, selectedId }) {
   // On its own page, /groups?show=cottage or ?show=campfires picks the list (the cottage map uses these).
   const [params] = useSearchParams()
   const asked = params.get('show')
@@ -26,6 +28,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
   // for. They can start a group for one of them and be its steward.
   const orgsIHead = (organizations || []).filter(o => o.role === 'admin' || o.role === 'organizer')
   const navigate = useNavigate()
+  const openGroup = (gid, state) => (onOpen ? onOpen(gid) : navigate('/groups/' + gid, state ? { state } : undefined))
   const campfires = useCampfireIds()
   const sidechatParents = useSidechatParents()
   const [groups, setGroups] = useState([])
@@ -107,7 +110,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
       setStartError(/New accounts can/i.test(error?.message || '') ? t(NEW_ACCOUNT_NOTE) : t('Could not start your chat. Try again.'))
       return
     }
-    navigate('/groups/' + newId, { state: { justStarted: true } })
+    openGroup(newId, { justStarted: true })
   }
 
   async function accept(groupId) {
@@ -115,7 +118,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
     const { error } = await supabase.rpc('accept_community_group_invite', { p_group: groupId })
     setBusy(null)
     if (error) { console.error('Failed to accept invite:', error); tell(t('Could not join this group. Try again.'), { tone: 'error' }); return }
-    navigate('/groups/' + groupId)
+    openGroup(groupId)
   }
 
   async function decline(groupId) {
@@ -229,7 +232,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
           <h2 id="mygroups-heading" className="groups-section">{!embedded ? t('Your chats') : show === 'campfires' ? t('Your Campfires') : show === 'cottage' ? t('Your Cottage Chats') : t('Your chats')}</h2>
           {orderedGroups.length === 0 && <p className="groups-empty">{show === 'campfires' ? t("You're not at any Campfires yet.") : t("You're not in any chats yet. Start a Cottage Chat, or ask a friend to invite you.")}</p>}
           {orderedGroups.map(({ g, nested }) => (
-            <button key={g.id} type="button" className="groups-row" style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => navigate('/groups/' + g.id)}>
+            <button key={g.id} type="button" className={'groups-row' + (selectedId === g.id ? ' hub-row-on' : '')} aria-current={selectedId === g.id ? 'true' : undefined} style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => openGroup(g.id)}>
               <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? <><Icon name="pushpin" />{' '}</> : ''}{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="campfire" />{' '}</> : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">{t('Steward')}</span> : null}</span>
               <span className="groups-row-meta">{g.village_kind === 'sidechat' ? t('Picked by the keeper') + ' \u00b7 ' : ''}{g.quiet ? t('Quiet') + ' \u00b7 ' : ''}{g.memberCount === 1 ? t('1 member') : t('{n} members', { n: g.memberCount })}</span>
             </button>
@@ -240,7 +243,7 @@ export default function Groups({ embedded = false, show: showProp = 'all' }) {
                 {showArchived ? t('Hide archived chats') : t('Archived chats ({n})', { n: archivedGroups.length })}
               </button>
               {showArchived && archivedGroups.map(g => (
-                <button key={g.id} type="button" className="groups-row" onClick={() => navigate('/groups/' + g.id)}>
+                <button key={g.id} type="button" className={'groups-row' + (selectedId === g.id ? ' hub-row-on' : '')} onClick={() => openGroup(g.id)}>
                   <span className="groups-row-name">{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="campfire" />{' '}</> : ''}{g.name}</span>
                   <span className="groups-row-meta">{t('Archived')}</span>
                 </button>

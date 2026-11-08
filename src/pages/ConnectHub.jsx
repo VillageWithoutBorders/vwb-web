@@ -11,11 +11,15 @@ import { useWideScreen } from '../hooks/useWideScreen'
 import ChatGuide from '../components/ChatGuide'
 import { useSimpleView } from '../utils/simpleView'
 import { useT } from '../utils/lang'
+import '../desktop-chats.css'
 
 const Groups = lazy(() => import('./Groups'))
 const Connections = lazy(() => import('./Connections'))
 const HubVillages = lazy(() => import('../components/HubVillages'))
 const HubOrganizations = lazy(() => import('../components/HubOrganizations'))
+// Nov 7 (Jade): village chats and group chats open beside the list on a computer too.
+const Campfire = lazy(() => import('./Campfire'))
+const GroupBoard = lazy(() => import('./GroupBoard'))
 
 // The Messages tab: one place for every way to talk to people. The screen is
 // the same for everyone; sections appear only when the person can use them.
@@ -58,8 +62,15 @@ export default function ConnectHub() {
   // the left and the chat you pick opens on the right (?c=<id>, so links work).
   // Phones and Simple view open a chat on its own page, as before.
   const wide = useWideScreen()
-  const split = wide && !simple && active === 'messages'
+  // Nov 7 (Jade): every kind of chat works this way, not only private messages.
+  // Village Square: ?tab=villages&open=<board id> ('square' means the main one).
+  // Cottage Chats and Campfires: ?tab=cottage|campfires&open=<chat id>.
+  const SPLIT_TABS = ['messages', 'villages', 'cottage', 'campfires']
+  const split = wide && !simple && SPLIT_TABS.includes(active)
   const openId = params.get('c')
+  const openBoard = params.get('open')
+  function openOther(id, extra) { setParams({ tab: active, open: id, ...(extra || {}) }, { replace: true }) }
+  function closeOther() { setParams({ tab: active }, { replace: true }) }
   const reportFor = params.get('report') === '1'
   function openChat(id, opts) { setParams(opts?.report ? { c: id, report: '1' } : { c: id }, { replace: true }) }
   function closeChat() { setParams({}, { replace: true }) }
@@ -67,6 +78,13 @@ export default function ConnectHub() {
   useEffect(() => {
     if (!split && openId && active === 'messages') navigate('/conversation/' + openId, { replace: true })
   }, [split, openId, active]) // eslint-disable-line react-hooks/exhaustive-deps
+  // On a phone (or a screen made narrow, or Simple view) a village or group chat
+  // link opens that chat's own page, as before.
+  useEffect(() => {
+    if (split || !openBoard) return
+    if (active === 'villages') navigate('/village-square' + (openBoard === 'square' ? '' : '?board=' + encodeURIComponent(openBoard)), { replace: true })
+    else if (active === 'cottage' || active === 'campfires') navigate('/groups/' + openBoard, { replace: true })
+  }, [split, openBoard, active]) // eslint-disable-line react-hooks/exhaustive-deps
   // The report window opens once; take report=1 off the address after.
   useEffect(() => {
     if (split && reportFor && openId) setParams({ c: openId }, { replace: true })
@@ -112,19 +130,28 @@ export default function ConnectHub() {
       <div className="hub-split">
         <div className="hub-left">
           {head}
-          <div role="tabpanel" id="hub-panel" aria-labelledby="hub-tab-messages">
-            <Messages embedded onOpen={openChat} selectedId={openId} />
+          <div role="tabpanel" id="hub-panel" aria-labelledby={'hub-tab-' + active}>
+            {active === 'messages' && <Messages embedded onOpen={openChat} selectedId={openId} />}
+            <Suspense fallback={<p className="cal-empty" style={{ padding: '1rem' }}>{t('Loading...')}</p>}>
+              {active === 'villages' && <HubVillages onOpen={(id) => openOther(id)} selectedId={openBoard} />}
+              {active === 'cottage' && <Groups embedded show="cottage" onOpen={(id) => openOther(id)} selectedId={openBoard} />}
+              {active === 'campfires' && <Groups embedded show="campfires" onOpen={(id) => openOther(id)} selectedId={openBoard} />}
+            </Suspense>
           </div>
         </div>
         <section className="hub-right" aria-label={t('Open chat')}>
-          {openId
+          {active === 'messages' && openId
             ? <Conversation key={openId} convoId={openId} pane openReport={reportFor} onClose={closeChat} />
-            : (
-              <div className="hub-pick">
-                <Icon name="chat-bubble" size={40} />
-                <p>{t('Pick a chat on the left to read it here.')}</p>
-              </div>
-            )}
+            : active === 'villages' && openBoard
+              ? <Suspense fallback={<p className="hub-pick">{t('Loading...')}</p>}><div className="hub-pane-fill"><Campfire key="square" pane /></div></Suspense>
+              : (active === 'cottage' || active === 'campfires') && openBoard
+                ? <Suspense fallback={<p className="hub-pick">{t('Loading...')}</p>}><div className="hub-pane-fill"><GroupBoard key={openBoard} pane boardId={openBoard} onOpen={(id) => openOther(id)} onClose={closeOther} /></div></Suspense>
+                : (
+                  <div className="hub-pick">
+                    <Icon name="chat-bubble" size={40} />
+                    <p>{t('Pick a chat on the left to read it here.')}</p>
+                  </div>
+                )}
         </section>
       </div>
     )

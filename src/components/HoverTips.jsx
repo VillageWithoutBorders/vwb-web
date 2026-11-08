@@ -60,6 +60,8 @@ export default function HoverTips() {
   const timer = useRef(0)
   const current = useRef(null)
   const box = useRef(null)
+  // Nov 7: after a click, no note on that button until the mouse leaves it (it covered menus).
+  const quiet = useRef(null)
 
   useEffect(() => {
     const mq = window.matchMedia('(hover: hover) and (pointer: fine)')
@@ -70,9 +72,11 @@ export default function HoverTips() {
       if (e.pointerType && e.pointerType !== 'mouse') return
       const el = e.target.closest && e.target.closest(PICK)
       if (el === current.current) return
+      if (el && el === quiet.current) return
+      quiet.current = null
       clearTimeout(timer.current)
       current.current = el
-      if (!el || el.disabled || el.closest('[data-no-tip]')) { setTip(null); return }
+      if (!el || el.disabled || el.closest('[data-no-tip]') || el.getAttribute('aria-expanded') === 'true') { setTip(null); return }
       const text = tipFor(el)
       if (!text) { setTip(null); return }
       timer.current = setTimeout(() => {
@@ -88,7 +92,8 @@ export default function HoverTips() {
     const key = (e) => { if (e.key === 'Escape') hide() }
     document.addEventListener('pointerover', over, true)
     document.addEventListener('pointerout', out, true)
-    document.addEventListener('pointerdown', hide, true)
+    const down = (e) => { quiet.current = e.target.closest && e.target.closest(PICK); hide() }
+    document.addEventListener('pointerdown', down, true)
     document.addEventListener('keydown', key, true)
     window.addEventListener('scroll', hide, true)
     window.addEventListener('blur', hide)
@@ -96,7 +101,7 @@ export default function HoverTips() {
       hide()
       document.removeEventListener('pointerover', over, true)
       document.removeEventListener('pointerout', out, true)
-      document.removeEventListener('pointerdown', hide, true)
+      document.removeEventListener('pointerdown', down, true)
       document.removeEventListener('keydown', key, true)
       window.removeEventListener('scroll', hide, true)
       window.removeEventListener('blur', hide)
