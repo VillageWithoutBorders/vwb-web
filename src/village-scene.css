@@ -1032,3 +1032,44 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
   }
   html:not(.simple) .vs-sheet .vs-sheet-close { position: static; justify-self: end; width: auto; padding: 0 16px; margin: 0; border-width: 1px; }
 }
+
+/* ---------- Light mode on the map pages (Nov 7, Jade) ----------
+   My World, villages, cottages and group pages used to stay dark teal in light mode.
+   Now, in light mode, everything around the map follows the light colors, the same as
+   Simple view does. The painted maps and the globe keep their own colors. */
+:root[data-theme="light"] .vs-page {
+  color-scheme: light;
+  --bg: inherit;
+  --text-strong: inherit; --text: inherit; --text-soft: inherit; --text-secondary: inherit; --text-muted: inherit;
+  --white: inherit; --surface: inherit; --surface-2: inherit; --surface-3: inherit; --surface-sunk: inherit;
+  --border: inherit; --border-strong: inherit; --green-light: inherit;
+  --accent: inherit; --on-accent: inherit; --btn-bg: inherit; --btn-ink: inherit; --btn-hover: inherit;
+  --warn: inherit; --info: inherit; --danger: inherit; --gold: inherit;
+  --success-bg: inherit; --info-bg: inherit; --warn-bg: inherit; --danger-bg: inherit;
+  --purple: inherit; --purple-bg: inherit;
+  --vs-bg: var(--bg); --vs-card: var(--surface); --vs-card2: var(--surface-2); --vs-line: var(--border-strong);
+  --vs-ink: var(--text-strong); --vs-muted: var(--text-secondary); --vs-teal: var(--accent); --vs-on-teal: var(--on-accent);
+  --vs-coral: var(--danger); --vs-gold: var(--gold); --vs-on-gold: var(--on-accent); --vs-focus: var(--focus);
+  background: var(--bg);
+}
+:root[data-theme="light"] .app-main.app-main-world { background: var(--bg); }
+:root[data-theme="light"] .vs-page-path::before { display: none; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .vs-page {
+    color-scheme: light;
+    --bg: inherit;
+    --text-strong: inherit; --text: inherit; --text-soft: inherit; --text-secondary: inherit; --text-muted: inherit;
+    --white: inherit; --surface: inherit; --surface-2: inherit; --surface-3: inherit; --surface-sunk: inherit;
+    --border: inherit; --border-strong: inherit; --green-light: inherit;
+    --accent: inherit; --on-accent: inherit; --btn-bg: inherit; --btn-ink: inherit; --btn-hover: inherit;
+    --warn: inherit; --info: inherit; --danger: inherit; --gold: inherit;
+    --success-bg: inherit; --info-bg: inherit; --warn-bg: inherit; --danger-bg: inherit;
+    --purple: inherit; --purple-bg: inherit;
+    --vs-bg: var(--bg); --vs-card: var(--surface); --vs-card2: var(--surface-2); --vs-line: var(--border-strong);
+    --vs-ink: var(--text-strong); --vs-muted: var(--text-secondary); --vs-teal: var(--accent); --vs-on-teal: var(--on-accent);
+    --vs-coral: var(--danger); --vs-gold: var(--gold); --vs-on-gold: var(--on-accent); --vs-focus: var(--focus);
+    background: var(--bg);
+  }
+  :root:not([data-theme="dark"]) .app-main.app-main-world { background: var(--bg); }
+  :root:not([data-theme="dark"]) .vs-page-path::before { display: none; }
+}
