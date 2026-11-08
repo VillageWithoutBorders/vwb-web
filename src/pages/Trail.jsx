@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import BackLink from '../components/BackLink'
 import Icon from '../components/Icon'
 import { useT, t, getLang } from '../utils/lang'
+import { openMyQr } from '../utils/qrSheet'
 
 // Your trail (vwb-roads-and-trail.sql): your own story in VWB, in order.
 // Only you can see it. It never shows where anyone else lives.
@@ -92,10 +93,10 @@ export default function Trail() {
             )
           })}
           <li className="tr-stop tr-next">
-            <Link to="/my-code" className="tr-link">
+            <button type="button" className="tr-link" onClick={openMyQr}>
               <span className="tr-dot" aria-hidden="true"><Icon name="compass" size={26} /></span>
               <span className="tr-text"><b>{t('Where to next?')}</b><small>{t('Meet a neighbor and share your QR code.')}</small></span>
-            </Link>
+            </button>
           </li>
         </ol>
       )}

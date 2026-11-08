@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useT } from '../utils/lang'
 import { useState } from 'react'
 import { startAppTour } from './AppTour'
+import { openMyQr } from '../utils/qrSheet'
 import { isLight } from '../utils/theme'
 import { usePrefsRefresh } from '../hooks/usePrefsRefresh'
 
@@ -20,7 +21,7 @@ const SPOTS = [
   { k: 'cat', label: 'Vouches and trust', sub: 'Friends who know you', to: '/profile', x: 94, y: 64 },
   { k: 'lamps', label: 'App guide and feedback', sub: 'A light to find your way', to: '/help', x: 29, y: 18 },
   { k: 'lantern', label: 'Take the tour', sub: 'A walk around the app', tour: true, x: 88, y: 69 },
-  { k: 'plant', label: 'My QR code', sub: 'Help your circle grow', to: '/my-code', x: 61, y: 38 },
+  { k: 'plant', label: 'My QR code', sub: 'Help your circle grow', qr: true, x: 61, y: 38 },
 ]
 
 // Nov 8 (Jade): a daytime room for light mode. Turn this on once
@@ -47,7 +48,7 @@ export default function CornerRoom() {
       {SPOTS.map((s) => (
         <button key={s.k} type="button" className={'cr-spot' + (s.x > 75 ? ' cr-right' : s.x < 20 ? ' cr-left' : '')} style={{ left: s.x + '%', top: s.y + '%' }}
           aria-label={t(s.label) + '. ' + t(s.sub)} data-tip={t(s.label) + '. ' + t(s.sub)}
-          onClick={() => (s.tour ? startAppTour() : navigate(s.to))}>
+          onClick={() => (s.tour ? startAppTour() : s.qr ? openMyQr() : navigate(s.to))}>
           <span className="cr-dot" aria-hidden="true" />
           <span className="cr-lab" aria-hidden="true">{t(s.label)}</span>
         </button>

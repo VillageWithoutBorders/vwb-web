@@ -7,6 +7,7 @@ import CornerRoom, { ROOM_READY } from '../components/CornerRoom'
 import { useWideScreen } from '../hooks/useWideScreen'
 import { useSimpleView } from '../utils/simpleView'
 import { useT } from '../utils/lang'
+import { openMyQr } from '../utils/qrSheet'
 
 // My Corner: everything about you in one place.
 // It shows under your cottage map (embedded) and as its own page at /me.
@@ -37,7 +38,7 @@ export default function YourCorner({ embedded = false }) {
       <nav aria-labelledby={hid} className="corner-list">
         <Link to="/profile#past-tasks" className="corner-item"><span aria-hidden="true"><Icon name="box" /></span> {t('Past tasks')}<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/trail" className="corner-item"><span aria-hidden="true"><Icon name="compass" /></span> {t('My trail')}<span className="corner-arrow" aria-hidden="true">›</span></Link>
-        <Link to="/my-code" className="corner-item"><span aria-hidden="true"><Icon name="qr-code" /></span> {t('My QR code')}<span className="corner-arrow" aria-hidden="true">›</span></Link>
+        <button type="button" className="corner-item corner-item-btn" onClick={openMyQr}><span aria-hidden="true"><Icon name="qr-code" /></span> {t('My QR code')}<span className="corner-arrow" aria-hidden="true">›</span></button>
         <Link to="/profile" className="corner-item"><span aria-hidden="true"><Icon name="handshake" /></span> {simple ? <span className="corner-item-text">{t('Vouches and trust')}<small>{t('Neighbors who say you can be trusted')}</small></span> : t('Vouches and trust')}<span className="corner-arrow" aria-hidden="true">›</span></Link>
         {/* Oct 22: your cottage is your house in your home village: your own private map. */}
         {!embedded && !simple && <Link to="/cottage" className="corner-item"><span aria-hidden="true"><Icon name="cottage" /></span> {t('My cottage')}<span className="corner-arrow" aria-hidden="true">›</span></Link>}

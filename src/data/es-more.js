@@ -4425,6 +4425,8 @@ const more = {
   'Page width on a computer': 'Ancho de página en una computadora',
   'Calm and narrow': 'Tranquilo y angosto',
   'Fill the screen': 'Llenar la pantalla',
+  // Nov 8: QR pop-up
+  'Let a neighbor you met scan this with their phone camera. It connects you and counts as a vouch.': 'Deje que un vecino que conoció escanee esto con la cámara de su teléfono. Quedarán conectados, y cuenta como que responden el uno por el otro.',
   'On a big screen, pages can stay narrow and easy to follow, or spread out to use the whole screen. Phones always fit the screen.': 'En una pantalla grande, las páginas pueden quedar angostas y fáciles de seguir, o abrirse para usar toda la pantalla. En el teléfono siempre caben en la pantalla.',
 }
 

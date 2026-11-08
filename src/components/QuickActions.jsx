@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 import { useSimpleView } from '../utils/simpleView'
 import Icon from './Icon'
 import { useT } from '../utils/lang'
+import { openMyQr } from '../utils/qrSheet'
 
 // Quick Actions: four big buttons at the top of Home.
 // Each person picks their own four. Saved on the account
@@ -129,7 +130,7 @@ export default function QuickActions() {
             key={a.key}
             type="button"
             className={'qa-btn' + (i === 0 ? ' qa-btn-main' : '')}
-            onClick={() => navigate(a.to)}
+            onClick={() => (a.key === 'my_code' ? openMyQr() : navigate(a.to))}
           >
             <span className="qa-btn-icon" aria-hidden="true"><Icon name={a.icon} size={simple ? 40 : 32} /></span>
             <span className="qa-btn-label">{t(a.label)}</span>
