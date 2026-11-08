@@ -6857,7 +6857,7 @@ html.calm-motion .nr-card:active { transform: none; }
   .app-main:has(> .doors:not(.doors-simple)) { max-width: 1240px; }
   .hub-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
-.hub-head h1, .messages-page h1, .feed-header h1, .tasks-header h1, .community-page h1,
+.hub-head h1, .fh-head h1, .messages-page h1, .feed-header h1, .tasks-header h1, .community-page h1,
 .cal-head h1, .help-page h1, .ask-page h1, h1.corner-title, h1.doors-title {
   font-size: 1.5rem; font-weight: 800; line-height: 1.2; color: var(--text-strong);
 }
@@ -6869,3 +6869,28 @@ html.calm-motion .nr-card:active { transform: none; }
 .hub-back:active { transform: scale(0.97); }
 .hub-back:focus-visible { outline: 3px solid #e8b84a; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .hub-back:active { transform: none; } }
+
+/* ---------- Same buttons, tabs and words (Nov 7, Jade) ----------
+   Jade likes the rounded look on Messages best, so every page uses it.
+   Main buttons are solid mint like New message (the darker green and the
+   outlined ones are gone). Tabs are rounded buttons with space between,
+   the picked one solid mint. The line under each page title is one size. */
+:root:not([data-theme="light"]) { --btn-bg: var(--accent); --btn-ink: var(--on-accent); --btn-hover: #72dbb8; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --btn-bg: #17664f; --btn-ink: #fffaf0; --btn-hover: #12543f; } }
+.btn { border-radius: 12px; }
+.btn-primary { font-weight: 700; }
+
+.help-switch, .tasks-tabs, .home-tasks-tabs.mine-tabs { gap: 0.5rem; border: none; border-radius: 0; overflow: visible; background: none; }
+.help-switch-btn, .tasks-tab, .mine-tabs .home-tasks-tab {
+  min-height: 48px; padding: 0.35rem 0.6rem; border: none; border-radius: 12px; line-height: 1.2;
+  background: var(--surface-2); color: var(--text-soft); font-size: 1rem; font-weight: 600;
+}
+.tasks-tab:first-child { border-right: none; }
+.help-switch-btn.on, .tasks-tab-active, .mine-tabs .home-tasks-tab.on { background: var(--accent); color: var(--on-accent); border: none; }
+.help-switch-btn:active, .tasks-tab:active { transform: scale(0.97); }
+.help-switch-btn:focus-visible, .tasks-tab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .help-switch-btn:active, .tasks-tab:active { transform: none; } }
+
+.hub-head > .cal-sub, .cal-head .cal-sub, .feed-subtitle, .fh-sub, .doors-sub {
+  font-size: 1rem; line-height: 1.45; color: var(--text-secondary);
+}

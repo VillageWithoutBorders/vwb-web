@@ -352,7 +352,7 @@ export default function Feed() {
                 {!simple && <HelpSwitch />}
                 <div className="feed-title-row">
                     <h1>{t('Offer Help')}</h1>
-                    {!simple && <button type="button" className="btn btn-outline feed-title-btn" onClick={() => navigate('/post-offer')}><span aria-hidden="true">+</span> {t('Offer something')}</button>}
+                    {!simple && <button type="button" className="btn btn-primary feed-title-btn" onClick={() => navigate('/post-offer')}><span aria-hidden="true">+</span> {t('Offer something')}</button>}
                 </div>
                 <p className="feed-subtitle feed-subtitle-tight">{view === 'offers' ? t('Free things and help your neighbors are sharing.') : t('Neighbors near you who need a hand. Tap Offer Help on one, or tap the card to read more.')}</p>
             </div>
