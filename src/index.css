@@ -7388,3 +7388,48 @@ html.calm-motion .vs-more-desk-btn:active { transform: none; }
 .corner-side-menu .app-menu-inline .app-menu-item:not(.app-menu-logout)::after { content: '\203A'; margin-left: auto; padding-left: 0.5rem; color: var(--text-muted); }
 .corner-side-menu .app-menu-inline .app-menu-item { min-height: 52px; border-bottom: 1px solid var(--border); }
 .corner-side-menu .app-menu-inline .app-menu-item:last-child { border-bottom: 0; }
+
+/* Nov 8 (Jade): "Any color" in the avatar maker opens the device's own color picker.
+   The real color input covers the whole button, see-through, so the button is easy to hit. */
+.ab-any { position: relative; cursor: pointer; }
+.ab-any-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+.ab-any:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ab-swatch-any { background: conic-gradient(#ff5c5c, #f2c14e, #4caf6e, #3fb59e, #65c9ff, #8e6bbf, #ff488e, #ff5c5c); }
+
+/* ============================================================
+   Nov 8 (Jade): the avatar maker fits on one screen on a computer.
+   Title and Pick one / Make my own share a row. Colors show as round swatches;
+   the name shows when you point at one, and screen readers still hear it.
+   ============================================================ */
+@media (min-width: 1024px) {
+  .ab:not(.fs-page .ab) { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 1.5rem; align-items: center; }
+  .ab:not(.fs-page .ab) > * { grid-column: 1 / -1; }
+  .ab:not(.fs-page .ab) > .ab-title { grid-column: 1; margin: 0 0 0.75rem; }
+  .ab:not(.fs-page .ab) > .ab-modes { grid-column: 2; justify-self: end; width: 100%; max-width: 420px; margin-bottom: 0.75rem; }
+  .ab:not(.fs-page .ab) > .ab-modes:first-child { grid-column: 1 / -1; justify-self: start; }
+  .ab-make { gap: 1.25rem; }
+  .ab-make .ab-preview { margin-bottom: 0; }
+  .ab-parts { gap: 0.4rem; margin-bottom: 0.6rem; }
+  .ab-part { min-height: 44px; padding: 0 0.75rem; font-size: 0.9rem; }
+  .ab-options { gap: 0.4rem; padding: 0.6rem; margin-bottom: 0.75rem; }
+  .ab-opt { min-height: 44px; padding: 0 0.7rem; font-size: 0.9rem; }
+  .ab-opt-color { position: relative; width: 44px; height: 44px; min-height: 44px; padding: 0; justify-content: center; border-radius: 50%; }
+  .ab-opt-color .ab-swatch { width: 30px; height: 30px; }
+  .ab-opt-color .ab-opt-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .ab-opt-color.on { box-shadow: 0 0 0 2px var(--accent); }
+  .ab-actions { max-width: 560px; margin-left: auto; width: 100%; }
+}
+@media (min-width: 1024px) {
+  .app-main:has(.ab-make):not(:has(.fs-page)) { max-width: 1240px; }
+  .ab:not(.fs-page .ab) { grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); align-items: start; }
+  .ab:not(.fs-page .ab) > .ab-title { align-self: center; }
+  .ab:not(.fs-page .ab) > .ab-modes { align-self: center; }
+  .ab:not(.fs-page .ab) > .ab-make { display: contents; }
+  .ab:not(.fs-page .ab) > .ab-make > .ab-preview { grid-column: 1; grid-row: 2; position: static; }
+  .ab:not(.fs-page .ab) > .ab-make > .ab-choices { grid-column: 2; grid-row: 2 / span 2; }
+  .ab:not(.fs-page .ab):has(> .ab-make) > .ab-actions { grid-column: 1; grid-row: 3; grid-template-columns: 1fr; max-width: none; margin: 0.75rem 0 0; align-self: start; }
+  .ab:not(.fs-page .ab):has(> .ab-make) > .ab-actions .ab-save { grid-row: 1; }
+}
+/* Nov 8: menus shown inside a page (My Corner) never float over pop-ups like My Tools.
+   The dropdown's z-index came back when the list became a flex item. */
+.app-menu-list.app-menu-inline { z-index: auto; }

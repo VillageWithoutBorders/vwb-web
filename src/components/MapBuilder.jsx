@@ -920,7 +920,7 @@ export function DeskMoreBelow({ getPage, getColumn, label = 'More below' }) {
         const r = el.getBoundingClientRect()
         if (r.height > 0) lowest = Math.max(lowest, r.bottom - (parseFloat(getComputedStyle(el).paddingBottom) || 0))
       }
-      const show = lowest > seen + 8
+      const show = lowest > seen + 2
       if (show && col) { const r = col.getBoundingClientRect(); setColBox({ left: Math.round(r.left), width: Math.round(r.width) }) }
       setDeskMore(show)
     }
