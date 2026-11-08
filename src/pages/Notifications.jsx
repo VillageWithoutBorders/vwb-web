@@ -10,17 +10,16 @@ import {
   clearAllNotifications
 } from '../utils/notificationHelpers'
 import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
-import { useGoBack } from '../components/BackLink'
 import Icon from '../components/Icon'
 import { personalAlertLink } from '../utils/alertLink'
 import { useT, tAlert } from '../utils/lang'
+import '../desktop-me.css'
 
 export default function Notifications() {
   const t = useT()
   const { user } = useAuth()
   const { notifications, unreadCount, loading, refresh, markSeen } = useNotifications()
   const navigate = useNavigate()
-  const goBack = useGoBack()
   const [filter, setFilter] = useState('all')
   const [confirmClear, setConfirmClear] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -116,11 +115,15 @@ export default function Notifications() {
     />
   )
 
+  // Nov 7 (Jade): on a computer, the page and new alerts on the left, earlier alerts
+  // on the right, each side scrolling by itself (desktop-me.css). Phones are the same list.
+  const split = filter === 'all' && read.length > 0
   return (
-    <div className="notifications-page">
+    <div className={'notifications-page nt-page' + (split ? ' nt-split' : '')}>
+      <div className="nt-left">
       <div className="notifications-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button onClick={() => goBack('/')} aria-label={t('Go back')} className="notifications-back">&#8592;</button>
+          {/* Nov 7 (Jade): the frame's Back button, like every other page. */}
           <h1>{t('Alerts')}</h1>
         </div>
         <div className="notifications-actions">
@@ -177,26 +180,22 @@ export default function Notifications() {
                 : t('No notifications yet')}
           </p>
         </div>
-      ) : (
+      ) : filter === 'followup' ? (
+        <div className="notifications-list">{filtered.map(card)}</div>
+      ) : unread.length > 0 ? (
         <div className="notifications-list">
-          {filter === 'followup' ? (
-            filtered.map(card)
-          ) : (
-            <>
-              {unread.length > 0 && (
-                <>
-                  <div className="notifications-section-label">{t('New')}</div>
-                  {unread.map(card)}
-                </>
-              )}
-              {read.length > 0 && filter === 'all' && (
-                <>
-                  <div className="notifications-section-label">{t('Earlier')}</div>
-                  {read.map(card)}
-                </>
-              )}
-            </>
-          )}
+          <div className="notifications-section-label">{t('New')}</div>
+          {unread.map(card)}
+        </div>
+      ) : split && <p className="nt-none-new">{t('No new alerts.')}</p>}
+      </div>
+
+      {split && (
+        <div className="nt-right">
+          <div className="notifications-list">
+            <div className="notifications-section-label">{t('Earlier')}</div>
+            {read.map(card)}
+          </div>
         </div>
       )}
 

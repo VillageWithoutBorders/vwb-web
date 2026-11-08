@@ -28,3 +28,11 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()
+
+# Nov 7 (Jade): the vwb-web.pages.dev address is not for the public. Search engines
+# are told not to list it, and the app itself sends anyone who opens it to
+# app.villagewithoutborders.org (src/main.jsx). Preview builds keep working.
+https://vwb-web.pages.dev/*
+  X-Robots-Tag: noindex, nofollow
+https://:version.vwb-web.pages.dev/*
+  X-Robots-Tag: noindex, nofollow

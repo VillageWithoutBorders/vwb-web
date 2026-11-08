@@ -7092,17 +7092,10 @@ h1.settings-title { margin: 0 0 1rem; }
   .sh-col > .sh-row, .sh-col > .sh-village { margin: 0; }
 }
 
-/* Nov 7 (Jade): on a computer, "Read this to me" on a page that has its own way back
-   ("All help", an arrow) sits on that page's first line, at the right, instead of
-   taking a whole row of its own. Phones keep it on its own row so nothing overlaps. */
-@media (min-width: 1024px) {
-  .app-main { position: relative; }
-  .app-main > .read-aloud-row {
-    position: absolute; z-index: 5; top: calc(var(--header-height) + 2rem); right: 2.5rem;
-    padding: 0; margin: 0;
-  }
-  .app-main:has(> .read-aloud-row) { --back-h: 0px; }
-}
+/* Nov 7 (Jade): "Read this to me" keeps its own row above the page. (Placing it on the
+   page's first line covered buttons like "Mark all read" and the top of right-hand panels.)
+   A back pill never stretches across a whole column. */
+.hub-back { align-self: flex-start; }
 
 /* Nov 7 (Jade): profile details. Village chat choice inside the card, skills as tags. */
 .profile-village-choice { align-items: flex-start; margin: 0; }

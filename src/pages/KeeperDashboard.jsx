@@ -1,3 +1,4 @@
+import '../desktop-groups.css'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
@@ -167,6 +168,9 @@ export default function KeeperDashboard() {
 
   return (
     <div className="cal-page hub-page dash-page">
+      {/* Nov 7 (Jade): on a computer the heading, Needs you now, numbers and tabs sit in a
+          side column on the left, and the open tab fills the right (desktop-groups.css). */}
+      <div className="dash-side">
       <BackLink fallback={'/village/' + id} fallbackLabel={village.name} />
       <div className="dash-head">
         <span className="dash-head-icon" aria-hidden="true"><Icon name="toolbox" /></span>
@@ -184,6 +188,8 @@ export default function KeeperDashboard() {
 
       <DashTabs tabs={TABS.map((x) => ({ ...x, label: t(x.label) }))} tab={tab} setTab={setTab}
         dots={{ people: secondNeeded.length > 0, chats: fireAskCount > 0 || checkIns.length > 0, sisters: isStarter && sisterAsks.length > 0 }} />
+      </div>
+      <div className="dash-main">
 
       {tab === 'people' && (
         <DashPanel k="people">
@@ -301,6 +307,7 @@ export default function KeeperDashboard() {
           requests={removals} onRequestsChange={loadRemovals}
           onKeeperChange={loadKeepers} onClose={() => setShowPeople(false)} onLeave={null} showRoleLog={false} />
       )}
+      </div>
     </div>
   )
 }

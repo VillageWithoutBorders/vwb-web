@@ -1,0 +1,49 @@
+/* Nov 7 (Jade): side by side on computers, full view only. Phones and Simple view
+   keep one column (the wrappers below are plain blocks there).
+   - Organizer and Keeper dashboards: heading, Needs you now, numbers and the tabs as a
+     side menu on the left; the open tab fills the right. Each side scrolls by itself.
+   - Cottage Chats and Campfires as its own page: starting a chat and invites on the
+     left, your chats on the right. */
+@media (min-width: 1024px) {
+  html:not(.simple) .app-main:has(.dash-page),
+  html:not(.simple) .app-main:has(.groups-full) { max-width: 1240px; }
+
+  html:not(.simple) .dash-page:has(> .dash-side) {
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
+    max-width: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr); gap: 1.5rem; align-items: start;
+  }
+  html:not(.simple) .dash-side, html:not(.simple) .dash-main {
+    min-width: 0; height: var(--fit-h); overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box;
+  }
+  html:not(.simple) .dash-side { padding: 4px 0.25rem 4px 4px; }
+  html:not(.simple) .dash-main { padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  html:not(.simple) .dash-main .dash-panel { scroll-margin-top: 0; }
+
+  /* The tabs become a side menu, like the Admin page. */
+  html:not(.simple) .dash-side .dash-tabs,
+  html:not(.simple) .dash-side .dash-tabs.dash-tabs-5 {
+    position: static; grid-template-columns: 1fr; gap: 0.375rem; padding: 0; margin: 0 0 0.5rem;
+    background: none; border: 0; border-radius: 0;
+  }
+  html:not(.simple) .dash-side .dash-tab {
+    flex-direction: row; justify-content: flex-start; gap: 0.6rem; min-height: 48px; padding: 0.5rem 0.9rem;
+    font-size: 1rem; text-align: left; border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  }
+  html:not(.simple) .dash-side .dash-tab[aria-selected="true"] { background: var(--accent); color: var(--on-accent); box-shadow: none; border-color: var(--accent); }
+  html:not(.simple) .dash-side .dash-tab-dot { top: 50%; right: 12px; margin-top: -4px; }
+  html:not(.simple) .dash-side .dash-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  /* Cottage Chats and Campfires page. */
+  html:not(.simple) .groups-page.groups-full {
+    max-width: none; padding: 0;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 1.5rem;
+    grid-template-rows: repeat(8, auto) 1fr; align-items: start;
+  }
+  html:not(.simple) .groups-full > * { grid-column: 1; min-width: 0; }
+  html:not(.simple) .groups-full > .groups-mine {
+    grid-column: 2; grid-row: 1 / -1; padding: 0.75rem 1rem;
+    border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+  }
+  html:not(.simple) .groups-full > .groups-mine > .groups-section:first-child { margin-top: 0; }
+}

@@ -13,6 +13,7 @@ import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
 import { ADMIN_REQUESTS_OPEN } from '../data/adminTeam'
 import { useT, t } from '../utils/lang'
+import '../desktop-me.css'
 
 function reportError(context, error, userMessage) {
   if (!error) return false
@@ -306,7 +307,10 @@ export default function Profile() {
 
   if (!editing) {
     return (
-      <div className="profile-page">
+      // Nov 7 (Jade): on a computer, you and your details on the left; your past
+      // tasks and role cards on the right. Each side scrolls by itself (desktop-me.css).
+      <div className="profile-page me-profile">
+        <div className="me-left">
         <div className="profile-header-section">
           <button type="button" onClick={() => setShowAvatarBuilder(true)} aria-label={t('Change avatar')} style={{ cursor: 'pointer', position: 'relative', background: 'none', border: 'none', padding: 0 }}>
             <AvatarPreview url={profile?.avatar_url} size={80} />
@@ -361,6 +365,9 @@ export default function Profile() {
           </div>
         </div>
 
+        </div>
+
+        <div className="me-right">
         <PastTasks />
 
         {profile?.is_hope_ambassador && (
@@ -512,21 +519,12 @@ export default function Profile() {
           </div>
         )}
 
-        <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'linear-gradient(135deg, var(--success-bg), var(--border))', border: '2px solid var(--accent)', borderRadius: '12px', textDecoration: 'none', marginTop: '0.75rem' }}>
-          <img src="/images/vwb_header-v2.png" alt="VWB" style={{ height: '40px', borderRadius: '50%' }} />
-          <div>
-            <span style={{ display: 'block', color: 'var(--accent)', fontWeight: 700, fontSize: '0.95rem' }}>Village Without Borders</span>
-            <span style={{ color: 'var(--accent)', fontSize: '0.8125rem' }}>{t('Visit our website')} &#8599;</span>
-          </div>
-        </a>
-
-        <button onClick={() => navigate('/connections')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid var(--accent)', borderRadius: '10px', padding: '0.6rem', minHeight: '44px', marginTop: '0.75rem', color: 'var(--accent)', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}>
-          {t('My Connections')}
+        {/* Nov 7 (Jade): one plain button. The website card and App guide used to sit here too;
+            both are in My Corner, so they were left out to keep this page short. */}
+        <button type="button" className="btn btn-outline btn-full me-connections" onClick={() => navigate('/connections')}>
+          <span aria-hidden="true"><Icon name="handshake" /></span> {t('My Connections')}
         </button>
-
-        <button onClick={() => navigate('/help')} style={{ display: 'block', width: '100%', textAlign: 'center', background: 'none', border: '1px solid var(--border-strong)', borderRadius: '10px', padding: '0.6rem', marginTop: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem', cursor: 'pointer' }}>
-          {t('App guide and feedback')}
-        </button>
+        </div>
       </div>
     )
   }

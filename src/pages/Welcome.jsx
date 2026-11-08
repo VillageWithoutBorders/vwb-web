@@ -11,7 +11,7 @@ const COLORS = {
   border: 'var(--border)',
   text: 'var(--text)',
   textDim: 'var(--text)',
-  textMuted: 'var(--text-muted)',
+  textMuted: 'var(--text-secondary)', // Nov 7: easier to read than --text-muted
   green: 'var(--accent)',
   greenDark: '#2d6a4f',
   greenLight: 'var(--success-bg)',
@@ -176,8 +176,10 @@ function FaqItem({ item, index, isOpen, onToggle }) {
             padding: '1rem 0',
             color: COLORS.textDim,
             fontSize: '1rem',
+            fontFamily: 'inherit',
             fontWeight: 600,
             textAlign: 'left',
+            minHeight: 48,
             cursor: 'pointer',
           }}
         >
@@ -187,7 +189,7 @@ function FaqItem({ item, index, isOpen, onToggle }) {
       </h3>
       {isOpen && (
         <div id={panelId} role="region" aria-labelledby={buttonId} style={{ paddingBottom: '1rem' }}>
-          <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.9rem', lineHeight: 1.6 }}>{t(item.a)}</p>
+          <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '1rem', lineHeight: 1.6 }}>{t(item.a)}</p>
         </div>
       )}
     </div>
@@ -242,7 +244,7 @@ export default function Welcome() {
               <div key={s.title} style={cardStyle}>
                 <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }} aria-hidden="true"><Icon name={s.icon} /></div>
                 <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.05rem', color: COLORS.text }}>{t(s.title)}</h3>
-                <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.875rem', lineHeight: 1.55 }}>{t(s.body)}</p>
+                <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '1rem', lineHeight: 1.55 }}>{t(s.body)}</p>
               </div>
             ))}
           </div>
@@ -255,7 +257,7 @@ export default function Welcome() {
           <p style={{ margin: '0 0 0.75rem', color: COLORS.textDim, lineHeight: 1.6 }}>
             {t('A village is a group of neighbors in nearby zip codes, with its own chat. Join the one that covers your zip code, or start one for your area if there is not one yet.')}
           </p>
-          <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '0.9rem', lineHeight: 1.6 }}>
+          <p style={{ margin: 0, color: COLORS.textMuted, fontSize: '1rem', lineHeight: 1.6 }}>
             {t('Village chats can be read only by the neighbors who joined them. Private messages are the place for anything sensitive.')}
           </p>
         </section>
@@ -278,7 +280,7 @@ export default function Welcome() {
           <div style={eyebrow}>{t('No account needed')}</div>
           <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>{t('Look around first')}</h2>
           <p style={{ margin: '0 0 1.25rem', color: COLORS.textDim, lineHeight: 1.6 }}>
-            {t('Anyone, of any age, can find local help and see what is happening nearby. No sign-up needed.')}
+            {t('Anyone can find local help and see what is happening nearby, with no account. Accounts are for adults 18 and older.')}
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Link to="/resources" style={btnSecondary}>{t('Find local resources')}</Link>
@@ -295,7 +297,7 @@ export default function Welcome() {
               {SAFETY_POINTS.map((point, i) => (
                 <li key={point} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start', padding: '0.6rem 0', borderTop: i === 0 ? 'none' : `1px solid ${COLORS.border}` }}>
                   <span aria-hidden="true" style={{ color: COLORS.green, fontWeight: 700, flexShrink: 0 }}>&#10003;</span>
-                  <span style={{ color: COLORS.textDim, fontSize: '0.9rem', lineHeight: 1.55 }}>{t(point)}</span>
+                  <span style={{ color: COLORS.textDim, fontSize: '1rem', lineHeight: 1.55 }}>{t(point)}</span>
                 </li>
               ))}
             </ul>
@@ -309,7 +311,7 @@ export default function Welcome() {
               <span aria-hidden="true" style={{ fontSize: '1.4rem' }}><Icon name="bolt" /></span>
               <div>
                 <h2 style={{ margin: '0 0 0.4rem', fontSize: '1.05rem', color: COLORS.orangeText }}>{t('Urgent situation?')}</h2>
-                <p style={{ margin: 0, color: COLORS.textDim, fontSize: '0.9rem', lineHeight: 1.6 }}>
+                <p style={{ margin: 0, color: COLORS.textDim, fontSize: '1rem', lineHeight: 1.6 }}>
                   {t('For anything life-threatening, call 911 first. Storm damage, flooding, or a safety concern that needs neighbors right away goes through a separate emergency feature that alerts nearby helpers. Everyday requests, like a leaky faucet or a ride to an appointment, use the regular request system.')}
                 </p>
               </div>
@@ -339,6 +341,8 @@ export default function Welcome() {
           <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.4rem' }}>{t('Ready to meet your neighbors?')}</h2>
           <p style={{ margin: '0 0 1.25rem', color: COLORS.textMuted }}>{t('It takes a couple of minutes to get started.')}</p>
           <Link to="/login?mode=signup" style={btnPrimary}>{t('Sign up')}</Link>
+          {/* Nov 7: a way in for people who already have an account, at the end of the long page too. */}
+          <p style={{ margin: '1rem 0 0' }}><Link to="/login" style={{ color: COLORS.green, fontWeight: 700, display: 'inline-flex', alignItems: 'center', minHeight: 44 }}>{t('Already have an account? Log in')}</Link></p>
         </section>
         </>)}
       </main>
@@ -348,7 +352,7 @@ export default function Welcome() {
           <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.green, fontSize: '0.85rem', textDecoration: 'none' }}>
             villagewithoutborders.org &#8599;
           </a>
-          <p style={{ margin: '0.5rem 0 0', color: COLORS.textMuted, fontSize: '0.8125rem' }}>{t('A project of neighbors, for neighbors.')}</p>
+          <p style={{ margin: '0.5rem 0 0', color: COLORS.textMuted, fontSize: '0.95rem' }}>{t('A project of neighbors, for neighbors.')}</p>
         </div>
       </footer>
     </div>

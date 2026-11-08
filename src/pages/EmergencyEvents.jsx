@@ -1,6 +1,6 @@
 import Icon from '../components/Icon'
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { createNotification } from '../utils/notificationHelpers'
@@ -8,6 +8,10 @@ import { useGoBack } from '../components/BackLink'
 import { tell } from '../components/AdminDialog'
 import { useT } from '../utils/lang'
 import { isNoSignal } from '../utils/pendingAsks'
+import { useWideScreen } from '../hooks/useWideScreen'
+import { useSimpleView } from '../utils/simpleView'
+import EventDetail from './EventDetail'
+import '../desktop-emergency.css'
 
 const VERIFY_THRESHOLD = 2
 
@@ -24,6 +28,25 @@ export default function EmergencyEvents() {
   const [tab, setTab] = useState('active')
   // Nov 5: when the list can't load (often no signal), say so instead of "No active emergencies".
   const [loadFailed, setLoadFailed] = useState(false)
+
+  // Nov 7 (Jade): on a computer (full view), Emergency works like Messages. The list is
+  // on the left and the open emergency (?open=<id>) on the right; each side scrolls by
+  // itself. Phones and Simple view open each emergency on its own page, as before.
+  const wide = useWideScreen()
+  const simple = useSimpleView()
+  const split = wide && !simple
+  const [params, setParams] = useSearchParams()
+  const openId = params.get('open')
+  function openEvent(eventId) {
+    if (split) setParams({ open: eventId }, { replace: true })
+    else navigate('/emergency/' + eventId)
+  }
+  // After the open emergency is closed or removed (it goes back to /emergency), load the list again.
+  const hadOpen = useRef(false)
+  useEffect(() => {
+    if (hadOpen.current && !openId) loadEvents()
+    hadOpen.current = !!openId
+  }, [openId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { loadEvents() }, [])
   // Load again when the signal comes back.
@@ -148,8 +171,8 @@ export default function EmergencyEvents() {
     duplicate: t('Merged'),
   }
 
-  return (
-    <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
+  const list = (
+    <div className={split ? 'em-left' : undefined} style={{ padding: '1rem', maxWidth: split ? 'none' : '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--gold)' }}>{t('Emergency Response')}</h1>
@@ -200,7 +223,7 @@ export default function EmergencyEvents() {
                 const myRole = mySignups[ev.id]
                 const voted = myUpvotes[ev.id]
                 return (
-                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--warn)', opacity: 0.9 }}>
+                  <div key={ev.id} className={'em-card' + (split && openId === ev.id ? ' em-card-on' : '')} aria-current={split && openId === ev.id ? 'true' : undefined} onClick={() => openEvent(ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEvent(ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--warn)', opacity: 0.9 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <span style={{ background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{t('Unverified')}</span>
@@ -233,7 +256,7 @@ export default function EmergencyEvents() {
               {verified.map(ev => {
                 const myRole = mySignups[ev.id]
                 return (
-                  <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--gold)' }}>
+                  <div key={ev.id} className={'em-card' + (split && openId === ev.id ? ' em-card-on' : '')} aria-current={split && openId === ev.id ? 'true' : undefined} onClick={() => openEvent(ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEvent(ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid var(--gold)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <span style={{ background: 'var(--gold)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{ev.event_type ? t(ev.event_type) : t('Emergency')}</span>
@@ -271,7 +294,7 @@ export default function EmergencyEvents() {
             resolvedEvents.map(ev => {
               const myRole = mySignups[ev.id]
               return (
-                <div key={ev.id} onClick={() => navigate('/emergency/' + ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/emergency/' + ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2d6a4f', opacity: 0.8 }}>
+                <div key={ev.id} className={'em-card' + (split && openId === ev.id ? ' em-card-on' : '')} aria-current={split && openId === ev.id ? 'true' : undefined} onClick={() => openEvent(ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEvent(ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2d6a4f', opacity: 0.8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
@@ -296,6 +319,23 @@ export default function EmergencyEvents() {
           )}
         </>
       )}
+    </div>
+  )
+
+  if (!split) return list
+  return (
+    <div className="em-split">
+      {list}
+      <section className="em-right" aria-label={t('Open emergency')}>
+        {openId
+          ? <EventDetail key={openId} id={openId} embedded />
+          : (
+            <div className="em-pick">
+              <Icon name="cat-emergency" size={40} />
+              <p>{t('Pick an emergency on the left to see it here.')}</p>
+            </div>
+          )}
+      </section>
     </div>
   )
 }
