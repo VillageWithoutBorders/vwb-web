@@ -13,6 +13,7 @@ import { useGoBack } from '../components/BackLink'
 import { isSimpleView } from '../utils/simpleView'
 import { savePendingAsk, isNoSignal } from '../utils/pendingAsks'
 import { useT } from '../utils/lang'
+import '../desktop-forms.css'
 
 // Each choice also sets when the request closes on its own (set by the database):
 // now = 6 hours, today = midnight Eastern (at least 3 hours), this_week = 7 days.
@@ -23,6 +24,9 @@ const URGENCY_OPTIONS = [
     { value: 'today', label: 'Today', desc: 'Stays open until midnight. Late at night, it stays open 3 hours.' },
     { value: 'this_week', label: 'This week', desc: 'Stays open 7 days' },
 ]
+
+// Nov 7 (Jade): the badge colors the Offer Help cards use, for the preview.
+const URGENCY_BADGE = { now: 'urgency-now', today: 'urgency-today', this_week: 'urgency-week', flexible: 'urgency-flexible' }
 
 const HELPER_COUNT_OPTIONS = [
     { value: 1, label: '1 person' },
@@ -296,8 +300,16 @@ export default function AskForHelp() {
         return <NearbyResourcesFirst profile={profile} onContinue={(cat) => { setFromCat(cat || ''); setCheckedResources(true); window.scrollTo(0, 0) }} />
     }
 
+    // Nov 7 (Jade): on a computer the form is on the left and a live preview of the
+    // post is on the right, so people see what neighbors will see while they type.
+    // Only the town or neighborhood they typed shows. Never an address.
+    const urgencyOpt = URGENCY_OPTIONS.find((o) => o.value === urgency)
+    const helperOpt = HELPER_COUNT_OPTIONS.find((o) => o.value === maxHelpers)
+    const postedBy = postAs ? ((managedOrgs.find((o) => o.id === postAs) || {}).name || t('Your group')) : (profile?.display_name || t('A neighbor'))
+
     return (
-        <div className="ask-page">
+        <div className="ask-page ask-split">
+            <div className="ask-left">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0, minWidth: 44, minHeight: 44 }}>&#8592;</button>
                 <h1 style={{ margin: 0 }}>{t(editId ? 'Edit your request' : 'Ask for Help')}</h1>
@@ -583,6 +595,29 @@ export default function AskForHelp() {
                 </div>
             </form>
             </>)}
+            </div>
+
+            <aside className="ask-preview" aria-labelledby="ask-preview-h">
+                <h2 id="ask-preview-h" className="ask-preview-h">{t('How neighbors will see it')}</h2>
+                <div className="feed-card ask-preview-card">
+                    <div className="feed-card-top">
+                        {urgencyOpt && <span className={'urgency-badge ' + (URGENCY_BADGE[urgency] || '')}>{t(urgencyOpt.label)}</span>}
+                        <span className="feed-card-time">{t('Just now')}</span>
+                    </div>
+                    <div className="feed-card-meta">
+                        <span className={'feed-card-skill' + (skillNeeded ? '' : ' ask-preview-empty')}>{skillNeeded ? t(skillNeeded) : t('Pick a kind of help')}</span>
+                    </div>
+                    <div className="feed-card-who">
+                        <span className="feed-card-name">{postedBy}</span>
+                        {neighborhood.trim() && <span className="feed-card-hood"> {t('in {place}', { place: neighborhood.trim() })}</span>}
+                    </div>
+                    {forOther && forName.trim() && <span className="for-line">{t('For {name}', { name: forName.trim() })}</span>}
+                    <p className={'feed-card-desc' + (description.trim() ? '' : ' ask-preview-empty')}>{description.trim() || t('What you write shows here.')}</p>
+                    {helperOpt && <p className="ask-preview-line">{t('Looking for: {who}', { who: t(helperOpt.label) })}</p>}
+                </div>
+                <p className="ask-preview-note">{t('Neighbors see your name and the town you typed. Never your address.')}</p>
+                {audience !== 'everyone' && !editId && <p className="ask-preview-note">{t('Your group sees it first. Then it opens to everyone nearby.')}</p>}
+            </aside>
         </div>
     )
 }

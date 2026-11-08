@@ -12,6 +12,9 @@ import { createNotification } from '../utils/notificationHelpers'
 import { useMenuPosition } from '../utils/useMenuPosition'
 import { submitUserReport } from '../utils/submitUserReport'
 import { useGoBack } from '../components/BackLink'
+import { useWideScreen } from '../hooks/useWideScreen'
+import { useSimpleView } from '../utils/simpleView'
+import '../desktop-emergency.css'
 import Icon from '../components/Icon'
 import ResponseCamp from '../components/ResponseCamp'
 import EventUpdates from '../components/EventUpdates'
@@ -33,13 +36,27 @@ const RESOURCE_CATEGORIES = ['Water', 'Food', 'Shelter', 'Tools', 'Transportatio
 
 const menuBtnStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.6rem 0.75rem', background: 'none', border: 'none', color: 'var(--text-soft)', cursor: 'pointer', fontSize: '0.85rem', textAlign: 'left' }
 
-export default function EventDetail() {
-  const justReported = !!useLocation().state?.justReported
-  const { id } = useParams()
+// Nov 7 (Jade): on a computer (full view) the emergency opens on the right side of
+// the Emergency list, like a chat in Messages. Then EmergencyEvents passes `id` and
+// `embedded`, and this page leaves out its own back arrow and narrow width.
+export default function EventDetail({ id: idProp, embedded = false }) {
+  const location = useLocation()
+  const justReported = !!location.state?.justReported
+  const params = useParams()
+  const id = idProp || params.id
   const { user, profile, isAdmin } = useAuth()
   const t = useT()
   const navigate = useNavigate()
   const goBack = useGoBack()
+  const wide = useWideScreen()
+  const simple = useSimpleView()
+  // Opened as its own page on a computer: show it beside the list instead.
+  useEffect(() => {
+    if (embedded || !wide || simple || !id) return
+    const q = new URLSearchParams(location.search)
+    q.set('open', id)
+    navigate('/emergency?' + q.toString(), { replace: true, state: location.state })
+  }, [embedded, wide, simple, id]) // eslint-disable-line react-hooks/exhaustive-deps
   const [event, setEvent] = useState(null)
   const [signups, setSignups] = useState([])
   const [roleCounts, setRoleCounts] = useState([])
@@ -616,7 +633,7 @@ export default function EventDetail() {
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>{t('Loading...')}</div>
   if (!event && noCopy) return (
-    <div style={{ padding: '2rem 1rem', maxWidth: '600px', margin: '0 auto' }}>
+    <div style={{ padding: '2rem 1rem', maxWidth: embedded ? 'none' : '600px', margin: '0 auto' }}>
       <p className="ask-offline" role="status"><b>{t('No signal right now.')}</b> {t('This emergency has not been opened on this phone before, so it can\'t show without signal. It will open when the signal is back.')}</p>
       <p style={{ textAlign: 'center' }}><a href="tel:911" className="btn ce-btn ce-btn-danger">{t('Call 911')}</a></p>
     </div>
@@ -645,9 +662,9 @@ export default function EventDetail() {
   const resCatIcon = { 'Water': '💧', 'Food': '🍞', 'Shelter': '🏠', 'Tools': '🔧', 'Transportation': '🚗', 'Medical': '⚕', 'Clothing': '🧥', 'Power/Fuel': '⚡', 'Tarps/Building': '🏗', 'Hygiene': '🧼', 'Other': '📦' }
 
   return (
-    <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
+    <div className={embedded ? 'em-detail-embedded' : undefined} style={{ padding: '1rem', maxWidth: embedded ? 'none' : '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => goBack('/emergency')} aria-label={t('Back to emergency events')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>
+        {!embedded && <button onClick={() => goBack('/emergency')} aria-label={t('Back to emergency events')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>}
         <div style={{ flex: 1 }}>
           <span style={{ background: 'var(--danger)', color: '#fff', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{event.event_type ? t(event.event_type) : ''}</span>
           <h1 style={{ margin: '0.25rem 0 0', fontSize: '1.3rem' }}>{event.title}</h1>

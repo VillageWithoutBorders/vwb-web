@@ -9,6 +9,7 @@ import { LocationPrompt } from '../components/LocationPrompt'
 import { loadSkillCategories, groupSkills, offerSkillRows, OFFER_ITEM_CATEGORIES, OFFER_ITEMS_GROUP } from '../utils/skillGroups'
 import { useGoBack } from '../components/BackLink'
 import { useT } from '../utils/lang'
+import '../desktop-forms.css'
 
 
 const fieldStyle = { display: 'block', width: '100%', marginBottom: '0.5rem', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface)', color: 'var(--text-strong)', fontSize: '1rem' }
@@ -86,8 +87,12 @@ export default function PostOffer() {
     navigate('/skillshare?tab=offers', { state: { message: t('Your offer is shared. Neighbors near you can see it now.') } })
   }
 
+  // Nov 7 (Jade): on a computer the form is on the left and a live preview on the right.
+  const postedBy = postAs ? ((managedOrgs.find((o) => o.id === postAs) || {}).name || t('Your group')) : (profile?.display_name || t('A neighbor'))
+
   return (
-    <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
+    <div className="offer-split" style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
+      <div className="ask-left">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
         <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem' }}>&#8592;</button>
         <h1 style={{ color: 'var(--accent)', margin: 0, fontSize: '1.5rem' }}>{t('Share an Offer')}</h1>
@@ -147,6 +152,26 @@ export default function PostOffer() {
           {submitting ? t('Posting...') : t('Post Offer')}
         </button>
       </form>
+      </div>
+
+      <aside className="ask-preview" aria-labelledby="offer-preview-h">
+        <h2 id="offer-preview-h" className="ask-preview-h">{t('How neighbors will see it')}</h2>
+        <div className="feed-card ask-preview-card">
+          <div className="feed-card-top">
+            <span className={'offer-badge' + (category ? '' : ' ask-preview-empty')}>{category ? t(category) : t('Category')}</span>
+            <span className="feed-card-time">{t('Just now')}</span>
+          </div>
+          <div className="feed-card-meta">
+            <span className={'feed-card-skill' + (title.trim() ? '' : ' ask-preview-empty')}>{title.trim() || t('What you are offering')}</span>
+          </div>
+          <div className="feed-card-who">
+            <span className="feed-card-name">{postedBy}</span>
+            {neighborhood.trim() && <span className="feed-card-hood"> {t('in {place}', { place: neighborhood.trim() })}</span>}
+          </div>
+          <p className={'feed-card-desc' + (description.trim() ? '' : ' ask-preview-empty')}>{description.trim() || t('What you write shows here.')}</p>
+        </div>
+        <p className="ask-preview-note">{t('Neighbors see your name and the town you typed. Never your address.')}</p>
+      </aside>
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import '../desktop-groups.css'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -273,6 +274,9 @@ export default function OrgDashboard() {
 
   return (
     <div className="cal-page hub-page dash-page">
+      {/* Nov 7 (Jade): on a computer the heading, Needs you now, numbers and tabs sit in a
+          side column on the left, and the open tab fills the right (desktop-groups.css). */}
+      <div className="dash-side">
       <BackLink fallback={'/orgs/' + id} fallbackLabel={orgName || t('Group')} />
       <div className="dash-head">
         <span className="dash-head-icon" aria-hidden="true"><Icon name="toolbox" /></span>
@@ -290,6 +294,8 @@ export default function OrgDashboard() {
       </div>
 
       <DashTabs tabs={TABS} tab={tab} setTab={setTab} dots={{ people: asks.length > 0, links: linkAsks > 0 }} />
+      </div>
+      <div className="dash-main">
 
       {tab === 'people' && (
         <DashPanel k="people">
@@ -481,6 +487,7 @@ export default function OrgDashboard() {
           )}
         </DashPanel>
       )}
+      </div>
     </div>
   )
 }

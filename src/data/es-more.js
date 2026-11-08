@@ -4389,6 +4389,19 @@ const more = {
   'Tongue out': 'Lengua afuera',
   'Little smile': 'Sonrisita',
   'Sick': 'Mareado del estómago',
+  // Side by side pages (Nov 7).
+  'How neighbors will see it': 'Así lo verán sus vecinos',
+  'Pick a kind of help': 'Elija un tipo de ayuda',
+  'What you write shows here.': 'Lo que escriba aparece aquí.',
+  'Looking for: {who}': 'Busca: {who}',
+  'Neighbors see your name and the town you typed. Never your address.': 'Los vecinos ven su nombre y el pueblo que escribió. Nunca su dirección.',
+  'Your group sees it first. Then it opens to everyone nearby.': 'Su grupo lo ve primero. Después se abre a todos los que están cerca.',
+  'What you are offering': 'Lo que usted ofrece',
+  'Open emergency': 'Emergencia abierta',
+  'Pick an emergency on the left to see it here.': 'Elija una emergencia a la izquierda para verla aquí.',
+  'No new alerts.': 'No hay avisos nuevos.',
+  'Anyone can find local help and see what is happening nearby, with no account. Accounts are for adults 18 and older.': 'Cualquier persona puede buscar ayuda local y ver lo que pasa cerca, sin cuenta. Las cuentas son para adultos de 18 años o más.',
+  'Already have an account? Log in': '¿Ya tiene cuenta? Entrar',
 }
 
 export default more
