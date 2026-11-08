@@ -1155,3 +1155,8 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
   .vs-more-desk-btn:active { transform: scale(0.97); }
 }
 @media (prefers-reduced-motion: reduce) { .vs-more-desk-btn:active { transform: none; } }
+
+/* Nov 8 (Jade): Keeper tools and Events near you share one row, so the village page fits. */
+.vs-top-btns { display: grid; gap: 10px; }
+@media (min-width: 480px) { .vs-top-btns:has(> :nth-child(2)) { grid-template-columns: 1fr 1fr; } }
+html.simple .vs-top-btns { grid-template-columns: 1fr !important; }
