@@ -4402,6 +4402,7 @@ const more = {
   'No new alerts.': 'No hay avisos nuevos.',
   'Anyone can find local help and see what is happening nearby, with no account. Accounts are for adults 18 and older.': 'Cualquier persona puede buscar ayuda local y ver lo que pasa cerca, sin cuenta. Las cuentas son para adultos de 18 años o más.',
   'Already have an account? Log in': '¿Ya tiene cuenta? Entrar',
+  'Saved with your account, so it follows you to any phone. The maps keep their painted colors.': 'Se guarda en su cuenta, así que le sigue a cualquier teléfono. Los mapas mantienen sus colores pintados.',
 }
 
 export default more

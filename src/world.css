@@ -134,3 +134,16 @@
     height: calc(100dvh - var(--header-height) - var(--tab-height) - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* Nov 7 (Jade): Sister Campfires listed beside the globe instead of sitting on it. */
+.wd-fires { margin: 4px 0 0; }
+.wd-fires-h { margin: 0 0 6px; font-size: 1.05rem; color: var(--vs-ink); }
+.wd-fires-list { display: grid; gap: 6px; }
+.wd-fire {
+  display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px; border-radius: 12px; text-align: left;
+  border: 2px solid var(--vs-gold); background: var(--vs-card); color: var(--vs-ink); font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer;
+}
+.wd-fire.wd-faint { border-color: var(--vs-line); font-weight: 500; }
+.wd-fire:focus-visible { outline: 3px solid var(--vs-focus); outline-offset: 2px; }
+.wd-fire:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .wd-fire:active { transform: none; } }

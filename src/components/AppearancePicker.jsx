@@ -30,7 +30,7 @@ export default function AppearancePicker() {
           </button>
         ))}
       </div>
-      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('Saved with your account, so it follows you to any phone. In the full view, map pages keep their painted colors.')}</p>
+      <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('Saved with your account, so it follows you to any phone. The maps keep their painted colors.')}</p>
     </div>
   )
 }

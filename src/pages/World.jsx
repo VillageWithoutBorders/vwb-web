@@ -320,7 +320,9 @@ export default function World() {
               </button>
             ))}
 
-            {view && view.lines.map((l, i) => (
+            {/* Nov 7 (Jade): the village globe stays calm: just circles, names and gold lines.
+                Sister Campfires are listed in the panel beside it instead of sitting on the map. */}
+            {view && net !== 'villages' && view.lines.map((l, i) => (
               <button key={'m' + i} type="button" className={'wd-mid' + (net === 'villages' && !l.mine ? ' wd-faint' : '')}
                 style={{ left: l.x.toFixed(1) + '%', top: l.y.toFixed(1) + '%' }}
                 aria-label={t(net === 'villages' ? 'Sister Campfire for {a} and {b}' : 'Shared Campfire for {a} and {b}', { a: l.a.name, b: l.b.name })}
@@ -358,6 +360,19 @@ export default function World() {
             ? t(myGroups.length ? 'Emergency crews help when disaster hits. Tap your crew to see who is ready and what you bring.' : (orgMap.nodes.length ? 'You are not in a crew yet. Emergency crews help when disaster hits. Tap one to see what it does.' : 'No crews yet. Emergency crews help when disaster hits. You can start one.'))
             : t(myRealOrgs.length ? 'Groups are people working together, not places. A gold line joins two that chose to connect.' : 'You do not belong to a group yet. Tap one to see what it does.')}
       </p>
+
+      {net === 'villages' && view && view.lines.length > 0 && (
+        <section className="wd-fires" aria-labelledby="wd-fires-h">
+          <h3 id="wd-fires-h" className="wd-fires-h">{t('Sister Campfires')}</h3>
+          <div className="wd-fires-list">
+            {view.lines.map((l, i) => (
+              <button key={'fire' + i} type="button" className={'wd-fire' + (l.mine ? '' : ' wd-faint')} onClick={() => openSheet({ kind: 'sister', a: l.a, b: l.b })}>
+                <Icon name="campfire" /> <span>{l.a.name} &amp; {l.b.name}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="wd-actions">
         {net === 'villages' && !hasMine && villages !== null && <button type="button" className="btn btn-primary btn-full wd-start" onClick={() => navigate('/find-village')}>{t('Find my village')}</button>}
