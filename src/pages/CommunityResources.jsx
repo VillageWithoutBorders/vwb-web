@@ -10,7 +10,7 @@ import { searchScore } from '../utils/resourceSearch'
 import AddressLink from '../components/AddressLink'
 import BackLink from '../components/BackLink'
 import HelpSwitch from '../components/HelpSwitch'
-import Icon from '../components/Icon'
+import Icon, { iconSrc, iconClass } from '../components/Icon'
 import AreaPicker from '../components/AreaPicker'
 import CrnCardDetails from '../components/CrnCardDetails'
 import ResourceReport from '../components/ResourceReport'
@@ -870,7 +870,7 @@ export default function CommunityResources() {
       <div className="fr-left">
       {user ? <HelpSwitch /> : <BackLink fallback="/welcome" fallbackLabel="Welcome" />}
       <div className="fh-head">
-        <img src="/art/icons/heart-hands.svg" alt="" width="48" height="48" />
+        <img className={iconClass('heart-hands', '')} src={iconSrc('heart-hands')} alt="" width="48" height="48" />
         <h1>{t('Find resources')}</h1>
       </div>
       <p className="feed-subtitle fh-sub">{t('Food, housing, safety, and more, shared by neighbors and local groups.')}</p>
@@ -926,7 +926,7 @@ export default function CommunityResources() {
                 const on = selectedCat === cat && !query.trim()
                 return (
                   <button key={cat} type="button" className={'fh-tile' + (on ? ' on' : '')} aria-pressed={on} onClick={() => { setQuery(''); openCat(on ? null : cat) }}>
-                    <img src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="48" height="48" />
+                    <img className={iconClass((CAT_ICON_FILES[cat] || 'cat-other'), '')} src={iconSrc((CAT_ICON_FILES[cat] || 'cat-other'))} alt="" width="48" height="48" />
                     <span className="fh-tile-name">{t(cat)}</span>
                     <span className="fh-tile-count">{t(grouped[cat].length === 1 ? '1 place' : '{n} places', { n: grouped[cat].length })}</span>
                   </button>
@@ -1202,7 +1202,7 @@ export default function CommunityResources() {
             <div className="fh-grid">
               {orderedCats.map(cat => (
                 <button key={cat} type="button" className="fh-tile" onClick={() => openCat(cat)}>
-                  <img src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="48" height="48" />
+                  <img className={iconClass((CAT_ICON_FILES[cat] || 'cat-other'), '')} src={iconSrc((CAT_ICON_FILES[cat] || 'cat-other'))} alt="" width="48" height="48" />
                   <span className="fh-tile-name">{t(cat)}</span>
                   <span className="fh-tile-count">{t(grouped[cat].length === 1 ? '1 place' : '{n} places', { n: grouped[cat].length })}</span>
                 </button>
@@ -1214,7 +1214,7 @@ export default function CommunityResources() {
             <section key={cat} className="fh-cat" aria-labelledby={'fh-cat-' + cat}>
               <div className="fh-cat-head">
                 {!query.trim() && <button type="button" className="fh-back" onClick={() => openCat(null)} aria-label={t('Back to all kinds of help')}>&#8249;</button>}
-                <img src={'/art/icons/' + (CAT_ICON_FILES[cat] || 'cat-other') + '.svg'} alt="" width="40" height="40" />
+                <img className={iconClass((CAT_ICON_FILES[cat] || 'cat-other'), '')} src={iconSrc((CAT_ICON_FILES[cat] || 'cat-other'))} alt="" width="40" height="40" />
                 <h2 id={'fh-cat-' + cat}>{t(cat)} <span>({grouped[cat].length})</span></h2>
               </div>
               <div className="fh-list">

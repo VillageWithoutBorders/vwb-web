@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { iconSrc, iconClass } from './Icon'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { getMyLocation, distanceMiles } from '../utils/location'
@@ -90,7 +91,7 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       <div role="group" aria-label={t('What do you need?')} className="hub-tiles nr-tiles">
         {QUICK_PICKS.map((c) => (
           <button key={c} type="button" className={'hub-tile nr-tile' + (cat === c && !query.trim() ? ' on' : '')} aria-pressed={cat === c && !query.trim()} onClick={() => { setQuery(''); const next = cat === c ? '' : c; setCat(next); if (next) setScrollAsked(n => n + 1) }}>
-            <img className="hub-tile-icon" src={'/art/icons/' + (CAT_ICON_FILES[c] || 'cat-other') + '.svg'} alt="" width="40" height="40" />
+            <img className={iconClass((CAT_ICON_FILES[c] || 'cat-other'), 'hub-tile-icon')} src={iconSrc((CAT_ICON_FILES[c] || 'cat-other'))} alt="" width="40" height="40" />
             <span>{t(c)}</span>
           </button>
         ))}
