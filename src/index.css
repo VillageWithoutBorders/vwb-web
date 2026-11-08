@@ -6959,3 +6959,78 @@ html.calm-motion .nr-card:active { transform: none; }
   /* Same for Your tasks. */
   html:not(.simple) .tasks-page.tk-page { padding-bottom: 0; }
 }
+
+/* ---------- A neighbor's page (Nov 7, Jade) ----------
+   Profile and cottage on one page. Buttons in one row. On a computer the profile is
+   on the left and their cottage map on the right, like the other side by side pages:
+   each side scrolls by itself and the page holds still. On a phone a picture of
+   their cottage sits under the vouches and opens the full map. */
+.pp-page { max-width: 600px; margin: 0 auto; padding: 0 1rem 1rem; box-sizing: border-box; }
+.pp-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 0.6rem; }
+.pp-actions > button { margin: 0 !important; min-height: 44px; }
+.pp-actions > div[style*="flex-wrap"] { display: contents; }
+.pp-actions > p { flex-basis: 100%; }
+.pp-cottage-h { font-size: 1.15rem; margin: 0 0 0.5rem; }
+.pp-cottage-preview { margin: 0 0 1.25rem; }
+.pp-cottage-link { position: relative; display: block; max-width: 360px; margin: 0 auto; border-radius: 16px; text-decoration: none; color: inherit; }
+.pp-cottage-link .vs-scene-path { margin-top: 0; border-radius: 16px; pointer-events: none; }
+.pp-cottage-open {
+  position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 30;
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 22px;
+  background: #1f4a47; color: #fff; font-weight: 700; white-space: nowrap; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.pp-cottage-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.pp-cottage-link:active { transform: scale(0.99); }
+@media (prefers-reduced-motion: reduce) { .pp-cottage-link:active { transform: none; } }
+.pp-cottage-note { margin: 0.6rem 0 0; font-size: 1rem; line-height: 1.45; color: var(--text-secondary); }
+@media (min-width: 1024px) {
+  .app-main:has(> .pp-split) { max-width: 1240px; }
+  .pp-page.pp-split {
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
+    max-width: none; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
+  }
+  .pp-split > .pp-main { min-width: 0; height: var(--fit-h); overflow-y: auto; overscroll-behavior: contain; padding: 4px; box-sizing: border-box; }
+  .pp-split > .pp-cottage {
+    min-width: 0; height: var(--fit-h); box-sizing: border-box; display: flex; flex-direction: column;
+    padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+  }
+  .pp-cottage-map { flex: 1 1 auto; min-height: 0; display: flex; justify-content: center; }
+  .pp-cottage-map > .vs-scene-path { height: 100%; width: auto; max-width: 100%; aspect-ratio: 2 / 3; margin: 0; border-radius: 12px; }
+  .pp-cottage-closed { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 1rem 2rem; }
+}
+
+/* Nov 7 (Jade): My Corner looks like a neighbor's page. On a computer your corner is on
+   the left (its cards two across) and your cottage on the right, each side scrolling by itself. */
+.corner-cottage-preview { margin: 0 0 0.9rem; }
+.pp-cottage-go { margin-top: 0.75rem; flex: 0 0 auto; }
+@media (min-width: 1024px) {
+  .app-main:has(> .corner-split) { max-width: 1240px; }
+  .corner-split {
+    --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px));
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
+  }
+  .corner-split > .corner-split-main { min-width: 0; height: var(--fit-h); overflow-y: auto; overscroll-behavior: contain; padding: 4px; box-sizing: border-box; }
+  .corner-split > .pp-cottage {
+    min-width: 0; height: var(--fit-h); box-sizing: border-box; display: flex; flex-direction: column;
+    padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+  }
+  .corner-split .corner-page-full { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .corner-split .corner-page-full > .corner-card { grid-column: 1 / -1; grid-row: 2; }
+  .corner-split .corner-page-full > .corner-settings { grid-column: 1 / -1; grid-row: 3; }
+  .corner-split .corner-page-full > .corner-group { grid-column: 1; grid-row: 4 / span 3; }
+  .corner-split .corner-page-full .app-menu-group-account { grid-column: 2; grid-row: 4; }
+  .corner-split .corner-page-full .app-menu-group-about { grid-column: 2; grid-row: 5; }
+  .corner-split .corner-page-full .app-menu-group-vwb { grid-column: 2; grid-row: 6; }
+}
+
+/* Nov 7 (Jade): My Tools. "Easier to see and use" sits first. On a computer the
+   sheet opens on the right side, under the top bar, instead of in the middle. */
+.tools-easy { margin-bottom: 0.25rem; border-color: var(--accent); }
+@media (min-width: 1024px) {
+  .tools-shade { align-items: stretch; justify-content: flex-end; padding: var(--header-height) 0 0; background: rgba(0, 0, 0, 0.4); }
+  .tools-sheet { max-width: 28rem; max-height: none; height: 100%; border-radius: 16px 0 0 0; border: 1px solid var(--border-strong); border-right: 0; border-bottom: 0;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35); animation: tools-in 0.18s ease-out; }
+}
+@keyframes tools-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tools-sheet { animation: none; } }
+html.calm-motion .tools-sheet { animation: none; }

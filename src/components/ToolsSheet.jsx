@@ -21,7 +21,23 @@ export default function ToolsSheet({ id, title, rows, onClose, children, rowsTit
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  function go(to) { closeRef.current(false); navigate(to) }
+  // Nov 7 (Jade): the phone's Back button closes the sheet instead of leaving the page.
+  // Opening adds a step to the history; Back takes that step away and closes it.
+  // Closing any other way takes the step back out, so Back still works as before.
+  useEffect(() => {
+    const id = Date.now() + Math.random()
+    let ours = false
+    try { window.history.pushState({ ...(window.history.state || {}), vwbSheet: id }, ''); ours = true } catch { /* old browser */ }
+    function onPop() { if (!(window.history.state && window.history.state.vwbSheet)) closeRef.current(false) }
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      if (ours && window.history.state && window.history.state.vwbSheet === id) window.history.back()
+    }
+  }, [])
+
+  // Going somewhere from the sheet takes the sheet's place in the history.
+  function go(to) { navigate(to, { replace: !!(window.history.state && window.history.state.vwbSheet) }); closeRef.current(false) }
 
   return (
     <div className="tools-shade" onClick={(e) => { if (e.target === e.currentTarget) onClose(true) }}>

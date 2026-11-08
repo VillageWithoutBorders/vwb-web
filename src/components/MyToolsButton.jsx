@@ -49,12 +49,13 @@ export default function MyToolsButton({ tools, adminWaiting = 0, adminUrgent = f
   function close(refocus) { setOpen(false); if (refocus && lastFocus.current && lastFocus.current.focus) lastFocus.current.focus() }
 
   async function openAlert(n) {
+    // Go first, taking the open sheet's place in the history (Nov 7), then mark it read.
+    navigate(personalAlertLink(n), { replace: !!(window.history.state && window.history.state.vwbSheet) })
     setOpen(false)
     if (!n.read) {
       try { await markNotificationRead(n.id) } catch (e) { console.error('[MyTools] mark read failed:', e) }
     }
     refresh?.()
-    navigate(personalAlertLink(n))
   }
 
   // Log out, at the bottom of My Tools (Oct 28, Jade).
@@ -79,6 +80,13 @@ export default function MyToolsButton({ tools, adminWaiting = 0, adminUrgent = f
             <Icon name="door" size={28} />
             <span><b>{t(leaving ? 'Logging out...' : 'Log out')}</b><small>{t('You can log back in any time.')}</small></span>
           </button>}>
+          {/* Nov 7 (Jade): the ways to make the app easier to see and use, one tap from
+              anywhere, for everyone (Settings > Easy to use). */}
+          <button type="button" className="tools-row tools-easy" onClick={() => { navigate('/settings', { replace: !!(window.history.state && window.history.state.vwbSheet) }); setOpen(false) }}>
+            <Icon name="gear" size={28} />
+            <span><b>{t('Easier to see and use')}</b><small>{t('Language, text size, light or dark, Simple view, less motion')}</small></span>
+            <span className="tools-arrow" aria-hidden="true">›</span>
+          </button>
           <h3 className="tools-sub">{t('Alerts')}</h3>
           <div className="tools-alerts">
             {recent.length === 0 ? (
@@ -103,7 +111,7 @@ export default function MyToolsButton({ tools, adminWaiting = 0, adminUrgent = f
                 </button>
               )
             })}
-            <button type="button" className="alerts-popout-more" onClick={() => { setOpen(false); navigate('/notifications') }}>{t('See all alerts')}</button>
+            <button type="button" className="alerts-popout-more" onClick={() => { navigate('/notifications', { replace: !!(window.history.state && window.history.state.vwbSheet) }); setOpen(false) }}>{t('See all alerts')}</button>
           </div>
         </ToolsSheet>
       )}

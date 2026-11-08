@@ -4268,6 +4268,14 @@ const more = {
   'My Village: your home village. Its chat, neighbors, groups, rules, and sister villages.': 'Mi aldea: su aldea. Su chat, vecinos, grupos, reglas y aldeas hermanas.',
   'My Cottage: your own place. Your garden, chats, calendar, groups, connections, and who can visit.': 'Mi casita: su propio lugar. Su jardín, chats, calendario, grupos, conexiones y quién puede visitarla.',
   'My Corner: your profile, settings, and account.': 'Mi rincón: su perfil, su configuración y su cuenta.',
+  // A neighbor's page and My Corner with the cottage (Nov 7).
+  "Open {name}'s cottage map": 'Abrir el mapa de la casita de {name}',
+  'Open the full map': 'Abrir el mapa completo',
+  'Open my cottage': 'Abrir mi casita',
+  'This is how {name} arranged their cottage. Their chats, alerts and tasks stay private.': 'Así arregló {name} su casita. Sus chats, avisos y tareas siguen privados.',
+  'This is how your cottage looks to neighbors who can visit.': 'Así ven su casita los vecinos que pueden visitarla.',
+  'Easier to see and use': 'Más fácil de ver y usar',
+  'Language, text size, light or dark, Simple view, less motion': 'Idioma, tamaño de letra, claro u oscuro, Vista sencilla, menos movimiento',
 }
 
 export default more
