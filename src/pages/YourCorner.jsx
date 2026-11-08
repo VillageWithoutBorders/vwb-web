@@ -53,12 +53,13 @@ export default function YourCorner({ embedded = false }) {
   const page = (
     // Oct 30 (Jade): on a computer, /me is three cards in a row under your card and Settings.
     <div className={'corner-page' + (embedded ? '' : ' corner-page-full')}>
-      {embedded ? <h2 className="corner-title">{t('My Corner')}</h2> : <h1 className="corner-title">{t('My Corner')}</h1>}
+      {/* Nov 8 (Jade): side by side, the title sits above both sides so their boxes line up. */}
+      {!split && (embedded ? <h2 className="corner-title">{t('My Corner')}</h2> : <h1 className="corner-title">{t('My Corner')}</h1>)}
 
       <Link to="/profile" className="corner-card">
         {avatarFailed
           ? <span className="corner-letter" aria-hidden="true">{letter}</span>
-          : <img className="corner-avatar" src={avatarSrc} alt="" width="60" height="60" onError={() => setAvatarFailed(true)} />}
+          : <img className="corner-avatar" src={avatarSrc} alt="" width="120" height="120" onError={() => setAvatarFailed(true)} />}
         <span className="corner-who">
           <b>{name}</b>
           {place && <span>{place}</span>}
@@ -86,14 +87,18 @@ export default function YourCorner({ embedded = false }) {
 
       {!split && thingsList('corner-things')}
 
-      <AppMenu inline />
+      {/* Nov 8 (Jade): side by side, the left is your account; the app's own links move to the right. */}
+      <AppMenu inline only={split ? ['account'] : null} />
     </div>
   )
 
   if (!split) return page
   return (
+    <>
+    <h1 className="corner-title corner-title-wide">{t('My Corner')}</h1>
     <div className="corner-split">
       <div className="corner-split-main">{page}</div>
+      <div className="corner-split-side">
       <aside className={'pp-cottage corner-room-panel' + (ROOM_READY ? '' : ' corner-room-plain')} aria-labelledby={ROOM_READY ? 'corner-room-side-h' : 'corner-things-side'}>
         {ROOM_READY && <>
           <h2 id="corner-room-side-h" className="pp-cottage-h">{t('Inside your cottage')}</h2>
@@ -103,6 +108,9 @@ export default function YourCorner({ embedded = false }) {
         <div className="corner-room-things">{thingsList('corner-things-side')}</div>
         <Link to="/cottage" className="btn btn-outline btn-full pp-cottage-go">{t('Step outside to My Cottage')}</Link>
       </aside>
+      <div className="corner-side-menu"><AppMenu inline only={['about', 'vwb']} /></div>
+      </div>
     </div>
+    </>
   )
 }
