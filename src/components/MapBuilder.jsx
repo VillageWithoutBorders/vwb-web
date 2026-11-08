@@ -873,40 +873,7 @@ export function ScrollCue({ b, label = 'More below' }) {
     window.addEventListener('resize', measure)
     return () => { clearTimeout(tm); window.removeEventListener('resize', measure) }
   })
-  // Nov 8 (Jade): on a computer the map holds still and the right side scrolls. A soft
-  // fade and a small "More below" button at the bottom of the right side say there is
-  // more. They go away once you start scrolling or when everything already fits.
-  const [deskMore, setDeskMore] = useState(false)
-  useEffect(() => {
-    // Shows only when real content (a button, a card, words) is hidden below the
-    // bottom bar, not just the page's empty padding.
-    function check() {
-      const page = b.outerRef.current && b.outerRef.current.closest('.vs-page-path')
-      if (!page || window.innerWidth < 1024 || window.scrollY >= 40) { setDeskMore(false); return }
-      const bar = document.querySelector('.bottom-tabs')
-      const seen = (bar ? bar.getBoundingClientRect().top : window.innerHeight) - 16
-      let lowest = 0
-      for (const el of page.children) {
-        if (el.matches('.vs-scene-path, .vs-shade, .vs-more-desk, .vs-scroll-cue, .vs-map-under')) continue
-        const r = el.getBoundingClientRect()
-        if (r.height > 0) lowest = Math.max(lowest, r.bottom - (parseFloat(getComputedStyle(el).paddingBottom) || 0))
-      }
-      setDeskMore(lowest > seen + 8)
-    }
-    check()
-    const tm = setTimeout(check, 800)
-    // Check again when the page grows or shrinks (lists finish loading, a section opens).
-    const page = b.outerRef.current && b.outerRef.current.closest('.vs-page-path')
-    const ro = page && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null
-    if (ro) ro.observe(page)
-    window.addEventListener('scroll', check, { passive: true })
-    window.addEventListener('resize', check)
-    return () => { clearTimeout(tm); if (ro) ro.disconnect(); window.removeEventListener('scroll', check); window.removeEventListener('resize', check) }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   if (b.arrange) return null
-  function deskGo() {
-    window.scrollBy({ top: Math.round(window.innerHeight * 0.6), behavior: stillMotion() ? 'auto' : 'smooth' })
-  }
   function go() {
     const el = b.outerRef.current
     if (!el) return
@@ -919,13 +886,63 @@ export function ScrollCue({ b, label = 'More below' }) {
       <button type="button" className="vs-scroll-cue" onClick={go}>
         {t(label)} <span className="vs-scroll-cue-arrow" aria-hidden="true">&#8595;</span>
       </button>
-      {deskMore && (
-        <div className="vs-more-desk">
-          <button type="button" className="vs-more-desk-btn" onClick={deskGo}>
-            {t(label)} <span aria-hidden="true">&#8595;</span>
-          </button>
-        </div>
-      )}
+      <DeskMoreBelow getPage={() => b.outerRef.current && b.outerRef.current.closest('.vs-page-path')} label={label} />
     </>
+  )
+}
+
+// Nov 8 (Jade): on a computer the map (or globe) holds still and the right side scrolls.
+// A soft fade and a small "More below" button at the bottom of the right side say there
+// is more. They go away once you start scrolling or when everything already fits.
+// Used by the map pages (ScrollCue), My World and the Calendar. getPage returns the page
+// element. getColumn (optional) returns the right-hand column; the fade then sits under it.
+export function DeskMoreBelow({ getPage, getColumn, label = 'More below' }) {
+  useT()
+  const [deskMore, setDeskMore] = useState(false)
+  const [colBox, setColBox] = useState(null)
+  const getRef = useRef(getPage)
+  getRef.current = getPage
+  const colRef = useRef(getColumn)
+  colRef.current = getColumn
+  useEffect(() => {
+    // Shows only when real content (a button, a card, words) is hidden below the
+    // bottom bar, not just the page's empty padding.
+    function check() {
+      const page = getRef.current()
+      if (!page || window.innerWidth < 1024 || window.scrollY >= 40 || document.documentElement.classList.contains('simple')) { setDeskMore(false); return }
+      const bar = document.querySelector('.bottom-tabs')
+      const seen = (bar ? bar.getBoundingClientRect().top : window.innerHeight) - 16
+      let lowest = 0
+      const col = colRef.current ? colRef.current() : null
+      const parts = col ? col.children : page.querySelector(':scope > .wd-panel') ? page.querySelector(':scope > .wd-panel').children : page.children
+      for (const el of parts) {
+        if (el.matches('.vs-scene-path, .vs-shade, .vs-more-desk, .vs-scroll-cue, .vs-map-under, .wd-globe-wrap, .wd-brand')) continue
+        const r = el.getBoundingClientRect()
+        if (r.height > 0) lowest = Math.max(lowest, r.bottom - (parseFloat(getComputedStyle(el).paddingBottom) || 0))
+      }
+      const show = lowest > seen + 8
+      if (show && col) { const r = col.getBoundingClientRect(); setColBox({ left: Math.round(r.left), width: Math.round(r.width) }) }
+      setDeskMore(show)
+    }
+    check()
+    const tm = setTimeout(check, 800)
+    // Check again when the page grows or shrinks (lists finish loading, a section opens).
+    const page = getRef.current()
+    const ro = page && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null
+    if (ro) ro.observe(page)
+    window.addEventListener('scroll', check, { passive: true })
+    window.addEventListener('resize', check)
+    return () => { clearTimeout(tm); if (ro) ro.disconnect(); window.removeEventListener('scroll', check); window.removeEventListener('resize', check) }
+  }, [])
+  if (!deskMore) return null
+  function deskGo() {
+    window.scrollBy({ top: Math.round(window.innerHeight * 0.6), behavior: stillMotion() ? 'auto' : 'smooth' })
+  }
+  return (
+    <div className={'vs-more-desk' + (colBox ? ' vs-more-col' : '')} style={colBox || undefined}>
+      <button type="button" className="vs-more-desk-btn" onClick={deskGo}>
+        {t(label)} <span aria-hidden="true">&#8595;</span>
+      </button>
+    </div>
   )
 }

@@ -49,6 +49,14 @@ const COLOR_OPTIONS = {
     { name: 'Tanned', hex: 'fd9841' }, { name: 'Yellow', hex: 'f8d25c' }, { name: 'Pale', hex: 'ffdbb4' }, { name: 'Light', hex: 'edb98a' },
     { name: 'Brown', hex: 'd08b5b' }, { name: 'Dark Brown', hex: 'ae5d29' }, { name: 'Black', hex: '614335' },
   ],
+  // Nov 8 (Jade): the color behind your avatar. None shows the app's own soft green.
+  backgroundColor: [
+    { name: 'Sky', hex: 'b6e3f4' }, { name: 'Lavender', hex: 'c0aede' }, { name: 'Periwinkle', hex: 'd1d4f9' },
+    { name: 'Blush', hex: 'ffd5dc' }, { name: 'Peach', hex: 'ffdfbf' }, { name: 'Butter', hex: 'fff1b8' },
+    { name: 'Mint', hex: 'c7f0d8' }, { name: 'Sage', hex: '9fc5a8' }, { name: 'Teal', hex: '3fb59e' },
+    { name: 'Gold', hex: 'f2c14e' }, { name: 'Coral', hex: 'f28b6b' }, { name: 'Forest', hex: '2f6f5e' },
+    { name: 'Plum', hex: '6b4a7a' }, { name: 'Night', hex: '262e33' },
+  ],
 }
 
 // Nov 7 (Jade): plain names, in the order people usually build a face.
@@ -57,6 +65,7 @@ const PART_NAMES = {
   facialHair: 'Beard', facialHairColor: 'Beard color',
   clothing: 'Clothes', clothesColor: 'Clothes color',
   eyes: 'Eyes', eyebrows: 'Eyebrows', mouth: 'Mouth', skinColor: 'Skin',
+  backgroundColor: 'Background',
 }
 
 // Plain names for DiceBear's choices (it calls them things like "straight01" or "miaWallace").
@@ -153,9 +162,11 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig, hideTit
       }
     })
     Object.entries(COLOR_OPTIONS).forEach(([key, vals]) => {
+      if (key === 'backgroundColor') return
       rand[key] = vals[Math.floor(Math.random() * vals.length)].hex
     })
-    setConfig(rand)
+    // Surprise me keeps the background you picked (Nov 8).
+    setConfig((prev) => (prev.backgroundColor ? { ...rand, backgroundColor: prev.backgroundColor } : rand))
     setSelected(null)
   }
 
@@ -225,8 +236,11 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig, hideTit
             </div>
 
             <div className="ab-options" role="group" aria-label={t(PART_NAMES[activeSection])}>
-              {COLOR_OPTIONS[activeSection] ? (
-                COLOR_OPTIONS[activeSection].map(({ name: colorName, hex }) => {
+              {COLOR_OPTIONS[activeSection] ? (<>
+                {activeSection === 'backgroundColor' && (
+                  <button type="button" className={'ab-opt' + (!config.backgroundColor ? ' on' : '')} aria-pressed={!config.backgroundColor} onClick={() => update('backgroundColor', '')}>{t('None')}</button>
+                )}
+                {COLOR_OPTIONS[activeSection].map(({ name: colorName, hex }) => {
                   const isActive = config[activeSection] === hex
                   return (
                     <button key={hex} type="button" className={'ab-opt' + (isActive ? ' on' : '')} aria-pressed={isActive} onClick={() => update(activeSection, hex)}>
@@ -234,8 +248,8 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig, hideTit
                       {t(colorName)}
                     </button>
                   )
-                })
-              ) : (
+                })}
+              </>) : (
                 <>
                   {(activeSection === 'accessories' || activeSection === 'facialHair') && (
                     <button type="button" className={'ab-opt' + (!config[activeSection] ? ' on' : '')} aria-pressed={!config[activeSection]} onClick={() => update(activeSection, '')}>{t('None')}</button>
