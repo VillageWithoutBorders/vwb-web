@@ -20,7 +20,8 @@ const SIGNUP_URL = `${APP_URL}/login?mode=signup`
 const SHARE_TEXT = 'Village Without Borders is a mutual aid network where neighbors help neighbors. Join us:'
 
 // inline: shown as a plain list inside My Corner (/me), with no button and no pop-up.
-export default function AppMenu({ inline = false }) {
+// only (Nov 8): which inline groups to show, from 'account', 'about', 'vwb'. All by default.
+export default function AppMenu({ inline = false, only = null }) {
   const t = useT()
   const navigate = useNavigate()
   const { signOut, isAdmin } = useAuth()
@@ -156,19 +157,20 @@ export default function AppMenu({ inline = false }) {
           </button>
         </>
         if (inline) {
+          const has = (g) => !only || only.includes(g)
           return <>
-            <section className="app-menu-group app-menu-group-account" aria-labelledby="amg-account">
+            {has('account') && <section className="app-menu-group app-menu-group-account" aria-labelledby="amg-account">
               <h2 id="amg-account" className="app-menu-heading">{t('Your account')}</h2>
               <div className="app-menu-list app-menu-inline">{account}</div>
-            </section>
-            <section className="app-menu-group app-menu-group-about" aria-labelledby="amg-about">
+            </section>}
+            {has('about') && <section className="app-menu-group app-menu-group-about" aria-labelledby="amg-about">
               <h2 id="amg-about" className="app-menu-heading">{t('About the app')}</h2>
               <div className="app-menu-list app-menu-inline">{about}</div>
-            </section>
-            <section className="app-menu-group app-menu-group-vwb" aria-labelledby="amg-vwb">
+            </section>}
+            {has('vwb') && <section className="app-menu-group app-menu-group-vwb" aria-labelledby="amg-vwb">
               <h2 id="amg-vwb" className="app-menu-heading">Village Without Borders</h2>
               <div className="app-menu-list app-menu-inline">{vwb}</div>
-            </section>
+            </section>}
           </>
         }
         return <>

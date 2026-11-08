@@ -10,6 +10,7 @@ import NearbyOrganizers from '../components/NearbyOrganizers'
 import BringOrg from '../components/BringOrg'
 import { calmMotion } from '../utils/motion'
 import { useT } from '../utils/lang'
+import { DeskMoreBelow } from '../components/MapBuilder'
 
 export default function Calendar() {
   const t = useT()
@@ -27,7 +28,8 @@ export default function Calendar() {
   const rightRef = useRef(null)
   function pickDay(k) {
     setPickedDay(k)
-    rightRef.current?.scrollTo({ top: 0, behavior: calmMotion() ? 'auto' : 'smooth' })
+    // Nov 8: on a computer the whole page scrolls (like the map pages), so go back to the top.
+    if (window.innerWidth >= 1024) window.scrollTo({ top: 0, behavior: calmMotion() ? 'auto' : 'smooth' })
   }
 
   // Calendars you can subscribe to: the network's own, plus your groups
@@ -155,6 +157,7 @@ export default function Calendar() {
           <BringOrg />
           <CalendarSubscribe choices={subscribeChoices} anchorId="cal-subscribe" />
         </div>
+        <DeskMoreBelow getPage={() => rightRef.current && rightRef.current.parentElement} getColumn={() => rightRef.current} />
       </div>
     )
   }

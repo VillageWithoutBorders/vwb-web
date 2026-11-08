@@ -7300,3 +7300,91 @@ button.tr-link:focus-visible, button.tr-link:hover { background: var(--surface-2
   .tools-shade.qr-shade { align-items: center; justify-content: center; padding: 1rem; background: rgba(0, 0, 0, 0.55); }
   .tools-sheet.qr-sheet { max-width: 30rem; height: auto; max-height: calc(100dvh - 2rem); border-radius: 16px; border: 1px solid var(--border-strong); animation: none; }
 }
+
+/* Nov 8 (Jade): the Calendar scrolls like the map pages on a computer. The month holds
+   still on the left; the whole page scrolls with the events on the right, so there is no
+   second scrollbar inside a box. "More below" shows at the bottom of the right side. */
+@media (min-width: 1024px) {
+  .cal-page.cal-split { align-items: start; }
+  /* The left side holds completely still: it sticks exactly where it starts (under the
+     top bar and the Home button) and never scrolls inside itself. The month squares
+     shrink to fit instead. */
+  .cal-split > .cal-left { position: sticky; top: calc(var(--header-height) + 2rem + var(--back-h, 0px)); overflow: hidden; }
+  .cal-split > .cal-right { height: auto; min-height: var(--fit-h); overflow: visible; overscroll-behavior: auto; }
+  .cal-split > .vs-more-desk.vs-more-col {
+    display: flex; align-items: flex-end; justify-content: center; position: fixed; z-index: 4;
+    bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px)); height: 96px; padding-bottom: 12px; box-sizing: border-box;
+    background: linear-gradient(to bottom, transparent, var(--surface, #1e1e1e) 75%); pointer-events: none;
+  }
+}
+/* The "More below" button looks the same everywhere it shows. */
+@media (min-width: 1024px) {
+  .vs-more-col .vs-more-desk-btn, .tools-more .vs-more-desk-btn { pointer-events: auto; }
+}
+/* Copied here so pages without the map styles (Calendar, My Tools) have the same button. */
+.vs-more-desk-btn {
+  pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 18px;
+  border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface, #1e1e1e);
+  color: var(--text, #fff); font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.vs-more-desk-btn:hover { border-color: var(--accent); }
+.vs-more-desk-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.vs-more-desk-btn:active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) { .vs-more-desk-btn:active { transform: none; } }
+html.calm-motion .vs-more-desk-btn:active { transform: none; }
+
+/* Nov 8 (Jade): "More below" inside pop-ups that scroll (My Tools). It floats over the
+   bottom of the box and takes no room of its own. */
+.box-more {
+  position: sticky; bottom: 0; z-index: 2;
+  display: flex; align-items: flex-end; justify-content: center;
+  height: 88px; margin: -88px -1rem 0; padding-bottom: 14px; box-sizing: border-box; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--surface, #1e1e1e) 70%);
+}
+/* Nov 8: the Home button above the Calendar stays put too, so no gap opens over the month. */
+@media (min-width: 1024px) {
+  .app-main:has(> .cal-split) > .app-back-row { position: sticky; top: calc(var(--header-height) + 2rem); z-index: 3; pointer-events: none; }
+  .app-main:has(> .cal-split) > .app-back-row > * { pointer-events: auto; }
+}
+
+/* ============================================================
+   Nov 8 (Jade): My Corner on a computer. The title sits above both sides so the
+   boxes start level. Left: you (a big avatar), Settings, and Your account.
+   Right: Your things, Step outside, then About the app and Village Without Borders.
+   ============================================================ */
+@media (min-width: 1024px) {
+  .corner-title-wide { margin: 0 0 0.75rem; }
+  .corner-split { --fit-h: calc(100dvh - var(--header-height) - var(--tab-height) - 4rem - 3rem - var(--back-h, 0px) - env(safe-area-inset-bottom, 0px)); }
+  .corner-split .corner-page-full { display: flex; flex-direction: column; gap: 0.9rem; }
+  .corner-split .corner-page-full > * { margin: 0; }
+  .corner-split .corner-page-full .app-menu-group { margin: 0; }
+  .corner-split .corner-card { flex-direction: row; gap: 1.25rem; padding: 1.25rem; }
+  .corner-split .corner-avatar, .corner-split .corner-letter { width: 120px; height: 120px; border-width: 3px; }
+  .corner-split .corner-letter { font-size: 3rem; }
+  .corner-split .corner-who b { font-size: 1.4rem; }
+  .corner-split .corner-who span { font-size: 1rem; }
+  .corner-split > .corner-split-side { min-width: 0; height: var(--fit-h); overflow-y: auto; overscroll-behavior: contain; padding: 4px; box-sizing: border-box; display: flex; flex-direction: column; gap: 0.9rem; }
+  .corner-split-side > .pp-cottage {
+    min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 0.75rem;
+    padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+  }
+  .corner-side-menu { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.9rem; align-items: start; }
+  .corner-side-menu .app-menu-group { margin: 0; }
+}
+@media (min-width: 1024px) {
+  .corner-split .corner-page-full { align-items: stretch; }
+  .corner-split .corner-page-full > *, .corner-split .corner-page-full .app-menu-group { width: auto; max-width: none; grid-column: auto !important; grid-row: auto !important; }
+  .corner-side-menu > .app-menu-group { grid-column: auto !important; grid-row: auto !important; width: auto; max-width: none; }
+  .corner-side-menu .app-menu-group-vwb .app-menu-list, .corner-side-menu .app-menu-group-about .app-menu-list { height: 100%; }
+}
+@media (min-width: 1024px) {
+  .corner-side-menu { display: block; }
+  .corner-side-menu > .app-menu { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.9rem; align-items: stretch; }
+  .corner-side-menu > .app-menu > .app-menu-group { display: flex; flex-direction: column; }
+  .corner-side-menu > .app-menu > .app-menu-group > .app-menu-list { flex: 1; }
+}
+/* The right-hand menus look like the left-hand one: dividers and arrows. */
+.corner-side-menu .app-menu-inline .app-menu-item:not(.app-menu-logout)::after { content: '\203A'; margin-left: auto; padding-left: 0.5rem; color: var(--text-muted); }
+.corner-side-menu .app-menu-inline .app-menu-item { min-height: 52px; border-bottom: 1px solid var(--border); }
+.corner-side-menu .app-menu-inline .app-menu-item:last-child { border-bottom: 0; }

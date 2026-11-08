@@ -12,6 +12,7 @@ import BringOrg from '../components/BringOrg'
 import { askConfirm } from '../components/AdminDialog'
 import { calmMotion } from '../utils/motion'
 import { useT } from '../utils/lang'
+import { DeskMoreBelow } from '../components/MapBuilder'
 
 // Oct 22: the Village Network (search, street map, every village and organization)
 // lives under the globe now. /villages opens this page.
@@ -390,6 +391,7 @@ export default function World() {
         {net === 'orgs' && <div className="cal-page wd-network"><BringOrg /></div>}
       </section>
       </div>
+      <DeskMoreBelow getPage={() => document.querySelector('.wd-page')} />
 
       {sheet && (
         <div className="vs-shade" onClick={(e) => { if (e.target === e.currentTarget) closeSheet() }}>

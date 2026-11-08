@@ -159,3 +159,39 @@
   :root:not([data-theme="dark"]) .wd-switch button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
 }
 .wd-fire { border-width: 1px; }
+
+/* ---------- My World scrolls like the other map pages (Nov 8, Jade) ----------
+   The globe holds still on the left. The right side is part of the page, so the whole
+   page scrolls with the mouse wheel anywhere, with no second scrollbar inside a box.
+   Same frame as the village and cottage pages: the dark panel, the place sheets on the
+   right, and "More below" when something is hidden. */
+@media (min-width: 1024px) {
+  html:not(.simple) .app-main-world > .vs-page.wd-page {
+    --wd-map-h: calc(100dvh - var(--header-height) - var(--tab-height) - 32px - env(safe-area-inset-bottom, 0px));
+    --wd-map-w: min(var(--wd-map-h), calc(50vw - 36px));
+    --wd-right-x: calc(var(--wd-map-w) + 48px);
+    --vs-right-x: var(--wd-right-x);
+    display: block; height: auto; min-height: 0; overflow: visible;
+    padding: 16px 24px 24px var(--wd-right-x);
+  }
+  html:not(.simple) .wd-page > .wd-globe-wrap {
+    position: fixed; z-index: 2; margin: 0;
+    top: calc(var(--header-height) + 16px); left: 24px;
+    /* Always a square, so the globe stays round (Nov 8 fix: it was stretched on narrower windows). */
+    width: var(--wd-map-w); max-width: none; height: var(--wd-map-w); aspect-ratio: 1;
+  }
+  html:not(.simple) .wd-page > .wd-panel {
+    height: auto; min-height: var(--wd-map-h); overflow: visible; overscroll-behavior: auto;
+  }
+  html:not(.simple) .wd-page .vs-shade {
+    left: var(--wd-right-x); padding: 0;
+    bottom: calc(var(--tab-height) + 16px + env(safe-area-inset-bottom, 0px));
+  }
+  html:not(.simple) .wd-page > .vs-more-desk {
+    display: flex; align-items: flex-end; justify-content: center;
+    position: fixed !important; z-index: 4 !important; left: var(--wd-right-x); right: 24px;
+    bottom: calc(var(--tab-height) + 16px + env(safe-area-inset-bottom, 0px)); height: 96px;
+    margin: 0 !important; padding-bottom: 12px; box-sizing: border-box; border-radius: 0 0 16px 16px;
+    background: linear-gradient(to bottom, transparent, var(--bg, #121212) 75%); pointer-events: none;
+  }
+}

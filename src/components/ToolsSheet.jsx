@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Icon from './Icon'
 import { useBackCloses } from '../hooks/useBackCloses'
+import BoxMoreBelow from './BoxMoreBelow'
 import { useT } from '../utils/lang'
 
 // The pop-up list behind My Tools (top bar). children show above the rows (your alerts).
@@ -47,6 +48,7 @@ export default function ToolsSheet({ id, title, rows, onClose, children, rowsTit
         </ul>
         {footer}
         <button type="button" className="btn btn-outline btn-full" onClick={() => onClose(true)}>{tr('Close')}</button>
+        <BoxMoreBelow boxRef={ref} />
       </div>
     </div>
   )
