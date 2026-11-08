@@ -7,6 +7,7 @@
 .ask-preview-card { cursor: default; margin: 0; }
 .ask-preview-card:active { transform: none; }
 .ask-preview-empty { color: var(--text-muted) !important; font-style: italic; }
+.offer-badge.ask-preview-empty { background: transparent !important; border: 1px dashed var(--border-strong); }
 .ask-preview-line { margin: 0.4rem 0 0; font-size: 1rem; color: var(--text-secondary); }
 .ask-preview-note { margin: 0; font-size: 1rem; line-height: 1.45; color: var(--text-secondary); }
 .ask-preview .feed-card-desc { white-space: pre-wrap; overflow-wrap: anywhere; }
