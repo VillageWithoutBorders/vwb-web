@@ -5,7 +5,6 @@ import { getMyLocation, distanceMiles } from '../utils/location'
 import { resourceCats, currentCategory, CAT_ICON_FILES } from '../utils/resourceCategories'
 import { searchResources } from '../utils/resourceSearch'
 import AddressLink from './AddressLink'
-import { useGoBack } from './BackLink'
 import SuggestResource from './SuggestResource'
 import { useWideScreen } from '../hooks/useWideScreen'
 import { useT } from '../utils/lang'
@@ -21,7 +20,6 @@ const SHOW = 5
 export default function NearbyResourcesFirst({ profile, onContinue }) {
   const t = useT()
   const navigate = useNavigate()
-  const goBack = useGoBack()
   const [rows, setRows] = useState(null)
   const [cat, setCat] = useState('')
   const [query, setQuery] = useState('')
@@ -75,10 +73,9 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       <div className="nr-left">
       <div className="nr-head">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0, minWidth: 44, minHeight: 44 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>{t('Resources near you')}</h1>
       </div>
-      <p className="ask-intro nr-intro">{t("Food, bills, rides, hotlines, and more near you. Can't find it? Ask a neighbor at the bottom.")}</p>
+      <p className="ask-intro nr-intro">{t("Food, bills, rides, hotlines, and more near you. Can't find it? Ask a neighbor.")}</p>
       <div className="nr-top-row">
         <a href="tel:911" className="nr-911">{t('In danger? Call 911')}</a>
         <a href="#nr-ask" className="nr-skip">{t('Ask a neighbor')} &#8595;</a>
@@ -108,7 +105,7 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       <div ref={resultsRef} className="nr-results">
       {!picked && <p className="nr-pick-hint">{t('Pick a kind of help or search on the left. What is near you shows up here.')}</p>}
       {rows === null && <p>{t('Loading...')}</p>}
-      {rows && picked && results.length === 0 && <p style={{ color: 'var(--text-soft)' }}>{t('Nothing found nearby. A neighbor may be able to help. Ask at the bottom of this page.')}</p>}
+      {rows && picked && results.length === 0 && <p style={{ color: 'var(--text-soft)' }}>{t('Nothing found nearby. A neighbor may be able to help. Tap Ask a neighbor for help.')}</p>}
       {results.length > 0 && (
         <ul style={{ listStyle: 'none', margin: '0 0 0.5rem', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {results.slice(0, SHOW).map(({ r, d }) => (
