@@ -1073,3 +1073,28 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
   :root:not([data-theme="dark"]) .app-main.app-main-world { background: var(--bg); }
   :root:not([data-theme="dark"]) .vs-page-path::before { display: none; }
 }
+
+/* ---------- My Cottage, condensed (Nov 7, Jade) ----------
+   Fewer lines on the right side, so more of it fits on the screen:
+   - your name and Hope Ambassador sit on one line;
+   - "Nothing is waiting on you" and "No open requests near you" sit on one line;
+   - on a computer: no "Tap anything on your map" line (the map is right there and
+     every place has a hover note), Your garden is a button its own size, and
+     Coming up and Emergency Response sit side by side. */
+.vs-today .welcome-section { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.75rem; }
+.vs-today .welcome-section > h2 { margin: 0; }
+.vs-today .welcome-section > .today-role { margin: 0; }
+.vs-today .welcome-section > .welcome-sub { flex-basis: 100%; margin: 0; }
+.vs-today .today-needs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.vs-today .today-needs > * { flex: 1 1 100%; }
+.vs-today .today-needs > .today-empty { flex: 0 1 auto; margin: 0; }
+.vs-today .today-needs > .home-need-quiet { flex: 1 1 260px; width: auto; margin: 0; min-height: 44px; }
+@media (min-width: 1024px) {
+  html:not(.simple) .vs-page-path > .vs-hint { display: none; }
+  html:not(.simple) .vs-page-path > .vs-gifts-btn { width: auto; align-self: flex-start; padding-left: 16px; padding-right: 16px; }
+  html:not(.simple) .vs-today .dashboard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; }
+  html:not(.simple) .vs-today .dashboard > * { grid-column: 1 / -1; min-width: 0; }
+  html:not(.simple) .vs-today .dashboard > .today-slim { grid-column: auto; order: 10; margin-top: 0; }
+  html:not(.simple) .vs-today .dashboard > .today-setup { order: 11; }
+}
+.vs-today .today-needs > .today-h { margin-bottom: 0; }
