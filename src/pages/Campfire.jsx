@@ -661,9 +661,10 @@ export default function Campfire({ pane = false }) {
           </button>
         )
         return (
-          <div role="dialog" aria-modal="true" aria-label={t('Choose a chat')} onClick={() => setPickerOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-            <div onClick={e => e.stopPropagation()} role="listbox" style={{ width: '100%', maxWidth: '32rem', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--surface)', borderTop: '1px solid var(--border-strong)', borderRadius: '16px 16px 0 0', padding: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <div role="dialog" aria-modal="true" aria-label={t('Choose a chat')} className="chat-picker-shade" onClick={() => setPickerOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <div onClick={e => e.stopPropagation()} role="listbox" className="chat-picker" style={{ width: '100%', maxWidth: '32rem', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--surface)', borderTop: '1px solid var(--border-strong)', borderRadius: '16px 16px 0 0', padding: '1rem' }}>
+              {/* Nov 7 (Jade): the title and Close stay in view while the list scrolls. */}
+              <div className="chat-picker-head" style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
                 <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-strong)', flex: 1 }}>{t('Your chats')}</h2>
                 <button type="button" onClick={() => setPickerOpen(false)} aria-label={t('Close')} style={{ minWidth: '44px', minHeight: '44px', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer' }}>&#10005;</button>
               </div>
