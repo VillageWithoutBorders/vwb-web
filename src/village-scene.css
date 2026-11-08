@@ -1131,3 +1131,27 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
   html:not(.simple) .vs-page-path .vs-cot { width: calc(var(--vs-lw) * 0.09 * var(--s, 1)); }
   html:not(.simple) .vs-page-path .vs-hamlet .vs-cot:nth-child(-n+3) { width: calc(var(--vs-lw) * 0.08 * var(--s, 1)); }
 }
+
+/* ---------- Computers: "More below" on the right side (Nov 8, Jade) ----------
+   A soft fade at the bottom of the right side with a small button, so people know
+   the page keeps going. ScrollCue (MapBuilder.jsx) shows it only until you scroll. */
+.vs-more-desk { display: none; }
+@media (min-width: 1024px) {
+  html:not(.simple) .vs-page-path > .vs-more-desk {
+    display: flex; align-items: flex-end; justify-content: center;
+    position: fixed !important; z-index: 4 !important; left: var(--vs-right-x); right: 24px;
+    bottom: calc(var(--tab-height) + 16px + env(safe-area-inset-bottom, 0px)); height: 96px;
+    margin: 0 !important; padding-bottom: 12px; box-sizing: border-box; border-radius: 0 0 16px 16px;
+    background: linear-gradient(to bottom, transparent, var(--bg, #121212) 75%); pointer-events: none;
+  }
+  .vs-more-desk-btn {
+    pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 18px;
+    border-radius: 999px; border: 1px solid var(--vs-line, var(--border-strong)); background: var(--surface, #1e1e1e);
+    color: var(--text, #fff); font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  .vs-more-desk-btn:hover { border-color: var(--accent); }
+  .vs-more-desk-btn:focus-visible { outline: 3px solid var(--vs-focus, var(--focus)); outline-offset: 2px; }
+  .vs-more-desk-btn:active { transform: scale(0.97); }
+}
+@media (prefers-reduced-motion: reduce) { .vs-more-desk-btn:active { transform: none; } }
