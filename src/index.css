@@ -7066,3 +7066,40 @@ h1.settings-title { margin: 0 0 1rem; }
   .sh-page > .sh-row, .sh-page > .sh-village { margin: 0; }
   .sh-page > .sh-everything { justify-self: center; max-width: 480px; }
 }
+
+/* Nov 7: the note that shows instead of a blank page. */
+.page-error { max-width: 520px; margin: 2rem auto; padding: 1.25rem; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.page-error h1 { font-size: 1.4rem; margin: 0 0 0.5rem; color: var(--text-strong); }
+.page-error p { margin: 0 0 1rem; color: var(--text-secondary); font-size: 1rem; line-height: 1.45; }
+
+/* Nov 7 (Jade): Simple home below the big buttons. On a phone the two column boxes step
+   aside (display: contents) and order keeps the usual top to bottom list. On a computer
+   each column stacks on its own, so there is no gap beside a tall box. */
+.sh-cols, .sh-col { display: contents; }
+.sh-col > * { order: 5; }
+.sh-col > .sh-village { order: 1; }
+.sh-col > .sh-events { order: 2; }
+.sh-col > .sh-share { order: 3; }
+.sh-col > .sh-groups { order: 4; }
+.sh-col > .sh-wait { order: 6; }
+.sh-col > .sh-emergency { order: 7; }
+.sh-col > .sh-setup { order: 8; }
+.sh-col > .sh-settings { order: 9; }
+.sh-page > .sh-everything, .sh-page > .sh-center { order: 20; }
+@media (min-width: 1024px) {
+  .sh-page > .sh-cols { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+  .sh-cols > .sh-col { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+  .sh-col > .sh-row, .sh-col > .sh-village { margin: 0; }
+}
+
+/* Nov 7 (Jade): on a computer, "Read this to me" on a page that has its own way back
+   ("All help", an arrow) sits on that page's first line, at the right, instead of
+   taking a whole row of its own. Phones keep it on its own row so nothing overlaps. */
+@media (min-width: 1024px) {
+  .app-main { position: relative; }
+  .app-main > .read-aloud-row {
+    position: absolute; z-index: 5; top: calc(var(--header-height) + 2rem); right: 2.5rem;
+    padding: 0; margin: 0;
+  }
+  .app-main:has(> .read-aloud-row) { --back-h: 0px; }
+}
