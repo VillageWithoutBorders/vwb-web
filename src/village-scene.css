@@ -1016,3 +1016,19 @@ button.vs-gift-row:hover, button.vs-gift-row:focus-visible { outline: 2px solid 
   html.simple .vs-page.vs-page-path > * { margin-left: 0 !important; margin-right: 0 !important; }
   html.simple .app-main-world > .app-back-row { width: 100%; max-width: 760px; margin: 0 auto; padding: 8px 24px 0; box-sizing: border-box; }
 }
+
+/* Nov 7 (Jade): on a computer, a place's sheet (Neighbors, Charter...) opens in the right
+   panel, beside the map, instead of popping up over the middle of the page. The map stays
+   free, so tapping another place just switches the sheet. Close is a small button at the
+   top right. Phones and Simple view keep the sheet that slides up from the bottom. */
+@media (min-width: 1024px) {
+  html:not(.simple) .vs-page-path .vs-shade, html:not(.simple) .wd-page .vs-shade {
+    top: calc(var(--header-height) + 16px); bottom: calc(var(--tab-height) + 24px + env(safe-area-inset-bottom, 0px));
+    left: calc(50vw + 12px); right: 24px; background: none; align-items: stretch; justify-content: stretch; pointer-events: none;
+  }
+  html:not(.simple) .vs-page-path .vs-sheet, html:not(.simple) .wd-page .vs-sheet {
+    pointer-events: auto; max-width: none; max-height: none; height: 100%; box-sizing: border-box;
+    border: 2px solid var(--vs-line); border-radius: 16px; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35); align-content: start;
+  }
+  html:not(.simple) .vs-sheet .vs-sheet-close { position: static; justify-self: end; width: auto; padding: 0 16px; margin: 0; border-width: 1px; }
+}
