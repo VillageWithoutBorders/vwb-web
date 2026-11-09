@@ -29,6 +29,8 @@ const uid = '11111111-1111-1111-1111-111111111111'
 const user = { id: uid, email: 'test@example.org', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' }
 const profile = { user_id: uid, display_name: 'Test Neighbor', simple_view: false, guidelines_accepted_at: '2026-01-01', tour_done_at: '2026-01-01', setup_done_at: '2026-01-01', village_opt_in: true, zip_code: '30736', neighborhood: 'Ringgold, GA', skills: ['Tech Help'], ui_prefs: {} }
 
+if (!existsSync(join(ROOT, 'index.html'))) { console.log('No test build yet. Run: npm run build:check   then   npm run a11y'); process.exit(1) }
+console.log('Accessibility check started. It takes a few minutes. Let it finish.')
 const browser = await playwright.chromium.launch()
 let serious = 0
 let minor = 0
@@ -52,6 +54,7 @@ for (const scheme of ['light', 'dark']) {
         if (inside) localStorage.setItem('sb-fake-auth-token', JSON.stringify({ access_token: 'x.eyJzdWIiOiIxIn0.x', refresh_token: 'r', token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, user: u }))
       }, [user, signedIn])
       const page = await ctx.newPage()
+      console.log(`Checking ${scheme}, ${w}px, ${signedIn ? 'signed in' : 'signed out'} (${pages.length} pages)...`)
       for (const route of pages) {
         await page.goto('http://localhost:4180' + route)
         await page.locator('h1, h2').first().waitFor({ timeout: 10000 }).catch(() => {})

@@ -7623,3 +7623,53 @@ html.simple .tab-icon-pic, html.simple .tab-icon-pic .vwb-icon { width: 2rem; he
 @media (min-width: 1024px) {
   :is(html.text-larger, html.text-largest) :is(.fr-left, .fr-right) { height: auto !important; max-height: none !important; overflow: visible !important; position: static !important; }
 }
+/* Nov 8 (Jade): My Corner at big text fits with room to spare (some accounts have an extra
+   Admin panel row). Smaller title and avatar, rows a touch shorter, steady 44px+ targets. */
+@media (min-width: 1024px) {
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-title-wide { margin: 0 0 0.5rem; font-size: 1.4rem; }
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-split { gap: 1rem; }
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-split .corner-page-full { gap: 0.6rem; }
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-split .corner-card { padding: 0.7rem 0.9rem; }
+  :is(html.text-larger, html.text-largest) .corner-split .corner-avatar, :is(html.text-larger, html.text-largest) .corner-split .corner-letter { width: 80px; height: 80px; }
+  :is(html.text-larger, html.text-largest) .corner-split .corner-who b { font-size: 1.15rem; }
+  :is(html.text-larger, html.text-largest) .corner-split .corner-who span { font-size: 0.9rem; }
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-split .app-menu-inline .app-menu-item,
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-side-menu .app-menu-inline .app-menu-item,
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-room-things .corner-item { min-height: 44px; padding-top: 0.2rem; padding-bottom: 0.2rem; }
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-split .app-menu-heading,
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-side-menu .app-menu-heading,
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-room-things .corner-group-h { margin: 0 0 0.3rem; font-size: 0.95rem; }
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-split-side > .pp-cottage { padding: 0.6rem; gap: 0.5rem; }
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-split .pp-cottage-go { min-height: 44px; }
+  :is(html.text-large, html.text-larger, html.text-largest) .corner-split .corner-settings { min-height: 48px; }
+}
+@media (min-width: 1024px) {
+  html:not(.text-large):not(.text-larger):not(.text-largest) .corner-split .corner-card { padding: 0.9rem 1.1rem; }
+  html:not(.text-large):not(.text-larger):not(.text-largest) .corner-split .corner-avatar,
+  html:not(.text-large):not(.text-larger):not(.text-largest) .corner-split .corner-letter { width: 104px; height: 104px; }
+  .corner-title-wide { margin-bottom: 0.5rem; }
+}
+
+/* Nov 8 (Jade): Resources near you, roomy cards at every text size.
+   Each kind of help is a card with its picture beside the word, and the card
+   grows to fit its words, so nothing overlaps. No box inside the page scrolls:
+   with big text the page itself grows. The title starts at the top, no gap. */
+@media (min-width: 1024px) {
+  html:not(.simple) .ask-page.nr-page { height: auto; min-height: var(--fit-h); grid-template-rows: auto auto 1fr; align-content: start; }
+  html:not(.simple) .nr-page > .nr-left { display: flex; flex-direction: column; grid-column: 1; grid-row: 1 / -1; align-self: start; min-width: 0; height: auto; overflow: visible; }
+  html:not(.simple) .nr-page > .nr-left > .nr-head, html:not(.simple) .nr-page > .nr-left > .nr-pick { flex: none; align-self: stretch; }
+  html:not(.simple) .nr-pick { overflow: visible; }
+  html:not(.simple) .nr-pick > .nr-tiles {
+    flex: none; overflow: visible; margin-bottom: 0.75rem; gap: 0.6rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(min-content, auto); align-content: start;
+  }
+  html:not(.simple) .nr-pick .hub-tile {
+    flex-direction: row; justify-content: flex-start; align-items: center; gap: 0.6rem;
+    height: auto; min-height: 56px; padding: 0.45rem 0.75rem; text-align: left; line-height: 1.25;
+  }
+  html:not(.simple) .nr-pick .hub-tile img { width: 36px; height: 36px; flex: none; margin: 0; }
+  html:not(.simple) .nr-pick .hub-tile > span { min-width: 0; overflow-wrap: anywhere; }
+  html:not(.simple) .nr-found > .nr-results { height: auto; min-height: 260px; overflow: visible; }
+  html.text-larger:not(.simple) .nr-pick > .nr-tiles,
+  html.text-largest:not(.simple) .nr-pick > .nr-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

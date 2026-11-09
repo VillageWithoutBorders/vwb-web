@@ -182,3 +182,40 @@ img.hub-tile-icon { width: 40px; height: 40px; }
   html.text-large .fr-left > .fr-side-tiles { gap: 0.5rem; }
   html.text-large .fr-page .community-sub, html.text-large .fr-left > p { font-size: 0.85rem; }
 }
+
+/* Nov 8 (Jade): Find resources at Larger and Largest text on a computer.
+   Less stacking, so more kinds of help show without scrolling:
+   All help sits beside the tabs, Filters and Print sit beside the search box,
+   and each card shows its name and count on one line. */
+@media (min-width: 1024px) {
+  html.text-larger:not(.simple) .fr-page .fr-left,
+  html.text-largest:not(.simple) .fr-page .fr-left { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 0.75rem; align-content: flex-start; }
+  html.text-larger:not(.simple) .fr-left > *,
+  html.text-largest:not(.simple) .fr-left > * { flex: 1 1 100%; min-width: 0; }
+  html.text-larger:not(.simple) .fr-left > .hub-back,
+  html.text-largest:not(.simple) .fr-left > .hub-back { flex: 0 0 auto; margin-bottom: 0.6rem; }
+  html.text-larger:not(.simple) .fr-left > .help-switch,
+  html.text-largest:not(.simple) .fr-left > .help-switch { flex: 1 1 0; margin-bottom: 0.6rem; }
+  html.text-larger:not(.simple) .fr-left > .fh-head img,
+  html.text-largest:not(.simple) .fr-left > .fh-head img { width: 40px; height: 40px; }
+  html.text-larger:not(.simple) .fr-left > .hub-search,
+  html.text-largest:not(.simple) .fr-left > .hub-search { flex: 1 1 260px; margin-bottom: 0.75rem; }
+  html.text-larger:not(.simple) .fr-left > .fh-filterbar,
+  html.text-largest:not(.simple) .fr-left > .fh-filterbar { flex: 0 1 auto; margin-bottom: 0.75rem; }
+  html.text-larger:not(.simple) .fr-left .fh-tile,
+  html.text-largest:not(.simple) .fr-left .fh-tile { grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-rows: auto; align-items: center; min-height: 56px; padding: 0.4rem 0.7rem; column-gap: 0.55rem; }
+  html.text-larger:not(.simple) .fr-left .fh-tile img,
+  html.text-largest:not(.simple) .fr-left .fh-tile img { width: 32px; height: 32px; grid-row: 1; }
+  html.text-larger:not(.simple) .fr-left .fh-tile-name,
+  html.text-largest:not(.simple) .fr-left .fh-tile-name { grid-column: 2; }
+  html.text-larger:not(.simple) .fr-left .fh-tile-count,
+  html.text-largest:not(.simple) .fr-left .fh-tile-count { grid-column: 3; grid-row: 1; white-space: nowrap; font-size: 0.8rem; }
+  html.text-larger:not(.simple) .fr-left > .fr-side-tiles,
+  html.text-largest:not(.simple) .fr-left > .fr-side-tiles { gap: 0.5rem; }
+}
+@media (min-width: 1024px) {
+  html.text-larger:not(.simple) .fr-left > .help-switch .help-switch-btn,
+  html.text-largest:not(.simple) .fr-left > .help-switch .help-switch-btn { white-space: nowrap; padding-left: 0.5rem; padding-right: 0.5rem; }
+  html.text-larger:not(.simple) .fr-left > .fh-head,
+  html.text-largest:not(.simple) .fr-left > .fh-head { margin-bottom: 0.15rem; }
+}
