@@ -7589,7 +7589,7 @@ html.simple .tab-icon-pic, html.simple .tab-icon-pic .vwb-icon { width: 2rem; he
     .tk-left, .tk-right,
     .pp-split > .pp-main, .pp-split > .pp-cottage,
     .corner-split > .corner-split-main, .corner-split > .corner-split-side, .corner-split > .pp-cottage,
-    .ask-page.nr-page, .nr-left, .nr-right, .fr-left, .fr-right,
+    .ask-page.nr-page, .nr-left, .nr-right,
     .cal-split > .cal-left, .cal-split > .cal-right
   ) { height: auto !important; max-height: none !important; overflow: visible !important; position: static !important; }
   /* Use the whole width for those pages. */
@@ -7601,4 +7601,25 @@ html.simple .tab-icon-pic, html.simple .tab-icon-pic .vwb-icon { width: 2rem; he
   :is(html.text-larger, html.text-largest) .corner-side-menu > .app-menu { grid-template-columns: minmax(0, 1fr); }
   /* The Calendar's Home button no longer needs to stick. */
   :is(html.text-large, html.text-larger, html.text-largest) .app-main:has(> .cal-split) > .app-back-row { position: static; }
+}
+
+/* Nov 8 (Jade): My Corner at Larger and Largest text on a computer: three columns, so it
+   fits on one screen. You and your account | Your things | About the app and VWB. */
+@media (min-width: 1024px) {
+  :is(html.text-larger, html.text-largest) .corner-split { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr) !important; }
+  :is(html.text-larger, html.text-largest) .corner-split > .corner-split-side { display: contents !important; }
+  :is(html.text-larger, html.text-largest) .corner-split-side > .pp-cottage { align-self: start; }
+  :is(html.text-larger, html.text-largest) .corner-side-menu > .app-menu { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
+  :is(html.text-larger, html.text-largest) .corner-room-things .corner-list { grid-template-columns: minmax(0, 1fr) !important; }
+  :is(html.text-larger, html.text-largest) .corner-room-things .corner-item { border-right: 0 !important; min-height: 48px; }
+  :is(html.text-larger, html.text-largest) .corner-split .corner-card { padding: 0.9rem; gap: 1rem; }
+  :is(html.text-larger, html.text-largest) .corner-split .corner-avatar, :is(html.text-larger, html.text-largest) .corner-split .corner-letter { width: 96px; height: 96px; }
+  :is(html.text-larger, html.text-largest) .corner-split .corner-settings small { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  :is(html.text-larger, html.text-largest) .corner-split .app-menu-inline .app-menu-item, :is(html.text-larger, html.text-largest) .corner-side-menu .app-menu-inline .app-menu-item { min-height: 48px; }
+}
+
+/* Find resources: at Large text it still fits on one screen (three columns of shorter
+   cards, below). Only at Larger and Largest does the page grow and scroll. */
+@media (min-width: 1024px) {
+  :is(html.text-larger, html.text-largest) :is(.fr-left, .fr-right) { height: auto !important; max-height: none !important; overflow: visible !important; position: static !important; }
 }
