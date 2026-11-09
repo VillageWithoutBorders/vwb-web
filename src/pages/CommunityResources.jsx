@@ -1002,7 +1002,7 @@ export default function CommunityResources() {
 
           {!placesEnabled && user && profile && profile.latitude == null && (
             <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.8125rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem' }}>
-              Showing national resources. Add your zip code in your profile to see ones near you.
+              {t('Showing national resources. Add your zip code in your profile to see ones near you.')}
             </p>
           )}
 

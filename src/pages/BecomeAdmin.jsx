@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import BackLink from '../components/BackLink'
 import { ADMIN_REQUESTS_OPEN } from '../data/adminTeam'
+import { useT } from '../utils/lang'
 
 // Asking to become an admin for your village (vwb-admin-recruiting.sql).
 // You can ask for a village that has no admin yet (vwb-roles-step5.sql).
@@ -19,6 +20,7 @@ const PROMISES = [
 
 export default function BecomeAdmin() {
   const { profile, isAdmin } = useAuth()
+  const t = useT()
   const [checks, setChecks] = useState(null)
   const [villages, setVillages] = useState(null)
   const [waiting, setWaiting] = useState(false)
@@ -67,10 +69,10 @@ export default function BecomeAdmin() {
     return (
       <div className="become-admin">
         <BackLink fallback="/profile" fallbackLabel="Profile" />
-        <h1>Admin is the VWB team for now</h1>
-        <p>VWB isn't adding admins right now. Villages are run by their own Keepers and Helpers, with Hope Ambassadors nearby.</p>
-        <p>If you want to help your village, ask its Keeper about being a Helper, or become a Hope Ambassador.</p>
-        <p><Link to="/admin-guide">Read the Admin Guide</Link> to see what admins do.</p>
+        <h1>{t('Admin is the VWB team for now')}</h1>
+        <p>{t("VWB isn't adding admins right now. Villages are run by their own Keepers and Helpers, with Hope Ambassadors nearby.")}</p>
+        <p>{t('If you want to help your village, ask its Keeper about being a Helper, or become a Hope Ambassador.')}</p>
+        <p><Link to="/admin-guide">{t('Read the Admin Guide')}</Link> {t('to see what admins do.')}</p>
       </div>
     )
   }
