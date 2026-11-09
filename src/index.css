@@ -7520,3 +7520,16 @@ html.calm-motion .vs-more-desk-btn:active { transform: none; }
   html.text-largest .settings-cols [aria-labelledby="textsize-h"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 .settings-cols [aria-labelledby="textsize-h"] > button { min-width: 0; overflow-wrap: anywhere; }
+/* Nov 8 (Jade): at Large text and up, Light or dark puts the picture above the word again,
+   so "Match my phone" has room. */
+@media (min-width: 1024px) {
+  html.text-large .settings-cols [aria-labelledby="appearance-h"] > button,
+  html.text-larger .settings-cols [aria-labelledby="appearance-h"] > button,
+  html.text-largest .settings-cols [aria-labelledby="appearance-h"] > button { flex-direction: column; gap: 0.2rem; padding: 0.4rem 0.3rem !important; }
+}
+.settings-cols [aria-labelledby="appearance-h"] > button { min-width: 0; overflow-wrap: anywhere; }
+/* At Larger and Largest text, two wider columns instead of three, so big words never break. */
+@media (min-width: 1024px) {
+  html.text-larger .settings-cols, html.text-largest .settings-cols { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+.settings-cols [aria-labelledby="textsize-h"] > button { overflow-wrap: normal; }
