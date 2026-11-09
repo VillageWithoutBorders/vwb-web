@@ -5963,7 +5963,7 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 .admin-guide-toc { margin: 1rem 0; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .admin-guide-toc h2 { margin: 0 0 0.25rem; font-size: 1.0625rem; }
 .admin-guide-toc ol { margin: 0; gap: 0; }
-.admin-guide-toc a { display: inline-block; min-height: 44px; line-height: 44px; color: var(--accent); font-weight: 600; }
+.admin-guide-toc a { display: block; box-sizing: border-box; min-height: 44px; padding: 0.6rem 0; line-height: 1.3; color: var(--accent); font-weight: 600; }
 .admin-guide-toc a:focus-visible, .guide-table-wrap:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .guide-table-wrap { overflow-x: auto; margin: 0 0 0.75rem; border: 1px solid var(--border); border-radius: 10px; }
 .guide-table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 0.9375rem; }
@@ -7673,3 +7673,60 @@ html.simple .tab-icon-pic, html.simple .tab-icon-pic .vwb-icon { width: 2rem; he
   html.text-larger:not(.simple) .nr-pick > .nr-tiles,
   html.text-largest:not(.simple) .nr-pick > .nr-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ---------- Phones at big text (Nov 9 sweep, Jade) ----------
+   At Large, Larger and Largest on a phone, words were spilling past the screen
+   and piling on top of each other. Rules here:
+   - The page keeps a slim 12px side margin so words get the room.
+   - The two bars keep their words a readable but fixed size, so five or four
+     buttons always fit side by side. Page words still grow.
+   - Page titles grow, but never so big that one long word runs off the screen.
+   - Tabs and buttons in a row wrap to a new line instead of overlapping. */
+@media (max-width: 479px) {
+  :is(html.text-large, html.text-larger, html.text-largest) .app-main { padding-left: 12px; padding-right: 12px; }
+  :is(html.text-large, html.text-larger, html.text-largest) .header-nav .header-btn-label { font-size: 12.5px; letter-spacing: 0; }
+  :is(html.text-large, html.text-larger, html.text-largest) .header-nav .header-btn { flex: 1 1 auto; min-width: 0; padding-left: 3px; padding-right: 3px; }
+  html[lang="es"]:is(.text-large, .text-larger, .text-largest) .header-nav .header-btn-label { font-size: 11.5px; }
+  :is(html.text-large, html.text-larger, html.text-largest) .tab-label { font-size: 14px; white-space: normal; text-align: center; line-height: 1.1; }
+  :is(html.text-large, html.text-larger, html.text-largest) .app-main :is(h1, h2) { overflow-wrap: break-word; hyphens: auto; }
+  :is(html.text-larger, html.text-largest) .app-main h1 { font-size: min(1.5rem, 32px); line-height: 1.15; }
+  :is(html.text-larger, html.text-largest) .app-main h2 { font-size: min(1.2rem, 26px); }
+  :is(html.text-large, html.text-larger, html.text-largest) :is(.help-switch, .tasks-tabs) { display: flex; flex-wrap: wrap; }
+  :is(html.text-large, html.text-larger, html.text-largest) :is(.help-switch-btn, .tasks-tab) { flex: 1 1 auto; white-space: normal; text-align: center; padding-left: 0.6rem; padding-right: 0.6rem; }
+  :is(html.text-large, html.text-larger, html.text-largest) .tasks-tab:first-child { border-right: none; }
+  :is(html.text-large, html.text-larger, html.text-largest) .vs-lab { font-size: 13px; padding: 3px 7px; }
+  :is(html.text-large, html.text-larger, html.text-largest) :is(.location-prompt-row, .hub-search) { flex-wrap: wrap; }
+  :is(html.text-large, html.text-larger, html.text-largest) :is(.location-prompt-row, .hub-search) > input { flex: 1 1 100%; min-width: 0; min-height: 48px; }
+  :is(html.text-large, html.text-larger, html.text-largest) :is(.location-prompt-row, .hub-search) > .btn { flex: 1 1 100%; }
+  :is(html.text-large, html.text-larger, html.text-largest) .app-main a[href^="mailto:"] { overflow-wrap: anywhere; }
+  /* Boxes inside boxes each added a big side margin. Keep them slim so words get the room. */
+  :is(html.text-large, html.text-larger, html.text-largest) .hub-head { padding-left: 0 !important; padding-right: 0 !important; }
+  :is(html.text-large, html.text-larger, html.text-largest) :is(.doors, .messages-page, .cal-page, .groups-page, .offer-split, .ce-page, .pp-page) { padding-left: 0; padding-right: 0; }
+  :is(html.text-large, html.text-larger, html.text-largest) :is(.door, .new-account-note, .location-prompt, .feed-empty, .ce-card, .detail-row, .detail-section-header, .cal-box, .cal-empty, .cal-found, .cal-choice, .cal-filters-body, .help-section, .new-here, .recovery-nudge, .amb-signup-card, .home-tasks, .vs-error) { padding-left: 14px; padding-right: 14px; }
+  :is(html.text-larger, html.text-largest) .hub-tiles { grid-template-columns: 1fr; }
+  :is(html.text-large, html.text-larger, html.text-largest) .hub-tile { overflow-wrap: break-word; hyphens: auto; }
+  :is(html.text-large, html.text-larger, html.text-largest) .app-main form:has(> input[type="search"]) { flex-wrap: wrap; }
+  :is(html.text-large, html.text-larger, html.text-largest) .app-main form:has(> input[type="search"]) > input { flex: 1 1 100% !important; min-width: 0; }
+  :is(html.text-large, html.text-larger, html.text-largest) .app-main form:has(> input[type="search"]) > .btn { flex: 1 1 100%; }
+  :is(html.text-large, html.text-larger, html.text-largest) :is(.vs-edit-fab, .vs-zoom-btn) { font-size: 14px; padding: 0 8px; gap: 4px; }
+  :is(html.text-large, html.text-larger, html.text-largest) .vs-scroll-cue { font-size: 16px; }
+  :is(html.text-large, html.text-larger, html.text-largest) .vs-scroll-cue-arrow { font-size: 18px; }
+}
+@media (max-width: 359px) {
+  :is(html.text-large, html.text-larger, html.text-largest) .header-nav .header-btn-label { font-size: 11.5px; }
+  :is(html.text-large, html.text-larger, html.text-largest) .tab-label { font-size: 13px; }
+  :is(html.text-large, html.text-larger, html.text-largest) .vs-lab { font-size: 12px; }
+}
+
+/* Any screen at big text (Nov 9 sweep): rows of choices wrap instead of overlapping. */
+:is(html.text-large, html.text-larger, html.text-largest) .msg-timer { grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)); }
+:is(html.text-large, html.text-larger, html.text-largest) .wd-switch { display: flex; flex-wrap: wrap; width: 100%; max-width: 520px; }
+:is(html.text-large, html.text-larger, html.text-largest) .wd-switch button { flex: 1 1 auto; font-size: 1rem; padding: 4px 10px; }
+:is(html.text-larger, html.text-largest) .help-switch-btn { white-space: normal !important; text-align: center; line-height: 1.15; }
+
+/* Touch targets (Nov 9 sweep): everything you tap is at least 44px. */
+a.vs-chip.vs-chip-link { min-height: 44px; }
+.password-toggle { min-height: 44px; min-width: 44px; }
+.convo-input, .convo-send, #email, #password { min-height: 44px; }
+button[role="switch"] { position: relative; }
+button[role="switch"]::after { content: ""; position: absolute; inset: -11px -4px; }

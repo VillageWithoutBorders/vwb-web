@@ -49,7 +49,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
   const [readReceipts, setReadReceipts] = useState(true)
   const [safetyCheckins, setSafetyCheckins] = useState(true)
   const [hidePushDetails, setHidePushDetails] = useState(true)
-  const [defaultHelpMsg, setDefaultHelpMsg] = useState('I can help!')
+  const [defaultHelpMsg, setDefaultHelpMsg] = useState(() => t('I can help!'))
   const [editingHelpMsg, setEditingHelpMsg] = useState(false)
   const [blockedUsers, setBlockedUsers] = useState([])
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
@@ -263,7 +263,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
       setReadReceipts(data.read_receipts_enabled !== false)
       setSafetyCheckins(data.safety_checkins_enabled !== false)
       setHidePushDetails(data.hide_push_details !== false)
-      setDefaultHelpMsg(data.default_help_message || 'I can help!')
+      setDefaultHelpMsg(data.default_help_message || t('I can help!'))
     }
   }
 
@@ -302,7 +302,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
   }
 
   async function saveHelpMsg() {
-    const trimmed = defaultHelpMsg.trim() || 'I can help!'
+    const trimmed = defaultHelpMsg.trim() || t('I can help!')
     const previous = defaultHelpMsg
     setDefaultHelpMsg(trimmed)
     setEditingHelpMsg(false)
@@ -614,11 +614,11 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
   }
 
-  const tabStyle = (active) => ({ padding: '0.5rem 1rem', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : 'var(--surface-2)', color: active ? 'var(--on-accent)' : 'var(--text-secondary)' })
+  const tabStyle = (active) => ({ padding: '0.5rem 1rem', minHeight: 44, borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : 'var(--surface-2)', color: active ? 'var(--on-accent)' : 'var(--text-secondary)' })
   const sidebarStyle = { position: 'fixed', top: 0, right: showSidebar ? 0 : '-320px', width: '300px', height: '100%', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }
   const overlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: showSidebar ? 'block' : 'none' }
   const sectionTitle = { fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1.5rem', marginBottom: '0.5rem' }
-  const menuBtn = { display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }
+  const menuBtn = { display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', minHeight: 44, cursor: 'pointer', fontSize: '0.85rem' }
   const toggleRow = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid var(--border)' }
   const toggleDot = (on) => ({ width: '40px', height: '22px', borderRadius: '11px', background: on ? 'var(--accent)' : '#444', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', border: 'none', padding: 0, flexShrink: 0 })
   const toggleKnob = (on) => ({ position: 'absolute', top: '2px', left: on ? '20px' : '2px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' })
@@ -657,13 +657,13 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
       <div style={sidebarStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('Settings')}</h2>
-          <button onClick={() => setShowSidebar(false)} aria-label={t('Close settings')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <button onClick={() => setShowSidebar(false)} aria-label={t('Close settings')} style={{ minWidth: 44, minHeight: 44, background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
 
         <div style={sectionTitle}>{t('Folders')}</div>
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
           <input type="text" placeholder={t('New folder name')} value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createFolder()} maxLength={30} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem' }} />
-          <button onClick={createFolder} style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{t('Add')}</button>
+          <button onClick={createFolder} style={{ padding: '0.5rem 0.75rem', minHeight: 44, borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{t('Add')}</button>
         </div>
         {folders.map(f => (
           <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: '1px solid var(--border)' }}>
@@ -712,7 +712,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
         ) : (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0' }}>
             <span style={{ color: 'var(--text)', fontSize: '0.9rem', fontStyle: 'italic' }}>"{defaultHelpMsg}"</span>
-            <button onClick={() => setEditingHelpMsg(true)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem' }}>{t('Edit')}</button>
+            <button onClick={() => setEditingHelpMsg(true)} style={{ minHeight: 44, padding: '0 0.5rem', background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem' }}>{t('Edit')}</button>
           </div>
         )}
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>{t('Auto-sent when you tap "Offer Help" on a request')}</p>

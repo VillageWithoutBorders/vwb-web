@@ -765,7 +765,7 @@ export default function EventDetail({ id: idProp, embedded = false }) {
       {!mySignup && (
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           <button onClick={() => setShowSignupForm('responder')} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>{t('Offer Help')}</button>
-          <button onClick={() => setShowSignupForm('affected')} style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: 'none', background: 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>{t('I need help')}</button>
+          <button onClick={() => setShowSignupForm('affected')} style={{ flex: 1, minHeight: 44, padding: '0.75rem', borderRadius: '8px', border: 'none', background: 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>{t('I need help')}</button>
         </div>
       )}
 

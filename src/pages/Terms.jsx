@@ -35,7 +35,7 @@ export default function Terms() {
   return (
     <div className="help-page" style={{ maxWidth: '720px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ minWidth: 44, minHeight: 44, background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>{t('Terms of Use')}</h1>
       </div>
       {/* Nov 5: the terms stay in English (legal text). In Spanish, say so up top,

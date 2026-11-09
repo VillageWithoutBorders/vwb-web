@@ -345,7 +345,7 @@ export default function Settings() {
       {/* Nov 7 (Jade): the frame's Back button and the same title as every other page. */}
       <h1 className="settings-title">{t('Settings & Privacy')}</h1>
 
-      <div role="tablist" aria-label="Settings" className="hub-tabs" style={{ marginTop: 0, marginBottom: '1rem' }}>
+      <div role="tablist" aria-label={t('Settings')} className="hub-tabs" style={{ marginTop: 0, marginBottom: '1rem' }}>
         <button type="button" role="tab" id="settings-tab-easy" aria-selected={tab === 'easy'} aria-controls="settings-panel" style={tabStyle(tab === 'easy')} onClick={() => pickTab('easy')}>
           {t('Easy to use')}
         </button>

@@ -29,7 +29,7 @@ export default function Help() {
   return (
     <div className="help-page">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
+        <button onClick={() => goBack('/')} aria-label={t('Go back')} style={{ minWidth: 44, minHeight: 44, background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>&#8592;</button>
         <h1 style={{ margin: 0 }}>{t('App guide and feedback')}</h1>
       </div>
 

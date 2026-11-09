@@ -533,7 +533,7 @@ export default function Conversation({ convoId, pane = false, openReport = false
       <div style={{ position: 'fixed', top: 0, right: showSettings ? 0 : '-320px', width: '300px', height: '100%', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('Chat Settings')}</h2>
-          <button onClick={() => setShowSettings(false)} aria-label={t('Close chat settings')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
+          <button onClick={() => setShowSettings(false)} aria-label={t('Close chat settings')} style={{ minWidth: 44, minHeight: 44, background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>&#10005;</button>
         </div>
 
         <button type="button" disabled={blockedBy.has(otherUserId)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'var(--surface-2)', borderRadius: '10px', marginBottom: '1.25rem', cursor: blockedBy.has(otherUserId) ? 'default' : 'pointer', border: 'none', width: '100%', textAlign: 'left' }} onClick={() => { setShowSettings(false); if (!blockedBy.has(otherUserId)) navigate('/u/' + otherUserId) }}>
@@ -547,7 +547,7 @@ export default function Conversation({ convoId, pane = false, openReport = false
         <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>{t('Actions')}</div>
 
         {!blockedBy.has(otherUserId) && (
-        <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+        <button onClick={() => { setShowSettings(false); navigate('/u/' + otherUserId) }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', minHeight: 44, cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="person" /></span> {t('View Profile')}
         </button>
         )}
@@ -562,10 +562,10 @@ export default function Conversation({ convoId, pane = false, openReport = false
           setShowSettings(false)
           if (error) { console.error('Failed to block user:', error); tell('Could not block this user. Try again.', { tone: 'error' }); return }
           tell(t('Blocked.'))
-        }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+        }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', minHeight: 44, cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="cross" /></span> {t('Block User')}
         </button>
-        <button onClick={() => { setShowSettings(false); setReportDialog('report') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', padding: '0.6rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+        <button onClick={() => { setShowSettings(false); setReportDialog('report') }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--danger)', padding: '0.6rem 0.75rem', minHeight: 44, cursor: 'pointer', fontSize: '0.85rem' }}>
           <span style={{ width: '1.2rem', textAlign: 'center' }}><Icon name="flag" /></span> {t('Report User')}
         </button>
       </div>
