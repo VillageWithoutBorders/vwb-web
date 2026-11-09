@@ -154,3 +154,21 @@ img.hub-tile-icon { width: 40px; height: 40px; }
 .sr-close:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .sr-close:active { transform: scale(0.95); }
 @media (prefers-reduced-motion: reduce) { .sr-close:active { transform: none; } }
+
+/* Nov 8 (Jade): kinds of help never overlap. Each card is at least as tall as its words
+   (big text grew the words but not the cards). At Large text and up, two columns. */
+@media (min-width: 1024px) {
+  .fr-left > .fr-side-tiles { grid-auto-rows: minmax(min-content, 150px); }
+  .fr-left .fh-tile { height: auto; }
+  html.text-large .fr-left > .fr-side-tiles,
+  html.text-larger .fr-left > .fr-side-tiles,
+  html.text-largest .fr-left > .fr-side-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fr-left .fh-tile-name { overflow-wrap: normal; word-break: normal; hyphens: manual; }
+}
+/* At Large text and up the page is simply taller: both sides grow and the page scrolls,
+   so nothing is cut off inside a fixed box. */
+@media (min-width: 1024px) {
+  html.text-large .fr-left, html.text-larger .fr-left, html.text-largest .fr-left { height: auto; max-height: none; overflow: visible; position: static; }
+  html.text-large .fr-left > .fr-side-tiles, html.text-larger .fr-left > .fr-side-tiles, html.text-largest .fr-left > .fr-side-tiles { flex: none; overflow: visible; grid-auto-rows: auto; }
+  html.text-large .fr-right, html.text-larger .fr-right, html.text-largest .fr-right { height: auto; overflow: visible; }
+}
