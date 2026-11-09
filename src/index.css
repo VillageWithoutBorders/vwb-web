@@ -7533,3 +7533,72 @@ html.calm-motion .vs-more-desk-btn:active { transform: none; }
   html.text-larger .settings-cols, html.text-largest .settings-cols { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 .settings-cols [aria-labelledby="textsize-h"] > button { overflow-wrap: normal; }
+
+/* Nov 8 (Jade): the pictures in the top and bottom bars grow with the text size.
+   They are measured in rem now (26px at normal), so Large, Larger and Largest make them
+   bigger along with the words. */
+.header-btn-pic, .header-btn-logo, .header-btn .me-btn-img, .header-btn .me-btn-letter { width: 1.625rem; height: 1.625rem; }
+.header-btn .me-btn-letter { font-size: 0.8125rem; }
+.tab-icon-pic, .tab-icon-pic .vwb-icon, .tab-icon-pic .me-btn-img, .tab-icon-pic .me-btn-letter { width: 1.625rem; height: 1.625rem; }
+html.simple .tab-icon-pic, html.simple .tab-icon-pic .vwb-icon { width: 2rem; height: 2rem; }
+.header-btn .vwb-icon { width: 1.625rem; height: 1.625rem; }
+/* The letter avatar carries its own size inline; in the bars it grows with the text too. */
+.header-btn .me-btn-letter, .tab-icon-pic .me-btn-letter { width: 1.625rem !important; height: 1.625rem !important; }
+
+/* ============================================================
+   Nov 8 (Jade): the top bar's buttons look like binder tabs. Each one is a tab with a
+   rounded top that sits on the bottom edge of the bar. The page you're on is the tab that
+   joins the page: it takes the page's own color, with a gold stripe along its top.
+   ============================================================ */
+.app-header-inner.header-nav { align-items: flex-end; }
+.header-nav > .header-btn, .header-nav > .app-menu { align-self: stretch; margin-top: 6px; }
+.header-nav .header-btn { border-radius: 12px 12px 0 0; background: rgba(255, 255, 255, 0.07); padding-top: 6px; }
+.header-nav .header-btn:hover { background: rgba(255, 255, 255, 0.14); }
+.header-nav .header-btn.on { background: var(--bg); color: var(--text-strong); box-shadow: inset 0 4px 0 #e0b85a; }
+.header-nav .header-btn.on .header-btn-label, .header-nav .header-btn.on .header-my { color: var(--text-strong); }
+.header-nav .header-btn.on .me-btn-img, .header-nav .header-btn.on .me-btn-letter { border-color: var(--accent); }
+.header-nav .header-btn:focus-visible { outline-offset: -4px; }
+
+/* ============================================================
+   Nov 8 (Jade): on a computer at Large, Larger and Largest text, the top and bottom
+   bars put each picture beside its word instead of above it. The bars use the spare
+   width instead of growing taller, so the maps and pages keep their size.
+   ============================================================ */
+@media (min-width: 1024px) {
+  html.text-large, html.text-larger, html.text-largest { --header-height: 2.9rem; --tab-height: calc(1.625rem + 20px); }
+  html.text-large .app-header-inner, html.text-larger .app-header-inner, html.text-largest .app-header-inner,
+  html.text-large .bottom-tabs-inner, html.text-larger .bottom-tabs-inner, html.text-largest .bottom-tabs-inner { max-width: 1240px; }
+  html.text-large .header-nav .header-btn, html.text-larger .header-nav .header-btn, html.text-largest .header-nav .header-btn { flex-direction: row; gap: 0.4rem; padding: 4px 12px 0; min-height: 0; }
+  html.text-large .tab-item, html.text-larger .tab-item, html.text-largest .tab-item { flex-direction: row; justify-content: center; gap: 0.5rem; padding: 4px 8px; }
+  html.text-large .header-nav .header-btn-label, html.text-larger .header-nav .header-btn-label, html.text-largest .header-nav .header-btn-label { white-space: nowrap; }
+}
+
+/* ============================================================
+   Nov 8 (Jade), the rule for the whole app: at Large, Larger and Largest text on a
+   computer, no box scrolls by itself. Side-by-side pages use the full width and the
+   page itself scrolls, so bigger words get more room instead of more scrollbars.
+   (Chats keep their own scrolling: a conversation has to.)
+   ============================================================ */
+@media (min-width: 1024px) {
+  :is(html.text-large, html.text-larger, html.text-largest) :is(
+    .em-split > .em-left, .em-split > .em-right,
+    .ask-split > .ask-left, .offer-split > .ask-left, .ask-split > .ask-preview, .offer-split > .ask-preview,
+    .dash-side, .dash-main,
+    .me-profile > .me-left, .me-profile > .me-right, .nt-split > .nt-left, .nt-split > .nt-right,
+    .fo-page > .feed-header, .fo-page > .feed-scroll,
+    .tk-left, .tk-right,
+    .pp-split > .pp-main, .pp-split > .pp-cottage,
+    .corner-split > .corner-split-main, .corner-split > .corner-split-side, .corner-split > .pp-cottage,
+    .ask-page.nr-page, .nr-left, .nr-right, .fr-left, .fr-right,
+    .cal-split > .cal-left, .cal-split > .cal-right
+  ) { height: auto !important; max-height: none !important; overflow: visible !important; position: static !important; }
+  /* Use the whole width for those pages. */
+  :is(html.text-large, html.text-larger, html.text-largest) .app-main:has(:is(.em-split, .ask-split, .offer-split, .dash-page, .groups-full, .me-profile, .nt-split, .fo-page, .tk-page, .pp-split, .corner-split, .nr-page, .fr-page, .cal-split, .settings-page)) { max-width: min(1600px, 100%) !important; }
+  /* A neighbor's cottage picture keeps a good size when the box is no longer screen-tall. */
+  :is(html.text-large, html.text-larger, html.text-largest) .pp-cottage-map > .vs-scene-path { height: auto !important; width: 100% !important; max-width: 460px; }
+  :is(html.text-large, html.text-larger, html.text-largest) .pp-cottage-map { flex: none; }
+  /* My Corner's two small menus stack, so their words aren't squeezed into narrow columns. */
+  :is(html.text-larger, html.text-largest) .corner-side-menu > .app-menu { grid-template-columns: minmax(0, 1fr); }
+  /* The Calendar's Home button no longer needs to stick. */
+  :is(html.text-large, html.text-larger, html.text-largest) .app-main:has(> .cal-split) > .app-back-row { position: static; }
+}
