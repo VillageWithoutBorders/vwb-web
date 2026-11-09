@@ -4452,6 +4452,14 @@ const more = {
   'Tortoise': 'Carey',
   'Cream': 'Crema',
   'Rose': 'Rosa',
+  // Nov 8: Account and privacy cards
+  'Brings back your private messages if you lose this device.': 'Recupera sus mensajes privados si pierde este dispositivo.',
+  'Why do I need this?': '¿Para qué sirve esto?',
+  'See my devices': 'Ver mis dispositivos',
+  '1 phone or computer can read your private messages.': '1 teléfono o computadora puede leer sus mensajes privados.',
+  '{n} phones and computers can read your private messages.': '{n} teléfonos y computadoras pueden leer sus mensajes privados.',
+  'Sign out or leave': 'Cerrar sesión o irse',
+  'Sign out on this device, or leave Village Without Borders for good.': 'Cierre sesión en este dispositivo, o deje Village Without Borders para siempre.',
   // Nov 8: QR pop-up
   'Let a neighbor you met scan this with their phone camera. It connects you and counts as a vouch.': 'Deje que un vecino que conoció escanee esto con la cámara de su teléfono. Quedarán conectados, y cuenta como que responden el uno por el otro.',
   'On a big screen, pages can stay narrow and easy to follow, or spread out to use the whole screen. Phones always fit the screen.': 'En una pantalla grande, las páginas pueden quedar angostas y fáciles de seguir, o abrirse para usar toda la pantalla. En el teléfono siempre caben en la pantalla.',

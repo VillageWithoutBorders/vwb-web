@@ -68,9 +68,14 @@ export default function RecoveryKeySection() {
     <div className="profile-details" id="recovery" style={{ marginTop: '0.75rem' }}>
       <div className="detail-section-header">{t('Recovery key')}</div>
       <div style={{ padding: '0 1rem 1rem' }}>
-        <p className="privacy-toggle-desc" style={{ marginTop: 0 }}>
-          {t("Your private messages are locked with a key that lives only on this device. If you clear your browser, lose your phone, or switch devices, old messages can't be opened. A recovery key lets you bring them back. We never see it, so we can't open your messages either.")}
-        </p>
+        {/* Nov 8 (Jade): one short line first; the full story behind "Why?" so the card stays calm. */}
+        <p className="privacy-toggle-desc" style={{ marginTop: 0 }}>{t('Brings back your private messages if you lose this device.')}</p>
+        <details className="recovery-more">
+          <summary>{t('Why do I need this?')}</summary>
+          <p className="privacy-toggle-desc" style={{ marginTop: 0 }}>
+            {t("Your private messages are locked with a key that lives only on this device. If you clear your browser, lose your phone, or switch devices, old messages can't be opened. A recovery key lets you bring them back. We never see it, so we can't open your messages either.")}
+          </p>
+        </details>
         <p className="privacy-toggle-desc">
           {status?.exists
             ? (status.updatedAt ? t('Recovery key set up on {date}.', { date: new Date(status.updatedAt).toLocaleDateString(getLang() === 'es' ? 'es' : undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }) : t('Recovery key set up.'))

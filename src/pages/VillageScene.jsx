@@ -674,6 +674,12 @@ export default function VillageScene() {
             {home?.village_id
               ? <Link className="vs-chip vs-chip-in vs-chip-link" to={'/village/' + home.village_id}>{t('Home: {village}', { village: home.name })}</Link>
               : home && <Link className="vs-chip vs-chip-link" to="/find-village">{t('Find your home village')}</Link>}
+            {/* Nov 8 (Jade): Your garden sits on the same line as your home village. */}
+            {!arrange && (
+              <button type="button" className="vs-gifts-btn" onClick={() => openSheet({ k: 'gifts' })}>
+                <Icon name="sprout" size={28} /> {t('Your garden: {n} of {total} gifts grown', { n: GIFTS.filter((g) => g.got).length, total: GIFTS.length })}
+              </button>
+            )}
           </div>
         </div>
       ) : (<>
@@ -805,11 +811,6 @@ export default function VillageScene() {
           It sits under the map so it never covers a place. */}
       {!simple && <ScrollCue b={b} />}
 
-      {cottage && !arrange && (
-        <button type="button" className="vs-gifts-btn" onClick={() => openSheet({ k: 'gifts' })}>
-          <Icon name="sprout" size={28} /> {t('Your garden: {n} of {total} gifts grown', { n: GIFTS.filter((g) => g.got).length, total: GIFTS.length })}
-        </button>
-      )}
       <p className="vs-hint">{arrange ? (cottage ? t('Arrange and build your cottage map. Your changes are saved as you go.') : arrangeFor === 'everyone' ? t('You are setting the default look for {village}. Personal views stay as they are. Changes are saved as you go.', { village: village.name }) : t('You are arranging your own view. Only you see it. Changes are saved as you go.')) : cottage ? t('Tap anything on your map to go there.') : t('Tap anything in the village to go there.')}</p>
 
       <MapToolbar b={b} more={<>
