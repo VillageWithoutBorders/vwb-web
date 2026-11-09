@@ -25,6 +25,10 @@ export default function Calendar() {
   const [allAgesOnly, setAllAgesOnly] = useState(false)
   // Wide layout: the day picked on the month shows at the top of the right panel.
   const [pickedDay, setPickedDay] = useState(() => dayKey(new Date()))
+  // Nov 9 (Jade): on a computer, the extras (who's organizing, bring your group, the phone
+  // calendar link) live under More and open on the right in place of the events, so the
+  // page fits one screen. null = the events.
+  const [extra, setExtra] = useState(null)
   const rightRef = useRef(null)
   function pickDay(k) {
     setPickedDay(k)
@@ -40,6 +44,7 @@ export default function Calendar() {
   ], [organizations])
 
   function jumpToSubscribe() {
+    if (wide) { setExtra('subscribe'); return }
     const el = document.getElementById('cal-subscribe')
     if (el) {
       el.scrollIntoView({ behavior: calmMotion() ? 'auto' : 'smooth', block: 'start' })
@@ -124,15 +129,19 @@ export default function Calendar() {
             <summary>{t('More')}</summary>
             <div className="cal-more-body">
               {canPost && <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/calendar/import')}>{t('Bring in events')}</button>}
-              <button type="button" className="btn btn-outline btn-full" onClick={jumpToSubscribe}>{t('Add these events to my phone calendar')}</button>
+              <button type="button" className="btn btn-outline btn-full" onClick={(e) => { setExtra('organizers'); e.currentTarget.closest('details').open = false }}>{t("Who's organizing nearby")}</button>
+              <button type="button" className="btn btn-outline btn-full" onClick={(e) => { setExtra('bring'); e.currentTarget.closest('details').open = false }}>{t('Bring your group to VWB')}</button>
+              <button type="button" className="btn btn-outline btn-full" onClick={(e) => { setExtra('subscribe'); e.currentTarget.closest('details').open = false }}>{t('Add these events to my phone calendar')}</button>
             </div>
           </details>
         </div>
 
-        <details className="cal-filters" open={!origin}>
+        {/* Nov 9: on a computer this starts closed so the whole month fits; with no place
+            yet, the line under it says so. */}
+        <details className="cal-filters">
           <summary>
             <span className="cal-filters-word">{t('Place and filters')}</span>
-            <small>{(origin && origin.name ? origin.name + ', ' : '') + t('within {n} miles', { n: miles }) + (allAgesOnly ? t(', all ages only') : '')}</small>
+            <small>{origin ? (origin.name ? origin.name + ', ' : '') + t('within {n} miles', { n: miles }) + (allAgesOnly ? t(', all ages only') : '') : t('No place yet, so you only see online events')}</small>
           </summary>
           <div className="cal-filters-body">
             <CalendarLocationBar origin={origin} onOriginChange={changeOrigin} miles={miles} onMilesChange={setMiles} homeArea={memberArea(profile)} />
@@ -143,6 +152,12 @@ export default function Calendar() {
           {!loading && !loadError && <CalendarMonth events={visible} picked={pickedDay} onPick={pickDay} hideDay />}
         </div>
         <div className="cal-right" ref={rightRef}>
+          {extra ? (<>
+            <button type="button" className="btn btn-outline cal-extra-back" onClick={() => setExtra(null)}>&#8592; {t('Back to events')}</button>
+            {extra === 'organizers' && <NearbyOrganizers origin={origin} miles={miles} />}
+            {extra === 'bring' && <BringOrg />}
+            {extra === 'subscribe' && <CalendarSubscribe choices={subscribeChoices} anchorId="cal-subscribe" />}
+          </>) : (<>
           {loading && <p className="cal-empty">{t('Loading events...')}</p>}
           {!loading && loadError && (
             <p className="cal-error">{t("We couldn't load the calendar right now. Check your connection and try again.")}</p>
@@ -153,9 +168,7 @@ export default function Calendar() {
             {farBox}
             <CalendarEventList events={upcoming} emptyText={emptyText} />
           </>)}
-          <NearbyOrganizers origin={origin} miles={miles} />
-          <BringOrg />
-          <CalendarSubscribe choices={subscribeChoices} anchorId="cal-subscribe" />
+          </>)}
         </div>
         <DeskMoreBelow getPage={() => rightRef.current && rightRef.current.parentElement} getColumn={() => rightRef.current} />
       </div>

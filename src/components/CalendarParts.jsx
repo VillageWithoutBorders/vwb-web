@@ -3,7 +3,10 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DISTANCE_OPTIONS, groupByDay, hasEnded, timeRange, dayLabel, VISIBILITY, placeFromZip } from '../utils/calendar'
 import { useWideScreen } from '../hooks/useWideScreen'
-import { t as tr, useT } from '../utils/lang'
+import { t as tr, useT, getLang } from '../utils/lang'
+
+// Nov 9: month and day names follow the app language, not the browser's.
+function dateLoc() { return getLang() === 'es' ? 'es-US' : undefined }
 
 // Where to look: a zip code (any US zip), "Use my location" (this visit
 // only), or "Back to my area" (the member's saved area), plus how far.
@@ -203,7 +206,7 @@ export function CalendarMonth({ events, newTab, picked: pickedProp, onPick, hide
     <div className="cal-month">
       <div className="cal-month-head">
         <button type="button" className="cal-month-nav" onClick={() => move(-1)} aria-label={t('Previous month')}>&#8249;</button>
-        <h2 className="cal-month-title" aria-live="polite">{month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
+        <h2 className="cal-month-title" aria-live="polite">{month.toLocaleDateString(dateLoc(), { month: 'long', year: 'numeric' })}</h2>
         <button type="button" className="cal-month-nav" onClick={() => move(1)} aria-label={t('Next month')}>&#8250;</button>
       </div>
       <div className="cal-month-grid" role="group" aria-label={t('Month')}>
@@ -213,7 +216,7 @@ export function CalendarMonth({ events, newTab, picked: pickedProp, onPick, hide
           const k = dayKey(d)
           const list = byDay[k] || []
           const cls = 'cal-month-day' + (k === picked ? ' is-picked' : '') + (k === dayKey(today) ? ' is-today' : '') + (list.length ? ' has-events' : '') + (list.length && list.every(hasEnded) ? ' has-ended-only' : '')
-          const label = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) + ', ' + (list.length === 0 ? t('no events') : t(list.length === 1 ? '1 event' : '{n} events', { n: list.length }))
+          const label = d.toLocaleDateString(dateLoc(), { month: 'long', day: 'numeric' }) + ', ' + (list.length === 0 ? t('no events') : t(list.length === 1 ? '1 event' : '{n} events', { n: list.length }))
           return (
             <button key={k} type="button" className={cls} onClick={() => setPicked(k)} aria-label={label} aria-pressed={k === picked}>
               <span className="cal-month-num">{d.getDate()}</span>
@@ -224,7 +227,7 @@ export function CalendarMonth({ events, newTab, picked: pickedProp, onPick, hide
       </div>
       <p className="cal-month-today"><button type="button" className="link-button" style={{ minHeight: '44px' }} onClick={goToday}>{t('Jump to today')}</button></p>
       {!hideDay && (<>
-        <h2 className="cal-day">{pickedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
+        <h2 className="cal-day">{pickedDate.toLocaleDateString(dateLoc(), { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
         {dayEvents.length === 0
           ? <p className="cal-sub">{t('Nothing on this day.')}</p>
           : dayEvents.map((ev) => <CalendarEventCard key={ev.id} ev={ev} newTab={newTab} />)}
@@ -240,7 +243,7 @@ export function CalendarDay({ day, events, newTab }) {
   const date = new Date(day + 'T00:00:00')
   return (
     <section className="cal-picked-day" aria-live="polite">
-      <h2 className="cal-day">{date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
+      <h2 className="cal-day">{date.toLocaleDateString(dateLoc(), { weekday: 'long', month: 'long', day: 'numeric' })}</h2>
       {list.length === 0
         ? <p className="cal-sub">{t('Nothing on this day.')}</p>
         : list.map((ev) => <CalendarEventCard key={ev.id} ev={ev} newTab={newTab} />)}
