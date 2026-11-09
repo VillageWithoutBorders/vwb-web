@@ -6,6 +6,7 @@ import { resetAccountToBase } from '../utils/resetAccount'
 import { startAppTour } from '../components/AppTour'
 import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
 import RecoveryKeySection from '../components/RecoveryKeySection'
+import DevicesSheet from '../components/DevicesSheet'
 import AppearancePicker from '../components/AppearancePicker'
 import WidthPicker from '../components/WidthPicker'
 import { useSimpleView } from '../utils/simpleView'
@@ -62,6 +63,8 @@ export default function Settings() {
   const [devices, setDevices] = useState([])
   const [thisDeviceId, setThisDeviceId] = useState(null)
   const [devicesLoaded, setDevicesLoaded] = useState(false)
+  // Nov 8 (Jade): Your devices opens as a pop-up.
+  const [showDevices, setShowDevices] = useState(false)
   const [removingDevice, setRemovingDevice] = useState(null)
   const [deviceNote, setDeviceNote] = useState('')
   const [signingOutAll, setSigningOutAll] = useState(false)
@@ -351,24 +354,31 @@ export default function Settings() {
         </button>
       </div>
 
-      <div role="tabpanel" id="settings-panel" aria-labelledby={'settings-tab-' + tab}>
+      <div role="tabpanel" id="settings-panel" className={tab === 'account' ? 'settings-account' : undefined} aria-labelledby={'settings-tab-' + tab}>
       {tab === 'easy' && (
         <>
           <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{t('Make VWB easier to see and use. Changes save right away.')}</p>
 
-          {/* Language first (Nov 3), so someone who can't read English finds it fast. */}
-          <LanguagePicker />
-
-          {/* Nov 7 (Jade): two columns on a computer, their tops lined up.
-              Left: seeing. Right: using and learning. */}
+          {/* Nov 8 (Jade): three columns on a computer so it all fits on one screen:
+              Seeing (with Language first), Using, and Learning the app.
+              Language stays first, so someone who can't read English finds it fast (Nov 3). */}
           <div className="settings-cols">
           <div className="settings-col">
+          <LanguagePicker />
 
           <h2 className="settings-group-h">{t('Seeing')}</h2>
           <TextSizePicker />
           <AppearancePicker />
+          </div>
 
-          {/* Nov 7 (Jade): Learning the app sits under Seeing so the two columns end closer together. */}
+          <div className="settings-col">
+          <h2 className="settings-group-h">{t('Using')}</h2>
+          <SimpleViewPicker />
+          {simpleOn && <WidthPicker />}
+          <MotionPicker />
+          </div>
+
+          <div className="settings-col">
           <h2 className="settings-group-h">{t('Learning the app')}</h2>
           <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '48px' }}>
             <span aria-hidden="true"><Icon name="compass" /></span> {t('Take the app tour again')}
@@ -379,29 +389,22 @@ export default function Settings() {
           </button>
           <p style={{ margin: '0.4rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{t('Make your avatar, pick your skills, and name your cottage. About 10 minutes. Finishing it turns on the full app.')}</p>
           </div>
-
-          <div className="settings-col">
-          <h2 className="settings-group-h">{t('Using')}</h2>
-          <SimpleViewPicker />
-          {simpleOn && <WidthPicker />}
-          <MotionPicker />
-
-          </div>
           </div>
         </>
       )}
 
       {tab === 'account' && (
       <>
+      {/* Nov 8 (Jade): calm, same-shaped cards. On a computer: two rows of four.
+          Signing in: Email, Password, Two-step login, Recovery key.
+          Privacy: Privacy and safety, Blocked neighbors, Your devices, Delete my account. */}
       {placesEnabled && <AreaPicker />}
 
       <div className="profile-details">
-        <div className="detail-row">
-          <span className="detail-label">{t('Email')}</span>
-          <span className="detail-value">{user?.email}</span>
-        </div>
+        <div className="detail-section-header">{t('Email')}</div>
         {!showEmailChange ? (
-          <div style={{ textAlign: 'right', padding: '0 1rem 0.75rem' }}>
+          <div className="detail-row">
+            <span className="detail-value" style={{ textAlign: 'left', overflowWrap: 'anywhere' }}>{user?.email}</span>
             <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => { setShowEmailChange(true); setEmailError(''); setEmailMessage('') }}>
               {t('Change email')}
             </button>
@@ -499,6 +502,8 @@ export default function Settings() {
         {twoStepMessage && <p className="form-success" role="status" style={{ padding: '0 1rem 0.75rem' }}>{twoStepMessage}</p>}
       </div>
 
+      <RecoveryKeySection />
+
       <div className="profile-details" style={{ marginTop: '1rem' }}>
         <div className="detail-section-header">{t('Privacy and Safety')}</div>
         <div className="privacy-toggle-row">
@@ -534,9 +539,8 @@ export default function Settings() {
           </button>
         </div>
         <div className="detail-row">
-          <span className="detail-label">{t('More message settings')}</span>
           <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => navigate('/messages')}>
-            {t('Open Messages')}
+            {t('More message settings')}
           </button>
         </div>
       </div>
@@ -558,44 +562,57 @@ export default function Settings() {
           ))
         )}
       </div>
-
-      <RecoveryKeySection />
-
       <div className="profile-details" style={{ marginTop: '0.75rem' }}>
         <div className="detail-section-header">{t('Your Devices')}</div>
         <div className="detail-row">
-          <span className="detail-value" style={{ textAlign: 'left', fontSize: '0.8125rem' }}>
-            {t("Private messages are locked separately for each device. Open VWB once on each device you use so it can read new messages. A new device can't read messages sent before it was added.")}
+          <span className="detail-value" style={{ textAlign: 'left' }}>
+            {!devicesLoaded ? t('Loading...') : devices.length === 1 ? t('1 phone or computer can read your private messages.') : t('{n} phones and computers can read your private messages.', { n: devices.length })}
           </span>
+          <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => setShowDevices(true)}>
+            {t('See my devices')}
+          </button>
         </div>
-        {devicesLoaded && devices.length === 0 && (
-          <div className="detail-row">
-            <span className="detail-value" style={{ textAlign: 'left' }}>{t('No devices found yet')}</span>
-          </div>
-        )}
-        {devices.map((d) => {
-          const mine = d.deviceId === thisDeviceId
-          const stale = d.lastSeen && Date.now() - new Date(d.lastSeen).getTime() > 60 * 24 * 3600 * 1000
-          return (
-            <div key={d.deviceId} className="blocked-user-row">
-              <div>
-                <span className="privacy-toggle-label">{d.label || t('Device (name not saved yet)')}{mine ? ' (' + t('this device') + ')' : ''}</span>
-                <p className="privacy-toggle-desc">
-                  {t('Added {date}', { date: shortDate(d.addedAt) })}
-                  {d.lastSeen ? ' \u00b7 ' + t('Last used {date}', { date: shortDate(d.lastSeen) }) : ''}
-                  {stale ? ' \u00b7 ' + t('Not used in a while') : ''}
-                </p>
-              </div>
-              {!mine && (
-                <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => removeDevice(d)} disabled={removingDevice === d.deviceId}>
-                  {removingDevice === d.deviceId ? t('Removing...') : t('Remove')}
-                </button>
-              )}
-            </div>
-          )
-        })}
         {deviceNote && <p className="form-success" role="status" style={{ padding: '0 1rem 0.75rem' }}>{deviceNote}</p>}
-        <div style={{ padding: '0 1rem 1rem' }}>
+      </div>
+      {/* Nov 8 (Jade): the full list opens in a pop-up, so the page stays calm. */}
+      {showDevices && (
+        <DevicesSheet onClose={() => setShowDevices(false)}>
+          <p className="privacy-toggle-desc" style={{ margin: '0 0 0.5rem' }}>
+            {t("Private messages are locked separately for each device. Open VWB once on each device you use so it can read new messages. A new device can't read messages sent before it was added.")}
+          </p>
+          <div className="profile-details" style={{ margin: 0 }}>
+        {devicesLoaded && devices.length === 0 && (
+            <div className="detail-row">
+              <span className="detail-value" style={{ textAlign: 'left' }}>{t('No devices found yet')}</span>
+            </div>
+          )}
+          {(() => {
+            const sorted = [...devices].sort((a, b) => (b.deviceId === thisDeviceId) - (a.deviceId === thisDeviceId) || new Date(b.lastSeen || b.addedAt || 0) - new Date(a.lastSeen || a.addedAt || 0))
+            return sorted
+          })().map((d) => {
+            const mine = d.deviceId === thisDeviceId
+            const stale = d.lastSeen && Date.now() - new Date(d.lastSeen).getTime() > 60 * 24 * 3600 * 1000
+            return (
+              <div key={d.deviceId} className="blocked-user-row">
+                <div>
+                  <span className="privacy-toggle-label">{d.label || t('Device (name not saved yet)')}{mine ? ' (' + t('this device') + ')' : ''}</span>
+                  <p className="privacy-toggle-desc">
+                    {t('Added {date}', { date: shortDate(d.addedAt) })}
+                    {d.lastSeen ? ' \u00b7 ' + t('Last used {date}', { date: shortDate(d.lastSeen) }) : ''}
+                    {stale ? ' \u00b7 ' + t('Not used in a while') : ''}
+                  </p>
+                </div>
+                {!mine && (
+                  <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={() => removeDevice(d)} disabled={removingDevice === d.deviceId}>
+                    {removingDevice === d.deviceId ? t('Removing...') : t('Remove')}
+                  </button>
+                )}
+              </div>
+            )
+          })}
+          </div>
+          {deviceNote && <p className="form-success" role="status">{deviceNote}</p>}
+        <div style={{ padding: '0.75rem 0 0' }}>
           <button type="button" className="btn btn-outline btn-full" style={{ minHeight: '44px', color: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={handleSignOutEverywhere} disabled={signingOutAll}>
             {signingOutAll ? t('Signing out...') : t('Sign out of all devices')}
           </button>
@@ -604,13 +621,21 @@ export default function Settings() {
           </p>
           {signOutAllError && <p className="form-error" role="alert">{signOutAllError}</p>}
         </div>
-      </div>
+        </DevicesSheet>
+      )}
 
       <div className="profile-details" style={{ marginTop: '0.75rem' }}>
-        <div className="detail-section-header">{t('Delete My Account')}</div>
+        {/* Nov 8 (Jade): Sign out lives here too, with leaving, so it's one calm card. */}
+        <div className="detail-section-header">{t('Sign out or leave')}</div>
         {!showDelete ? (
           <div className="detail-row">
-            <span className="detail-value" style={{ textAlign: 'left' }}>{t('Leave Village Without Borders for good.')}</span>
+            <span className="detail-value" style={{ textAlign: 'left' }}>{t('Sign out on this device, or leave Village Without Borders for good.')}</span>
+            <button type="button" className="link-button settings-signout" style={{ fontSize: '0.8125rem' }} onClick={signOut}>{t('Sign out')}</button>
+            {!isFounder && (profile?.is_hope_ambassador || isAdmin || (profile?.skills?.length > 0)) && (
+              <button type="button" className="link-button settings-reset" style={{ fontSize: '0.8125rem' }} onClick={handleResetToBase} disabled={resetting}>
+                {resetting ? t('Resetting...') : t('Reset to Neighbor')}
+              </button>
+            )}
             <button type="button" className="link-button" style={{ fontSize: '0.8125rem', color: 'var(--danger)' }} onClick={() => { setShowDelete(true); setDeleteError('') }}>
               {t('Delete account')}
             </button>
@@ -636,14 +661,6 @@ export default function Settings() {
       {resetMessage && <p className="form-success" role="status" style={{ marginTop: '1rem' }}>{resetMessage}</p>}
       {resetError && <p className="form-error" role="alert" style={{ marginTop: '1rem' }}>{resetError}</p>}
 
-      <div className="form-row" style={{ marginTop: '1.5rem' }}>
-        <button className="btn btn-outline" style={{ flex: 1 }} onClick={signOut}>{t('Sign out')}</button>
-        {!isFounder && (profile?.is_hope_ambassador || isAdmin || (profile?.skills?.length > 0)) && (
-          <button className="btn btn-outline" style={{ flex: 1, borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }} onClick={handleResetToBase} disabled={resetting}>
-            {resetting ? t('Resetting...') : t('Reset to Neighbor')}
-          </button>
-        )}
-      </div>
       </>
       )}
       </div>

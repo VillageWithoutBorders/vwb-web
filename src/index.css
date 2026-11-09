@@ -7433,3 +7433,83 @@ html.calm-motion .vs-more-desk-btn:active { transform: none; }
 /* Nov 8: menus shown inside a page (My Corner) never float over pop-ups like My Tools.
    The dropdown's z-index came back when the list became a flex item. */
 .app-menu-list.app-menu-inline { z-index: auto; }
+
+/* ============================================================
+   Nov 8 (Jade): Settings & Privacy fits on one screen on a computer.
+   The title and the two tabs share a row, and Easy to use has three
+   columns: Seeing (Language first), Using, and Learning the app.
+   ============================================================ */
+@media (min-width: 1024px) {
+  .settings-page { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 1.5rem; align-items: center; }
+  .settings-page > * { grid-column: 1 / -1; }
+  .settings-page > h1.settings-title { grid-column: 1; margin: 0 0 0.75rem; }
+  .settings-page > .hub-tabs { grid-column: 2; justify-self: end; width: 100%; max-width: 520px; margin: 0 0 0.75rem !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-page #settings-panel > p:first-child { margin: 0 0 0.75rem !important; }
+  .settings-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+  .settings-cols .settings-group-h { margin: 0.75rem 0 0.4rem; }
+  .settings-col > .settings-group-h:first-child { margin-top: 0; }
+  .settings-cols .profile-details { margin-bottom: 0.75rem !important; }
+  .settings-cols .detail-section-header { padding-top: 0.6rem; padding-bottom: 0.4rem; }
+  .settings-cols [role="radiogroup"] { padding-top: 0.4rem !important; }
+  .settings-cols [role="radiogroup"] > button { min-height: 48px !important; padding: 0.3rem 0.5rem !important; }
+  .settings-cols .profile-details > p { font-size: 0.85rem !important; padding-bottom: 0.6rem !important; line-height: 1.4; }
+  .settings-cols [role="radiogroup"] > button small, .settings-cols [role="radiogroup"] > button span:not(:first-child) { font-size: 0.85rem; line-height: 1.35; }
+}
+@media (min-width: 1024px) {
+  .settings-cols { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 0.8fr); }
+  /* Light or dark: icon beside the word, so the buttons are one line tall. */
+  .settings-cols [aria-labelledby="appearance-h"] > button { display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+  .settings-cols [aria-labelledby="appearance-h"] > button > span[aria-hidden] { display: inline-flex !important; }
+}
+/* Nov 8 (Jade): Account and privacy in three columns of cards on a computer. */
+@media (min-width: 1024px) {
+  /* Two rows of four same-shaped cards (Nov 8, Jade). */
+  .settings-page #settings-panel.settings-account { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
+  .settings-page #settings-panel.settings-account > * { margin: 0 !important; max-width: none; min-width: 0; }
+  .settings-page #settings-panel.settings-account > :not(.profile-details) { grid-column: 1 / -1; }
+  .settings-page #settings-panel.settings-account > .form-row { justify-content: flex-end; }
+  .settings-page #settings-panel.settings-account > .form-row > .btn { flex: 0 0 auto !important; min-width: 12rem; }
+}
+/* Nov 8: Account and privacy cards a little tighter on a computer, so they fit. */
+@media (min-width: 1024px) {
+  .settings-account .detail-section-header { padding-top: 0.6rem; padding-bottom: 0.45rem; }
+  .settings-account .detail-row { padding-top: 0.55rem; padding-bottom: 0.55rem; }
+  .settings-account .privacy-toggle-desc { font-size: 0.82rem; line-height: 1.4; }
+  .settings-account .profile-details p, .settings-account .detail-value { line-height: 1.4; }
+}
+
+/* ============================================================
+   Nov 8 (Jade): Account and privacy cards all have the same shape, on every screen:
+   a heading, a short plain line, then one clear full-width button at the bottom.
+   (They used to mix small links on the right with buttons.)
+   ============================================================ */
+.settings-account .profile-details { display: flex; flex-direction: column; }
+.settings-account .profile-details > .detail-row { flex-direction: column; align-items: stretch; gap: 0.6rem; flex: 1; }
+.settings-account .profile-details > .detail-row > .detail-value { text-align: left !important; }
+.settings-account .detail-row > .link-button, .settings-account #recovery .link-button {
+  margin-top: auto; width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface-2); color: var(--text);
+  font-size: 0.95rem !important; font-weight: 600; text-decoration: none; padding: 0 0.75rem; box-sizing: border-box;
+}
+.settings-account .detail-row > .link-button[style*="danger"] { border-color: var(--danger); background: transparent; }
+.settings-account .detail-row > .link-button:hover, .settings-account #recovery .link-button:hover { border-color: var(--accent); }
+.settings-account .blocked-user-row > .link-button { min-height: 44px; padding: 0 0.9rem; border: 1px solid var(--border-strong); border-radius: 10px; text-decoration: none; font-weight: 600; }
+.settings-account #recovery > div { display: flex; flex-direction: column; flex: 1; }
+.settings-account #recovery .btn-primary { margin-top: auto; }
+.settings-account #recovery .link-button { margin-top: 0.5rem; }
+.recovery-more summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--accent); font-size: 0.875rem; }
+@media (min-width: 1024px) {
+  /* The privacy card holds the most words, so it gets a little more room. */
+  .settings-page #settings-panel.settings-account { grid-template-columns: minmax(0, 1.3fr) repeat(3, minmax(0, 0.9fr)); }
+  .settings-account .privacy-toggle-row { padding-top: 0.55rem; padding-bottom: 0.55rem; }
+  .settings-account .privacy-toggle-desc { margin-top: 0.15rem; }
+  .settings-account .detail-row { padding-top: 0.6rem; padding-bottom: 0.75rem; }
+}
+/* Every card's button looks the same, including Make my recovery key. */
+.settings-account #recovery .btn-primary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); font-weight: 600; }
+.settings-account #recovery .btn-primary:hover { border-color: var(--accent); }
+/* In the Sign out or leave card, the buttons sit together at the bottom. */
+.settings-account .detail-row > .settings-signout { margin-top: auto; }
+.settings-account .detail-row > .settings-signout ~ .link-button { margin-top: 0; }
+/* Devices pop-up: Remove is a small button, easy to hit. */
+.qr-sheet .blocked-user-row > .link-button { min-height: 44px; padding: 0 0.9rem; border: 1px solid var(--border-strong); border-radius: 10px; text-decoration: none; font-weight: 600; flex: none; }
