@@ -160,7 +160,6 @@ img.hub-tile-icon { width: 40px; height: 40px; }
 @media (min-width: 1024px) {
   .fr-left > .fr-side-tiles { grid-auto-rows: minmax(min-content, 150px); }
   .fr-left .fh-tile { height: auto; }
-  html.text-large .fr-left > .fr-side-tiles,
   html.text-larger .fr-left > .fr-side-tiles,
   html.text-largest .fr-left > .fr-side-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fr-left .fh-tile-name { overflow-wrap: normal; word-break: normal; hyphens: manual; }
@@ -168,7 +167,18 @@ img.hub-tile-icon { width: 40px; height: 40px; }
 /* At Large text and up the page is simply taller: both sides grow and the page scrolls,
    so nothing is cut off inside a fixed box. */
 @media (min-width: 1024px) {
-  html.text-large .fr-left, html.text-larger .fr-left, html.text-largest .fr-left { height: auto; max-height: none; overflow: visible; position: static; }
-  html.text-large .fr-left > .fr-side-tiles, html.text-larger .fr-left > .fr-side-tiles, html.text-largest .fr-left > .fr-side-tiles { flex: none; overflow: visible; grid-auto-rows: auto; }
-  html.text-large .fr-right, html.text-larger .fr-right, html.text-largest .fr-right { height: auto; overflow: visible; }
+  html.text-larger .fr-left, html.text-largest .fr-left { height: auto; max-height: none; overflow: visible; position: static; }
+  html.text-larger .fr-left > .fr-side-tiles, html.text-largest .fr-left > .fr-side-tiles { flex: none; overflow: visible; grid-auto-rows: auto; }
+  html.text-larger .fr-right, html.text-largest .fr-right { height: auto; overflow: visible; }
+}
+
+/* Nov 8 (Jade): at Large text, Find resources still fits one screen: three columns of
+   shorter cards with the picture beside the words, and a shorter page heading. */
+@media (min-width: 1024px) {
+  html.text-large .fr-left .fh-tile { min-height: 0; padding: 0.4rem 0.6rem; column-gap: 0.5rem; }
+  html.text-large .fr-left .fh-tile img { width: 32px; height: 32px; }
+  html.text-large .fr-left .fh-tile-name { font-size: 0.85rem; }
+  html.text-large .fr-left .fh-tile-count { font-size: 0.75rem; }
+  html.text-large .fr-left > .fr-side-tiles { gap: 0.5rem; }
+  html.text-large .fr-page .community-sub, html.text-large .fr-left > p { font-size: 0.85rem; }
 }

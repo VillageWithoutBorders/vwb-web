@@ -648,7 +648,8 @@ export default function VillageScene() {
   function roomRow(s) {
     const i = info(s.k)
     return (
-      <button key={s.k} type="button" className={'vs-room' + (s.soon ? ' vs-soon' : '')} onClick={() => tap(s)}>
+      <button key={s.k} type="button" className={'vs-room' + (s.soon ? ' vs-soon' : '')} onClick={() => tap(s)}
+        data-tip={simple && s.k === 'skillshare' ? t('Neighbors who need a hand, and free things to share') : (typeof i.sub === 'string' ? i.sub : undefined)}>
         <span className="vs-room-ic" aria-hidden="true"><SpotIcon spot={s} size={40} /></span>
         <span className="vs-room-text"><b>{simple && s.k === 'skillshare' ? t('Help nearby') : t(s.label)}{i.badge > 0 && <span className="vs-dot" aria-label={t('New')} />}</b><small>{simple && s.k === 'skillshare' ? t('Neighbors who need a hand, and free things to share') : i.sub}</small></span>
         <span className="vs-go" aria-hidden="true">&#8250;</span>

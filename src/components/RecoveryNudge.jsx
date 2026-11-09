@@ -29,7 +29,7 @@ export default function RecoveryNudge() {
   }
   return (
     <div className="recovery-nudge" role="region" aria-label={t('Recovery key')}>
-      <p><strong>{t('Keep your private messages safe.')}</strong> {t("If you clear your browser or get a new phone, old messages can't be opened. A recovery key brings them back.")}</p>
+      <p><strong>{t('Keep your private messages safe.')}</strong> <span className="nudge-more">{t("If you clear your browser or get a new phone, old messages can't be opened. A recovery key brings them back.")}</span></p>
       <div className="key-actions">
         <Link to="/settings#recovery" className="btn btn-primary" style={{ minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>{t('Make my recovery key')}</Link>
         <button type="button" className="btn btn-outline" style={{ minHeight: '44px' }} onClick={dismiss}>{t('Not now')}</button>
