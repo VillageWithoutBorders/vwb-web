@@ -7730,3 +7730,21 @@ a.vs-chip.vs-chip-link { min-height: 44px; }
 .convo-input, .convo-send, #email, #password { min-height: 44px; }
 button[role="switch"] { position: relative; }
 button[role="switch"]::after { content: ""; position: absolute; inset: -11px -4px; }
+
+/* Nov 9 (Jade): on a computer, the top and bottom bars always put each picture beside
+   its word, at every text size (it was only at Large and up). Phones keep the picture
+   above the word, since five words side by side don't fit a phone. */
+@media (min-width: 1024px) {
+  html { --header-height: 2.9rem; --tab-height: calc(1.625rem + 20px); }
+  .app-header-inner, .bottom-tabs-inner { max-width: 1240px; }
+  .header-nav .header-btn { flex-direction: row; gap: 0.4rem; padding: 4px 12px 0; min-height: 0; max-width: none; }
+  .tab-item { flex-direction: row; justify-content: center; gap: 0.5rem; padding: 4px 8px; }
+  .header-nav .header-btn-label { white-space: nowrap; }
+}
+
+/* Nov 9 (Jade: "the calendar is scrolling on the desktop again"): at Large text on a
+   computer the month moved away when the page scrolled. It holds still again, like at
+   Normal, on screens tall enough for the whole month. */
+@media (min-width: 1024px) and (min-height: 760px) {
+  html.text-large .cal-split > .cal-left { position: sticky !important; top: calc(var(--header-height) + 1rem); }
+}

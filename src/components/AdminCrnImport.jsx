@@ -5,6 +5,7 @@ import { friendlyError } from '../utils/resourceReports'
 import { CATEGORIES } from '../utils/resourceCategories'
 import { askConfirm } from './AdminDialog'
 import AdminCrnResearch from './AdminCrnResearch'
+import { t, useT } from '../utils/lang'
 
 // Admin > CRN Import. VWB admins only (the database checks this too).
 // See vwb-crn-import.sql for the rules.
@@ -16,7 +17,7 @@ const TABS = [
   { key: 'areas', label: 'Service areas', file: 'Verified Service Areas', hint: 'Area Type can be County, Community, ZIP or Open to anyone (blank means County). Open to anyone shows to people within 50 miles of the location. A community shows to people who search its county (with a note) or who chose that town. Other towns do not see it. A ZIP only shows on the card. It never decides who sees a service.' },
 ]
 const TAB_LABEL = Object.fromEntries(TABS.map((t) => [t.key, t.label]))
-const TAB_WORD = { organizations: ['organization', 'organizations'], locations: ['location', 'locations'], services: ['service', 'services'], areas: ['service area', 'service areas'] }
+const TAB_WORD = { organizations: ['1 organization', '{n} organizations'], locations: ['1 location', '{n} locations'], services: ['1 service', '{n} services'], areas: ['1 service area', '{n} service areas'] }
 
 const GROUPS = [
   { key: 'possible_match', label: 'Possible match', hint: 'Looks like a resource already in VWB. Needs a person to decide.' },
@@ -51,7 +52,7 @@ const small = { color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 
 const input = { width: '100%', boxSizing: 'border-box', minHeight: 44, fontSize: '16px', padding: '0.5rem 0.7rem', borderRadius: 10, border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)' }
 const chip = (on) => ({ minHeight: 44, padding: '0 0.85rem', borderRadius: 22, border: on ? '2px solid var(--accent)' : '1px solid var(--border-strong)', background: on ? 'var(--green-light)' : 'none', color: 'var(--text)', font: 'inherit', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' })
 
-const show = (v) => (v === null || v === undefined || v === '' ? '(blank)' : Array.isArray(v) ? v.join(', ') : String(v))
+const show = (v) => (v === null || v === undefined || v === '' ? t('(blank)') : Array.isArray(v) ? v.join(', ') : String(v))
 
 // The value a held row is waiting on, so it can be taught in one tap.
 function heldValue(reason) {
@@ -62,6 +63,7 @@ function heldValue(reason) {
 }
 
 export default function AdminCrnImport() {
+  const tr = useT()
   const [view, setView] = useState('import') // 'import' or 'research'
   const [files, setFiles] = useState({}) // { tab: { file, rows, headers } }
   const [busy, setBusy] = useState(false)
@@ -83,7 +85,7 @@ export default function AdminCrnImport() {
 
   async function loadBatches(openId) {
     const { data, error } = await supabase.rpc('crn_import_list')
-    if (error) { console.error('crn_import_list failed:', error); setNote(friendlyError(error, "We couldn't load past imports.")); return }
+    if (error) { console.error('crn_import_list failed:', error); setNote(tr(friendlyError(error, "We couldn't load past imports."))); return }
     setBatches(data || [])
     const waiting = (data || []).find((b) => b.status === 'preview')
     const pick = openId ? (data || []).find((b) => b.id === openId) : waiting
@@ -93,7 +95,7 @@ export default function AdminCrnImport() {
   async function openBatchRows(b) {
     setOpenBatch(b); setConfirming(false); setGroupFilter('all'); setVisible(PAGE)
     const { data, error } = await supabase.rpc('crn_import_rows_for', { p_batch: b.id })
-    if (error) { console.error('crn_import_rows_for failed:', error); setNote(friendlyError(error, "We couldn't load that import.")); return }
+    if (error) { console.error('crn_import_rows_for failed:', error); setNote(tr(friendlyError(error, "We couldn't load that import."))); return }
     setRows(data || [])
   }
 
@@ -112,26 +114,26 @@ export default function AdminCrnImport() {
   async function pickFile(tab, file) {
     setNote('')
     if (!file) { setFiles((f) => { const n = { ...f }; delete n[tab]; return n }); return }
-    if (file.size > 5 * 1024 * 1024) { setNote('That file is too big. Split it and import in parts.'); return }
+    if (file.size > 5 * 1024 * 1024) { setNote(tr('That file is too big. Split it and import in parts.')); return }
     try {
       const text = await file.text()
       const { headers, rows: r } = csvToObjects(text)
-      if (!headers.length) { setNote(file.name + ' looks empty.'); return }
+      if (!headers.length) { setNote(tr('{file} looks empty.', { file: file.name })); return }
       setFiles((f) => ({ ...f, [tab]: { file: file.name, rows: r, headers } }))
     } catch (e) {
       console.error('Could not read CSV:', e)
-      setNote("We couldn't read " + file.name + '. Save it as CSV and try again.')
+      setNote(tr("We couldn't read {file}. Save it as CSV and try again.", { file: file.name }))
     }
   }
 
   async function makePreview() {
     const payload = {}
     Object.entries(files).forEach(([tab, f]) => { payload[tab] = { file: f.file, rows: f.rows } })
-    if (!Object.keys(payload).length) { setNote('Add at least one file first.'); return }
+    if (!Object.keys(payload).length) { setNote(tr('Add at least one file first.')); return }
     setBusy(true); setNote('')
     const { data, error } = await supabase.rpc('crn_import_stage', { p_files: payload })
     setBusy(false)
-    if (error) { console.error('crn_import_stage failed:', error); setNote(friendlyError(error, "We couldn't make the preview. Try again.")); return }
+    if (error) { console.error('crn_import_stage failed:', error); setNote(tr(friendlyError(error, "We couldn't make the preview. Try again."))); return }
     setFiles({})
     await loadBatches(data)
   }
@@ -140,7 +142,7 @@ export default function AdminCrnImport() {
     setBusy(true)
     const { error } = await supabase.rpc('crn_match_decide', { p_row: row.id, p_decision: decision })
     setBusy(false)
-    if (error) { console.error('crn_match_decide failed:', error); setNote(friendlyError(error, "That didn't save. Try again.")); return }
+    if (error) { console.error('crn_match_decide failed:', error); setNote(tr(friendlyError(error, "That didn't save. Try again."))); return }
     await openBatchRows(openBatch)
   }
 
@@ -148,8 +150,8 @@ export default function AdminCrnImport() {
     setBusy(true); setNote('')
     const { error } = await supabase.rpc('crn_import_apply', { p_batch: openBatch.id, p_confirm: true })
     setBusy(false)
-    if (error) { console.error('crn_import_apply failed:', error); setNote(friendlyError(error, "The import didn't finish. Nothing changed. Try again.")); return }
-    setNote('Imported.')
+    if (error) { console.error('crn_import_apply failed:', error); setNote(tr(friendlyError(error, "The import didn't finish. Nothing changed. Try again."))); return }
+    setNote(tr('Imported.'))
     await loadBatches(openBatch.id)
     loadTeam()
   }
@@ -158,49 +160,49 @@ export default function AdminCrnImport() {
     setBusy(true); setNote('')
     const { error } = await supabase.rpc('crn_import_discard', { p_batch: openBatch.id })
     setBusy(false)
-    if (error) { console.error('crn_import_discard failed:', error); setNote(friendlyError(error, "That didn't work. Try again.")); return }
-    setNote('Discarded. Nothing changed.')
+    if (error) { console.error('crn_import_discard failed:', error); setNote(tr(friendlyError(error, "That didn't work. Try again."))); return }
+    setNote(tr('Discarded. Nothing changed.'))
     setOpenBatch(null); setRows([])
     loadBatches()
   }
 
   async function undo(b) {
-    if (!(await askConfirm('Undo this import? Everything it changed goes back the way it was.', { yes: 'Undo import', danger: true }))) return
+    if (!(await askConfirm(tr('Undo this import? Everything it changed goes back the way it was.'), { yes: tr('Undo import'), danger: true }))) return
     setBusy(true); setNote('')
     const { error } = await supabase.rpc('crn_import_undo', { p_batch: b.id })
     setBusy(false)
-    if (error) { console.error('crn_import_undo failed:', error); setNote(friendlyError(error, "Undo didn't work. Nothing changed.")); return }
-    setNote('Undone.')
+    if (error) { console.error('crn_import_undo failed:', error); setNote(tr(friendlyError(error, "Undo didn't work. Nothing changed."))); return }
+    setNote(tr('Undone.'))
     await loadBatches(b.id)
   }
 
   async function saveValue(v = newValue) {
-    if (!v.value.trim() || !v.meaning) { setNote('Type the CRN value and choose what it means.'); return }
+    if (!v.value.trim() || !v.meaning) { setNote(tr('Type the CRN value and choose what it means.')); return }
     setBusy(true); setNote('')
     const { error } = await supabase.rpc('crn_value_map_set', { p_field: v.field, p_value: v.value.trim(), p_meaning: v.meaning })
     setBusy(false)
-    if (error) { console.error('crn_value_map_set failed:', error); setNote(friendlyError(error, "That didn't save. Try again.")); return }
+    if (error) { console.error('crn_value_map_set failed:', error); setNote(tr(friendlyError(error, "That didn't save. Try again."))); return }
     setNewValue({ field: v.field, value: '', meaning: '' })
     await loadValues()
-    setNote('Saved. Make a new preview to use it.')
+    setNote(tr('Saved. Make a new preview to use it.'))
   }
 
   async function pickMapFile(file) {
     setMapNote('')
     if (!file) { setMapUpload(null); return }
-    if (file.size > 2 * 1024 * 1024) { setMapNote('That file is too big. Split it into parts.'); return }
+    if (file.size > 2 * 1024 * 1024) { setMapNote(tr('That file is too big. Split it into parts.')); return }
     let parsed
     try {
       parsed = csvToObjects(await file.text())
     } catch (e) {
       console.error('Could not read mapping CSV:', e)
-      setMapNote("We couldn't read " + file.name + '. Save it as CSV and try again.'); return
+      setMapNote(tr("We couldn't read {file}. Save it as CSV and try again.", { file: file.name })); return
     }
-    if (!parsed.rows.length) { setMapNote(file.name + ' looks empty.'); return }
+    if (!parsed.rows.length) { setMapNote(tr('{file} looks empty.', { file: file.name })); return }
     setBusy(true)
     const { data, error } = await supabase.rpc('crn_value_map_import', { p_rows: parsed.rows, p_save: false })
     setBusy(false)
-    if (error) { console.error('crn_value_map_import (check) failed:', error); setMapNote(mapUploadError(error, "We couldn't check that file. Try again.")); return }
+    if (error) { console.error('crn_value_map_import (check) failed:', error); setMapNote(mapUploadError(error, tr("We couldn't check that file. Try again."))); return }
     setMapUpload({ file: file.name, rows: parsed.rows, results: data || [] })
   }
 
@@ -209,11 +211,11 @@ export default function AdminCrnImport() {
     setBusy(true); setMapNote('')
     const { data, error } = await supabase.rpc('crn_value_map_import', { p_rows: mapUpload.rows, p_save: true })
     setBusy(false)
-    if (error) { console.error('crn_value_map_import (save) failed:', error); setMapNote(mapUploadError(error, "That didn't save. Nothing changed. Try again.")); return }
+    if (error) { console.error('crn_value_map_import (save) failed:', error); setMapNote(mapUploadError(error, tr("That didn't save. Nothing changed. Try again."))); return }
     const saved = (data || []).filter((r) => r.outcome === 'saved').length
     setMapUpload(null)
     await loadValues()
-    setMapNote(saved + (saved === 1 ? ' mapping saved.' : ' mappings saved.') + ' Make a new preview to use them.')
+    setMapNote(tr(saved === 1 ? '1 mapping saved. Make a new preview to use them.' : '{n} mappings saved. Make a new preview to use them.', { n: saved }))
   }
 
   function downloadMapTemplate() {
@@ -230,7 +232,7 @@ export default function AdminCrnImport() {
     setBusy(true)
     const { error } = await supabase.rpc('crn_value_map_set', { p_field: v.field, p_value: v.crn_value, p_meaning: '' })
     setBusy(false)
-    if (error) { console.error('crn_value_map_set failed:', error); setNote(friendlyError(error, "That didn't save. Try again.")); return }
+    if (error) { console.error('crn_value_map_set failed:', error); setNote(tr(friendlyError(error, "That didn't save. Try again."))); return }
     loadValues()
   }
 
@@ -238,9 +240,9 @@ export default function AdminCrnImport() {
     const headers = ['CRN Source Service ID', 'Resource', 'Kind', 'What changed', 'Approved by', 'Approved on']
     const lines = teamList.map((t) => [t.crn_service_id, t.resource_name, t.kind, JSON.stringify(t.changes), t.approved_by_name || '', new Date(t.created_at).toLocaleDateString()])
     downloadText('vwb-changes-for-crn-' + new Date().toISOString().slice(0, 10) + '.csv', toCsv(headers, lines))
-    if (!(await askConfirm('Mark these as sent to the CRN team?', { yes: 'Mark as sent' }))) return
+    if (!(await askConfirm(tr('Mark these as sent to the CRN team?'), { yes: tr('Mark as sent') }))) return
     const { error } = await supabase.rpc('crn_team_mark_exported', { p_ids: teamList.map((t) => t.id) })
-    if (error) { console.error('crn_team_mark_exported failed:', error); setNote(friendlyError(error, "We couldn't mark them as sent.")); return }
+    if (error) { console.error('crn_team_mark_exported failed:', error); setNote(tr(friendlyError(error, "We couldn't mark them as sent."))); return }
     loadTeam()
   }
 
@@ -260,35 +262,35 @@ export default function AdminCrnImport() {
   rows.forEach((r) => { counts[r.grp] = (counts[r.grp] || 0) + 1 })
   const shown = rows.filter((r) => (groupFilter === 'all' ? !QUIET.includes(r.grp) : r.grp === groupFilter || (groupFilter === 'coverage' && r.flags?.includes('coverage'))))
   const quiet = QUIET.filter((g) => counts[g]).map((g) => ({ key: g, n: counts[g] }))
-  const quietByTab = (g) => TABS.map((t) => [t.key, rows.filter((r) => r.grp === g && r.tab === t.key).length]).filter(([, n]) => n).map(([k, n]) => n + ' ' + TAB_WORD[k][n === 1 ? 0 : 1]).join(', ')
+  const quietByTab = (g) => TABS.map((t) => [t.key, rows.filter((r) => r.grp === g && r.tab === t.key).length]).filter(([, n]) => n).map(([k, n]) => tr(TAB_WORD[k][n === 1 ? 0 : 1], { n })).join(', ')
   function pickGroup(g) { setGroupFilter(g); setVisible(PAGE) }
-  const ignored = openBatch ? Object.entries(openBatch.ignored_columns || {}).flatMap(([tab, cols]) => (cols || []).map((c) => TAB_LABEL[tab] + ': ' + c)) : []
+  const ignored = openBatch ? Object.entries(openBatch.ignored_columns || {}).flatMap(([tab, cols]) => (cols || []).map((c) => tr(TAB_LABEL[tab]) + ': ' + c)) : []
   const latestApplied = batches.filter((b) => b.status === 'applied').sort((a, b) => new Date(b.decided_at) - new Date(a.decided_at))[0]
   const fieldMeanings = (VALUE_FIELDS.find((f) => f.key === newValue.field) || VALUE_FIELDS[0]).meanings
 
   return (
     <div>
-      <div role="group" aria-label="CRN view" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
-        <button type="button" style={chip(view === 'import')} aria-pressed={view === 'import'} onClick={() => setView('import')}>Imports</button>
-        <button type="button" style={chip(view === 'research')} aria-pressed={view === 'research'} onClick={() => setView('research')}>Research records</button>
+      <div role="group" aria-label={tr('CRN view')} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+        <button type="button" style={chip(view === 'import')} aria-pressed={view === 'import'} onClick={() => setView('import')}>{tr('Imports')}</button>
+        <button type="button" style={chip(view === 'research')} aria-pressed={view === 'research'} onClick={() => setView('research')}>{tr('Research records')}</button>
       </div>
       {view === 'research' ? <AdminCrnResearch /> : <>
       <p role="status" style={{ minHeight: '1.2em', margin: '0 0 0.5rem', color: 'var(--accent)', fontWeight: 600 }}>{note}</p>
 
       {!inPreview && (
         <section style={box} aria-labelledby="crn-add-h">
-          <h3 id="crn-add-h" style={h3}>Add the CRN files</h3>
-          <p style={small}>In the CRN workbook, download each approved tab as CSV (File, Download, CSV). Add the ones you have. Nothing changes until you look at the preview and tap Apply.</p>
+          <h3 id="crn-add-h" style={h3}>{tr('Add the CRN files')}</h3>
+          <p style={small}>{tr('In the CRN workbook, download each approved tab as CSV (File, Download, CSV). Add the ones you have. Nothing changes until you look at the preview and tap Apply.')}</p>
           {TABS.map((t) => (
             <div key={t.key} style={{ marginBottom: '0.75rem' }}>
-              <label htmlFor={'crn-file-' + t.key} style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem' }}>{t.file}</label>
-              {t.hint && <p id={'crn-hint-' + t.key} style={{ ...small, margin: '0 0 0.25rem' }}>{t.hint}</p>}
+              <label htmlFor={'crn-file-' + t.key} style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem' }}>{tr(t.file)}</label>
+              {t.hint && <p id={'crn-hint-' + t.key} style={{ ...small, margin: '0 0 0.25rem' }}>{tr(t.hint)}</p>}
               <input id={'crn-file-' + t.key} type="file" accept=".csv,text/csv" aria-describedby={t.hint ? 'crn-hint-' + t.key : undefined} onChange={(e) => pickFile(t.key, e.target.files?.[0])} style={{ ...input, padding: '0.45rem' }} />
-              {files[t.key] && <p style={{ ...small, margin: '0.25rem 0 0' }}>{files[t.key].file}: {files[t.key].rows.length} rows</p>}
+              {files[t.key] && <p style={{ ...small, margin: '0.25rem 0 0' }}>{tr('{file}: {n} rows', { file: files[t.key].file, n: files[t.key].rows.length })}</p>}
             </div>
           ))}
           <button type="button" className="btn btn-primary btn-full" style={{ minHeight: 48 }} disabled={busy || !Object.keys(files).length} onClick={makePreview}>
-            {busy ? 'Reading...' : 'Make a preview'}
+            {busy ? tr('Reading...') : tr('Make a preview')}
           </button>
         </section>
       )}
@@ -296,71 +298,71 @@ export default function AdminCrnImport() {
       {openBatch && (
         <section style={box} aria-labelledby="crn-prev-h">
           <h3 id="crn-prev-h" style={h3}>
-            {inPreview ? 'Preview' : 'Import from ' + new Date(openBatch.uploaded_at).toLocaleDateString()} <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>({openBatch.status === 'preview' ? 'nothing changed yet' : openBatch.status})</span>
+            {inPreview ? tr('Preview') : tr('Import from {date}', { date: new Date(openBatch.uploaded_at).toLocaleDateString() })} <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>({openBatch.status === 'preview' ? tr('nothing changed yet') : openBatch.status})</span>
           </h3>
-          <p style={small}>Files: {Object.values(openBatch.file_names || {}).join(', ') || 'none'}</p>
+          <p style={small}>{tr('Files: {files}', { files: Object.values(openBatch.file_names || {}).join(', ') || tr('none') })}</p>
           {ignored.length > 0 && (
-            <p style={{ ...small, color: 'var(--warn)' }}>Ignored columns (never saved): {ignored.join('; ')}</p>
+            <p style={{ ...small, color: 'var(--warn)' }}>{tr('Ignored columns (never saved): {list}', { list: ignored.join('; ') })}</p>
           )}
 
-          <div role="group" aria-label="Show" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', margin: '0.5rem 0 0.75rem' }}>
-            <button type="button" style={chip(groupFilter === 'all')} aria-pressed={groupFilter === 'all'} onClick={() => pickGroup('all')}>Changes ({rows.filter((r) => !QUIET.includes(r.grp)).length})</button>
+          <div role="group" aria-label={tr('Show')} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', margin: '0.5rem 0 0.75rem' }}>
+            <button type="button" style={chip(groupFilter === 'all')} aria-pressed={groupFilter === 'all'} onClick={() => pickGroup('all')}>{tr('Changes')} ({rows.filter((r) => !QUIET.includes(r.grp)).length})</button>
             {GROUPS.filter((g) => counts[g.key] && !QUIET.includes(g.key)).map((g) => (
-              <button key={g.key} type="button" style={chip(groupFilter === g.key)} aria-pressed={groupFilter === g.key} onClick={() => pickGroup(g.key)}>{g.label} ({counts[g.key]})</button>
+              <button key={g.key} type="button" style={chip(groupFilter === g.key)} aria-pressed={groupFilter === g.key} onClick={() => pickGroup(g.key)}>{tr(g.label)} ({counts[g.key]})</button>
             ))}
-            {summary.flagged > 0 && <button type="button" style={chip(groupFilter === 'coverage')} aria-pressed={groupFilter === 'coverage'} onClick={() => pickGroup('coverage')}>Coverage flagged ({summary.flagged})</button>}
+            {summary.flagged > 0 && <button type="button" style={chip(groupFilter === 'coverage')} aria-pressed={groupFilter === 'coverage'} onClick={() => pickGroup('coverage')}>{tr('Coverage flagged')} ({summary.flagged})</button>}
           </div>
 
           {quiet.length > 0 && (
             <div style={{ border: '1px dashed var(--border-strong)', borderRadius: 10, padding: '0.6rem', marginBottom: '0.75rem' }}>
-              <p style={{ ...small, margin: '0 0 0.4rem' }}>Folded away. Nothing changes for these:</p>
+              <p style={{ ...small, margin: '0 0 0.4rem' }}>{tr('Folded away. Nothing changes for these:')}</p>
               <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.4rem' }}>
                 {quiet.map((q) => (
                   <li key={q.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span><strong>{GROUP_LABEL[q.key]}</strong>: {quietByTab(q.key)}</span>
+                    <span><strong>{tr(GROUP_LABEL[q.key])}</strong>: {quietByTab(q.key)}</span>
                     <button type="button" style={chip(groupFilter === q.key)} aria-pressed={groupFilter === q.key}
                       onClick={() => pickGroup(groupFilter === q.key ? 'all' : q.key)}>
-                      {groupFilter === q.key ? 'Fold away' : 'Show them'}
+                      {groupFilter === q.key ? tr('Fold away') : tr('Show them')}
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
           )}
-          {shown.length === 0 && <p style={small}>Nothing to show here.</p>}
+          {shown.length === 0 && <p style={small}>{tr('Nothing to show here.')}</p>}
 
           <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.5rem' }}>
             {shown.slice(0, visible).map((r) => {
               const teach = (r.reasons || []).map(heldValue).find(Boolean)
               return (
                 <li key={r.id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '0.6rem', background: 'var(--surface-2)' }}>
-                  <p style={{ margin: 0, fontWeight: 700, overflowWrap: 'anywhere' }}>{r.label || '(no name)'}</p>
+                  <p style={{ margin: 0, fontWeight: 700, overflowWrap: 'anywhere' }}>{r.label || tr('(no name)')}</p>
                   <p style={{ ...small, margin: '0.1rem 0 0.25rem' }}>
-                    {TAB_LABEL[r.tab]}{r.source_id ? ' · ' + r.source_id : ''}{r.row_number ? ' · line ' + r.row_number : ''} · <strong>{GROUP_LABEL[r.grp] || r.grp}</strong>
-                    {r.flags?.includes('coverage') && <> · <strong style={{ color: 'var(--warn)' }}>Coverage flagged</strong></>}
-                    {r.result && <> · Result: {r.result}</>}
+                    {tr(TAB_LABEL[r.tab])}{r.source_id ? ' · ' + r.source_id : ''}{r.row_number ? ' · ' + tr('line {n}', { n: r.row_number }) : ''} · <strong>{GROUP_LABEL[r.grp] ? tr(GROUP_LABEL[r.grp]) : r.grp}</strong>
+                    {r.flags?.includes('coverage') && <> · <strong style={{ color: 'var(--warn)' }}>{tr('Coverage flagged')}</strong></>}
+                    {r.result && <> · {tr('Result: {result}', { result: r.result })}</>}
                   </p>
                   {(r.reasons || []).map((x, i) => <p key={i} style={{ ...small, margin: '0.1rem 0', color: 'var(--text)' }}>{x}</p>)}
                   {Object.entries(r.changes || {}).map(([f, c]) => (
                     <p key={f} style={{ ...small, margin: '0.1rem 0', overflowWrap: 'anywhere' }}>
                       <span style={{ fontWeight: 600 }}>{f.replace(/_/g, ' ')}:</span> {show(c.old)} &rarr; {show(c.new)}
-                      {c.action === 'conflict' && <strong style={{ color: 'var(--warn)' }}> (kept VWB&rsquo;s version)</strong>}
+                      {c.action === 'conflict' && <strong style={{ color: 'var(--warn)' }}>{' ' + tr('(kept VWB’s version)')}</strong>}
                     </p>
                   ))}
                   {inPreview && teach && (
                     <button type="button" style={{ ...chip(false), marginTop: '0.3rem' }} onClick={() => setNewValue({ field: teach.field, value: teach.value, meaning: '' })}>
-                      Teach the app what &ldquo;{teach.value}&rdquo; means
+                      {tr('Teach the app what “{value}” means', { value: teach.value })}
                     </button>
                   )}
                   {r.grp === 'possible_match' && (
                     <div style={{ marginTop: '0.4rem' }}>
-                      <p style={{ ...small, margin: '0 0 0.3rem' }}>Looks like: <strong style={{ color: 'var(--text)' }}>{r.match_name}</strong></p>
+                      <p style={{ ...small, margin: '0 0 0.3rem' }}>{tr('Looks like:')} <strong style={{ color: 'var(--text)' }}>{r.match_name}</strong></p>
                       {r.decision === 'link'
-                        ? <p style={{ ...small, color: 'var(--accent)', fontWeight: 600 }}>Marked as the same. Its name, owner and votes stay. Only empty CRN details get filled in.</p>
+                        ? <p style={{ ...small, color: 'var(--accent)', fontWeight: 600 }}>{tr('Marked as the same. Its name, owner and votes stay. Only empty CRN details get filled in.')}</p>
                         : inPreview && (
                           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} disabled={busy} onClick={() => decide(r, 'same')}>Same resource</button>
-                            <button type="button" className="btn btn-outline" style={{ minHeight: 44 }} disabled={busy} onClick={() => decide(r, 'not_same')}>Not the same</button>
+                            <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} disabled={busy} onClick={() => decide(r, 'same')}>{tr('Same resource')}</button>
+                            <button type="button" className="btn btn-outline" style={{ minHeight: 44 }} disabled={busy} onClick={() => decide(r, 'not_same')}>{tr('Not the same')}</button>
                           </div>
                         )}
                     </div>
@@ -371,26 +373,26 @@ export default function AdminCrnImport() {
           </ul>
           {shown.length > visible && (
             <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48, marginTop: '0.5rem' }} onClick={() => setVisible((v) => v + PAGE)}>
-              Show {Math.min(PAGE, shown.length - visible)} more (of {shown.length - visible} left)
+              {tr('Show {n} more (of {left} left)', { n: Math.min(PAGE, shown.length - visible), left: shown.length - visible })}
             </button>
           )}
 
           {inPreview && !confirming && (
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-              <button type="button" className="btn btn-outline" style={{ minHeight: 48, flex: 1 }} disabled={busy} onClick={discard}>Discard</button>
-              <button type="button" className="btn btn-primary" style={{ minHeight: 48, flex: 2 }} disabled={busy} onClick={() => setConfirming(true)}>Apply</button>
+              <button type="button" className="btn btn-outline" style={{ minHeight: 48, flex: 1 }} disabled={busy} onClick={discard}>{tr('Discard')}</button>
+              <button type="button" className="btn btn-primary" style={{ minHeight: 48, flex: 2 }} disabled={busy} onClick={() => setConfirming(true)}>{tr('Apply')}</button>
             </div>
           )}
           {inPreview && confirming && (
             <div role="alertdialog" aria-labelledby="crn-confirm-h" style={{ marginTop: '1rem', padding: '0.75rem', borderRadius: 10, border: '2px solid var(--accent)', background: 'var(--surface)' }}>
-              <p id="crn-confirm-h" style={{ margin: '0 0 0.5rem', fontWeight: 700 }}>Import these?</p>
+              <p id="crn-confirm-h" style={{ margin: '0 0 0.5rem', fontWeight: 700 }}>{tr('Import these?')}</p>
               <p style={small}>
-                {summary.added} new in Find Help, {summary.updated} updated, {summary.linked} linked, {summary.hiding} hidden, {summary.research} saved as private research, {summary.held} held or skipped, {summary.flagged} flagged for coverage.
-                {summary.waiting > 0 && <> {summary.waiting} possible {summary.waiting === 1 ? 'match is' : 'matches are'} not decided yet and will wait for next time.</>}
+                {tr('{added} new in Find Help, {updated} updated, {linked} linked, {hiding} hidden, {research} saved as private research, {held} held or skipped, {flagged} flagged for coverage.', summary)}
+                {summary.waiting > 0 && <> {tr(summary.waiting === 1 ? '1 possible match is not decided yet and will wait for next time.' : '{n} possible matches are not decided yet and will wait for next time.', { n: summary.waiting })}</>}
               </p>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button type="button" className="btn btn-outline" style={{ minHeight: 48, flex: 1 }} disabled={busy} onClick={() => setConfirming(false)}>Go back</button>
-                <button type="button" className="btn btn-primary" style={{ minHeight: 48, flex: 2 }} disabled={busy} onClick={apply}>{busy ? 'Importing...' : 'Yes, import these'}</button>
+                <button type="button" className="btn btn-outline" style={{ minHeight: 48, flex: 1 }} disabled={busy} onClick={() => setConfirming(false)}>{tr('Go back')}</button>
+                <button type="button" className="btn btn-primary" style={{ minHeight: 48, flex: 2 }} disabled={busy} onClick={apply}>{busy ? tr('Importing...') : tr('Yes, import these')}</button>
               </div>
             </div>
           )}
@@ -398,20 +400,20 @@ export default function AdminCrnImport() {
       )}
 
       <section style={box} aria-labelledby="crn-values-h">
-        <h3 id="crn-values-h" style={h3}>What CRN values mean</h3>
-        <p style={small}>Rows with a value the app doesn&rsquo;t know yet are held, not guessed. Teach it each value once, using the CRN team&rsquo;s lists.</p>
+        <h3 id="crn-values-h" style={h3}>{tr('What CRN values mean')}</h3>
+        <p style={small}>{tr('Rows with a value the app doesn’t know yet are held, not guessed. Teach it each value once, using the CRN team’s lists.')}</p>
         {VALUE_FIELDS.map((f) => {
           const list = values.filter((v) => v.field === f.key)
           if (!list.length) return null
           return (
             <div key={f.key} style={{ marginBottom: '0.6rem' }}>
-              <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>{f.label}</p>
+              <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>{tr(f.label)}</p>
               <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.3rem' }}>
                 {list.map((v) => (
                   <li key={v.field + v.crn_value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span style={{ overflowWrap: 'anywhere' }}>&ldquo;{v.crn_value}&rdquo; means <strong>{(f.meanings.find((m) => m[0] === v.meaning) || [v.meaning, v.meaning])[1]}</strong></span>
-                    <button type="button" onClick={() => removeValue(v)} disabled={busy} aria-label={'Remove ' + v.crn_value}
-                      style={{ minHeight: 44, padding: '0 0.5rem', background: 'none', border: 'none', color: 'var(--danger)', font: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>Remove</button>
+                    <span style={{ overflowWrap: 'anywhere' }}>{boldSpot(tr('“{value}” means {meaning}', { value: v.crn_value }), '{meaning}', tr((f.meanings.find((m) => m[0] === v.meaning) || [v.meaning, v.meaning])[1]))}</span>
+                    <button type="button" onClick={() => removeValue(v)} disabled={busy} aria-label={tr('Remove {name}', { name: v.crn_value })}
+                      style={{ minHeight: 44, padding: '0 0.5rem', background: 'none', border: 'none', color: 'var(--danger)', font: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>{tr('Remove')}</button>
                   </li>
                 ))}
               </ul>
@@ -419,25 +421,25 @@ export default function AdminCrnImport() {
           )
         })}
         <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.5rem' }}>
-          <label htmlFor="crn-v-field" style={{ fontWeight: 600 }}>Which column</label>
+          <label htmlFor="crn-v-field" style={{ fontWeight: 600 }}>{tr('Which column')}</label>
           <select id="crn-v-field" value={newValue.field} onChange={(e) => setNewValue({ field: e.target.value, value: newValue.value, meaning: '' })} style={input}>
-            {VALUE_FIELDS.map((f) => <option key={f.key} value={f.key}>{FIELD_LABEL[f.key]}</option>)}
+            {VALUE_FIELDS.map((f) => <option key={f.key} value={f.key}>{tr(FIELD_LABEL[f.key])}</option>)}
           </select>
-          <label htmlFor="crn-v-value" style={{ fontWeight: 600 }}>Value, exactly as the CRN sheet writes it</label>
+          <label htmlFor="crn-v-value" style={{ fontWeight: 600 }}>{tr('Value, exactly as the CRN sheet writes it')}</label>
           <input id="crn-v-value" value={newValue.value} onChange={(e) => setNewValue({ ...newValue, value: e.target.value })} style={input} autoComplete="off" />
-          <label htmlFor="crn-v-meaning" style={{ fontWeight: 600 }}>What it means in VWB</label>
+          <label htmlFor="crn-v-meaning" style={{ fontWeight: 600 }}>{tr('What it means in VWB')}</label>
           <select id="crn-v-meaning" value={newValue.meaning} onChange={(e) => setNewValue({ ...newValue, meaning: e.target.value })} style={input}>
-            <option value="">Choose one</option>
-            {fieldMeanings.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            <option value="">{tr('Choose one')}</option>
+            {fieldMeanings.map(([k, l]) => <option key={k} value={k}>{tr(l)}</option>)}
           </select>
-          <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => saveValue()}>Save</button>
+          <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => saveValue()}>{tr('Save')}</button>
         </div>
 
         <div style={{ borderTop: '1px solid var(--border)', marginTop: '1rem', paddingTop: '0.85rem' }}>
-          <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>Or upload the CRN team&rsquo;s mapping file</p>
-          <p style={small}>A CSV with Field, CRN Value, VWB Meaning, Mapping Status and Notes. Only rows marked Approved are saved. You see every row first.</p>
-          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48, marginBottom: '0.5rem' }} onClick={downloadMapTemplate}>Download a blank mapping file</button>
-          <label htmlFor="crn-map-file" style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem' }}>Choose mapping file (CSV)</label>
+          <p style={{ margin: '0 0 0.25rem', fontWeight: 600 }}>{tr('Or upload the CRN team’s mapping file')}</p>
+          <p style={small}>{tr('A CSV with Field, CRN Value, VWB Meaning, Mapping Status and Notes. Only rows marked Approved are saved. You see every row first.')}</p>
+          <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48, marginBottom: '0.5rem' }} onClick={downloadMapTemplate}>{tr('Download a blank mapping file')}</button>
+          <label htmlFor="crn-map-file" style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem' }}>{tr('Choose mapping file (CSV)')}</label>
           <input id="crn-map-file" type="file" accept=".csv,text/csv" disabled={busy}
             onChange={(e) => { pickMapFile(e.target.files?.[0]); e.target.value = '' }} style={{ ...input, padding: '0.6rem' }} />
           {mapNote && <p role="status" style={{ margin: '0.5rem 0 0', color: 'var(--accent)', fontWeight: 600, overflowWrap: 'anywhere' }}>{mapNote}</p>}
@@ -446,8 +448,8 @@ export default function AdminCrnImport() {
       </section>
 
       <section style={box} aria-labelledby="crn-team-h">
-        <h3 id="crn-team-h" style={h3}>For the CRN team ({teamList.length})</h3>
-        <p style={small}>Changes Hope Ambassadors approved on CRN listings. The CRN sheet stays the source, so send these to Carrie&rsquo;s team to decide.</p>
+        <h3 id="crn-team-h" style={h3}>{tr('For the CRN team ({n})', { n: teamList.length })}</h3>
+        <p style={small}>{tr('Changes Hope Ambassadors approved on CRN listings. The CRN sheet stays the source, so send these to Carrie’s team to decide.')}</p>
         {teamList.length > 0 && (
           <>
             <ul style={{ listStyle: 'none', margin: '0 0 0.6rem', padding: 0, display: 'grid', gap: '0.3rem' }}>
@@ -455,14 +457,14 @@ export default function AdminCrnImport() {
                 <li key={t.id} style={{ ...small, margin: 0 }}><strong style={{ color: 'var(--text)' }}>{t.resource_name || t.crn_service_id}</strong> &middot; {t.kind.replace(/_/g, ' ')} &middot; {new Date(t.created_at).toLocaleDateString()}</li>
               ))}
             </ul>
-            <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} onClick={exportTeam}>Download as CSV</button>
+            <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48 }} onClick={exportTeam}>{tr('Download as CSV')}</button>
           </>
         )}
       </section>
 
       <section style={box} aria-labelledby="crn-past-h">
-        <h3 id="crn-past-h" style={h3}>Past imports</h3>
-        {batches.length === 0 && <p style={small}>None yet.</p>}
+        <h3 id="crn-past-h" style={h3}>{tr('Past imports')}</h3>
+        {batches.length === 0 && <p style={small}>{tr('None yet.')}</p>}
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.4rem' }}>
           {batches.map((b) => (
             <li key={b.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -471,7 +473,7 @@ export default function AdminCrnImport() {
               </button>
               <span style={{ color: 'var(--text-secondary)' }}>{b.status}</span>
               {latestApplied && b.id === latestApplied.id && (
-                <button type="button" className="btn btn-outline" style={{ minHeight: 44 }} disabled={busy} onClick={() => undo(b)}>Undo</button>
+                <button type="button" className="btn btn-outline" style={{ minHeight: 44 }} disabled={busy} onClick={() => undo(b)}>{tr('Undo')}</button>
               )}
             </li>
           ))}
@@ -486,9 +488,9 @@ export default function AdminCrnImport() {
 // upload function yet (vwb-crn-mapping-upload.sql not run on this project).
 function mapUploadError(error, fallback) {
   if (error?.code === 'PGRST202' || /crn_value_map_import/.test(error?.message || '')) {
-    return 'The mapping upload isn\u2019t set up on this project yet. Run vwb-crn-find-help-column.sql, then vwb-crn-mapping-upload.sql, then try again.'
+    return t('The mapping upload isn\u2019t set up on this project yet. Run vwb-crn-find-help-column.sql, then vwb-crn-mapping-upload.sql, then try again.')
   }
-  return friendlyError(error, fallback)
+  return t(friendlyError(error, fallback))
 }
 
 // What will happen to each row of an uploaded mapping file.
@@ -500,7 +502,14 @@ const MAP_OUTCOME = {
   problem: 'Problem',
 }
 
+// Puts a bold part where {spot} sits in an already translated sentence.
+function boldSpot(text, spot, node) {
+  const [a, b = ''] = text.split(spot)
+  return <>{a}<strong>{node}</strong>{b}</>
+}
+
 function MapUploadPreview({ upload, busy, onSave, onCancel }) {
+  const tr = useT()
   const rows = upload.results
   const n = (k) => rows.filter((r) => r.outcome === k).length
   const toSave = n('save') + n('change')
@@ -508,32 +517,32 @@ function MapUploadPreview({ upload, busy, onSave, onCancel }) {
   const label = (r) => {
     const f = VALUE_FIELDS.find((x) => x.key === r.field)
     const m = f && (f.meanings.find((x) => x[0] === r.meaning) || [r.meaning, r.meaning])[1]
-    return { field: f ? f.label : 'Unknown field', meaning: m || '' }
+    return { field: f ? tr(f.label) : tr('Unknown field'), meaning: m ? tr(m) : '' }
   }
   return (
     <div style={{ marginTop: '0.75rem' }} aria-live="polite">
       <p style={{ margin: '0 0 0.4rem', fontWeight: 600, overflowWrap: 'anywhere' }}>{upload.file}</p>
       <p style={small}>
-        {toSave} to save &middot; {n('same')} already set &middot; {n('not_saved')} not approved yet &middot; {problems} {problems === 1 ? 'problem' : 'problems'}
+        {tr(problems === 1 ? '{save} to save · {same} already set · {waiting} not approved yet · 1 problem' : '{save} to save · {same} already set · {waiting} not approved yet · {n} problems', { save: toSave, same: n('same'), waiting: n('not_saved'), n: problems })}
       </p>
-      {problems > 0 && <p style={{ ...small, color: 'var(--danger)', fontWeight: 600 }}>Fix the problem rows in the file and upload it again. Nothing saves until they&rsquo;re fixed.</p>}
+      {problems > 0 && <p style={{ ...small, color: 'var(--danger)', fontWeight: 600 }}>{tr('Fix the problem rows in the file and upload it again. Nothing saves until they’re fixed.')}</p>}
       <ul style={{ listStyle: 'none', margin: '0 0 0.6rem', padding: 0, display: 'grid', gap: '0.35rem', maxHeight: 360, overflowY: 'auto' }}>
         {rows.map((r) => {
           const l = label(r)
           const bad = r.outcome === 'problem'
           return (
             <li key={r.line} style={{ padding: '0.5rem 0.6rem', borderRadius: 8, border: '1px solid ' + (bad ? 'var(--danger)' : 'var(--border)'), fontSize: '0.95rem', overflowWrap: 'anywhere' }}>
-              <strong style={{ color: bad ? 'var(--danger)' : 'var(--text)' }}>{MAP_OUTCOME[r.outcome] || r.outcome}</strong>
-              {' '}&middot; line {r.line} &middot; {l.field}: &ldquo;{r.crn_value || '(blank)'}&rdquo;{l.meaning ? <> means <strong>{l.meaning}</strong></> : null}
+              <strong style={{ color: bad ? 'var(--danger)' : 'var(--text)' }}>{MAP_OUTCOME[r.outcome] ? tr(MAP_OUTCOME[r.outcome]) : r.outcome}</strong>
+              {' '}&middot; {tr('line {n}', { n: r.line })} &middot; {l.meaning ? boldSpot(tr('{field}: “{value}” means {meaning}', { field: l.field, value: r.crn_value || tr('(blank)') }), '{meaning}', l.meaning) : tr('{field}: “{value}”', { field: l.field, value: r.crn_value || tr('(blank)') })}
               {r.note && <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{r.note}</span>}
             </li>
           )
         })}
       </ul>
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-        <button type="button" className="btn btn-outline" style={{ minHeight: 48, flex: 1 }} disabled={busy} onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn btn-outline" style={{ minHeight: 48, flex: 1 }} disabled={busy} onClick={onCancel}>{tr('Cancel')}</button>
         <button type="button" className="btn btn-primary" style={{ minHeight: 48, flex: 2 }} disabled={busy || problems > 0 || toSave === 0} onClick={onSave}>
-          {busy ? 'Saving...' : toSave === 0 ? 'Nothing to save' : 'Save ' + toSave + (toSave === 1 ? ' mapping' : ' mappings')}
+          {busy ? tr('Saving...') : toSave === 0 ? tr('Nothing to save') : tr(toSave === 1 ? 'Save 1 mapping' : 'Save {n} mappings', { n: toSave })}
         </button>
       </div>
     </div>

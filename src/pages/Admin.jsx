@@ -1,5 +1,5 @@
 import Icon from '../components/Icon'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import AdminResourceClaims from '../components/AdminResourceClaims'
 import { BanDialog, BannedAccountsPanel } from '../components/AdminBans'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -22,6 +22,8 @@ import { useWideScreen } from '../hooks/useWideScreen'
 import { ask, askConfirm, tell } from '../components/AdminDialog'
 import { ORG_TYPES } from '../data/orgTypes'
 import { calmMotion } from '../utils/motion'
+// tNow is the same t, for the loaders (they run outside a draw).
+import { useT, t as tNow } from '../utils/lang'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also tell the person (an in-page note) and let the caller bail out; omit it for
@@ -31,6 +33,16 @@ function reportError(context, error, userMessage) {
   console.error(`[Admin:${context}]`, error)
   if (userMessage) tell(userMessage, { tone: 'error' })
   return true
+}
+
+// Puts names (or other parts) into a translated sentence: fillIn(tr('From {a} about {b}'), { a: <X />, b: <Y /> }).
+// The words around the parts get labelStyle, so the sentence looks the same as before.
+function fillIn(text, parts, labelStyle) {
+  return text.split(/(\{\w+\})/).map((p, i) => {
+    const m = /^\{(\w+)\}$/.exec(p)
+    if (m && m[1] in parts) return <Fragment key={i}>{parts[m[1]]}</Fragment>
+    return p ? <span key={i} style={labelStyle}>{p}</span> : null
+  })
 }
 
 // Ways to narrow the Users tab. Key, then the label on the button.
@@ -63,6 +75,7 @@ const CONTENT_FILTERS = [
 
 export default function Admin() {
   const { user, isAdmin, isFounder } = useAuth()
+  const tr = useT()
   const navigate = useNavigate()
   const goBack = useGoBack()
   const [tab, setTab] = useState(() => { try { return new URLSearchParams(window.location.search).get('tab') || 'inbox' } catch { return 'inbox' } })
@@ -232,8 +245,8 @@ export default function Admin() {
       kind: 'request',
       id: r.id,
       poster_id: r.requester_id,
-      poster_name: nameOf[r.requester_id] || 'Unknown',
-      title: r.for_name ? r.skill_needed + ' (for ' + r.for_name + ')' : r.skill_needed,
+      poster_name: nameOf[r.requester_id] || tNow('Unknown'),
+      title: r.for_name ? tNow('{skill} (for {name})', { skill: r.skill_needed, name: r.for_name }) : r.skill_needed,
       description: r.description,
       tag: r.urgency,
       neighborhood: r.neighborhood,
@@ -245,7 +258,7 @@ export default function Admin() {
       kind: 'offer',
       id: o.id,
       poster_id: o.user_id,
-      poster_name: nameOf[o.user_id] || 'Unknown',
+      poster_name: nameOf[o.user_id] || tNow('Unknown'),
       title: o.title,
       description: o.description,
       tag: o.category,
@@ -278,7 +291,7 @@ export default function Admin() {
         setDeletingKey(null)
         return
       }
-      reportError('confirmDeleteContent', error, error.message || 'Could not delete this. Try again.')
+      reportError('confirmDeleteContent', error, error.message || tr('Could not delete this. Try again.'))
       return
     }
     setContent(prev => prev.filter(c => !(c.kind === item.kind && c.id === item.id)))
@@ -304,23 +317,23 @@ export default function Admin() {
 
   // Zips within a few miles of a center zip, as a starting point to edit.
   async function suggestZips(centerZip, setter) {
-    if (!/^\d{5}$/.test(centerZip.trim())) { tell('Add the 5-digit center zip first.', { tone: 'error' }); return }
+    if (!/^\d{5}$/.test(centerZip.trim())) { tell(tr('Add the 5-digit center zip first.'), { tone: 'error' }); return }
     const { data, error } = await supabase.rpc('village_reach', { p_zip: centerZip.trim(), p_miles: 10 })
-    if (reportError('suggestZips', error, 'Could not look up nearby zip codes. Try again.')) return
-    if (!data || data.length === 0) { tell('That zip code was not found.', { tone: 'error' }); return }
+    if (reportError('suggestZips', error, tr('Could not look up nearby zip codes. Try again.'))) return
+    if (!data || data.length === 0) { tell(tr('That zip code was not found.'), { tone: 'error' }); return }
     setter(data.map(r => r.zip).join(', '))
   }
 
   async function saveZipList(villageId, text) {
     const { data, error } = await supabase.rpc('set_village_zips', { p_village: villageId, p_zips: parseZips(text) })
-    if (reportError('setVillageZips', error, 'Could not save the zip codes. Try again.')) return false
-    if (data !== 'ok') { tell(ZIP_WORDS[data] || 'Could not save the zip codes.', { tone: 'error' }); return false }
+    if (reportError('setVillageZips', error, tr('Could not save the zip codes. Try again.'))) return false
+    if (data !== 'ok') { tell(tr(ZIP_WORDS[data] || 'Could not save the zip codes.'), { tone: 'error' }); return false }
     return true
   }
 
   async function createVillage() {
-    if (!newVillageName.trim()) { tell('Village name is required.', { tone: 'error' }); return }
-    if (!/^\d{5}$/.test(newVillageZip.trim())) { tell('Add a 5-digit zip code for the center of the village.', { tone: 'error' }); return }
+    if (!newVillageName.trim()) { tell(tr('Village name is required.'), { tone: 'error' }); return }
+    if (!/^\d{5}$/.test(newVillageZip.trim())) { tell(tr('Add a 5-digit zip code for the center of the village.'), { tone: 'error' }); return }
     const { data: made, error } = await supabase.from('villages').insert({
       name: newVillageName.trim(),
       region_label: newVillageRegion.trim() || null,
@@ -328,7 +341,7 @@ export default function Admin() {
       center_zip: newVillageZip.trim(),
       radius_miles: 10,
     }).select('id').single()
-    if (reportError('createVillage', error, /zip/i.test(error?.message || '') ? 'That zip code wasn\u2019t found. Check the center zip and try again.' : 'Could not create this village. It may already exist. Try again.')) return
+    if (reportError('createVillage', error, /zip/i.test(error?.message || '') ? tr('That zip code wasn\u2019t found. Check the center zip and try again.') : tr('Could not create this village. It may already exist. Try again.'))) return
     // No zips typed: start from the zips within 10 miles of the center.
     let list = newVillageZips
     if (parseZips(list).length === 0) list = newVillageZip.trim()
@@ -350,19 +363,19 @@ export default function Admin() {
   // so renaming a village never breaks anything that refers to it. The chat's
   // name follows the village's name (the database does that).
   async function saveVillageEdit() {
-    if (!editVillageName.trim()) { tell('Village name is required.', { tone: 'error' }); return }
+    if (!editVillageName.trim()) { tell(tr('Village name is required.'), { tone: 'error' }); return }
     const zip = editVillageZip.trim()
-    if (zip && !/^\d{5}$/.test(zip)) { tell('The center zip should be 5 digits.', { tone: 'error' }); return }
+    if (zip && !/^\d{5}$/.test(zip)) { tell(tr('The center zip should be 5 digits.'), { tone: 'error' }); return }
     const current = villages.find(v => v.id === editingVillageId)
     const updates = { name: editVillageName.trim(), region_label: editVillageRegion.trim() || null }
     // Only send the zip when it changed, so a neighbor-started village
     // (which has a center but no zip) keeps its center.
     if (zip !== (current?.center_zip || '')) updates.center_zip = zip || null
     const { data, error } = await supabase.from('villages').update(updates).eq('id', editingVillageId).select('id')
-    if (reportError('saveVillageEdit', error, /zip/i.test(error?.message || '') ? 'That zip code wasn\u2019t found. Check the center zip and try again.' : 'Could not save these changes. Try again.')) return
+    if (reportError('saveVillageEdit', error, /zip/i.test(error?.message || '') ? tr('That zip code wasn\u2019t found. Check the center zip and try again.') : tr('Could not save these changes. Try again.'))) return
     // Supabase can filter an update down to zero rows without raising an error
     // (for example if permissions block it), so check that a row really changed.
-    if (!data || data.length === 0) { tell('Nothing was saved. You may not have permission to edit villages.', { tone: 'error' }); return }
+    if (!data || data.length === 0) { tell(tr('Nothing was saved. You may not have permission to edit villages.'), { tone: 'error' }); return }
     const before = (current?.zips || []).join(',')
     const after = parseZips(editVillageZips).sort().join(',')
     if (after !== before) { if (!(await saveZipList(editingVillageId, editVillageZips))) return }
@@ -372,13 +385,13 @@ export default function Admin() {
 
   async function toggleVillageActive(village) {
     const { error } = await supabase.from('villages').update({ active: !village.active }).eq('id', village.id)
-    if (reportError('toggleVillageActive', error, 'Could not update this village. Try again.')) return
+    if (reportError('toggleVillageActive', error, tr('Could not update this village. Try again.'))) return
     await loadVillages()
   }
 
   async function reassignUserVillage(userId, villageId) {
     const { error } = await supabase.from('helper_profiles').update({ village_id: villageId || null }).eq('user_id', userId)
-    if (reportError('reassignUserVillage', error, 'Could not move this person to that village. Try again.')) return
+    if (reportError('reassignUserVillage', error, tr('Could not move this person to that village. Try again.'))) return
     await Promise.all([loadUsers(), loadVillages()])
   }
 
@@ -399,9 +412,9 @@ export default function Admin() {
       if (a.invited_by) {
         const { data: inviter, error: invErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', a.invited_by).maybeSingle()
         reportError('loadAdminApplications:inviter', invErr)
-        invitedByName = inviter?.display_name || 'an admin'
+        invitedByName = inviter?.display_name || tNow('an admin')
       }
-      return { ...a, applicant_name: prof?.display_name || 'Unnamed', applicant_avatar: prof?.avatar_url || null, invited_by_name: invitedByName }
+      return { ...a, applicant_name: prof?.display_name || tNow('Unnamed'), applicant_avatar: prof?.avatar_url || null, invited_by_name: invitedByName }
     }))
     setAdminApplications(enriched)
   }
@@ -423,7 +436,7 @@ export default function Admin() {
   // happen together or not at all.
   async function reviewAmbassadorApplication(applicationId, approve) {
     const { error } = await supabase.rpc('review_ambassador_application', { p_application_id: applicationId, p_approve: approve })
-    if (reportError('reviewAmbassadorApplication', error, 'Could not save that decision. Try again.')) return
+    if (reportError('reviewAmbassadorApplication', error, tr('Could not save that decision. Try again.'))) return
     await Promise.all([loadAmbassadorApplications(), loadUsers(), loadStats()])
   }
 
@@ -444,7 +457,7 @@ export default function Admin() {
   }
 
   async function createOrganization() {
-    if (!newOrgName.trim()) { tell('Group name is required.', { tone: 'error' }); return }
+    if (!newOrgName.trim()) { tell(tr('Group name is required.'), { tone: 'error' }); return }
     const social_links = newOrgSocial.trim() ? { primary: newOrgSocial.trim() } : {}
     const { error } = await supabase.from('organizations').insert({
       name: newOrgName.trim(),
@@ -453,7 +466,7 @@ export default function Admin() {
       website_url: newOrgWebsite.trim() || null,
       social_links,
     })
-    if (reportError('createOrganization', error, 'Could not create this group. Try again.')) return
+    if (reportError('createOrganization', error, tr('Could not create this group. Try again.'))) return
     setNewOrgName(''); setNewOrgDesc(''); setNewOrgEmail(''); setNewOrgWebsite(''); setNewOrgSocial('')
     setShowNewOrgForm(false)
     await loadOrganizations()
@@ -463,24 +476,24 @@ export default function Admin() {
   // signed up as the wrong kind (organization vs emergency response group).
   async function setOrgType(org, value) {
     const { error } = await supabase.from('organizations').update({ org_type: value || null }).eq('id', org.id)
-    if (reportError('setOrgType', error, 'Could not save the kind of group. Try again.')) return
+    if (reportError('setOrgType', error, tr('Could not save the kind of group. Try again.'))) return
     await loadOrganizations()
   }
 
   async function switchOrgKind(org) {
     const toGroup = org.kind !== 'group'
     const msg = toGroup
-      ? 'Make ' + org.name + ' an emergency crew? Its leaders will be called Keeper and Helper, and it will need approval before it is called to emergencies.'
-      : 'Make ' + org.name + ' a group? It will no longer be called to emergencies. Its members, chats, events and resources stay.'
-    if (!(await askConfirm(msg, { yes: toGroup ? 'Make it a crew' : 'Make it a group' }))) return
+      ? tr('Make {name} an emergency crew? Its leaders will be called Keeper and Helper, and it will need approval before it is called to emergencies.', { name: org.name })
+      : tr('Make {name} a group? It will no longer be called to emergencies. Its members, chats, events and resources stay.', { name: org.name })
+    if (!(await askConfirm(msg, { yes: toGroup ? tr('Make it a crew') : tr('Make it a group') }))) return
     const { error } = await supabase.from('organizations').update({ kind: toGroup ? 'group' : 'organization', response_status: 'none' }).eq('id', org.id)
-    if (reportError('switchOrgKind', error, 'Could not change this. Try again.')) return
+    if (reportError('switchOrgKind', error, tr('Could not change this. Try again.'))) return
     await loadOrganizations()
   }
 
   async function toggleOrgApproved(org) {
     const { error } = await supabase.from('organizations').update({ approved: !org.approved }).eq('id', org.id)
-    if (reportError('toggleOrgApproved', error, 'Could not update this group. Try again.')) return
+    if (reportError('toggleOrgApproved', error, tr('Could not update this group. Try again.'))) return
     await loadOrganizations()
   }
 
@@ -490,14 +503,14 @@ export default function Admin() {
   async function reviewOrgRequest(org, approve) {
     let note = null
     if (approve) {
-      if (!(await askConfirm('Approve ' + org.name + '? It will show to the public, and its members will get an alert.', { yes: 'Approve' }))) return
+      if (!(await askConfirm(tr('Approve {name}? It will show to the public, and its members will get an alert.', { name: org.name }), { yes: tr('Approve') }))) return
     } else {
-      const r = await ask({ message: 'Turn down ' + org.name + '? Its members will get a kind alert, and the request will be removed.', yes: 'Turn down', danger: true, input: { label: 'A short note for them (optional)' } })
+      const r = await ask({ message: tr('Turn down {name}? Its members will get a kind alert, and the request will be removed.', { name: org.name }), yes: tr('Turn down'), danger: true, input: { label: tr('A short note for them (optional)') } })
       if (r === null) return
       note = r.text
     }
     const { error } = await supabase.rpc('review_organization_request', { p_org_id: org.id, p_approve: approve, p_note: note })
-    if (reportError('reviewOrgRequest', error, error?.message || 'Could not save that decision. Try again.')) return
+    if (reportError('reviewOrgRequest', error, error?.message || tr('Could not save that decision. Try again.'))) return
     await loadOrganizations()
   }
 
@@ -516,16 +529,16 @@ export default function Admin() {
       note: inviteNote.trim() || null,
     })
     setCreatingInvite(false)
-    if (reportError('createOrgInvitation', error, 'Could not create the invite. Try again.')) return
+    if (reportError('createOrgInvitation', error, tr('Could not create the invite. Try again.'))) return
     setInviteContactName(''); setInviteContactEmail(''); setInviteNote('')
     setShowInviteOrgForm(false)
     await loadOrgInvitations()
   }
 
   async function revokeOrgInvitation(id) {
-    if (!(await askConfirm('Revoke this invite link? It will stop working right away.', { yes: 'Revoke', danger: true }))) return
+    if (!(await askConfirm(tr('Revoke this invite link? It will stop working right away.'), { yes: tr('Revoke'), danger: true }))) return
     const { error } = await supabase.from('organization_invitations').update({ status: 'revoked' }).eq('id', id)
-    if (reportError('revokeOrgInvitation', error, 'Could not revoke this invite. Try again.')) return
+    if (reportError('revokeOrgInvitation', error, tr('Could not revoke this invite. Try again.'))) return
     await loadOrgInvitations()
   }
 
@@ -535,8 +548,8 @@ export default function Admin() {
 
   function copyInviteLink(token) {
     navigator.clipboard.writeText(inviteLink(token))
-      .then(() => tell('Invite link copied.'))
-      .catch(() => tell('Could not copy automatically. Long-press or select the link to copy it.', { tone: 'error' }))
+      .then(() => tell(tr('Invite link copied.')))
+      .catch(() => tell(tr('Could not copy automatically. Long-press or select the link to copy it.'), { tone: 'error' }))
   }
 
   async function loadPending() {
@@ -552,7 +565,7 @@ export default function Admin() {
       reportError('enrichReports:reporter', repErr)
       const { data: reported, error: repdErr } = a.reported_user_id ? await supabase.from('helper_profiles_public').select('display_name, role').eq('user_id', a.reported_user_id).maybeSingle() : { data: null, error: null }
       reportError('enrichReports:reported', repdErr)
-      return { ...a, reporter_name: reporter?.display_name || 'Unknown', reported_name: a.reported_user_id ? (reported?.display_name || 'Unknown') : 'a removed account', reported_role: reported?.role || null }
+      return { ...a, reporter_name: reporter?.display_name || tNow('Unknown'), reported_name: a.reported_user_id ? (reported?.display_name || tNow('Unknown')) : tNow('a removed account'), reported_role: reported?.role || null }
     }))
     const ids = withNames.map(a => a.id)
     const { data: noteRows, error: noteErr } = ids.length ? await supabase.from('user_report_notes').select('report_id, note').in('report_id', ids) : { data: [], error: null }
@@ -608,9 +621,9 @@ export default function Admin() {
       ;(reqRows || []).forEach(r => { skillOf[r.id] = r.skill_needed })
       setTaskIssues(issues.map(i => ({
         ...i,
-        from_name: nameOf[i.from_user_id] || 'Unknown',
-        about_name: i.about_user_id ? (nameOf[i.about_user_id] || 'Unknown') : 'a removed account',
-        skill: skillOf[i.request_id] || 'a request',
+        from_name: nameOf[i.from_user_id] || tNow('Unknown'),
+        about_name: i.about_user_id ? (nameOf[i.about_user_id] || tNow('Unknown')) : tNow('a removed account'),
+        skill: skillOf[i.request_id] || tNow('a request'),
       })))
     } else if (issues) {
       setTaskIssues([])
@@ -623,7 +636,7 @@ export default function Admin() {
       const withReporter = await Promise.all(checkins.map(async (c) => {
         const { data: rp, error: rpErr } = await supabase.from('helper_profiles_public').select('display_name').eq('user_id', c.reporter_id).maybeSingle()
         reportError('loadAlerts:checkinReporter', rpErr)
-        return { ...c, reporter_name: rp?.display_name || 'Unknown' }
+        return { ...c, reporter_name: rp?.display_name || tNow('Unknown') }
       }))
       setCheckinAlerts(withReporter)
     }
@@ -631,26 +644,26 @@ export default function Admin() {
 
   async function updateHelpMessage(id, changes) {
     const { data, error } = await supabase.from('feedback').update(changes).eq('id', id).select('id')
-    if (reportError('updateHelpMessage', error, 'Could not update this message. Try again.')) return
-    if (!data || data.length === 0) { tell('Could not update this message. Try again.', { tone: 'error' }); return }
+    if (reportError('updateHelpMessage', error, tr('Could not update this message. Try again.'))) return
+    if (!data || data.length === 0) { tell(tr('Could not update this message. Try again.'), { tone: 'error' }); return }
     await Promise.all([loadAlerts(), loadStats()])
-    if (changes.status === 'done') tell('Marked done.', { action: { label: 'Undo', run: () => updateHelpMessage(id, { status: 'open' }) } })
+    if (changes.status === 'done') tell(tr('Marked done.'), { action: { label: tr('Undo'), run: () => updateHelpMessage(id, { status: 'open' }) } })
   }
 
   async function reviewReport(id, status) {
     const { data, error } = await supabase.from('user_reports').update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq('id', id).select('id')
-    if (reportError('reviewReport', error, 'Could not update this report. Try again.')) return
-    if (!data || data.length === 0) { tell('Could not update this report. Try again.', { tone: 'error' }); return }
+    if (reportError('reviewReport', error, tr('Could not update this report. Try again.'))) return
+    if (!data || data.length === 0) { tell(tr('Could not update this report. Try again.'), { tone: 'error' }); return }
     await Promise.all([loadAlerts(), loadStats(), reportView === 'closed' ? loadClosedReports(true) : Promise.resolve()])
-    if (status !== 'open') tell(status === 'dismissed' ? 'Report dismissed.' : 'Report marked reviewed.', { action: { label: 'Undo', run: () => reopenReport(id) } })
+    if (status !== 'open') tell(tr(status === 'dismissed' ? 'Report dismissed.' : 'Report marked reviewed.'), { action: { label: tr('Undo'), run: () => reopenReport(id) } })
   }
 
   // Undo: put a report back in the open list.
   async function reopenReport(id) {
     const { data, error } = await supabase.from('user_reports').update({ status: 'open', reviewed_by: null, reviewed_at: null }).eq('id', id).select('id')
-    if (reportError('reopenReport', error, 'Could not undo. Try again.')) return
-    if (!data || data.length === 0) { tell('Could not undo. Try again.', { tone: 'error' }); return }
-    tell('Back in open reports.')
+    if (reportError('reopenReport', error, tr('Could not undo. Try again.'))) return
+    if (!data || data.length === 0) { tell(tr('Could not undo. Try again.'), { tone: 'error' }); return }
+    tell(tr('Back in open reports.'))
     await Promise.all([loadAlerts(), loadStats(), reportView === 'closed' ? loadClosedReports(true) : Promise.resolve()])
     refreshAdminInbox()
   }
@@ -667,25 +680,25 @@ export default function Admin() {
       err = res.error
     }
     setNoteSaving(null)
-    if (reportError('saveReportNote', err, 'Could not save the note. Try again.')) return
+    if (reportError('saveReportNote', err, tr('Could not save the note. Try again.'))) return
     setNoteDrafts(d => { const n = { ...d }; delete n[id]; return n })
     await loadAlerts()
   }
 
   async function reviewTaskIssue(id, status) {
     const { data, error } = await supabase.from('task_feedback').update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq('id', id).select('id')
-    if (reportError('reviewTaskIssue', error, 'Could not update this. Try again.')) return
-    if (!data || data.length === 0) { tell('Could not update this. Try again.', { tone: 'error' }); return }
+    if (reportError('reviewTaskIssue', error, tr('Could not update this. Try again.'))) return
+    if (!data || data.length === 0) { tell(tr('Could not update this. Try again.'), { tone: 'error' }); return }
     await Promise.all([loadAlerts(), loadStats()])
-    if (status !== 'open') tell(status === 'dismissed' ? 'Dismissed.' : 'Marked reviewed.', { action: { label: 'Undo', run: () => reopenTaskIssue(id) } })
+    if (status !== 'open') tell(tr(status === 'dismissed' ? 'Dismissed.' : 'Marked reviewed.'), { action: { label: tr('Undo'), run: () => reopenTaskIssue(id) } })
   }
 
   // Undo: put a task issue back in the open list.
   async function reopenTaskIssue(id) {
     const { data, error } = await supabase.from('task_feedback').update({ status: 'open', reviewed_by: null, reviewed_at: null }).eq('id', id).select('id')
-    if (reportError('reopenTaskIssue', error, 'Could not undo. Try again.')) return
-    if (!data || data.length === 0) { tell('Could not undo. Try again.', { tone: 'error' }); return }
-    tell('Back in open reports.')
+    if (reportError('reopenTaskIssue', error, tr('Could not undo. Try again.'))) return
+    if (!data || data.length === 0) { tell(tr('Could not undo. Try again.'), { tone: 'error' }); return }
+    tell(tr('Back in open reports.'))
     await Promise.all([loadAlerts(), loadStats()])
     refreshAdminInbox()
   }
@@ -778,19 +791,19 @@ export default function Admin() {
 
   async function verifyEvent(eventId) {
     const { error } = await supabase.from('emergency_events').update({ verified: true }).eq('id', eventId)
-    if (reportError('verifyEvent', error, 'Could not verify this event. Try again.')) return
+    if (reportError('verifyEvent', error, tr('Could not verify this event. Try again.'))) return
     await loadPending()
   }
 
   async function rejectEvent(eventId) {
-    if (!(await askConfirm('Reject and close this emergency report?', { yes: 'Reject', danger: true }))) return
+    if (!(await askConfirm(tr('Reject and close this emergency report?'), { yes: tr('Reject'), danger: true }))) return
     const { error } = await supabase.from('emergency_events').update({ status: 'closed' }).eq('id', eventId)
-    if (reportError('rejectEvent', error, 'Could not reject this event. Try again.')) return
+    if (reportError('rejectEvent', error, tr('Could not reject this event. Try again.'))) return
     await loadPending()
   }
 
   async function approveFalseAlarm(notif) {
-    if (!(await askConfirm('Delete this emergency as a false alarm? This cannot be undone.', { yes: 'Delete', danger: true }))) return
+    if (!(await askConfirm(tr('Delete this emergency as a false alarm? This cannot be undone.'), { yes: tr('Delete'), danger: true }))) return
     const eventId = notif.link?.replace('/emergency/', '')
     if (eventId) {
       const { error: e1 } = await supabase.from('event_signups').delete().eq('event_id', Number(eventId))
@@ -802,7 +815,7 @@ export default function Admin() {
       const { error: e4 } = await supabase.from('event_close_votes').delete().eq('event_id', Number(eventId))
       reportError('approveFalseAlarm:closevotes', e4)
       const { error: e5 } = await supabase.from('emergency_events').delete().eq('id', Number(eventId))
-      if (reportError('approveFalseAlarm:event', e5, 'Could not delete the event. Try again.')) return
+      if (reportError('approveFalseAlarm:event', e5, tr('Could not delete the event. Try again.'))) return
     }
     const { error: e6 } = await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
     reportError('approveFalseAlarm:notif', e6)
@@ -821,8 +834,8 @@ export default function Admin() {
   }
 
   async function approveDuplicateMerge(notif) {
-    if (!notif.duplicateEvent || !notif.targetEvent) { tell('Could not find both events. They may have already been resolved.', { tone: 'error' }); return }
-    if (!(await askConfirm('Merge "' + notif.duplicateEvent.title + '" into "' + notif.targetEvent.title + '"?', { yes: 'Merge' }))) return
+    if (!notif.duplicateEvent || !notif.targetEvent) { tell(tr('Could not find both events. They may have already been resolved.'), { tone: 'error' }); return }
+    if (!(await askConfirm(tr('Merge "{from}" into "{to}"?', { from: notif.duplicateEvent.title, to: notif.targetEvent.title }), { yes: tr('Merge') }))) return
     const dupId = notif.duplicateEvent.id
     const tgtId = notif.targetEvent.id
     const { error: e1 } = await supabase.from('event_signups').update({ event_id: tgtId }).eq('event_id', dupId)
@@ -832,7 +845,7 @@ export default function Admin() {
     const { error: e3 } = await supabase.from('event_resources').update({ event_id: tgtId }).eq('event_id', dupId)
     reportError('approveDuplicateMerge:resources', e3)
     const { error: e4 } = await supabase.from('emergency_events').update({ status: 'closed', resolved_at: new Date().toISOString(), close_reason: 'duplicate', merged_into_event_id: tgtId }).eq('id', dupId)
-    if (reportError('approveDuplicateMerge:event', e4, 'Could not merge the events. Try again.')) return
+    if (reportError('approveDuplicateMerge:event', e4, tr('Could not merge the events. Try again.'))) return
     const { error: e5 } = await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
     reportError('approveDuplicateMerge:notif', e5)
     const { error: e6 } = await supabase.from('event_close_votes').delete().eq('event_id', dupId)
@@ -853,19 +866,19 @@ export default function Admin() {
   async function promoteUser(userId, toRole) {
     if (toRole === 'ambassador') {
       const { error } = await supabase.from('helper_profiles').update({ is_hope_ambassador: true }).eq('user_id', userId)
-      if (reportError('promoteUser:ambassador', error, 'Could not update this user. Try again.')) return
+      if (reportError('promoteUser:ambassador', error, tr('Could not update this user. Try again.'))) return
       // If they had an application waiting, mark it approved so it leaves the queue.
       const { error: closeErr } = await supabase.from('ambassador_applications').update({ status: 'approved', reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq('user_id', userId).eq('status', 'pending')
       reportError('promoteUser:closeApplication', closeErr)
       await Promise.all([loadUsers(), loadAmbassadorApplications()])
     } else if (toRole === 'admin') {
-      if (!(await askConfirm('Send an admin invitation to this person? They will see it on their profile.', { yes: 'Send invitation' }))) return
+      if (!(await askConfirm(tr('Send an admin invitation to this person? They will see it on their profile.'), { yes: tr('Send invitation') }))) return
       const { data: existing, error: existErr } = await supabase.from('admin_applications').select('id, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle()
-      if (reportError('promoteUser:checkExisting', existErr, 'Could not check this user. Try again.')) return
-      if (existing && existing.status === 'invited') { tell("This person already has an invitation waiting. They haven't answered yet."); return }
-      if (existing && existing.status === 'pending') { tell('This person already said yes to an invitation. Finish it in Approvals.'); navigate('/admin?tab=approvals'); return }
+      if (reportError('promoteUser:checkExisting', existErr, tr('Could not check this user. Try again.'))) return
+      if (existing && existing.status === 'invited') { tell(tr("This person already has an invitation waiting. They haven't answered yet.")); return }
+      if (existing && existing.status === 'pending') { tell(tr('This person already said yes to an invitation. Finish it in Approvals.')); navigate('/admin?tab=approvals'); return }
       const { error: insErr } = await supabase.from('admin_applications').insert({ user_id: userId, region: 'Invited by admin', reason: 'Admin invitation', status: 'invited', invited_by: user.id })
-      if (reportError('promoteUser:insertInvite', insErr, 'Could not send the invitation. Try again.')) return
+      if (reportError('promoteUser:insertInvite', insErr, tr('Could not send the invitation. Try again.'))) return
       const { error: notifErr } = await supabase.from('notifications').insert({ user_id: userId, type: 'admin_invite', title: 'You have been invited to become an Admin', body: 'Check your profile to accept or decline.', link: '/profile', read: false })
       reportError('promoteUser:notify', notifErr)
       await loadUsers()
@@ -875,19 +888,19 @@ export default function Admin() {
   // asks, and a second admin has to agree (vwb-admin-roles.sql).
   async function demoteUser(userId) {
     const u = users.find(x => x.user_id === userId)
-    const name = u?.display_name || 'this admin'
+    const name = u?.display_name || tr('this admin')
     const r = await ask({
       message: isFounder
-        ? 'Remove admin access from ' + name + '? It goes in the Role changes log that every admin can see.'
-        : 'Ask to remove admin access from ' + name + '? A second admin has to agree before it happens. Every admin can see the request.',
-      yes: isFounder ? 'Remove admin access' : 'Ask to remove', danger: true,
-      input: { label: 'Why? (optional, every admin can see this)' },
+        ? tr('Remove admin access from {name}? It goes in the Role changes log that every admin can see.', { name })
+        : tr('Ask to remove admin access from {name}? A second admin has to agree before it happens. Every admin can see the request.', { name }),
+      yes: isFounder ? tr('Remove admin access') : tr('Ask to remove'), danger: true,
+      input: { label: tr('Why? (optional, every admin can see this)') },
     })
     if (r === null) return
     const reason = r.text
     const { data, error } = await supabase.rpc('admin_removal_ask', { p_target: userId, p_reason: reason })
-    if (reportError('demoteUser', error, error?.message || 'Could not do that. Try again.')) return
-    if (data === 'asked') tell('Asked. It happens when a second admin agrees in Approvals.')
+    if (reportError('demoteUser', error, error?.message || tr('Could not do that. Try again.'))) return
+    if (data === 'asked') tell(tr('Asked. It happens when a second admin agrees in Approvals.'))
     setRoleRefresh(n => n + 1)
     await loadUsers()
   }
@@ -895,16 +908,16 @@ export default function Admin() {
   // Ambassador status/details and any admin coverage area, and drops their
   // role to member. Shares its logic with Profile's own self-service reset.
   async function resetUserToBase(u) {
-    if (!(await askConfirm('Reset ' + (u.display_name || 'this person') + ' back to a plain Neighbor account? This clears their Ambassador status, skills, and admin settings.', { yes: 'Reset to Neighbor', danger: true }))) return
+    if (!(await askConfirm(tr('Reset {name} back to a plain Neighbor account? This clears their Ambassador status, skills, and admin settings.', { name: u.display_name || tr('this person') }), { yes: tr('Reset to Neighbor'), danger: true }))) return
     const { error } = await resetAccountToBase(u.user_id, { currentRole: u.role })
-    if (reportError('resetUserToBase', error, 'Could not reset this user. Try again.')) return
+    if (reportError('resetUserToBase', error, tr('Could not reset this user. Try again.'))) return
     await loadUsers()
   }
   async function resetTwoStep(u) {
-    if (!(await askConfirm('Reset two-step login for ' + (u.display_name || 'this person') + '? Only do this after they asked for help and you are sure it is them. They can turn it back on in Settings.', { yes: 'Reset two-step', danger: true }))) return
+    if (!(await askConfirm(tr('Reset two-step login for {name}? Only do this after they asked for help and you are sure it is them. They can turn it back on in Settings.', { name: u.display_name || tr('this person') }), { yes: tr('Reset two-step'), danger: true }))) return
     const { error } = await supabase.rpc('admin_reset_two_step', { p_user: u.user_id })
-    if (reportError('resetTwoStep', error, 'Could not reset two-step login. Try again.')) return
-    tell('Two-step login was reset. They can sign in with just their password now.')
+    if (reportError('resetTwoStep', error, tr('Could not reset two-step login. Try again.'))) return
+    tell(tr('Two-step login was reset. They can sign in with just their password now.'))
   }
   async function messageUser(userId) {
     const { data: convos, error: convoErr } = await supabase.from('conversations').select('id, helper_id, requester_id').or('helper_id.eq.' + userId + ',requester_id.eq.' + userId)
@@ -912,7 +925,7 @@ export default function Admin() {
     const existing = (convos || []).find(c => (c.helper_id === user.id || c.requester_id === user.id) && (c.helper_id === userId || c.requester_id === userId))
     if (existing) { navigate('/conversation/' + existing.id); return }
     const { data: newConvo, error: createErr } = await supabase.from('conversations').insert({ helper_id: user.id, requester_id: userId }).select().single()
-    if (reportError('messageUser:create', createErr, 'Could not start a conversation. Try again.')) return
+    if (reportError('messageUser:create', createErr, tr('Could not start a conversation. Try again.'))) return
     navigate('/conversation/' + newConvo.id)
   }
 
@@ -920,8 +933,8 @@ export default function Admin() {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}><Icon name="lock" /></p>
-        <p style={{ fontWeight: 700 }}>Admin access only</p>
-        <button onClick={() => navigate('/profile')} style={{ marginTop: '1rem', padding: '0.6rem 1.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>Back to Profile</button>
+        <p style={{ fontWeight: 700 }}>{tr('Admin access only')}</p>
+        <button onClick={() => navigate('/profile')} style={{ marginTop: '1rem', padding: '0.6rem 1.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer' }}>{tr('Back to Profile')}</button>
       </div>
     )
   }
@@ -930,9 +943,9 @@ export default function Admin() {
     const d = new Date(ts)
     const diff = Date.now() - d.getTime()
     const hrs = Math.floor(diff / 3600000)
-    if (hrs < 1) return 'Just now'
-    if (hrs < 24) return hrs + 'h ago'
-    return Math.floor(hrs / 24) + 'd ago'
+    if (hrs < 1) return tr('Just now')
+    if (hrs < 24) return tr('{n}h ago', { n: hrs })
+    return tr('{n}d ago', { n: Math.floor(hrs / 24) })
   }
 
   // Users tab: search, filter, and sort. Counts on the buttons ignore the
@@ -988,16 +1001,16 @@ export default function Admin() {
   // The sections. desktopOnly ones need more room and tools, so the phone
   // build leaves them for a computer.
   const SECTIONS = [
-    { key: 'inbox', label: 'Needs you', icon: 'inbox', count: inbox.total, urgent: inbox.urgent },
-    { key: 'approvals', label: 'Approvals', icon: 'check', count: approvalsCount },
-    { key: 'reports', label: 'Reports', icon: 'flag', count: stats.alerts || 0, urgent: (stats.alerts || 0) > 0 },
-    { key: 'emergencies', label: 'Emergencies', icon: 'siren', count: pendingEvents.length, urgent: pendingEvents.length > 0 },
-    { key: 'users', label: 'People', icon: 'people' },
-    { key: 'log', label: 'Admin log', icon: 'scroll' },
-    { key: 'organizations', label: 'Groups', icon: 'people', count: orgsWaiting },
-    { key: 'villages', label: 'Villages', icon: 'houses', desktopOnly: true },
-    { key: 'content', label: 'SkillShare', icon: 'basket', count: duplicateCount, desktopOnly: true },
-    ...(placesEnabled ? [{ key: 'crn', label: 'CRN Import', icon: 'folder', desktopOnly: true }] : []),
+    { key: 'inbox', label: tr('Needs you'), icon: 'inbox', count: inbox.total, urgent: inbox.urgent },
+    { key: 'approvals', label: tr('Approvals'), icon: 'check', count: approvalsCount },
+    { key: 'reports', label: tr('Reports'), icon: 'flag', count: stats.alerts || 0, urgent: (stats.alerts || 0) > 0 },
+    { key: 'emergencies', label: tr('Emergencies'), icon: 'siren', count: pendingEvents.length, urgent: pendingEvents.length > 0 },
+    { key: 'users', label: tr('People'), icon: 'people' },
+    { key: 'log', label: tr('Admin log'), icon: 'scroll' },
+    { key: 'organizations', label: tr('Groups'), icon: 'people', count: orgsWaiting },
+    { key: 'villages', label: tr('Villages'), icon: 'houses', desktopOnly: true },
+    { key: 'content', label: tr('SkillShare'), icon: 'basket', count: duplicateCount, desktopOnly: true },
+    ...(placesEnabled ? [{ key: 'crn', label: tr('CRN Import'), icon: 'folder', desktopOnly: true }] : []),
   ]
   const current = SECTIONS.find(s => s.key === tab)
   // Oct 28 (Jade): every admin tool works on a phone too. Nothing waits for a computer.
@@ -1015,26 +1028,26 @@ export default function Admin() {
   return (
     <div className={'admin-shell' + (wide ? ' admin-wide' : '')}>
       <div className="admin-top">
-        <button type="button" className="admin-back" onClick={() => goBack('/profile')} aria-label="Back">&#8592;</button>
-        <h1 className="admin-title">Admin</h1>
-        {wide && <span className="admin-top-note">Computer view: every tool</span>}
+        <button type="button" className="admin-back" onClick={() => goBack('/profile')} aria-label={tr('Back')}>&#8592;</button>
+        <h1 className="admin-title">{tr('Admin')}</h1>
+        {wide && <span className="admin-top-note">{tr('Computer view: every tool')}</span>}
       </div>
 
       {wide ? (
-        <nav className="admin-side" aria-label="Admin sections">
+        <nav className="admin-side" aria-label={tr('Admin sections')}>
           {SECTIONS.map(navBtn)}
           <div className="admin-side-more">
-            <button type="button" className="admin-nav-btn" onClick={() => navigate('/admin-guide')}><Icon name="books" size={24} /><span className="admin-nav-label">Admin Guide</span></button>
-            {isFounder && <button type="button" className="admin-nav-btn" onClick={() => navigate('/admin/report')}><Icon name="scroll" size={24} /><span className="admin-nav-label">Grant report</span></button>}
-            <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/scramble-test')}><Icon name="lock" size={24} /><span className="admin-nav-label">Test tools</span></button>
+            <button type="button" className="admin-nav-btn" onClick={() => navigate('/admin-guide')}><Icon name="books" size={24} /><span className="admin-nav-label">{tr('Admin Guide')}</span></button>
+            {isFounder && <button type="button" className="admin-nav-btn" onClick={() => navigate('/admin/report')}><Icon name="scroll" size={24} /><span className="admin-nav-label">{tr('Grant report')}</span></button>}
+            <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/scramble-test')}><Icon name="lock" size={24} /><span className="admin-nav-label">{tr('Test tools')}</span></button>
           </div>
         </nav>
       ) : (
-        <nav className="admin-chips" aria-label="Admin sections">
+        <nav className="admin-chips" aria-label={tr('Admin sections')}>
           {SECTIONS.map(navBtn)}
-          <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/admin-guide')}><Icon name="books" size={24} /><span className="admin-nav-label">Admin Guide</span></button>
-          {isFounder && <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/admin/report')}><Icon name="scroll" size={24} /><span className="admin-nav-label">Grant report</span></button>}
-          <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/scramble-test')}><Icon name="lock" size={24} /><span className="admin-nav-label">Test tools</span></button>
+          <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/admin-guide')}><Icon name="books" size={24} /><span className="admin-nav-label">{tr('Admin Guide')}</span></button>
+          {isFounder && <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/admin/report')}><Icon name="scroll" size={24} /><span className="admin-nav-label">{tr('Grant report')}</span></button>}
+          <button type="button" className="admin-nav-btn quiet" onClick={() => navigate('/scramble-test')}><Icon name="lock" size={24} /><span className="admin-nav-label">{tr('Test tools')}</span></button>
         </nav>
       )}
 
@@ -1043,35 +1056,35 @@ export default function Admin() {
       <div className="admin-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
         <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('all'); goTab('users') }} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{stats.users}</div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Users</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{tr('Users')}</div>
         </button>
         <button type="button" className="admin-stat-card" onClick={() => { setUserFilter('ambassadors'); goTab('users') }} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{stats.ambassadors}</div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Ambassadors</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{tr('Ambassadors')}</div>
         </button>
         <button type="button" className="admin-stat-card" onClick={() => { setContentFilter('requests'); goTab('content') }} style={statCardStyle}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent)' }}>{stats.requests}</div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Requests</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{tr('Requests')}</div>
         </button>
-        <div style={statCardStyle} title="Neighbors who offered to help and are waiting for the requester to say yes or no">
+        <div style={statCardStyle} title={tr('Neighbors who offered to help and are waiting for the requester to say yes or no')}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--info)' }}>{stats.offersWaiting}</div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Offers waiting</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{tr('Offers waiting')}</div>
         </div>
-        <div style={statCardStyle} title="Offers the requester said yes to">
+        <div style={statCardStyle} title={tr('Offers the requester said yes to')}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--info)' }}>{stats.accepted}</div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Accepted</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{tr('Accepted')}</div>
         </div>
-        <div style={statCardStyle} title="Tasks both people marked done">
+        <div style={statCardStyle} title={tr('Tasks both people marked done')}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--info)' }}>{stats.completed}</div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Completed</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{tr('Completed')}</div>
         </div>
         <button type="button" className="admin-stat-card" onClick={() => goTab('emergencies')} style={{ ...statCardStyle, gridColumn: 'span 3' }}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger)' }}>{stats.events}</div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Events</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{tr('Events')}</div>
         </button>
         <button type="button" className="admin-stat-card" onClick={() => goTab('reports')} style={{ ...statCardStyle, gridColumn: 'span 3' }}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: stats.alerts > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>{stats.alerts}</div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Reports</div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{tr('Reports')}</div>
         </button>
       </div>
       )}
@@ -1082,13 +1095,13 @@ export default function Admin() {
 
       {twoStepOn && toolWaits && (
         <div className="admin-tool-wait">
-          <p><strong>{current.label} works best on a computer.</strong> It has more tools than fit well on a phone.</p>
-          <button type="button" className="btn btn-outline" onClick={() => setForceTool(true)}>Open it here anyway</button>
-          <button type="button" className="btn btn-primary" onClick={() => goTab('inbox')}>Back to Needs you</button>
+          <p><strong>{tr('{name} works best on a computer.', { name: current.label })}</strong> {tr('It has more tools than fit well on a phone.')}</p>
+          <button type="button" className="btn btn-outline" onClick={() => setForceTool(true)}>{tr('Open it here anyway')}</button>
+          <button type="button" className="btn btn-primary" onClick={() => goTab('inbox')}>{tr('Back to Needs you')}</button>
         </div>
       )}
 
-      {loading && tab !== 'inbox' && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Loading...</p>}
+      {loading && tab !== 'inbox' && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>{tr('Loading...')}</p>}
 
       {!loading && placesEnabled && showTab === 'crn' && <AdminCrnImport />}
 
@@ -1098,12 +1111,12 @@ export default function Admin() {
           <AdminApplications me={user.id} isFounder={isFounder} refreshKey={roleRefresh} onChanged={() => { setRoleRefresh(n => n + 1); loadUsers(); loadAdminApplications() }} />
           <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
           {approvals.length === 0 && adminApplications.length === 0 && ambApplications.length === 0 && resourceClaims.length === 0 ? (
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No pending approvals</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>{tr('No pending approvals')}</p>
           ) : (
             <>
               {ambApplications.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: '0.85rem', color: 'var(--warn)', margin: '0.5rem 0' }}>Hope Ambassador Applications</h3>
+                  <h3 style={{ fontSize: '0.85rem', color: 'var(--warn)', margin: '0.5rem 0' }}>{tr('Hope Ambassador Applications')}</h3>
                   {ambApplications.map(a => {
                     const villageName = villages.find(v => v.id === a.applicant.village_id)?.name
                     const skillList = Array.isArray(a.applicant.skills) ? a.applicant.skills.join(', ') : ''
@@ -1113,18 +1126,18 @@ export default function Admin() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <AvatarDisplay url={a.applicant.avatar_url} userId={a.user_id} size={32} />
                           <div>
-                            <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}><UserName userId={a.user_id} name={a.applicant.display_name || 'Unnamed'} /></strong>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Applied {timeAgo(a.created_at)}{villageName ? ' \u00b7 ' + villageName : ''}</div>
+                            <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}><UserName userId={a.user_id} name={a.applicant.display_name || tr('Unnamed')} /></strong>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{tr('Applied {when}', { when: timeAgo(a.created_at) })}{villageName ? ' \u00b7 ' + villageName : ''}</div>
                           </div>
                         </div>
-                        <p style={{ color: 'var(--text)', fontSize: '0.8125rem', margin: '0.5rem 0 0.25rem' }}><strong style={{ color: 'var(--warn)' }}>How they know us:</strong> {a.how_known || 'Not given'}</p>
-                        {skillList && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.15rem 0' }}><strong>Skills:</strong> {skillList}</p>}
-                        {when && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.15rem 0' }}><strong>Available:</strong> {when}</p>}
-                        {typeof a.applicant.interests === 'string' && a.applicant.interests && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.15rem 0' }}><strong>About:</strong> {a.applicant.interests}</p>}
-                        {a.user_id !== user.id && <button type="button" onClick={() => messageUser(a.user_id)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, minHeight: '44px', padding: 0 }}>Message applicant</button>}
+                        <p style={{ color: 'var(--text)', fontSize: '0.8125rem', margin: '0.5rem 0 0.25rem' }}><strong style={{ color: 'var(--warn)' }}>{tr('How they know us:')}</strong> {a.how_known || tr('Not given')}</p>
+                        {skillList && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.15rem 0' }}><strong>{tr('Skills:')}</strong> {skillList}</p>}
+                        {when && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.15rem 0' }}><strong>{tr('Available:')}</strong> {when}</p>}
+                        {typeof a.applicant.interests === 'string' && a.applicant.interests && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.15rem 0' }}><strong>{tr('About:')}</strong> {a.applicant.interests}</p>}
+                        {a.user_id !== user.id && <button type="button" onClick={() => messageUser(a.user_id)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, minHeight: '44px', padding: 0 }}>{tr('Message applicant')}</button>}
                         <div className="admin-decide" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
-                          <button onClick={() => reviewAmbassadorApplication(a.id, true)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>Approve</button>
-                          <button onClick={() => reviewAmbassadorApplication(a.id, false)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', fontWeight: 600, cursor: 'pointer', fontSize: '0.8125rem' }}>Decline</button>
+                          <button onClick={() => reviewAmbassadorApplication(a.id, true)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>{tr('Approve')}</button>
+                          <button onClick={() => reviewAmbassadorApplication(a.id, false)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', fontWeight: 600, cursor: 'pointer', fontSize: '0.8125rem' }}>{tr('Decline')}</button>
                         </div>
                       </div>
                     )
@@ -1135,22 +1148,22 @@ export default function Admin() {
 
               {falseAlarms.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: '0.85rem', color: 'var(--warn)', margin: '0.5rem 0' }}>False Alarm Reports</h3>
+                  <h3 style={{ fontSize: '0.85rem', color: 'var(--warn)', margin: '0.5rem 0' }}>{tr('False Alarm Reports')}</h3>
                   {falseAlarms.map(n => (
                     <div key={n.id} style={{ ...cardStyle, borderLeft: '3px solid var(--warn)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div style={{ flex: 1 }}>
-                          <span style={{ background: 'var(--warn-bg)', color: 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>FALSE ALARM</span>
-                          <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: 'var(--text)' }}>{n.event?.title || 'Unknown event'}</h4>
+                          <span style={{ background: 'var(--warn-bg)', color: 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{tr('FALSE ALARM')}</span>
+                          <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: 'var(--text)' }}>{n.event?.title || tr('Unknown event')}</h4>
                         </div>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{timeAgo(n.created_at)}</span>
                       </div>
                       {n.event?.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{n.event.location_name}</p>}
                       {n.event?.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{n.event.description}</p>}
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0' }}>Signups: {n.event?.signup_count || 0} | Verified: {n.event?.verified ? 'Yes' : 'No'}</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0' }}>{tr('Signups: {n} | Verified: {yes}', { n: n.event?.signup_count || 0, yes: n.event?.verified ? tr('Yes') : tr('No') })}</p>
                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                        <button onClick={() => approveFalseAlarm(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Confirm False Alarm</button>
-                        <button onClick={() => rejectFalseAlarm(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Keep Event</button>
+                        <button onClick={() => approveFalseAlarm(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--warn)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Confirm False Alarm')}</button>
+                        <button onClick={() => rejectFalseAlarm(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Keep Event')}</button>
                       </div>
                     </div>
                   ))}
@@ -1159,30 +1172,30 @@ export default function Admin() {
 
               {duplicates.length > 0 && (
                 <>
-                  <h3 style={{ fontSize: '0.85rem', color: 'var(--info)', margin: '0.75rem 0 0.5rem' }}>Duplicate Merge Requests</h3>
+                  <h3 style={{ fontSize: '0.85rem', color: 'var(--info)', margin: '0.75rem 0 0.5rem' }}>{tr('Duplicate Merge Requests')}</h3>
                   {duplicates.map(n => (
                     <div key={n.id} style={{ ...cardStyle, borderLeft: '3px solid var(--info)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>DUPLICATE</span>
+                        <span style={{ background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{tr('DUPLICATE')}</span>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{timeAgo(n.created_at)}</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '0.5rem', margin: '0.5rem 0', alignItems: 'center' }}>
                         <div style={{ background: 'var(--danger-bg)', borderRadius: '8px', padding: '0.5rem', border: '1px solid var(--danger)' }}>
-                          <p style={{ fontSize: '0.8125rem', color: 'var(--danger)', margin: '0 0 0.2rem', fontWeight: 600 }}>Remove</p>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, fontWeight: 600 }}>{n.duplicateEvent?.title || 'Unknown'}</p>
+                          <p style={{ fontSize: '0.8125rem', color: 'var(--danger)', margin: '0 0 0.2rem', fontWeight: 600 }}>{tr('Remove')}</p>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, fontWeight: 600 }}>{n.duplicateEvent?.title || tr('Unknown')}</p>
                           {n.duplicateEvent?.location_name && <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0' }}>{n.duplicateEvent.location_name}</p>}
                         </div>
                         <span style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>&#8594;</span>
                         <div style={{ background: 'var(--success-bg)', borderRadius: '8px', padding: '0.5rem', border: '1px solid var(--accent)' }}>
-                          <p style={{ fontSize: '0.8125rem', color: 'var(--accent)', margin: '0 0 0.2rem', fontWeight: 600 }}>Keep</p>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, fontWeight: 600 }}>{n.targetEvent?.title || 'Unknown'}</p>
+                          <p style={{ fontSize: '0.8125rem', color: 'var(--accent)', margin: '0 0 0.2rem', fontWeight: 600 }}>{tr('Keep')}</p>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text)', margin: 0, fontWeight: 600 }}>{n.targetEvent?.title || tr('Unknown')}</p>
                           {n.targetEvent?.location_name && <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0' }}>{n.targetEvent.location_name}</p>}
                         </div>
                       </div>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>Signups and resources from the duplicate will be moved to the kept event.</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{tr('Signups and resources from the duplicate will be moved to the kept event.')}</p>
                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                        <button onClick={() => approveDuplicateMerge(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--info)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Merge Events</button>
-                        <button onClick={() => rejectDuplicateMerge(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Dismiss</button>
+                        <button onClick={() => approveDuplicateMerge(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--info)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Merge Events')}</button>
+                        <button onClick={() => rejectDuplicateMerge(n)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Dismiss')}</button>
                       </div>
                     </div>
                   ))}
@@ -1196,22 +1209,22 @@ export default function Admin() {
       {!loading && showTab === 'emergencies' && (
         <>
           {pendingEvents.length === 0 ? (
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No pending emergency reports</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>{tr('No pending emergency reports')}</p>
           ) : pendingEvents.map(ev => (
             <div key={ev.id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div>
-                  <span style={{ background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>PENDING</span>
+                  <span style={{ background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{tr('PENDING')}</span>
                   <h3 style={{ margin: '0.4rem 0 0.2rem', fontSize: '1rem' }}>{ev.title}</h3>
                 </div>
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{timeAgo(ev.created_at)}</span>
               </div>
               {ev.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{ev.location_name}</p>}
               {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{ev.description}</p>}
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.4rem 0' }}>Upvotes: {ev.upvote_count || 0} / 2 needed</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.4rem 0' }}>{tr('Upvotes: {n} / 2 needed', { n: ev.upvote_count || 0 })}</p>
               <div className="admin-decide" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button onClick={() => verifyEvent(ev.id)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Approve</button>
-                <button onClick={() => rejectEvent(ev.id)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>Reject</button>
+                <button onClick={() => verifyEvent(ev.id)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Approve')}</button>
+                <button onClick={() => rejectEvent(ev.id)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Reject')}</button>
               </div>
             </div>
           ))}
@@ -1226,7 +1239,7 @@ export default function Admin() {
             const reportId = banReportId
             setBanTarget(null); setBanReportId(null); setBanRefresh(n => n + 1); loadUsers()
             // Asking a second admin doesn't close the report yet.
-            if (result?.asked) { tell('Asked. The ban happens when a second admin agrees in Reports.'); refreshAdminInbox(); return }
+            if (result?.asked) { tell(tr('Asked. The ban happens when a second admin agrees in Reports.')); refreshAdminInbox(); return }
             if (reportId) reviewReport(reportId, 'reviewed')
           }}
         />
@@ -1238,48 +1251,48 @@ export default function Admin() {
           <AdminTrials me={user.id} isFounder={isFounder} refreshKey={roleRefresh} />
           <BannedAccountsPanel refreshKey={banRefresh} onChange={loadUsers} />
           <div style={{ marginBottom: '0.75rem' }}>
-            <label htmlFor="user-search" style={hiddenLabel}>Search people by name or village</label>
-            <input id="user-search" type="search" value={userQuery} onChange={(e) => { setUserQuery(e.target.value); setUserLimit(USER_PAGE_SIZE) }} autoComplete="off" enterKeyHint="search" placeholder="Search by name or village" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem', marginBottom: '0.5rem' }} />
-            <div role="group" aria-label="Filter people" style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', paddingBottom: '0.25rem' }}>
+            <label htmlFor="user-search" style={hiddenLabel}>{tr('Search people by name or village')}</label>
+            <input id="user-search" type="search" value={userQuery} onChange={(e) => { setUserQuery(e.target.value); setUserLimit(USER_PAGE_SIZE) }} autoComplete="off" enterKeyHint="search" placeholder={tr('Search by name or village')} style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem', marginBottom: '0.5rem' }} />
+            <div role="group" aria-label={tr('Filter people')} style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', paddingBottom: '0.25rem' }}>
               {USER_FILTERS.map(([key, label]) => (
                 <button key={key} type="button" aria-pressed={userFilter === key} onClick={() => { setUserFilter(key); setUserLimit(USER_PAGE_SIZE) }} style={{ ...tabStyle(userFilter === key), minHeight: '44px' }}>
-                  {label} <span style={{ opacity: 0.7 }}>{userCounts[key]}</span>
+                  {tr(label)} <span style={{ opacity: 0.7 }}>{userCounts[key]}</span>
                 </button>
               ))}
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.5rem' }}>
-              <select value={userSort} onChange={(e) => setUserSort(e.target.value)} aria-label="Sort people" style={filterSelect}>
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="name">Name A to Z</option>
-                <option value="vouches">Most vouches</option>
+              <select value={userSort} onChange={(e) => setUserSort(e.target.value)} aria-label={tr('Sort people')} style={filterSelect}>
+                <option value="newest">{tr('Newest first')}</option>
+                <option value="oldest">{tr('Oldest first')}</option>
+                <option value="name">{tr('Name A to Z')}</option>
+                <option value="vouches">{tr('Most vouches')}</option>
               </select>
               {villages.length > 1 && (
-                <select value={userVillage} onChange={(e) => { setUserVillage(e.target.value); setUserLimit(USER_PAGE_SIZE) }} aria-label="Filter by village" style={filterSelect}>
-                  <option value="all">All villages</option>
+                <select value={userVillage} onChange={(e) => { setUserVillage(e.target.value); setUserLimit(USER_PAGE_SIZE) }} aria-label={tr('Filter by village')} style={filterSelect}>
+                  <option value="all">{tr('All villages')}</option>
                   {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                  <option value="none">No village</option>
+                  <option value="none">{tr('No village')}</option>
                 </select>
               )}
-              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, padding: '0.25rem 0.5rem', minHeight: '44px' }}>Clear filters</button>}
-              <span role="status" style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Showing {Math.min(userLimit, visibleUsers.length)} of {visibleUsers.length}{visibleUsers.length !== users.length ? ' (' + users.length + ' total)' : ''}</span>
+              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, padding: '0.25rem 0.5rem', minHeight: '44px' }}>{tr('Clear filters')}</button>}
+              <span role="status" style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{tr(visibleUsers.length !== users.length ? 'Showing {n} of {count} ({total} total)' : 'Showing {n} of {count}', { n: Math.min(userLimit, visibleUsers.length), count: visibleUsers.length, total: users.length })}</span>
             </div>
           </div>
 
           {visibleUsers.slice(0, userLimit).map(u => u.no_profile ? (
             <div key={u.user_id} style={{ ...cardStyle, borderLeft: '3px solid var(--border-strong)' }}>
               <div>
-                <span style={{ fontWeight: 700 }}><UserName userId={u.user_id} name={u.display_name || 'No name given'} /></span>
-                <span style={{ marginLeft: '0.4rem', background: 'var(--surface-2)', color: 'var(--text-soft)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>No profile yet</span>
+                <span style={{ fontWeight: 700 }}><UserName userId={u.user_id} name={u.display_name || tr('No name given')} /></span>
+                <span style={{ marginLeft: '0.4rem', background: 'var(--surface-2)', color: 'var(--text-soft)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>{tr('No profile yet')}</span>
               </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0 0' }}>{u.email_hint || 'No email'} &middot; Signed up {new Date(u.created_at).toLocaleDateString()}</p>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>{u.email_confirmed ? 'Email confirmed' : 'Email not confirmed yet'} &middot; {u.last_sign_in_at ? 'Last signed in ' + new Date(u.last_sign_in_at).toLocaleDateString() : 'Never signed in'}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0 0' }}>{u.email_hint || tr('No email')} &middot; {tr('Signed up {date}', { date: new Date(u.created_at).toLocaleDateString() })}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>{u.email_confirmed ? tr('Email confirmed') : tr('Email not confirmed yet')} &middot; {u.last_sign_in_at ? tr('Last signed in {date}', { date: new Date(u.last_sign_in_at).toLocaleDateString() }) : tr('Never signed in')}</p>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0 0' }}>
                 {!u.email_confirmed
-                  ? 'They need to confirm their email and sign in. Their profile is made the first time they sign in.'
+                  ? tr('They need to confirm their email and sign in. Their profile is made the first time they sign in.')
                   : u.last_sign_in_at
-                    ? 'They signed in, but no profile was made. Ask them to sign in again.'
-                    : 'They confirmed their email but have not signed in yet.'}
+                    ? tr('They signed in, but no profile was made. Ask them to sign in again.')
+                    : tr('They confirmed their email but have not signed in yet.')}
               </p>
             </div>
           ) : (
@@ -1288,31 +1301,31 @@ export default function Admin() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <AvatarDisplay url={u.avatar_url} userId={u.user_id} size={32} />
                   <div>
-                    <UserName userId={u.user_id} name={u.display_name || 'Unnamed'} style={{ fontWeight: 700 }} />
-                    {u.role === 'founder' && <span style={{ marginLeft: '0.4rem', background: 'var(--purple-bg)', color: 'var(--purple)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Founder</span>}
-                    {u.role === 'admin' && <span style={{ marginLeft: '0.4rem', background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Admin</span>}
-                    {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>Ambassador</span>}
+                    <UserName userId={u.user_id} name={u.display_name || tr('Unnamed')} style={{ fontWeight: 700 }} />
+                    {u.role === 'founder' && <span style={{ marginLeft: '0.4rem', background: 'var(--purple-bg)', color: 'var(--purple)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>{tr('Founder')}</span>}
+                    {u.role === 'admin' && <span style={{ marginLeft: '0.4rem', background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>{tr('Admin')}</span>}
+                    {u.is_hope_ambassador && <span style={{ marginLeft: '0.4rem', background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, padding: '1px 6px', borderRadius: '4px' }}>{tr('Ambassador')}</span>}
                   </div>
                 </div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{u.vouch_count} vouches</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{tr('{n} vouches', { n: u.vouch_count })}</span>
               </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0 0' }}>Joined {new Date(u.created_at).toLocaleDateString()}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0 0' }}>{tr('Joined {date}', { date: new Date(u.created_at).toLocaleDateString() })}</p>
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem' }}>Message</button>
+                <button onClick={() => messageUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem' }}>{tr('Message')}</button>
                 {!u.is_hope_ambassador && (
-                  <button onClick={() => promoteUser(u.user_id, 'ambassador')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--border)', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>Make Ambassador</button>
+                  <button onClick={() => promoteUser(u.user_id, 'ambassador')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--border)', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{tr('Make Ambassador')}</button>
                 )}
                 {isFounder && u.role !== 'admin' && u.role !== 'founder' && u.is_hope_ambassador && u.user_id !== user.id && (
                   u.admin_app_status === 'invited' ? (
-                    <span style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600 }}>Invite Sent</span>
+                    <span style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', background: 'var(--info-bg)', color: 'var(--info)', fontSize: '0.8125rem', fontWeight: 600 }}>{tr('Invite Sent')}</span>
                   ) : u.admin_app_status === 'pending' ? (
-                    <button onClick={() => goTab('approvals')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>Review in Approvals</button>
+                    <button onClick={() => goTab('approvals')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{tr('Review in Approvals')}</button>
                   ) : (
-                    <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--info-bg)', color: 'var(--info)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{u.admin_app_status === 'declined' ? 'Invite Admin Again' : 'Invite Admin'}</button>
+                    <button onClick={() => promoteUser(u.user_id, 'admin')} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: 'none', background: 'var(--info-bg)', color: 'var(--info)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{u.admin_app_status === 'declined' ? tr('Invite Admin Again') : tr('Invite Admin')}</button>
                   )
                 )}
                 {u.role === 'admin' && u.user_id !== user.id && (
-                  <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8125rem' }}>{isFounder ? 'Remove Admin' : 'Ask to remove admin'}</button>
+                  <button onClick={() => demoteUser(u.user_id)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8125rem' }}>{isFounder ? tr('Remove Admin') : tr('Ask to remove admin')}</button>
                 )}
                 {isFounder && u.role === 'admin' && (
                   <AdminVillagePicker admin={u} villages={villages} rows={adminVillages.rows} onSaved={() => setRoleRefresh(n => n + 1)} />
@@ -1323,22 +1336,22 @@ export default function Admin() {
                     onChanged={() => setRoleRefresh(n => n + 1)} />
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.is_hope_ambassador || u.role === 'admin') && (u.role !== 'admin' || isFounder) && (
-                  <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8125rem' }}>Reset to Neighbor</button>
+                  <button onClick={() => resetUserToBase(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8125rem' }}>{tr('Reset to Neighbor')}</button>
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.role !== 'admin' || isFounder) && (
-                  <button type="button" onClick={() => setBanTarget({ userId: u.user_id, name: u.display_name || 'this person', role: u.role })} className="ban-row-btn">Ban</button>
+                  <button type="button" onClick={() => setBanTarget({ userId: u.user_id, name: u.display_name || tr('this person'), role: u.role })} className="ban-row-btn">{tr('Ban')}</button>
                 )}
                 {u.role !== 'founder' && u.user_id !== user.id && (u.role !== 'admin' || isFounder) && (
-                  <button onClick={() => resetTwoStep(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8125rem' }}>Reset two-step</button>
+                  <button onClick={() => resetTwoStep(u)} style={{ padding: '0.35rem 0.75rem', minHeight: '44px', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8125rem' }}>{tr('Reset two-step')}</button>
                 )}
                 {villages.length > 1 && (
                   <select
                     value={u.village_id || ''}
                     onChange={(e) => reassignUserVillage(u.user_id, e.target.value)}
-                    aria-label={'Village for ' + (u.display_name || 'this person')}
+                    aria-label={tr('Village for {name}', { name: u.display_name || tr('this person') })}
                     style={{ padding: '0.35rem 0.5rem', minHeight: '44px', flex: '1 1 100%', maxWidth: '100%', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}
                   >
-                    <option value="">No village</option>
+                    <option value="">{tr('No village')}</option>
                     {villages.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 )}
@@ -1347,12 +1360,12 @@ export default function Admin() {
           ))}
 
           {visibleUsers.length > userLimit && (
-            <button type="button" onClick={() => setUserLimit(n => n + USER_PAGE_SIZE)} style={{ width: '100%', padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Show {Math.min(USER_PAGE_SIZE, visibleUsers.length - userLimit)} more</button>
+            <button type="button" onClick={() => setUserLimit(n => n + USER_PAGE_SIZE)} style={{ width: '100%', padding: '0.7rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>{tr('Show {n} more', { n: Math.min(USER_PAGE_SIZE, visibleUsers.length - userLimit) })}</button>
           )}
           {visibleUsers.length === 0 && (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-              <p>{users.length === 0 ? 'No one has signed up yet.' : 'No one matches.'}</p>
-              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }}>Clear filters</button>}
+              <p>{users.length === 0 ? tr('No one has signed up yet.') : tr('No one matches.')}</p>
+              {filtersActive && <button type="button" onClick={clearUserFilters} style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }}>{tr('Clear filters')}</button>}
             </div>
           )}
           <AdminRoleLog refreshKey={roleRefresh} />
@@ -1374,25 +1387,25 @@ export default function Admin() {
                 <div key={m.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (m.followup ? 'var(--danger)' : String(m.body).startsWith('[Problem]') ? '#ffaa33' : 'var(--accent)'), opacity: isDone ? 0.65 : 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8125rem', marginBottom: '0.3rem' }}>
                     <span>{m.created_at ? timeAgo(m.created_at) : ''}</span>
-                    {m.followup && <span style={{ color: 'var(--danger)', fontWeight: 700 }}>NEEDS FOLLOW-UP</span>}
+                    {m.followup && <span style={{ color: 'var(--danger)', fontWeight: 700 }}>{tr('NEEDS FOLLOW-UP')}</span>}
                   </div>
                   <p style={{ color: 'var(--text)', fontSize: '0.9rem', margin: '0 0 0.6rem', whiteSpace: 'pre-wrap' }}>{m.body}</p>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {m.user_id && m.user_id !== user.id && <button type="button" onClick={() => messageUser(m.user_id)} style={{ ...small, background: 'none', border: '1px solid var(--accent)', color: 'var(--accent)' }}>Message them</button>}
-                    <button type="button" onClick={() => updateHelpMessage(m.id, { followup: !m.followup })} style={{ ...small, background: m.followup ? 'var(--danger-bg)' : 'var(--surface-2)', border: '1px solid ' + (m.followup ? 'var(--danger)' : 'var(--border-strong)'), color: m.followup ? 'var(--danger)' : 'var(--text)' }}>{m.followup ? 'Clear follow-up' : 'Flag for follow-up'}</button>
-                    <button type="button" onClick={() => updateHelpMessage(m.id, { status: isDone ? 'open' : 'done' })} style={{ ...small, background: isDone ? 'var(--surface-2)' : 'var(--accent)', border: isDone ? '1px solid var(--border-strong)' : 'none', color: isDone ? 'var(--text)' : 'var(--on-accent)' }}>{isDone ? 'Reopen' : 'Done'}</button>
+                    {m.user_id && m.user_id !== user.id && <button type="button" onClick={() => messageUser(m.user_id)} style={{ ...small, background: 'none', border: '1px solid var(--accent)', color: 'var(--accent)' }}>{tr('Message them')}</button>}
+                    <button type="button" onClick={() => updateHelpMessage(m.id, { followup: !m.followup })} style={{ ...small, background: m.followup ? 'var(--danger-bg)' : 'var(--surface-2)', border: '1px solid ' + (m.followup ? 'var(--danger)' : 'var(--border-strong)'), color: m.followup ? 'var(--danger)' : 'var(--text)' }}>{m.followup ? tr('Clear follow-up') : tr('Flag for follow-up')}</button>
+                    <button type="button" onClick={() => updateHelpMessage(m.id, { status: isDone ? 'open' : 'done' })} style={{ ...small, background: isDone ? 'var(--surface-2)' : 'var(--accent)', border: isDone ? '1px solid var(--border-strong)' : 'none', color: isDone ? 'var(--text)' : 'var(--on-accent)' }}>{isDone ? tr('Reopen') : tr('Done')}</button>
                   </div>
                 </div>
               )
             }
             return (
               <div style={{ marginBottom: '1rem' }}>
-                <h3 style={{ color: 'var(--text-strong)', fontSize: '1rem', margin: '0 0 0.5rem' }}>Messages from the Help page ({openMsgs.length} open)</h3>
-                {openMsgs.length === 0 && <p style={{ color: 'var(--text-muted)', margin: '0 0 0.5rem' }}>All caught up.</p>}
+                <h3 style={{ color: 'var(--text-strong)', fontSize: '1rem', margin: '0 0 0.5rem' }}>{tr('Messages from the Help page ({n} open)', { n: openMsgs.length })}</h3>
+                {openMsgs.length === 0 && <p style={{ color: 'var(--text-muted)', margin: '0 0 0.5rem' }}>{tr('All caught up.')}</p>}
                 {openMsgs.map(renderMsg)}
                 {doneMsgs.length > 0 && (
                   <>
-                    <button type="button" onClick={() => setShowDoneHelp(v => !v)} style={{ ...small, background: 'none', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{showDoneHelp ? 'Hide' : 'Show'} done ({doneMsgs.length})</button>
+                    <button type="button" onClick={() => setShowDoneHelp(v => !v)} style={{ ...small, background: 'none', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>{tr(showDoneHelp ? 'Hide done ({n})' : 'Show done ({n})', { n: doneMsgs.length })}</button>
                     {showDoneHelp && doneMsgs.map(renderMsg)}
                   </>
                 )}
@@ -1402,35 +1415,33 @@ export default function Admin() {
           {(() => {
             const renderReport = (a) => {
             const open = a.status === 'open'
-            const sourceLabel = { profile: 'From a profile', conversation: 'From a chat', messages: 'From messages', campfire: 'From the Village Square', event: 'From an event' }[a.source] || a.source
+            const sourceLabel = { profile: tr('From a profile'), conversation: tr('From a chat'), messages: tr('From messages'), campfire: tr('From the Village Square'), event: tr('From an event') }[a.source] || a.source
             const linkBtn = { background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', padding: '0.25rem 0', fontWeight: 600 }
             return (
               <div key={a.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (open ? 'var(--danger)' : 'var(--border-strong)'), opacity: open ? 1 : 0.7 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ background: open ? 'var(--danger-bg)' : 'var(--surface-2)', color: open ? 'var(--danger)' : 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{open ? 'Open' : a.status === 'reviewed' ? 'Reviewed' : 'Dismissed'}</span>
+                  <span style={{ background: open ? 'var(--danger-bg)' : 'var(--surface-2)', color: open ? 'var(--danger)' : 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{open ? tr('Open') : a.status === 'reviewed' ? tr('Reviewed') : tr('Dismissed')}</span>
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{sourceLabel} &middot; {timeAgo(a.created_at)}</span>
                 </div>
                 <p style={{ color: 'var(--text-soft)', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Reported by:</span> <UserName userId={a.reporter_id} name={a.reporter_name} />
-                  <span style={{ color: 'var(--text-secondary)' }}> about </span>
-                  <UserName userId={a.reported_user_id} name={a.reported_name} />
+                  {fillIn(tr('Reported by: {from} about {about}'), { from: <UserName userId={a.reporter_id} name={a.reporter_name} />, about: <UserName userId={a.reported_user_id} name={a.reported_name} /> }, { color: 'var(--text-secondary)' })}
                 </p>
                 {a.reason && <p style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.2rem 0' }}>{a.reason}</p>}
                 {a.details && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.2rem 0' }}>{a.details}</p>}
-                <label htmlFor={'report-note-' + a.id} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.6rem 0 0.25rem' }}>Private admin note (the person who reported cannot see this)</label>
+                <label htmlFor={'report-note-' + a.id} style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.6rem 0 0.25rem' }}>{tr('Private admin note (the person who reported cannot see this)')}</label>
                 <textarea id={'report-note-' + a.id} rows={2} maxLength={1000} value={noteDrafts[a.id] ?? a.admin_note} onChange={(e) => setNoteDrafts(d => ({ ...d, [a.id]: e.target.value }))} style={{ width: '100%', boxSizing: 'border-box', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem', fontSize: '1rem', fontFamily: 'inherit' }} />
                 {noteDrafts[a.id] !== undefined && noteDrafts[a.id].trim() !== a.admin_note && (
-                  <button type="button" disabled={noteSaving === a.id} onClick={() => saveReportNote(a.id)} style={{ ...linkBtn, minHeight: '44px' }}>{noteSaving === a.id ? 'Saving...' : 'Save note'}</button>
+                  <button type="button" disabled={noteSaving === a.id} onClick={() => saveReportNote(a.id)} style={{ ...linkBtn, minHeight: '44px' }}>{noteSaving === a.id ? tr('Saving...') : tr('Save note')}</button>
                 )}
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
-                  {a.reported_user_id && <button type="button" onClick={() => navigate('/u/' + a.reported_user_id)} style={linkBtn}>View their profile</button>}
-                  {a.reporter_id && a.reporter_id !== user.id && <button type="button" onClick={() => messageUser(a.reporter_id)} style={{ ...linkBtn, minHeight: '44px' }}>Message reporter</button>}
-                  {a.reported_user_id && a.reported_user_id !== user.id && <button type="button" onClick={() => messageUser(a.reported_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>Message them</button>}
+                  {a.reported_user_id && <button type="button" onClick={() => navigate('/u/' + a.reported_user_id)} style={linkBtn}>{tr('View their profile')}</button>}
+                  {a.reporter_id && a.reporter_id !== user.id && <button type="button" onClick={() => messageUser(a.reporter_id)} style={{ ...linkBtn, minHeight: '44px' }}>{tr('Message reporter')}</button>}
+                  {a.reported_user_id && a.reported_user_id !== user.id && <button type="button" onClick={() => messageUser(a.reported_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>{tr('Message them')}</button>}
                   {a.reported_user_id && a.reported_role !== 'founder' && a.reported_user_id !== user.id && (a.reported_role !== 'admin' || isFounder) && (
-                    <button type="button" onClick={() => { setBanReportId(a.id); setBanTarget({ userId: a.reported_user_id, name: a.reported_name, role: a.reported_role }) }} className="ban-row-btn">Ban</button>
+                    <button type="button" onClick={() => { setBanReportId(a.id); setBanTarget({ userId: a.reported_user_id, name: a.reported_name, role: a.reported_role }) }} className="ban-row-btn">{tr('Ban')}</button>
                   )}
-                  {open && <button type="button" onClick={() => reviewReport(a.id, 'reviewed')} style={linkBtn}>Mark reviewed</button>}
-                  {open && <button type="button" onClick={() => reviewReport(a.id, 'dismissed')} style={{ ...linkBtn, color: 'var(--text-muted)' }}>Dismiss</button>}
+                  {open && <button type="button" onClick={() => reviewReport(a.id, 'reviewed')} style={linkBtn}>{tr('Mark reviewed')}</button>}
+                  {open && <button type="button" onClick={() => reviewReport(a.id, 'dismissed')} style={{ ...linkBtn, color: 'var(--text-muted)' }}>{tr('Dismiss')}</button>}
                 </div>
               </div>
             )
@@ -1446,24 +1457,24 @@ export default function Admin() {
             return (
               <>
                 <div style={{ display: 'flex', gap: '0.5rem', margin: '0 0 0.75rem' }}>
-                  {segBtn('open', 'Open (' + alerts.length + ')')}
-                  {segBtn('closed', 'Closed')}
+                  {segBtn('open', tr('Open ({n})', { n: alerts.length }))}
+                  {segBtn('closed', tr('Closed'))}
                 </div>
                 {reportView === 'open' ? (
                   alerts.length === 0
-                    ? <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No open reports about people</p>
+                    ? <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>{tr('No open reports about people')}</p>
                     : alerts.map(renderReport)
                 ) : (
                   <>
-                    <input type="search" value={closedSearch} onChange={e => setClosedSearch(e.target.value)} placeholder="Search closed reports" aria-label="Search closed reports" style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0.5rem 0.7rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', marginBottom: '0.5rem' }} />
+                    <input type="search" value={closedSearch} onChange={e => setClosedSearch(e.target.value)} placeholder={tr('Search closed reports')} aria-label={tr('Search closed reports')} style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '0.5rem 0.7rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', marginBottom: '0.5rem' }} />
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                      {chip('all', 'All')}{chip('reviewed', 'Reviewed')}{chip('dismissed', 'Dismissed')}
+                      {chip('all', tr('All'))}{chip('reviewed', tr('Reviewed'))}{chip('dismissed', tr('Dismissed'))}
                     </div>
-                    {shownClosed.length === 0 && !closedLoading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No closed reports{q ? ' match that search' : ''}</p>}
+                    {shownClosed.length === 0 && !closedLoading && <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>{q ? tr('No closed reports match that search') : tr('No closed reports')}</p>}
                     {shownClosed.map(renderReport)}
-                    {closedLoading && <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</p>}
+                    {closedLoading && <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{tr('Loading...')}</p>}
                     {closedHasMore && !closedLoading && (
-                      <button type="button" onClick={() => loadClosedReports(false)} style={{ display: 'block', width: '100%', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontWeight: 700, cursor: 'pointer', marginBottom: '0.75rem' }}>Load 25 more</button>
+                      <button type="button" onClick={() => loadClosedReports(false)} style={{ display: 'block', width: '100%', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', fontWeight: 700, cursor: 'pointer', marginBottom: '0.75rem' }}>{tr('Load 25 more')}</button>
                     )}
                   </>
                 )}
@@ -1473,29 +1484,27 @@ export default function Admin() {
 
           {taskIssues.length > 0 && (
             <>
-              <h3 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '1.25rem 0 0.5rem', fontWeight: 700 }}>Tasks that did not go well</h3>
+              <h3 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '1.25rem 0 0.5rem', fontWeight: 700 }}>{tr('Tasks that did not go well')}</h3>
               {taskIssues.map(t => {
                 const open = t.status === 'open'
                 const linkBtn = { background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', padding: '0.25rem 0', fontWeight: 600 }
                 return (
                   <div key={'issue-' + t.id} style={{ ...cardStyle, borderLeft: '3px solid ' + (open ? 'var(--warn)' : 'var(--border-strong)'), opacity: open ? 1 : 0.7 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ background: open ? 'var(--warn-bg)' : 'var(--surface-2)', color: open ? 'var(--warn)' : 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{open ? 'Open' : t.status === 'reviewed' ? 'Reviewed' : 'Dismissed'}</span>
+                      <span style={{ background: open ? 'var(--warn-bg)' : 'var(--surface-2)', color: open ? 'var(--warn)' : 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{open ? tr('Open') : t.status === 'reviewed' ? tr('Reviewed') : tr('Dismissed')}</span>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{timeAgo(t.created_at)}</span>
                     </div>
-                    <p style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.4rem 0 0.2rem' }}>{TASK_ISSUE_LABELS[t.outcome] || t.outcome}</p>
+                    <p style={{ color: 'var(--text)', fontSize: '0.85rem', fontWeight: 600, margin: '0.4rem 0 0.2rem' }}>{TASK_ISSUE_LABELS[t.outcome] ? tr(TASK_ISSUE_LABELS[t.outcome]) : t.outcome}</p>
                     <p style={{ color: 'var(--text-soft)', fontSize: '0.85rem', margin: '0.2rem 0' }}>
-                      <span style={{ color: 'var(--text-secondary)' }}>From:</span> <UserName userId={t.from_user_id} name={t.from_name} />
-                      <span style={{ color: 'var(--text-secondary)' }}> about </span><UserName userId={t.about_user_id} name={t.about_name} />
-                      <span style={{ color: 'var(--text-secondary)' }}> &middot; task: </span>{t.skill}
+                      {fillIn(tr('From: {from} about {about} \u00b7 task: {skill}'), { from: <UserName userId={t.from_user_id} name={t.from_name} />, about: <UserName userId={t.about_user_id} name={t.about_name} />, skill: t.skill }, { color: 'var(--text-secondary)' })}
                     </p>
                     {t.note && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.2rem 0' }}>{t.note}</p>}
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
-                      {t.about_user_id && <button type="button" onClick={() => navigate('/u/' + t.about_user_id)} style={linkBtn}>View their profile</button>}
-                      {t.from_user_id && t.from_user_id !== user.id && <button type="button" onClick={() => messageUser(t.from_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>Message {t.from_name}</button>}
-                      {t.about_user_id && t.about_user_id !== user.id && <button type="button" onClick={() => messageUser(t.about_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>Message {t.about_name}</button>}
-                      {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'reviewed')} style={linkBtn}>Mark reviewed</button>}
-                      {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'dismissed')} style={{ ...linkBtn, color: 'var(--text-muted)' }}>Dismiss</button>}
+                      {t.about_user_id && <button type="button" onClick={() => navigate('/u/' + t.about_user_id)} style={linkBtn}>{tr('View their profile')}</button>}
+                      {t.from_user_id && t.from_user_id !== user.id && <button type="button" onClick={() => messageUser(t.from_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>{tr('Message {name}', { name: t.from_name })}</button>}
+                      {t.about_user_id && t.about_user_id !== user.id && <button type="button" onClick={() => messageUser(t.about_user_id)} style={{ ...linkBtn, minHeight: '44px' }}>{tr('Message {name}', { name: t.about_name })}</button>}
+                      {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'reviewed')} style={linkBtn}>{tr('Mark reviewed')}</button>}
+                      {open && <button type="button" onClick={() => reviewTaskIssue(t.id, 'dismissed')} style={{ ...linkBtn, color: 'var(--text-muted)' }}>{tr('Dismiss')}</button>}
                     </div>
                   </div>
                 )
@@ -1505,7 +1514,7 @@ export default function Admin() {
 
           {checkinAlerts.length > 0 && (
             <>
-              <h3 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '1.25rem 0 0.5rem', fontWeight: 700 }}>Safety check-in alerts</h3>
+              <h3 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '1.25rem 0 0.5rem', fontWeight: 700 }}>{tr('Safety check-in alerts')}</h3>
               {checkinAlerts.map(c => (
                 <div key={'checkin-' + c.id} style={{ ...cardStyle, borderLeft: '3px solid var(--warn)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1513,7 +1522,7 @@ export default function Admin() {
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{timeAgo(c.created_at)}</span>
                   </div>
                   <p style={{ color: 'var(--text-soft)', fontSize: '0.85rem', margin: '0.4rem 0 0.2rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Task check-in from:</span> <UserName userId={c.reporter_id} name={c.reporter_name} />
+                    <span style={{ color: 'var(--text-secondary)' }}>{tr('Task check-in from:')}</span> <UserName userId={c.reporter_id} name={c.reporter_name} />
                   </p>
                   {c.notes && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.2rem 0' }}>{c.notes}</p>}
                 </div>
@@ -1526,49 +1535,49 @@ export default function Admin() {
       {!loading && showTab === 'organizations' && (
         <>
           <AdminResourceClaims claims={resourceClaims} onChanged={loadResourceClaims} />
-          <button onClick={() => setShowNewOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewOrgForm ? 'Cancel' : '+ New group'}</button>
+          <button onClick={() => setShowNewOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewOrgForm ? tr('Cancel') : tr('+ New group')}</button>
 
           {showNewOrgForm && (
             <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
-              <input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="Group name *" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
-              <textarea value={newOrgDesc} onChange={(e) => setNewOrgDesc(e.target.value)} placeholder="Short description" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '3rem' }} />
-              <input value={newOrgEmail} onChange={(e) => setNewOrgEmail(e.target.value)} placeholder="Contact email" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
-              <input value={newOrgWebsite} onChange={(e) => setNewOrgWebsite(e.target.value)} placeholder="Website URL" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
-              <input value={newOrgSocial} onChange={(e) => setNewOrgSocial(e.target.value)} placeholder="Social media link (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
-              <button onClick={createOrganization} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create group</button>
+              <input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder={tr('Group name *')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <textarea value={newOrgDesc} onChange={(e) => setNewOrgDesc(e.target.value)} placeholder={tr('Short description')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '3rem' }} />
+              <input value={newOrgEmail} onChange={(e) => setNewOrgEmail(e.target.value)} placeholder={tr('Contact email')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <input value={newOrgWebsite} onChange={(e) => setNewOrgWebsite(e.target.value)} placeholder={tr('Website URL')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <input value={newOrgSocial} onChange={(e) => setNewOrgSocial(e.target.value)} placeholder={tr('Social media link (optional)')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <button onClick={createOrganization} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Create group')}</button>
             </div>
           )}
 
-          <button onClick={() => setShowInviteOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showInviteOrgForm ? 'Cancel' : '+ Invite a group'}</button>
+          <button onClick={() => setShowInviteOrgForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showInviteOrgForm ? tr('Cancel') : tr('+ Invite a group')}</button>
 
           {showInviteOrgForm && (
             <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.5rem' }}>Generates a link you send yourself (text, email, whatever). Whoever opens it fills in their own group's details and joins as its first member -- it lands here as PENDING APPROVAL just like one you create yourself.</p>
-              <input value={inviteContactName} onChange={(e) => setInviteContactName(e.target.value)} placeholder="Contact name (for your reference)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
-              <input value={inviteContactEmail} onChange={(e) => setInviteContactEmail(e.target.value)} placeholder="Contact email (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
-              <textarea value={inviteNote} onChange={(e) => setInviteNote(e.target.value)} placeholder="A short note they'll see on the invite page (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '3rem' }} />
-              <button onClick={createOrgInvitation} disabled={creatingInvite} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{creatingInvite ? 'Creating...' : 'Generate Invite Link'}</button>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.5rem' }}>{tr("Generates a link you send yourself (text, email, whatever). Whoever opens it fills in their own group's details and joins as its first member -- it lands here as PENDING APPROVAL just like one you create yourself.")}</p>
+              <input value={inviteContactName} onChange={(e) => setInviteContactName(e.target.value)} placeholder={tr('Contact name (for your reference)')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <input value={inviteContactEmail} onChange={(e) => setInviteContactEmail(e.target.value)} placeholder={tr('Contact email (optional)')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <textarea value={inviteNote} onChange={(e) => setInviteNote(e.target.value)} placeholder={tr("A short note they'll see on the invite page (optional)")} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem', minHeight: '3rem' }} />
+              <button onClick={createOrgInvitation} disabled={creatingInvite} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{creatingInvite ? tr('Creating...') : tr('Generate Invite Link')}</button>
             </div>
           )}
 
           {orgInvitations.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>
-              <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0 0 0.4rem' }}>Sent invites</p>
+              <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0 0 0.4rem' }}>{tr('Sent invites')}</p>
               {orgInvitations.map(inv => (
                 <div key={inv.id} style={{ ...cardStyle, marginBottom: '0.5rem', padding: '0.6rem 0.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
                     <div>
-                      <span style={{ background: inv.status === 'accepted' ? 'var(--success-bg)' : inv.status === 'revoked' ? 'var(--danger-bg)' : 'var(--warn-bg)', color: inv.status === 'accepted' ? 'var(--accent)' : inv.status === 'revoked' ? 'var(--danger)' : 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{inv.status.toUpperCase()}</span>
-                      <p style={{ margin: '0.3rem 0 0', fontSize: '0.8125rem', color: 'var(--text)' }}>{inv.contact_name || 'No name given'}{inv.contact_email ? ` · ${inv.contact_email}` : ''}</p>
+                      <span style={{ background: inv.status === 'accepted' ? 'var(--success-bg)' : inv.status === 'revoked' ? 'var(--danger-bg)' : 'var(--warn-bg)', color: inv.status === 'accepted' ? 'var(--accent)' : inv.status === 'revoked' ? 'var(--danger)' : 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{tr(inv.status.toUpperCase())}</span>
+                      <p style={{ margin: '0.3rem 0 0', fontSize: '0.8125rem', color: 'var(--text)' }}>{inv.contact_name || tr('No name given')}{inv.contact_email ? ` · ${inv.contact_email}` : ''}</p>
                     </div>
                     {inv.status === 'pending' && (
-                      <button onClick={() => revokeOrgInvitation(inv.id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>Revoke</button>
+                      <button onClick={() => revokeOrgInvitation(inv.id)} style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{tr('Revoke')}</button>
                     )}
                   </div>
                   {inv.status === 'pending' && (
                     <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
                       <input readOnly value={inviteLink(inv.token)} onFocus={(e) => e.target.select()} style={{ flex: 1, padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text-secondary)', fontSize: '0.8125rem' }} />
-                      <button onClick={() => copyInviteLink(inv.token)} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>Copy Link</button>
+                      <button onClick={() => copyInviteLink(inv.token)} style={{ padding: '0.4rem 0.7rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>{tr('Copy Link')}</button>
                     </div>
                   )}
                 </div>
@@ -1577,37 +1586,37 @@ export default function Admin() {
           )}
 
           {organizations.length === 0 ? (
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No groups yet</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>{tr('No groups yet')}</p>
           ) : organizations.map(org => (
             <div key={org.id} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
-                  <span style={{ background: org.approved ? 'var(--success-bg)' : 'var(--warn-bg)', color: org.approved ? 'var(--accent)' : 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{org.approved ? 'APPROVED' : 'PENDING APPROVAL'}</span>
+                  <span style={{ background: org.approved ? 'var(--success-bg)' : 'var(--warn-bg)', color: org.approved ? 'var(--accent)' : 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{org.approved ? tr('APPROVED') : tr('PENDING APPROVAL')}</span>
                   <h4 style={{ margin: '0.4rem 0 0.2rem', fontSize: '0.95rem', color: 'var(--text)' }}>{org.name}</h4>
                 </div>
                 {org.approved ? (
-                  <button onClick={() => toggleOrgApproved(org)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: 'var(--danger)', border: '1px solid var(--danger)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Unapprove</button>
+                  <button onClick={() => toggleOrgApproved(org)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: 'var(--danger)', border: '1px solid var(--danger)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{tr('Unapprove')}</button>
                 ) : (
                   <div className="admin-decide admin-decide-side" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexShrink: 0 }}>
-                    <button onClick={() => reviewOrgRequest(org, true)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'var(--accent)', color: 'var(--on-accent)', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>Approve</button>
-                    <button onClick={() => reviewOrgRequest(org, false)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'none', color: 'var(--warn)', border: '1px solid var(--warn)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>Turn down</button>
+                    <button onClick={() => reviewOrgRequest(org, true)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'var(--accent)', color: 'var(--on-accent)', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{tr('Approve')}</button>
+                    <button onClick={() => reviewOrgRequest(org, false)} style={{ minHeight: '44px', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'none', color: 'var(--warn)', border: '1px solid var(--warn)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{tr('Turn down')}</button>
                   </div>
                 )}
               </div>
               {org.approved && (
                 <p style={{ margin: '0.3rem 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                  {org.hide_from_public ? 'Hidden from the public. Only people with an account can see it.' : 'Visible to the public.'} {org.kind === 'group' ? 'The crew' : 'The group'} sets this itself.
+                  {org.hide_from_public ? tr('Hidden from the public. Only people with an account can see it.') : tr('Visible to the public.')} {org.kind === 'group' ? tr('The crew sets this itself.') : tr('The group sets this itself.')}
                 </p>
               )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', margin: '0.4rem 0' }}>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{org.kind === 'group' ? 'Emergency crew' : 'Group'}</span>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{org.kind === 'group' ? tr('Emergency crew') : tr('Group')}</span>
                 {org.kind !== 'group' && (
-                  <select aria-label={'Kind of group for ' + org.name} value={org.org_type || ''} onChange={(e) => setOrgType(org, e.target.value)} style={{ minHeight: '44px', maxWidth: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }}>
-                    <option value="">Kind not picked</option>
-                    {ORG_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  <select aria-label={tr('Kind of group for {name}', { name: org.name })} value={org.org_type || ''} onChange={(e) => setOrgType(org, e.target.value)} style={{ minHeight: '44px', maxWidth: '100%', padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }}>
+                    <option value="">{tr('Kind not picked')}</option>
+                    {ORG_TYPES.map((t) => <option key={t.value} value={t.value}>{tr(t.label)}</option>)}
                   </select>
                 )}
-                <button type="button" onClick={() => switchOrgKind(org)} style={{ minHeight: '44px', padding: '0.4rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--accent)', border: '1px solid var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{org.kind === 'group' ? 'Make it a group' : 'Make it a crew'}</button>
+                <button type="button" onClick={() => switchOrgKind(org)} style={{ minHeight: '44px', padding: '0.4rem 0.7rem', borderRadius: '8px', background: 'none', color: 'var(--accent)', border: '1px solid var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{org.kind === 'group' ? tr('Make it a group') : tr('Make it a crew')}</button>
               </div>
               {/* Council links were taken out of the app (Oct 8); organizations connect to each other directly. */}
               {org.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.3rem 0' }}>{org.description}</p>}
@@ -1615,11 +1624,11 @@ export default function Admin() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{org.website_url}</p>
               )}
               {org.contact_email_shown && (
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>Contact: {org.contact_email_shown}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.2rem 0' }}>{tr('Contact: {email}', { email: org.contact_email_shown })}</p>
               )}
 
-              <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.6rem 0 0.3rem' }}>Members: {org.member_count}</p>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.4rem' }}>Names and member lists are private. Only its leaders can see or change them.</p>
+              <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.6rem 0 0.3rem' }}>{tr('Members: {n}', { n: org.member_count })}</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.4rem' }}>{tr('Names and member lists are private. Only its leaders can see or change them.')}</p>
             </div>
           ))}
         </>
@@ -1628,69 +1637,69 @@ export default function Admin() {
       {!loading && showTab === 'villages' && (
         <>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>
-            Each village has its own village chat, run by its Keeper and Helpers. Everyone has one home village, from the zip code on their profile. They join its chat after agreeing to a risk warning. Other villages they join, or are invited to, they visit as guests (guests read and post, but cannot be Keeper or Helper). New members only see messages from after they joined. Two members can remove someone, and admins can too. Any neighbor can start a village (up to 3 each, up to 40 zip codes). You can edit any village{"\u2019"}s zip list here. Open People and leaders on a village to see who is in it, ask someone to be Keeper, or put people in the chat.
+            {tr('Each village has its own village chat, run by its Keeper and Helpers. Everyone has one home village, from the zip code on their profile. They join its chat after agreeing to a risk warning. Other villages they join, or are invited to, they visit as guests (guests read and post, but cannot be Keeper or Helper). New members only see messages from after they joined. Two members can remove someone, and admins can too. Any neighbor can start a village (up to 3 each, up to 40 zip codes). You can edit any village\u2019s zip list here. Open People and leaders on a village to see who is in it, ask someone to be Keeper, or put people in the chat.')}
           </p>
-          <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? 'Cancel' : '+ New Village'}</button>
+          <button onClick={() => setShowNewVillageForm(v => !v)} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{showNewVillageForm ? tr('Cancel') : tr('+ New Village')}</button>
 
           {showNewVillageForm && (
             <div style={{ ...cardStyle, marginBottom: '0.75rem' }}>
-              <input value={newVillageName} onChange={(e) => setNewVillageName(e.target.value)} placeholder="Village name * (e.g. Bay Area, CA)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
-              <input value={newVillageRegion} onChange={(e) => setNewVillageRegion(e.target.value)} placeholder="Region description (optional)" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <input value={newVillageName} onChange={(e) => setNewVillageName(e.target.value)} placeholder={tr('Village name * (e.g. Bay Area, CA)')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+              <input value={newVillageRegion} onChange={(e) => setNewVillageRegion(e.target.value)} placeholder={tr('Region description (optional)')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <label style={{ flex: '1 1 8rem', fontSize: '0.8125rem', color: 'var(--text-soft)' }}>Center zip *
+                <label style={{ flex: '1 1 8rem', fontSize: '0.8125rem', color: 'var(--text-soft)' }}>{tr('Center zip *')}
                   <input value={newVillageZip} onChange={(e) => setNewVillageZip(e.target.value)} inputMode="numeric" autoComplete="off" maxLength={5} placeholder="30736" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
                 </label>
-                <button type="button" onClick={() => suggestZips(newVillageZip, setNewVillageZips)} style={{ flex: '1 1 8rem', alignSelf: 'center', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>Suggest zips within 10 miles</button>
+                <button type="button" onClick={() => suggestZips(newVillageZip, setNewVillageZips)} style={{ flex: '1 1 8rem', alignSelf: 'center', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{tr('Suggest zips within 10 miles')}</button>
               </div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-soft)', marginTop: '0.4rem' }}>Zip codes this village covers (separate with commas)
+              <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-soft)', marginTop: '0.4rem' }}>{tr('Zip codes this village covers (separate with commas)')}
                 <textarea value={newVillageZips} onChange={(e) => setNewVillageZips(e.target.value)} rows={3} inputMode="numeric" placeholder="30736, 30742, 30707" style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
               </label>
-              <button onClick={createVillage} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Create Village</button>
+              <button onClick={createVillage} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Create Village')}</button>
             </div>
           )}
 
           {villages.length === 0 ? (
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No villages yet</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>{tr('No villages yet')}</p>
           ) : villages.map(c => (
             <div key={c.id} id={'village-' + c.id} className={'admin-village-card' + (focusVillage === c.id ? ' admin-focus' : '')} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {editingVillageId === c.id ? (
                   <div style={{ flex: 1 }}>
-                    <input value={editVillageName} onChange={(e) => setEditVillageName(e.target.value)} placeholder="Village name *" aria-label="Village name" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
-                    <input value={editVillageRegion} onChange={(e) => setEditVillageRegion(e.target.value)} placeholder="Region description (optional)" aria-label="Region description" style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+                    <input value={editVillageName} onChange={(e) => setEditVillageName(e.target.value)} placeholder={tr('Village name *')} aria-label={tr('Village name')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
+                    <input value={editVillageRegion} onChange={(e) => setEditVillageRegion(e.target.value)} placeholder={tr('Region description (optional)')} aria-label={tr('Region description')} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.85rem' }} />
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <label style={{ flex: '1 1 8rem', fontSize: '0.8125rem', color: 'var(--text-soft)' }}>Center zip
-                        <input value={editVillageZip} onChange={(e) => setEditVillageZip(e.target.value)} inputMode="numeric" autoComplete="off" maxLength={5} placeholder={c.auto_started && !c.center_zip ? 'Set by the ambassador' : '30736'} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
+                      <label style={{ flex: '1 1 8rem', fontSize: '0.8125rem', color: 'var(--text-soft)' }}>{tr('Center zip')}
+                        <input value={editVillageZip} onChange={(e) => setEditVillageZip(e.target.value)} inputMode="numeric" autoComplete="off" maxLength={5} placeholder={c.auto_started && !c.center_zip ? tr('Set by the ambassador') : '30736'} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
                       </label>
-                      <button type="button" onClick={() => suggestZips(editVillageZip, setEditVillageZips)} style={{ flex: '1 1 8rem', alignSelf: 'center', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>Suggest zips within 10 miles</button>
+                      <button type="button" onClick={() => suggestZips(editVillageZip, setEditVillageZips)} style={{ flex: '1 1 8rem', alignSelf: 'center', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{tr('Suggest zips within 10 miles')}</button>
                     </div>
-                    <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-soft)', margin: '0.4rem 0 0' }}>Zip codes (separate with commas)
-                      <textarea value={editVillageZips} onChange={(e) => setEditVillageZips(e.target.value)} rows={4} inputMode="numeric" aria-label="Zip codes this village covers" style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-soft)', margin: '0.4rem 0 0' }}>{tr('Zip codes (separate with commas)')}
+                      <textarea value={editVillageZips} onChange={(e) => setEditVillageZips(e.target.value)} rows={4} inputMode="numeric" aria-label={tr('Zip codes this village covers')} style={{ width: '100%', boxSizing: 'border-box', padding: '0.5rem', marginBottom: '0.4rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '1rem' }} />
                     </label>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button onClick={saveVillageEdit} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Save</button>
-                      <button onClick={() => setEditingVillageId(null)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                      <button onClick={saveVillageEdit} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Save')}</button>
+                      <button onClick={() => setEditingVillageId(null)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Cancel')}</button>
                     </div>
                   </div>
                 ) : (
                 <div style={{ flex: '1 1 14rem', minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                     <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text)' }}>{c.name}</h4>
-                    {c.is_default && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Default</span>}
-                    {!c.active && <span style={{ fontSize: '0.8125rem', background: 'var(--warn-bg)', color: 'var(--warn)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Inactive</span>}
-                    {c.auto_started && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>Started by a neighbor</span>}
+                    {c.is_default && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>{tr('Default')}</span>}
+                    {!c.active && <span style={{ fontSize: '0.8125rem', background: 'var(--warn-bg)', color: 'var(--warn)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>{tr('Inactive')}</span>}
+                    {c.auto_started && <span style={{ fontSize: '0.8125rem', background: 'var(--info-bg)', color: 'var(--info)', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>{tr('Started by a neighbor')}</span>}
                   </div>
                   {c.region_label && c.region_label !== c.name && <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.2rem 0 0' }}>{c.region_label}</p>}
                   <p style={{ color: c.latitude == null ? 'var(--warn)' : 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.2rem 0 0' }}>
-                    {c.latitude == null ? 'No center yet. Edit to add a center zip and zip codes, or nobody can join.' : (c.center_zip ? 'Center ' + c.center_zip : 'Centered on where it started') + ' \u00b7 ' + (c.zips?.length || 0) + ' zip codes'}
+                    {c.latitude == null ? tr('No center yet. Edit to add a center zip and zip codes, or nobody can join.') : (c.center_zip ? tr('Center {zip}', { zip: c.center_zip }) : tr('Centered on where it started')) + ' \u00b7 ' + tr('{n} zip codes', { n: c.zips?.length || 0 })}
                   </p>
                 </div>
                 )}
                 {editingVillageId !== c.id && (
                   <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-start' }}>
-                    <button onClick={() => startEditVillage(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: 'var(--accent)', border: '1px solid var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>Edit</button>
+                    <button onClick={() => startEditVillage(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: 'none', color: 'var(--accent)', border: '1px solid var(--accent)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{tr('Edit')}</button>
                 {!c.is_default && (
-                  <button onClick={() => toggleVillageActive(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: c.active ? 'none' : 'var(--accent)', color: c.active ? 'var(--danger)' : 'var(--on-accent)', border: c.active ? '1px solid var(--danger)' : 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{c.active ? 'Deactivate' : 'Activate'}</button>
+                  <button onClick={() => toggleVillageActive(c)} style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', background: c.active ? 'none' : 'var(--accent)', color: c.active ? 'var(--danger)' : 'var(--on-accent)', border: c.active ? '1px solid var(--danger)' : 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, whiteSpace: 'nowrap' }}>{c.active ? tr('Deactivate') : tr('Activate')}</button>
                 )}
                   </div>
                 )}
@@ -1698,15 +1707,15 @@ export default function Admin() {
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
                 <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: 'var(--surface)', borderRadius: '8px' }}>
                   <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--accent)' }}>{c.member_count}</div>
-                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>member{c.member_count !== 1 ? 's' : ''}</div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{c.member_count !== 1 ? tr('members') : tr('member')}</div>
                 </div>
                 <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: 'var(--surface)', borderRadius: '8px' }}>
                   <div style={{ fontWeight: 700, fontSize: '0.95rem', color: c.messages_this_week > 0 ? 'var(--accent)' : 'var(--text-muted)' }}>{c.messages_this_week}</div>
-                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>msg{c.messages_this_week !== 1 ? 's' : ''} this week</div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{c.messages_this_week !== 1 ? tr('msgs this week') : tr('msg this week')}</div>
                 </div>
                 <div style={{ flex: 1, textAlign: 'center', padding: '0.4rem', background: 'var(--surface)', borderRadius: '8px' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.8125rem', color: c.last_message_at ? 'var(--text)' : 'var(--text-muted)' }}>{c.last_message_at ? timeAgo(c.last_message_at) : 'No activity'}</div>
-                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>last message</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.8125rem', color: c.last_message_at ? 'var(--text)' : 'var(--text-muted)' }}>{c.last_message_at ? timeAgo(c.last_message_at) : tr('No activity')}</div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{tr('last message')}</div>
                 </div>
               </div>
               {c.active !== false && (
@@ -1720,15 +1729,15 @@ export default function Admin() {
       {!loading && showTab === 'content' && (
         <>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0 0 0.75rem' }}>
-            Deleting here is permanent. It removes the request or offer from SkillShare for good; any chat about it stays.
+            {tr('Deleting here is permanent. It removes the request or offer from SkillShare for good; any chat about it stays.')}
           </p>
           <div style={{ marginBottom: '0.75rem' }}>
-            <label htmlFor="content-search" style={hiddenLabel}>Search SkillShare posts</label>
-            <input id="content-search" type="search" value={contentQuery} onChange={(e) => setContentQuery(e.target.value)} placeholder="Search by skill, title, or name" style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
-            <div role="group" aria-label="Filter SkillShare posts" style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', paddingBottom: '0.25rem' }}>
+            <label htmlFor="content-search" style={hiddenLabel}>{tr('Search SkillShare posts')}</label>
+            <input id="content-search" type="search" value={contentQuery} onChange={(e) => setContentQuery(e.target.value)} placeholder={tr('Search by skill, title, or name')} style={{ width: '100%', padding: '0.6rem 0.75rem', minHeight: '44px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-sunk)', color: 'var(--text)', fontSize: '0.9rem', marginBottom: '0.5rem' }} />
+            <div role="group" aria-label={tr('Filter SkillShare posts')} style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', paddingBottom: '0.25rem' }}>
               {CONTENT_FILTERS.map(([key, label]) => (
                 <button key={key} type="button" aria-pressed={contentFilter === key} onClick={() => setContentFilter(key)} style={{ ...tabStyle(contentFilter === key), minHeight: '36px' }}>
-                  {label} <span style={{ opacity: 0.7 }}>{contentCounts[key]}</span>
+                  {tr(label)} <span style={{ opacity: 0.7 }}>{contentCounts[key]}</span>
                 </button>
               ))}
             </div>
@@ -1736,7 +1745,7 @@ export default function Admin() {
 
           {visibleContent.length === 0 ? (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
-              {contentFilter === 'dupes' ? 'No possible duplicates found.' : 'Nothing matches.'}
+              {contentFilter === 'dupes' ? tr('No possible duplicates found.') : tr('Nothing matches.')}
             </p>
           ) : visibleContent.map(c => {
             const key = c.kind + '-' + c.id
@@ -1745,13 +1754,13 @@ export default function Admin() {
               <div key={key} style={{ ...cardStyle, borderLeft: '3px solid ' + (c.is_duplicate ? 'var(--warn)' : 'var(--border-strong)') }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.3rem' }}>
                   <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                    <span style={{ background: c.kind === 'request' ? 'var(--info-bg)' : 'var(--success-bg)', color: c.kind === 'request' ? 'var(--info)' : 'var(--accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{c.kind === 'request' ? 'Request' : 'Offer'}</span>
-                    {c.is_duplicate && <span style={{ background: 'var(--warn-bg)', color: 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>POSSIBLE DUPLICATE</span>}
+                    <span style={{ background: c.kind === 'request' ? 'var(--info-bg)' : 'var(--success-bg)', color: c.kind === 'request' ? 'var(--info)' : 'var(--accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{c.kind === 'request' ? tr('Request') : tr('Offer')}</span>
+                    {c.is_duplicate && <span style={{ background: 'var(--warn-bg)', color: 'var(--warn)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>{tr('POSSIBLE DUPLICATE')}</span>}
                     <span style={{ background: 'var(--surface-2)', color: 'var(--text-muted)', fontSize: '0.8125rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>{c.status}</span>
                   </div>
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>{timeAgo(c.created_at)}</span>
                 </div>
-                <h4 style={{ margin: '0.4rem 0 0.15rem', fontSize: '0.95rem', color: 'var(--text)' }}>{c.title || 'Untitled'}</h4>
+                <h4 style={{ margin: '0.4rem 0 0.15rem', fontSize: '0.95rem', color: 'var(--text)' }}>{c.title || tr('Untitled')}</h4>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0' }}>
                   <UserName userId={c.poster_id} name={c.poster_name} style={{ color: 'var(--accent)' }} />
                   {c.neighborhood ? ' · ' + c.neighborhood : ''}{c.tag ? ' · ' + String(c.tag).replace(/_/g, ' ') : ''}
@@ -1760,14 +1769,14 @@ export default function Admin() {
 
                 {confirming ? (
                   <div style={{ marginTop: '0.5rem', padding: '0.6rem', background: 'var(--danger-bg)', border: '1px solid var(--danger)', borderRadius: '8px' }}>
-                    <p style={{ color: 'var(--danger)', fontSize: '0.8125rem', margin: '0 0 0.5rem', fontWeight: 600 }}>Delete this {c.kind} for good? This can't be undone.</p>
+                    <p style={{ color: 'var(--danger)', fontSize: '0.8125rem', margin: '0 0 0.5rem', fontWeight: 600 }}>{c.kind === 'request' ? tr("Delete this request for good? This can't be undone.") : tr("Delete this offer for good? This can't be undone.")}</p>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button type="button" disabled={deleteBusy} onClick={() => confirmDeleteContent(c)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: deleteBusy ? 'default' : 'pointer', fontSize: '0.85rem', opacity: deleteBusy ? 0.6 : 1 }}>{deleteBusy ? 'Deleting…' : 'Delete for good'}</button>
-                      <button type="button" disabled={deleteBusy} onClick={cancelDeleteContent} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                      <button type="button" disabled={deleteBusy} onClick={() => confirmDeleteContent(c)} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'var(--danger)', color: '#fff', fontWeight: 700, cursor: deleteBusy ? 'default' : 'pointer', fontSize: '0.85rem', opacity: deleteBusy ? 0.6 : 1 }}>{deleteBusy ? tr('Deleting…') : tr('Delete for good')}</button>
+                      <button type="button" disabled={deleteBusy} onClick={cancelDeleteContent} style={{ flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem' }}>{tr('Cancel')}</button>
                     </div>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => askDeleteContent(c)} style={{ marginTop: '0.4rem', padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>Delete permanently</button>
+                  <button type="button" onClick={() => askDeleteContent(c)} style={{ marginTop: '0.4rem', padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{tr('Delete permanently')}</button>
                 )}
               </div>
             )
