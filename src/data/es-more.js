@@ -4462,6 +4462,18 @@ const more = {
   'Sign out on this device, or leave Village Without Borders for good.': 'Cierre sesión en este dispositivo, o deje Village Without Borders para siempre.',
   // Nov 8: QR pop-up
   'Let a neighbor you met scan this with their phone camera. It connects you and counts as a vouch.': 'Deje que un vecino que conoció escanee esto con la cámara de su teléfono. Quedarán conectados, y cuenta como que responden el uno por el otro.',
+  // Nov 9 sweep
+  'Showing national resources. Add your zip code in your profile to see ones near you.': 'Se muestran recursos de todo el país. Agregue su código postal en su perfil para ver los que están cerca de usted.',
+  'I can help!': '¡Yo puedo ayudar!',
+  'Admin is the VWB team for now': 'Por ahora, los administradores son el equipo de VWB',
+  "VWB isn't adding admins right now. Villages are run by their own Keepers and Helpers, with Hope Ambassadors nearby.": 'VWB no está sumando administradores por ahora. Cada aldea la llevan sus propios Guardianes y Ayudantes, con Embajadores de Esperanza cerca.',
+  'If you want to help your village, ask its Keeper about being a Helper, or become a Hope Ambassador.': 'Si quiere ayudar a su aldea, pregúntele a su Guardián cómo ser Ayudante, o hágase Embajador de Esperanza.',
+  'Read the Admin Guide': 'Lea la Guía para administradores',
+  'to see what admins do.': 'para ver lo que hacen los administradores.',
+  'VWB Admin Guide': 'Guía para administradores de VWB',
+  'Last updated {date}': 'Última actualización: {date}',
+  'In this guide': 'En esta guía',
+  'Table': 'Tabla',
   'On a big screen, pages can stay narrow and easy to follow, or spread out to use the whole screen. Phones always fit the screen.': 'En una pantalla grande, las páginas pueden quedar angostas y fáciles de seguir, o abrirse para usar toda la pantalla. En el teléfono siempre caben en la pantalla.',
 }
 

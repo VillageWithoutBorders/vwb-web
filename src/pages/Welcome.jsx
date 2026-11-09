@@ -349,7 +349,7 @@ export default function Welcome() {
 
       <footer style={{ borderTop: `1px solid ${COLORS.border}`, marginTop: '1rem' }}>
         <div style={{ maxWidth: '760px', margin: '0 auto', padding: '1.5rem 1.25rem', textAlign: 'center' }}>
-          <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.green, fontSize: '0.85rem', textDecoration: 'none' }}>
+          <a href="https://villagewithoutborders.org" target="_blank" rel="noopener noreferrer" style={{ color: COLORS.green, fontSize: '0.85rem', textDecoration: 'none', display: 'inline-block', padding: '12px 4px' }}>
             villagewithoutborders.org &#8599;
           </a>
           <p style={{ margin: '0.5rem 0 0', color: COLORS.textMuted, fontSize: '0.95rem' }}>{t('A project of neighbors, for neighbors.')}</p>
