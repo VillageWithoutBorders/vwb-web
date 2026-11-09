@@ -7513,3 +7513,10 @@ html.calm-motion .vs-more-desk-btn:active { transform: none; }
 .settings-account .detail-row > .settings-signout ~ .link-button { margin-top: 0; }
 /* Devices pop-up: Remove is a small button, easy to hit. */
 .qr-sheet .blocked-user-row > .link-button { min-height: 44px; padding: 0 0.9rem; border: 1px solid var(--border-strong); border-radius: 10px; text-decoration: none; font-weight: 600; flex: none; }
+/* Nov 8 (Jade): at Large text and up, the four text-size buttons sit two by two so none get cut off. */
+@media (min-width: 1024px) {
+  html.text-large .settings-cols [aria-labelledby="textsize-h"],
+  html.text-larger .settings-cols [aria-labelledby="textsize-h"],
+  html.text-largest .settings-cols [aria-labelledby="textsize-h"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+.settings-cols [aria-labelledby="textsize-h"] > button { min-width: 0; overflow-wrap: anywhere; }
