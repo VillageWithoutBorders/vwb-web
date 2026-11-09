@@ -7748,3 +7748,43 @@ button[role="switch"]::after { content: ""; position: absolute; inset: -11px -4p
 @media (min-width: 1024px) and (min-height: 760px) {
   html.text-large .cal-split > .cal-left { position: sticky !important; top: calc(var(--header-height) + 1rem); }
 }
+
+/* Nov 9 (Jade: yes, make the Calendar fit): on a computer at Larger and Largest text, the
+   left side gets a little tighter so the whole month fits on one screen. The short line
+   under the title is still read aloud by screen readers. */
+@media (min-width: 1024px) {
+  :is(html.text-larger, html.text-largest) .cal-split > .cal-left > .cal-head .cal-sub {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  :is(html.text-larger, html.text-largest) .cal-split > .cal-left > .cal-head h1 { margin-bottom: 0; }
+  /* The title and the More button share one row. */
+  :is(html.text-larger, html.text-largest) .cal-split > .cal-left { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 0.75rem; align-content: start; }
+  :is(html.text-larger, html.text-largest) .cal-split > .cal-left > * { grid-column: 1 / -1; }
+  :is(html.text-larger, html.text-largest) .cal-split > .cal-left > .cal-head { grid-column: 1; }
+  :is(html.text-larger, html.text-largest) .cal-split > .cal-left > .cal-top-row { grid-column: 2; justify-self: end; }
+  :is(html.text-larger, html.text-largest) .cal-split .cal-month-day { min-height: 44px; padding-top: 4px; padding-bottom: 4px; }
+  :is(html.text-larger, html.text-largest) .cal-split > .cal-left > .cal-top-row,
+  :is(html.text-larger, html.text-largest) .cal-split > .cal-left > .cal-filters { margin-bottom: 0.35rem; }
+}
+/* Shorter laptop screens: the same at Large. */
+@media (min-width: 1024px) and (max-height: 899px) {
+  html.text-large .cal-split > .cal-left > .cal-head .cal-sub {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  html.text-large .cal-split > .cal-left > .cal-head h1 { margin-bottom: 0; }
+  /* The title and the More button share one row. */
+  html.text-large .cal-split > .cal-left { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 0.75rem; align-content: start; }
+  html.text-large .cal-split > .cal-left > * { grid-column: 1 / -1; }
+  html.text-large .cal-split > .cal-left > .cal-head { grid-column: 1; }
+  html.text-large .cal-split > .cal-left > .cal-top-row { grid-column: 2; justify-self: end; }
+  html.text-large .cal-split .cal-month-day { min-height: 44px; padding-top: 4px; padding-bottom: 4px; }
+  html.text-large .cal-split > .cal-left > .cal-top-row,
+  html.text-large .cal-split > .cal-left > .cal-filters { margin-bottom: 0.35rem; }
+}
+@media (min-width: 1024px) and (max-height: 899px) {
+  html.text-large .app-main:has(> .cal-split) { padding-bottom: calc(var(--tab-height) + 0.5rem + env(safe-area-inset-bottom, 0px)); }
+}
+@media (min-width: 1024px) {
+  :is(html.text-larger, html.text-largest) .app-main:has(> .cal-split) { padding-bottom: calc(var(--tab-height) + 0.5rem + env(safe-area-inset-bottom, 0px)); }
+}
+.cal-extra-back { align-self: flex-start; margin-bottom: 0.75rem; }

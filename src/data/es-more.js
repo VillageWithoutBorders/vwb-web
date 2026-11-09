@@ -5156,6 +5156,9 @@ const more = {
   "{name} can't be added.": "No se puede agregar a {name}.",
   "{name} was updated.": "{name} fue actualizado.",
   "Open [button]": "Abrir",
+  // Nov 9: Calendar extras under More
+  'Back to events': 'Volver a los eventos',
+  'No place yet, so you only see online events': 'Sin lugar todavía: solo eventos en línea',
 }
 
 export default more
