@@ -1229,3 +1229,72 @@ html.simple .vs-top-btns { grid-template-columns: 1fr !important; }
 @media (min-width: 1024px) and (max-width: 1279px) {
   html:not(.simple) .vs-page-path .vs-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* ============================================================
+   Nov 8 (Jade): My Village and My Cottage fit on one screen at big text on a computer.
+   The place list shows each name only; the short line under it shows when you point at
+   it (and screen readers still read it). Everything else sits a little closer.
+   ============================================================ */
+@media (min-width: 1024px) {
+  :is(html.text-large, html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-room { min-height: 48px; padding: 4px 10px; }
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-room-text small {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  :is(html.text-large, html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-room-text b { line-height: 1.2; }
+  :is(html.text-large, html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-title h1 { font-size: 1.5rem; }
+  :is(html.text-large, html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-cottage-sub { font-size: 0.85rem; }
+  :is(html.text-large, html.text-larger, html.text-largest):not(.simple) .vs-today .today-slim small { font-size: 0.8rem; }
+  :is(html.text-large, html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-pick-h { margin: 0.4rem 0 0.3rem; }
+  :is(html.text-large, html.text-larger, html.text-largest):not(.simple) .vs-today .recovery-nudge > p { font-size: 0.8rem; }
+}
+@media (min-width: 1024px) {
+  /* At Larger and Largest text: the reminder keeps its bold line and its buttons; the small
+     line under the title and the second line on Coming up and Emergency step aside. */
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-today .recovery-nudge .nudge-more,
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-cottage-sub,
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-today .today-slim small {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-title h1 { margin-bottom: 0.3rem; }
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-today .today-slim { min-height: 48px; }
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-today .welcome-section { margin: 0 0 0.2rem; }
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-today .qa { margin: 0.25rem 0; }
+}
+@media (min-width: 1024px) {
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-panel.vs-today { margin-bottom: 0; }
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-today .today-setup { margin-bottom: 0; }
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-today .dashboard > :last-child { margin-bottom: 0; }
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-page-path > .vs-body { gap: 0.4rem; row-gap: 0.4rem; }
+  :is(html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-pick-h { margin: 0.5rem 0 0.25rem; font-size: 0.9rem; }
+  html.text-largest:not(.simple) .vs-page-path .vs-room-text b { font-size: 0.8rem; }
+  html.text-largest:not(.simple) .vs-page-path .vs-room-ic { width: 28px; height: 28px; }
+}
+@media (min-width: 1024px) {
+  html.text-largest:not(.simple) .vs-page-path .vs-pick-h { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
+  html.text-largest:not(.simple) .vs-page-path .vs-list { margin-top: 0.5rem; }
+}
+
+/* ============================================================
+   Nov 8 (Jade): balance, like feng shui. On a computer the place list on My Village and
+   My Cottage stretches to fill the space down to the bottom, so there is no empty gap
+   under it and nothing to scroll. The cards grow a little taller instead.
+   ============================================================ */
+@media (min-width: 1024px) {
+  html:not(.simple) .vs-page.vs-page-path { min-height: calc(100dvh - var(--header-height) - var(--tab-height) - env(safe-area-inset-bottom, 0px)); box-sizing: border-box; }
+  html:not(.simple) .vs-page-path > .vs-body { flex: 1 1 auto; display: flex; flex-direction: column; }
+  html:not(.simple) .vs-page-path > .vs-body > .vs-list { flex: 1 1 auto; grid-auto-rows: minmax(min-content, 1fr); align-content: stretch; max-height: 420px; }
+  html:not(.simple) .vs-page-path .vs-room { height: 100%; box-sizing: border-box; }
+}
+@media (min-width: 1024px) {
+  /* My Cottage at Large text: names only on the list cards, and the reminder's bold line only. */
+  html.text-large:not(.simple) .vs-page-path:has(.vs-today) .vs-room-text small,
+  html.text-large:not(.simple) .vs-today .recovery-nudge .nudge-more {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  html:not(.simple) .vs-page-path .vs-panel.vs-today { margin-bottom: 0; }
+  html:not(.simple) .vs-today .dashboard > :last-child { margin-bottom: 0; }
+}
+@media (min-width: 1024px) {
+  html.text-largest:not(.simple) .vs-page-path .vs-list { margin-top: 0.3rem; }
+  html.text-largest:not(.simple) .vs-today .recovery-nudge { padding-top: 0.35rem; padding-bottom: 0.35rem; }
+}
