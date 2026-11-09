@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { friendlyError } from '../utils/resourceReports'
+import { t, useT } from '../utils/lang'
 
 // Admin > CRN Import > Research records. VWB admins only (the database
 // checks this too). Read only: the CRN sheet is the source. To change a
@@ -23,7 +24,7 @@ const STATUS_WORDS = { research: 'Private research', active: 'Active', closed: '
 const HIDDEN_WORDS = { crn_revoked: 'hidden (revoked)', closed: 'hidden (closed)', paused_for_review: 'paused for review' }
 
 function place(r) {
-  return [r.city, r.county ? r.county + ' County' : null, r.state].filter(Boolean).join(', ')
+  return [r.city, r.county ? t('{county} County', { county: r.county }) : null, r.state].filter(Boolean).join(', ')
 }
 
 // Fields shown on the detail, in the CRN sheet's own words.
@@ -46,6 +47,7 @@ const RESULT_WORDS = {
 }
 
 export default function AdminCrnResearch() {
+  const tr = useT()
   const [search, setSearch] = useState('')
   const [show, setShow] = useState('all')
   const [rows, setRows] = useState([])
@@ -71,8 +73,8 @@ export default function AdminCrnResearch() {
     if (error) {
       console.error('crn_research_list failed:', error)
       setNote(error.code === 'PGRST202'
-        ? 'Research records are not set up on this project yet. Run vwb-crn-research-stage.sql first.'
-        : friendlyError(error, "We couldn't load the research records. Try again."))
+        ? tr('Research records are not set up on this project yet. Run vwb-crn-research-stage.sql first.')
+        : tr(friendlyError(error, "We couldn't load the research records. Try again.")))
       return
     }
     const list = data || []
@@ -84,28 +86,28 @@ export default function AdminCrnResearch() {
     if (openId === id) { setOpenId(null); setDetail(null); return }
     setOpenId(id); setDetail(null)
     const { data, error } = await supabase.rpc('crn_research_get', { p_id: id })
-    if (error) { console.error('crn_research_get failed:', error); setNote(friendlyError(error, "We couldn't open that record.")); setOpenId(null); return }
+    if (error) { console.error('crn_research_get failed:', error); setNote(tr(friendlyError(error, "We couldn't open that record."))); setOpenId(null); return }
     setDetail(data)
   }
 
   return (
     <div>
       <section style={box} aria-labelledby="crn-rs-h">
-        <h3 id="crn-rs-h" style={{ margin: '0 0 0.5rem', fontSize: '1.05rem', color: 'var(--text)' }}>Research records</h3>
-        <p style={small}>Every CRN service VWB has stored, private research included. Read only. To change one, change the CRN sheet and import it. Private research never shows in Find Help.</p>
-        <label htmlFor="crn-rs-search" style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem' }}>Search</label>
+        <h3 id="crn-rs-h" style={{ margin: '0 0 0.5rem', fontSize: '1.05rem', color: 'var(--text)' }}>{tr('Research records')}</h3>
+        <p style={small}>{tr('Every CRN service VWB has stored, private research included. Read only. To change one, change the CRN sheet and import it. Private research never shows in Find Help.')}</p>
+        <label htmlFor="crn-rs-search" style={{ display: 'block', fontWeight: 600, marginBottom: '0.25rem' }}>{tr('Search')}</label>
         <input id="crn-rs-search" type="search" inputMode="search" autoComplete="off" value={search}
-          placeholder="Name, CRN ID, town or county"
+          placeholder={tr('Name, CRN ID, town or county')}
           onChange={(e) => setSearch(e.target.value)} style={input} />
-        <div role="group" aria-label="Show" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.6rem' }}>
+        <div role="group" aria-label={tr('Show')} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.6rem' }}>
           {SHOW.map((s) => (
-            <button key={s.key} type="button" style={chip(show === s.key)} aria-pressed={show === s.key} onClick={() => setShow(s.key)}>{s.label}</button>
+            <button key={s.key} type="button" style={chip(show === s.key)} aria-pressed={show === s.key} onClick={() => setShow(s.key)}>{tr(s.label)}</button>
           ))}
         </div>
       </section>
 
       <p role="status" aria-live="polite" style={{ ...small, minHeight: '1.2em', color: note ? 'var(--danger)' : 'var(--text-secondary)', fontWeight: note ? 600 : 400 }}>
-        {note || (loading && rows.length === 0 ? 'Loading...' : total + (total === 1 ? ' record' : ' records'))}
+        {note || (loading && rows.length === 0 ? tr('Loading...') : tr(total === 1 ? '1 record' : '{n} records', { n: total }))}
       </p>
 
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.5rem' }}>
@@ -115,15 +117,15 @@ export default function AdminCrnResearch() {
             <li key={r.source_service_id} style={{ border: '1px solid var(--border)', borderRadius: 10, background: 'var(--surface-2)' }}>
               <button type="button" onClick={() => toggle(r.source_service_id)} aria-expanded={open}
                 style={{ display: 'block', width: '100%', minHeight: 44, padding: '0.6rem', background: 'none', border: 'none', color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
-                <span style={{ display: 'block', fontWeight: 700, overflowWrap: 'anywhere' }}>{r.service_name || '(no name)'}</span>
+                <span style={{ display: 'block', fontWeight: 700, overflowWrap: 'anywhere' }}>{r.service_name || tr('(no name)')}</span>
                 <span style={{ display: 'block', ...small, margin: '0.15rem 0 0', overflowWrap: 'anywhere' }}>
                   {r.org_name || r.source_org_id}{place(r) ? ' · ' + place(r) : ''}
                 </span>
                 <span style={{ display: 'block', ...small, margin: '0.15rem 0 0', overflowWrap: 'anywhere' }}>
-                  {r.source_service_id} · {STATUS_WORDS[r.status_meaning] || r.status || '(no status)'}
+                  {r.source_service_id} · {STATUS_WORDS[r.status_meaning] ? tr(STATUS_WORDS[r.status_meaning]) : r.status || tr('(no status)')}
                   {r.in_find_help
-                    ? <> · <strong style={{ color: 'var(--accent)' }}>In Find Help{r.hidden_reason ? ', ' + (HIDDEN_WORDS[r.hidden_reason] || r.hidden_reason) : ''}</strong></>
-                    : r.status_meaning === 'research' ? null : <> · Not in Find Help</>}
+                    ? <> · <strong style={{ color: 'var(--accent)' }}>{r.hidden_reason ? tr('In Find Help, {why}', { why: HIDDEN_WORDS[r.hidden_reason] ? tr(HIDDEN_WORDS[r.hidden_reason]) : r.hidden_reason }) : tr('In Find Help')}</strong></>
+                    : r.status_meaning === 'research' ? null : <> · {tr('Not in Find Help')}</>}
                 </span>
               </button>
               {open && <Detail data={detail} />}
@@ -134,7 +136,7 @@ export default function AdminCrnResearch() {
 
       {rows.length < total && (
         <button type="button" className="btn btn-outline btn-full" style={{ minHeight: 48, marginTop: '0.75rem' }} disabled={loading} onClick={() => load(rows.length)}>
-          {loading ? 'Loading...' : 'Show ' + Math.min(PAGE, total - rows.length) + ' more'}
+          {loading ? tr('Loading...') : tr('Show {n} more', { n: Math.min(PAGE, total - rows.length) })}
         </button>
       )}
     </div>
@@ -142,16 +144,17 @@ export default function AdminCrnResearch() {
 }
 
 function Fields({ title, obj, fields }) {
+  const t = useT()
   if (!obj) return null
   const filled = fields.filter(([k]) => obj[k] !== null && obj[k] !== undefined && obj[k] !== '')
   return (
     <div style={{ marginTop: '0.6rem' }}>
-      <p style={{ margin: '0 0 0.25rem', fontWeight: 700 }}>{title}</p>
-      {filled.length === 0 && <p style={{ ...small, margin: 0 }}>Nothing filled in.</p>}
+      <p style={{ margin: '0 0 0.25rem', fontWeight: 700 }}>{t(title)}</p>
+      {filled.length === 0 && <p style={{ ...small, margin: 0 }}>{t('Nothing filled in.')}</p>}
       <dl style={{ margin: 0 }}>
         {filled.map(([k, label]) => (
           <div key={k} style={{ marginBottom: '0.3rem' }}>
-            <dt style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{label}</dt>
+            <dt style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{t(label)}</dt>
             <dd style={{ margin: 0, overflowWrap: 'anywhere' }}>{String(obj[k])}</dd>
           </div>
         ))}
@@ -161,28 +164,31 @@ function Fields({ title, obj, fields }) {
 }
 
 function Detail({ data }) {
-  if (!data) return <p style={{ ...small, padding: '0 0.6rem 0.6rem' }}>Loading...</p>
+  const t = useT()
+  if (!data) return <p style={{ ...small, padding: '0 0.6rem 0.6rem' }}>{t('Loading...')}</p>
   const s = data.service || {}
   const history = data.history || []
   return (
     <div style={{ padding: '0 0.6rem 0.6rem', borderTop: '1px solid var(--border)' }}>
       {data.listing
-        ? <p style={{ ...small, margin: '0.5rem 0 0', color: 'var(--text)' }}>In Find Help as &ldquo;{data.listing.name}&rdquo;{data.listing.hidden_reason ? ' (' + (HIDDEN_WORDS[data.listing.hidden_reason] || data.listing.hidden_reason) + ')' : ''}. Edits made in VWB stay; the import lists them as conflicts.</p>
-        : <p style={{ ...small, margin: '0.5rem 0 0', color: 'var(--text)' }}>Private. Not in Find Help.</p>}
+        ? <p style={{ ...small, margin: '0.5rem 0 0', color: 'var(--text)' }}>{data.listing.hidden_reason
+          ? t('In Find Help as “{name}” ({why}). Edits made in VWB stay; the import lists them as conflicts.', { name: data.listing.name, why: HIDDEN_WORDS[data.listing.hidden_reason] ? t(HIDDEN_WORDS[data.listing.hidden_reason]) : data.listing.hidden_reason })
+          : t('In Find Help as “{name}”. Edits made in VWB stay; the import lists them as conflicts.', { name: data.listing.name })}</p>
+        : <p style={{ ...small, margin: '0.5rem 0 0', color: 'var(--text)' }}>{t('Private. Not in Find Help.')}</p>}
       <Fields title="Service" obj={s} fields={SERVICE_FIELDS} />
       <Fields title="Organization" obj={data.organization} fields={ORG_FIELDS} />
       <Fields title="Location" obj={data.location} fields={LOC_FIELDS} />
       <div style={{ marginTop: '0.6rem' }}>
-        <p style={{ margin: '0 0 0.25rem', fontWeight: 700 }}>Import history</p>
-        {!s.last_import_batch && history.length === 0 && <p style={{ ...small, margin: 0 }}>Loaded before batch tracking. Its next import adds it to the history, with Undo.</p>}
+        <p style={{ margin: '0 0 0.25rem', fontWeight: 700 }}>{t('Import history')}</p>
+        {!s.last_import_batch && history.length === 0 && <p style={{ ...small, margin: 0 }}>{t('Loaded before batch tracking. Its next import adds it to the history, with Undo.')}</p>}
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.3rem' }}>
           {history.map((h) => (
             <li key={h.batch_id} style={{ fontSize: '0.95rem', overflowWrap: 'anywhere' }}>
-              <strong>{new Date(h.uploaded_at).toLocaleDateString()}</strong> · {RESULT_WORDS[h.result] || h.result || h.grp}
-              {h.batch_status === 'undone' && <span style={{ color: 'var(--text-secondary)' }}> (undone)</span>}
+              <strong>{new Date(h.uploaded_at).toLocaleDateString()}</strong> · {RESULT_WORDS[h.result] ? t(RESULT_WORDS[h.result]) : h.result || h.grp}
+              {h.batch_status === 'undone' && <span style={{ color: 'var(--text-secondary)' }}>{' ' + t('(undone)')}</span>}
               {Object.keys(h.changes || {}).length > 0 && (
                 <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  Changed: {Object.keys(h.changes).map((k) => k.replace(/_/g, ' ')).join(', ')}
+                  {t('Changed: {list}', { list: Object.keys(h.changes).map((k) => k.replace(/_/g, ' ')).join(', ') })}
                 </span>
               )}
             </li>

@@ -1,7 +1,7 @@
 // La Guía para administradores de VWB, en español (Nov 9, Jade: "go ahead").
 // Same sections, ids and block types as adminGuide.js. When the English guide
-// changes, change this file to match. Buttons on the admin pages are still in
-// English, so their names are shown in English in **bold**, with the Spanish after.
+// changes, change this file to match. Buttons on the admin pages are in
+// Spanish too (Nov 9), so the guide names them the way they show on screen.
 // A native Spanish speaker should read this, like es.js and es-more.js.
 
 export const GUIDE_UPDATED = '7 de noviembre de 2026'
@@ -58,10 +58,10 @@ export const ADMIN_GUIDE = [
       { h3: 'Su mentor' },
       { ul: [
         'Responde sus preguntas y le pregunta cómo va.',
-        'Se nombra cuando usted es aprobado. Puede ver quién es en **Admin**, **People**.',
-        'Después de 30 días, toca **Ready** (listo: usted recibe todas las herramientas) o **Not yet** (todavía no: 30 días más). La fundadora puede decidir en cualquier momento.',
+        'Se nombra cuando usted es aprobado. Puede ver quién es en **Administración**, **Gente**.',
+        'Después de 30 días, toca **Listo** (usted recibe todas las herramientas) o **Todavía no** (30 días más). La fundadora puede decidir en cualquier momento.',
       ] },
-      { p: '**Buenos hábitos para empezar ya:** revise la bandeja una vez al día, lea el registro de administradores (**Admin log**) para ver cómo otros manejan las cosas, y pregunte antes de actuar cuando algo se sienta grande.' },
+      { p: '**Buenos hábitos para empezar ya:** revise la bandeja una vez al día, lea el **Registro de administradores** para ver cómo otros manejan las cosas, y pregunte antes de actuar cuando algo se sienta grande.' },
     ],
   },
   {
@@ -71,20 +71,20 @@ export const ADMIN_GUIDE = [
       { ol: [
         '**Prenda la verificación en dos pasos.** Las herramientas de administrador quedan cerradas hasta que lo haga. Vaya a Ajustes, Verificación en dos pasos, y siga los pasos con una app de autenticación en su teléfono. Después, siempre entre con su código. Las herramientas de administrador lo necesitan.',
         '**Toque el escudo en la barra de arriba.** El número muestra cuántas cosas esperan. Rojo quiere decir que algo es urgente. Dorado quiere decir que nada es urgente.',
-        '**Empiece con Needs you (Le espera).** Es una sola lista que comparten todos los administradores. Cuando uno de ustedes atiende algo, sale de la lista para todos.',
-        '**Vea quién ya lo está atendiendo.** Cuando usted toca **Open** (abrir), los otros administradores ven "Sam abrió esto" por 30 minutos, para que dos de ustedes no hagan lo mismo. Si alguien lo abrió hace un minuto, elija otra cosa o escríbale.',
-        '**Haga primero el grupo Urgent (urgente).** Reportes de emergencia por revisar, reportes de miembros, tareas que salieron mal, y todo lo que espera a un segundo administrador.',
-        '**Después, el grupo Waiting (en espera).** Solicitudes, grupos, pedidos para manejar un recurso, mensajes de la página de Ayuda y reportes de recursos.',
-        '**Mire los avisos de administración más recientes (Latest admin alerts).** Son los mismos avisos que suenan en los teléfonos de los administradores.',
+        '**Empiece con Le espera.** Es una sola lista que comparten todos los administradores. Cuando uno de ustedes atiende algo, sale de la lista para todos.',
+        '**Vea quién ya lo está atendiendo.** Cuando usted toca **Abrir**, los otros administradores ven "Sam abrió esto" por 30 minutos, para que dos de ustedes no hagan lo mismo. Si alguien lo abrió hace un minuto, elija otra cosa o escríbale.',
+        '**Haga primero el grupo Urgente.** Reportes de emergencia por revisar, reportes de miembros, tareas que salieron mal, y todo lo que espera a un segundo administrador.',
+        '**Después, el grupo Esperando.** Solicitudes, grupos, pedidos para manejar un recurso, mensajes de la página de Ayuda y reportes de recursos.',
+        '**Mire Últimos avisos de administradores.** Son los mismos avisos que suenan en los teléfonos de los administradores.',
       ] },
       { p: '**Avisos en su teléfono:** cada cosa nueva de administración manda un aviso a todos los administradores. El trabajo de administración ya no sale en sus Avisos personales. Si escondió los detalles en la pantalla bloqueada, el aviso solo dice que algo está esperando.' },
-      { p: '**En el teléfono o en la computadora:** todas las herramientas de administrador funcionan en los dos. La computadora solo da más espacio para Villages, SkillShare y CRN Import.' },
+      { p: '**En el teléfono o en la computadora:** todas las herramientas de administrador funcionan en los dos. La computadora solo da más espacio para Aldeas, Compartir habilidades e Importar CRN.' },
     ],
   },
   {
     id: 'who', title: 'Quién puede hacer qué',
     blocks: [
-      { p: 'Casi todo el trabajo lo puede hacer usted solo. Todo lo que cambia la posición de alguien necesita dos administradores o a la fundadora. Cada acción queda en el registro de administradores (**Admin log**), que todos pueden leer y nadie puede cambiar.' },
+      { p: 'Casi todo el trabajo lo puede hacer usted solo. Todo lo que cambia la posición de alguien necesita dos administradores o a la fundadora. Cada acción queda en el **Registro de administradores**, que todos pueden leer y nadie puede cambiar.' },
       { table: {
         head: ['Acción', 'Un administrador solo', 'Necesita dos administradores', 'Fundadora'],
         rows: [
@@ -98,7 +98,7 @@ export const ADMIN_GUIDE = [
           ['Quitar a un administrador', 'No', 'Sí: uno lo pide y otro está de acuerdo', 'Sola'],
           ['Expulsar a un administrador', 'No', 'No', 'Sola'],
           ['Dar a los administradores sus aldeas', 'No', 'No', 'Sola'],
-          ['Pedir a alguien que cuide una aldea', 'Sí, desde Villages, People and leaders. La persona dice que sí primero. (Un Embajador de Esperanza que vive allí también puede, cuando la aldea no tiene Guardián activo)', 'No', 'Le pide a cualquiera; la persona dice que sí primero'],
+          ['Pedir a alguien que cuide una aldea', 'Sí, desde Aldeas, Gente y líderes. La persona dice que sí primero. (Un Embajador de Esperanza que vive allí también puede, cuando la aldea no tiene Guardián activo)', 'No', 'Le pide a cualquiera; la persona dice que sí primero'],
           ['Cambiar el papel de fundadora', 'No', 'No', 'Solo en la base de datos, a propósito'],
         ],
       } },
@@ -110,12 +110,12 @@ export const ADMIN_GUIDE = [
   {
     id: 'situations', title: 'Situaciones comunes',
     blocks: [
-      { p: 'Cada una empieza desde el escudo, luego **Needs you** (Le espera), luego **Open** (abrir).' },
+      { p: 'Cada una empieza desde el escudo, luego **Le espera**, luego **Abrir**.' },
       { h3: 'Un reporte de emergencia por revisar' },
       { ol: [
         'Lea lo que se reportó y dónde.',
         'Revise si es real: noticias locales, un vecino de confianza, o quien reportó.',
-        'Es real: toque **Verify** (verificar), para que los vecinos y los equipos de emergencia puedan responder. No es real o ya pasó: ciérrelo. Si usted lo verificó, puede cerrarlo solo cuando termine.',
+        'Es real: toque **Verificar**, para que los vecinos y los equipos de emergencia puedan responder. No es real o ya pasó: ciérrelo. Si usted lo verificó, puede cerrarlo solo cuando termine.',
         'Dos reportes de lo mismo: junte el repetido con el primero.',
       ] },
       { h3: 'Un reporte de un miembro sobre una persona' },
@@ -123,7 +123,7 @@ export const ADMIN_GUIDE = [
         'Lea los dos lados si puede. Escriba a quien reportó para preguntar qué pasó.',
         'Agregue una nota privada (solo la ven los administradores).',
         'Márquelo como revisado, o descartado si no pasó nada malo.',
-        'Alguien no está seguro: expúlselo. Para un Embajador de Esperanza o cualquiera que dirija una aldea, un grupo o un equipo, toque **Ask to ban** (pedir expulsión), y un segundo administrador está de acuerdo en Reports.',
+        'Alguien no está seguro: expúlselo. Para un Embajador de Esperanza o cualquiera que dirija una aldea, un grupo o un equipo, toque **Pedir la expulsión**, y un segundo administrador está de acuerdo en **Reportes**.',
       ] },
       { h3: 'Un aviso de seguridad durante una tarea' },
       { ol: [
@@ -139,7 +139,7 @@ export const ADMIN_GUIDE = [
       ] },
       { h3: 'Un reporte de recurso (un listado está mal o no es seguro)' },
       { ol: [
-        'Abra Resource reports (reportes de recursos) desde la bandeja.',
+        'Abra **Reportes por revisar** desde la bandeja.',
         'Revise el sitio web del propio listado o llámelos.',
         'Apruebe el cambio, o rechácelo con una nota corta. Un reporte de seguridad pausa el listado hasta que alguien lo revise.',
       ] },
@@ -173,7 +173,7 @@ export const ADMIN_GUIDE = [
     id: 'privacy', title: 'La privacidad y sus aldeas',
     blocks: [
       { p: 'Usted ve a la gente de las aldeas que le da la fundadora, y los datos privados de nadie más.' },
-      { h3: 'En People (gente), usted ve' },
+      { h3: 'En Gente, usted ve' },
       { ul: [
         'La gente de sus aldeas',
         'Todos los administradores y la fundadora',
@@ -187,7 +187,7 @@ export const ADMIN_GUIDE = [
         'Correos electrónicos completos. Los administradores los ven en parte escondidos; solo la fundadora los ve completos.',
         'Dónde vive alguien. VWB nunca muestra nada que pueda ayudar a encontrar a una persona. Nunca pida una dirección en público, y nunca comparta una.',
       ] },
-      { p: '**Buena costumbre:** hable de una persona solo con los administradores que necesitan saber. No tome capturas de pantalla de los datos de nadie. Si comparte su pantalla, cierre Admin primero.' },
+      { p: '**Buena costumbre:** hable de una persona solo con los administradores que necesitan saber. No tome capturas de pantalla de los datos de nadie. Si comparte su pantalla, cierre Administración primero.' },
     ],
   },
   {
@@ -223,7 +223,7 @@ export const ADMIN_GUIDE = [
         '**Deje el puesto en Ajustes** con Volver a Vecino. Sigue siendo miembro y conserva sus amistades, chats e historial.',
       ] },
       { p: '**Si deja de entrar:** después de 60 días sin entrar, VWB pregunta si sigue participando. Con entrar basta para decir que sí. Si no responde, la fundadora puede quitarle el acceso de administrador. No es un castigo; mantiene la aldea cubierta y la cuenta segura.' },
-      { p: '**Si los administradores necesitan quitarle el puesto:** se necesita a la fundadora, o a dos administradores de acuerdo. Cada cambio queda en el registro de cambios de funciones (**Role changes**) que todos los administradores pueden ver.' },
+      { p: '**Si los administradores necesitan quitarle el puesto:** se necesita a la fundadora, o a dos administradores de acuerdo. Cada cambio queda en el registro de **Cambios de funciones** que todos los administradores pueden ver.' },
     ],
   },
   {
@@ -232,15 +232,15 @@ export const ADMIN_GUIDE = [
       { table: {
         head: ['Palabra', 'Qué quiere decir'],
         rows: [
-          ['Admin log (registro de administradores)', 'Lo que hicieron los administradores. Todos pueden leerlo; nadie puede cambiarlo.'],
-          ['Ask to ban / Ask to remove (pedir expulsión / pedir quitar)', 'Empieza un pedido que un segundo administrador tiene que aprobar.'],
+          ['Registro de administradores', 'Lo que hicieron los administradores. Todos pueden leerlo; nadie puede cambiarlo.'],
+          ['Pedir la expulsión / Pedir que le saquen', 'Empieza un pedido que un segundo administrador tiene que aprobar.'],
           ['Fundadora', 'La persona que empezó VWB. Puede decidir sola donde otros necesitan dos administradores.'],
           ['Embajador de Esperanza', 'Un vecino de confianza que ayuda en su zona, revisa emergencias y aprueba equipos de emergencia.'],
           ['Ayudante', 'Un vecino que el Guardián nombra para ayudar a cuidar una aldea o un equipo de emergencia.'],
           ['Guardián', 'El vecino que cuida una aldea o un equipo de emergencia.'],
           ['Mentor', 'El administrador que guía a un administrador nuevo en sus primeros 30 días.'],
-          ['Needs you (Le espera)', 'La lista compartida de todo lo que espera a un administrador.'],
-          ['Role changes (cambios de funciones)', 'El registro de quién recibió o perdió el acceso de administrador, y quién estuvo de acuerdo.'],
+          ['Le espera', 'La lista compartida de todo lo que espera a un administrador.'],
+          ['Cambios de funciones', 'El registro de quién recibió o perdió el acceso de administrador, y quién estuvo de acuerdo.'],
           ['Escudo', 'El botón de administración en la barra de arriba. Su número muestra lo que espera.'],
           ['Verificación en dos pasos', 'Un código de una app en su teléfono, que se usa con su contraseña. Se necesita para las herramientas de administrador.'],
           ['Aldea', 'Un grupo de vecinos que comparten códigos postales y un chat de aldea.'],

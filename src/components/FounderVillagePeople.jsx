@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { askConfirm, tell } from './AdminDialog'
 import { UserName } from './AvatarDisplay'
+import { useT, t } from '../utils/lang'
 
 // VWB admins and the founder (Oct 28; was founder only), on each village in Admin > Villages: who is in the village
 // chat (names and roles, never messages), ask a member to be Keeper, and put
@@ -12,17 +13,19 @@ import { UserName } from './AvatarDisplay'
 const btn = { minHeight: 44, padding: '0 0.8rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text)', fontSize: '0.9rem', cursor: 'pointer' }
 const badge = (bg, fg) => ({ fontSize: '0.8125rem', background: bg, color: fg, padding: '1px 6px', borderRadius: 4, fontWeight: 600, marginLeft: 6 })
 
+// Whole sentences with {name}, so Spanish can put the name where it fits (Nov 9).
 const PLACED = {
-  added: 'is in the village chat now. They got an alert.',
-  invited: 'was invited. They join after reading the warning.',
-  guest_invited: 'lives outside these zip codes, so they were invited as a guest. They say yes or no.',
-  already: 'is already in this village chat.',
-  removed: "was removed from this village chat before, so they can't be put back from here.",
-  declined: 'said no to joining not long ago. Try again later.',
-  missing: "can't be added.",
+  added: '{name} is in the village chat now. They got an alert.',
+  invited: '{name} was invited. They join after reading the warning.',
+  guest_invited: '{name} lives outside these zip codes, so they were invited as a guest. They say yes or no.',
+  already: '{name} is already in this village chat.',
+  removed: "{name} was removed from this village chat before, so they can't be put back from here.",
+  declined: '{name} said no to joining not long ago. Try again later.',
+  missing: "{name} can't be added.",
 }
 
 export default function FounderVillagePeople({ village, offers, onChanged }) {
+  const tr = useT()
   const [open, setOpen] = useState(false)
   const [people, setPeople] = useState(null)
   const [query, setQuery] = useState('')
@@ -31,7 +34,7 @@ export default function FounderVillagePeople({ village, offers, onChanged }) {
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('founder_village_people', { p_village: village.id })
-    if (error) { console.error('Failed to load village people:', error); tell("The people list didn't load. Try again.", { tone: 'error' }); setPeople([]); return }
+    if (error) { console.error('Failed to load village people:', error); tell(t("The people list didn't load. Try again."), { tone: 'error' }); setPeople([]); return }
     setPeople(data || [])
   }, [village.id])
 
@@ -45,30 +48,30 @@ export default function FounderVillagePeople({ village, offers, onChanged }) {
     e.preventDefault()
     if (query.trim().length < 2) return
     const { data, error } = await supabase.rpc('founder_find_people', { p_village: village.id, p_search: query.trim() })
-    if (error) { console.error('Founder people search failed:', error); tell("Search didn't work. Try again.", { tone: 'error' }); return }
+    if (error) { console.error('Founder people search failed:', error); tell(t("Search didn't work. Try again."), { tone: 'error' }); return }
     setFound(data || [])
   }
 
   async function place(p, now) {
     if (now && !(await askConfirm(
-      'Add ' + p.display_name + ' to ' + village.name + ' now? Only do this if they already told you yes. They skip the in-app warning, get an alert that you added them, and can leave any time.',
-      { yes: 'Add now' }))) return
+      t('Add {name} to {village} now? Only do this if they already told you yes. They skip the in-app warning, get an alert that you added them, and can leave any time.', { name: p.display_name, village: village.name }),
+      { yes: t('Add now') }))) return
     setBusy(true)
     const { data, error } = await supabase.rpc('founder_place_in_village', { p_village: village.id, p_user: p.user_id, p_now: now })
     setBusy(false)
-    if (error) { console.error('Could not place person in village:', error); tell(error.message || "That didn't work. Try again.", { tone: 'error' }); return }
+    if (error) { console.error('Could not place person in village:', error); tell(t(error.message || "That didn't work. Try again."), { tone: 'error' }); return }
     const good = data === 'added' || data === 'invited' || data === 'guest_invited'
-    tell(p.display_name + ' ' + (PLACED[data] || 'was updated.'), good ? {} : { tone: 'error' })
+    tell(t(PLACED[data] || '{name} was updated.', { name: p.display_name }), good ? {} : { tone: 'error' })
     if (data === 'added') { setFound((f) => (f || []).map((x) => (x.user_id === p.user_id ? { ...x, is_member: true } : x))); load() }
   }
 
   async function askKeeper(p) {
-    if (!(await askConfirm('Ask ' + p.display_name + ' to be Keeper of ' + village.name + '? They get an alert and say yes or no. If they say yes, the current Keeper becomes a Helper.', { yes: 'Ask them' }))) return
+    if (!(await askConfirm(t('Ask {name} to be Keeper of {village}? They get an alert and say yes or no. If they say yes, the current Keeper becomes a Helper.', { name: p.display_name, village: village.name }), { yes: t('Ask them') }))) return
     setBusy(true)
     const { error } = await supabase.rpc('offer_keeper', { p_village: village.id, p_person: p.user_id })
     setBusy(false)
-    if (error) { console.error('Keeper ask failed:', error); tell(error.message || "That didn't send. Try again.", { tone: 'error' }); return }
-    tell('Asked. Nothing changes until ' + p.display_name + ' says yes.')
+    if (error) { console.error('Keeper ask failed:', error); tell(t(error.message || "That didn't send. Try again."), { tone: 'error' }); return }
+    tell(t('Asked. Nothing changes until {name} says yes.', { name: p.display_name }))
     onChanged?.()
   }
 
@@ -76,8 +79,8 @@ export default function FounderVillagePeople({ village, offers, onChanged }) {
     setBusy(true)
     const { error } = await supabase.rpc('founder_cancel_keeper_offer', { p_offer: o.offer_id })
     setBusy(false)
-    if (error) { console.error('Take back failed:', error); tell(error.message || "That didn't save. Try again.", { tone: 'error' }); return }
-    tell('Ask taken back.')
+    if (error) { console.error('Take back failed:', error); tell(t(error.message || "That didn't save. Try again."), { tone: 'error' }); return }
+    tell(t('Ask taken back.'))
     onChanged?.()
   }
 
@@ -91,33 +94,33 @@ export default function FounderVillagePeople({ village, offers, onChanged }) {
     <div style={{ marginTop: '0.6rem' }}>
       {waiting.map((o) => (
         <p key={o.offer_id} className="admin-section-note">
-          Waiting on {o.admin_name} to answer your Keeper ask.{' '}
-          <button type="button" className="admin-village-btn" disabled={busy} onClick={() => takeBack(o)}>Take back</button>
+          {tr('Waiting on {name} to answer your Keeper ask.', { name: o.admin_name })}{' '}
+          <button type="button" className="admin-village-btn" disabled={busy} onClick={() => takeBack(o)}>{tr('Take back')}</button>
         </p>
       ))}
-      <button type="button" style={btn} aria-expanded={open} onClick={toggle}>{open ? 'Hide people' : 'People and leaders'}</button>
+      <button type="button" style={btn} aria-expanded={open} onClick={toggle}>{open ? tr('Hide people') : tr('People and leaders')}</button>
       {open && (
         <div style={{ marginTop: '0.6rem' }}>
-          {people === null ? <p className="admin-section-note">Loading...</p> : (
+          {people === null ? <p className="admin-section-note">{tr('Loading...')}</p> : (
             <>
               <p className="admin-section-note">
-                {keeper ? 'Keeper: ' + keeper.display_name : 'No Keeper yet.'}
-                {' · '}{helpers.length ? 'Helpers: ' + helpers.map((h) => h.display_name).join(', ') : 'No Helpers yet'}
-                {' · '}{hasAmbassador ? 'Has a Hope Ambassador' : 'No Hope Ambassador'}
+                {keeper ? tr('Keeper: {name}', { name: keeper.display_name }) : tr('No Keeper yet.')}
+                {' · '}{helpers.length ? tr('Helpers: {names}', { names: helpers.map((h) => h.display_name).join(', ') }) : tr('No Helpers yet')}
+                {' · '}{hasAmbassador ? tr('Has a Hope Ambassador') : tr('No Hope Ambassador')}
               </p>
-              <p className="admin-section-note">You see who is in this chat, never what they say.</p>
-              {people.length === 0 && <p className="admin-section-note">No one has joined yet.</p>}
+              <p className="admin-section-note">{tr('You see who is in this chat, never what they say.')}</p>
+              {people.length === 0 && <p className="admin-section-note">{tr('No one has joined yet.')}</p>}
               {people.map((p) => (
                 <div key={p.user_id} style={row}>
                   <span>
                     <UserName userId={p.user_id} name={p.display_name} />
-                    {p.is_keeper && <span style={badge('var(--warn-bg)', 'var(--gold)')}>Keeper</span>}
-                    {p.is_helper && <span style={badge('var(--warn-bg)', 'var(--gold)')}>Helper</span>}
-                    {p.is_ambassador && <span style={badge('var(--info-bg)', 'var(--info)')}>Hope Ambassador</span>}
-                    {p.is_guest && <span style={badge('var(--surface)', 'var(--text-muted)')}>Guest</span>}
+                    {p.is_keeper && <span style={badge('var(--warn-bg)', 'var(--gold)')}>{tr('Keeper')}</span>}
+                    {p.is_helper && <span style={badge('var(--warn-bg)', 'var(--gold)')}>{tr('Helper')}</span>}
+                    {p.is_ambassador && <span style={badge('var(--info-bg)', 'var(--info)')}>{tr('Hope Ambassador')}</span>}
+                    {p.is_guest && <span style={badge('var(--surface)', 'var(--text-muted)')}>{tr('Guest')}</span>}
                   </span>
                   {!p.is_keeper && !p.is_guest && village.active !== false && (
-                    <button type="button" style={btn} disabled={busy} onClick={() => askKeeper(p)}>Ask to be Keeper</button>
+                    <button type="button" style={btn} disabled={busy} onClick={() => askKeeper(p)}>{tr('Ask to be Keeper')}</button>
                   )}
                 </div>
               ))}
@@ -126,23 +129,23 @@ export default function FounderVillagePeople({ village, offers, onChanged }) {
 
           {village.active !== false && (
             <form onSubmit={search} noValidate style={{ marginTop: '0.75rem' }}>
-              <label htmlFor={'fvp-' + village.id} style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem' }}>Put someone in this village chat</label>
+              <label htmlFor={'fvp-' + village.id} style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.3rem' }}>{tr('Put someone in this village chat')}</label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input id={'fvp-' + village.id} type="search" autoComplete="off" value={query} onChange={(e) => { setQuery(e.target.value); setFound(null) }}
-                  placeholder="Search by name" style={{ flex: 1, minWidth: 0, minHeight: 44, fontSize: '1rem', padding: '0 0.6rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-sunk, var(--surface))', color: 'var(--text)' }} />
-                <button type="submit" style={btn} disabled={query.trim().length < 2}>Search</button>
+                  placeholder={tr('Search by name')} style={{ flex: 1, minWidth: 0, minHeight: 44, fontSize: '1rem', padding: '0 0.6rem', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--surface-sunk, var(--surface))', color: 'var(--text)' }} />
+                <button type="submit" style={btn} disabled={query.trim().length < 2}>{tr('Search')}</button>
               </div>
-              {found && found.length === 0 && <p className="admin-section-note">No one found by that name.</p>}
+              {found && found.length === 0 && <p className="admin-section-note">{tr('No one found by that name.')}</p>}
               {found && found.map((p) => (
                 <div key={p.user_id} style={row}>
                   <span>
                     {p.display_name}
-                    <small style={{ color: 'var(--text-muted)', marginLeft: 6 }}>{p.is_member ? 'Already in' : p.lives_in_area ? 'Lives in this area' : 'Outside these zip codes (guest)'}</small>
+                    <small style={{ color: 'var(--text-muted)', marginLeft: 6 }}>{p.is_member ? tr('Already in') : p.lives_in_area ? tr('Lives in this area') : tr('Outside these zip codes (guest)')}</small>
                   </span>
                   {!p.is_member && (
                     <span style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button type="button" style={btn} disabled={busy} onClick={() => place(p, false)}>Invite</button>
-                      <button type="button" style={btn} disabled={busy} onClick={() => place(p, true)}>Add now</button>
+                      <button type="button" style={btn} disabled={busy} onClick={() => place(p, false)}>{tr('Invite')}</button>
+                      <button type="button" style={btn} disabled={busy} onClick={() => place(p, true)}>{tr('Add now')}</button>
                     </span>
                   )}
                 </div>

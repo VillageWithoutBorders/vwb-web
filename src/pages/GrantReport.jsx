@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { useGoBack } from '../components/BackLink'
+import { useT } from '../utils/lang'
 
 export default function GrantReport() {
   const { isAdmin } = useAuth()
   const navigate = useNavigate()
   const goBack = useGoBack()
+  const tr = useT()
   // isAdmin comes from useAuth context
 
   const today = new Date().toISOString().split('T')[0]
@@ -22,8 +24,8 @@ export default function GrantReport() {
   if (!isAdmin) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-        <h2>Admin access required</h2>
-        <button className="btn btn-outline" onClick={() => navigate('/admin')}>Back to Admin</button>
+        <h2>{tr('Admin access required')}</h2>
+        <button className="btn btn-outline" onClick={() => navigate('/admin')}>{tr('Back to Admin')}</button>
       </div>
     )
   }
@@ -289,23 +291,23 @@ export default function GrantReport() {
       `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => goBack('/admin')} aria-label="Back to Admin Panel" style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
-        <h1 style={{ margin: 0, fontSize: '1.3rem' }}>Grant Report</h1>
+        <button onClick={() => goBack('/admin')} aria-label={tr('Back to Admin Panel')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer' }}>&#8592;</button>
+        <h1 style={{ margin: 0, fontSize: '1.3rem' }}>{tr('Grant Report')}</h1>
       </div>
 
       {/* Date range picker */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '120px' }}>
-            <label style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', display: 'block', marginBottom: '0.25rem' }}>From</label>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', display: 'block', marginBottom: '0.25rem' }}>{tr('From')}</label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', boxSizing: 'border-box' }} />
           </div>
           <div style={{ flex: 1, minWidth: '120px' }}>
-            <label style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', display: 'block', marginBottom: '0.25rem' }}>To</label>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', display: 'block', marginBottom: '0.25rem' }}>{tr('To')}</label>
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', boxSizing: 'border-box' }} />
           </div>
           <button onClick={generateReport} disabled={loading} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', opacity: loading ? 0.6 : 1, whiteSpace: 'nowrap' }}>
-            {loading ? 'Building...' : 'Generate'}
+            {loading ? tr('Building...') : tr('Generate')}
           </button>
         </div>
         {/* Quick range buttons */}
@@ -325,7 +327,7 @@ export default function GrantReport() {
               }}
               style={{ padding: '0.3rem 0.6rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
             >
-              {q.label}
+              {tr(q.label)}
             </button>
           ))}
         </div>
@@ -333,33 +335,33 @@ export default function GrantReport() {
 
       {!report && !loading && (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-          <p style={{ fontSize: '0.95rem' }}>Pick a date range and hit Generate to build your report.</p>
-          <p style={{ fontSize: '0.8125rem', marginTop: '0.5rem' }}>Data exports as CSV or PDF for grant applications.</p>
+          <p style={{ fontSize: '0.95rem' }}>{tr('Pick a date range and hit Generate to build your report.')}</p>
+          <p style={{ fontSize: '0.8125rem', marginTop: '0.5rem' }}>{tr('Data exports as CSV or PDF for grant applications.')}</p>
         </div>
       )}
 
       {loading && (
-        <div className="feed-loading"><div className="feed-loading-spinner" /><p>Pulling data...</p></div>
+        <div className="feed-loading"><div className="feed-loading-spinner" /><p>{tr('Pulling data...')}</p></div>
       )}
 
       {report && !loading && (
         <>
           {reportErrors.length > 0 && (
             <div style={{ background: 'var(--danger-bg)', color: 'var(--danger)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>
-              <strong>Heads up:</strong> some data failed to load ({reportErrors.join(', ')}). The numbers below may be incomplete. Try generating again before using this for a grant application.
+              <strong>{tr('Heads up:')}</strong> {tr('some data failed to load ({list}). The numbers below may be incomplete. Try generating again before using this for a grant application.', { list: reportErrors.map((e) => tr(e)).join(', ') })}
             </div>
           )}
           {/* Download buttons */}
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.35rem' }}>
             <button onClick={downloadCSV} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: 'var(--accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
-              Download CSV
+              {tr('Download CSV')}
             </button>
             <button onClick={exportPDF} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px dashed #66aaff', background: 'none', color: 'var(--info)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
-              Download PDF
+              {tr('Download PDF')}
             </button>
           </div>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>
-            PDF opens your browser's print dialog. Choose "Save as PDF" as the destination.
+            {tr('PDF opens your browser\'s print dialog. Choose "Save as PDF" as the destination.')}
           </p>
 
           <div id="grant-report-printable">
@@ -382,14 +384,14 @@ export default function GrantReport() {
             ].map(s => (
               <div key={s.label} style={{ textAlign: 'center', padding: '0.6rem', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                 <div style={{ fontSize: '1.4rem', fontWeight: 700, color: s.color }}>{s.value}</div>
-                <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{s.label}</div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>{tr(s.label)}</div>
               </div>
             ))}
           </div>
 
           {/* Mutual Aid section */}
           <div style={cardStyle}>
-            <div style={sectionTitle}>Mutual Aid (SkillShare)</div>
+            <div style={sectionTitle}>{tr('Mutual Aid (SkillShare)')}</div>
             {Object.entries(report.helpRequests.categoryBreakdown).sort((a, b) => b[1] - a[1]).map(([cat, count]) => (
               <div key={cat} style={statRow}>
                 <span style={{ color: 'var(--text-soft)' }}>{cat}</span>
@@ -397,19 +399,19 @@ export default function GrantReport() {
               </div>
             ))}
             {Object.keys(report.helpRequests.categoryBreakdown).length === 0 && (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0' }}>No requests in this period.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{tr('No requests in this period.')}</p>
             )}
             <div style={{ marginTop: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
-              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Unique requesters</span><span style={{ color: 'var(--text-strong)' }}>{report.helpRequests.uniqueRequesters}</span></div>
-              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Posted for someone else</span><span style={{ color: 'var(--text-strong)' }}>{report.helpRequests.forOthers || 0}</span></div>
-              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Unique volunteers</span><span style={{ color: 'var(--text-strong)' }}>{report.matching.uniqueHelpers}</span></div>
-              <div style={{ ...statRow, borderBottom: 'none' }}><span style={{ color: 'var(--text-secondary)' }}>Completed tasks</span><span style={{ color: 'var(--accent)', fontWeight: 600 }}>{report.matching.completedMatches}</span></div>
+              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>{tr('Unique requesters')}</span><span style={{ color: 'var(--text-strong)' }}>{report.helpRequests.uniqueRequesters}</span></div>
+              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>{tr('Posted for someone else')}</span><span style={{ color: 'var(--text-strong)' }}>{report.helpRequests.forOthers || 0}</span></div>
+              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>{tr('Unique volunteers')}</span><span style={{ color: 'var(--text-strong)' }}>{report.matching.uniqueHelpers}</span></div>
+              <div style={{ ...statRow, borderBottom: 'none' }}><span style={{ color: 'var(--text-secondary)' }}>{tr('Completed tasks')}</span><span style={{ color: 'var(--accent)', fontWeight: 600 }}>{report.matching.completedMatches}</span></div>
             </div>
           </div>
 
           {/* Urgency breakdown */}
           <div style={cardStyle}>
-            <div style={sectionTitle}>Request Urgency</div>
+            <div style={sectionTitle}>{tr('Request Urgency')}</div>
             {[
               { key: 'now', label: 'Right now', color: '#ff4444' },
               { key: 'today', label: 'Today', color: '#ff6644' },
@@ -417,7 +419,7 @@ export default function GrantReport() {
               { key: 'flexible', label: 'Flexible', color: '#4ecca3' },
             ].map(u => (
               <div key={u.key} style={statRow}>
-                <span style={{ color: u.color }}>{u.label}</span>
+                <span style={{ color: u.color }}>{tr(u.label)}</span>
                 <span style={{ color: 'var(--text-strong)', fontWeight: 600 }}>{report.helpRequests.urgencyBreakdown[u.key]}</span>
               </div>
             ))}
@@ -426,7 +428,7 @@ export default function GrantReport() {
           {/* Neighborhoods */}
           {Object.keys(report.helpRequests.neighborhoods).length > 0 && (
             <div style={cardStyle}>
-              <div style={sectionTitle}>Neighborhoods</div>
+              <div style={sectionTitle}>{tr('Neighborhoods')}</div>
               {Object.entries(report.helpRequests.neighborhoods).sort((a, b) => b[1] - a[1]).map(([hood, count]) => (
                 <div key={hood} style={statRow}>
                   <span style={{ color: 'var(--text-soft)' }}>{hood}</span>
@@ -438,13 +440,13 @@ export default function GrantReport() {
 
           {/* Emergency section */}
           <div style={cardStyle}>
-            <div style={{ ...sectionTitle, color: 'var(--danger)' }}>Emergency Response</div>
-            <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Events reported</span><span style={{ color: 'var(--text-strong)' }}>{report.emergencies.total}</span></div>
-            <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Total signups</span><span style={{ color: 'var(--text-strong)' }}>{report.emergencies.totalSignups}</span></div>
-            <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Unique responders</span><span style={{ color: 'var(--text-strong)' }}>{report.emergencies.uniqueResponders}</span></div>
-            <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Affected individuals</span><span style={{ color: 'var(--text-strong)' }}>{report.emergencies.uniqueAffected}</span></div>
-            <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Status check-ins</span><span style={{ color: 'var(--text-strong)' }}>{report.emergencies.totalCheckIns}</span></div>
-            <div style={{ ...statRow, borderBottom: 'none' }}><span style={{ color: 'var(--text-secondary)' }}>Needs-help alerts</span><span style={{ color: 'var(--danger)', fontWeight: 600 }}>{report.emergencies.needsHelpCheckIns}</span></div>
+            <div style={{ ...sectionTitle, color: 'var(--danger)' }}>{tr('Emergency Response')}</div>
+            <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>{tr('Events reported')}</span><span style={{ color: 'var(--text-strong)' }}>{report.emergencies.total}</span></div>
+            <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>{tr('Total signups')}</span><span style={{ color: 'var(--text-strong)' }}>{report.emergencies.totalSignups}</span></div>
+            <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>{tr('Unique responders')}</span><span style={{ color: 'var(--text-strong)' }}>{report.emergencies.uniqueResponders}</span></div>
+            <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>{tr('Affected individuals')}</span><span style={{ color: 'var(--text-strong)' }}>{report.emergencies.uniqueAffected}</span></div>
+            <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>{tr('Status check-ins')}</span><span style={{ color: 'var(--text-strong)' }}>{report.emergencies.totalCheckIns}</span></div>
+            <div style={{ ...statRow, borderBottom: 'none' }}><span style={{ color: 'var(--text-secondary)' }}>{tr('Needs-help alerts')}</span><span style={{ color: 'var(--danger)', fontWeight: 600 }}>{report.emergencies.needsHelpCheckIns}</span></div>
             {Object.keys(report.emergencies.typeBreakdown).length > 0 && (
               <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
                 {Object.entries(report.emergencies.typeBreakdown).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
@@ -460,10 +462,10 @@ export default function GrantReport() {
           {/* Resources section */}
           {(report.resources.totalNeeds > 0 || report.resources.totalOffers > 0) && (
             <div style={cardStyle}>
-              <div style={{ ...sectionTitle, color: 'var(--warn)' }}>Resource Coordination</div>
-              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Needs posted</span><span style={{ color: 'var(--text-strong)' }}>{report.resources.totalNeeds}</span></div>
-              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>Offers posted</span><span style={{ color: 'var(--text-strong)' }}>{report.resources.totalOffers}</span></div>
-              <div style={{ ...statRow, borderBottom: 'none' }}><span style={{ color: 'var(--text-secondary)' }}>Needs fulfilled</span><span style={{ color: 'var(--accent)', fontWeight: 600 }}>{report.resources.needsFulfilled}</span></div>
+              <div style={{ ...sectionTitle, color: 'var(--warn)' }}>{tr('Resource Coordination')}</div>
+              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>{tr('Needs posted')}</span><span style={{ color: 'var(--text-strong)' }}>{report.resources.totalNeeds}</span></div>
+              <div style={statRow}><span style={{ color: 'var(--text-secondary)' }}>{tr('Offers posted')}</span><span style={{ color: 'var(--text-strong)' }}>{report.resources.totalOffers}</span></div>
+              <div style={{ ...statRow, borderBottom: 'none' }}><span style={{ color: 'var(--text-secondary)' }}>{tr('Needs fulfilled')}</span><span style={{ color: 'var(--accent)', fontWeight: 600 }}>{report.resources.needsFulfilled}</span></div>
               {Object.keys(report.resources.categoryBreakdown).length > 0 && (
                 <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
                   {Object.entries(report.resources.categoryBreakdown).sort((a, b) => b[1] - a[1]).map(([cat, count]) => (
