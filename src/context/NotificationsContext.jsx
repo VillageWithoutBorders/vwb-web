@@ -35,11 +35,13 @@ export function NotificationsProvider({ children }) {
     // 'message' alerts are left out on purpose: the Messages tab has its own
     // unread badge, and a new message used to bump both at once. The row
     // still exists (it's what sends the push notification).
+    // Nov 10 (Jade): new posts in a Cottage Chat or Campfire ('group_post') are
+    // messages too. They count on the Messages tab now, not here.
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
-      .neq('type', 'message')
+      .not('type', 'in', '(message,group_post)')
       .order('created_at', { ascending: false })
       .limit(50)
     if (error) console.error('[NotificationsContext] refresh', error)

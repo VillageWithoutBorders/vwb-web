@@ -10,6 +10,7 @@ import Icon from '../components/Icon'
 import { tell } from '../components/AdminDialog'
 import { isSimpleView } from '../utils/simpleView'
 import { useT } from '../utils/lang'
+import { useUnreadCount } from '../context/UnreadCountContext'
 
 // Groups: private circles anyone can start. No roles, no one in charge.
 // Every group has its own board (its own Campfire), end-to-end encrypted.
@@ -23,6 +24,8 @@ export default function Groups({ embedded = false, show: showProp = 'all', onOpe
   const asked = params.get('show')
   const show = embedded ? showProp : asked === 'cottage' || asked === 'campfires' ? asked : 'all'
   const t = useT()
+  // Nov 10 (Jade): boards with a post you have not read yet (it used to be an alert).
+  const { newBoards } = useUnreadCount()
   const { user, organizations, established } = useAuth()
   // Organizations this person heads or is an organizer (trusted liaison)
   // for. They can start a group for one of them and be its steward.
@@ -234,7 +237,7 @@ export default function Groups({ embedded = false, show: showProp = 'all', onOpe
           {orderedGroups.map(({ g, nested }) => (
             <button key={g.id} type="button" className={'groups-row' + (selectedId === g.id ? ' hub-row-on' : '')} aria-current={selectedId === g.id ? 'true' : undefined} style={nested ? { marginLeft: '1.25rem', width: 'calc(100% - 1.25rem)' } : undefined} onClick={() => openGroup(g.id)}>
               <span className="groups-row-name">{nested ? '\u21B3 ' : ''}{g.pinned ? <><Icon name="pushpin" />{' '}</> : ''}{campfires.has(g.id) ? <><Icon name="campfire" />{' '}</> : g.village_kind === 'sidechat' ? <><Icon name="campfire" />{' '}</> : ''}{g.name}{g.steward_id === user.id ? <span className="group-steward-badge">{t('Steward')}</span> : null}</span>
-              <span className="groups-row-meta">{g.village_kind === 'sidechat' ? t('Picked by the keeper') + ' \u00b7 ' : ''}{g.quiet ? t('Quiet') + ' \u00b7 ' : ''}{g.memberCount === 1 ? t('1 member') : t('{n} members', { n: g.memberCount })}</span>
+              <span className="groups-row-meta">{newBoards.has(String(g.id)) && <><b className="groups-new">{t('New posts')}</b>{' \u00b7 '}</>}{g.village_kind === 'sidechat' ? t('Picked by the keeper') + ' \u00b7 ' : ''}{g.quiet ? t('Quiet') + ' \u00b7 ' : ''}{g.memberCount === 1 ? t('1 member') : t('{n} members', { n: g.memberCount })}</span>
             </button>
           ))}
           {archivedGroups.length > 0 && (
