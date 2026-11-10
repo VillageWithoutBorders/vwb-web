@@ -9,6 +9,7 @@ import { skillsForCategory } from '../utils/resourceCategories'
 import { getMyLocation, lookupZip } from '../utils/location'
 import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
+import EmergencyDoor from '../components/EmergencyDoor'
 import { isSimpleView } from '../utils/simpleView'
 import { savePendingAsk, isNoSignal } from '../utils/pendingAsks'
 import { useT } from '../utils/lang'
@@ -316,6 +317,9 @@ export default function AskForHelp() {
                     ? t('Tell us what {name} needs. Helpers will talk with you, and you pass things along. Never share their address here.', { name: theirName })
                     : t('Tell us what you need. Neighbors and Hope Ambassadors near you will see it, with your name and town. Never your address.')}
             </p>
+
+            {/* Nov 10 (Jade): a flood, storm, or fire is not a request. One tap to Emergency Response. */}
+            {!editId && <EmergencyDoor />}
 
             {!online && (
                 <p className="ask-offline" role="status">

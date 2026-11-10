@@ -13,6 +13,7 @@ import { getBlockedUserIds } from '../utils/blockedUsers'
 import { UserName } from '../components/AvatarDisplay'
 import HelpSwitch from '../components/HelpSwitch'
 import TownToday from '../components/TownToday'
+import EmergencyDoor from '../components/EmergencyDoor'
 import Icon from '../components/Icon'
 import { forLine, helperNote } from '../utils/forSomeone'
 import { askConfirm, tell } from '../components/AdminDialog'
@@ -374,6 +375,8 @@ export default function Feed() {
                 : <LocationPrompt onDone={loadFeed} intro={t('Enter your zip code to see requests near you. We never guess where you are.')} />}
             {/* Nov 7 (Jade): "I'm in town today". Accounts past their first 14 days. */}
             {view === 'requests' && myLoc && <TownToday onChanged={loadFeed} />}
+            {/* Nov 10 (Jade): Emergency Response is one tap from here too. */}
+            <EmergencyDoor />
 
             <div className="feed-filters">
                 {view === 'requests' ? (
