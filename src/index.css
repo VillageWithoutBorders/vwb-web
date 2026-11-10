@@ -7834,3 +7834,33 @@ html.vv-zoomed .what-btn { display: none; }
   }
 }
 
+/* ---------- My Corner, Nov 10 (Jade): only what is yours and lives nowhere else ----------
+   Card, a nudge when someone says they know you, two code buttons, Settings, Your roles,
+   Your things, About the app, Village Without Borders, then Log out alone. */
+.corner-codes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.6rem; margin: 0 0 1rem; }
+.corner-code-btn { min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.5rem 0.75rem; font-weight: 700; line-height: 1.25; text-align: center; overflow-wrap: anywhere; }
+.corner-code-btn > span[aria-hidden] { flex: none; display: flex; }
+/* Stacked on narrow phones and at the two biggest text sizes, so no word is cut. */
+@media (max-width: 479px) { .corner-codes { grid-template-columns: minmax(0, 1fr); } }
+:is(html.text-larger, html.text-largest) .corner-codes { grid-template-columns: minmax(0, 1fr); }
+.corner-nudge { margin: 0 0 1rem; min-height: 56px; border: 2px solid var(--gold); border-radius: 14px; background: var(--surface); font-weight: 700; }
+.corner-nudge .corner-item-text { flex: 1; min-width: 0; }
+.corner-roles-row { min-height: 56px; border: 1px solid var(--border) !important; border-radius: 14px; background: var(--surface) !important; font-weight: 700; }
+.corner-page .corner-list .corner-item-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+/* Log out, alone in its own card, with space above it. */
+.app-menu-group-logout { margin-top: 1.75rem; }
+.app-menu-group-logout .app-menu-list.app-menu-inline { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; padding: 0; }
+.corner-split .corner-page-full .app-menu-group-logout { margin-top: 0.85rem; }
+/* Simple view on a computer: one easy column, not stretched across the screen. */
+@media (min-width: 1024px) { .corner-page:not(.corner-page-full) { max-width: 640px; margin: 0 auto; } }
+.scan-steps { margin: 0.5rem 0 0.75rem; padding-left: 1.5rem; display: grid; gap: 0.6rem; font-size: 1.05rem; line-height: 1.45; color: var(--text); }
+@media (min-width: 1024px) {
+  /* Your things is one row now, so it takes the full width of its box. */
+  .corner-room-things .corner-list { grid-template-columns: minmax(0, 1fr) !important; }
+  .corner-room-things .corner-item { border-right: 0 !important; }
+  /* At the two biggest text sizes the page was three thin columns. With less on it,
+     two columns give every word room. Each side still scrolls by itself. */
+  :is(html.text-larger, html.text-largest) .corner-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  :is(html.text-larger, html.text-largest) .corner-split > .corner-split-side { display: flex !important; }
+}
+
