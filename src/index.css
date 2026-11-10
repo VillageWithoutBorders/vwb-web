@@ -6772,6 +6772,9 @@ html.calm-motion .nr-card:active { transform: none; }
 .today-slim:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .today-slim:active { transform: scale(0.99); }
 @media (prefers-reduced-motion: reduce) { .today-slim:active { transform: none; } }
+/* Nov 10 (Jade): the Emergency Response bar on Ask for Help and Offer Help. Its small line wraps, so no word is cut off. */
+.today-slim-wrap small { white-space: normal; overflow: visible; text-overflow: clip; }
+.emergency-door { margin-bottom: 0.75rem; }
 
 /* Printed resource list (Nov 3, PrintResourceList.jsx). Hidden on screen. */
 .print-sheet { display: none; }
