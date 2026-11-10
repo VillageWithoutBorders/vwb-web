@@ -7985,3 +7985,45 @@ h1[data-tr~="what"] { padding-right: 52px !important; }
 :is(html.text-larger, html.text-largest) :is(.convo-send, .chat-send) { padding: 0 10px !important; min-width: 44px; flex: none; }
 :is(html.text-larger, html.text-largest) .gb-small-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 :is(html.text-larger, html.text-largest) .gb-small-nav { padding: 4px 6px !important; gap: 6px !important; }
+
+/* Read this to me, Nov 10 (Jade): a reading bar in thumb reach. Back, Pause or Go on, Skip,
+   Speed, and Stop. Tap any words on the page to read from there. */
+.read-bar {
+  position: fixed; z-index: 900; left: 8px; right: 8px; margin: 0 auto; max-width: 560px;
+  bottom: calc(var(--tab-height) + 8px + env(safe-area-inset-bottom, 0px));
+  padding: 8px; border-radius: 16px; border: 2px solid var(--accent); background: var(--surface);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); display: grid; gap: 6px; box-sizing: border-box;
+}
+.read-bar-hint { margin: 0; font-size: 0.875rem; color: var(--text-secondary); text-align: center; line-height: 1.3; }
+.read-bar-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.read-bar-btn {
+  flex: 1 1 0; min-width: 0; min-height: 48px; padding: 4px 8px; border-radius: 12px;
+  border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-strong);
+  font: inherit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  line-height: 1.2; overflow-wrap: anywhere;
+}
+.read-bar-btn:disabled { opacity: 0.45; cursor: default; }
+.read-bar-main { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.read-bar-stop { background: #1f4a47; color: #fff; border-color: #1f4a47; }
+.read-bar-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.read-bar-btn:not(:disabled):active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) { .read-bar-btn:not(:disabled):active { transform: none; } }
+html.calm-motion .read-bar-btn:not(:disabled):active { transform: none; }
+/* Room under the page while the bar is up, so the last words can scroll above it. */
+.app-main:has(.read-bar) { padding-bottom: calc(var(--tab-height) + 13rem + env(safe-area-inset-bottom, 0px)) !important; }
+:is(html.text-larger, html.text-largest) .read-bar-hint { display: none; }
+
+/* Nov 10 (Jade): My Corner's Emergency button shows whether anything is open, with a count. */
+.corner-emergency-text { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.corner-emergency-text b { overflow-wrap: anywhere; }
+.corner-emergency-text small { font-size: 0.875rem; font-weight: 600; opacity: 0.95; overflow-wrap: anywhere; }
+.corner-emergency-count { flex: none; min-width: 1.75rem; height: 1.75rem; padding: 0 0.4rem; border-radius: 999px; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center; background: var(--bg); color: var(--text-strong); font-weight: 800; font-size: 0.95rem; }
+/* Big text: whole words on the reading bar. Pause or Go on gets its own wide row, then Back and Skip,
+   then Speed and Stop. The arrow pictures step aside so the words fit. */
+.read-bar-btn { overflow-wrap: normal; word-break: normal; hyphens: none; }
+.read-bar-pic { flex: none; }
+:is(html.text-larger, html.text-largest) .read-bar-row:first-of-type { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+:is(html.text-larger, html.text-largest) .read-bar-row:first-of-type .read-bar-main { grid-column: 1 / -1; grid-row: 1; }
+:is(html.text-larger, html.text-largest) .read-bar-pic { display: none; }
+:is(html.text-larger, html.text-largest) .read-bar { padding: 6px; gap: 6px; }
