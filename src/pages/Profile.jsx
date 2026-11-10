@@ -49,7 +49,7 @@ export default function Profile() {
     return () => { alive = false }
   }, [zipCode])
   const [selectedSkills, setSelectedSkills] = useState([])
-  const [radiusMiles, setRadiusMiles] = useState(10)
+  const [radiusMiles, setRadiusMiles] = useState(25)
 
   const [ambAvailability, setAmbAvailability] = useState('')
   const [ambInterests, setAmbInterests] = useState('')
@@ -103,7 +103,7 @@ export default function Profile() {
       setZipCode(profile.zip_code || '')
       setNeighborhood(profile.neighborhood || '')
       setSelectedSkills(profile.skills || [])
-      setRadiusMiles(profile.radius_miles || 10)
+      setRadiusMiles(profile.radius_miles || 25)
       setAmbAvailability(profile.availability || '')
       setAmbInterests(profile.interests || '')
     }
@@ -147,7 +147,7 @@ export default function Profile() {
       setZipCode(profile.zip_code || '')
       setNeighborhood(profile.neighborhood || '')
       setSelectedSkills(profile.skills || [])
-      setRadiusMiles(profile.radius_miles || 10)
+      setRadiusMiles(profile.radius_miles || 25)
       setAmbAvailability(profile.availability || '')
       setAmbInterests(profile.interests || '')
     }
@@ -339,7 +339,7 @@ export default function Profile() {
           </div>
           <div className="detail-row">
             <span className="detail-label">{t('Help radius')}</span>
-            <span className="detail-value">{t('{n} miles', { n: profile?.radius_miles || 10 })}</span>
+            <span className="detail-value">{t('{n} miles', { n: profile?.radius_miles || 25 })}</span>
           </div>
           <div className="detail-row">
             <span className="detail-label">{t('Tasks completed')}</span>

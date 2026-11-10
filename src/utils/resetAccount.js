@@ -13,7 +13,7 @@ export async function resetAccountToBase(userId, { currentRole } = {}) {
     skills: [],
     availability: '',
     interests: '',
-    radius_miles: 10,
+    radius_miles: 25,
     admin_region_name: null,
     admin_latitude: null,
     admin_longitude: null,

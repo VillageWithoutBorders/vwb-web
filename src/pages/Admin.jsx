@@ -339,7 +339,7 @@ export default function Admin() {
       region_label: newVillageRegion.trim() || null,
       slug: slugifyVillageName(newVillageName),
       center_zip: newVillageZip.trim(),
-      radius_miles: 10,
+      radius_miles: 25,
     }).select('id').single()
     if (reportError('createVillage', error, /zip/i.test(error?.message || '') ? tr('That zip code wasn\u2019t found. Check the center zip and try again.') : tr('Could not create this village. It may already exist. Try again.'))) return
     // No zips typed: start from the zips within 10 miles of the center.

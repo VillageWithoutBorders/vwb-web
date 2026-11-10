@@ -23,7 +23,7 @@ export default function NearbyNeedTiles() {
       // No known location means no tiles. We never guess.
       const loc = getMyLocation(profile)
       if (!loc) { setReady(false); return }
-      const radius = profile?.radius_miles || 10
+      const radius = profile?.radius_miles || 25
       const { data, error } = await supabase.rpc('nearby_open_request_counts', {
         helper_lat: loc.lat, helper_lng: loc.lng, helper_radius: radius,
       })

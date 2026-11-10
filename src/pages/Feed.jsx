@@ -173,7 +173,7 @@ export default function Feed() {
             // Group-only requests whose time is up open to everyone (this also alerts ambassadors).
             supabase.rpc('release_due_solidarity_requests').then(() => {}, () => {})
             const helperSkills = filterSkill === 'all' ? [] : [filterSkill]
-            const radius = profile?.radius_miles || 10
+            const radius = profile?.radius_miles || 25
             const { data, error } = loc
                 ? await supabase.rpc('nearby_matching_requests', {
                     helper_lat: loc.lat, helper_lng: loc.lng, helper_radius: radius, helper_skills: helperSkills,
@@ -231,7 +231,7 @@ export default function Feed() {
             // No area set means no offers, never the whole app's list.
             let data = []
             if (loc) {
-                const radius = profile?.radius_miles || 10
+                const radius = profile?.radius_miles || 25
                 const { data: near, error: nearErr } = await supabase.rpc('nearby_offers', { p_lat: loc.lat, p_lng: loc.lng, p_radius: radius })
                 if (nearErr) console.error('nearby_offers failed:', nearErr)
                 const distById = new Map((near || []).map(r => [r.offer_id, r.distance_miles]))
@@ -387,7 +387,7 @@ export default function Feed() {
             </div>
 
             {myLoc
-                ? <LocationBar loc={myLoc} prefix={t('Within {n} miles of', { n: profile?.radius_miles || 10 })} onChanged={loadFeed} />
+                ? <LocationBar loc={myLoc} prefix={t('Within {n} miles of', { n: profile?.radius_miles || 25 })} onChanged={loadFeed} />
                 : <LocationPrompt onDone={loadFeed} intro={t('Enter your zip code to see requests near you. We never guess where you are.')} />}
             {/* Nov 7 (Jade): "I'm in town today". Accounts past their first 14 days. */}
             {view === 'requests' && myLoc && <TownToday onChanged={loadFeed} />}
@@ -446,12 +446,12 @@ export default function Feed() {
                         </div>
                         {fartherOpen && (
                             <div className="feed-farther" role="group" aria-label={t('How far to look')}>
-                                <p className="feed-empty-line">{t('Now {n} miles. Look within:', { n: profile?.radius_miles || 10 })}</p>
+                                <p className="feed-empty-line">{t('Now {n} miles. Look within:', { n: profile?.radius_miles || 25 })}</p>
                                 <div className="feed-empty-actions">
-                                    {[25, 50].filter((m) => m > (profile?.radius_miles || 10)).map((m) => (
+                                    {[25, 35, 50].filter((m) => m > (profile?.radius_miles || 25)).map((m) => (
                                         <button key={m} type="button" className="btn btn-outline" onClick={() => lookFarther(m)}>{t('{n} miles', { n: m })}</button>
                                     ))}
-                                    {(profile?.radius_miles || 10) >= 50 && <p className="feed-empty-line">{t('This is as far as it goes. Try Find resources, or post an offer.')}</p>}
+                                    {(profile?.radius_miles || 25) >= 50 && <p className="feed-empty-line">{t('This is as far as it goes. Try Find resources, or post an offer.')}</p>}
                                 </div>
                                 {fartherNote && <p className="form-error" role="alert">{fartherNote}</p>}
                             </div>
