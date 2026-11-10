@@ -13,12 +13,11 @@ export const VILLAGE_SPOTS = [
   { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'chat-bubble', label: 'Village chat', short: 'Village chat', em: '\u{1F4AC}', x: 21, y: 82, s: 1.1 },
   { k: 'keeper', art: '/art/village-path/spot-keeper.webp', icon: 'key', label: "Keeper's house", short: 'Keeper', em: '\u{1F5DD}️', x: 83, y: 39 },
   { k: 'sisters', art: '/art/village-path/spot-sisters.webp', icon: 'bridge', label: 'Sister villages', short: 'Sisters', em: '\u{1F309}', x: 50, y: 8 },
-  { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Groups here', short: 'Groups', em: '\u{1F465}', x: 17, y: 19 },
+  { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Groups and crews', short: 'Groups', em: '\u{1F465}', x: 17, y: 19 },
   { k: 'campfires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Campfires', short: 'Campfires', em: '\u{1F525}', x: 50, y: 42, s: 1.05 },
-  { k: 'skillshare', art: '/art/village-path/spot-skillshare.webp', icon: 'basket', label: 'SkillShare', short: 'SkillShare', em: '\u{1F9FA}', x: 79, y: 82, s: 1.1 },
-  { k: 'neighbors', art: '/art/life/life-cottage-lit.webp', icon: 'wave', label: 'Neighbors', short: 'Neighbors', em: '\u{1F44B}', x: 17, y: 60 },
-  { k: 'groups', art: '/art/village-path/spot-groups.webp', icon: 'tent', label: 'Emergency crews', short: 'Crews', em: '⛺', x: 83, y: 19 },
-  { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'My Corner', short: 'Me', em: '\u{1F3E0}', x: 50, y: 73 },
+  // Nov 10 map review: Help nearby shows only in the Simple view list. In the full view, Help is on the bottom bar.
+  { k: 'skillshare', art: '/art/village-path/spot-skillshare.webp', icon: 'basket', label: 'Help nearby', short: 'Help', em: '\u{1F9FA}', x: 79, y: 82, s: 1.1, simpleOnly: true },
+  { k: 'neighbors', art: '/art/life/life-cottage-lit.webp', icon: 'wave', label: 'Neighbors', short: 'Neighbors', em: '\u{1F44B}', x: 80, y: 78 },
 ]
 
 // Your cottage (Oct 22): your own page, the "My Village" tab. One per person,
@@ -36,7 +35,6 @@ export const COTTAGE_SPOTS = [
   { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Groups and crews', short: 'Groups', x: 18, y: 28 },
   { k: 'chats', art: '/art/village-path/spot-messages.webp', icon: 'mailbox', label: 'Chats', short: 'Chats', x: 22, y: 70 },
   { k: 'help', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Help', short: 'Help', x: 81, y: 76 },
-  { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'My Corner', short: 'My Corner', x: 50, y: 48, s: 1.35 },
 ]
 
 // The Organization page (OrgPage.jsx). Same roadmap.

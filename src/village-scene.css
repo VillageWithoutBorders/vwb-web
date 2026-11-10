@@ -1321,3 +1321,7 @@ html.simple .vs-top-btns { grid-template-columns: 1fr !important; }
   html:not(.simple) .vs-page-path .vs-toolpanel { display: block; flex: 1 1 auto; max-height: none; border: 1px solid var(--vs-line); box-shadow: none; }
   html:not(.simple) .vs-page-path .vs-tools-toggle { display: none !important; }
 }
+
+/* Nov 10 map review: Groups and crews sheet has two short sections */
+.vs-sheet-sub { font-size: 1rem; margin: 12px 0 4px; }
+.vs-sheet-sub:first-of-type { margin-top: 4px; }
