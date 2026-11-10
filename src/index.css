@@ -8089,3 +8089,21 @@ html.calm-motion .read-bar-btn:not(:disabled):active { transform: none; }
 }
 /* Pop-ups that scroll inside: the same solid strip. */
 .box-more { height: 60px; margin-top: -60px; background: var(--surface, #1e1e1e); border-top: 1px solid var(--border); align-items: center; padding-bottom: 0; }
+
+/* ---------- Round C (Nov 10, Jade): Settings, maps, World ---------- */
+/* Section labels in normal case, not all capitals. */
+.detail-section-header { text-transform: none; letter-spacing: normal; font-size: 0.95rem; }
+
+/* My World: the Announcements word under its button, and the three-line key. */
+.wd-news { width: auto !important; min-width: 48px; height: auto !important; padding: 4px 8px !important; border-radius: 14px !important; display: flex !important; flex-direction: column; align-items: center; gap: 2px; }
+.wd-news-pic { width: 32px; height: 32px; display: block; }
+.wd-news-pic .vwb-icon { width: 100%; height: 100%; }
+.wd-news-word { font-size: 0.72rem; font-weight: 700; line-height: 1.1; color: var(--vs-ink, var(--text)); }
+.wd-sub .wd-key { display: grid; gap: 4px; text-align: left; }
+.wd-sub:has(.wd-key) { text-align: left; }
+/* My Village and My Cottage: Edit map is smaller than Zoom in. */
+.vs-edit-fab { font-size: 0.85rem !important; padding-left: 10px !important; padding-right: 10px !important; min-height: 44px; opacity: 0.95; }
+/* Resources: "In danger? Call 911" is a real button (Round C, Nov 10). */
+.nr-911 { min-height: 48px !important; padding: 0 16px; border-radius: 12px; border: 2px solid var(--danger); background: var(--danger-bg); color: var(--text-strong) !important; justify-content: center; gap: 6px; }
+.nr-911:active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) { .nr-911:active { transform: none; } }
