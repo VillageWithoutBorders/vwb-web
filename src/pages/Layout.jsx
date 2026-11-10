@@ -13,9 +13,8 @@ import PendingReports from '../components/PendingReports'
 import { useT } from '../utils/lang'
 import BottomTabs from '../components/BottomTabs'
 import MeButton, { MyCornerButton } from '../components/MeButton'
-import MyToolsButton from '../components/MyToolsButton'
+import AlertsButton from '../components/AlertsButton'
 import QrSheetHost from '../components/QrSheet'
-import { useMyTools } from '../hooks/useMyTools'
 import { useAdminInbox } from '../hooks/useAdminInbox'
 import AppTour from '../components/AppTour'
 import KeyRestorePrompt from '../components/KeyRestorePrompt'
@@ -30,8 +29,7 @@ export default function Layout() {
   // after Find your village. "Skip setup for now" on that page ends it.
   const setupNext = needsFullSetup(user, profile) && pathname !== '/setup' && !firstRunPaused(pathname)
   useEffect(() => { if (setupNext) navigate('/setup', { replace: true }) }, [setupNext]) // eslint-disable-line react-hooks/exhaustive-deps
-  // Your role tools and the Admin inbox count, for My Tools in the top bar.
-  const tools = useMyTools()
+  // The Admin inbox count shows on My Corner in the top bar (Nov 10). Role tools live there.
   const { total: adminWaiting, urgent: adminUrgent } = useAdminInbox()
   const simple = useSimpleView()
   const t = useT()
@@ -140,7 +138,7 @@ export default function Layout() {
     <div className="app-shell">
       {!focus && <header className="app-header">
         {/* Oct 25 (Jade): top bar, left to right: My World, My Village, My Cottage,
-            My Corner (profile, account, settings), and My Tools (alerts and role tools).
+            My Corner (profile, account, settings, your roles), and the Alerts bell (Nov 10).
             The bottom bar is actions: Ask for Help, Offer Help, Calendar, Messages. */}
         <nav className="app-header-inner header-nav" aria-label="Top menu">
           {!simple && (<>
@@ -153,14 +151,13 @@ export default function Layout() {
             <span className="header-btn-label" aria-hidden="true"><span className="header-my">{t('My ')}</span>{t('Village')}</span>
           </Link>
           <MeButton />
-          <MyCornerButton />
-          <MyToolsButton tools={tools} adminWaiting={adminWaiting} adminUrgent={adminUrgent} />
+          <MyCornerButton adminWaiting={adminWaiting} adminUrgent={adminUrgent} />
+          <AlertsButton />
           </>)}
-          {/* Simple view keeps it short: Alerts and My Corner. People with a role
-              (Admin, Ambassador, a group or crew leader, a village Keeper) get My Tools
-              in place of Alerts, so their tools and alerts stay one tap away (Oct 27). */}
-          {simple && <MyToolsButton tools={tools} adminWaiting={adminWaiting} adminUrgent={adminUrgent} />}
-          {simple && <MeButton />}
+          {/* Simple view keeps it short: My Corner and Alerts. People with a role
+              find their tools in My Corner > Your roles (Nov 10). */}
+          {simple && <MeButton adminWaiting={adminWaiting} adminUrgent={adminUrgent} />}
+          {simple && <AlertsButton />}
         </nav>
       </header>}
       <main className={'app-main' + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '') + (focus ? ' app-main-focus' : '')}>

@@ -5,8 +5,9 @@ import { useBackCloses } from '../hooks/useBackCloses'
 import BoxMoreBelow from './BoxMoreBelow'
 import { useT } from '../utils/lang'
 
-// The pop-up list behind My Tools (top bar). children show above the rows (your alerts).
-// rows: { key, label, to, icon, pic?, name?, note? }. pic shows in place of the icon (your avatar).
+// The pop-up list behind My Corner > Your roles (Nov 10; it used to sit behind My Tools
+// in the top bar). children show above the rows.
+// rows: { key, label, to, icon, pic?, name?, note?, noteVars? }. pic shows in place of the icon (your avatar).
 // onClose(true) puts focus back on the button that opened it.
 export default function ToolsSheet({ id, title, rows, onClose, children, rowsTitle, footer }) {
   const tr = useT()
@@ -40,7 +41,7 @@ export default function ToolsSheet({ id, title, rows, onClose, children, rowsTit
             <li key={t.key}>
               <button type="button" className="tools-row" onClick={() => go(t.to)}>
                 {t.pic || <Icon name={t.icon} size={28} />}
-                <span><b>{tr(t.label)}</b>{t.name && <small>{t.name}</small>}{t.note && <small>{tr(t.note)}</small>}</span>
+                <span><b>{tr(t.label)}</b>{t.name && <small>{t.name}</small>}{t.note && <small>{tr(t.note, t.noteVars)}</small>}</span>
                 <span className="tools-arrow" aria-hidden="true">›</span>
               </button>
             </li>
@@ -58,6 +59,6 @@ export default function ToolsSheet({ id, title, rows, onClose, children, rowsTit
 export const EMERGENCY = { key: 'emergency', label: 'Emergency', icon: 'siren', to: '/emergency' }
 export function toolRows(tools, adminWaiting) {
   return tools.map((t) => t.key === 'admin' && adminWaiting > 0
-    ? { ...t, to: '/admin?tab=inbox', note: adminWaiting + ' waiting in the inbox' }
+    ? { ...t, to: '/admin?tab=inbox', note: '{n} waiting in the inbox', noteVars: { n: adminWaiting } }
     : t)
 }

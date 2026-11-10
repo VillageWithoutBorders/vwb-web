@@ -268,7 +268,7 @@ function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
           type="button"
           className="notification-delete"
           onClick={(e) => onDelete(e, notification.id)}
-          aria-label={t('Delete notification')}
+          aria-label={t('Clear this alert')}
         >
           &times;
         </button>
