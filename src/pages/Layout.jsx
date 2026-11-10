@@ -10,6 +10,7 @@ import SimpleOffer from '../components/SimpleOffer'
 import ReadAloud from '../components/ReadAloud'
 import PendingAsks from '../components/PendingAsks'
 import PendingReports from '../components/PendingReports'
+import EmergencyBanner from '../components/EmergencyBanner'
 import { useT } from '../utils/lang'
 import BottomTabs from '../components/BottomTabs'
 import MeButton, { MyCornerButton } from '../components/MeButton'
@@ -162,6 +163,8 @@ export default function Layout() {
         </nav>
       </header>}
       <main className={'app-main' + (!focus && !isChat ? ' app-main-what' : '') + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '') + (focus ? ' app-main-focus' : '')}>
+        {/* Nov 10 (Round A3): an open emergency you can act on, at the top of every page. Not in setup. */}
+        {!focus && user && <EmergencyBanner />}
         {/* Read this to me (Nov 3, barriers review): Simple view pages, next to Back.
             Not on chats or the maps. */}
         {showBack

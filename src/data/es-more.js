@@ -5151,6 +5151,11 @@ const more = {
   'Tap the link that shows. It opens here and connects you.': 'Toque el enlace que aparece. Se abre aquí y los conecta.',
   'Only scan the code of someone you have met.': 'Solo escanee el código de alguien que conoce en persona.',
   "How to scan a neighbor's code with your phone camera.": 'Cómo escanear el código de un vecino con la cámara de su teléfono.',
+  // ---- Nov 10, Round A3: Emergency at the top of My Corner, banner during an open emergency ----
+  'Emergency: see the emergencies that are open and help respond.': 'Emergencia: vea las emergencias abiertas y ayude a responder.',
+  'Emergency open: {name}. Tap to help.': 'Emergencia abierta: {name}. Toque para ayudar.',
+  '{n} emergencies open. Tap to help.': '{n} emergencias abiertas. Toque para ayudar.',
+  'Hide for 1 hour': 'Ocultar por 1 hora',
 }
 
 export default more
