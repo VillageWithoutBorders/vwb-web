@@ -15,7 +15,7 @@ import { usePrefsRefresh } from '../hooks/usePrefsRefresh'
 const SPOTS = [
   { k: 'fire', label: 'Cottage Chats and Campfires', sub: 'Gather by the fire', to: '/groups', x: 21, y: 80 },
   { k: 'chair', label: 'Settings', sub: 'Get comfortable', to: '/settings', x: 53, y: 74 },
-  { k: 'books', label: 'Past tasks', sub: 'The stories so far', to: '/profile#past-tasks', x: 45, y: 24 },
+  { k: 'books', label: 'Past tasks', sub: 'The stories so far', to: '/tasks?tab=archived', x: 45, y: 24 },
   { k: 'oldbooks', label: 'My trail', sub: 'Where you have been', to: '/trail', x: 4, y: 20 },
   { k: 'window', label: 'Map of my villages', sub: 'Look out at your world', to: '/world', x: 81, y: 30 },
   { k: 'cat', label: 'Vouches and trust', sub: 'Friends who know you', to: '/profile', x: 94, y: 64 },

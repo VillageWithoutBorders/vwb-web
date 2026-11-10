@@ -48,7 +48,7 @@ export default function CalendarSubscribe({ orgId: orgIdProp, orgName: orgNamePr
         </button>
       </div>
       <details className="hub-org-desc">
-        <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center' }}>{t('Other calendars, or a button did nothing')}</summary>
+        <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center' }}>{t('Having trouble? Other ways')} &#8250;</summary>
         <p><strong>{t('iPhone:')}</strong> {t('Settings, Calendar, Accounts, Add Account, Other, Add Subscribed Calendar. Paste the link.')}</p>
         <p><strong>{t('Outlook or others:')}</strong> {t('look for "Subscribe from web" or "Add by URL". Paste the link.')}</p>
       </details>

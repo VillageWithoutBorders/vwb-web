@@ -55,7 +55,11 @@ export default function NearbyOrganizers({ origin, miles }) {
     const o = orgs.find((x) => x.id === m.id)
     return o && !o.home_zip
   })
-  const shown = showAll ? orgs : orgs.slice(0, ORG_COUNT)
+  // Round D (Nov 10, Jade): groups with an event coming up first. The rest wait under "More organizers".
+  const withEvents = orgs.filter((o) => o.next_event_title)
+  const others = orgs.filter((o) => !o.next_event_title)
+  const shown = showAll ? withEvents : withEvents.slice(0, ORG_COUNT)
+  const [showOthers, setShowOthers] = useState(false)
 
   return (
     <section className="hub-section" aria-labelledby="cal-orgs">
@@ -74,9 +78,15 @@ export default function NearbyOrganizers({ origin, miles }) {
         <p className="hub-empty">{t('No groups have posted near here yet. Know one that should be here? Invite them to bring their group.')}</p>
       )}
       {!loading && !failed && shown.map((org) => <OrgCard key={org.id} org={org} />)}
-      {!loading && orgs.length > ORG_COUNT && (
+      {!loading && !failed && others.length > 0 && (
+        <details className="cal-more-orgs" open={showOthers} onToggle={(e) => setShowOthers(e.currentTarget.open)}>
+          <summary>{t('More organizers ({n})', { n: others.length })}</summary>
+          {showOthers && others.map((org) => <OrgCard key={org.id} org={org} />)}
+        </details>
+      )}
+      {!loading && withEvents.length > ORG_COUNT && (
         <button type="button" className="btn btn-outline btn-full" onClick={() => setShowAll((v) => !v)}>
-          {showAll ? t('Show fewer') : t('Show all {n} groups', { n: orgs.length })}
+          {showAll ? t('Show fewer') : t('Show all {n} groups', { n: withEvents.length })}
         </button>
       )}
     </section>

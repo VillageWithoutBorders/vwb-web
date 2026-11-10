@@ -8107,3 +8107,17 @@ html.calm-motion .read-bar-btn:not(:disabled):active { transform: none; }
 .nr-911 { min-height: 48px !important; padding: 0 16px; border-radius: 12px; border: 2px solid var(--danger); background: var(--danger-bg); color: var(--text-strong) !important; justify-content: center; gap: 6px; }
 .nr-911:active { transform: scale(0.97); }
 @media (prefers-reduced-motion: reduce) { .nr-911:active { transform: none; } }
+/* Round D (Nov 10): Ask for Help leads with the form; 911 and resources sit at the top. */
+.ask-911 { margin: 0.5rem 0; }
+.ask-find-res { margin-bottom: 0.75rem; }
+.profile-done-link { margin-bottom: 1rem; }
+/* Round D (Nov 10): Calendar's List / Month beside the title; groups without events fold away. */
+.cal-head-mode { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.cal-head-mode > .cal-mode { margin: 0; flex: none; }
+@media (min-width: 1024px) { .cal-head-mode > .cal-mode { display: none; } }
+.cal-more-orgs { margin-top: 0.5rem; }
+.cal-more-orgs > summary { min-height: 44px; display: flex; align-items: center; font-weight: 600; cursor: pointer; }
+.cal-head-mode > div { flex: 1 1 9rem; min-width: 0; }
+.cal-head-mode > .cal-mode button { min-height: 44px; min-width: 44px; padding: 0 12px; }
+/* Offer Help: the helper sentence hides at Larger and Largest, like other pages. */
+:is(html.text-larger, html.text-largest) .feed-subtitle { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0 !important; }

@@ -10,6 +10,7 @@ import { getMyLocation, lookupZip } from '../utils/location'
 import { LocationPrompt, LocationBar } from '../components/LocationPrompt'
 import NearbyResourcesFirst from '../components/NearbyResourcesFirst'
 import EmergencyDoor from '../components/EmergencyDoor'
+import Icon from '../components/Icon'
 import { isSimpleView } from '../utils/simpleView'
 import { savePendingAsk, isNoSignal } from '../utils/pendingAsks'
 import { useT } from '../utils/lang'
@@ -52,9 +53,9 @@ export default function AskForHelp() {
     const navigate = useNavigate()
     // /ask?edit=ID opens this same form filled in, to change a request already posted.
     const editId = searchParams.get('edit')
-    // First screen: look at nearby resources before asking a neighbor. Skipped
-    // when editing, when posting as a group, or with ?skip=1.
-    const [checkedResources, setCheckedResources] = useState(() => Boolean(editId) || Boolean(searchParams.get('org')) || searchParams.get('skip') === '1' || Boolean(repost))
+    // Round D (Nov 10, Jade): asking a neighbor comes first. Resources come second, behind
+    // "Or find a resource yourself" (or /ask?resources=1). Before, resources came first.
+    const [checkedResources, setCheckedResources] = useState(() => searchParams.get('resources') !== '1')
 
     const [skills, setSkills] = useState([])
     const [skillNeeded, setSkillNeeded] = useState(repost?.skill_needed || '')
@@ -318,8 +319,18 @@ export default function AskForHelp() {
                     : t('Tell us what you need. Neighbors and Hope Ambassadors near you will see it, with your name and town. Never your address.')}
             </p>
 
+            {/* Round D (Nov 10): Call 911 stays one tap away now that the form comes first. */}
+            {!editId && <a href="tel:911" className="nr-911 ask-911">{t('In danger? Call 911')}</a>}
             {/* Nov 10 (Jade): a flood, storm, or fire is not a request. One tap to Emergency Response. */}
             {!editId && <EmergencyDoor />}
+            {!editId && !searchParams.get('org') && !repost && (
+                <button type="button" className="today-slim today-slim-wrap ask-find-res" onClick={() => { setCheckedResources(false); window.scrollTo(0, 0) }}
+                    data-tip={t('Food, bills, rides, hotlines, and more near you, without waiting for a neighbor.')}>
+                    <Icon name="heart-hands" size={28} />
+                    <span className="today-slim-text"><b>{t('Or find a resource yourself')}</b><small>{t('Food, bills, rides, hotlines, and more near you')}</small></span>
+                    <span className="today-slim-go" aria-hidden="true">&#8250;</span>
+                </button>
+            )}
 
             {!online && (
                 <p className="ask-offline" role="status">
