@@ -14,6 +14,7 @@ import { useT } from '../utils/lang'
 import BottomTabs from '../components/BottomTabs'
 import MeButton, { MyCornerButton } from '../components/MeButton'
 import AlertsButton from '../components/AlertsButton'
+import WhatButton from '../components/WhatButton'
 import QrSheetHost from '../components/QrSheet'
 import { useAdminInbox } from '../hooks/useAdminInbox'
 import AppTour from '../components/AppTour'
@@ -160,7 +161,7 @@ export default function Layout() {
           {simple && <AlertsButton />}
         </nav>
       </header>}
-      <main className={'app-main' + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '') + (focus ? ' app-main-focus' : '')}>
+      <main className={'app-main' + (!focus && !isChat ? ' app-main-what' : '') + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '') + (focus ? ' app-main-focus' : '')}>
         {/* Read this to me (Nov 3, barriers review): Simple view pages, next to Back.
             Not on chats or the maps. */}
         {showBack
@@ -175,6 +176,8 @@ export default function Layout() {
         </PageBackContext.Provider>
       </main>
       {!focus && <BottomTabs />}
+      {/* What is this? (Nov 10): not in setup, and not on chats, where it would sit on the typing box. */}
+      {!focus && !isChat && <WhatButton />}
       <SimpleOffer />
       <AppTour />
       <KeyRestorePrompt />
