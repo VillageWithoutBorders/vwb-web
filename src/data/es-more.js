@@ -5141,6 +5141,7 @@ const more = {
   'The bell shows what is new. My Corner has your profile and Settings, where you can make the words bigger.': 'La campana muestra lo nuevo. Mi rincón tiene su perfil y Ajustes, donde puede hacer las letras más grandes.',
   'You have a role. Your tools are in My Corner, under Your roles.': 'Usted tiene un rol. Sus herramientas están en Mi rincón, en Sus roles.',
   'Not sure what something is? Tap the ? and then tap it. Or hold your finger on it.': '¿No sabe qué es algo? Toque el ? y luego toque eso. O deje el dedo encima.',
+  'Not sure what something is? Rest your mouse on it.': '¿No sabe qué es algo? Deje el ratón encima.',
   'Try a pretend request': 'Probar un pedido de ejemplo',
   'What is this? Tap here, then tap anything to see what it is.': '¿Qué es esto? Toque aquí y luego toque cualquier cosa para ver qué es.',
   'Tap anything to see what it is.': 'Toque cualquier cosa para ver qué es.',
