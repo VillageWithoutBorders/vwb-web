@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Icon from './Icon'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -7,7 +8,7 @@ import { useT, t } from '../utils/lang'
 // Your home village, on your profile (Oct 22). Everyone has one home village,
 // set from the zip code on their profile. When more than one village covers
 // that zip, you choose. Your other villages are guest links.
-export default function HomeVillageRow() {
+export default function HomeVillageRow({ privacy }) {
   const { profile, refreshProfile } = useAuth()
   const [home, setHome] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -61,6 +62,7 @@ export default function HomeVillageRow() {
         </>
       )}
       {note && <span className="detail-value" role="status">{note}</span>}
+      {privacy && <small className="only-you"><Icon name="lock" size={16} /> {privacy}</small>}
     </div>
   )
 }

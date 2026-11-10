@@ -10,7 +10,7 @@ import { loadSkillCategories } from '../utils/skillGroups'
 import AvatarBuilder, { AvatarPreview } from '../components/AvatarBuilder'
 import AvailabilityPicker, { availabilityDisplayString } from '../components/AvailabilityPicker'
 import Icon from '../components/Icon'
-import { askConfirm, tell } from '../components/AdminDialog'
+import { tell } from '../components/AdminDialog'
 import { ADMIN_REQUESTS_OPEN } from '../data/adminTeam'
 import { useT, t } from '../utils/lang'
 import '../desktop-me.css'
@@ -153,19 +153,6 @@ export default function Profile() {
       setAmbInterests(profile.interests || '')
     }
     setEditing(false); setError('')
-  }
-
-  const [villageSaving, setVillageSaving] = useState(false)
-  async function toggleVillage(on) {
-    setVillageSaving(true)
-    // Turning it on goes to the list of villages, where you read the warning and join.
-    // Turning it off leaves every village chat.
-    if (on) { setVillageSaving(false); navigate('/find-village'); return }
-    if (!(await askConfirm(t('Leave all your village chats? You can join again any time.')))) { setVillageSaving(false); return }
-    const { error: vErr } = await supabase.rpc('leave_all_villages')
-    reportError('toggleVillage', vErr)
-    if (!vErr) await refreshProfile()
-    setVillageSaving(false)
   }
 
   async function handleSave() {
@@ -324,32 +311,27 @@ export default function Profile() {
           )}
           {/* Nov 7 (Jade): your email is not shown here, so nobody nearby reads it over
               your shoulder. It is in Settings > Account and privacy. */}
-          <button type="button" className="btn btn-outline profile-edit-btn" onClick={startEditing}>
+          <button type="button" className="btn btn-outline btn-full profile-edit-btn" onClick={startEditing}>
             <span aria-hidden="true"><Icon name="pencil" /></span> {t('Edit my profile')}
           </button>
         </div>
 
-        {/* Nov 10: My Corner's nudge links here (/profile#vouches). Round A4 adds the scroll and highlight. */}
+        {/* Nov 10: My Corner's nudge links here (/profile#vouches). The list scrolls into view and glows (PersonalVouches.jsx). */}
         <div id="vouches"><VouchRequestsForMe myId={user?.id} /></div>
 
         <div className="profile-details">
           {/* Nov 7 (Jade): where you are, on one line (it said Ringgold, GA twice). */}
+          {/* Round A4 (Nov 10): a lock says who sees this. Neighbors never see your zip code.
+              Your town shows only if you share your location; your home village only to
+              connected neighbors, and only then (helper_profiles_public, profile_home_village).
+              The village chat switch moved to Settings > Account and privacy. */}
           <div className="detail-row">
             <span className="detail-label">{t('Where')}</span>
-            <span className="detail-value">{[profile?.neighborhood, profile?.zip_code].filter(Boolean).join(' \u00b7 ') || t('Not set')}</span>
+            <span className="detail-value">{[profile?.neighborhood, profile?.zip_code].filter(Boolean).join(' \u00b7 ') || t('Not set')}
+              <small className="only-you"><Icon name="lock" size={16} /> {profile?.show_location ? t('Neighbors see your town, never your zip code.') : t('Only you see this')}</small>
+            </span>
           </div>
-          <HomeVillageRow />
-          {/* Nov 7 (Jade): the village chat choice lives with your village, worded as a choice. */}
-          <div className="detail-row detail-row-stack">
-            <label className="checkbox-field profile-village-choice">
-              <input type="checkbox" checked={profile?.village_opt_in === true} disabled={villageSaving} onChange={(e) => toggleVillage(e.target.checked)} />
-              <span>
-                <strong>{t('Show me village chats near my zip code')}</strong>
-                <small>{t('Turn this off to leave all of them.')}</small>
-              </span>
-            </label>
-            <Link to="/find-village" className="profile-village-link">{t('Find or start a village chat')} &#8250;</Link>
-          </div>
+          <HomeVillageRow privacy={profile?.show_location ? t('Connected neighbors can see this.') : t('Only you see this')} />
           <div className="detail-row detail-row-stack">
             <span className="detail-label">{t('Skills')}</span>
             {profile?.skills?.length > 0

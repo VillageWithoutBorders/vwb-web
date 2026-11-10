@@ -26,6 +26,7 @@ export function useTitleRow(mainRef, key, off) {
 
     function clear() {
       main.querySelectorAll('[data-tr]').forEach((el) => el.removeAttribute('data-tr'))
+      main.querySelectorAll('[data-lead]').forEach((el) => el.removeAttribute('data-lead'))
       main.classList.remove('tr-back', 'tr-what')
       last = ''
     }
@@ -43,6 +44,17 @@ export function useTitleRow(mainRef, key, off) {
       const lineH = parseFloat(hs.lineHeight) || parseFloat(hs.fontSize) * 1.25
       const lineMid = hr.top + parseFloat(hs.paddingTop || '0') + Math.min(lineH, hr.height) / 2
       const near = hr.top - contentTop < NEAR
+
+      // Nov 10 (Jade): the helper sentence right under a page title hides at Larger and
+      // Largest (index.css). The ? still explains the page, and screen readers still hear it.
+      // Only a short plain sentence: no links or buttons in it, and not on a page with an error.
+      let lead = h1.nextElementSibling
+      // A title in a small row (with a button beside it): the sentence comes after the row.
+      if ((!lead || lead.tagName !== 'P') && h1.parentElement && h1.parentElement !== main && h1.parentElement.children.length <= 3) lead = h1.parentElement.nextElementSibling
+      const leadOk = lead && lead.tagName === 'P' && !lead.querySelector('a, button, input') && (lead.textContent || '').trim().length < 220
+        && !main.querySelector('[role="alert"]')
+      main.querySelectorAll('[data-lead]').forEach((el) => { if (el !== lead || !leadOk) el.removeAttribute('data-lead') })
+      if (leadOk && !lead.hasAttribute('data-lead')) lead.setAttribute('data-lead', '')
       const nearWhat = hr.top - contentTop < NEAR_WHAT
 
       // Back: only the frame's own Back row, alone (Simple view adds Read this to me there).

@@ -195,3 +195,8 @@
     background: linear-gradient(to bottom, transparent, var(--bg, #121212) 75%); pointer-events: none;
   }
 }
+
+/* Round B (Nov 10, Jade): village names on My World never cut off. Up to two lines,
+   no wider than about 60% of the globe. */
+.wd-tag { white-space: normal !important; max-width: 60% !important; width: max-content; overflow: visible !important; text-overflow: clip !important;
+  text-align: center; line-height: 1.2 !important; overflow-wrap: break-word; border-radius: 14px; }

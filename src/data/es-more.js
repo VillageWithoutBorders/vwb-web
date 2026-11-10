@@ -5157,7 +5157,6 @@ const more = {
   // ---- Nov 10: new posts in Cottage Chats and Campfires count on Messages, not Alerts ----
   'New posts in 1 chat': 'Mensajes nuevos en 1 chat',
   'New posts in {n} chats': 'Mensajes nuevos en {n} chats',
-  'New posts': 'Mensajes nuevos',
   'A flood, storm, or fire? Tap Emergency Response on that page. In danger? Call 911.': '¿Una inundación, tormenta o incendio? Toque Respuesta a emergencias en esa página. ¿En peligro? Llame al 911.',
   'No note for this one yet. It does what the words on it say.': 'Todavía no hay una nota para esto. Hace lo que dicen sus palabras.',
   // Notes for the Emergency Response pages (What is this?, hover)
@@ -5287,7 +5286,6 @@ const more = {
   'Tap any words to read from there.': 'Toque cualquier parte del texto para leer desde ahí.',
   'Pause': 'Pausa',
   'Go on': 'Seguir',
-  'Skip': 'Saltar',
   'Speed: slow': 'Velocidad: lenta',
   'Speed: normal': 'Velocidad: normal',
   'Speed: fast': 'Velocidad: rápida',
@@ -5303,6 +5301,43 @@ const more = {
   'None open now': 'Ninguna abierta ahora',
   '1 waiting for a check': '1 esperando revisión',
   '{n} waiting for a check': '{n} esperando revisión',
+  // ---- Nov 10: Read this to me in the full view ----
+  'Read this to me button': 'Botón Léamelo',
+  'Show the Read this to me button at the top of each page.': 'Mostrar el botón Léamelo arriba en cada página.',
+  'Hide the Read this to me button.': 'Ocultar el botón Léamelo.',
+  'Your phone reads the page out loud. Tap any words to read from there.': 'Su teléfono lee la página en voz alta. Toque cualquier parte del texto para leer desde ahí.',
+  'On': 'Encendido',
+  // ---- Nov 10: smaller Campfires for everyone ----
+  'Start a side chat for a few people from this chat.': 'Empezar un chat aparte para algunas personas de este chat.',
+  'A side chat for a few people from this chat. Only the people in it can read it.': 'Un chat aparte para algunas personas de este chat. Solo las personas que están en él pueden leerlo.',
+  'Like: Setup crew': 'Por ejemplo: Equipo de montaje',
+  'Who to bring (you can add more later)': 'A quién traer (puede agregar más después)',
+  'No one else is in this chat yet. You can start it now and add people later.': 'Nadie más está en este chat todavía. Puede empezarlo ahora y agregar gente después.',
+  'Give it a name.': 'Póngale un nombre.',
+  "We couldn't start it. Try again.": 'No pudimos empezarlo. Intente de nuevo.',
+  'Only people in this chat can start a smaller Campfire in it.': 'Solo las personas de este chat pueden empezar una fogata más pequeña en él.',
+  'This is already a smaller Campfire. Start one from the main chat.': 'Esta ya es una fogata más pequeña. Empiece una desde el chat principal.',
+  "Announcements can't have smaller Campfires.": 'Los anuncios no pueden tener fogatas más pequeñas.',
+  'In a village Campfire, ask a keeper to start a sidechat.': 'En una fogata de aldea, pida a un guardián que empiece un chat aparte.',
+  'That chat was not found.': 'No se encontró ese chat.',
+  "Couldn't load who can be added. Try again.": 'No se pudo cargar a quién se puede agregar. Intente de nuevo.',
+  'Add anyone from the main chat. They are added right away.': 'Agregue a cualquiera del chat principal. Se agregan de inmediato.',
+  'No one in the main chat by that name who is not already here.': 'No hay nadie en el chat principal con ese nombre que no esté ya aquí.',
+  'Everyone in the main chat is already here.': 'Todos los del chat principal ya están aquí.',
+  // ---- Nov 10: Round A4, Profile ----
+  'Village chats': 'Chats de aldea',
+  'Turn off to leave nearby village chats. You can turn it back on.': 'Apáguelo para salir de los chats de aldea cercanos. Puede volver a encenderlo.',
+  'Only you see this': 'Solo usted ve esto',
+  'Neighbors see your town, never your zip code.': 'Los vecinos ven su pueblo, nunca su código postal.',
+  'Connected neighbors can see this.': 'Los vecinos conectados pueden ver esto.',
+  // ---- Nov 10: Round B ----
+  'Filter and sort': 'Filtrar y ordenar',
+  'No requests near you right now.': 'No hay solicitudes cerca de usted ahora.',
+  'Look farther away': 'Buscar más lejos',
+  'How far to look': 'Qué tan lejos buscar',
+  'Now {n} miles. Look within:': 'Ahora {n} millas. Buscar dentro de:',
+  'This is as far as it goes. Try Find resources, or post an offer.': 'Esto es lo más lejos posible. Pruebe Buscar recursos, o publique una oferta.',
+  "We couldn't change that. Try again.": 'No pudimos cambiar eso. Intente de nuevo.',
 }
 
 export default more

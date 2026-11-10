@@ -23,6 +23,8 @@ import KeyRestorePrompt from '../components/KeyRestorePrompt'
 import { PageBackContext, FrameBack } from '../components/BackLink'
 import { calmMotion } from '../utils/motion'
 import { useTitleRow } from '../hooks/useTitleRow'
+import { readReadButton } from '../utils/readButton'
+import { usePrefsRefresh } from '../hooks/usePrefsRefresh'
 
 export default function Layout() {
   const { pathname, search, key } = useLocation()
@@ -36,6 +38,10 @@ export default function Layout() {
   const { total: adminWaiting, urgent: adminUrgent } = useAdminInbox()
   const simple = useSimpleView()
   const t = useT()
+  // Read this to me: always in Simple view; in the full view when turned on in Settings (Nov 10).
+  const [readOn, setReadOn] = useState(readReadButton() === 'on')
+  usePrefsRefresh(() => setReadOn(readReadButton() === 'on'))
+  const reader = simple || readOn
   // The account says which view to use. Follow it on this phone too.
   useEffect(() => {
     const v = profile?.simple_view
@@ -176,8 +182,8 @@ export default function Layout() {
         {/* Read this to me (Nov 3, barriers review): Simple view pages, next to Back.
             Not on chats or the maps. */}
         {showBack
-          ? <FrameBack world={isWorld}>{simple && !isChat && !isWorld && <ReadAloud />}</FrameBack>
-          : simple && !isChat && !isWorld && <div className="app-back-row read-aloud-row"><ReadAloud /></div>}
+          ? <FrameBack world={isWorld}>{reader && !isChat && !isWorld && <ReadAloud />}</FrameBack>
+          : reader && !isChat && !isWorld && <div className="app-back-row read-aloud-row"><ReadAloud /></div>}
         {/* Emergency reports (Nov 5) and requests (Nov 3) saved with no signal: waiting, sending, or sent. */}
         {!isChat && !isWorld && <PendingReports />}
         {!isChat && !isWorld && <PendingAsks />}

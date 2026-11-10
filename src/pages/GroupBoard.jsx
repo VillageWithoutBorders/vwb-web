@@ -14,6 +14,7 @@ import { useCampfireIds } from '../hooks/useCampfireIds'
 import { useSidechatParents } from '../hooks/useSidechatParents'
 import VillageRoomPanel from '../components/VillageRoomPanel'
 import SidechatAdd from '../components/SidechatAdd'
+import ThreadStart from '../components/ThreadStart'
 import { useWideScreen } from '../hooks/useWideScreen'
 import { useSimpleView } from '../utils/simpleView'
 import '../desktop-chats.css'
@@ -84,6 +85,9 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
     supabase.from('community_groups').select('name').eq('id', parentId).maybeSingle().then(({ data }) => { if (alive && data?.name) setParentName(data.name) })
     return () => { alive = false }
   }, [parentId])
+  // Nov 10 (Jade): anyone in a chat can start a smaller Campfire in it.
+  const [threadOpen, setThreadOpen] = useState(false)
+  const [threadsTick, setThreadsTick] = useState(0)
   // Sidechats under this chat that you are in (empty if the database is not updated yet)
   useEffect(() => {
     let alive = true
@@ -92,7 +96,7 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
       setSidechats(data || [])
     })
     return () => { alive = false }
-  }, [id])
+  }, [id, threadsTick])
   const [group, setGroup] = useState(null)
   const [members, setMembers] = useState([])
   const [waiting, setWaiting] = useState([])
@@ -646,6 +650,9 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
   const iRunOrg = !!group.organization_id && (organizations || []).some((o) => o.id === group.organization_id && (o.role === 'admin' || o.role === 'organizer'))
   const readOnly = group.is_org_news ? !iRunOrg : !!(group.announcement_only && group.steward_id && !iAmSteward)
   const canChangeLink = !group.steward_id || iAmSteward
+  // Smaller Campfires: not inside one, not under Announcements or a steward-only chat,
+  // and not in a village Campfire (keepers run those).
+  const canStartThread = !isSidechat && !group.is_org_news && !group.announcement_only && !group.village_id && !villageRoom && !amWaiting
   const nameOf = (uid) => members.find(m => m.userId === uid)?.name || t('Former member')
   const memberWord = members.length === 1 ? t('1 member') : t('{n} members', { n: members.length })
   const avatarOf = (uid) => members.find(m => m.userId === uid)?.avatar || null
@@ -668,15 +675,23 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
         </button>
       </div>
 
-      {sidechats.length > 0 && (
+      {(sidechats.length > 0 || canStartThread) && (
         <nav aria-label={t('Smaller Campfires')} className="gb-small-nav" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
           <span className="cal-sub gb-small-label" style={{ alignSelf: 'center' }}>{t('Smaller Campfires:')}</span>
           {sidechats.map((s) => (
             <button key={s.id} type="button" className="btn btn-outline group-small-btn" onClick={() => goChat(s.id)}>{'\u21B3 '}{s.name}</button>
           ))}
+          {canStartThread && !threadOpen && (
+            <button type="button" className="btn btn-outline group-small-btn thread-add-btn" onClick={() => setThreadOpen(true)}
+              data-tip={t('Start a side chat for a few people from this chat.')}>+ {t('Smaller Campfire')}</button>
+          )}
         </nav>
       )}
       <VillageRoomPanel groupId={group.id} onInfo={setVillageRoom} onLeave={leave} onChanged={() => loadGroup()} />
+      {threadOpen && canStartThread && (
+        <ThreadStart parentId={group.id} onClose={() => setThreadOpen(false)}
+          onStarted={(gid) => { setThreadOpen(false); setThreadsTick((n) => n + 1); goChat(gid) }} />
+      )}
       {isSidechat && parentId && (
         <nav aria-label={t('Back to the general chat')} style={{ padding: '0.4rem 1rem', borderBottom: '1px solid var(--border)' }}>
           <button type="button" className="group-post-delete gb-parent" onClick={() => goChat(parentId)} title={parentName || undefined}>{'\u2190 '}{t('Back to the general chat')}</button>
@@ -898,7 +913,7 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
             )}
 
             {isSidechat && (
-              <SidechatAdd groupId={id} orgId={group.organization_id} memberIds={new Set(members.map(m => m.userId))} isSteward={iAmSteward} onAdded={loadGroup} />
+              <SidechatAdd groupId={id} parentId={parentId} orgId={group.organization_id} memberIds={new Set(members.map(m => m.userId))} onAdded={loadGroup} />
             )}
             {villageRoom && (
               <p className="groups-note">{villageRoom.kind === 'sidechat'

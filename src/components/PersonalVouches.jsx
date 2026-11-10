@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { calmMotion } from '../utils/motion'
 import { useBlockedBy } from '../utils/blockedBy'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
@@ -49,11 +50,30 @@ export function VouchRequestsForMe({ myId }) {
     load()
   }
 
+  // Round A4 (Nov 10): My Corner's nudge opens /profile#vouches. Bring this list into view
+  // under the top bar, put focus on its title, and glow softly for a moment (not with Calm).
+  const boxRef = useRef(null)
+  const headRef = useRef(null)
+  const shownOnce = useRef(false)
+  useEffect(() => {
+    if (shownOnce.current || requests.length === 0 || window.location.hash !== '#vouches') return
+    shownOnce.current = true
+    const box = boxRef.current
+    if (!box) return
+    const calm = calmMotion()
+    box.scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' })
+    if (headRef.current) headRef.current.focus({ preventScroll: true })
+    if (calm) return
+    box.classList.add('vouch-glow')
+    const tm = setTimeout(() => box.classList.remove('vouch-glow'), 1500)
+    return () => clearTimeout(tm)
+  }, [requests.length])
+
   if (requests.length === 0) return null
 
   return (
-    <section className="groups-card vouch-requests" aria-labelledby="vouch-req-title">
-      <h2 id="vouch-req-title" className="groups-card-title">{t('People who say they know you')}</h2>
+    <section className="groups-card vouch-requests" aria-labelledby="vouch-req-title" ref={boxRef}>
+      <h2 id="vouch-req-title" className="groups-card-title" tabIndex={-1} ref={headRef}>{t('People who say they know you')}</h2>
       <p className="groups-note">{t('Say yes only if you really know them. Their vouch will show on your profile.')}</p>
       {requests.map(r => (
         <div key={r.voucher_id} className="group-member">
