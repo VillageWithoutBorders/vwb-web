@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
-import { startAppTour } from '../components/AppTour'
+import { startAppTour, SampleCard } from '../components/AppTour'
 import { useGoBack } from '../components/BackLink'
 import { tell } from '../components/AdminDialog'
 import { useT } from '../utils/lang'
@@ -16,6 +16,7 @@ export default function Help() {
   const [feedbackKind, setFeedbackKind] = useState('problem')
   const [feedbackSent, setFeedbackSent] = useState(false)
   const [sendingFeedback, setSendingFeedback] = useState(false)
+  const [practice, setPractice] = useState(false)
 
   async function submitFeedback() {
     setSendingFeedback(true)
@@ -37,6 +38,11 @@ export default function Help() {
         <h2>{t('New here, or feeling lost?')}</h2>
         <p>{t('Take a one-minute tour of the app. It shows you where everything is.')}</p>
         <button type="button" className="btn btn-primary btn-full" onClick={startAppTour}>{t('Take the tour')}</button>
+        {/* Nov 10 (Jade): practice moved out of the tour. Nothing is saved and nobody is told. */}
+        {practice
+          ? <SampleCard />
+          : <button type="button" className="btn btn-outline btn-full" onClick={() => setPractice(true)}>{t('Try a pretend request')}</button>}
+        <p>{t('Not sure what something is? Tap the ? and then tap it. Or hold your finger on it.')}</p>
       </div>
 
       <div className="help-section">
