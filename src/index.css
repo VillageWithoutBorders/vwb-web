@@ -3357,7 +3357,8 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
   bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px) + 12px);
   width: calc(100% - 24px);
   max-width: 480px;
-  max-height: min(60dvh, calc(100dvh - var(--tab-height) - 40px));
+  /* Nov 10 (Jade): room for all the words. Up to the whole space between the bars. */
+  max-height: calc(100dvh - var(--header-height) - var(--tab-height) - env(safe-area-inset-bottom, 0px) - 28px);
   overflow-y: auto;
   background: var(--white);
   border: 1px solid var(--green-dark);
