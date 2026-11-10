@@ -58,7 +58,7 @@ export default function Login() {
   const [availability, setAvailability] = useState('')
   const [interests, setInterests] = useState('')
   const [howKnown, setHowKnown] = useState('')
-  const [radiusMiles, setRadiusMiles] = useState(10)
+  const [radiusMiles, setRadiusMiles] = useState(25)
   // Opt-in, off by default, mirrors the field on the in-app ambassador
   // signup in Profile.jsx. See that file for the reasoning.
   const [campfireNotify, setCampfireNotify] = useState(false)
