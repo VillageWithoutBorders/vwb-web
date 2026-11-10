@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useUnreadCount } from '../context/UnreadCountContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import QrShare from '../components/QrShare'
@@ -59,6 +60,7 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
   const routeParams = useParams()
   const id = pane ? boardId : routeParams.id
   const { user, organizations } = useAuth()
+  const { refreshUnread } = useUnreadCount()
   const t = useT()
   const navigate = useNavigate()
   const location = useLocation()
@@ -355,9 +357,10 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
       const { error: readErr } = await supabase.from('notifications').update({ read: true })
         .eq('user_id', user.id).eq('type', 'group_post').eq('link', '/groups/' + id).eq('read', false)
       if (readErr) console.error('Failed to clear group alert:', readErr)
+      else refreshUnread()
     })()
     return () => { cancelled = true }
-  }, [id, user?.id])
+  }, [id, user?.id, refreshUnread])
 
   async function saveSetting(patch) {
     const next = { ...mySettings, ...patch }

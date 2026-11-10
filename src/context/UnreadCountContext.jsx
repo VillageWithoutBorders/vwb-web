@@ -2,11 +2,15 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { supabase } from '../supabaseClient'
 import { useAuth } from './AuthContext'
 
-const UnreadCountContext = createContext({ unreadCount: 0, refreshUnread: () => {} })
+const UnreadCountContext = createContext({ unreadCount: 0, refreshUnread: () => {}, newBoards: new Set() })
+const NO_BOARDS = new Set()
 
 export function UnreadCountProvider({ children }) {
   const { user } = useAuth()
   const [count, setCount] = useState(0)
+  // Nov 10 (Jade): Cottage Chats and Campfires with a new post you have not read yet.
+  // The database keeps one unread 'group_post' alert per board, so each board counts once.
+  const [newBoards, setNewBoards] = useState(NO_BOARDS)
 
   const refresh = useCallback(async () => {
     if (!user?.id) return
@@ -19,17 +23,30 @@ export function UnreadCountProvider({ children }) {
       .select('conversation_id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .eq('marked_unread', true)
-    setCount(data + (markedErr ? 0 : (marked || 0)))
+    const { data: posts, error: postsErr } = await supabase
+      .from('notifications')
+      .select('link')
+      .eq('user_id', user.id)
+      .eq('type', 'group_post')
+      .eq('read', false)
+      .limit(100)
+    if (postsErr) console.error('[UnreadCount] new board posts', postsErr)
+    const boards = new Set((postsErr ? [] : posts || []).map((p) => String(p.link || '').replace(/^\/groups\//, '')).filter(Boolean))
+    setNewBoards(boards)
+    setCount(data + (markedErr ? 0 : (marked || 0)) + boards.size)
   }, [user?.id])
 
   useEffect(() => {
     refresh()
     const timer = setInterval(refresh, 30000)
-    return () => clearInterval(timer)
+    // Catch up as soon as someone comes back to the app.
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', onVisible) }
   }, [refresh])
 
   return (
-    <UnreadCountContext.Provider value={{ unreadCount: count, refreshUnread: refresh }}>
+    <UnreadCountContext.Provider value={{ unreadCount: count, refreshUnread: refresh, newBoards }}>
       {children}
     </UnreadCountContext.Provider>
   )

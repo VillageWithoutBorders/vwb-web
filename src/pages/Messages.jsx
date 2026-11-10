@@ -30,7 +30,7 @@ const DISAPPEAR_STEPS = [
 // page (Nov 1, Jade). selectedId is the chat open there, outlined in the list.
 export default function Messages({ embedded = false, onOpen, selectedId }) {
   const { user } = useAuth()
-  const { refreshUnread } = useUnreadCount()
+  const { refreshUnread, newBoards } = useUnreadCount()
   const navigate = useNavigate()
   const t = useT()
   const blockedBy = useBlockedBy()
@@ -748,7 +748,9 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
 
       <button type="button" className="groups-row groups-entry" data-tour="cottage-chats" onClick={() => navigate('/groups')}>
         <span className="groups-row-name"><span aria-hidden="true"><Icon name="people" /></span> {t('Cottage Chats and Campfires')}</span>
-        <span className="groups-row-meta">{t('Members-only boards')} &#8250;</span>
+        <span className="groups-row-meta">{newBoards.size > 0
+          ? <b className="groups-new">{newBoards.size === 1 ? t('New posts in 1 chat') : t('New posts in {n} chats', { n: newBoards.size })}</b>
+          : t('Members-only boards')} &#8250;</span>
       </button>
       </>)}
 
