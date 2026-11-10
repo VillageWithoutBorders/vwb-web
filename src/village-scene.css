@@ -1298,3 +1298,26 @@ html.simple .vs-top-btns { grid-template-columns: 1fr !important; }
   html.text-largest:not(.simple) .vs-page-path .vs-list { margin-top: 0.3rem; }
   html.text-largest:not(.simple) .vs-today .recovery-nudge { padding-top: 0.35rem; padding-bottom: 0.35rem; }
 }
+
+/* ---------- Nov 10 (Jade): editing tools that fit, and beside the map on a computer ----------
+   Narrow windows: the tray tabs and piece names wrap instead of running off the side.
+   Computers (1024px and up): the tools sit in the right column, beside the map, not on it. */
+.vs-tray-tabs { grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)); }
+.vs-tray-tab { font-size: 0.875rem; padding: 4px 6px; min-width: 0; overflow-wrap: normal; word-break: normal; hyphens: auto; text-align: center; line-height: 1.15; }
+.vs-palette-item { min-width: 0; overflow-wrap: normal; word-break: normal; hyphens: auto; font-size: 0.8125rem; line-height: 1.15; text-align: center; }
+.vs-toolpanel { overflow-x: hidden; }
+@media (min-width: 1024px) {
+  html:not(.simple) .vs-page-path .vs-toolbar {
+    left: var(--vs-right-x); right: 24px; width: auto !important; top: calc(var(--header-height) + 16px);
+    bottom: calc(var(--tab-height) + 16px + env(safe-area-inset-bottom, 0px));
+    flex-direction: column; align-items: stretch; gap: 8px; transform: none !important;
+    padding: 12px; box-sizing: border-box; border-radius: 16px; background: var(--vs-bg, #102a29); border: 2px solid var(--vs-gold);
+    pointer-events: auto;
+  }
+  html:not(.simple) .vs-page-path .vs-tool-main {
+    order: -1; width: auto; max-height: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    border: 0; border-radius: 12px; box-shadow: none; padding: 0; background: none;
+  }
+  html:not(.simple) .vs-page-path .vs-toolpanel { display: block; flex: 1 1 auto; max-height: none; border: 1px solid var(--vs-line); box-shadow: none; }
+  html:not(.simple) .vs-page-path .vs-tools-toggle { display: none !important; }
+}
