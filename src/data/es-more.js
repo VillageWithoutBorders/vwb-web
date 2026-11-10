@@ -5143,6 +5143,8 @@ const more = {
   'Not sure what something is? Tap the ? and then tap it. Or hold your finger on it.': '¿No sabe qué es algo? Toque el ? y luego toque eso. O deje el dedo encima.',
   'Not sure what something is? Rest your mouse on it.': '¿No sabe qué es algo? Deje el ratón encima.',
   'Try a pretend request': 'Probar un pedido de ejemplo',
+  'Report an active emergency near you': 'Reportar una emergencia activa cerca de usted',
+  'Emergency Response: report a flood, storm, fire, or outage near you, or see the ones that are open.': 'Respuesta a emergencias: reporte una inundación, tormenta, incendio o apagón cerca de usted, o vea las que están abiertas.',
   'What is this? Tap here, then tap anything to see what it is.': '¿Qué es esto? Toque aquí y luego toque cualquier cosa para ver qué es.',
   'Tap anything to see what it is.': 'Toque cualquier cosa para ver qué es.',
   'No note for this one yet.': 'Todavía no hay una nota para esto.',
