@@ -8121,3 +8121,20 @@ html.calm-motion .read-bar-btn:not(:disabled):active { transform: none; }
 .cal-head-mode > .cal-mode button { min-height: 44px; min-width: 44px; padding: 0 12px; }
 /* Offer Help: the helper sentence hides at Larger and Largest, like other pages. */
 :is(html.text-larger, html.text-largest) .feed-subtitle { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0 !important; }
+
+/* ---------- Messages, Round D (Nov 10, Jade): People, Places, Groups ---------- */
+.hub-tabs-three { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)); gap: 6px; }
+.hub-tab-count { margin-left: 0.4rem; background: var(--danger); color: #fff; border-radius: 9px; padding: 0 6px; font-size: 0.8125rem; }
+.hub-subtabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+.hub-subtab { min-height: 44px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-soft); font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; }
+.hub-subtab.on { border-color: var(--accent); color: var(--text-strong); background: var(--success-bg); }
+.hub-subtab:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.hub-new-note { padding-top: 6px; padding-bottom: 6px; }
+.hub-new-note > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.hub-new-note > p { margin: 0.25rem 0 0.5rem; }
+.msg-gear-word { display: inline-flex; align-items: center; gap: 6px; width: auto !important; padding: 0 12px !important; font: inherit; font-weight: 600; white-space: nowrap; }
+:is(html.text-larger, html.text-largest) .hub-head { padding-top: 4px !important; }
+:is(html.text-larger, html.text-largest) .hub-subtab { font-size: 0.9rem; }
+/* Messages: New message and Chat settings share a row when they fit, and stack when they don't. */
+.msg-new-row { flex-wrap: wrap; }
+.msg-new-main { flex: 1 1 11rem; }
