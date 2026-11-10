@@ -6,6 +6,7 @@ import { startAppTour, SampleCard } from '../components/AppTour'
 import { useGoBack } from '../components/BackLink'
 import { tell } from '../components/AdminDialog'
 import { useT } from '../utils/lang'
+import { whatHint } from '../components/HoverTips'
 
 export default function Help() {
   const t = useT()
@@ -42,7 +43,7 @@ export default function Help() {
         {practice
           ? <SampleCard />
           : <button type="button" className="btn btn-outline btn-full" onClick={() => setPractice(true)}>{t('Try a pretend request')}</button>}
-        <p>{t('Not sure what something is? Tap the ? and then tap it. Or hold your finger on it.')}</p>
+        <p>{t(whatHint())}</p>
       </div>
 
       <div className="help-section">

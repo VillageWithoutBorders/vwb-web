@@ -24,6 +24,16 @@ const NO_HOLD = '.vs-el, .wd-globe-wrap, .leaflet-container, .cr-room, input, te
 export const WHAT_EVENT = 'vwb:what'
 export const WHAT_STATE = 'vwb:what-state'
 
+// The words that tell people how to get a note (tour last card, Help page).
+// A mouse on a big screen has no ? button (same rule as .what-btn in index.css), so it gets its own words.
+export function whatHint() {
+  const mouse = typeof window !== 'undefined' && !!window.matchMedia
+    && window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches
+  return mouse
+    ? 'Not sure what something is? Rest your mouse on it.'
+    : 'Not sure what something is? Tap the ? and then tap it. Or hold your finger on it.'
+}
+
 const clean = (s) => (s || '').replace(/[←-⇿›‹+›‹]/g, '').replace(/\s+/g, ' ').trim()
 
 let textMap = null, textLang = null

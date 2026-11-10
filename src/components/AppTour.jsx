@@ -7,6 +7,7 @@ import Icon from './Icon'
 import { firstRunPaused } from '../utils/firstVillage'
 import { needsFullSetup } from '../utils/startPath'
 import { useT } from '../utils/lang'
+import { whatHint } from './HoverTips'
 
 // A short walk-through of the app.
 //
@@ -388,7 +389,7 @@ export default function AppTour() {
           {/* Said once, on the first card that rings something. */}
           {step.target && rect && index === STEPS.findIndex((st) => st.target) && <p className="tour-hint">{t('Look for the ringed spot on your screen.')}</p>}
           {isLast && <>
-            <p className="tour-hint">{t('Not sure what something is? Tap the ? and then tap it. Or hold your finger on it.')}</p>
+            <p className="tour-hint">{t(whatHint())}</p>
             {practice
               ? <SampleCard />
               : <button type="button" className="btn btn-outline tour-sample-btn" onClick={() => setPractice(true)}>{t('Try a pretend request')}</button>}
