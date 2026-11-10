@@ -660,12 +660,17 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
             ? (villageRoom.kind === 'sidechat' ? t('Sidechat in {place}', { place: villageRoom.village_name }) : t('Campfire in {place}', { place: villageRoom.village_name })) + ' · ' + memberWord
             : <>{isSidechat ? (parentName ? t('Smaller Campfire inside {name}', { name: parentName }) : t('Smaller Campfire')) + ' · ' : (orgName ? t('For {name}', { name: orgName }) + ' · ' : '')}{memberWord} · {campfires.has(group.id) ? t('Campfire') : t('Cottage Chat')}</>}</p>
         </div>
-        <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">{t('Settings')}{waiting.length > 0 ? ' (' + t('{n} waiting', { n: waiting.length }) + ')' : ''}</button>
+        {/* Nov 10 (Jade): at big text only the gear shows, so the title gets the room. */}
+        <button type="button" className="page-top-btn group-members-btn" onClick={() => setPanelOpen(true)} aria-haspopup="dialog" aria-label={t('Settings') + (waiting.length > 0 ? ', ' + t('{n} waiting', { n: waiting.length }) : '')}>
+          <span aria-hidden="true" className="gm-gear"><Icon name="gear" /></span>
+          <span className="gm-word" aria-hidden="true">{t('Settings')}</span>
+          {waiting.length > 0 && <span className="gm-count" aria-hidden="true">{waiting.length}</span>}
+        </button>
       </div>
 
       {sidechats.length > 0 && (
-        <nav aria-label={t('Smaller Campfires')} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
-          <span className="cal-sub" style={{ alignSelf: 'center' }}>{t('Smaller Campfires:')}</span>
+        <nav aria-label={t('Smaller Campfires')} className="gb-small-nav" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)' }}>
+          <span className="cal-sub gb-small-label" style={{ alignSelf: 'center' }}>{t('Smaller Campfires:')}</span>
           {sidechats.map((s) => (
             <button key={s.id} type="button" className="btn btn-outline group-small-btn" onClick={() => goChat(s.id)}>{'\u21B3 '}{s.name}</button>
           ))}
@@ -674,7 +679,7 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
       <VillageRoomPanel groupId={group.id} onInfo={setVillageRoom} onLeave={leave} onChanged={() => loadGroup()} />
       {isSidechat && parentId && (
         <nav aria-label={t('Back to the general chat')} style={{ padding: '0.4rem 1rem', borderBottom: '1px solid var(--border)' }}>
-          <button type="button" className="group-post-delete" onClick={() => goChat(parentId)}>{'\u2190 '}{parentName ? t('Back to {name}', { name: parentName }) : t('Back to the general chat')}</button>
+          <button type="button" className="group-post-delete gb-parent" onClick={() => goChat(parentId)} title={parentName || undefined}>{'\u2190 '}{t('Back to the general chat')}</button>
         </nav>
       )}
       <div className="convo-messages" ref={containerRef} onScroll={onScroll} role="log" aria-live="polite" aria-label={t('{name} board', { name: group.name })}>

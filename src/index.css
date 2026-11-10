@@ -7915,3 +7915,73 @@ html.calm-motion .corner-emergency:active, html.calm-motion .em-banner-go:active
 .em-report-btn .today-slim-text { overflow-wrap: anywhere; }
 :is(html.text-larger, html.text-largest) .em-report-btn { gap: 0.5rem; padding: 0.5rem 0.6rem; }
 :is(html.text-larger, html.text-largest) .em-report-btn .today-slim-go { display: none; }
+
+/* ---------- Room to read (Nov 10, Jade): every bit of screen matters ----------
+   Big text keeps the words big and gives back the space around them.
+   1. Back and the ? share the page title's line (hooks/useTitleRow.js), at every text size.
+   2. Larger and Largest: thinner page edges, gaps and padding; titles grow less than body text.
+   3. Chats: one short header row and a slim chat picker, so the messages get the screen. */
+.app-main.tr-back, .app-main.tr-what { position: relative; }
+.app-main.tr-back { --back-h: 0px; }
+.app-main.tr-back > .app-back-row { position: absolute; z-index: 6; top: var(--tr-top); left: var(--tr-left); padding: 0; }
+.app-main.tr-back > .app-back-row .app-back { width: 44px; height: 44px; min-height: 44px; padding: 0; justify-content: center; border-radius: 50%; gap: 0; font-size: 1.25rem; }
+.app-main.tr-back > .app-back-row .app-back-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+h1[data-tr~="back"] { padding-left: 52px !important; }
+h1[data-tr~="what"] { padding-right: 52px !important; }
+.app-main.tr-what > .what-btn { position: absolute; top: var(--tr-top); right: var(--tr-right); bottom: auto; left: auto; width: 44px; height: 44px; font-size: 22px; box-shadow: none; z-index: 6; }
+
+:is(html.text-larger, html.text-largest) .app-main:not(.app-main-chat):not(.app-main-world):not(.app-main-focus) {
+  padding-left: 10px; padding-right: 10px; padding-top: calc(var(--header-height) + 8px);
+}
+:is(html.text-larger, html.text-largest) .app-back-row { padding: 2px 0 0; }
+:is(html.text-larger, html.text-largest) .app-back { min-height: 44px; padding: 0 12px 0 8px; }
+:is(html.text-larger, html.text-largest) .app-main h1:not(.convo-header h1):not(.cf-head h1) { font-size: 1.2rem !important; line-height: 1.2; margin-top: 0 !important; margin-bottom: 0.35rem !important; }
+:is(html.text-larger, html.text-largest) .app-main h2 { margin-top: 0.5rem; margin-bottom: 0.3rem; }
+
+/* Alerts */
+:is(html.text-larger, html.text-largest) .notifications-header { margin-bottom: 6px; gap: 6px; }
+:is(html.text-larger, html.text-largest) .notifications-filters { gap: 6px; margin-bottom: 8px; }
+:is(html.text-larger, html.text-largest) .filter-chip { padding: 4px 12px; }
+:is(html.text-larger, html.text-largest) .btn-mark-all-read { padding: 4px 12px; }
+:is(html.text-larger, html.text-largest) .notifications-empty { padding: 8px 4px; }
+:is(html.text-larger, html.text-largest) .notifications-empty .empty-icon { display: none; }
+:is(html.text-larger, html.text-largest) .nt-none-new { margin: 4px 0; }
+:is(html.text-larger, html.text-largest) .notifications-section-label { padding: 6px 0 4px; }
+:is(html.text-larger, html.text-largest) .notification-card { padding: 8px 8px 8px 10px; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+:is(html.text-larger, html.text-largest) .notification-icon { width: 32px; height: 32px; font-size: 1rem; }
+:is(html.text-larger, html.text-largest) .notification-body { margin-top: 2px; }
+:is(html.text-larger, html.text-largest) .notification-time { margin-top: 2px; }
+
+/* Chats: one short header row. The gray line under the title hides at big text; screen readers still hear it. */
+:is(html.text-larger, html.text-largest) :is(.convo-header, .cf-head) { padding: 4px 6px !important; gap: 4px !important; }
+:is(html.text-larger, html.text-largest) :is(.convo-header, .cf-head) h1 { font-size: 1rem !important; line-height: 1.2; }
+:is(html.text-larger, html.text-largest) :is(.convo-header, .cf-head) .convo-context { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:is(html.text-larger, html.text-largest) :is(.convo-header, .cf-head) > button { flex: none; padding: 0 !important; }
+:is(html.text-larger, html.text-largest) .convo-header-info { min-width: 0; flex: 1 1 auto; }
+:is(html.text-larger, html.text-largest) .cf-pick-row { padding: 4px 6px !important; }
+:is(html.text-larger, html.text-largest) .cf-pick { min-height: 44px !important; padding: 0 0.6rem !important; }
+:is(html.text-larger, html.text-largest) :is(.cf-compose, .convo-input-bar) { padding: 6px !important; gap: 6px !important; }
+.convo-input-bar > .convo-input { min-width: 0; }
+.convo-input-bar > .convo-send { flex: none; }
+:is(html.text-larger, html.text-largest) .gb-parent { font-size: 0.875rem; }
+:is(html.text-larger, html.text-largest) .group-lock-note { font-size: 0.75rem; margin: 2px auto; padding: 2px 10px; }
+/* Group chat Settings: the gear with the word; at big text the gear alone. A count shows when people are waiting. */
+.group-members-btn { display: inline-flex; align-items: center; gap: 0.35rem; min-width: 44px; min-height: 44px; flex: none; }
+.group-members-btn .gm-gear { display: none; }
+.group-members-btn .gm-count { min-width: 1.3rem; height: 1.3rem; padding: 0 0.3rem; border-radius: 999px; background: var(--warn); color: var(--on-accent); font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
+:is(html.text-larger, html.text-largest) .group-members-btn { padding: 0 6px !important; justify-content: center; }
+:is(html.text-larger, html.text-largest) .group-members-btn .gm-gear { display: inline-flex; }
+:is(html.text-larger, html.text-largest) .group-members-btn .gm-word { display: none; }
+/* Phones at big text: a title with Back and the ? on its line still fits whole words. */
+@media (max-width: 420px) {
+  :is(html.text-larger, html.text-largest) .app-main h1:not(.convo-header h1):not(.cf-head h1) { font-size: 1.05rem !important; hyphens: manual; overflow-wrap: anywhere; }
+  h1[data-tr~="back"] { padding-left: 50px !important; }
+  h1[data-tr~="what"] { padding-right: 50px !important; }
+}
+/* Big text: page boxes that add their own 1rem edge (style="max-width: ...; margin: 0 auto; padding: 1rem")
+   give it back, so words get the width. Cards inside keep their padding. */
+:is(html.text-larger, html.text-largest) .app-main:not(.app-main-chat):not(.app-main-world) [style*="max-width"][style*="margin: 0px auto"][style*="padding: 1rem"] { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+/* Big text: the Send button stays small so the typing box gets the room. */
+:is(html.text-larger, html.text-largest) :is(.convo-send, .chat-send) { padding: 0 10px !important; min-width: 44px; flex: none; }
+:is(html.text-larger, html.text-largest) .gb-small-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:is(html.text-larger, html.text-largest) .gb-small-nav { padding: 4px 6px !important; gap: 6px !important; }

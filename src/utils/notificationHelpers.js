@@ -24,7 +24,7 @@ export async function markAllNotificationsRead(userId) {
     .eq('user_id', userId)
     .eq('read', false)
     // New chat posts are not on the Alerts page (Nov 10). They clear when the chat is opened.
-    .not('type', 'in', '(message,group_post)')
+    .not('type', 'in', '(message,group_post,campfire)')
   if (error) console.error('Failed to mark all read:', error)
 }
 
@@ -49,7 +49,8 @@ export async function setNotificationFollowUp(notificationId, value) {
 
 // Deletes every alert you can see, except the ones flagged to follow up.
 // Message alerts are left alone: they never show in the list, they only
-// exist to trigger push notifications. New chat posts ('group_post') too:
+// exist to trigger push notifications. New chat posts ('group_post') and the
+// Village Square summary ('campfire') too:
 // since Nov 10 they count on Messages and clear when the chat is opened.
 export async function clearAllNotifications(userId) {
   if (!userId) return { error: null }
@@ -58,7 +59,7 @@ export async function clearAllNotifications(userId) {
     .delete()
     .eq('user_id', userId)
     .eq('follow_up', false)
-    .not('type', 'in', '(message,group_post)')
+    .not('type', 'in', '(message,group_post,campfire)')
   if (error) console.error('Failed to clear alerts:', error)
   return { error }
 }

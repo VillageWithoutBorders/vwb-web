@@ -68,7 +68,8 @@ export function FrameBack({ world, children }) {
   return (
     <div className={'app-back-row' + (world ? ' app-back-world' : '')}>
       <Link to={isSimpleView() ? '/' : '/world'} className="app-back" onClick={cameFromApp ? (e) => { e.preventDefault(); navigate(-1) } : undefined}>
-        <span aria-hidden="true">&#8592;</span> {t(cameFromApp ? 'Back' : 'Home')}
+        {/* Nov 10: beside a page title only the arrow shows; the word stays for screen readers (useTitleRow). */}
+        <span aria-hidden="true">&#8592;</span> <span className="app-back-word">{t(cameFromApp ? 'Back' : 'Home')}</span>
       </Link>
       {children}
     </div>
