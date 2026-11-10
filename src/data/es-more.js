@@ -5282,6 +5282,27 @@ const more = {
   'Let pages use the whole width of the screen.': 'Dejar que las páginas usen todo el ancho de la pantalla.',
   'Only VWB admins can add a board. If you use two-step sign-in, sign out and sign back in with your code.': 'Solo los administradores de VWB pueden agregar un tablero. Si usa el inicio de sesión en dos pasos, cierre sesión y vuelva a entrar con su código.',
   'Give the board a name.': 'Póngale un nombre al tablero.',
+  // ---- Nov 10: Read this to me, reading bar ----
+  'Reading out loud': 'Leyendo en voz alta',
+  'Tap any words to read from there.': 'Toque cualquier parte del texto para leer desde ahí.',
+  'Pause': 'Pausa',
+  'Go on': 'Seguir',
+  'Skip': 'Saltar',
+  'Speed: slow': 'Velocidad: lenta',
+  'Speed: normal': 'Velocidad: normal',
+  'Speed: fast': 'Velocidad: rápida',
+  'Read the part before this one again.': 'Volver a leer la parte anterior.',
+  'Stop for now. Go on picks up where you stopped.': 'Parar por ahora. Seguir continúa donde paró.',
+  'Pick up reading where you stopped.': 'Seguir leyendo donde paró.',
+  'Skip to the next part.': 'Saltar a la siguiente parte.',
+  'Change how fast it reads.': 'Cambiar qué tan rápido lee.',
+  'Stop reading out loud.': 'Dejar de leer en voz alta.',
+  // ---- Nov 10: My Corner Emergency count ----
+  '1 open near you': '1 abierta cerca de usted',
+  '{n} open near you': '{n} abiertas cerca de usted',
+  'None open now': 'Ninguna abierta ahora',
+  '1 waiting for a check': '1 esperando revisión',
+  '{n} waiting for a check': '{n} esperando revisión',
 }
 
 export default more
