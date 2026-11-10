@@ -22,6 +22,7 @@ import AppTour from '../components/AppTour'
 import KeyRestorePrompt from '../components/KeyRestorePrompt'
 import { PageBackContext, FrameBack } from '../components/BackLink'
 import { calmMotion } from '../utils/motion'
+import { useTitleRow } from '../hooks/useTitleRow'
 
 export default function Layout() {
   const { pathname, search, key } = useLocation()
@@ -62,7 +63,10 @@ export default function Layout() {
   const [ownBacks, setOwnBacks] = useState(0)
   const tellFrame = useCallback((n) => setOwnBacks((c) => c + n), [])
   // Oct 30 (Jade): not on My Corner (/me) either. It's a top-bar place, like My World.
-  const showBack = !ownBacks && !isChat && pathname !== '/' && pathname !== '/me' && (simple || pathname !== '/world')
+  // Nov 10 (Jade, Round D rule, moved up for the space round): not on the bottom-bar pages
+  // either (Ask for Help, Calendar, Messages). Their tab shows where you are.
+  const bottomBarPage = ['/ask', '/calendar', '/messages'].includes(pathname)
+  const showBack = !ownBacks && !isChat && !bottomBarPage && pathname !== '/' && pathname !== '/me' && (simple || pathname !== '/world')
 
   // Ask for Help is ready even if the signal drops later (Nov 3): its screen is
   // fetched once, quietly, a few seconds after the app opens, and kept on the phone.
@@ -133,6 +137,10 @@ export default function Layout() {
   // The steps have their own Back and "Skip setup for now".
   const focus = pathname === '/setup'
 
+  // Nov 10 (Jade): Back and the ? share the page title's line (hooks/useTitleRow.js).
+  const mainRef = useRef(null)
+  useTitleRow(mainRef, pathname + search, focus || isChat || isWorld)
+
   // The Admin page gets a wider column on a computer for its side menu.
   const isAdminPage = pathname === '/admin'
 
@@ -162,7 +170,7 @@ export default function Layout() {
           {simple && <AlertsButton />}
         </nav>
       </header>}
-      <main className={'app-main' + (!focus && !isChat ? ' app-main-what' : '') + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '') + (focus ? ' app-main-focus' : '')}>
+      <main ref={mainRef} className={'app-main' + (!focus && !isChat ? ' app-main-what' : '') + (isChat ? ' app-main-chat' : '') + (isWorld ? ' app-main-world' : '') + (isAdminPage ? ' app-main-admin' : '') + (focus ? ' app-main-focus' : '')}>
         {/* Nov 10 (Round A3): an open emergency you can act on, at the top of every page. Not in setup. */}
         {!focus && user && <EmergencyBanner />}
         {/* Read this to me (Nov 3, barriers review): Simple view pages, next to Back.
@@ -177,10 +185,11 @@ export default function Layout() {
         <PageBackContext.Provider value={tellFrame}>
           <Outlet />
         </PageBackContext.Provider>
+        {/* What is this? (Nov 10): not in setup, and not on chats, where it would sit on the typing box.
+            Inside the page so it can sit at the end of the title's line. */}
+        {!focus && !isChat && <WhatButton />}
       </main>
       {!focus && <BottomTabs />}
-      {/* What is this? (Nov 10): not in setup, and not on chats, where it would sit on the typing box. */}
-      {!focus && !isChat && <WhatButton />}
       <SimpleOffer />
       <AppTour />
       <KeyRestorePrompt />

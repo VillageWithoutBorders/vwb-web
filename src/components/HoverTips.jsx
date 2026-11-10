@@ -79,8 +79,34 @@ function tipFor(el) {
   const noCount = firstLine.replace(/\s*\(\d+\+?\)$/, '')
   if (noCount && noCount !== firstLine) { const fromTab = textTip(noCount); if (fromTab) return fromTab }
   if (aria && aria.toLowerCase() !== words.toLowerCase() && aria.length > words.length) return el.getAttribute('aria-label')
-  if (el.tagName === 'A') return routeTip(el)
-  return aria && !words ? el.getAttribute('aria-label') : ''
+  if (el.tagName === 'A') { const r = routeTip(el); if (r) return r }
+  if (aria && !words) return el.getAttribute('aria-label')
+  return fallbackTip(el, firstLine)
+}
+
+// Nov 10 (Jade): when a button has no note of its own, say something useful instead
+// of "No note for this one yet". First match wins.
+const PREFIX_TIPS = [
+  ['\u21B3', 'Open this smaller Campfire.'],
+  ['Your garden', 'See the gifts growing in your garden.'],
+  ['Step into', 'Go into this village.'],
+  ['Entrar a', 'Go into this village.'],
+]
+function fallbackTip(el, firstLine) {
+  // The raw words: clean() takes arrows like \u21B3 out.
+  const raw = (el.innerText || el.textContent || '').trim()
+  for (const [start, tip] of PREFIX_TIPS) if (raw.startsWith(start) || raw.startsWith(t(start)) || firstLine.startsWith(t(start))) return t(tip)
+  if (el.tagName === 'SUMMARY') return t('Open or close this part.')
+  if (el.tagName === 'SELECT') return t('Pick one from the list.')
+  if (el.classList.contains('hub-tile')) return t('See places near you that help with this.')
+  if (el.classList.contains('notification-card')) return t('Open this alert.')
+  // A button with a title and a line under it: the line under it says what it is.
+  const lines = (el.innerText || '').split('\n').map((l) => l.trim()).filter(Boolean)
+  if (lines.length >= 2) {
+    const rest = lines.slice(1).join(' ')
+    if (rest.length > 8 && rest.length < 220 && /[a-z\u00e1-\u00fa]/i.test(rest)) return rest
+  }
+  return ''
 }
 
 export default function HoverTips() {

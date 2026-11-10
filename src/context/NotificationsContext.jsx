@@ -36,12 +36,13 @@ export function NotificationsProvider({ children }) {
     // unread badge, and a new message used to bump both at once. The row
     // still exists (it's what sends the push notification).
     // Nov 10 (Jade): new posts in a Cottage Chat or Campfire ('group_post') are
-    // messages too. They count on the Messages tab now, not here.
+    // messages too. They count on the Messages tab now, not here. So does the
+    // Village Square summary ('campfire': "Village Square: 1 new message").
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
-      .not('type', 'in', '(message,group_post)')
+      .not('type', 'in', '(message,group_post,campfire)')
       .order('created_at', { ascending: false })
       .limit(50)
     if (error) console.error('[NotificationsContext] refresh', error)

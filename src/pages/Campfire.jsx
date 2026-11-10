@@ -3,6 +3,7 @@ import { isSimpleView } from '../utils/simpleView'
 import { useNavigate, useSearchParams, useLocation, Navigate } from 'react-router-dom'
 import { useChatScroll } from '../hooks/useChatScroll'
 import { useAuth } from '../context/AuthContext'
+import { useUnreadCount } from '../context/UnreadCountContext'
 import { supabase } from '../supabaseClient'
 import AvatarDisplay, { UserName } from '../components/AvatarDisplay'
 import { useMenuPosition } from '../utils/useMenuPosition'
@@ -125,6 +126,19 @@ export default function Campfire({ pane = false }) {
   }
   useEffect(() => { if (hasAccess) loadBoards() }, [hasAccess])
 
+  // Nov 10 (Jade): "Village Square: 1 new message" counts on Messages, not Alerts.
+  // You are here now, so it clears.
+  const { refreshUnread } = useUnreadCount()
+  useEffect(() => {
+    if (!user?.id) return
+    supabase.from('notifications').update({ read: true })
+      .eq('user_id', user.id).eq('type', 'campfire').eq('read', false)
+      .then(({ error }) => {
+        if (error) console.error('Failed to clear Village Square alert:', error)
+        else refreshUnread()
+      })
+  }, [user?.id, refreshUnread])
+
   async function loadMemberships() {
     const { data, error } = await supabase.from('village_members').select('village_id, joined_at').eq('user_id', user.id)
     if (error) { console.error('Failed to load your village chats:', error); setMemberVillages([]); return }
@@ -203,15 +217,17 @@ export default function Campfire({ pane = false }) {
     const name = newBoardName.trim()
     if (!name) return
     setBoardError('')
-    const { data, error } = await supabase.from('campfire_boards').insert({ name, created_by: user.id, sort_order: 50 }).select('id').single()
-    if (error) {
+    // Nov 10 (Jade): Add did nothing. Saving straight into the table and reading it back
+    // was refused by the read rule. One database function does it now (vwb-add-board.sql).
+    const { data: newId, error } = await supabase.rpc('add_campfire_board', { p_name: name })
+    if (error || !newId) {
       console.error('Failed to add board:', error)
-      setBoardError(/duplicate|unique/i.test(error.message || '') ? t('A board with that name already exists.') : t('Could not add the board. Try again.'))
+      setBoardError(error && error.code === 'P0001' ? t(error.message) : /duplicate|unique/i.test(error?.message || '') ? t('A board with that name already exists.') : t('Could not add the board. Try again.'))
       return
     }
     setNewBoardName(''); setCreatingBoard(false); setPickerOpen(false)
     await loadBoards()
-    chooseBoard(data.id)
+    chooseBoard(newId)
   }
 
   // Everyone who has a seat at the Campfire, so the member list shows the
@@ -617,13 +633,14 @@ export default function Campfire({ pane = false }) {
 
   return (
     <div onClick={() => { if (openMsgMenu) setOpenMsgMenu(null) }} style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--surface)' }}>
-      <div style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      {/* Nov 10 (Jade): at big text the header stays one short row (index.css "Room to read"). */}
+      <div className="cf-head" style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         {!pane && <button onClick={() => goBack(activeBoard?.village_id ? '/village/' + activeBoard.village_id : '/')} aria-label={t('Back')} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '1.5rem', cursor: 'pointer', minWidth: 44, minHeight: 44 }}>&#8592;</button>}
-        <div>
+        <div className="cf-head-info" style={{ minWidth: 0, flex: '1 1 auto' }}>
           <h1 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span><Icon name={activeBoard?.village_id ? 'chat-bubble' : 'megaphone'} /></span> {activeBoard?.village_id ? t('{name} village chat', { name: activeBoard.name }) : t('The Village Square')}
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{activeBoard ? (activeBoard.village_id ? t('Part of the Village Square, where all village chats live') : activeBoard.event_id ? t('Response Camp') + (activeBoard.archived ? t(', closed') : '') : activeBoard.sister_a ? t('Sister Campfire') + (activeBoard.archived ? t(', closed') : '') : t('{name} board', { name: activeBoard.name })) : t('Announcements and village chats')}</p>
+          <p className="convo-context" style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{activeBoard ? (activeBoard.village_id ? t('Part of the Village Square, where all village chats live') : activeBoard.event_id ? t('Response Camp') + (activeBoard.archived ? t(', closed') : '') : activeBoard.sister_a ? t('Sister Campfire') + (activeBoard.archived ? t(', closed') : '') : t('{name} board', { name: activeBoard.name })) : t('Announcements and village chats')}</p>
         </div>
         {!isSimpleView() && activeBoard?.village_id && <button onClick={() => navigate('/village/' + activeBoard.village_id)} aria-label={t('Village page')} title={t('Village page')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}><Icon name="compass" /></button>}
         {isVillageBoard && inVillage && (
@@ -635,8 +652,8 @@ export default function Campfire({ pane = false }) {
         <button onClick={() => setShowSettings(true)} aria-label={t('Village Square settings')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.3rem', padding: '0.25rem', minWidth: '44px', minHeight: '44px' }} title={t('Settings')}><Icon name="gear" /></button>
       </div>
 
-      <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-        <button type="button" onClick={() => { setPickerOpen(true); setPickerSearch('') }} aria-haspopup="dialog" aria-expanded={pickerOpen} aria-label={t('Change chat. Now in {name}', { name: activeBoard?.name || t('no chat') })} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid var(--accent)', background: 'var(--success-bg)', color: 'var(--accent)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>
+      <div className="cf-pick-row" style={{ padding: '0.5rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+        <button type="button" className="cf-pick" onClick={() => { setPickerOpen(true); setPickerSearch('') }} aria-haspopup="dialog" aria-expanded={pickerOpen} aria-label={t('Change chat. Now in {name}', { name: activeBoard?.name || t('no chat') })} style={{ width: '100%', minHeight: '48px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0 1rem', borderRadius: '12px', border: '1px solid var(--accent)', background: 'var(--success-bg)', color: 'var(--accent)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', textAlign: 'left' }}>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeBoard?.name || t('Pick a chat')}</span>
           {otherUnread > 0 && <span role="status" aria-label={otherUnread + ' new in other chats'} style={{ minWidth: '1.4rem', height: '1.4rem', padding: '0 0.35rem', boxSizing: 'border-box', borderRadius: '999px', background: 'var(--warn)', color: 'var(--on-accent)', fontSize: '0.8125rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{otherUnread > 99 ? '99+' : otherUnread}</span>}
           {orderedBoards.length > 1 && <span style={{ fontWeight: 500, fontSize: '0.8125rem', color: 'var(--accent)' }}>{orderedBoards.length} chats</span>}
@@ -928,7 +945,7 @@ export default function Campfire({ pane = false }) {
           {t('Say hello. Add what you like doing and how you would like to be involved in your community.')}
         </p>
       )}
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', padding: '0.75rem 1rem', borderTop: introHint && !editing ? 'none' : '1px solid var(--border)', background: 'var(--surface)' }}>
+      <div className="cf-compose" style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', padding: '0.75rem 1rem', borderTop: introHint && !editing ? 'none' : '1px solid var(--border)', background: 'var(--surface)' }}>
         <textarea
           ref={inputRef}
           rows={Math.min(6, Math.max(1, newMsg.split('\n').length))}
@@ -940,7 +957,7 @@ export default function Campfire({ pane = false }) {
             if (e.key === 'Enter' && !e.shiftKey && !touch) sendMessage(e)
             if (e.key === 'Escape') cancelComposeMode()
           }}
-          placeholder={editing ? t('Edit your message...') : (activeBoard ? (activeBoard.village_id ? t('Say something to {name}...', { name: activeBoard.name }) : t('Say something to the {name} board...', { name: activeBoard.name })) : t('Say something to the group...'))}
+          placeholder={editing ? t('Edit your message...') : t('Say something...')}
           aria-label={editing ? t('Edit your message') : t('Message the Village Square')}
           disabled={sending}
           style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', minHeight: '44px', maxHeight: '40vh', padding: '0.6rem 0.875rem', borderRadius: '1.25rem', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', lineHeight: 1.35, outline: 'none', resize: 'none', fontFamily: 'inherit' }}

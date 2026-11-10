@@ -25,15 +25,18 @@ export function UnreadCountProvider({ children }) {
       .eq('marked_unread', true)
     const { data: posts, error: postsErr } = await supabase
       .from('notifications')
-      .select('link')
+      .select('type, link')
       .eq('user_id', user.id)
-      .eq('type', 'group_post')
+      .in('type', ['group_post', 'campfire'])
       .eq('read', false)
       .limit(100)
     if (postsErr) console.error('[UnreadCount] new board posts', postsErr)
-    const boards = new Set((postsErr ? [] : posts || []).map((p) => String(p.link || '').replace(/^\/groups\//, '')).filter(Boolean))
+    const rows = postsErr ? [] : posts || []
+    const boards = new Set(rows.filter((p) => p.type === 'group_post').map((p) => String(p.link || '').replace(/^\/groups\//, '')).filter(Boolean))
+    // The Village Square summary counts once, however many there are.
+    const square = rows.some((p) => p.type === 'campfire') ? 1 : 0
     setNewBoards(boards)
-    setCount(data + (markedErr ? 0 : (marked || 0)) + boards.size)
+    setCount(data + (markedErr ? 0 : (marked || 0)) + boards.size + square)
   }, [user?.id])
 
   useEffect(() => {
