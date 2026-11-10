@@ -40,12 +40,11 @@ export default function VillageScene() {
   const { user, profile, isFounder, refreshProfile, organizations } = useAuth()
   const simple = useSimpleView()
   const t = useT()
-  // In your home village, your house (the 'me' spot) is your cottage.
-  const isHome = !cottage && !!id && profile?.home_village_id === id
   // Your cottage shows only in your home village (Oct 22).
   const SPOTS = cottage ? COTTAGE_SPOTS
-    : isHome ? VILLAGE_SPOTS.map((v) => (v.k === 'me' ? { ...v, label: 'My Cottage', short: 'My Cottage' } : v))
-    : VILLAGE_SPOTS.filter((v) => v.k !== 'me')
+    // Nov 10 map review: no Me spot (My Cottage is on the top bar), one place for groups and crews,
+    // and Help nearby only in the Simple view list.
+    : VILLAGE_SPOTS.filter((v) => simple || !v.simpleOnly)
   const { unreadCount } = useUnreadCount()
   // The You button and old /me links open the cottage at Your corner (Oct 22).
   useEffect(() => {
@@ -545,10 +544,12 @@ export default function VillageScene() {
       case 'skillshare': return { sub: t('Help nearby: requests and offers') }
       case 'neighbors': return { sub: village && village.member_count ? t('{n} neighbors live here', { n: village.member_count }) : t('A few neighbors so far') }
       case 'cottage': return { sub: t('Private chats with people you chose') }
-      case 'me': return { sub: isHome ? t('Your house: your own map of everything you are part of') : t('Your profile, vouches, and settings') }
       case 'messages': return { sub: unreadCount ? t('{n} unread', { n: unreadCount }) : t('Requests and private messages'), badge: unreadCount }
-      case 'orgs': { const n = orgs.filter((o) => o.kind !== 'group').length; return { sub: n ? t('{n} working here', { n }) : t('None working here yet') } }
-      case 'groups': { const n = orgs.filter((o) => o.kind === 'group').length; return { sub: n ? (n === 1 ? t('1 emergency crew') : t('{n} emergency crews', { n })) : t('Start a crew for when disaster hits') } }
+      case 'orgs': {
+        const c = orgs.filter((o) => o.kind === 'group').length, g = orgs.length - c
+        const parts = [g ? (g === 1 ? t('1 group') : t('{n} groups', { n: g })) : '', c ? (c === 1 ? t('1 crew') : t('{n} crews', { n: c })) : ''].filter(Boolean)
+        return { sub: parts.length ? parts.join(', ') : t('None working here yet') }
+      }
       default: return { sub: '' }
     }
   }
@@ -580,8 +581,6 @@ export default function VillageScene() {
       case 'skillshare': goTo('/skillshare'); return
       case 'cottage': goTo('/messages?tab=cottage'); return
       case 'messages': goTo('/messages'); return
-      // In your home village, your house is your cottage: your own private map.
-      case 'me': goTo(isHome ? '/cottage' : '/me'); return
       default: openSheet({ k: spot.k })
     }
   }
@@ -633,21 +632,20 @@ export default function VillageScene() {
                 <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/village-square?board=' + board.id)}>{t('Open the village chat')}</button></>
             : <p className="vs-note">{t('Join this village to see who lives here.')}</p>}
         </>
-      case 'orgs':
+      case 'orgs': {
+        const crews = orgs.filter((o) => o.kind === 'group'), groups = orgs.filter((o) => o.kind !== 'group')
         return <>{title}
-          {orgs.filter((o) => o.kind !== 'group').length === 0 && <p>{t('No groups work in this village yet.')}</p>}
-          {orgs.filter((o) => o.kind !== 'group').map((o) => (
+          <h3 className="vs-sheet-sub">{t('Groups')}</h3>
+          {groups.length === 0 && <p className="vs-note">{t('No groups work in this village yet.')}</p>}
+          {groups.map((o) => (
             <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
               <span aria-hidden="true"><Icon name="people" /></span> {o.name}<small>{t('Group')}</small>
             </button>
           ))}
-        </>
-      case 'groups': {
-        const groups = orgs.filter((o) => o.kind === 'group')
-        return <>{title}
-          <p>{t('Emergency crews show up when disaster hits here: flooding, storms, mold, fires. They plan together ahead of time.')}</p>
-          {groups.length === 0 && <p className="vs-note">{t('No crews cover this village yet.')}</p>}
-          {groups.map((o) => (
+          <h3 className="vs-sheet-sub">{t('Emergency crews')}</h3>
+          <p className="vs-note">{t('Emergency crews show up when disaster hits here: flooding, storms, mold, fires. They plan together ahead of time.')}</p>
+          {crews.length === 0 && <p className="vs-note">{t('No crews cover this village yet.')}</p>}
+          {crews.map((o) => (
             <button key={o.id} type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/orgs/' + o.id) }}>
               <span aria-hidden="true"><Icon name="tent" /></span> {o.name}<small>{t('Emergency crew')}</small>
             </button>
@@ -665,9 +663,9 @@ export default function VillageScene() {
     const i = info(s.k)
     return (
       <button key={s.k} type="button" className={'vs-room' + (s.soon ? ' vs-soon' : '')} onClick={() => tap(s)}
-        data-tip={simple && s.k === 'skillshare' ? t('Neighbors who need a hand, and free things to share') : (typeof i.sub === 'string' ? i.sub : undefined)}>
+        data-tip={s.k === 'skillshare' ? t('Neighbors who need a hand, and free things to share') : (typeof i.sub === 'string' ? i.sub : undefined)}>
         <span className="vs-room-ic" aria-hidden="true"><SpotIcon spot={s} size={40} /></span>
-        <span className="vs-room-text"><b>{simple && s.k === 'skillshare' ? t('Help nearby') : t(s.label)}{i.badge > 0 && <span className="vs-dot" aria-label={t('New')} />}</b><small>{simple && s.k === 'skillshare' ? t('Neighbors who need a hand, and free things to share') : i.sub}</small></span>
+        <span className="vs-room-text"><b>{t(s.label)}{i.badge > 0 && <span className="vs-dot" aria-label={t('New')} />}</b><small>{s.k === 'skillshare' ? t('Neighbors who need a hand, and free things to share') : i.sub}</small></span>
         <span className="vs-go" aria-hidden="true">&#8250;</span>
       </button>
     )

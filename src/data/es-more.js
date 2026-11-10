@@ -2059,6 +2059,8 @@ const more = {
   "Events and sign-ups near you": "Eventos e inscripciones cerca de usted",
   "1 group": "1 grupo",
   "{n} groups": "{n} grupos",
+  '1 crew': '1 cuadrilla',
+  '{n} crews': '{n} cuadrillas',
   "Find a group near you": "Encuentre un grupo cerca de usted",
   "People you know on VWB": "Gente que conoce en VWB",
   "1 emergency crew": "1 equipo de emergencia",
