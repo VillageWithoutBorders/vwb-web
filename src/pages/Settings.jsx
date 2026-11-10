@@ -9,6 +9,8 @@ import RecoveryKeySection from '../components/RecoveryKeySection'
 import DevicesSheet from '../components/DevicesSheet'
 import AppearancePicker from '../components/AppearancePicker'
 import WidthPicker from '../components/WidthPicker'
+import ReadButtonPicker from '../components/ReadButtonPicker'
+import VillageChatsSwitch from '../components/VillageChatsSwitch'
 import { useSimpleView } from '../utils/simpleView'
 import SimpleViewPicker from '../components/SimpleViewPicker'
 import TextSizePicker from '../components/TextSizePicker'
@@ -375,6 +377,7 @@ export default function Settings() {
           <h2 className="settings-group-h">{t('Using')}</h2>
           <SimpleViewPicker />
           {simpleOn && <WidthPicker />}
+          {!simpleOn && <ReadButtonPicker />}
           <MotionPicker />
           </div>
 
@@ -399,6 +402,8 @@ export default function Settings() {
           Signing in: Email, Password, Two-step login, Recovery key.
           Privacy: Privacy and safety, Blocked neighbors, Your devices, Delete my account. */}
       {placesEnabled && <AreaPicker />}
+      {/* Round A4 (Nov 10): moved here from your profile. */}
+      <VillageChatsSwitch />
 
       <div className="profile-details">
         <div className="detail-section-header">{t('Email')}</div>

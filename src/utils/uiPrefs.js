@@ -4,6 +4,7 @@ import { getTheme, setTheme } from './theme'
 import { readCalm, applyCalm } from './motion'
 import { getLang, setLangLocal, LANGS } from './lang'
 import { readWidth, applyWidth, WIDTHS } from './pageWidth'
+import { readReadButton, applyReadButton, READ_CHOICES } from './readButton'
 
 // Settings that follow you (Nov 1, Jade): Text size, Light or dark, and Motion are
 // saved on the account (helper_profiles.ui_prefs) as well as on this phone, so they
@@ -11,16 +12,18 @@ import { readWidth, applyWidth, WIDTHS } from './pageWidth'
 //   { text: 'normal'|'large'|'larger'|'largest', theme: 'auto'|'light'|'dark', motion: 'normal'|'calm', lang: 'en'|'es' }
 // (lang added Nov 3; needs vwb-language.sql so the account can save it)
 // (width: 'calm'|'full' added Nov 8; needs vwb-page-width.sql)
+// (read: 'off'|'on' added Nov 10, the Read this to me button in the full view; needs vwb-threads-and-read.sql)
 const OK = {
   text: TEXT_SIZES,
   theme: ['auto', 'light', 'dark'],
   motion: ['normal', 'calm'],
   lang: LANGS,
   width: WIDTHS,
+  read: READ_CHOICES,
 }
 
 export function devicePrefs() {
-  return { text: readTextSize(), theme: getTheme(), motion: readCalm() ? 'calm' : 'normal', lang: getLang(), width: readWidth() }
+  return { text: readTextSize(), theme: getTheme(), motion: readCalm() ? 'calm' : 'normal', lang: getLang(), width: readWidth(), read: readReadButton() }
 }
 
 // Put the account's choices on this phone.
@@ -30,6 +33,7 @@ export function applyPrefs(p) {
   if (OK.theme.includes(p.theme) && p.theme !== getTheme()) setTheme(p.theme)
   if (OK.motion.includes(p.motion) && (p.motion === 'calm') !== readCalm()) applyCalm(p.motion === 'calm')
   if (OK.width.includes(p.width) && p.width !== readWidth()) applyWidth(p.width)
+  if (OK.read.includes(p.read) && p.read !== readReadButton()) applyReadButton(p.read)
   if (OK.lang.includes(p.lang) && p.lang !== getLang()) {
     setLangLocal(p.lang).then(() => window.dispatchEvent(new Event('vwb:prefs')))
   }

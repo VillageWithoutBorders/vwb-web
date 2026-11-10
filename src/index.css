@@ -8027,3 +8027,65 @@ html.calm-motion .read-bar-btn:not(:disabled):active { transform: none; }
 :is(html.text-larger, html.text-largest) .read-bar-row:first-of-type .read-bar-main { grid-column: 1 / -1; grid-row: 1; }
 :is(html.text-larger, html.text-largest) .read-bar-pic { display: none; }
 :is(html.text-larger, html.text-largest) .read-bar { padding: 6px; gap: 6px; }
+
+/* Nov 10 (Jade): at Larger and Largest, the helper sentence under a page title hides
+   (useTitleRow marks it). The ? explains the page; screen readers still hear it. */
+:is(html.text-larger, html.text-largest) .app-main [data-lead] { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0 !important; padding: 0 !important; }
+
+/* Nov 10 (Jade): start a smaller Campfire inside any chat. */
+.thread-start { margin: 0; padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--surface); display: grid; gap: 8px; max-height: 60vh; overflow-y: auto; }
+.thread-start-h { margin: 0; font-size: 1.1rem; }
+.thread-people { display: grid; gap: 4px; }
+.thread-person { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 8px; border-radius: 10px; background: var(--surface-2); cursor: pointer; overflow-wrap: anywhere; }
+.thread-person input { width: 22px; height: 22px; flex: none; }
+.thread-add-btn { border-style: dashed; }
+
+/* Round A4 (Nov 10): Profile. */
+.vouch-requests { scroll-margin-top: calc(var(--header-height) + 12px); }
+.vouch-requests h2:focus { outline: none; }
+.vouch-requests h2:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.vouch-glow { box-shadow: 0 0 0 3px var(--gold); transition: box-shadow 0.4s ease; }
+.only-you { display: flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 0.8125rem; color: var(--text-secondary); font-weight: 500; }
+.detail-value .only-you { justify-content: flex-end; }
+.profile-header-section .profile-edit-btn { width: 100%; justify-content: center; }
+
+/* ---------- Round B (Nov 10, Jade): bigger text fixes ---------- */
+/* Offer Help: at Larger and Largest, one "Filter and sort" button instead of two menus. */
+.feed-filter-toggle { display: none; }
+:is(html.text-larger, html.text-largest) .feed-filter-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; margin-bottom: 8px; }
+:is(html.text-larger, html.text-largest) .feed-filters { display: none; }
+:is(html.text-larger, html.text-largest) .feed-filters.feed-filters-open { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+:is(html.text-larger, html.text-largest) .feed-filters.feed-filters-open > * { width: 100%; max-width: 100%; min-height: 48px; }
+/* Offer Help empty list: one line and two buttons. */
+.feed-empty.feed-empty-short { padding: 12px 4px; text-align: left; }
+.feed-empty-line { margin: 0 0 8px; color: var(--text-soft); }
+.feed-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.feed-empty-actions > .btn { flex: 1 1 10rem; min-height: 48px; }
+.feed-farther { margin-top: 10px; }
+
+/* ---------- Round B (Nov 10, Jade): computer windows, small to large ----------
+   "Everything should fit within the small, medium and large windows on a desktop."
+   1. My Cottage and My Village quick buttons: never squeezed. They wrap to a new row
+      and "Change these buttons" drops under them when there is no room; words never split.
+   2. "Or pick from the list": two across when the right side is narrow or text is bigger.
+   3. "More below" sits on a solid strip at the bottom, so it never lies on top of words. */
+@media (min-width: 1024px) {
+  html:not(.simple) .vs-today .qa { flex-wrap: wrap; }
+  html:not(.simple) .vs-today .qa > .qa-grid { flex: 1 1 19rem; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); }
+  html:not(.simple) .vs-today .qa > .qa-link { flex: 0 1 auto; white-space: normal; text-align: left; padding-left: 0; }
+  html:not(.simple) .vs-today .qa-btn-label { hyphens: manual; overflow-wrap: normal; word-break: normal; }
+  html:not(.simple) .vs-page-path .vs-room-text { min-width: 0; }
+  html:not(.simple) .vs-page-path .vs-room-text b { overflow-wrap: anywhere; hyphens: manual; }
+  :is(html.text-large, html.text-larger, html.text-largest):not(.simple) .vs-page-path .vs-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html:not(.simple) :is(.vs-page-path, .wd-page) > .vs-more-desk {
+    height: 76px !important; padding-bottom: 16px !important; align-items: center !important;
+    bottom: calc(var(--tab-height) + env(safe-area-inset-bottom, 0px)) !important;
+    background: var(--bg, #121212) !important; border-top: 1px solid var(--border);
+  }
+  .cal-split > .vs-more-desk.vs-more-col { height: 60px !important; padding-bottom: 8px !important; align-items: center !important; background: var(--bg, #121212) !important; border-top: 1px solid var(--border); }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  html:not(.simple) .vs-page-path .vs-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Pop-ups that scroll inside: the same solid strip. */
+.box-more { height: 60px; margin-top: -60px; background: var(--surface, #1e1e1e); border-top: 1px solid var(--border); align-items: center; padding-bottom: 0; }
