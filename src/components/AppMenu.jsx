@@ -5,7 +5,6 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt'
 import { startAppTour } from './AppTour'
 import Icon from './Icon'
 import { tell } from './AdminDialog'
-import { useSimpleView } from '../utils/simpleView'
 import { useT } from '../utils/lang'
 
 // The one menu in the top bar. It replaces two hidden menus (tapping the logo,
@@ -20,12 +19,13 @@ const SIGNUP_URL = `${APP_URL}/login?mode=signup`
 const SHARE_TEXT = 'Village Without Borders is a mutual aid network where neighbors help neighbors. Join us:'
 
 // inline: shown as a plain list inside My Corner (/me), with no button and no pop-up.
-// only (Nov 8): which inline groups to show, from 'account', 'about', 'vwb'. All by default.
+// only: which inline groups to show, from 'about', 'vwb', 'logout'. All by default.
+// Nov 10 (Jade): the Your account group is gone. Its rows live on the profile card,
+// in Messages, and under Your roles.
 export default function AppMenu({ inline = false, only = null }) {
   const t = useT()
   const navigate = useNavigate()
-  const { signOut, isAdmin } = useAuth()
-  const simple = useSimpleView()
+  const { signOut } = useAuth()
   const { canInstall, isStandalone, isIOS, promptInstall } = useInstallPrompt()
   const [open, setOpen] = useState(false)
   const [panel, setPanel] = useState(null) // 'share' | 'install' | 'logout'
@@ -110,27 +110,6 @@ export default function AppMenu({ inline = false, only = null }) {
       {(open || inline) && (() => {
         // The rows, in three groups. My Corner (inline) shows each group as its own card,
         // so a wide screen can put them side by side (Oct 30). The pop-up keeps one list.
-        const account = <>
-          <button type="button" className="app-menu-item" onClick={() => go('/profile', { openEdit: true })}>
-            <span aria-hidden="true"><Icon name="person" /></span> {t('Edit my profile')}
-          </button>
-          {!simple && (
-            <button type="button" className="app-menu-item" onClick={() => go('/groups')}>
-              <span aria-hidden="true"><Icon name="people" /></span> {t('Cottage Chats and Campfires')}
-            </button>
-          )}
-          {/* Oct 30 (Jade): My Corner already has a big Settings button, so the inline list leaves this out. */}
-          {!inline && (
-            <button type="button" className="app-menu-item" onClick={() => go('/settings')}>
-              <span aria-hidden="true"><Icon name="gear" /></span> {t('Settings and privacy')}
-            </button>
-          )}
-          {isAdmin && (
-            <button type="button" className="app-menu-item" onClick={() => go('/admin')}>
-              <span aria-hidden="true"><Icon name="shield" /></span> {t('Admin panel')}
-            </button>
-          )}
-        </>
         const about = <>
           <button type="button" className="app-menu-item" onClick={() => go('/help')}>
             <span aria-hidden="true"><Icon name="question" /></span> {t('App guide and feedback')}
@@ -152,17 +131,16 @@ export default function AppMenu({ inline = false, only = null }) {
             <span aria-hidden="true"><Icon name="globe" /></span> {t('Visit our website')}
             <span className="sr-only"> {t('(opens in a new tab)')}</span>
           </a>
+        </>
+        // Nov 10 (Jade): Log out sits alone in its own card on My Corner, with space above it.
+        const logout = (
           <button type="button" className="app-menu-item app-menu-logout" onClick={() => { setOpen(false); setPanel('logout') }}>
             <span aria-hidden="true"><Icon name="door" /></span> {t('Log out')}
           </button>
-        </>
+        )
         if (inline) {
           const has = (g) => !only || only.includes(g)
           return <>
-            {has('account') && <section className="app-menu-group app-menu-group-account" aria-labelledby="amg-account">
-              <h2 id="amg-account" className="app-menu-heading">{t('Your account')}</h2>
-              <div className="app-menu-list app-menu-inline">{account}</div>
-            </section>}
             {has('about') && <section className="app-menu-group app-menu-group-about" aria-labelledby="amg-about">
               <h2 id="amg-about" className="app-menu-heading">{t('About the app')}</h2>
               <div className="app-menu-list app-menu-inline">{about}</div>
@@ -171,17 +149,19 @@ export default function AppMenu({ inline = false, only = null }) {
               <h2 id="amg-vwb" className="app-menu-heading">Village Without Borders</h2>
               <div className="app-menu-list app-menu-inline">{vwb}</div>
             </section>}
+            {has('logout') && <section className="app-menu-group app-menu-group-logout" aria-label={t('Log out')}>
+              <div className="app-menu-list app-menu-inline">{logout}</div>
+            </section>}
           </>
         }
         return <>
           <button type="button" className="app-menu-scrim" aria-label={t('Close menu')} tabIndex={-1} onClick={() => setOpen(false)} />
           <div id="appMenuList" className="app-menu-list" ref={menuRef}>
-            <p className="app-menu-heading">{t('Your account')}</p>
-            {account}
             <p className="app-menu-heading">{t('About the app')}</p>
             {about}
             <p className="app-menu-heading">Village Without Borders</p>
             {vwb}
+            {logout}
           </div>
         </>
       })()}

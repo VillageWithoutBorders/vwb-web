@@ -64,7 +64,7 @@ export default function Trail() {
   return (
     <div className="cal-page tr-page">
       <BackLink fallback="/me" fallbackLabel={t('My Corner')} />
-      <h1 className="tr-title">{t('My trail')}</h1>
+      <h1 className="tr-title">{t('My story')}</h1>
       <p className="cal-sub">{t('The path you have walked in Village Without Borders. Only you can see this.')}</p>
 
       {totals && (
