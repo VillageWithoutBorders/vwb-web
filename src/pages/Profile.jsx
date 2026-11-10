@@ -329,7 +329,8 @@ export default function Profile() {
           </button>
         </div>
 
-        <VouchRequestsForMe myId={user?.id} />
+        {/* Nov 10: My Corner's nudge links here (/profile#vouches). Round A4 adds the scroll and highlight. */}
+        <div id="vouches"><VouchRequestsForMe myId={user?.id} /></div>
 
         <div className="profile-details">
           {/* Nov 7 (Jade): where you are, on one line (it said Ringgold, GA twice). */}
