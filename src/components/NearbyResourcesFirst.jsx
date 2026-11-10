@@ -7,6 +7,7 @@ import { resourceCats, currentCategory, CAT_ICON_FILES } from '../utils/resource
 import { searchResources } from '../utils/resourceSearch'
 import AddressLink from './AddressLink'
 import SuggestResource from './SuggestResource'
+import EmergencyDoor from './EmergencyDoor'
 import { useWideScreen } from '../hooks/useWideScreen'
 import { useT } from '../utils/lang'
 
@@ -81,6 +82,8 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
         <a href="tel:911" className="nr-911">{t('In danger? Call 911')}</a>
         <a href="#nr-ask" className="nr-skip">{t('Ask a neighbor')} &#8595;</a>
       </div>
+      {/* Nov 10 (Jade): Emergency Response is one tap from the first Ask for Help screen. */}
+      <EmergencyDoor />
 
       <label htmlFor="nr-q" className="nr-label">{t('Search or pick what you need')}</label>
       </div>
