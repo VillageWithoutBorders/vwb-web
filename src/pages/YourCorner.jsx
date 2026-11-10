@@ -16,6 +16,7 @@ import { useAdminInbox } from '../hooks/useAdminInbox'
 
 // My Corner (/me): only the things that are yours and live nowhere else.
 // Nov 10 (Jade), top to bottom:
+//   0. Emergency, only for people with an Emergency role (Round A3: two taps was too slow)
 //   1. Your card, with "My profile"
 //   2. A nudge, only when someone says they know you and is waiting for your answer
 //   3. Show my code to connect, Scan a code
@@ -28,7 +29,7 @@ import { useAdminInbox } from '../hooks/useAdminInbox'
 // Past tasks (your profile), My QR code (the Show my code button), Admin panel (Your roles).
 export default function YourCorner() {
   const t = useT()
-  const { user, profile } = useAuth()
+  const { user, profile, isAdmin, organizations } = useAuth()
   const [avatarFailed, setAvatarFailed] = useState(false)
   const simple = useSimpleView()
   // Your roles: the tools your roles give you (Admin, Ambassador, Organizer, crews, villages you keep).
@@ -61,7 +62,12 @@ export default function YourCorner() {
   // Nov 7 (Jade): on a computer, your cottage sits beside your corner.
   const wide = useWideScreen()
   const split = !simple && wide
-  const roleRows = [...toolRows(tools, adminWaiting), EMERGENCY]
+  // People who can act in an emergency: VWB admins, Hope Ambassadors, and the Keepers and
+  // Helpers of an emergency crew. Their Emergency button sits at the very top of the page,
+  // so it leaves the Your roles list. Other role holders keep the row there.
+  const emergencyRole = !!(isAdmin || profile?.is_hope_ambassador
+    || (organizations || []).some((o) => o.kind === 'group' && (o.role === 'admin' || o.role === 'organizer')))
+  const roleRows = emergencyRole ? toolRows(tools, adminWaiting) : [...toolRows(tools, adminWaiting), EMERGENCY]
 
   // Your things (Nov 10): one row. On a computer it sits on the right, under the room.
   const thingsList = (hid) => (
@@ -108,6 +114,14 @@ export default function YourCorner() {
     <div className={'corner-page' + (split ? ' corner-page-full' : '')}>
       {/* Nov 8 (Jade): side by side, the title sits above both sides so their boxes line up. */}
       {!split && <h1 className="corner-title">{t('My Corner')}</h1>}
+
+      {emergencyRole && (
+        <Link to="/emergency" className="corner-emergency" data-tip={t('Emergency: see the emergencies that are open and help respond.')}>
+          <Icon name="siren" size={28} />
+          <b>{t('Emergency')}</b>
+          <span className="corner-emergency-go" aria-hidden="true">›</span>
+        </Link>
+      )}
 
       <Link to="/profile" className="corner-card">
         {avatarFailed
