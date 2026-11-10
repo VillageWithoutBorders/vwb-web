@@ -182,10 +182,18 @@ const ALL_STEPS = [
   },
   {
     route: '/',
-    target: '[data-tour="top-tools"], [data-tour="alerts"]',
+    target: '[data-tour="alerts"]',
     icon: '\u{1F514}',
     title: 'Alerts',
-    body: 'Your alerts live here. A number shows when something is new. Emergency is here too. If you keep a village, run a group, or are an Ambassador, this button says My Tools and holds your tools.',
+    body: 'Your alerts live here. A number shows when something is new. Tap the bell to read them. You can clear one, or clear them all.',
+  },
+  {
+    need: 'tools',
+    route: '/me',
+    target: '[data-tour="top-tools"]',
+    icon: '\u{1F9F0}',
+    title: 'Your roles',
+    body: 'You have a role, so My Corner has Your roles. Tap it to open your tools.',
   },
   {
     route: '/cottage',
@@ -226,14 +234,13 @@ const SIMPLE_STEPS = [
     icon: '\u{1F514}',
     title: 'Alerts',
     body: 'When something new happens, like a neighbor offering to help you, a number shows here.',
-    need: 'alerts',
   },
   {
-    route: '/',
+    route: '/me',
     target: '[data-tour="top-tools"]',
     icon: '\u{1F9F0}',
-    title: 'My Tools',
-    body: 'Your alerts and your tools live here. A number shows when something is new. Emergency is here too.',
+    title: 'Your roles',
+    body: 'You have a role, so My Corner has Your roles. Tap it to open your tools.',
     need: 'tools',
   },
   {
@@ -293,11 +300,12 @@ function SampleCard({ kind }) {
 
 // Steps that fit this person (see "need" above).
 function stepsFor(ctx) {
-  if (ctx.simple) return SIMPLE_STEPS.filter((st) => (st.need !== 'tools' || ctx.hasTools) && (st.need !== 'alerts' || !ctx.hasTools))
+  if (ctx.simple) return SIMPLE_STEPS.filter((st) => st.need !== 'tools' || ctx.hasTools)
   return ALL_STEPS.filter((st) => {
     if (st.need === 'village') return !!ctx.villageId
     if (st.need === 'noVillage') return ctx.ready && !ctx.villageId
     if (st.need === 'keeper') return !!ctx.isKeeper
+    if (st.need === 'tools') return !!ctx.hasTools
     if (st.need === 'organizer') return !!ctx.isOrganizer
     if (st.need === 'ambassador') return !!ctx.isAmbassador
     return true
@@ -356,7 +364,7 @@ export default function AppTour() {
   const isOrganizer = (organizations || []).some((o) => o.kind !== 'group' && (o.role === 'admin' || o.role === 'organizer'))
   const isAmbassador = !!profile?.is_hope_ambassador || profile?.role === 'admin' || profile?.role === 'founder'
   const simple = useSimpleView()
-  // Anyone with a role sees My Tools in Simple view too (Oct 27).
+  // Anyone with a role has Your roles on My Corner, in Simple view too (Nov 10).
   const hasTools = isAmbassador || ctx.isKeeper || (organizations || []).some((o) => o.role === 'admin' || o.role === 'organizer')
   const STEPS = stepsFor({ ...ctx, isOrganizer, isAmbassador, simple, hasTools })
   const step = STEPS[index] || STEPS[0]

@@ -3,13 +3,13 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { placesEnabled } from '../utils/places'
 
-// The tools a person has because of their role, for My tools (top bar) and My Corner (bottom bar).
+// The tools a person has because of their role, for My Corner > Your roles (Nov 10; before that, My Tools in the top bar).
 // Admin, Hope Ambassador, organization Head or organizer, group keeper, village keeper.
 // Each tool: { key, label, icon, to }. An empty list means a neighbor with no role.
 export function useMyTools() {
   const { user, profile, isAdmin, organizations } = useAuth()
   const [keptVillages, setKeptVillages] = useState([])
-  // Oct 28: new resource suggestions, for a My Tools row (Hope Ambassadors and admins).
+  // Oct 28: new resource suggestions, for a Your roles row (Hope Ambassadors and admins).
   const [newSuggestions, setNewSuggestions] = useState(0)
   const reviewer = !!(profile?.is_hope_ambassador || isAdmin)
   useEffect(() => {
@@ -44,7 +44,7 @@ export function useMyTools() {
   const tools = []
   if (isAdmin) tools.push({ key: 'admin', label: 'Admin', icon: 'shield', to: '/admin' })
   if (profile?.is_hope_ambassador || isAdmin) tools.push({ key: 'ambassador', label: 'Ambassador', icon: 'star', to: '/ambassador' })
-  if (reviewer) tools.push({ key: 'suggestions', label: 'Resource suggestions', icon: 'books', to: '/community/resources?suggestions=1', note: newSuggestions ? newSuggestions + ' new' : 'Nothing new' })
+  if (reviewer) tools.push({ key: 'suggestions', label: 'Resource suggestions', icon: 'books', to: '/community/resources?suggestions=1', note: newSuggestions ? '{n} new' : 'Nothing new', noteVars: { n: newSuggestions } })
   if (reviewer) tools.push({ key: 'merges', label: 'Merged listings', icon: 'chain', to: '/community/resources?merges=1', note: 'Undo a merge' })
   // Nov 3 (Jade): moved here from the top of Find resources, so the list comes first.
   if (reviewer && placesEnabled) tools.push({ key: 'reports', label: 'Reports to review', icon: 'flag', to: '/resource-reports', note: 'Listings people flagged' })

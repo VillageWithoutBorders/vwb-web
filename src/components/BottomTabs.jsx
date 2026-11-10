@@ -5,7 +5,7 @@ import { useSimpleView } from '../utils/simpleView'
 import { useT } from '../utils/lang'
 
 // Bottom bar: things to do. Find Help, Offer Help, Calendar, Messages (Oct 25, Jade).
-// Places, My Corner, and My Tools (alerts and role tools) are in the top bar.
+// Places, My Corner, and the Alerts bell are in the top bar.
 
 const HELP = ['/help-doors', '/skillshare', '/tasks', '/ask', '/post-offer', '/community/resources']
 // Which action tab lights up (Oct 28: Ask for Help only for the ask form itself, not the resource library).
