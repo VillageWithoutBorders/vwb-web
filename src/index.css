@@ -7904,3 +7904,14 @@ html.vv-zoomed .what-btn { display: none; }
 .app-main-world > .em-banner { flex: 0 0 auto; margin: 8px 12px; max-width: calc(100% - 24px); position: relative; z-index: 2; }
 @media (prefers-reduced-motion: reduce) { .corner-emergency:active, .em-banner-go:active, .em-banner-hide:active { transform: none; } }
 html.calm-motion .corner-emergency:active, html.calm-motion .em-banner-go:active, html.calm-motion .em-banner-hide:active { transform: none; }
+
+/* Nov 10 (Jade): new posts in a Cottage Chat or Campfire show on Messages, not Alerts. */
+.groups-new { color: var(--accent); font-weight: 700; }
+
+/* Nov 10 (Jade): Report an emergency, on the Emergency Response page. Every word shows
+   at every text size (the old box cut off "Call 911 first"). */
+.em-report-btn { margin: 0 0 1.25rem; height: auto; overflow: visible; }
+.em-report-btn .today-slim-text small { font-size: 1rem; color: var(--text); }
+.em-report-btn .today-slim-text { overflow-wrap: anywhere; }
+:is(html.text-larger, html.text-largest) .em-report-btn { gap: 0.5rem; padding: 0.5rem 0.6rem; }
+:is(html.text-larger, html.text-largest) .em-report-btn .today-slim-go { display: none; }

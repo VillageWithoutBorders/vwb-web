@@ -178,12 +178,12 @@ export default function EmergencyEvents() {
         </div>
       </div>
 
-      <button onClick={() => navigate('/emergency/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '1rem', borderRadius: '10px', border: '2px solid var(--warn)', background: 'linear-gradient(135deg, var(--warn-bg), var(--warn-bg))', cursor: 'pointer', textAlign: 'left', marginBottom: '1.25rem' }}>
-        <span style={{ fontSize: '1.75rem' }}><Icon name="cat-emergency" /></span>
-        <div>
-          <span style={{ display: 'block', color: 'var(--gold)', fontWeight: 700, fontSize: '0.95rem' }}>{t('Report an emergency')}</span>
-          <span style={{ color: 'var(--danger)', fontSize: '1rem', fontWeight: 700 }}>{t('When many neighbors are hit at once. Someone in danger? Call 911 first.')}</span>
-        </div>
+      {/* Nov 10 (Jade): the same warm bar as Emergency Response elsewhere. Every word shows
+          at every text size (the old box cut off "Call 911 first"). */}
+      <button type="button" className="today-slim today-slim-warn today-slim-wrap em-report-btn" onClick={() => navigate('/emergency/create')}>
+        <Icon name="cat-emergency" size={28} />
+        <span className="today-slim-text"><b>{t('Report an emergency')}</b><small>{t('When many neighbors are hit at once. Someone in danger? Call 911 first.')}</small></span>
+        <span className="today-slim-go" aria-hidden="true">&#8250;</span>
       </button>
 
       <div className="tasks-tabs" style={{ marginBottom: '1rem' }}>
@@ -231,14 +231,15 @@ export default function EmergencyEvents() {
                     </div>
                     {ev.location_name && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.25rem 0' }}>{ev.location_name}</p>}
                     {ev.description && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0.25rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{ev.description}</p>}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem' }}>
-                      <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid var(--accent)' : '1px solid var(--border-strong)', background: voted ? 'var(--success-bg)' : 'none', color: voted ? 'var(--accent)' : 'var(--text-secondary)', cursor: voted ? 'default' : 'pointer', fontSize: '1rem', fontWeight: 700, minHeight: 48 }}>
+                    {/* Nov 10: the row wraps, so nothing runs off a small phone at big text sizes. Buttons are 44px tall. */}
+                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem 0.75rem', marginTop: '0.75rem' }}>
+                      <button onClick={(e) => upvoteEvent(e, ev.id)} disabled={voted} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minHeight: '44px', padding: '0.4rem 0.75rem', borderRadius: '8px', border: voted ? '1px solid var(--accent)' : '1px solid var(--border-strong)', background: voted ? 'var(--success-bg)' : 'none', color: voted ? 'var(--accent)' : 'var(--text-secondary)', cursor: voted ? 'default' : 'pointer', fontSize: '1rem', fontWeight: 700, minHeight: 48 }}>
                         {/* Oct 27: words on the button, not just an arrow. */}
                         {voted ? t('You said you see it') : t('I see this too')}
                       </button>
                       <span style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{(ev.upvote_count || 0) === 1 ? t('1 neighbor sees it') : t('{n} neighbors see it', { n: ev.upvote_count || 0 })}</span>
                       {canVerify(ev) && !voted && (
-                        <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>{t('Verify')}</button>
+                        <button onClick={(e) => adminVerify(e, ev.id)} style={{ marginLeft: 'auto', minHeight: '44px', padding: '0.4rem 0.75rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8125rem' }}>{t('Verify')}</button>
                       )}
                     </div>
                   </div>

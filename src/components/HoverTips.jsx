@@ -72,6 +72,12 @@ function tipFor(el) {
   const aria = clean(el.getAttribute('aria-label'))
   const fromText = textTip(words)
   if (fromText) return fromText
+  // A button with a title and a small line under it: try the title alone (Nov 10).
+  const firstLine = clean(((el.innerText || '').split('\n').find((l) => l.trim())) || '')
+  if (firstLine && firstLine !== words) { const fromTitle = textTip(firstLine); if (fromTitle) return fromTitle }
+  // A tab with a count on it, like "Active (1)": the note is for the words.
+  const noCount = firstLine.replace(/\s*\(\d+\+?\)$/, '')
+  if (noCount && noCount !== firstLine) { const fromTab = textTip(noCount); if (fromTab) return fromTab }
   if (aria && aria.toLowerCase() !== words.toLowerCase() && aria.length > words.length) return el.getAttribute('aria-label')
   if (el.tagName === 'A') return routeTip(el)
   return aria && !words ? el.getAttribute('aria-label') : ''
@@ -179,7 +185,7 @@ export default function HoverTips() {
         // Not a button or link: stay ready, so the next tap can try again.
         if (!el) return
         setAsk(false)
-        showNote(el, tipFor(el) || t('No note for this one yet.'))
+        showNote(el, tipFor(el) || t('No note for this one yet. It does what the words on it say.'))
         return
       }
       if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation() }
