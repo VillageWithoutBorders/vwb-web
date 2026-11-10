@@ -25,19 +25,18 @@ export const VILLAGE_SPOTS = [
 // arranged by you, seen only by you. It holds everything you are part of and
 // works as a dashboard (dots show where something new is waiting).
 // Same painted meadow and clearings as the village page.
+// Nov 10 (Jade, map review): the cottage shows what is waiting for you, not a second set
+// of doors. Places that only repeated a top or bottom bar button are gone (Home village,
+// Calendar, Messages, Village Square, Cottage Chats, Campfires, Connections). What is left:
+// Villages (home and visits), Groups and crews, Chats (one count for every kind of chat),
+// Help (tasks waiting on you), and your house in the middle (My Corner). Calendar's next
+// event is the "Coming up" bar beside the map.
 export const COTTAGE_SPOTS = [
-  { k: 'home', art: '/art/village-path/spot-visits.webp', icon: 'houses', label: 'Your home village', short: 'Home village', x: 50, y: 9 },
-  { k: 'visits', art: '/art/village-path/spot-sisters.webp', icon: 'bridge', label: 'Villages you visit', short: 'Visits', x: 18, y: 18 },
-  { k: 'calendar', art: '/art/village-path/spot-calendar.webp', icon: 'calendar', label: 'Calendar', short: 'Calendar', x: 17, y: 37 },
-  { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Your groups', short: 'Groups', x: 82, y: 18 },
-  { k: 'connections', art: '/art/village-path/spot-connections.webp', icon: 'handshake', label: 'Connections', short: 'Connections', x: 17, y: 57 },
-  { k: 'groups', art: '/art/village-path/spot-groups.webp', icon: 'tent', label: 'Your crews', short: 'Crews', x: 83, y: 38 },
-  { k: 'cottage', art: '/art/village-path/spot-cottage.webp', icon: 'cottage', label: 'Cottage Chats', short: 'Cottage Chats', x: 83, y: 57 },
-  { k: 'campfires', art: '/art/life/life-fire-2.webp', icon: 'campfire', label: 'Your Campfires', short: 'Campfires', x: 50, y: 32, s: 0.9 },
-  { k: 'chat', art: '/art/village-path/spot-chat.webp', icon: 'chat-bubble', label: 'Village Square', short: 'Village Square', x: 19, y: 79 },
-  { k: 'help', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Help', short: 'Help', x: 81, y: 79 },
-  { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'My Corner', short: 'My Corner', x: 50, y: 56, s: 1.35 },
-  { k: 'messages', art: '/art/village-path/spot-messages.webp', icon: 'mailbox', label: 'Messages', short: 'Messages', x: 50, y: 87, s: 0.9 },
+  { k: 'villages', art: '/art/village-path/spot-visits.webp', icon: 'houses', label: 'Villages', short: 'Villages', x: 50, y: 10 },
+  { k: 'orgs', art: '/art/village-path/spot-orgs.webp', icon: 'people', label: 'Groups and crews', short: 'Groups', x: 18, y: 28 },
+  { k: 'chats', art: '/art/village-path/spot-messages.webp', icon: 'mailbox', label: 'Chats', short: 'Chats', x: 22, y: 70 },
+  { k: 'help', art: '/art/village-path/spot-skillshare.webp', icon: 'heart-hands', label: 'Help', short: 'Help', x: 81, y: 76 },
+  { k: 'me', art: '/art/village-path/spot-me.webp', icon: 'house', label: 'My Corner', short: 'My Corner', x: 50, y: 48, s: 1.35 },
 ]
 
 // The Organization page (OrgPage.jsx). Same roadmap.

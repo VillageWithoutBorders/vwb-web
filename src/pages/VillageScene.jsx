@@ -413,9 +413,15 @@ export default function VillageScene() {
   function cottageInfo(k) {
     switch (k) {
       case 'home': return { sub: home?.village_id ? t('Step into {village}', { village: home.name }) : home ? t('Find or start your home village') : t('Loading...') }
+      // Nov 10 (map review): one place each for villages, groups and crews, and chats.
+      case 'villages': return { sub: home?.village_id ? (visits.length ? t('{home} and {n} more', { home: home.name, n: visits.length }) : home.name) : home ? t('Find or start your home village') : t('Loading...') }
+      case 'chats': {
+        const n = unreadCount + chatsNew
+        return { sub: n ? t('{n} new', { n }) : t('Messages, village chats, and Campfires'), badge: n, lantern: n ? t('{n} new', { n }) : '' }
+      }
       case 'visits': return { sub: visits.length ? (visits.length === 1 ? t('1 village where you are a guest') : t('{n} villages where you are a guest', { n: visits.length })) : t('Villages you visit show up here') }
       case 'calendar': return { sub: t('Events and sign-ups near you') }
-      case 'orgs': return { sub: myOrgs.length ? (myOrgs.length === 1 ? t('1 group') : t('{n} groups', { n: myOrgs.length })) : t('Find a group near you') }
+      case 'orgs': return { sub: myOrgs.length + myGroups.length ? t('{g} groups, {c} crews', { g: myOrgs.length, c: myGroups.length }) : t('Find a group or crew near you') }
       case 'connections': return { sub: t('People you know on VWB') }
       case 'groups': return { sub: myGroups.length ? (myGroups.length === 1 ? t('1 emergency crew') : t('{n} emergency crews', { n: myGroups.length })) : t('Crews that help when disaster hits') }
       case 'cottage': return { sub: t('Private chats with people you chose') }
@@ -444,6 +450,7 @@ export default function VillageScene() {
       // Oct 28 (Jade): My Corner on the map opens My Corner, the same as the top bar button.
       case 'me': goTo('/me'); return
       case 'messages': goTo('/messages'); return
+      case 'chats': goTo('/messages'); return
       default: openSheet({ k })
     }
   }
@@ -459,10 +466,19 @@ export default function VillageScene() {
         {visits.map((v) => row('/village/' + v.id, 'houses', v.name, t('Guest')))}
         <Link className="btn btn-outline btn-full" to="/world">{t('See every village')}</Link>
       </>
+      case 'villages': return <>{title}
+        {home?.village_id
+          ? row('/village/' + home.village_id, 'houses', home.name, t('Your home village'))
+          : <Link className="btn btn-primary btn-full" to="/find-village">{t('Find or start your home village')}</Link>}
+        {visits.map((v) => row('/village/' + v.id, 'bridge', v.name, t('Guest')))}
+        <Link className="btn btn-outline btn-full" to="/world">{t('See every village')}</Link>
+      </>
       case 'orgs': return <>{title}
-        {myOrgs.length === 0 && <p>{t('You are not in a group yet.')}</p>}
+        {myOrgs.length + myGroups.length === 0 && <p>{t('You are not in a group or crew yet.')}</p>}
         {myOrgs.map((o) => row('/orgs/' + o.id, 'people', o.name, t('Group')))}
+        {myGroups.map((o) => row('/orgs/' + o.id, 'tent', o.name, t('Emergency crew')))}
         <Link className="btn btn-outline btn-full" to="/world?tab=orgs">{t('See every group')}</Link>
+        <Link className="btn btn-outline btn-full" to="/start-group">{t('Start a group or crew')}</Link>
       </>
       case 'groups': return <>{title}
         {myGroups.length === 0 && <p>{t('You are not in an emergency crew yet. Crews help when disaster hits.')}</p>}

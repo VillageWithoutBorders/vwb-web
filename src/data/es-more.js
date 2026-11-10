@@ -5362,6 +5362,14 @@ const more = {
   'No events within {n} miles yet. Look farther, or check back soon.': 'Todavía no hay eventos a {n} millas. Busque más lejos, o vuelva pronto.',
   'More organizers ({n})': 'Más organizadores ({n})',
   'Having trouble? Other ways': '¿Problemas? Otras formas',
+  // ---- Nov 10: My Cottage map review ----
+  'Groups and crews': 'Grupos y cuadrillas',
+  '{home} and {n} more': '{home} y {n} más',
+  'Messages, village chats, and Campfires': 'Mensajes, chats de aldea y fogatas',
+  '{g} groups, {c} crews': '{g} grupos, {c} cuadrillas',
+  'Find a group or crew near you': 'Busque un grupo o cuadrilla cerca',
+  'You are not in a group or crew yet.': 'Todavía no está en un grupo ni en una cuadrilla.',
+  'Start a group or crew': 'Empezar un grupo o cuadrilla',
 }
 
 export default more
