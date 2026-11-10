@@ -366,8 +366,10 @@ export default function Feed() {
                     with Offer something beside it, so the top takes less room. */}
                 {!simple && <HelpSwitch />}
                 <div className="feed-title-row">
-                    <h1>{t('Offer Help')}</h1>
-                    {!simple && <button type="button" className="btn btn-primary feed-title-btn" onClick={() => navigate('/post-offer')}><span aria-hidden="true">+</span> {t('Offer something')}</button>}
+                    {/* Round D (Nov 10, Jade): the title said Offer Help right under the Offer Help tab.
+                        It stays for screen readers; on screen the tab already says it. Simple view keeps it. */}
+                    <h1 className={simple ? undefined : 'sr-only'}>{t('Offer Help')}</h1>
+                    {!simple && <button type="button" className="btn btn-primary feed-title-btn" onClick={() => navigate('/post-offer')}><span aria-hidden="true">+</span> {t('Post an offer')}</button>}
                 </div>
                 <p className="feed-subtitle feed-subtitle-tight">{view === 'offers' ? t('Free things and help your neighbors are sharing.') : t('Neighbors near you who need a hand. Tap Offer Help on one, or tap the card to read more.')}</p>
             </div>

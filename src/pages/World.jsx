@@ -359,7 +359,8 @@ export default function World() {
         <button type="button" aria-pressed={net === 'orgs' || net === 'groups'} onClick={() => setNet('orgs')}><span aria-hidden="true"><Icon name="people" /></span> {t('Groups')}</button>
         {/* Oct 25: the third button opens the resource hub (the same page as Ask for help).
             Emergency crews are reached from the Groups view. */}
-        <button type="button" onClick={() => navigate('/ask')}><span aria-hidden="true"><Icon name="heart-hands" /></span> {t('Resources')}</button>
+        {/* Round D (Nov 10): every door to Resources goes to the one Resources page. */}
+        <button type="button" onClick={() => navigate('/community/resources')}><span aria-hidden="true"><Icon name="heart-hands" /></span> {t('Resources')}</button>
       </div>
 
       {villages === null && <p className="wd-sub" role="status">{t('Loading your world...')}</p>}

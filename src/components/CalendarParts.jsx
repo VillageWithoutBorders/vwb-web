@@ -252,14 +252,18 @@ export function CalendarDay({ day, events, newTab }) {
 }
 
 // Month calendar by default, with a switch to the plain list.
-export function CalendarView({ events, newTab, emptyText, belowTabs = null }) {
+export function CalendarView({ events, newTab, emptyText, belowTabs = null, mode: modeProp, onMode }) {
   const t = useT()
-  const [mode, setMode] = useState('list')
+  const [modeOwn, setModeOwn] = useState('list')
+  // Round D (Nov 10): the Calendar page can hold List / Month itself, beside its title.
+  const mode = modeProp || modeOwn
+  const setMode = onMode || setModeOwn
   const wide = useWideScreen()
   const upcoming = events.filter((e) => !hasEnded(e)).length
   return (
     <>
-      <p className="cal-sub" role="status">{upcoming === 0 ? t('No upcoming events found for this search. Try more miles.') : t(upcoming === 1 ? '1 upcoming event found.' : '{n} upcoming events found.', { n: upcoming })}</p>
+      {/* Round D (Nov 10, Jade): one empty message (emptyText), not two. */}
+      {upcoming > 0 && <p className="cal-sub" role="status">{t(upcoming === 1 ? '1 upcoming event found.' : '{n} upcoming events found.', { n: upcoming })}</p>}
       {/* Oct 28 (Jade): on a computer, the month and the list sit side by side, two even halves. */}
       {wide ? (
         <>
@@ -270,15 +274,23 @@ export function CalendarView({ events, newTab, emptyText, belowTabs = null }) {
           </div>
         </>
       ) : (<>
-      <div className="cal-mode" role="group" aria-label={t('How to show events')}>
-        <button type="button" className={mode === 'list' ? 'is-on' : ''} aria-pressed={mode === 'list'} onClick={() => setMode('list')}>{t('List')}</button>
-        <button type="button" className={mode === 'month' ? 'is-on' : ''} aria-pressed={mode === 'month'} onClick={() => setMode('month')}>{t('Month')}</button>
-      </div>
+      {!onMode && <CalendarModeSwitch mode={mode} onMode={setMode} />}
       {belowTabs}
       {mode === 'month'
         ? <CalendarMonth events={events} newTab={newTab} />
         : <CalendarEventList events={events.filter((e) => !hasEnded(e))} newTab={newTab} emptyText={emptyText} />}
       </>)}
     </>
+  )
+}
+
+// List or Month (phones). The Calendar page shows it beside its title (Round D, Nov 10).
+export function CalendarModeSwitch({ mode, onMode }) {
+  const t = useT()
+  return (
+    <div className="cal-mode" role="group" aria-label={t('How to show events')}>
+      <button type="button" className={mode === 'list' ? 'is-on' : ''} aria-pressed={mode === 'list'} onClick={() => onMode('list')}>{t('List')}</button>
+      <button type="button" className={mode === 'month' ? 'is-on' : ''} aria-pressed={mode === 'month'} onClick={() => onMode('month')}>{t('Month')}</button>
+    </div>
   )
 }

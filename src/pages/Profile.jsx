@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import HomeVillageRow from '../components/HomeVillageRow'
 import { VouchRequestsForMe } from '../components/PersonalVouches'
-import PastTasks from '../components/PastTasks'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
@@ -351,7 +350,12 @@ export default function Profile() {
         </div>
 
         <div className="me-right">
-        <PastTasks />
+        {/* Round D (Nov 10): past tasks moved to Offer Help > Your tasks > Done. */}
+        <Link to="/tasks?tab=archived" className="corner-item profile-done-link">
+          <span aria-hidden="true"><Icon name="books" /></span>
+          <span className="corner-item-text">{t('Tasks you finished')}<small>{t('Your tasks, Done')}</small></span>
+          <span className="corner-arrow" aria-hidden="true">›</span>
+        </Link>
 
         {profile?.is_hope_ambassador && (
           <div className="profile-details" style={{ marginTop: '1rem' }}>
