@@ -67,6 +67,13 @@ export default function World() {
   const t = useT()
   const navigate = useNavigate()
   const { profile, organizations } = useAuth()
+  // Round B (Nov 10, Jade): village names on the globe drop the state when it is your own
+  // ("Chattanooga, TN" shows "Chattanooga" for someone in Tennessee). Screen readers hear the full name.
+  const myState = ((profile?.neighborhood || '').match(/,\s*([A-Za-z]{2})\s*$/) || [])[1]?.toUpperCase() || ''
+  const shortName = (name) => {
+    const m = (name || '').match(/^(.*?),\s*([A-Za-z]{2})\s*$/)
+    return m && myState && m[2].toUpperCase() === myState ? m[1] : name
+  }
   const [params, setParams] = useSearchParams()
   const asked = params.get('tab')
   const net = asked === 'orgs' || asked === 'groups' ? asked : 'villages'
@@ -307,7 +314,7 @@ export default function World() {
             ))}
             {net === 'villages' && villageMap && villageMap.nodes.map((v) => (
               <span key={'t' + v.id} className={'wd-tag' + (v.is_mine ? ' wd-tag-under' : ' wd-tag-mid')} aria-hidden="true" style={{ left: v.gx + '%', top: v.gy + '%' }}>
-                {v.is_mine ? '' : '+ '}{v.name}
+                {v.is_mine ? '' : '+ '}{shortName(v.name)}
               </span>
             ))}
 

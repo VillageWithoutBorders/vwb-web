@@ -69,7 +69,21 @@ const URGENCY_CONFIG = {
 export default function Feed() {
     const simple = useSimpleView()
     const t = useT()
-    const { user, profile } = useAuth()
+    const { user, profile, refreshProfile } = useAuth()
+    // Round B (Nov 10): at Larger and Largest the skill and sort menus fold behind one
+    // "Filter and sort" button (index.css hides them until it is open).
+    const [filtersOpen, setFiltersOpen] = useState(false)
+    // Round B: "Look farther away" on an empty list. Saves the help radius on the account.
+    const [fartherOpen, setFartherOpen] = useState(false)
+    const [fartherNote, setFartherNote] = useState('')
+    async function lookFarther(miles) {
+        setFartherNote('')
+        const { error } = await supabase.from('helper_profiles').update({ radius_miles: miles }).eq('user_id', user.id)
+        if (error) { console.error('Failed to change help radius:', error); setFartherNote(t("We couldn't change that. Try again.")); return }
+        setFartherOpen(false)
+        await refreshProfile()
+        loadFeed()
+    }
     const navigate = useNavigate()
     const location = useLocation()
     const [successMsg, setSuccessMsg] = useState(location.state?.message || null)
@@ -378,7 +392,12 @@ export default function Feed() {
             {/* Nov 10 (Jade): Emergency Response is one tap from here too. */}
             <EmergencyDoor />
 
-            <div className="feed-filters">
+            {!simple && (
+                <button type="button" className="btn btn-outline btn-full feed-filter-toggle" aria-expanded={filtersOpen} aria-controls="feed-filters" onClick={() => setFiltersOpen((o) => !o)}>
+                    {t('Filter and sort')} <span aria-hidden="true">{filtersOpen ? '\u25B4' : '\u25BE'}</span>
+                </button>
+            )}
+            <div className={'feed-filters' + (filtersOpen ? ' feed-filters-open' : '')} id="feed-filters">
                 {view === 'requests' ? (
                     <select className="feed-filter-select" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} aria-label={t('Filter by skill')}>
                         <option value="all">{t('All skills')}</option>
@@ -416,11 +435,25 @@ export default function Feed() {
                 <div className="feed-loading"><div className="feed-loading-spinner" /><p>{t('Loading...')}</p></div>
             ) : view === 'requests' ? (
                 !myLoc ? null : sortedRequests.length === 0 ? (
-                    <div className="feed-empty">
-                        <span className="feed-empty-icon" aria-hidden="true"><Icon name="sprout" size={64} /></span>
-                        <h2>{t('No requests right now')}</h2>
-                        <p>{filterSkill !== 'all' ? t('No open "{skill}" requests nearby.', { skill: t(filterSkill) }) : t('No open requests in your area right now.')}</p>
-                        <button className="btn btn-primary" onClick={() => navigate('/ask')}>{t('Post a request')}</button>
+                    // Round B (Nov 10, Jade): one line, and two ways forward.
+                    <div className="feed-empty feed-empty-short">
+                        <p className="feed-empty-line">{filterSkill !== 'all' ? t('No open "{skill}" requests nearby.', { skill: t(filterSkill) }) : t('No requests near you right now.')}</p>
+                        <div className="feed-empty-actions">
+                            <button type="button" className="btn btn-outline" aria-expanded={fartherOpen} onClick={() => setFartherOpen((o) => !o)}>{t('Look farther away')}</button>
+                            <button type="button" className="btn btn-primary" onClick={() => navigate('/post-offer')}>{t('Post an offer')}</button>
+                        </div>
+                        {fartherOpen && (
+                            <div className="feed-farther" role="group" aria-label={t('How far to look')}>
+                                <p className="feed-empty-line">{t('Now {n} miles. Look within:', { n: profile?.radius_miles || 10 })}</p>
+                                <div className="feed-empty-actions">
+                                    {[25, 50].filter((m) => m > (profile?.radius_miles || 10)).map((m) => (
+                                        <button key={m} type="button" className="btn btn-outline" onClick={() => lookFarther(m)}>{t('{n} miles', { n: m })}</button>
+                                    ))}
+                                    {(profile?.radius_miles || 10) >= 50 && <p className="feed-empty-line">{t('This is as far as it goes. Try Find resources, or post an offer.')}</p>}
+                                </div>
+                                {fartherNote && <p className="form-error" role="alert">{fartherNote}</p>}
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="feed-list">
