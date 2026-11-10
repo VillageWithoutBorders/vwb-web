@@ -5350,6 +5350,18 @@ const more = {
   'A gold line joins sister villages.': 'Una línea dorada une aldeas hermanas.',
   'A dotted path: neighbors from two villages have met.': 'Un camino punteado: vecinos de dos aldeas se han conocido.',
   '{name} village': 'Aldea de {name}',
+  // ---- Nov 10: Round D (Ask, Offer, Calendar) ----
+  'Or find a resource yourself': 'O busque un recurso usted mismo',
+  'Food, bills, rides, hotlines, and more near you': 'Comida, facturas, transporte, líneas de ayuda y más cerca de usted',
+  'Food, bills, rides, hotlines, and more near you, without waiting for a neighbor.': 'Comida, facturas, transporte, líneas de ayuda y más cerca de usted, sin esperar a un vecino.',
+  'Nothing done yet': 'Nada terminado todavía',
+  'Help that is happening now.': 'Ayuda que está pasando ahora.',
+  'Tasks you finished': 'Tareas que terminó',
+  'Your tasks, Done': 'Sus tareas, Hecho',
+  'No events within {n} miles yet. Post the first one, or look farther.': 'Todavía no hay eventos a {n} millas. Publique el primero, o busque más lejos.',
+  'No events within {n} miles yet. Look farther, or check back soon.': 'Todavía no hay eventos a {n} millas. Busque más lejos, o vuelva pronto.',
+  'More organizers ({n})': 'Más organizadores ({n})',
+  'Having trouble? Other ways': '¿Problemas? Otras formas',
 }
 
 export default more

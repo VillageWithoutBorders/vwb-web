@@ -734,13 +734,15 @@ export default function ActiveTasks() {
   const EMPTY = {
     requests: ['No open requests', 'When you ask for help, your request waits here until a neighbor says yes.', 'Ask for Help', '/ask'],
     active: ['No tasks in progress', 'When someone takes your request, or you help a neighbor, it shows here.', 'See who needs help', '/skillshare'],
-    archived: ['Nothing archived yet', 'Finished tasks move here once you have both said how it went.', null, null],
+    archived: ['Nothing done yet', 'Finished tasks move here once you have both said how it went.', null, null],
   }
   const MINE_TABS = [
     { id: 'requests', label: 'Requests', icon: '\u{1F198}' },
     { id: 'offers', label: 'Offers', icon: '\u{1F49A}' },
-    { id: 'active', label: 'Active', icon: '\u{1F91D}' },
-    { id: 'archived', label: 'Archived', icon: '\u{1F4E6}' },
+    // Round D (Nov 10, Jade): Now and Done. Done is the old Past tasks list. The addresses
+    // stay ?tab=active and ?tab=archived, so old links still work.
+    { id: 'active', label: 'Now', icon: '\u{1F91D}' },
+    { id: 'archived', label: 'Done', icon: '\u{1F4E6}' },
   ]
 
   // =============================================
@@ -757,7 +759,7 @@ export default function ActiveTasks() {
         <h1>{t('Your tasks')}</h1>
         {/* Was a floating button that covered task buttons on phones (Oct 22); now it sits in the page. */}
         <button type="button" className="btn btn-primary feed-title-btn mine-new" onClick={() => navigate(tab === 'offers' ? '/post-offer' : '/ask')}>
-          <span aria-hidden="true">+</span> {tab === 'offers' ? t('Offer something') : t('Ask for Help')}
+          <span aria-hidden="true">+</span> {tab === 'offers' ? t('Post an offer') : t('Ask for Help')}
         </button>
       </div>
 
@@ -770,6 +772,7 @@ export default function ActiveTasks() {
             id={'mine-' + mt.id}
             aria-selected={tab === mt.id}
             className={'home-tasks-tab' + (tab === mt.id ? ' on' : '')}
+            data-tip={mt.id === 'active' ? t('Help that is happening now.') : mt.id === 'archived' ? t('Help you finished with neighbors.') : undefined}
             onClick={() => setTab(mt.id)}
           >
             <span aria-hidden="true"><Icon name={mt.icon} /></span> {t(mt.label)}

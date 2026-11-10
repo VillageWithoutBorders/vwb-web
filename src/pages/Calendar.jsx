@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { fetchCalendarEvents, filterByDistance, savePlace, startingOrigin, memberArea } from '../utils/calendar'
 import CalendarSubscribe from '../components/CalendarSubscribe'
-import { CalendarLocationBar, CalendarView, CalendarEventList, CalendarMonth, CalendarDay, AllAgesFilter, dayKey } from '../components/CalendarParts'
+import { CalendarLocationBar, CalendarView, CalendarEventList, CalendarMonth, CalendarDay, AllAgesFilter, dayKey, CalendarModeSwitch } from '../components/CalendarParts'
 import { useWideScreen } from '../hooks/useWideScreen'
 import { hasEnded } from '../utils/calendar'
 import NearbyOrganizers from '../components/NearbyOrganizers'
@@ -94,7 +94,11 @@ export default function Calendar() {
   }
 
   const upcoming = visible.filter((e) => !hasEnded(e))
-  const emptyText = canPost ? t('No events nearby yet. Tap "New event" to post the first one.') : t('No events nearby yet. Check back soon, or try a wider distance.')
+  // Round D (Nov 10, Jade): one empty message that says how far it looked.
+  const emptyText = canPost
+    ? t('No events within {n} miles yet. Post the first one, or look farther.', { n: miles })
+    : t('No events within {n} miles yet. Look farther, or check back soon.', { n: miles })
+  const [calMode, setCalMode] = useState('list')
   const farBox = yourFarEvents.length > 0 ? (
             <details style={{ margin: '1rem 0' }}>
               <summary style={{ minHeight: 44, display: 'flex', alignItems: 'center', fontWeight: 600, cursor: 'pointer' }}>
@@ -164,7 +168,7 @@ export default function Calendar() {
           )}
           {!loading && !loadError && (<>
             <CalendarDay day={pickedDay} events={visible} />
-            <p className="cal-sub" role="status">{upcoming.length === 0 ? t('No upcoming events found for this search. Try more miles.') : t(upcoming.length === 1 ? '1 upcoming event found.' : '{n} upcoming events found.', { n: upcoming.length })}</p>
+            {upcoming.length > 0 && <p className="cal-sub" role="status">{t(upcoming.length === 1 ? '1 upcoming event found.' : '{n} upcoming events found.', { n: upcoming.length })}</p>}
             {farBox}
             <CalendarEventList events={upcoming} emptyText={emptyText} />
           </>)}
@@ -177,11 +181,13 @@ export default function Calendar() {
 
   return (
     <div className="cal-page">
-      <div className="cal-head">
+      <div className="cal-head cal-head-mode">
         <div>
           <h1>{t('Calendar')}</h1>
           <p className="cal-sub">{t('Gatherings, drives, volunteer shifts, and who is organizing near you')}</p>
         </div>
+        {/* Round D (Nov 10, Jade): List / Month sit by the title. */}
+        <CalendarModeSwitch mode={calMode} onMode={setCalMode} />
       </div>
 
       {/* Oct 28 (Jade): one calm row before the events. New event; Place and filters
@@ -227,6 +233,8 @@ export default function Calendar() {
             </details>
           ) : null}
           emptyText={emptyText}
+          mode={calMode}
+          onMode={setCalMode}
         />
       )}
 
