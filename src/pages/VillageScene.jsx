@@ -686,7 +686,8 @@ export default function VillageScene() {
       ) : (<>
 
       <div className="vs-title">
-        <h1>{village.name}</h1>
+        {/* Round C (Nov 10): "Ringgold village", not just "Ringgold, GA". */}
+        <h1>{t('{name} village', { name: (village.name || '').replace(/,\s*[A-Za-z]{2}\s*$/, '') })}</h1>
         <div className="vs-chips">
           {mine && !isGuest && (profile?.home_village_id === village.id ? <span className="vs-chip vs-chip-in">{t('Your home village')}</span> : <span className="vs-chip vs-chip-in">{t('You are in')}</span>)}
           {mine && isGuest && <span className="vs-chip vs-chip-guest">{t('Guest')}</span>}

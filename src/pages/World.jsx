@@ -278,7 +278,11 @@ export default function World() {
 
       <div className="wd-globe-wrap">
         {announceBoard && (
-          <button type="button" className="wd-news" aria-label={t('Announcements')} onClick={() => navigate('/village-square?board=' + announceBoard)}><Icon name="megaphone" /></button>
+          // Round C (Nov 10): the word shows under the button, so nobody has to guess what the megaphone is.
+          <button type="button" className="wd-news" onClick={() => navigate('/village-square?board=' + announceBoard)}>
+            <span className="wd-news-pic" aria-hidden="true"><Icon name="megaphone" /></span>
+            <span className="wd-news-word">{t('Announcements')}</span>
+          </button>
         )}
         <div className={'wd-float' + (leaving ? ' wd-leaving' : '')}>
           <div ref={globeRef} className={'wd-globe' + (leaving ? (leaving.spin ? ' wd-spin' : ' wd-zoom') : '')}
@@ -314,7 +318,8 @@ export default function World() {
             ))}
             {net === 'villages' && villageMap && villageMap.nodes.map((v) => (
               <span key={'t' + v.id} className={'wd-tag' + (v.is_mine ? ' wd-tag-under' : ' wd-tag-mid')} aria-hidden="true" style={{ left: v.gx + '%', top: v.gy + '%' }}>
-                {v.is_mine ? '' : '+ '}{shortName(v.name)}
+                {/* Round C (Nov 10): "+ Cleveland, TN" now says what a tap does. */}
+                {v.is_mine ? shortName(v.name) : t('Join {name}', { name: shortName(v.name) })}
               </span>
             ))}
 
@@ -363,7 +368,14 @@ export default function World() {
       <h1 className="wd-hint">{t(net === 'villages' ? (hasMine || villages === null ? 'Your villages' : 'Start here: find your village') : net === 'groups' ? 'Your emergency crews' : 'Your groups')}</h1>
       <p className="wd-sub">
         {net === 'villages'
-          ? t(hasMine ? 'Villages overlap where they share zip codes. A gold line joins sister villages. A dotted path means neighbors from two villages have met in person. Tap your village to step inside.' : 'Your village is your neighbors by zip code. Type your zip code to join. It takes a minute.')
+          // Round C (Nov 10): three short lines, left-aligned, instead of one long paragraph.
+          ? (hasMine
+            ? <span className="wd-key">
+                <span>{t('Circles overlap where villages share zip codes.')}</span>
+                <span>{t('A gold line joins sister villages.')}</span>
+                <span>{t('A dotted path: neighbors from two villages have met.')}</span>
+              </span>
+            : t('Your village is your neighbors by zip code. Type your zip code to join. It takes a minute.'))
           : net === 'groups'
             ? t(myGroups.length ? 'Emergency crews help when disaster hits. Tap your crew to see who is ready and what you bring.' : (orgMap.nodes.length ? 'You are not in a crew yet. Emergency crews help when disaster hits. Tap one to see what it does.' : 'No crews yet. Emergency crews help when disaster hits. You can start one.'))
             : t(myRealOrgs.length ? 'Groups are people working together, not places. A gold line joins two that chose to connect.' : 'You do not belong to a group yet. Tap one to see what it does.')}

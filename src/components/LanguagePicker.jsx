@@ -37,7 +37,7 @@ export default function LanguagePicker() {
         ))}
       </div>
       <p style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-        {t('Spanish is new. Some pages are still in English. Saved with your account, so it follows you to any phone.')}
+        {t('Spanish is new. Some pages are still in English.')}
       </p>
     </div>
   )

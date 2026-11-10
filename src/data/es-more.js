@@ -5338,6 +5338,18 @@ const more = {
   'Now {n} miles. Look within:': 'Ahora {n} millas. Buscar dentro de:',
   'This is as far as it goes. Try Find resources, or post an offer.': 'Esto es lo más lejos posible. Pruebe Buscar recursos, o publique una oferta.',
   "We couldn't change that. Try again.": 'No pudimos cambiar eso. Intente de nuevo.',
+  // ---- Nov 10: Round C ----
+  'Changes save right away and follow you to any phone.': 'Los cambios se guardan de inmediato y le siguen a cualquier teléfono.',
+  'The maps keep their painted colors.': 'Los mapas mantienen sus colores pintados.',
+  'Spanish is new. Some pages are still in English.': 'El español es nuevo. Algunas páginas siguen en inglés.',
+  'Calm stops moving pictures, sparkles, and sliding.': 'Calma detiene los dibujos que se mueven, los destellos y los deslizamientos.',
+  'Makes all the words and buttons bigger, everywhere in the app.': 'Hace más grandes todas las palabras y botones en toda la app.',
+  'Your avatar and cottage': 'Su avatar y su casita',
+  'Change my avatar and cottage': 'Cambiar mi avatar y mi casita',
+  'Circles overlap where villages share zip codes.': 'Los círculos se cruzan donde las aldeas comparten códigos postales.',
+  'A gold line joins sister villages.': 'Una línea dorada une aldeas hermanas.',
+  'A dotted path: neighbors from two villages have met.': 'Un camino punteado: vecinos de dos aldeas se han conocido.',
+  '{name} village': 'Aldea de {name}',
 }
 
 export default more

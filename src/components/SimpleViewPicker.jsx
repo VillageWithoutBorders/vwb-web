@@ -37,8 +37,9 @@ export default function SimpleViewPicker() {
         {opt(true, 'Simple', 'Bigger words and buttons. A plain home page with the main things: get help, give help, messages, and your village.')}
         {opt(false, 'Everything', 'The full app: maps of your village and area, group chats, a calendar, and more.')}
       </div>
-      <p role="status" style={{ margin: 0, padding: '0.25rem 1rem 0.75rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-        {t(note || 'Saved to your account, so it follows you to any phone.')}
+      {/* Round C (Nov 10): the "follows you to any phone" line is said once, at the top of Settings. */}
+      <p role="status" style={{ margin: 0, padding: note ? '0.25rem 1rem 0.75rem' : '0 0 0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+        {note ? t(note) : ''}
       </p>
     </div>
   )

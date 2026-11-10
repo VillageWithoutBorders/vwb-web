@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { resetAccountToBase } from '../utils/resetAccount'
-import { startAppTour } from '../components/AppTour'
 import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
 import RecoveryKeySection from '../components/RecoveryKeySection'
 import DevicesSheet from '../components/DevicesSheet'
@@ -47,6 +46,8 @@ export default function Settings() {
   const t = useT()
   const simpleOn = useSimpleView()
   const { user, profile, isAdmin, isFounder, signOut, signOutEverywhere, refreshProfile, refreshMfa } = useAuth()
+  // Round C (Nov 10): after Full setup is done, the button says Change, not Set up.
+  const setupDone = !!profile?.setup_done_at
   const navigate = useNavigate()
 
   const [showEmailChange, setShowEmailChange] = useState(false)
@@ -345,7 +346,7 @@ export default function Settings() {
   return (
     <div className="profile-page settings-page">
       {/* Nov 7 (Jade): the frame's Back button and the same title as every other page. */}
-      <h1 className="settings-title">{t('Settings & Privacy')}</h1>
+      <h1 className="settings-title">{t('Settings')}</h1>
 
       <div role="tablist" aria-label={t('Settings')} className="hub-tabs" style={{ marginTop: 0, marginBottom: '1rem' }}>
         <button type="button" role="tab" id="settings-tab-easy" aria-selected={tab === 'easy'} aria-controls="settings-panel" style={tabStyle(tab === 'easy')} onClick={() => pickTab('easy')}>
@@ -359,7 +360,7 @@ export default function Settings() {
       <div role="tabpanel" id="settings-panel" className={tab === 'account' ? 'settings-account' : undefined} aria-labelledby={'settings-tab-' + tab}>
       {tab === 'easy' && (
         <>
-          <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{t('Make VWB easier to see and use. Changes save right away.')}</p>
+          <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{t('Changes save right away and follow you to any phone.')}</p>
 
           {/* Nov 8 (Jade): three columns on a computer so it all fits on one screen:
               Seeing (with Language first), Using, and Learning the app.
@@ -382,15 +383,13 @@ export default function Settings() {
           </div>
 
           <div className="settings-col">
-          <h2 className="settings-group-h">{t('Learning the app')}</h2>
-          <button type="button" className="btn btn-outline btn-full" onClick={startAppTour} style={{ minHeight: '48px' }}>
-            <span aria-hidden="true"><Icon name="compass" /></span> {t('Take the app tour again')}
+          <h2 className="settings-group-h">{t('Your avatar and cottage')}</h2>
+          {/* Round C (Nov 10): the tour lives on My Corner now. Full setup stays here: a way back
+              for Quick start people who said Not now, and a way to change things after. */}
+          <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/setup')} style={{ minHeight: '48px' }}>
+            <span aria-hidden="true"><Icon name="cottage" /></span> {t(setupDone ? 'Change my avatar and cottage' : 'Set up your avatar and cottage')}
           </button>
-          {/* Nov 1 (Jade): a way back to Full setup, for Quick start people who said Not now. */}
-          <button type="button" className="btn btn-outline btn-full" onClick={() => navigate('/setup')} style={{ minHeight: '48px', marginTop: '0.75rem' }}>
-            <span aria-hidden="true"><Icon name="cottage" /></span> {t('Set up your avatar and cottage')}
-          </button>
-          <p style={{ margin: '0.4rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{t('Make your avatar, pick your skills, and name your cottage. About 10 minutes. Finishing it turns on the full app.')}</p>
+          <p style={{ margin: '0.4rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{t(setupDone ? 'Make your avatar, pick your skills, and name your cottage.' : 'Make your avatar, pick your skills, and name your cottage. About 10 minutes. Finishing it turns on the full app.')}</p>
           </div>
           </div>
         </>
