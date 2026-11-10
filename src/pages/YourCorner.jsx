@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AppMenu from '../components/AppMenu'
@@ -8,16 +8,25 @@ import { useWideScreen } from '../hooks/useWideScreen'
 import { useSimpleView } from '../utils/simpleView'
 import { useT } from '../utils/lang'
 import { openMyQr } from '../utils/qrSheet'
+import ToolsSheet, { EMERGENCY, toolRows } from '../components/ToolsSheet'
+import { useMyTools } from '../hooks/useMyTools'
+import { useAdminInbox } from '../hooks/useAdminInbox'
 
 // My Corner: everything about you in one place.
 // It shows under your cottage map (embedded) and as its own page at /me.
 // Oct 25 (Jade): My Corner in the top bar opens /me: profile, account, and settings.
-// Role tools and alerts live in My Tools.
+// Nov 10 (Jade): the My Tools tab is gone. Role tools live here, under Your roles.
+// Alerts have their own bell in the top bar.
 export default function YourCorner({ embedded = false }) {
   const t = useT()
   const { user, profile, organizations } = useAuth()
   const [avatarFailed, setAvatarFailed] = useState(false)
   const simple = useSimpleView()
+  // Your roles: the tools your roles give you (Admin, Ambassador, Organizer, crews, villages you keep).
+  const tools = useMyTools()
+  const { total: adminWaiting } = useAdminInbox()
+  const [rolesOpen, setRolesOpen] = useState(false)
+  const rolesBtn = useRef(null)
   // Your avatar from the avatar builder, or the same drawn avatar others see. The letter shows only if it can't load.
   const avatarSrc = profile?.avatar_url || 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + (user?.id || 'default')
   const name = profile?.display_name || t('Neighbor')
@@ -36,6 +45,16 @@ export default function YourCorner({ embedded = false }) {
       <section className="corner-group" aria-labelledby={hid}>
       <h2 id={hid} className="corner-group-h">{t('Your things')}</h2>
       <nav aria-labelledby={hid} className="corner-list">
+        {/* Only for people with a role. Opens their tools; a neighbor with no role never sees it. */}
+        {tools.length > 0 && (
+          <button type="button" className="corner-item corner-item-btn" data-tour="top-tools" aria-haspopup="dialog" onClick={(e) => { rolesBtn.current = e.currentTarget; setRolesOpen(true) }}>
+            <span aria-hidden="true"><Icon name="toolbox" /></span>
+            {adminWaiting > 0
+              ? <span className="corner-item-text">{t('Your roles')}<small>{t('{n} waiting in the Admin inbox', { n: adminWaiting })}</small></span>
+              : t('Your roles')}
+            <span className="corner-arrow" aria-hidden="true">›</span>
+          </button>
+        )}
         <Link to="/profile#past-tasks" className="corner-item"><span aria-hidden="true"><Icon name="box" /></span> {t('Past tasks')}<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <Link to="/trail" className="corner-item"><span aria-hidden="true"><Icon name="compass" /></span> {t('My trail')}<span className="corner-arrow" aria-hidden="true">›</span></Link>
         <button type="button" className="corner-item corner-item-btn" onClick={openMyQr}><span aria-hidden="true"><Icon name="qr-code" /></span> {t('My QR code')}<span className="corner-arrow" aria-hidden="true">›</span></button>
@@ -92,7 +111,12 @@ export default function YourCorner({ embedded = false }) {
     </div>
   )
 
-  if (!split) return page
+  const rolesSheet = rolesOpen && (
+    <ToolsSheet id="corner-roles-title" title={t('Your roles')} rows={[...toolRows(tools, adminWaiting), EMERGENCY]}
+      onClose={(refocus) => { setRolesOpen(false); if (refocus && rolesBtn.current && rolesBtn.current.focus) rolesBtn.current.focus() }} />
+  )
+
+  if (!split) return <>{page}{rolesSheet}</>
   return (
     <>
     <h1 className="corner-title corner-title-wide">{t('My Corner')}</h1>
@@ -111,6 +135,7 @@ export default function YourCorner({ embedded = false }) {
       <div className="corner-side-menu"><AppMenu inline only={['about', 'vwb']} /></div>
       </div>
     </div>
+    {rolesSheet}
     </>
   )
 }
