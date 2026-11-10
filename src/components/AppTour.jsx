@@ -19,20 +19,18 @@ import { useT } from '../utils/lang'
 // Everyone: can take it again any time from Help or Settings. A
 // replay can be closed whenever they like.
 //
-// Each step opens the real screen, dims everything else, and rings the
-// button or tab it is talking about, so people learn where things live
-// instead of reading about them. The card moves to the top or bottom of the
-// screen, whichever keeps the ringed spot in view. If a spot cannot be found
-// (a screen is slow, or a button is hidden for this person), the card still
-// shows and the tour keeps going. Plain words on purpose: short sentences,
-// one idea per card.
+// Nov 10 (Jade): the tour is short on purpose. Seven cards for the biggest uses of the
+// app: ask, offer, calendar, messages, your village, alerts and My Corner. People with a
+// role get one more card. Everything else is explained by the "What is this?" notes
+// (the ? button, or holding a finger on something; see HoverTips.jsx).
 //
-// Village intro: four short stops on the village map (the chat, the living
-// village, the Show/Hide names button, and Arrange and build my village).
+// Each card dims the screen and rings the button it is talking about. The tour stays on
+// the page you are on; the buttons it rings are in the top and bottom bars. The card
+// always shows its full words. If a spot cannot be found, the card still shows and the
+// tour keeps going. Plain words on purpose: short sentences, one idea per card.
 //
-// Practice round (optional): after SkillShare, a sample request, offer, and
-// event let people try the buttons. Nothing is saved, nobody is notified, and
-// "Skip practice" jumps past it at any time, even on the first-time tour.
+// Practice (optional): the last card and the Help page offer "Try a pretend request".
+// Nothing is saved and nobody is told.
 
 const START_EVENT = 'vwb:start-tour'
 
@@ -40,152 +38,50 @@ const START_EVENT = 'vwb:start-tour'
 // Steps with no target show a plain card over the dimmed screen.
 const TAB = (name) => '.tab-item[data-tour="' + name + '"]'
 
-// need: show the step only when it fits this person.
-//   'village'   in at least one village      'noVillage' not in any village yet
-//   'keeper'    looks after a village         'organizer' Head or organizer of an organization
-// route can be a function of ctx ({ villageId }).
-const VILLAGE = (c) => '/village/' + c.villageId
-const SPOT = (k) => '.vs-el[data-spot="' + k + '"]'
-
-// Steps for everyone, then the steps for your role, then a last card.
-// Each ringed spot is small on purpose, so the card never has to cover it.
-// The practice round is offered after the Help step and can be skipped.
+// need: show the step only when it fits this person ('tools': has a role).
+// note: one more small line under the words.
 const ALL_STEPS = [
   {
-    route: '/',
-    target: '.header-nav',
     icon: '\u{1F3E1}',
     title: 'Welcome to the village',
-    body: 'The top buttons are yours: My World, My Village, My Cottage, My Corner, and Alerts. The bottom buttons are things to do: Ask for Help, Offer Help, Calendar, and Messages. Tap Show me around to see each part. You can skip any time.',
+    body: 'Neighbors helping neighbors. Here are the main things you can do. It takes about a minute.',
   },
   {
-    route: '/world',
-    target: '.wd-switch',
-    icon: '\u{1F30D}',
-    title: 'World',
-    body: 'World opens the globe. Gold circles are your villages. Use these buttons to see your Villages and Groups, or open Resources.',
+    target: TAB('ask'),
+    icon: '\u{1F64B}',
+    title: 'Ask for Help',
+    body: 'Need a hand? Tap here. Ask your neighbors, or find food, rides, and more near you.',
+    note: 'A flood, storm, or fire? Tap Emergency Response on My Cottage. In danger? Call 911.',
   },
   {
-    need: 'noVillage',
-    route: '/find-village',
-    target: '#fv-search',
-    icon: '\u{1F3D8}\uFE0F',
-    title: 'Find your village',
-    body: 'Search for your town here, then tap Join. Your village is the neighbors who live near you. No village yet? Anyone can start one.',
+    target: TAB('offer'),
+    icon: '\u{1F91D}',
+    title: 'Offer Help',
+    body: 'Want to help? Tap here to see what neighbors near you need.',
   },
   {
-    need: 'village',
-    route: VILLAGE,
-    target: SPOT('chat'),
-    icon: '\u{1F3D8}\uFE0F',
-    title: 'Your village',
-    body: 'Your village is a little map. Each picture is a place. Tap one to go in. This one is the village chat, where neighbors talk.',
-  },
-  {
-    need: 'village',
-    route: VILLAGE,
-    target: SPOT('neighbors'),
-    icon: '\u{1F3E0}',
-    title: 'A living village',
-    body: 'More cottages light up as more neighbors join. The campfire grows when the chats are busy. A lantern means a keeper looks after the village.',
-  },
-  // Oct 27: the Names on the map step is gone. The names button now sits inside Customize, out of sight.
-  {
-    need: 'village',
-    route: '/cottage',
-    target: '[data-tour="village-arrange"]',
-    icon: '\u{1F333}',
-    title: 'My Cottage',
-    body: 'My Village, at the top, opens your home village. Your cottage is your house there: your own map with your chats, groups, and more. Tap Edit cottage, then Arrange and build, to move things, add trees and bridges, and draw roads. Only you see it.',
-  },
-  {
-    route: '/cottage',
-    target: '#today',
-    icon: '\u2600\uFE0F',
-    title: 'Today',
-    body: 'Your day at a glance, right under your cottage map: what needs you, your shortcuts, and what is coming up. Tap My Cottage at the top to come back here.',
-  },
-  {
-    route: '/calendar',
     target: TAB('calendar'),
     icon: '\u{1F4C5}',
     title: 'Calendar',
-    body: 'Events and volunteer sign-ups near you. Tap one to sign up or add it to your phone.',
+    body: 'Events and volunteer shifts near you. Tap one to sign up.',
   },
   {
-    route: '/help-doors',
-    target: '.doors',
-    icon: '\u{1F91D}',
-    title: 'Help',
-    body: 'Find resources near you, ask neighbors for a hand, or see who you can help. Your own requests are at the bottom.',
-  },
-  {
-    practice: 'intro',
-    icon: '\u270B',
-    title: 'Want to practice?',
-    body: 'Try a pretend request, offer, and event. Nothing is real and nobody is told. It takes about a minute. Or skip it.',
-  },
-  {
-    practice: 'request',
-    icon: '\u{1F64B}',
-    title: 'Practice: a request',
-    body: 'This is how a request looks to your neighbors. Tap the button to see what happens.',
-  },
-  {
-    practice: 'offer',
-    icon: '\u{1F381}',
-    title: 'Practice: an offer',
-    body: 'Neighbors share skills, time, and things they can spare. Tap the button to try it.',
-  },
-  {
-    practice: 'event',
-    icon: '\u{1F4C5}',
-    title: 'Practice: an event',
-    body: 'Events are gatherings and drives near you. Tap the button to try it.',
-  },
-  {
-    route: '/messages',
     target: TAB('messages'),
     icon: '\u{1F4AC}',
     title: 'Messages',
-    body: 'All your chats live here. Each kind is a room of a different size: the bigger the room, the less you share. Tap "Why so many kinds of chat?" at the top to learn which one to use.',
+    body: 'Your chats live here. A red number means someone wrote to you.',
   },
   {
-    route: '/cottage',
-    target: '[data-tour="emergency"]',
-    icon: '\u26A0\uFE0F',
-    title: 'Emergencies',
-    body: 'For a flood, storm, fire, or outage that hits many neighbors. Report it or sign up to help. Someone in danger? Call 911 first.',
+    target: '[data-tour="top-village"]',
+    icon: '\u{1F3D8}️',
+    title: 'My Village',
+    body: 'Your village is the neighbors who live near you. Tap here to visit it, or to find yours.',
   },
   {
-    need: 'keeper',
-    route: VILLAGE,
-    target: '[data-tour="keeper-tools"]',
-    icon: '\u{1F511}',
-    title: 'Keeper tools',
-    body: 'You look after this village. Here you see who wants to join, sister villages, and more.',
-  },
-  {
-    need: 'organizer',
-    route: '/org-dashboard',
-    icon: '\u{1F9F0}',
-    title: 'Organizer tools',
-    body: 'You help run a group. Here you see who wants to join, your connections, events, and settings.',
-  },
-  {
-    need: 'ambassador',
-    route: '/ambassador',
-    target: '.amb-title',
-    icon: '\u2B50',
-    title: 'Ambassador tools',
-    body: 'Emergencies to check, crews asking to respond, and needs near you, all in one place.',
-  },
-  {
-    route: '/',
-    target: '[data-tour="alerts"]',
+    target: '.header-nav',
     icon: '\u{1F514}',
-    title: 'Alerts',
-    body: 'Your alerts live here. A number shows when something is new. Tap the bell to read them. You can clear one, or clear them all.',
+    title: 'Alerts and My Corner',
+    body: 'The bell shows what is new. My Corner has your profile and Settings, where you can make the words bigger.',
   },
   {
     need: 'tools',
@@ -193,19 +89,11 @@ const ALL_STEPS = [
     target: '[data-tour="top-tools"]',
     icon: '\u{1F9F0}',
     title: 'Your roles',
-    body: 'You have a role, so My Corner has Your roles. Tap it to open your tools.',
-  },
-  {
-    route: '/cottage',
-    target: '[data-tour="corner"]',
-    icon: '\u{1F331}',
-    title: 'My Corner',
-    body: 'Tap your picture for My Corner: your profile, account, and settings. New here? Once a neighbor vouches for you, or you finish a task together, you can message people first and post offers.',
-    last: 'Take this tour again any time from Settings or Help.',
+    body: 'You have a role. Your tools are in My Corner, under Your roles.',
   },
 ]
 
-// Simple view gets a short tour.
+// Simple view gets its own short tour.
 const SIMPLE_STEPS = [
   {
     route: '/',
@@ -236,54 +124,36 @@ const SIMPLE_STEPS = [
     body: 'When something new happens, like a neighbor offering to help you, a number shows here.',
   },
   {
-    route: '/me',
-    target: '[data-tour="top-tools"]',
-    icon: '\u{1F9F0}',
-    title: 'Your roles',
-    body: 'You have a role, so My Corner has Your roles. Tap it to open your tools.',
-    need: 'tools',
-  },
-  {
     route: '/',
     target: '[data-tour="me"]',
     icon: '\u{1F331}',
     title: 'My Corner',
     body: 'Tap your picture for your profile and Settings, where you can make the words bigger. Want the full app? Tap Show me everything at the bottom of Home.',
-    last: 'Take this tour again any time from Settings or Help.',
+  },
+  {
+    route: '/me',
+    target: '[data-tour="top-tools"]',
+    icon: '\u{1F9F0}',
+    title: 'Your roles',
+    body: 'You have a role. Your tools are in My Corner, under Your roles.',
+    need: 'tools',
   },
 ]
 
-// Sample cards for the practice round. Static on purpose: no database, no alerts.
-const SAMPLES = {
-  request: {
-    label: 'Request',
-    title: 'SAMPLE: Help carrying groceries',
-    text: 'This is an example request. Nothing here is real.',
-    action: 'Offer Help',
-    after: 'Nice. In the real app, the person gets an alert, and the two of you can message to set a time and place. Your address stays private.',
-  },
-  offer: {
-    label: 'Offer',
-    title: 'SAMPLE: Free ride to the clinic',
-    text: 'This is an example offer. Nothing here is real.',
-    action: 'Ask about this',
-    after: 'Nice. In the real app, you can send a message to ask about it. Once a neighbor vouches for you, you can post offers too.',
-  },
-  event: {
-    label: 'Event',
-    title: 'SAMPLE: Community Cleanup Day',
-    text: 'This is an example event. Nothing here is real.',
-    action: 'Sign up',
-    after: 'Nice. In the real app, you would be on the list, and the organizers would see you are coming. You can take your name off any time.',
-  },
+// The pretend request. Static on purpose: no database, no alerts.
+const SAMPLE = {
+  title: 'SAMPLE: Help carrying groceries',
+  text: 'This is an example request. Nothing here is real.',
+  action: 'Offer Help',
+  after: 'Nice. In the real app, the person gets an alert, and the two of you can message to set a time and place. Your address stays private.',
 }
 
-function SampleCard({ kind }) {
+// Used on the tour's last card and on the Help page.
+export function SampleCard() {
   const t = useT()
   const [tried, setTried] = useState(false)
-  const s = SAMPLES[kind]
-  if (!s) return null
-  const tag = t('Sample ' + s.label.toLowerCase())
+  const s = SAMPLE
+  const tag = t('Sample request')
   return (
     <div className="tour-sample" role="group" aria-label={tag}>
       <span className="tour-sample-tag">{tag}</span>
@@ -300,16 +170,7 @@ function SampleCard({ kind }) {
 
 // Steps that fit this person (see "need" above).
 function stepsFor(ctx) {
-  if (ctx.simple) return SIMPLE_STEPS.filter((st) => st.need !== 'tools' || ctx.hasTools)
-  return ALL_STEPS.filter((st) => {
-    if (st.need === 'village') return !!ctx.villageId
-    if (st.need === 'noVillage') return ctx.ready && !ctx.villageId
-    if (st.need === 'keeper') return !!ctx.isKeeper
-    if (st.need === 'tools') return !!ctx.hasTools
-    if (st.need === 'organizer') return !!ctx.isOrganizer
-    if (st.need === 'ambassador') return !!ctx.isAmbassador
-    return true
-  })
+  return (ctx.simple ? SIMPLE_STEPS : ALL_STEPS).filter((st) => st.need !== 'tools' || ctx.hasTools)
 }
 
 // Call from anywhere (Menu, Help, Settings) to replay the tour.
@@ -364,19 +225,15 @@ export default function AppTour() {
     })
     return () => { alive = false }
   }, [open, user])
-  const isOrganizer = (organizations || []).some((o) => o.kind !== 'group' && (o.role === 'admin' || o.role === 'organizer'))
   const isAmbassador = !!profile?.is_hope_ambassador || profile?.role === 'admin' || profile?.role === 'founder'
   const simple = useSimpleView()
   // Anyone with a role has Your roles on My Corner, in Simple view too (Nov 10).
   const hasTools = isAmbassador || ctx.isKeeper || (organizations || []).some((o) => o.role === 'admin' || o.role === 'organizer')
-  const STEPS = stepsFor({ ...ctx, isOrganizer, isAmbassador, simple, hasTools })
+  const STEPS = stepsFor({ simple, hasTools })
   const step = STEPS[index] || STEPS[0]
   const isLast = index === STEPS.length - 1
-  const inPractice = !!step.practice
-  function skipPractice() {
-    const next = STEPS.findIndex((st, i) => i > index && !st.practice)
-    setIndex(next === -1 ? STEPS.length - 1 : next)
-  }
+  // The pretend request, opened from the last card.
+  const [practice, setPractice] = useState(false)
 
   // First time for a new member: open it, and it has to be finished.
   useEffect(() => {
@@ -386,7 +243,7 @@ export default function AppTour() {
 
   // Replays from Menu, Help, or Settings.
   useEffect(() => {
-    function start() { startPath.current = pathRef.current; setIndex(0); setError(''); setRequired(needsTour); setOpen(true) }
+    function start() { startPath.current = pathRef.current; setIndex(0); setError(''); setPractice(false); setRequired(needsTour); setOpen(true) }
     window.addEventListener(START_EVENT, start)
     return () => window.removeEventListener(START_EVENT, start)
   }, [needsTour])
@@ -394,9 +251,9 @@ export default function AppTour() {
   // Open the real screen for each step.
   useEffect(() => {
     if (!open) return
-    const to = typeof step.route === 'function' ? step.route(ctx) : step.route
+    const to = step.route
     if (to && pathRef.current !== to) navigate(to)
-  }, [open, index, ctx.villageId])
+  }, [open, index])
 
   // Find the thing to ring. The screen may still be loading, so keep looking
   // for a few seconds, and keep the ring in place if the page moves.
@@ -511,9 +368,6 @@ export default function AppTour() {
         <div className="tour-top">
           <span className="tour-count">{t('Step {n} of {total}', { n: index + 1, total: STEPS.length })}</span>
           <span className="tour-top-actions">
-            {inPractice && (
-              <button type="button" className="tour-skip" onClick={skipPractice}>{t('Skip practice')}</button>
-            )}
             {required ? (
               <button type="button" className="tour-skip" onClick={agree} disabled={saving}>{saving ? t('Saving...') : t('Skip tour')}</button>
             ) : (
@@ -530,9 +384,15 @@ export default function AppTour() {
             <h2 id="tourTitle" className="tour-title" tabIndex={-1} ref={headingRef}>{t(step.title)}</h2>
           </div>
           <p id="tourBody" className="tour-body">{t(step.body)}</p>
-          {step.practice && step.practice !== 'intro' && <SampleCard kind={step.practice} />}
-          {step.target && rect && <p className="tour-hint">{t('Look for the ringed spot on your screen.')}</p>}
-          {step.last && <p className="tour-hint">{t(step.last)}</p>}
+          {step.note && <p className="tour-hint">{t(step.note)}</p>}
+          {/* Said once, on the first card that rings something. */}
+          {step.target && rect && index === STEPS.findIndex((st) => st.target) && <p className="tour-hint">{t('Look for the ringed spot on your screen.')}</p>}
+          {isLast && <>
+            <p className="tour-hint">{t('Not sure what something is? Tap the ? and then tap it. Or hold your finger on it.')}</p>
+            {practice
+              ? <SampleCard />
+              : <button type="button" className="btn btn-outline tour-sample-btn" onClick={() => setPractice(true)}>{t('Try a pretend request')}</button>}
+          </>}
           {error && <p className="form-error" role="alert">{t(error)}</p>}
         </div>
 
@@ -546,7 +406,7 @@ export default function AppTour() {
             </button>
           ) : (
             <button type="button" className="btn btn-primary tour-btn tour-btn-main" onClick={() => setIndex(i => i + 1)}>
-              {index === 0 ? t('Show me around') : step.practice === 'intro' ? t('Try it') : t('Next')}
+              {index === 0 ? t('Show me around') : t('Next')}
             </button>
           )}
         </div>
