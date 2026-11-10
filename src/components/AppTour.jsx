@@ -337,6 +337,8 @@ export default function AppTour() {
   const [cardAtTop, setCardAtTop] = useState(false)
   const headingRef = useRef(null)
   const sheetRef = useRef(null)
+  // The step whose ringed spot was already slid into view (once per step).
+  const nudgedFor = useRef(-1)
   const startPath = useRef('/')
   const pathRef = useRef(pathname)
   const openRef = useRef(false)
@@ -350,7 +352,8 @@ export default function AppTour() {
     supabase.rpc('village_network').then(async ({ data, error: vErr }) => {
       if (!alive) return
       if (vErr) console.error('Tour: failed to load villages:', vErr)
-      const mine = (data || []).find((v) => v.is_mine)
+      // Nov 10 (Jade): "Your village" is your home village, not one you visit as a guest.
+      const mine = (data || []).find((v) => v.id === profile?.home_village_id) || (data || []).find((v) => v.is_mine)
       let keeper = false
       if (mine) {
         const { data: k, error: kErr } = await supabase.rpc('village_keepers_info', { p_village: mine.id })
@@ -432,10 +435,24 @@ export default function AppTour() {
     const spaceBelow = vh - tabH - (rect.top + rect.height) - 12
     const spaceAbove = rect.top - headH - 12
     // Prefer the bottom. Use the top when the bottom would cover the spot and the top has room.
-    // When neither side has room, use the bigger side and let the card scroll inside, so the ring stays in view.
-    const top = spaceBelow < cardH && (spaceAbove >= cardH || spaceAbove > spaceBelow)
-    setCardAtTop(top)
-    if (sheet && cardH > Math.max(spaceBelow, spaceAbove)) sheet.style.maxHeight = Math.max(160, top ? spaceAbove : spaceBelow) + 'px'
+    // Nov 10 (Jade): the words always show in full. The card used to shrink when neither side
+    // had room, which hid its title and words. Now the page slides the ringed spot up under
+    // the top bar once, to make room below it. If there is still no room (a spot as tall as
+    // the screen), the card keeps its full size and sits over part of the spot.
+    if (Math.max(spaceBelow, spaceAbove) < cardH && nudgedFor.current !== index) {
+      nudgedFor.current = index
+      const move = rect.top - headH - 14
+      if (Math.abs(move) > 4) {
+        const before = window.scrollY
+        window.scrollBy(0, move)
+        // The ring follows the spot within a moment and this runs again. If the page
+        // could not move (the spot is at the very top or bottom), place the card now.
+        if (Math.abs(window.scrollY - before) > 1) return
+      }
+    }
+    // No room on either side: the card goes to the bottom, so the top of the spot shows
+    // under the top bar, unless there is clearly more room above the spot.
+    setCardAtTop(spaceBelow < cardH && (spaceAbove >= cardH || (spaceAbove > spaceBelow && spaceAbove > 120)))
   }, [open, rect, index])
 
   // Move focus to each new card so screen readers read it.
