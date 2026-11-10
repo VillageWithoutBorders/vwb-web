@@ -52,7 +52,7 @@ const ALL_STEPS = [
     icon: '\u{1F64B}',
     title: 'Ask for Help',
     body: 'Need a hand? Tap here. Ask your neighbors, or find food, rides, and more near you.',
-    note: 'A flood, storm, or fire? Tap Emergency Response on My Cottage. In danger? Call 911.',
+    note: 'A flood, storm, or fire? Tap Emergency Response on that page. In danger? Call 911.',
   },
   {
     target: TAB('offer'),
