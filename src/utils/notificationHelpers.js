@@ -23,6 +23,8 @@ export async function markAllNotificationsRead(userId) {
     .update({ read: true })
     .eq('user_id', userId)
     .eq('read', false)
+    // New chat posts are not on the Alerts page (Nov 10). They clear when the chat is opened.
+    .not('type', 'in', '(message,group_post)')
   if (error) console.error('Failed to mark all read:', error)
 }
 
@@ -47,7 +49,8 @@ export async function setNotificationFollowUp(notificationId, value) {
 
 // Deletes every alert you can see, except the ones flagged to follow up.
 // Message alerts are left alone: they never show in the list, they only
-// exist to trigger push notifications.
+// exist to trigger push notifications. New chat posts ('group_post') too:
+// since Nov 10 they count on Messages and clear when the chat is opened.
 export async function clearAllNotifications(userId) {
   if (!userId) return { error: null }
   const { error } = await supabase
@@ -55,7 +58,7 @@ export async function clearAllNotifications(userId) {
     .delete()
     .eq('user_id', userId)
     .eq('follow_up', false)
-    .neq('type', 'message')
+    .not('type', 'in', '(message,group_post)')
   if (error) console.error('Failed to clear alerts:', error)
   return { error }
 }
