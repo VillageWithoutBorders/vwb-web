@@ -13,6 +13,7 @@ import { openMyQr } from '../utils/qrSheet'
 import ToolsSheet, { EMERGENCY, toolRows } from '../components/ToolsSheet'
 import { useMyTools } from '../hooks/useMyTools'
 import { useAdminInbox } from '../hooks/useAdminInbox'
+import { useEmergenciesICanHelp } from '../hooks/useEmergenciesICanHelp'
 
 // My Corner (/me): only the things that are yours and live nowhere else.
 // Nov 10 (Jade), top to bottom:
@@ -69,6 +70,26 @@ export default function YourCorner() {
     || (organizations || []).some((o) => o.kind === 'group' && (o.role === 'admin' || o.role === 'organizer')))
   const roleRows = emergencyRole ? toolRows(tools, adminWaiting) : [...toolRows(tools, adminWaiting), EMERGENCY]
 
+  // Nov 10 (Jade): the Emergency button says at a glance whether anything is open.
+  // Open: verified emergencies this person can act on (the same list as the banner).
+  // To check: reported but not checked yet, in villages a Hope Ambassador or admin can check.
+  const openNow = useEmergenciesICanHelp()
+  const [toCheck, setToCheck] = useState(0)
+  const checker = !!(isAdmin || profile?.is_hope_ambassador)
+  useEffect(() => {
+    if (!user?.id || !checker) return undefined
+    let alive = true
+    supabase.rpc('emergencies_i_can_check').then(({ data, error }) => {
+      if (error) { console.error('[YourCorner] emergencies to check', error); return }
+      if (alive) setToCheck((data || []).length)
+    })
+    return () => { alive = false }
+  }, [user?.id, checker])
+  const emNote = openNow.length > 0
+    ? (openNow.length === 1 ? t('1 open near you') : t('{n} open near you', { n: openNow.length }))
+    : t('None open now')
+  const emCheck = toCheck > 0 ? (toCheck === 1 ? t('1 waiting for a check') : t('{n} waiting for a check', { n: toCheck })) : ''
+
   // Your things (Nov 10): one row. On a computer it sits on the right, under the room.
   const thingsList = (hid) => (
     <section className="corner-group" aria-labelledby={hid}>
@@ -116,9 +137,13 @@ export default function YourCorner() {
       {!split && <h1 className="corner-title">{t('My Corner')}</h1>}
 
       {emergencyRole && (
-        <Link to="/emergency" className="corner-emergency" data-tip={t('Emergency: see the emergencies that are open and help respond.')}>
+        <Link to="/emergency" className={'corner-emergency' + (openNow.length || toCheck ? ' corner-emergency-live' : '')} data-tip={t('Emergency: see the emergencies that are open and help respond.')}>
           <Icon name="siren" size={28} />
-          <b>{t('Emergency')}</b>
+          <span className="corner-emergency-text">
+            <b>{t('Emergency')}</b>
+            <small>{emNote}{emCheck ? '. ' + emCheck : ''}</small>
+          </span>
+          {openNow.length + toCheck > 0 && <span className="corner-emergency-count" aria-hidden="true">{openNow.length + toCheck > 9 ? '9+' : openNow.length + toCheck}</span>}
           <span className="corner-emergency-go" aria-hidden="true">›</span>
         </Link>
       )}
