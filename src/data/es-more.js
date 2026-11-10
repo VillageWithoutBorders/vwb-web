@@ -5370,6 +5370,11 @@ const more = {
   'Find a group or crew near you': 'Busque un grupo o cuadrilla cerca',
   'You are not in a group or crew yet.': 'Todavía no está en un grupo ni en una cuadrilla.',
   'Start a group or crew': 'Empezar un grupo o cuadrilla',
+  // ---- Nov 10: Messages tabs ----
+  'Places': 'Lugares',
+  'New account: a few things open up soon': 'Cuenta nueva: algunas cosas se abren pronto',
+  'Private messages and the people you are connected with.': 'Mensajes privados y las personas con las que está conectado.',
+  'Village Square, Cottage Chats, and Campfires.': 'Plaza de la aldea, chats de la casita y fogatas.',
 }
 
 export default more

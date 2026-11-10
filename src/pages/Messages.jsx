@@ -844,8 +844,9 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
       <div className="msg-new-row">
         <div className="msg-new-main"><NewMessage /></div>
         {embedded && (
-          <button type="button" onClick={() => setShowSidebar(true)} className="msg-gear" aria-label={t('Message settings')}>
-            <Icon name="gear" size={28} />
+          // Round D (Nov 10, Jade): the gear says what it is.
+          <button type="button" onClick={() => setShowSidebar(true)} className="msg-gear msg-gear-word" data-tip={t('Folders, disappearing messages, read receipts, and blocked people.')}>
+            <Icon name="gear" size={24} /> <span>{t('Chat settings')}</span>
           </button>
         )}
       </div>

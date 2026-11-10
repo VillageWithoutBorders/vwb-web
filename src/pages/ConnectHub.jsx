@@ -8,7 +8,6 @@ import Messages from './Messages'
 import Conversation from './Conversation'
 import Icon from '../components/Icon'
 import { useWideScreen } from '../hooks/useWideScreen'
-import ChatGuide from '../components/ChatGuide'
 import { useSimpleView } from '../utils/simpleView'
 import { useT } from '../utils/lang'
 import '../desktop-chats.css'
@@ -34,7 +33,7 @@ const GroupBoard = lazy(() => import('./GroupBoard'))
 // members or opens anyone's chats for them.
 export default function ConnectHub() {
   const { user, isAdmin, organizations, established } = useAuth()
-  const { unreadCount } = useUnreadCount()
+  const { unreadCount, newBoards } = useUnreadCount()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [villageUnread, setVillageUnread] = useState(0)
@@ -57,6 +56,20 @@ export default function ConnectHub() {
   // Older links said tab=chats: that is the Cottage Chats tab now.
   const asked = params.get('tab') === 'chats' ? 'cottage' : params.get('tab')
   const active = tabs.some((tb) => tb.key === asked) ? asked : 'messages'
+
+  // Round D (Nov 10, Jade): three tabs instead of seven. People (private messages and
+  // Connections), Places (Village Square, Cottage Chats, Campfires), Groups. Admin for admins.
+  // Each kind of chat is still here, one tap further, so old ?tab= links keep working.
+  const FAMILIES = simple ? null : [
+    { key: 'people', label: 'People', parts: ['messages', 'connections'], badge: unreadCount },
+    { key: 'places', label: 'Places', parts: ['villages', 'cottage', 'campfires'], badge: villageUnread + ((newBoards && newBoards.size) || 0) },
+    ...((organizations || []).length > 0 ? [{ key: 'groups', label: 'Groups', parts: ['orgs'] }] : []),
+    ...(isAdmin ? [{ key: 'admin', label: 'Admin', parts: ['admin'] }] : []),
+  ]
+  const family = FAMILIES ? (FAMILIES.find((f) => f.parts.includes(active)) || FAMILIES[0]) : null
+  const partLabel = (k) => (tabs.find((tb) => tb.key === k) || {}).label || k
+  const partBadge = (k) => (tabs.find((tb) => tb.key === k) || {}).badge || 0
+  const goPart = (k) => setParams(k === 'messages' ? {} : { tab: k }, { replace: true })
 
   // Nov 1 (Jade): on a computer, Messages is side by side. The chat list stays on
   // the left and the chat you pick opens on the right (?c=<id>, so links work).
@@ -112,16 +125,41 @@ export default function ConnectHub() {
       <div className="hub-head" style={{ maxWidth: '640px', margin: '0 auto', padding: '1rem 1rem 0', boxSizing: 'border-box' }}>
         <h1 style={{ margin: '0 0 0.25rem' }}>{t('Messages')}</h1>
         <p className="cal-sub" style={{ marginTop: 0 }}>{simple ? t('Talk with one neighbor, or with a few people you chose.') : t('Chats, villages, and neighbors, all in one place.')}</p>
-        {established === false && <p className="new-account-note" role="status">{t(NEW_ACCOUNT_NOTE)}</p>}
-        {!simple && <ChatGuide />}
+        {/* Round D (Nov 10): the new-account note folds to one line, so chats show sooner. */}
+        {established === false && (
+          <details className="new-account-note hub-new-note">
+            <summary>{t('New account: a few things open up soon')}</summary>
+            <p>{t(NEW_ACCOUNT_NOTE)}</p>
+          </details>
+        )}
+        {FAMILIES ? (<>
+          <div role="tablist" aria-label={t('Where to connect')} className="hub-tabs hub-tabs-three">
+            {FAMILIES.map((f) => (
+              <button key={f.key} type="button" role="tab" id={'hub-tab-' + f.key} aria-selected={family.key === f.key} aria-controls="hub-panel" style={chip(family.key === f.key)}
+                onClick={() => goPart(f.parts[0])}>
+                {t(f.label)}{f.badge > 0 && <span className="hub-tab-count">{f.badge > 9 ? '9+' : f.badge}</span>}
+              </button>
+            ))}
+          </div>
+          {family.parts.length > 1 && (
+            <div className="hub-subtabs" role="group" aria-label={t(family.label)}>
+              {family.parts.map((k) => (
+                <button key={k} type="button" className={'hub-subtab' + (active === k ? ' on' : '')} aria-pressed={active === k} onClick={() => goPart(k)}>
+                  {t(partLabel(k))}{partBadge(k) > 0 && <span className="hub-tab-count">{partBadge(k) > 9 ? '9+' : partBadge(k)}</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </>) : (
         <div role="tablist" aria-label={t('Where to connect')} className="hub-tabs">
           {tabs.map((tb) => (
             <button key={tb.key} type="button" role="tab" id={'hub-tab-' + tb.key} aria-selected={active === tb.key} aria-controls="hub-panel" style={chip(active === tb.key)}
-              onClick={() => setParams(tb.key === 'messages' ? {} : { tab: tb.key }, { replace: true })}>
-              {t(tb.label)}{tb.badge > 0 && <span style={{ marginLeft: '0.4rem', background: 'var(--danger)', color: '#fff', borderRadius: '9px', padding: '0 6px', fontSize: '0.8125rem' }}>{tb.badge > 9 ? '9+' : tb.badge}</span>}
+              onClick={() => goPart(tb.key)}>
+              {t(tb.label)}{tb.badge > 0 && <span className="hub-tab-count">{tb.badge > 9 ? '9+' : tb.badge}</span>}
             </button>
           ))}
         </div>
+        )}
       </div>
   )
 
@@ -130,7 +168,7 @@ export default function ConnectHub() {
       <div className="hub-split">
         <div className="hub-left">
           {head}
-          <div role="tabpanel" id="hub-panel" aria-labelledby={'hub-tab-' + active}>
+          <div role="tabpanel" id="hub-panel" aria-labelledby={'hub-tab-' + (family ? family.key : active)}>
             {active === 'messages' && <Messages embedded onOpen={openChat} selectedId={openId} />}
             <Suspense fallback={<p className="cal-empty" style={{ padding: '1rem' }}>{t('Loading...')}</p>}>
               {active === 'villages' && <HubVillages onOpen={(id) => openOther(id)} selectedId={openBoard} />}
@@ -161,7 +199,7 @@ export default function ConnectHub() {
     <div>
       {head}
 
-      <div role="tabpanel" id="hub-panel" aria-labelledby={'hub-tab-' + active}>
+      <div role="tabpanel" id="hub-panel" aria-labelledby={'hub-tab-' + (family ? family.key : active)}>
         {active === 'messages' && <Messages embedded />}
         <Suspense fallback={<p className="cal-empty" style={{ padding: '1rem' }}>{t('Loading...')}</p>}>
           {active === 'villages' && <HubVillages />}
