@@ -8138,3 +8138,11 @@ html.calm-motion .read-bar-btn:not(:disabled):active { transform: none; }
 /* Messages: New message and Chat settings share a row when they fit, and stack when they don't. */
 .msg-new-row { flex-wrap: wrap; }
 .msg-new-main { flex: 1 1 11rem; }
+
+/* Round E (Nov 10): Bring your group asks the kind first, then shows how it starts. */
+.org-kind { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
+.org-kind legend { font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; color: var(--text); }
+.org-kind-choice, .org-default { display: flex !important; gap: 10px; align-items: flex-start; min-height: 44px; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 12px; font-weight: 500 !important; margin: 0 !important; cursor: pointer; overflow-wrap: anywhere; }
+.org-kind-choice.is-on { border: 2px solid var(--accent); }
+.org-kind-choice input, .org-default input { width: 24px; height: 24px; min-height: 24px; flex: none; margin-top: 2px; }
+.org-defaults { display: grid; gap: 8px; }

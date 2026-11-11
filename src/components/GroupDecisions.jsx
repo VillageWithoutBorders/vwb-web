@@ -25,14 +25,15 @@ function day(iso) {
   return new Date(iso).toLocaleDateString(getLang() === 'es' ? 'es-US' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-export default function GroupDecisions({ orgId }) {
+// startOpen (Round E): the Decide something button opens the suggest form right away.
+export default function GroupDecisions({ orgId, startOpen = false }) {
   const t = useT()
   const [data, setData] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   // Suggest form
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(!!startOpen)
   const [title, setTitle] = useState('')
   const [details, setDetails] = useState('')
   const [days, setDays] = useState(7)

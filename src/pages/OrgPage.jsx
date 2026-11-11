@@ -18,6 +18,7 @@ import { usePageMap, MapLayers, MapToolbar, ToolIcon, sceneProps, zoomLayer, ask
 import OrgSceneEditor from '../components/OrgSceneEditor'
 import GroupGear from '../components/GroupGear'
 import GroupResponse from '../components/GroupResponse'
+import GroupHome from '../components/GroupHome'
 import '../village-scene.css'
 import Icon from '../components/Icon'
 import { orgWords } from '../utils/roleWords'
@@ -74,6 +75,7 @@ export default function OrgPage() {
   const [asked, setAsked] = useState(false)
   const [askNote, setAskNote] = useState('')
   const [asking, setAsking] = useState(false)
+  const [memberCount, setMemberCount] = useState(null)
 
   const [sheet, setSheet] = useState(null)
   const [bump, setBump] = useState(null)
@@ -187,6 +189,23 @@ export default function OrgPage() {
     })
     return () => { alive = false }
   }, [id, isMember, canManage, user])
+
+  // Round E (Nov 10): members see What's needed on the group home, so needs load right away.
+  useEffect(() => {
+    if (isMember && org && posts === null) loadPosts()
+  }, [isMember, org?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Round E: how many people are in it. A number only, never names (vwb-group-kinds.sql).
+  useEffect(() => {
+    let alive = true
+    setMemberCount(null)
+    supabase.rpc('org_member_count', { p_org: id }).then(({ data, error }) => {
+      if (!alive) return
+      if (error) { if (error.code !== 'PGRST202') console.error('Failed to load member count:', error); return }
+      setMemberCount(typeof data === 'number' ? data : null)
+    })
+    return () => { alive = false }
+  }, [id])
 
   // Not a member: did I already ask to join this week?
   useEffect(() => {
@@ -318,6 +337,8 @@ export default function OrgPage() {
   const spots = SPOTS.filter((s) => !s.organizers || canManage).filter((s) => s.k === 'tools' || !hiddenKeys.includes(s.k))
     .map(named)
   const general = chats.find((c) => c.is_general)
+  // Round E: members already belong, so Get involved leaves their map (it stays in the list as Share this page).
+  const mapSpots = isMember ? spots.filter((s) => s.k !== 'involved') : spots
 
   // Arrange and build (Oct 22, vwb-map-layouts.sql): the Heads and organizers (a
   // group's Keeper and Helpers) set the shared look; anyone signed in can arrange
@@ -381,6 +402,10 @@ export default function OrgPage() {
   }
 
   function sheetBody(k) {
+    if (k === 'decide') {
+      return <><h2 id="op-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><Icon name="scroll" size={36} /></span> {t('Decide something')}</h2>
+        <GroupDecisions orgId={id} startOpen /></>
+    }
     const spot = SPOTS.find((s) => s.k === k)
     const title = <h2 id="op-sheet-title"><span aria-hidden="true" className="vs-sheet-ic"><SpotIcon spot={spot} size={36} /></span> {t(spot.label)}</h2>
     if (locked(spot)) {
@@ -563,10 +588,9 @@ export default function OrgPage() {
     await loadOrg()
   }
 
-  // Simple view: the few places most people need, in this order. Leaders see their tools first.
-  const simpleMain = !isMember ? (isGroup ? ['involved'] : ['needs', 'involved'])
-    : isGroup ? ['tools', 'ready', 'news', 'fires', 'events', 'members', 'rules']
-    : ['tools', 'news', 'fires', 'events', 'needs', 'members', 'rules']
+  // Simple view, people who are not members: the few places they need first.
+  // Members get the group home (Round E) and one More fold instead.
+  const simpleMain = isGroup ? ['involved'] : ['needs', 'involved']
   function roomRow(s) {
     const i = info(s.k)
     const lock = locked(s)
@@ -589,7 +613,7 @@ export default function OrgPage() {
 
 
   return (
-    <div className="vs-page vs-page-path">
+    <div className={'vs-page vs-page-path' + (isMember ? ' vs-page-member' : '')}>
 
       <div className="vs-title">
         <h1 className="org-title"><span className="org-sign" aria-hidden="true"><Icon name={sign} size={40} /></span>{org.name}</h1>
@@ -598,12 +622,20 @@ export default function OrgPage() {
           {isGroup ? <span className="vs-chip"><Icon name="tent" /> {t('Emergency crew')}</span> : <span className="vs-chip"><Icon name="people" /> {t('Group')}</span>}
           {isGroup && org.response_status === 'approved' && <span className="vs-chip vs-chip-in"><Icon name="check" /> {t('Approved to respond')}</span>}
           {place && <span className="vs-chip">{t('Near {place}', { place })}</span>}
+          {memberCount > 0 && <span className="vs-chip">{memberCount === 1 ? t('1 member') : t('{n} members', { n: memberCount })}</span>}
           {org.invisible
             ? <span className="vs-chip"><Icon name="lock" /> {t('Invisible: members only')}</span>
             : org.hide_from_public && <span className="vs-chip">{t('Seen only by VWB members')}</span>}
         </div>
         {org.description && <p className="vs-note" style={{ marginTop: 10 }}>{org.description}</p>}
       </div>
+
+      {/* Round E (Nov 10): members land on four parts first: on a phone above the map,
+          on a computer at the top of the right side. Everything else is under More about this group. */}
+      {isMember && <div className="gh-wrap">
+        <GroupHome org={org} events={events} posts={posts} chats={chats} news={news} canManage={canManage}
+          hasNeedsSpot={spots.some((s) => s.k === 'needs')} onOpen={(k) => { if (k === 'needs' && posts === null) loadPosts(); openSheet({ k }) }} />
+      </div>}
 
       {/* Public profile (Oct 25): people who are not members see how to reach the
           organization, what's coming up and what it shares first. Ask to join sits
@@ -618,7 +650,7 @@ export default function OrgPage() {
        <div {...zoomLayer(b)}>
         <img className="vs-ground" src={backgroundSrc(b.world.bg)} alt="" width="720" height="1080" fetchpriority="high" />
         <MapLayers b={b} />
-        {spots.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
+        {mapSpots.filter((s0) => arrange || !isHidden(s0.k)).map((s0) => {
           const s = placed(s0)
           const i = info(s.k)
           const lock = locked(s)
@@ -689,17 +721,22 @@ export default function OrgPage() {
       )}
 
       <div className="vs-body">
-        {isMember && general && <button type="button" className="btn btn-primary btn-full vs-big" onClick={() => navigate('/groups/' + general.id)}><Icon name="campfire" /> {t('Open the general chat')}</button>}
-        <h2 className="vs-pick-h">{t('Or pick from the list')}</h2>
+        {isMember && (
+          <details className="op-more">
+            <summary>{t('More about {name}', { name: org.name })}</summary>
+            <div className="vs-list">{spots.map(roomRow)}</div>
+          </details>
+        )}
+        {!isMember && <h2 className="vs-pick-h">{t('Or pick from the list')}</h2>}
         {/* Simple view (Oct 27): the main things first, the rest folded under More. */}
-        {simple && <div className="vs-list">{spots.filter((s) => simpleMain.includes(s.k)).sort((a, b) => simpleMain.indexOf(a.k) - simpleMain.indexOf(b.k)).map(roomRow)}</div>}
-        {simple && spots.some((s) => !simpleMain.includes(s.k)) && (
+        {!isMember && simple && <div className="vs-list">{spots.filter((s) => simpleMain.includes(s.k)).sort((a, b) => simpleMain.indexOf(a.k) - simpleMain.indexOf(b.k)).map(roomRow)}</div>}
+        {!isMember && simple && spots.some((s) => !simpleMain.includes(s.k)) && (
           <details className="op-simple-more">
             <summary>{t('More about {name}', { name: org.name })}</summary>
             <div className="vs-list">{spots.filter((s) => !simpleMain.includes(s.k)).map(roomRow)}</div>
           </details>
         )}
-        {!simple && <div className="vs-list">{spots.map(roomRow)}</div>}
+        {!isMember && !simple && <div className="vs-list">{spots.map(roomRow)}</div>}
 
         {!isMember && (
           <section className="op-join" aria-labelledby="op-join-h">
