@@ -625,7 +625,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
 
   const offerCardStyle = {
     background: 'var(--success-bg)',
-    border: '1px solid #2d6a4f',
+    border: '1px solid #2E4D46',
     borderRadius: '12px',
     padding: '1rem',
     marginBottom: '0.75rem',

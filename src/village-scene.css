@@ -110,13 +110,13 @@
 .vs-page {
   color-scheme: dark;
   /* Nov 5: --bg too, or panels turned cream in light mode under light text. */
-  --bg: #121212;
+  --bg: #121a17;
   --text-strong: #fff; --text: #e8e8e8; --text-soft: #ccc; --text-secondary: #aaa; --text-muted: #8a8a8a;
-  --white: #1e1e1e; --surface: #1e1e1e; --surface-2: #222; --surface-3: #333; --surface-sunk: #111;
-  --border: #333; --border-strong: #444; --green-light: #1a332a;
-  --accent: #4ecca3; --on-accent: #1a1a1a; --btn-bg: #1D9E75; --btn-ink: #1e1e1e; --btn-hover: #2bbf8e;
+  --white: #1a2420; --surface: #1a2420; --surface-2: #1f2a26; --surface-3: #2c3a35; --surface-sunk: #0e1513;
+  --border: #33433d; --border-strong: #43554e; --green-light: #23332d;
+  --accent: #BFD6CD; --on-accent: #1D1915; --btn-bg: #BFD6CD; --btn-ink: #1D1915; --btn-hover: #d4e5de;
   --warn: #ffaa44; --info: #66aaff; --danger: #ff6666; --gold: #ffcc66;
-  --success-bg: #1a4a3a; --info-bg: #1a3a5a; --warn-bg: #3a2a1a; --danger-bg: #3a1a1a;
+  --success-bg: #24403a; --info-bg: #1a3a5a; --warn-bg: #3a2a1a; --danger-bg: #3a1a1a;
   --purple: #c77dff; --purple-bg: #3a1a4a;
 }
 

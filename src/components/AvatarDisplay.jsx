@@ -185,16 +185,16 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
               </div>
             )}
             {info?.myId && info.myId !== userId && (
-              <button type="button" onClick={messageThem} disabled={messaging} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.65rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? t('Opening...') : t('Message')}</button>
+              <button type="button" onClick={messageThem} disabled={messaging} style={{ width: '100%', marginBottom: '0.5rem', padding: '0.65rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: messaging ? 'default' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: messaging ? 0.6 : 1 }}>{messaging ? t('Opening...') : t('Message')}</button>
             )}
             {/* Nov 1 (Jade): visit their cottage, when they let you. */}
             {info?.canVisit && !blockedBy.has(userId) && (
-              <button type="button" onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId + '/cottage') }} style={{ width: '100%', minHeight: 44, marginBottom: '0.5rem', padding: '0.6rem', borderRadius: '8px', border: '1px solid #4ecca3', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{t('Visit their cottage')}</button>
+              <button type="button" onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId + '/cottage') }} style={{ width: '100%', minHeight: 44, marginBottom: '0.5rem', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--accent)', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem' }}>{t('Visit their cottage')}</button>
             )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button onClick={(e) => { e.stopPropagation(); setShowPopup(false) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>{t('Close')}</button>
               {!blockedBy.has(userId) && (
-                <button onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>{t('View profile')}</button>
+                <button onClick={(e) => { e.stopPropagation(); setShowPopup(false); navigate('/u/' + userId) }} style={{ flex: 1, padding: '0.6rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>{t('View profile')}</button>
               )}
             </div>
           </div>
