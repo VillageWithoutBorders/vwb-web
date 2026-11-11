@@ -8247,3 +8247,15 @@ html.text-larger .acc-list > div, html.text-largest .acc-list > div { grid-templ
 html.text-largest .plan-slot-row { grid-template-columns: 1fr; }
 .plan-task { display: grid; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 .plan-next { margin-top: 16px; }
+
+/* Round F part 2 (Nov 11): partner groups, teams. */
+.partner-box { border: 2px solid var(--gold, #f2c763); }
+.partner-ask { display: grid; gap: 8px; }
+.partner-ask p { margin: 0; overflow-wrap: anywhere; }
+.partner-tags { display: grid; gap: 8px; }
+.partner-tags input { width: 100%; box-sizing: border-box; min-height: 44px; font-size: 1rem; }
+.partner-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 6px 0; }
+.partner-row span { min-width: 0; overflow-wrap: anywhere; }
+.partner-row small { display: block; color: var(--text-secondary); font-size: .875rem; }
+.partner-row .btn { min-height: 44px; }
+.plan-team-tag { margin: 0 0 4px; }

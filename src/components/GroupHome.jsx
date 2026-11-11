@@ -55,7 +55,7 @@ export default function GroupHome({ org, events, posts, chats, news, canManage, 
         {next.map((ev) => (
           <button key={ev.id} type="button" className="vs-row" onClick={() => navigate('/events/' + ev.id)}>
             <span aria-hidden="true"><Icon name="calendar" /></span> {ev.title}
-            <small>{dayLabel(ev.starts_at)} {timeRange(ev)}{ev.is_signed_up ? ' · ' + t("You're signed up") : ''}</small>
+            <small>{dayLabel(ev.starts_at)} {timeRange(ev)}{ev.partner_host ? ' · ' + t('Hosted by {host}', { host: ev.partner_host }) : ''}{ev.is_signed_up ? ' · ' + t("You're signed up") : ''}</small>
           </button>
         ))}
         <div className="gh-more">

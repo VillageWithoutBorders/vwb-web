@@ -2,6 +2,7 @@ import Icon from '../components/Icon'
 import { useCallback, useEffect, useState } from 'react'
 import EventShifts from '../components/EventShifts'
 import EventRoles, { EventMyTasks } from '../components/EventRoles'
+import { useEventPartners, hostedLine, PartnerAnswer, PartnerTags } from '../components/EventPartners'
 import { useBlockedBy } from '../utils/blockedBy'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -56,6 +57,8 @@ export default function EventPage() {
   const [organizerMsg, setOrganizerMsg] = useState('')
   // Round E part 4: access notes and the watch-from-home link (vwb-event-access-rsvp.sql).
   const [accessInfo, setAccessInfo] = useState(null)
+  // Round F part 2: partner groups on this one shared event.
+  const [partners, reloadPartners] = useEventPartners(id, token, user)
 
   const load = useCallback(async () => {
     if (user && token) {
@@ -325,7 +328,7 @@ export default function EventPage() {
       <main className="cal-page">
         {cancelled && <p className="cal-error" role="status"><strong>{t('This event was cancelled.')}</strong></p>}
 
-        <p className="cal-sub" style={{ margin: 0 }}>{ev.organization_name || 'Village Without Borders'}</p>
+        <p className="cal-sub" style={{ margin: 0 }}>{ev.organization_name ? hostedLine(t, ev.organization_name, partners) : 'Village Without Borders'}</p>
         <h1 style={{ margin: '0.25rem 0 0.75rem', fontSize: '1.6rem', lineHeight: 1.25 }}>{ev.title}</h1>
 
         <div className="cal-detail-row">
@@ -386,6 +389,8 @@ export default function EventPage() {
         )}
 
         {ev.description && <p className="cal-description"><Linkify text={ev.description} /></p>}
+
+        {user && <PartnerAnswer eventId={id} rows={partners} hostName={ev.organization_name} onChanged={() => { reloadPartners(); load() }} />}
 
         <EventAccessNotes info={accessInfo} />
 
@@ -515,6 +520,7 @@ export default function EventPage() {
                 : <button type="button" className="btn btn-outline btn-full" onClick={() => setStatus('cancelled')}>{t('Cancel event')}</button>}
               <button type="button" className="link-button" style={{ color: 'var(--danger)', minHeight: '44px' }} onClick={deleteEvent}>{t('Delete event')}</button>
             </div>
+            {ev.organization_id && <PartnerTags eventId={id} rows={partners} onChanged={reloadPartners} />}
             <h2 style={{ marginTop: '1rem' }}>{t('Message everyone coming')}</h2>
             {(() => {
               const everyone = new Set([...signups.map((x) => x.user_id), ...invited.map((x) => x.user_id)]).size
