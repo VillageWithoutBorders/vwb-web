@@ -7533,7 +7533,7 @@ html.calm-motion .vs-more-desk-btn:active { transform: none; }
   html.text-larger .settings-cols [aria-labelledby="textsize-h"],
   html.text-largest .settings-cols [aria-labelledby="textsize-h"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
-.settings-cols [aria-labelledby="textsize-h"] > button { min-width: 0; overflow-wrap: anywhere; }
+.settings-cols [aria-labelledby="textsize-h"] > button { min-width: 0; overflow-wrap: break-word; }
 /* Nov 8 (Jade): at Large text and up, Light or dark puts the picture above the word again,
    so "Match my phone" has room. */
 @media (min-width: 1024px) {
@@ -8301,3 +8301,17 @@ html.text-largest .plan-slot-row { grid-template-columns: 1fr; }
 .ep-pick:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
 .ep-check { align-items: flex-start; gap: 0.6rem; min-height: 44px; }
 .ep-check input { width: 24px; height: 24px; flex: none; margin-top: 2px; }
+
+/* Nov 11 (Jade): Settings felt cramped on a computer once the new, wider font came in.
+   Two roomy columns instead of three: Seeing with Your avatar under it on the left,
+   Using on the right. Normal-size words and padding inside the cards again, and the text size
+   buttons two by two so "Largest" never breaks. */
+@media (min-width: 1024px) {
+  .settings-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; column-gap: 2rem; row-gap: 0.5rem; }
+  .settings-cols > .settings-col:nth-child(2) { grid-column: 2; grid-row: 1 / span 2; }
+  .settings-cols > .settings-col:nth-child(3) { grid-column: 1; grid-row: 2; }
+  .settings-cols [role="radiogroup"] > button { min-height: 52px !important; padding: 0.5rem 0.75rem !important; }
+  .settings-cols .profile-details > p { font-size: 0.95rem !important; line-height: 1.5; padding-bottom: 0.75rem !important; }
+  .settings-cols [role="radiogroup"] > button small, .settings-cols [role="radiogroup"] > button span:not(:first-child) { font-size: 0.95rem; line-height: 1.45; }
+  .settings-cols [aria-labelledby="textsize-h"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
