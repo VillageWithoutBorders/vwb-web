@@ -1000,8 +1000,10 @@ export default function Campfire({ pane = false }) {
             <div key={b.id} style={{ padding: '0.6rem 0', borderBottom: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{b.name}</span>
-                <button type="button" role="switch" aria-checked={on} aria-label={t('Notifications for {name}', { name: b.name })} disabled={alertSaving} onClick={() => saveAlert(b.id, on ? { alerts: 'off' } : { alerts: 'all', muted_until: null })} style={{ width: '40px', height: '22px', borderRadius: '11px', background: on ? 'var(--accent)' : '#444', border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0, padding: 0 }}>
-                  <span style={{ position: 'absolute', top: '2px', left: on ? '20px' : '2px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                <button type="button" role="switch" aria-checked={on} aria-label={t('Notifications for {name}', { name: b.name })} disabled={alertSaving} onClick={() => saveAlert(b.id, on ? { alerts: 'off' } : { alerts: 'all', muted_until: null })} style={{ width: '56px', height: '44px', background: 'none', border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0, padding: 0 }}>
+                  <span style={{ position: 'absolute', left: '2px', top: '7px', width: '52px', height: '30px', borderRadius: '15px', background: on ? 'var(--accent)' : 'var(--border-strong)', transition: 'background 0.2s' }}>
+                    <span style={{ position: 'absolute', top: '3px', left: on ? '25px' : '3px', width: '24px', height: '24px', borderRadius: '50%', background: on ? 'var(--on-accent)' : '#fff', transition: 'left 0.2s' }} />
+                  </span>
                 </button>
               </div>
               {muted && (

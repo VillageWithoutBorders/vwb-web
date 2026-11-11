@@ -620,8 +620,10 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
   const sectionTitle = { fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1.5rem', marginBottom: '0.5rem' }
   const menuBtn = { display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', textAlign: 'left', background: 'none', border: 'none', color: 'var(--text)', padding: '0.6rem 0.75rem', minHeight: 44, cursor: 'pointer', fontSize: '0.85rem' }
   const toggleRow = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid var(--border)' }
-  const toggleDot = (on) => ({ width: '40px', height: '22px', borderRadius: '11px', background: on ? 'var(--accent)' : '#444', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', border: 'none', padding: 0, flexShrink: 0 })
-  const toggleKnob = (on) => ({ position: 'absolute', top: '2px', left: on ? '20px' : '2px', width: '18px', height: '18px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' })
+  // Nov 11: switches are a full 44px tap target; the track inside is 52 by 30.
+  const toggleBtn = { width: '56px', height: '44px', background: 'none', border: 'none', padding: 0, position: 'relative', cursor: 'pointer', flexShrink: 0 }
+  const toggleDot = (on) => ({ position: 'absolute', left: '2px', top: '7px', width: '52px', height: '30px', borderRadius: '15px', background: on ? 'var(--accent)' : 'var(--border-strong)', transition: 'background 0.2s' })
+  const toggleKnob = (on) => ({ position: 'absolute', top: '3px', left: on ? '25px' : '3px', width: '24px', height: '24px', borderRadius: '50%', background: on ? 'var(--on-accent)' : '#fff', transition: 'left 0.2s' })
 
   const offerCardStyle = {
     background: 'var(--success-bg)',
@@ -686,20 +688,20 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
         <div style={sectionTitle}>{t('Privacy')}</div>
         <div style={toggleRow}>
           <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{t('Read receipts')}</span>
-          <button role="switch" aria-checked={readReceipts} aria-label={t('Read receipts')} style={toggleDot(readReceipts)} onClick={toggleReadReceipts}><span style={toggleKnob(readReceipts)} /></button>
+          <button role="switch" aria-checked={readReceipts} aria-label={t('Read receipts')} style={toggleBtn} onClick={toggleReadReceipts}><span style={toggleDot(readReceipts)}><span style={toggleKnob(readReceipts)} /></span></button>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>{t("Show when you have read a message. If you turn this off, you won't see when others read yours either.")}</p>
 
         <div style={sectionTitle}>{t('Safety')}</div>
         <div style={toggleRow}>
           <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{t('Safety check-ins')}</span>
-          <button role="switch" aria-checked={safetyCheckins} aria-label={t('Safety check-ins')} style={toggleDot(safetyCheckins)} onClick={toggleSafetyCheckins}><span style={toggleKnob(safetyCheckins)} /></button>
+          <button role="switch" aria-checked={safetyCheckins} aria-label={t('Safety check-ins')} style={toggleBtn} onClick={toggleSafetyCheckins}><span style={toggleDot(safetyCheckins)}><span style={toggleKnob(safetyCheckins)} /></span></button>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>{t('Receive periodic check-in prompts during active help sessions')}</p>
 
         <div style={toggleRow}>
           <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{t('Hide details on my lock screen')}</span>
-          <button role="switch" aria-checked={hidePushDetails} aria-label={t('Hide details on my lock screen')} style={toggleDot(hidePushDetails)} onClick={toggleHidePushDetails}><span style={toggleKnob(hidePushDetails)} /></button>
+          <button role="switch" aria-checked={hidePushDetails} aria-label={t('Hide details on my lock screen')} style={toggleBtn} onClick={toggleHidePushDetails}><span style={toggleDot(hidePushDetails)}><span style={toggleKnob(hidePushDetails)} /></span></button>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: '0.15rem 0 0' }}>{t('When on, phone alerts only say you have an update. Names and group titles stay inside the app, so nobody glancing at your phone can see them.')}</p>
 

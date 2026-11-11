@@ -8315,3 +8315,10 @@ html.text-largest .plan-slot-row { grid-template-columns: 1fr; }
   .settings-cols [role="radiogroup"] > button small, .settings-cols [role="radiogroup"] > button span:not(:first-child) { font-size: 0.95rem; line-height: 1.45; }
   .settings-cols [aria-labelledby="textsize-h"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
+
+/* Nov 11: three buttons that ran a few pixels over at the bigger text sizes with the new font. */
+:is(html.text-larger, html.text-largest) .cal-mode button { padding-left: 10px; padding-right: 10px; min-width: fit-content; flex: 0 0 auto; }
+:is(html.text-larger, html.text-largest) .dash-stat { padding-left: 8px; padding-right: 8px; min-width: 0; }
+:is(html.text-larger, html.text-largest) .dash-stat small { font-size: 0.72em; overflow-wrap: break-word; }
+:is(html.text-larger, html.text-largest) .dash-tabs-5 .dash-tab { padding-left: 4px; padding-right: 4px; min-width: 0; }
+:is(html.text-larger, html.text-largest) .dash-tabs-5 .dash-tab-label { font-size: 0.78em; }
