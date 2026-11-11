@@ -292,7 +292,7 @@ export default function EmergencyEvents() {
             resolvedEvents.map(ev => {
               const myRole = mySignups[ev.id]
               return (
-                <div key={ev.id} className={'em-card' + (split && openId === ev.id ? ' em-card-on' : '')} aria-current={split && openId === ev.id ? 'true' : undefined} onClick={() => openEvent(ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEvent(ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2d6a4f', opacity: 0.8 }}>
+                <div key={ev.id} className={'em-card' + (split && openId === ev.id ? ' em-card-on' : '')} aria-current={split && openId === ev.id ? 'true' : undefined} onClick={() => openEvent(ev.id)} role="button" tabIndex={0} aria-label={t('Open event: {title}', { title: ev.title })} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEvent(ev.id) } }} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1rem', marginBottom: '0.75rem', cursor: 'pointer', borderLeft: '4px solid #2E4D46', opacity: 0.8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <span style={{ background: 'var(--success-bg)', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>

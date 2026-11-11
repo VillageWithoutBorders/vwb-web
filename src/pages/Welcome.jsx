@@ -13,7 +13,7 @@ const COLORS = {
   textDim: 'var(--text)',
   textMuted: 'var(--text-secondary)', // Nov 7: easier to read than --text-muted
   green: 'var(--accent)',
-  greenDark: '#2d6a4f',
+  greenDark: '#2E4D46',
   greenLight: 'var(--success-bg)',
   orange: 'var(--danger)',
   orangeText: 'var(--warn)',
