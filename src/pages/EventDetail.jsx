@@ -39,6 +39,15 @@ const menuBtnStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', wid
 // Nov 7 (Jade): on a computer (full view) the emergency opens on the right side of
 // the Emergency list, like a chat in Messages. Then EmergencyEvents passes `id` and
 // `embedded`, and this page leaves out its own back arrow and narrow width.
+// Nov 11: ? notes for the needs and supplies filter.
+const RES_FILTER_TIPS = {
+  all: 'Show everything.',
+  needs: 'Show only what is needed.',
+  offers: 'Show only what people can give.',
+  available: 'Show only what is still open.',
+  fulfilled: 'Show only what has been taken care of.',
+}
+
 export default function EventDetail({ id: idProp, embedded = false }) {
   const location = useLocation()
   const justReported = !!location.state?.justReported
@@ -922,7 +931,7 @@ export default function EventDetail({ id: idProp, embedded = false }) {
 
           <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '0.75rem', overflowX: 'auto' }}>
             {[['all',t('All')],['needs',t('Needs')],['offers',t('Offers')],['available',t('Open')],['fulfilled',t('Fulfilled')]].map(([k,l]) => (
-              <button key={k} onClick={() => setResFilter(k)} style={{ padding: '0.35rem 0.65rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, background: resFilter === k ? '#444' : 'var(--surface-2)', color: resFilter === k ? 'var(--text-strong)' : 'var(--text-muted)' }}>{l}</button>
+              <button key={k} type="button" data-tip={t(RES_FILTER_TIPS[k])} onClick={() => setResFilter(k)} style={{ padding: '0.35rem 0.65rem', borderRadius: '16px', border: 'none', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, background: resFilter === k ? '#444' : 'var(--surface-2)', color: resFilter === k ? 'var(--text-strong)' : 'var(--text-muted)' }}>{l}</button>
             ))}
           </div>
 
