@@ -5684,6 +5684,8 @@ const more = {
   "{name} is a partner on this event. You can run your own team in the plan.": "{name} es aliado en este evento. Pueden llevar su propio equipo en el plan.",
   "{name} is now a partner on this event.": "{name} ahora es aliado en este evento.",
   "{name} needs a general chat first. Start it in the group's tools, then come back.": "{name} necesita primero un chat general. Empiézalo en las herramientas del grupo y vuelve.",
+  // Calendar cards: partner groups
+  'with': 'con',
 }
 
 export default more
