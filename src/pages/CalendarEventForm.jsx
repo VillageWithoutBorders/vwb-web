@@ -83,6 +83,9 @@ export default function CalendarEventForm() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [shifts, setShifts] = useState([])
+  // Round F: an event with a plan keeps its roles and time slots in the plan. The form
+  // leaves them alone (set_event_shifts would remove slots it doesn't list).
+  const [hasRoles, setHasRoles] = useState(false)
   const [pasteText, setPasteText] = useState('')
   const [pasteNote, setPasteNote] = useState('')
   const [pasteEmpty, setPasteEmpty] = useState(false)
@@ -127,9 +130,13 @@ export default function CalendarEventForm() {
   useEffect(() => {
     if (!editing) return
     let alive = true
-    supabase.rpc('list_event_shifts', { p_event: Number(id), p_token: null }).then(({ data, error }) => {
+    Promise.all([
+      supabase.rpc('list_event_shifts', { p_event: Number(id), p_token: null }),
+      supabase.rpc('list_event_roles', { p_event: Number(id), p_token: null }),
+    ]).then(([{ data, error }, roles]) => {
       if (!alive) return
       if (error) { console.error('list_event_shifts', error); return }
+      if (!roles.error && (roles.data?.roles || []).length) { setHasRoles(true); return }
       setShifts((data || []).map((x) => ({ id: x.id, label: x.label, start: x.starts_at ? toTimeInput(x.starts_at) : '', end: x.ends_at ? toTimeInput(x.ends_at) : '', capacity: String(x.capacity) })))
     })
     return () => { alive = false }
@@ -270,7 +277,7 @@ export default function CalendarEventForm() {
       if (st && en && new Date(en) < new Date(st)) { const d = new Date(en); d.setDate(d.getDate() + 1); en = d.toISOString() }
       shiftRows.push({ id: sh.id || null, label: sh.label.trim(), starts_at: st, ends_at: en, capacity: cap })
     }
-    const hasShifts = shiftRows.length > 0
+    const hasShifts = shiftRows.length > 0 || hasRoles
 
     let link = form.onlineLink.trim()
     if (form.online) {
@@ -316,7 +323,7 @@ export default function CalendarEventForm() {
       fail('ev-submit', t("We couldn't save this event. Check the details and try again."))
       return
     }
-    if (hasShifts || editing) {
+    if (!hasRoles && (hasShifts || editing)) {
       const { error: shiftErr } = await supabase.rpc('set_event_shifts', { p_event: data.id, p_shifts: shiftRows })
       if (shiftErr) {
         console.error('set_event_shifts', shiftErr)
@@ -569,7 +576,9 @@ export default function CalendarEventForm() {
           </div>
         )}
 
-        <ShiftsEditor shifts={shifts} onChange={setShifts} />
+        {hasRoles
+          ? <p className="field-hint">{t('This event has a plan. Roles and time slots are changed in the plan, from the event page.')}</p>
+          : <ShiftsEditor shifts={shifts} onChange={setShifts} />}
 
         {fieldNote('ev-submit')}
         <button id="ev-submit" type="submit" className="btn btn-primary btn-full" style={{ minHeight: '48px', marginTop: '1rem' }} disabled={saving}>

@@ -1,6 +1,7 @@
 import Icon from '../components/Icon'
 import { useCallback, useEffect, useState } from 'react'
 import EventShifts from '../components/EventShifts'
+import EventRoles, { EventMyTasks } from '../components/EventRoles'
 import { useBlockedBy } from '../utils/blockedBy'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -419,7 +420,10 @@ export default function EventPage() {
           </section>
         )}
 
-        <EventShifts eventId={id} token={token} user={user} canManage={ev.can_manage} past={past} cancelled={cancelled} onSignIn={goSignIn} onChanged={load} onLoaded={(n) => setHasShifts(n > 0)} />
+        {/* Round F: events with a plan show roles; others show the plain shifts list. */}
+        <EventRoles eventId={id} token={token} user={user} past={past} cancelled={cancelled} onSignIn={goSignIn} onChanged={load} onLoaded={(n) => setHasShifts(n > 0)}
+          fallback={<EventShifts eventId={id} token={token} user={user} canManage={ev.can_manage} past={past} cancelled={cancelled} onSignIn={goSignIn} onChanged={load} onLoaded={(n) => setHasShifts(n > 0)} />} />
+        {user && <EventMyTasks eventId={id} />}
         {user && hasShifts && !past && !cancelled && (
           <section className="cal-box" aria-label={t('Reminder')}>
             <EventReminder eventId={id} token={token} label="Remind me before my shift" />
@@ -499,6 +503,7 @@ export default function EventPage() {
           <section className="cal-box" aria-label={t('Organizer tools')}>
             <h2>{t('Organizer tools')}</h2>
             <div className="cal-actions">
+              <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/calendar/' + id + '/plan')}>{t('Plan this event')}</button>
               {ev.visibility === 'invite' && ev.invite_token && (
                 <button type="button" className="btn btn-primary btn-full" onClick={() => copy(eventUrl(ev, true), 'invite')}>
                   {copied === 'invite' ? t('Invite link copied!') : t('Copy private invite link')}
