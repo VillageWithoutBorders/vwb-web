@@ -20,10 +20,10 @@ export default function TextSizePicker() {
   return (
     <div className="profile-details" style={{ marginBottom: '1rem' }}>
       <div className="detail-section-header" id="textsize-h">{t('Text size')}</div>
-      <div role="radiogroup" aria-labelledby="textsize-h" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(6.5rem, 1fr))', gap: '0.5rem', padding: '0.5rem 1rem 0.25rem' }}>
+      <div role="radiogroup" aria-labelledby="textsize-h" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr))', gap: '0.5rem', padding: '0.5rem 1rem 0.25rem' }}>
         {CHOICES.map((c) => (
           <button key={c.k} type="button" role="radio" aria-checked={size === c.k} onClick={() => choose(c.k)}
-            style={{ minHeight: 56, borderRadius: 12, cursor: 'pointer', font: 'inherit', fontWeight: 700, fontSize: c.size, padding: '0.4rem',
+            style={{ minHeight: 56, borderRadius: 12, cursor: 'pointer', font: 'inherit', fontWeight: 700, fontSize: c.size, padding: '0.4rem', minWidth: 0, lineHeight: 1.15,
               border: '2px solid ' + (size === c.k ? 'var(--accent)' : 'var(--border)'),
               background: size === c.k ? 'var(--green-light)' : 'var(--surface-2)', color: 'var(--text)' }}>
             {t(c.label)}
