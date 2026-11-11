@@ -19,6 +19,7 @@ import { useT, getLang } from '../utils/lang'
 import AreaPicker from '../components/AreaPicker'
 import { placesEnabled } from '../utils/places'
 import Icon from '../components/Icon'
+import AlertChoices from '../components/AlertChoices'
 import { askConfirm, tell } from '../components/AdminDialog'
 
 // A plain read on how strong a new password is. Length matters most.
@@ -380,6 +381,7 @@ export default function Settings() {
           {simpleOn && <WidthPicker />}
           {!simpleOn && <ReadButtonPicker />}
           <MotionPicker />
+          <AlertChoices />
           </div>
 
           <div className="settings-col">

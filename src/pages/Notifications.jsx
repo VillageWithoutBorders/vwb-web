@@ -13,17 +13,30 @@ import { TYPE_ICONS, TYPE_COLORS, timeAgo } from '../utils/notificationDisplay'
 import Icon from '../components/Icon'
 import { personalAlertLink } from '../utils/alertLink'
 import { useT, tAlert } from '../utils/lang'
+import { supabase } from '../supabaseClient'
+import { alertKindName, canMute } from '../utils/alertKinds'
 import '../desktop-me.css'
 
 export default function Notifications() {
   const t = useT()
-  const { user } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const { notifications, unreadCount, loading, refresh, markSeen } = useNotifications()
   const navigate = useNavigate()
   const [filter, setFilter] = useState('all')
   const [confirmClear, setConfirmClear] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  // Round E part 2 (Nov 10): Mute this, one tap, with Undo.
+  const [muteNote, setMuteNote] = useState(null)
+  const muteReady = !!profile && Object.prototype.hasOwnProperty.call(profile, 'muted_alert_types')
+  const mutedTypes = (muteReady && Array.isArray(profile.muted_alert_types)) ? profile.muted_alert_types : []
+  async function setMute(type, mute) {
+    setError('')
+    const { error: err } = await supabase.rpc('mute_alert_type', { p_type: type, p_mute: mute })
+    if (err) { showError(err); return }
+    await refreshProfile()
+    setMuteNote(mute ? type : null)
+  }
 
   // Opening this page clears the top-bar badge right away. Alerts you
   // haven't tapped still show under "New" until you do.
@@ -112,6 +125,7 @@ export default function Notifications() {
       onTap={handleTap}
       onDelete={handleDelete}
       onToggleFollowUp={handleToggleFollowUp}
+      onMute={muteReady && canMute(n.type) && !mutedTypes.includes(n.type) ? (e) => { e.stopPropagation(); setMute(n.type, true) } : null}
     />
   )
 
@@ -168,6 +182,12 @@ export default function Notifications() {
       </div>
 
       {error && <p className="form-error" role="alert">{error}</p>}
+      {muteNote && (
+        <p className="notif-mute-note" role="status">
+          {t('Muted: {kind}. You will not get phone alerts like this. They still show here.', { kind: t(alertKindName(muteNote)) })}{' '}
+          <button type="button" className="link-button" onClick={() => setMute(muteNote, false)}>{t('Undo')}</button>
+        </p>
+      )}
 
       {filtered.length === 0 ? (
         <div className="notifications-empty">
@@ -221,7 +241,7 @@ export default function Notifications() {
   )
 }
 
-function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
+function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp, onMute }) {
   const t = useT()
   const icon = TYPE_ICONS[notification.type] || '\u{1F514}'
   const color = TYPE_COLORS[notification.type] || '#6b7280'
@@ -264,6 +284,12 @@ function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp }) {
         >
           <span aria-hidden="true"><Icon name="flag" /></span>
         </button>
+        {onMute && (
+          <button type="button" className="notification-mute" onClick={onMute}
+            aria-label={t('Mute phone alerts like this')} data-tip={t('No more phone alerts like this. They still show here.')}>
+            {t('Mute')}
+          </button>
+        )}
         <button
           type="button"
           className="notification-delete"

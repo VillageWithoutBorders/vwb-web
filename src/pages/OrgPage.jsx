@@ -633,6 +633,7 @@ export default function OrgPage() {
       {/* Round E (Nov 10): members land on four parts first: on a phone above the map,
           on a computer at the top of the right side. Everything else is under More about this group. */}
       {isMember && <div className="gh-wrap">
+        {params.get('welcome') === '1' && <p className="gh-welcome" role="status">{t('Welcome to {name}! Here is what is going on.', { name: org.name })}</p>}
         <GroupHome org={org} events={events} posts={posts} chats={chats} news={news} canManage={canManage}
           hasNeedsSpot={spots.some((s) => s.k === 'needs')} onOpen={(k) => { if (k === 'needs' && posts === null) loadPosts(); openSheet({ k }) }} />
       </div>}

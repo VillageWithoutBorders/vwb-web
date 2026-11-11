@@ -8146,3 +8146,27 @@ html.calm-motion .read-bar-btn:not(:disabled):active { transform: none; }
 .org-kind-choice.is-on { border: 2px solid var(--accent); }
 .org-kind-choice input, .org-default input { width: 24px; height: 24px; min-height: 24px; flex: none; margin-top: 2px; }
 .org-defaults { display: grid; gap: 8px; }
+
+/* Round E part 2 (Nov 10): Mute this on alerts, phone alert choices, invite link. */
+.notification-mute { min-height: 44px; min-width: 44px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-secondary); font-size: .875rem; font-weight: 600; cursor: pointer; }
+.notification-mute:hover, .notification-mute:focus-visible { color: var(--text-strong); border-color: var(--accent); }
+.notification-mute:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.notif-mute-note { margin: 8px 0; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--accent); overflow-wrap: anywhere; }
+.notif-mute-note .link-button { min-height: 44px; font-weight: 700; }
+.alert-choices { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; min-width: 0; }
+.alert-choices legend { font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; }
+.alert-choice { display: flex; gap: 10px; align-items: flex-start; min-height: 44px; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 12px; cursor: pointer; overflow-wrap: anywhere; }
+.alert-choice.is-on { border: 2px solid var(--accent); }
+.alert-choice input { width: 24px; height: 24px; flex: none; margin-top: 2px; }
+.alert-choice b { display: block; }
+.alert-choice small { display: block; color: var(--text-secondary); font-size: .875rem; }
+.alert-choices-note { margin: 0; color: var(--text-secondary); font-size: .875rem; }
+.alert-muted { display: grid; gap: 6px; }
+.alert-muted p { margin: 0; }
+.alert-muted-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.alert-muted-row .btn { min-height: 44px; }
+.od-link-url { margin: 0 0 8px; overflow-wrap: anywhere; font-size: .9375rem; }
+.od-link-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.od-link-btns .btn { min-height: 44px; flex: 1 1 10rem; }
+.od-link-mode { border: 0; padding: 0; margin: 10px 0; display: grid; gap: 8px; min-width: 0; }
+.od-link-mode legend { font-weight: 700; margin-bottom: 6px; }

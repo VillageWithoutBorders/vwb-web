@@ -49,6 +49,7 @@ const GrantReport = lazyPage(() => import('./pages/GrantReport'))
 const ScrambleTest = lazyPage(() => import('./pages/ScrambleTest'))
 import CommunityGuidelines from './pages/CommunityGuidelines'
 const JoinOrg = lazyPage(() => import('./pages/JoinOrg'))
+const JoinOrgLink = lazyPage(() => import('./pages/JoinOrgLink'))
 const Terms = lazyPage(() => import('./pages/Terms'))
 const Calendar = lazyPage(() => import('./pages/Calendar'))
 const CalendarEventForm = lazyPage(() => import('./pages/CalendarEventForm'))
@@ -256,6 +257,8 @@ function AppRoutes() {
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/join-org" element={<SetupGate><JoinOrg /></SetupGate>} />
+      {/* Round E part 2 (Nov 10): a group's invite link. functions/join/[token].js adds the link preview. */}
+      <Route path="/join/:token" element={<SetupGate><JoinOrgLink /></SetupGate>} />
       <Route path="/terms" element={<Terms />} />
       {/* Public on purpose: the resource list is read-only and needs no account, so people of any age can use it. */}
       <Route path="/resources" element={<PublicResources />} />
