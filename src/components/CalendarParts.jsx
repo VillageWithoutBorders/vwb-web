@@ -123,7 +123,7 @@ export function CalendarEventCard({ ev, newTab, showDate }) {
       <span className="cal-card-time">{showDate && <span className="cal-card-day">{dayLabel(ev.starts_at)}</span>}{timeRange(ev)}</span>
       <span className="cal-card-title">{ev.title}</span>
       <span className="cal-card-meta">
-        {ev.organization_name || 'Village Without Borders'}{where ? ' · ' + where : ''}
+        {ev.organization_name || 'Village Without Borders'}{ev.organization_name && ev.partner_names && ev.partner_names.length ? ' ' + t('with') + ' ' + ev.partner_names.join(', ') : ''}{where ? ' · ' + where : ''}
       </span>
       {badges(ev).length > 0 && (
         <span className="cal-badges">
