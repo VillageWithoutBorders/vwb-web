@@ -135,9 +135,18 @@ export default function OrgPage() {
     ]).then(([, ev, res]) => {
       if (!alive) return
       const now = Date.now()
-      setEvents((ev.events || [])
+      const own = (ev.events || [])
         .filter((e) => e.organization_id === id && e.status !== 'cancelled' && new Date(e.ends_at || e.starts_at).getTime() >= now)
-        .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at)))
+      setEvents(own.sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at)))
+      // Round F part 2: events this group co-hosts as a partner show here too.
+      supabase.rpc('org_partner_events', { p_org: id }).then(({ data, error }) => {
+        if (!alive) return
+        if (error) { if (error.code !== 'PGRST202') console.error('Failed to load co-hosted events:', error); return }
+        const have = new Set(own.map((e) => e.id))
+        const extra = (data || []).filter((e) => !have.has(e.id) && new Date(e.ends_at || e.starts_at).getTime() >= now)
+          .map((e) => ({ ...e, organization_name: e.host_name, partner_host: e.host_name }))
+        if (extra.length) setEvents([...own, ...extra].sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at)))
+      })
       if (res.error) console.error('Failed to load organization resources:', res.error)
       setResources(res.data || [])
       setLoading(false)
