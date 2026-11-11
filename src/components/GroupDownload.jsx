@@ -66,7 +66,7 @@ export default function GroupDownload({ orgId }) {
       <p className="gdl-fine">{t('One file for moving to another app. Spreadsheets, one at a time:')}</p>
       <div className="gdl-sheets">
         {SHEETS.map((s) => (
-          <button key={s.k} type="button" className="btn btn-outline gdl-btn" disabled={!!busy} onClick={() => sheet(s)}>
+          <button key={s.k} type="button" className="btn btn-outline gdl-btn" disabled={!!busy} onClick={() => sheet(s)} data-tip={t('Download this list as a spreadsheet.')}>
             {busy === s.k ? t('Getting it ready...') : t(s.label)}
           </button>
         ))}

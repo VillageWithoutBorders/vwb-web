@@ -34,14 +34,14 @@ export default function LeadToday({ orgId, onOpen }) {
   if (!d || !d.ok) return null
   const dash = '/orgs/' + orgId + '/dashboard'
   const items = [
-    ...(d.partner_asks || []).slice(0, 3).map((x) => ({ k: 'p' + x.event_id, icon: 'people', text: t('{host} asked you to co-host {title}', { host: x.host || t('A group'), title: x.title }), btn: t('Answer'), go: () => navigate('/events/' + x.event_id) })),
-    reports > 0 && { k: 'r', icon: 'flag', text: reports === 1 ? t('1 report to look at') : t('{n} reports to look at', { n: reports }), btn: t('Look'), go: () => navigate(dash + '?tab=people') },
-    d.asks > 0 && { k: 'a', icon: 'raise-hand', text: d.asks === 1 ? t('1 person asked to join') : t('{n} people asked to join', { n: d.asks }), btn: t('Answer'), go: () => navigate(dash + '?tab=people') },
+    ...(d.partner_asks || []).slice(0, 3).map((x) => ({ k: 'p' + x.event_id, icon: 'people', text: t('{host} asked you to co-host {title}', { host: x.host || t('A group'), title: x.title }), btn: t('Answer'), tip: t('Open the event and say yes or no to co-hosting.'), go: () => navigate('/events/' + x.event_id) })),
+    reports > 0 && { k: 'r', icon: 'flag', text: reports === 1 ? t('1 report to look at') : t('{n} reports to look at', { n: reports }), btn: t('Look'), tip: t('See the reports in your dashboard.'), go: () => navigate(dash + '?tab=people') },
+    d.asks > 0 && { k: 'a', icon: 'raise-hand', text: d.asks === 1 ? t('1 person asked to join') : t('{n} people asked to join', { n: d.asks }), btn: t('Answer'), tip: t('Say yes or no to the people who asked to join.'), go: () => navigate(dash + '?tab=people') },
     ...(d.shifts || []).slice(0, 3).map((s, i) => ({ k: 's' + i, icon: 'calendar',
-      text: t('{title}, {day}: {label} needs {n} more', { title: s.title, day: dayWord(s.starts_at), label: s.label, n: s.open }), btn: t('Open'), go: () => navigate('/events/' + s.event_id) })),
-    d.needs_no_offers > 0 && { k: 'n', icon: 'heart-hands', text: d.needs_no_offers === 1 ? t('1 need has no offers yet') : t('{n} needs have no offers yet', { n: d.needs_no_offers }), btn: t('See'), go: () => onOpen('needs') },
-    ...(d.decisions || []).slice(0, 2).map((x) => ({ k: 'd' + x.id, icon: 'scroll', text: t('Deciding "{title}" closes {day}', { title: x.title, day: dayWord(x.closes_at) }), btn: t('Open'), go: () => onOpen('rules') })),
-    d.joined_week > 0 && { k: 'j', icon: 'people', text: d.joined_week === 1 ? t('1 person joined this week') : t('{n} people joined this week', { n: d.joined_week }), btn: t('Say hi'), go: () => onOpen('fires') },
+      text: t('{title}, {day}: {label} needs {n} more', { title: s.title, day: dayWord(s.starts_at), label: s.label, n: s.open }), btn: t('Open'), tip: t('Open the event to fill the open spots.'), go: () => navigate('/events/' + s.event_id) })),
+    d.needs_no_offers > 0 && { k: 'n', icon: 'heart-hands', text: d.needs_no_offers === 1 ? t('1 need has no offers yet') : t('{n} needs have no offers yet', { n: d.needs_no_offers }), btn: t('See'), tip: t('See the needs that no one has offered to help with yet.'), go: () => onOpen('needs') },
+    ...(d.decisions || []).slice(0, 2).map((x) => ({ k: 'd' + x.id, icon: 'scroll', text: t('Deciding "{title}" closes {day}', { title: x.title, day: dayWord(x.closes_at) }), btn: t('Open'), tip: t('Open the decision and have your say.'), go: () => onOpen('rules') })),
+    d.joined_week > 0 && { k: 'j', icon: 'people', text: d.joined_week === 1 ? t('1 person joined this week') : t('{n} people joined this week', { n: d.joined_week }), btn: t('Say hi'), tip: t('Open your Campfires to welcome the new people.'), go: () => onOpen('fires') },
   ].filter(Boolean)
 
   return (
@@ -52,7 +52,7 @@ export default function LeadToday({ orgId, onOpen }) {
         <div key={it.k} className="gh-today-row">
           <span className="gh-today-ic" aria-hidden="true"><Icon name={it.icon} /></span>
           <span className="gh-today-text">{it.text}</span>
-          <button type="button" className="btn btn-outline gh-today-btn" onClick={it.go}>{it.btn}</button>
+          <button type="button" className="btn btn-outline gh-today-btn" onClick={it.go} data-tip={it.tip}>{it.btn}</button>
         </div>
       ))}
     </section>
