@@ -19,6 +19,7 @@ import OrgSceneEditor from '../components/OrgSceneEditor'
 import GroupGear from '../components/GroupGear'
 import GroupResponse from '../components/GroupResponse'
 import GroupHome from '../components/GroupHome'
+import GroupHandbook from '../components/GroupHandbook'
 import '../village-scene.css'
 import Icon from '../components/Icon'
 import { orgWords } from '../utils/roleWords'
@@ -354,7 +355,7 @@ export default function OrgPage() {
   function info(k) {
     const n = (one, many, count) => t(count === 1 ? one : many, { n: count })
     switch (k) {
-      case 'rules': return { sub: isMember ? t('How this {kind} runs and decides together', { kind: kindT }) : t('Members only') }
+      case 'rules': return { sub: isMember ? t('Rules, how we work, links, pinned posts, and deciding together') : t('Members only') }
       case 'where': return { sub: villageCount ? (isGroup ? n('Covers 1 village', 'Covers {n} villages', villageCount) : n('Works in 1 village', 'Works in {n} villages', villageCount)) : t('No villages picked yet') }
       case 'ready': return { sub: org.response_status === 'approved' ? t('Approved to respond to emergencies') : org.response_status === 'asked' ? t('Waiting for approval') : t('Not called to emergencies yet') }
       case 'links': return { sub: links.length ? n('1 connected group', '{n} connected groups', links.length) : t('No connections yet') }
@@ -417,7 +418,8 @@ export default function OrgPage() {
     if (spot.soon) return <>{title}<p>{t('This part of the {kind} is coming soon.', { kind: kindT })}</p></>
     switch (k) {
       case 'rules':
-        return <>{title}<OrgRules orgId={id} isHead={isHead} org={org} onTitles={loadOrg} />{isMember && <GroupDecisions orgId={id} />}{isMember && <CareCircle orgId={id} />}</>
+        // Round E part 3: the handbook comes first, then deciding together, care circle, and the Head's settings.
+        return <>{title}{isMember && <GroupHandbook orgId={id} orgName={org.name} />}{isMember && <GroupDecisions orgId={id} />}{isMember && <CareCircle orgId={id} />}<OrgRules orgId={id} isHead={isHead} org={org} onTitles={loadOrg} /></>
       case 'where':
         return <>{title}<OrgVillages orgId={id} orgName={org.name} canManage={canManage} /></>
       case 'links':

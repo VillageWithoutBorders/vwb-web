@@ -1356,3 +1356,30 @@ html.text-larger .gh, html.text-largest .gh { grid-template-columns: 1fr !import
 .gh .vs-row { font-size: 1.0625rem; line-height: 1.3; }
 .gh .vs-row small { font-size: .875rem; font-weight: 500; margin-top: 2px; }
 .gh-welcome { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--accent); background: var(--vs-card, var(--surface-2)); font-weight: 600; }
+
+/* Round E part 3 (Nov 10): Today for leaders, the handbook. */
+.gh-decide { display: flex; flex-wrap: wrap; gap: 8px; }
+.gh-decide .btn { flex: 1 1 12rem; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.gh-today { border: 2px solid var(--vs-gold, #f2c763); }
+@media (min-width: 1024px) { html:not(.simple) .gh-today { grid-column: 1 / -1; } }
+.gh-today-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 6px 0; border-top: 1px solid var(--vs-line, rgba(255,255,255,.12)); }
+.gh-today-row:first-of-type { border-top: 0; }
+.gh-today-text { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
+.gh-today-btn { min-height: 44px; flex: none; }
+.hb { display: grid; gap: 10px; margin-bottom: 12px; }
+.hb-search input { width: 100%; box-sizing: border-box; min-height: 44px; font-size: 1rem; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-strong); }
+.hb-part { display: grid; gap: 6px; }
+.hb-part h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 1.05rem; }
+.hb-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.hb-links { margin: 0; padding-left: 1.2rem; display: grid; gap: 4px; }
+.hb-links a { display: inline-flex; align-items: center; min-height: 44px; overflow-wrap: anywhere; }
+.hb-pin { display: grid; gap: 4px; padding: 8px 10px; border-radius: 12px; background: var(--vs-card2, var(--surface-2)); border: 1px solid var(--vs-line, var(--border-strong)); }
+.hb-pin-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.hb-edit { display: grid; gap: 8px; margin-bottom: 12px; }
+.hb-edit label { font-weight: 700; }
+.hb-edit textarea, .hb-link-row input { width: 100%; box-sizing: border-box; font-size: 1rem; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-strong); min-height: 44px; }
+.hb-links-edit, .hb-helpers { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; min-width: 0; }
+.hb-links-edit legend, .hb-helpers legend { font-weight: 700; margin-bottom: 6px; }
+.hb-link-row { display: grid; grid-template-columns: 1fr; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--vs-line, rgba(255,255,255,.12)); }
+.hb-link-row .btn { min-height: 44px; }
+@media (min-width: 700px) { .hb-link-row { grid-template-columns: 1fr 1.4fr auto; align-items: center; } }

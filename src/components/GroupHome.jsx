@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { dayLabel, timeRange } from '../utils/calendar'
 import Icon from './Icon'
+import LeadToday from './LeadToday'
 import { useT } from '../utils/lang'
 
 // Round E (Nov 10): the group home for members. Four parts, in this order:
@@ -46,6 +47,8 @@ export default function GroupHome({ org, events, posts, chats, news, canManage, 
 
   return (
     <div className="gh" aria-label={t('Home for {name}', { name: org.name })}>
+      {/* Round E part 3: leaders see Today first. */}
+      {canManage && <LeadToday orgId={org.id} onOpen={onOpen} />}
       <section className="gh-part" aria-labelledby="gh-next">
         <h2 id="gh-next"><Icon name="calendar" /> {t("What's next")}</h2>
         {next.length === 0 && <p className="gh-empty">{t('Nothing planned yet.')}</p>}
@@ -100,7 +103,10 @@ export default function GroupHome({ org, events, posts, chats, news, canManage, 
         </div>
       </section>
 
-      <button type="button" className="btn btn-outline btn-full gh-decide" onClick={() => onOpen('decide')}><Icon name="scroll" /> {t('Decide something')}</button>
+      <div className="gh-decide">
+        <button type="button" className="btn btn-outline" onClick={() => onOpen('rules')}><Icon name="clipboard" /> {t('Handbook')}</button>
+        <button type="button" className="btn btn-outline" onClick={() => onOpen('decide')}><Icon name="scroll" /> {t('Decide something')}</button>
+      </div>
     </div>
   )
 }
