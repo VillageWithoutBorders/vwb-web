@@ -21,5 +21,5 @@ export function needsFirstVillage(profile, user) {
 let arranging = false
 export function pauseFirstRun(on) { arranging = !!on }
 export function firstRunPaused(pathname) {
-  return arranging || pathname === '/find-village' || pathname === '/village-square' || pathname === '/setup'
+  return arranging || pathname.startsWith('/join/') || pathname === '/find-village' || pathname === '/village-square' || pathname === '/setup'
 }
