@@ -8170,3 +8170,36 @@ html.calm-motion .read-bar-btn:not(:disabled):active { transform: none; }
 .od-link-btns .btn { min-height: 44px; flex: 1 1 10rem; }
 .od-link-mode { border: 0; padding: 0; margin: 10px 0; display: grid; gap: 8px; min-width: 0; }
 .od-link-mode legend { font-weight: 700; margin-bottom: 6px; }
+
+/* Round E part 4 (Nov 10): access notes, RSVP choices, reminders. */
+.acc-edit { margin: 1rem 0; border: 1px solid var(--border-strong); border-radius: 12px; padding: 0 12px; }
+.acc-edit > summary { min-height: 48px; display: flex; align-items: center; font-weight: 700; font-size: 1.05rem; cursor: pointer; }
+.acc-edit > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.acc-edit[open] { padding-bottom: 12px; }
+.acc-choice { border: 0; padding: 0; margin: 0 0 0.75rem; min-width: 0; }
+.acc-choice legend { font-weight: 600; margin-bottom: 6px; }
+.acc-options { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.acc-opt { margin: 0 !important; flex: 0 1 auto; }
+.acc-clear { min-height: 44px; }
+.acc-save { display: grid; gap: 6px; margin-top: 8px; }
+.acc-save label { font-weight: 600; }
+.acc-save-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.acc-save-row input { flex: 1 1 12rem; min-height: 44px; font-size: 1rem; }
+.acc-save-row .btn { min-height: 44px; }
+.acc-view h3 { font-size: 1rem; margin: 0.75rem 0 0.25rem; }
+.acc-list { margin: 0; display: grid; gap: 6px; }
+.acc-list > div { display: grid; grid-template-columns: minmax(7rem, 35%) 1fr; gap: 8px; }
+.acc-list dt { font-weight: 700; }
+.acc-list dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 420px) { .acc-list > div { grid-template-columns: 1fr; gap: 0; } }
+html.text-larger .acc-list > div, html.text-largest .acc-list > div { grid-template-columns: 1fr; gap: 0; }
+.acc-order { margin: 0; padding-left: 1.4rem; display: grid; gap: 2px; }
+.rsvp { display: grid; gap: 8px; }
+.rsvp-choices { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; min-width: 0; }
+.rsvp-choices legend { font-weight: 700; margin-bottom: 6px; }
+.rsvp-choices .cal-choice { margin: 0; }
+.rsvp-choices .cal-choice.is-off { opacity: .6; }
+.rsvp-choices small { display: block; color: var(--text-secondary); font-size: .875rem; }
+.rsvp-msg { margin: 0; color: var(--accent); font-weight: 600; }
+.rsvp-remind select { min-height: 44px; font-size: 1rem; max-width: 100%; }
+.rsvp-counts { margin: 0 0 0.5rem; }
