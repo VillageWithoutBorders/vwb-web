@@ -23,7 +23,7 @@ const COLORS = {
   textDim: 'var(--text)',
   textMuted: 'var(--text-muted)',
   green: 'var(--accent)',
-  greenDark: '#2d6a4f',
+  greenDark: '#2E4D46',
   dotInactive: '#3a3a3a',
 }
 

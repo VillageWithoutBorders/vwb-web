@@ -263,7 +263,7 @@ export default function GrantReport() {
 
   const cardStyle = { background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '1rem', marginBottom: '0.75rem' }
   const statRow = { display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid #2a2a2a', fontSize: '0.85rem' }
-  const sectionTitle = { color: '#4ecca3', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }
+  const sectionTitle = { color: 'var(--accent)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }
 
   return (
     <div style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
@@ -306,7 +306,7 @@ export default function GrantReport() {
             <label style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', display: 'block', marginBottom: '0.25rem' }}>{tr('To')}</label>
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', boxSizing: 'border-box' }} />
           </div>
-          <button onClick={generateReport} disabled={loading} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#4ecca3', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', opacity: loading ? 0.6 : 1, whiteSpace: 'nowrap' }}>
+          <button onClick={generateReport} disabled={loading} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: 'var(--accent)', color: '#1a1a1a', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', opacity: loading ? 0.6 : 1, whiteSpace: 'nowrap' }}>
             {loading ? tr('Building...') : tr('Generate')}
           </button>
         </div>
@@ -353,7 +353,7 @@ export default function GrantReport() {
           )}
           {/* Download buttons */}
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.35rem' }}>
-            <button onClick={downloadCSV} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px dashed #4ecca3', background: 'none', color: 'var(--accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
+            <button onClick={downloadCSV} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px dashed var(--accent)', background: 'none', color: 'var(--accent)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
               {tr('Download CSV')}
             </button>
             <button onClick={exportPDF} style={{ flex: 1, padding: '0.65rem', borderRadius: '8px', border: '1px dashed #66aaff', background: 'none', color: 'var(--info)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>
@@ -375,11 +375,11 @@ export default function GrantReport() {
           {/* Summary stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
             {[
-              { label: 'People served', value: report.community.totalPeopleServed, color: '#4ecca3' },
+              { label: 'People served', value: report.community.totalPeopleServed, color: 'var(--accent)' },
               { label: 'Help requests', value: report.helpRequests.total, color: '#66aaff' },
               { label: 'Emergencies', value: report.emergencies.total, color: '#ff6644' },
               { label: 'Volunteer matches', value: report.matching.totalMatches, color: '#ffaa44' },
-              { label: 'Tasks completed', value: report.matching.completedMatches, color: '#4ecca3' },
+              { label: 'Tasks completed', value: report.matching.completedMatches, color: 'var(--accent)' },
               { label: 'New users', value: report.community.newUsers, color: '#66aaff' },
             ].map(s => (
               <div key={s.label} style={{ textAlign: 'center', padding: '0.6rem', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
@@ -416,7 +416,7 @@ export default function GrantReport() {
               { key: 'now', label: 'Right now', color: '#ff4444' },
               { key: 'today', label: 'Today', color: '#ff6644' },
               { key: 'this_week', label: 'This week', color: '#ffaa44' },
-              { key: 'flexible', label: 'Flexible', color: '#4ecca3' },
+              { key: 'flexible', label: 'Flexible', color: 'var(--accent)' },
             ].map(u => (
               <div key={u.key} style={statRow}>
                 <span style={{ color: u.color }}>{tr(u.label)}</span>

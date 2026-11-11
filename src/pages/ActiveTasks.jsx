@@ -660,7 +660,7 @@ export default function ActiveTasks() {
       return <div style={{ marginTop: '0.5rem' }}><VouchButton userId={otherUserId} size="sm" showCount={true} /></div>
     }
     const answer = myFeedback[matchId]
-    const box = { marginTop: '0.6rem', padding: '0.75rem', background: 'var(--success-bg)', border: '1px solid #2d6a4f', borderRadius: '8px' }
+    const box = { marginTop: '0.6rem', padding: '0.75rem', background: 'var(--success-bg)', border: '1px solid #2E4D46', borderRadius: '8px' }
     const title = { color: 'var(--text)', fontWeight: 600, fontSize: '0.9rem' }
     const small = { color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: '0.25rem 0 0.5rem' }
     const waiting = ratedReady && !bothRated[matchId]
@@ -818,7 +818,7 @@ export default function ActiveTasks() {
       })()}
 
       {notice && (
-        <p role="status" style={{ margin: '0 0 1rem', padding: '0.75rem', background: 'var(--success-bg)', border: '1px solid #2d6a4f', borderRadius: '8px', color: 'var(--accent)' }}>
+        <p role="status" style={{ margin: '0 0 1rem', padding: '0.75rem', background: 'var(--success-bg)', border: '1px solid #2E4D46', borderRadius: '8px', color: 'var(--accent)' }}>
           {notice} <button type="button" onClick={() => setNotice('')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', textDecoration: 'underline', minHeight: 44, cursor: 'pointer', font: 'inherit' }}>{t('Dismiss')}</button>
         </p>
       )}
@@ -849,7 +849,7 @@ export default function ActiveTasks() {
                 {t('Your Requests')}
               </div>
               {currentRequests.map(req => (
-                <div key={req.id} className="task-card" style={{ borderLeft: '3px solid #2d6a4f' }}>
+                <div key={req.id} className="task-card" style={{ borderLeft: '3px solid #2E4D46' }}>
                   <div className="task-card-top">
                     <span className={'urgency-badge urgency-' + req.urgency}>{t(URGENCY_LABELS[req.urgency] || 'Flexible')}</span>
                     <span className="feed-card-time">{timeAgo(req.created_at)}</span>
@@ -948,7 +948,7 @@ export default function ActiveTasks() {
                       {req.matches.map(match => {
                         const bothDone = match.helper_completed && match.requester_completed
                         return (
-                          <div key={match.id} style={{ background: bothDone ? 'var(--success-bg)' : 'var(--surface-2)', border: '1px solid ' + (bothDone ? '#2d6a4f' : 'var(--border)'), borderRadius: '8px', padding: '0.6rem 0.75rem' }}>
+                          <div key={match.id} style={{ background: bothDone ? 'var(--success-bg)' : 'var(--surface-2)', border: '1px solid ' + (bothDone ? '#2E4D46' : 'var(--border)'), borderRadius: '8px', padding: '0.6rem 0.75rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.35rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AvatarDisplay url={match.helper_avatar} userId={match.helper_id} size={28} /><UserName userId={match.helper_id} name={match.helper_name} style={{ fontWeight: 600, color: 'var(--text-strong)', fontSize: '0.9rem' }} /></div>

@@ -312,7 +312,7 @@ export default function VillageMap({ embedded = false, net = null }) {
         bounds.push(ll)
         // Each zip code the village covers shows as a small dot.
         ;(pointsByVillage[v.id] || []).forEach((p) => {
-          L.circleMarker([Number(p.latitude), Number(p.longitude)], { radius: 5, color: '#4ecca3', weight: 1, fillColor: '#4ecca3', fillOpacity: 0.3, interactive: false }).addTo(map)
+          L.circleMarker([Number(p.latitude), Number(p.longitude)], { radius: 5, color: '#E78761', weight: 1, fillColor: '#E78761', fillOpacity: 0.3, interactive: false }).addTo(map)
         })
         const picked = String(v.id) === String(selectedRef.current)
         const m = L.circleMarker(ll, { radius: nodeRadius(v), color: picked || v.is_mine ? '#ffcc66' : '#8fe6cd', weight: picked ? 5 : v.is_mine ? 4 : 2, fillColor: '#52c9aa', fillOpacity: 0.9 }).addTo(map)
@@ -409,7 +409,7 @@ export default function VillageMap({ embedded = false, net = null }) {
             return (
               <div key={o.id} className="cal-card" style={{ width: '100%', padding: 0 }}>
                 <button type="button" aria-expanded={open} aria-controls={'org-' + o.id} data-tip={t('Show or hide more about this group.')} onClick={() => setOpenOrgs((m) => ({ ...m, [o.id]: !m[o.id] }))} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', minHeight: '56px', padding: '0.5rem 0.75rem', background: 'none', border: 0, color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
-                  <span aria-hidden="true" style={{ flex: 'none', width: '44px', height: '44px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', background: 'rgba(78, 204, 163, 0.15)' }}><Icon name={o.kind === 'group' ? 'tent' : 'people'} /></span>
+                  <span aria-hidden="true" style={{ flex: 'none', width: '44px', height: '44px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', background: 'rgba(191, 214, 205, 0.15)' }}><Icon name={o.kind === 'group' ? 'tent' : 'people'} /></span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span className="cal-card-title" style={{ display: 'block' }}>{o.name}</span>
                     <span className="cal-card-meta">{o.kind === 'group' ? t('Emergency crew') : t('Group')}</span>

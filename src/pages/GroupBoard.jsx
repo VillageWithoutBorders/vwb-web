@@ -508,7 +508,7 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
 
   // The decision an alert pointed at gets an outline and a label.
   const focusStyle = (key) => focusKey === key
-    ? { outline: '2px solid var(--accent)', background: 'rgba(78,204,163,0.12)', borderRadius: '8px', padding: '0.5rem', margin: '0.35rem 0' }
+    ? { outline: '2px solid var(--accent)', background: 'rgba(191, 214, 205, 0.12)', borderRadius: '8px', padding: '0.5rem', margin: '0.35rem 0' }
     : undefined
   const focusLabel = (key) => focusKey === key
     ? <span style={{ display: 'block', width: '100%', color: 'var(--accent)', fontWeight: 700, fontSize: '0.8125rem' }}><Icon name="pushpin" /> {t('This is the one you were asked about')}</span>
