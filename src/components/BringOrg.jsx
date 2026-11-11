@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { ORG_TYPES } from '../data/orgTypes'
+import { GROUP_KINDS } from '../data/orgTypes'
 import { useT } from '../utils/lang'
 
 // "Bring your organization to VWB": the request form (Oct 22: moved from the old
@@ -11,7 +11,7 @@ import { useT } from '../utils/lang'
 export default function BringOrg() {
   const t = useT()
   const { profile, organizations } = useAuth()
-  const emptyOrgForm = { name: '', description: '', email: '', website: '', social: '', orgType: '', hidePublic: false }
+  const emptyOrgForm = { name: '', description: '', email: '', website: '', social: '', orgType: '', hidePublic: false, joinOpen: true, membersSee: false }
   const [pendingOrg, setPendingOrg] = useState(null)
   const [showOrgForm, setShowOrgForm] = useState(() => new URLSearchParams(window.location.search).get('bring') === 'org')
   const [orgForm, setOrgForm] = useState(emptyOrgForm)
@@ -45,13 +45,17 @@ export default function BringOrg() {
 
   async function sendOrgRequest(e) {
     e.preventDefault()
+    if (!orgForm.orgType) {
+      setOrgError(t('Pick what kind of group it is.'))
+      return
+    }
     if (!orgForm.name.trim()) {
       setOrgError(t("Please add your group's name."))
       return
     }
     setOrgSending(true)
     setOrgError('')
-    const { data, error } = await supabase.rpc('request_organization', {
+    const base = {
       p_name: orgForm.name,
       p_description: orgForm.description,
       p_contact_email: orgForm.email,
@@ -59,7 +63,14 @@ export default function BringOrg() {
       p_social_link: orgForm.social,
       p_hide_from_public: orgForm.hidePublic,
       p_org_type: orgForm.orgType || null,
-    })
+    }
+    // Round E: request_group (vwb-group-kinds.sql) also saves Ask to join and who sees names.
+    let { data, error } = await supabase.rpc('request_group', { ...base, p_join_open: orgForm.joinOpen, p_members_see_list: orgForm.membersSee })
+    if (error && error.code === 'PGRST202') {
+      // Before the SQL is run: the older request still works. New kinds are saved as Other.
+      const oldKinds = ['nonprofit', 'faith', 'mutual_aid', 'club', 'business', 'other']
+      ;({ data, error } = await supabase.rpc('request_organization', { ...base, p_org_type: oldKinds.includes(base.p_org_type) ? base.p_org_type : 'other' }))
+    }
     setOrgSending(false)
     if (error) {
       console.error('Failed to send organization request:', error)
@@ -90,16 +101,43 @@ export default function BringOrg() {
           <form className="org-request-form" onSubmit={sendOrgRequest} noValidate aria-labelledby="org-request-title">
             <h3 id="org-request-title">{t('Bring your group to VWB')}</h3>
             <p className="org-request-help">{t("Tell us a little about your group. We'll look it over. Once it's approved, you can post events and resources.")}</p>
-            <p className="org-request-help">{t('Starting a crew that shows up during emergencies?')} <Link to="/start-group">{t('Start an emergency crew')}</Link> {t('instead.')}</p>
+            <fieldset className="org-kind">
+              <legend>{t('What kind of group is it?')}</legend>
+              {GROUP_KINDS.map((k) => (
+                <label key={k.value} className={'org-kind-choice' + (orgForm.orgType === k.value ? ' is-on' : '')}>
+                  <input type="radio" name="org-kind" value={k.value} checked={orgForm.orgType === k.value}
+                    onChange={() => { setOrgError(''); setOrgForm((f) => (k.crew ? { ...f, orgType: k.value } : { ...f, orgType: k.value, hidePublic: k.hidePublic, joinOpen: k.joinOpen, membersSee: k.membersSee })) }} />
+                  <span>{t(k.label)}</span>
+                </label>
+              ))}
+            </fieldset>
+
+            {orgForm.orgType === 'crew' && <>
+              <p className="org-request-help">{t('Emergency crews have their own setup. It takes a minute.')}</p>
+              <Link className="btn btn-primary btn-full" to="/start-group">{t('Start an emergency crew')}</Link>
+              <button type="button" className="btn btn-outline btn-full" onClick={() => { setShowOrgForm(false); setOrgError(''); setOrgForm(emptyOrgForm) }}>{t('Cancel')}</button>
+            </>}
+
+            {orgForm.orgType && orgForm.orgType !== 'crew' && <>
+            <div className="org-defaults" aria-live="polite">
+              <p className="org-request-help"><b>{t('How it starts. You can change any of this later.')}</b></p>
+              <label className="org-default">
+                <input type="checkbox" checked={orgForm.hidePublic} onChange={(e) => setOrgForm((f) => ({ ...f, hidePublic: e.target.checked }))} />
+                <span>{t('Only people with a VWB account can see our group. It does not show to the public or on the website.')}</span>
+              </label>
+              <label className="org-default">
+                <input type="checkbox" checked={orgForm.joinOpen} onChange={(e) => setOrgForm((f) => ({ ...f, joinOpen: e.target.checked }))} />
+                <span>{t('Show an Ask to join button. You decide who to add. When off, people join only by your invite link.')}</span>
+              </label>
+              <label className="org-default">
+                <input type="checkbox" checked={orgForm.membersSee} onChange={(e) => setOrgForm((f) => ({ ...f, membersSee: e.target.checked }))} />
+                <span>{t('Members can see each other\'s names. When off, only leaders see names.')}</span>
+              </label>
+              <p className="org-request-help">{t('Your public page shows how many members you have. It never shows names.')}</p>
+            </div>
 
             <label htmlFor="org-name">{t('Group name (required)')}</label>
             <input id="org-name" type="text" autoComplete="organization" maxLength={120} required aria-invalid={orgError && !orgForm.name.trim() ? 'true' : undefined} value={orgForm.name} onChange={setOrgField('name')} />
-
-            <label htmlFor="org-type">{t('What kind of group is it? (optional)')}</label>
-            <select id="org-type" value={orgForm.orgType} onChange={setOrgField('orgType')}>
-              <option value="">{t('Choose one')}</option>
-              {ORG_TYPES.map((ot) => <option key={ot.value} value={ot.value}>{t(ot.label)}</option>)}
-            </select>
 
             <label htmlFor="org-desc">{t('What does your group do?')}</label>
             <textarea id="org-desc" rows={3} maxLength={1000} value={orgForm.description} onChange={setOrgField('description')} />
@@ -113,15 +151,12 @@ export default function BringOrg() {
             <label htmlFor="org-social">{t('One social media link')}</label>
             <input id="org-social" type="url" inputMode="url" placeholder="https://" maxLength={300} value={orgForm.social} onChange={setOrgField('social')} />
 
-            <label htmlFor="org-private" style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontWeight: 400 }}>
-              <input id="org-private" type="checkbox" checked={orgForm.hidePublic} onChange={(e) => setOrgForm((f) => ({ ...f, hidePublic: e.target.checked }))} style={{ width: '24px', minHeight: '24px', flexShrink: 0, marginTop: '2px' }} />
-              <span>{t('Only show our group to people with an account. Our name, resources and events will not appear to the public or on the website. You can change this any time.')}</span>
-            </label>
-
             {orgError && <p className="cal-error" role="alert">{orgError}</p>}
 
             <button type="submit" className="btn btn-primary btn-full" disabled={orgSending}>{orgSending ? t('Sending...') : t('Send request')}</button>
-            <button type="button" className="btn btn-outline btn-full" onClick={() => { setShowOrgForm(false); setOrgError('') }}>{t('Cancel')}</button>
+            </>}
+            {!orgForm.orgType && orgError && <p className="cal-error" role="alert">{orgError}</p>}
+            {orgForm.orgType !== 'crew' && <button type="button" className="btn btn-outline btn-full" onClick={() => { setShowOrgForm(false); setOrgError('') }}>{t('Cancel')}</button>}
           </form>
         )}
       {!pendingOrg && !showOrgForm && (
