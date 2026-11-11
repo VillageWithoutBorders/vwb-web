@@ -17,6 +17,24 @@ import { DeskMoreBelow } from '../components/MapBuilder'
 // Oct 22: the Village Network (search, street map, every village and organization)
 // lives under the globe now. /villages opens this page.
 const VillageMap = lazy(() => import('./VillageMap'))
+const ResourceMapView = lazy(() => import('../components/ResourceMapView'))
+import { distanceMiles } from '../utils/location'
+import { startingOrigin } from '../utils/calendar'
+import { CATEGORIES, resourceCats } from '../utils/resourceCategories'
+import AddressLink from '../components/AddressLink'
+
+// Nov 10 (Jade): the Resource map shows only resources with a public street address.
+// No address, no street number, or words that say the address is kept private: no pin.
+// Those stay on the Resources list, where they show without a location.
+const PRIVATE_WORDS = /confidential|undisclosed|private|not (listed|published|shared)|call for (the )?address|safe ?house|domestic violence shelter/i
+export function hasPublicAddress(r) {
+  const a = (r.address || '').trim()
+  if (a.length < 6 || !/\d/.test(a)) return false
+  if (PRIVATE_WORDS.test(a + ' ' + (r.description || ''))) return false
+  if (r.hidden_reason) return false
+  const lat = Number(r.latitude), lng = Number(r.longitude)
+  return r.latitude != null && r.longitude != null && Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0)
+}
 
 // The World: the VWB globe with your connections on it, in two networks.
 // Villages: circles that overlap where they share zip codes, and gold lines
@@ -76,9 +94,35 @@ export default function World() {
   }
   const [params, setParams] = useSearchParams()
   const asked = params.get('tab')
-  const net = asked === 'orgs' || asked === 'groups' ? asked : 'villages'
+  const net = asked === 'orgs' || asked === 'groups' || asked === 'resources' ? asked : 'villages'
   const setNet = (n) => setParams(n === 'villages' ? {} : { tab: n }, { replace: true })
   const networkRef = useRef(null)
+  // Resource map (Nov 10)
+  const [resAll, setResAll] = useState(null)
+  const [resKind, setResKind] = useState('all')
+  const [resPicked, setResPicked] = useState(null)
+  const resOrigin = useMemo(() => startingOrigin(profile), [profile])
+  useEffect(() => {
+    if (net !== 'resources' || resAll !== null) return
+    let alive = true
+    supabase.from('community_resources')
+      .select('id, name, description, categories, category, phone, url, address, latitude, longitude, hidden_reason')
+      .eq('verified', true).not('address', 'is', null).not('latitude', 'is', null).not('longitude', 'is', null)
+      .order('name').limit(1000)
+      .then(({ data, error: e }) => {
+        if (!alive) return
+        if (e) { console.error('Failed to load resources for the map:', e); setResAll([]); return }
+        setResAll((data || []).filter(hasPublicAddress))
+      })
+    return () => { alive = false }
+  }, [net, resAll])
+  const resItems = useMemo(() => {
+    const list = (resAll || []).filter((r) => resKind === 'all' || resourceCats(r).includes(resKind)).map((r) => ({
+      ...r, miles: resOrigin && resOrigin.lat != null ? distanceMiles(resOrigin.lat, resOrigin.lng, Number(r.latitude), Number(r.longitude)) : null,
+    }))
+    return list.sort((a, b) => (a.miles ?? 1e9) - (b.miles ?? 1e9) || a.name.localeCompare(b.name))
+  }, [resAll, resKind, resOrigin])
+  const resKinds = useMemo(() => CATEGORIES.filter((c) => (resAll || []).some((r) => resourceCats(r).includes(c))), [resAll])
   function seeAll() {
     if (networkRef.current) networkRef.current.scrollIntoView({ behavior: stillMotion() ? 'auto' : 'smooth', block: 'start' })
   }
@@ -276,6 +320,13 @@ export default function World() {
     <div className="vs-page wd-page">
       <div className="wd-brand">Village Without Borders</div>
 
+      {net === 'resources' ? (
+        <div className="wd-globe-wrap wd-res-wrap">
+          <Suspense fallback={<p className="wd-sub" role="status">{t('Loading the map...')}</p>}>
+            {resAll !== null && <ResourceMapView items={resItems} picked={resPicked} onPick={setResPicked} center={resOrigin} />}
+          </Suspense>
+        </div>
+      ) : (
       <div className="wd-globe-wrap">
         {announceBoard && (
           // Round C (Nov 10): the word shows under the button, so nobody has to guess what the megaphone is.
@@ -349,6 +400,7 @@ export default function World() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Oct 28 (Jade): everything beside the globe sits in one panel. On a computer the
           panel scrolls by itself and the globe stays put. On phones the panel is invisible
@@ -360,12 +412,54 @@ export default function World() {
         {/* Oct 25: the third button opens the resource hub (the same page as Ask for help).
             Emergency crews are reached from the Groups view. */}
         {/* Round D (Nov 10): every door to Resources goes to the one Resources page. */}
-        <button type="button" onClick={() => navigate('/community/resources')}><span aria-hidden="true"><Icon name="heart-hands" /></span> {t('Resources')}</button>
+        {/* Nov 10 (Jade): Resources is a real map of places with a public address. */}
+        <button type="button" aria-pressed={net === 'resources'} onClick={() => { setResPicked(null); setNet('resources') }}><span aria-hidden="true"><Icon name="heart-hands" /></span> {t('Resources')}</button>
       </div>
 
       {villages === null && <p className="wd-sub" role="status">{t('Loading your world...')}</p>}
       {error && <p className="vs-error" role="alert">{error}</p>}
 
+      {net === 'resources' ? <>
+        <h1 className="wd-hint">{t('Resources near you')}</h1>
+        <p className="wd-sub">{t('Only places with a public street address are on this map. Phone lines and places that keep their address private are on the full list.')}</p>
+        {resKinds.length > 1 && (
+          <label className="wd-res-kind">
+            <span>{t('Kind of help')}</span>
+            <select value={resKind} onChange={(e) => { setResKind(e.target.value); setResPicked(null) }}>
+              <option value="all">{t('All kinds')}</option>
+              {resKinds.map((c) => <option key={c} value={c}>{t(c)}</option>)}
+            </select>
+          </label>
+        )}
+        {resPicked && (
+          <section className="wd-res-card" aria-live="polite" ref={(el) => { if (el) el.scrollIntoView({ block: 'nearest', behavior: stillMotion() ? 'auto' : 'smooth' }) }}>
+            <h2>{resPicked.name}</h2>
+            <p className="wd-res-cats">{resourceCats(resPicked).map((c) => t(c)).join(' · ')}{resPicked.miles != null ? ' · ' + t('{n} miles', { n: Math.round(resPicked.miles) }) : ''}</p>
+            {resPicked.description && <p>{resPicked.description}</p>}
+            <p><AddressLink address={resPicked.address} /></p>
+            {resPicked.phone && <p><a href={'tel:' + resPicked.phone.replace(/[^\d+]/g, '')}>{resPicked.phone}</a></p>}
+            {resPicked.url && /^https?:\/\//i.test(resPicked.url) && <p><a href={resPicked.url} target="_blank" rel="noopener noreferrer">{t('Website')}</a></p>}
+            <button type="button" className="btn btn-outline btn-full" onClick={() => setResPicked(null)}>{t('Close')}</button>
+          </section>
+        )}
+        {resAll === null && <p className="wd-sub" role="status">{t('Loading...')}</p>}
+        {resAll !== null && resItems.length === 0 && <p className="wd-sub">{t('No resources with a public address near you yet.')}</p>}
+        {resItems.length > 0 && (
+          <ul className="wd-res-list" aria-label={t('On this map')}>
+            {resItems.slice(0, 40).map((r) => (
+              <li key={r.id}>
+                <button type="button" aria-pressed={!!resPicked && resPicked.id === r.id} onClick={() => setResPicked(r)}>
+                  <b>{r.name}</b>
+                  <small>{resourceCats(r).map((c) => t(c)).join(' · ')}{r.miles != null ? ' · ' + t('{n} miles', { n: Math.round(r.miles) }) : ''}</small>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="wd-actions">
+          <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/community/resources')}>{t('See the full list')}</button>
+        </div>
+      </> : <>
       <h1 className="wd-hint">{t(net === 'villages' ? (hasMine || villages === null ? 'Your villages' : 'Start here: find your village') : net === 'groups' ? 'Your emergency crews' : 'Your groups')}</h1>
       <p className="wd-sub">
         {net === 'villages'
@@ -410,6 +504,7 @@ export default function World() {
         </Suspense>
         {net === 'orgs' && <div className="cal-page wd-network"><BringOrg /></div>}
       </section>
+      </>}
       </div>
       <DeskMoreBelow getPage={() => document.querySelector('.wd-page')} />
 
