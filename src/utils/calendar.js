@@ -54,7 +54,18 @@ export async function fetchCalendarEvents(opts = {}) {
     console.error('Failed to load calendar events:', error)
     return { events: [], error }
   }
-  return { events: data || [], error: null }
+  const events = data || []
+  // Round F (Nov 11): accepted partner groups, so cards can say "APC with Library Friends".
+  const withHost = events.filter((e) => e.organization_id).map((e) => e.id)
+  if (withHost.length) {
+    const { data: pn, error: pnErr } = await supabase.rpc('event_partner_names', { p_events: withHost.slice(0, 500) })
+    if (pnErr) { if (pnErr.code !== 'PGRST202') console.error('Failed to load partner names:', pnErr) }
+    else {
+      const by = Object.fromEntries((pn || []).map((r) => [r.event_id, r.names]))
+      events.forEach((e) => { if (by[e.id]) e.partner_names = by[e.id] })
+    }
+  }
+  return { events, error: null }
 }
 
 export async function fetchCalendarEvent(id, token) {
