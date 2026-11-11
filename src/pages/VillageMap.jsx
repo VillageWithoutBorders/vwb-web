@@ -408,7 +408,7 @@ export default function VillageMap({ embedded = false, net = null }) {
             const site = safeUrl(o.website_url)
             return (
               <div key={o.id} className="cal-card" style={{ width: '100%', padding: 0 }}>
-                <button type="button" aria-expanded={open} aria-controls={'org-' + o.id} onClick={() => setOpenOrgs((m) => ({ ...m, [o.id]: !m[o.id] }))} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', minHeight: '56px', padding: '0.5rem 0.75rem', background: 'none', border: 0, color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
+                <button type="button" aria-expanded={open} aria-controls={'org-' + o.id} data-tip={t('Show or hide more about this group.')} onClick={() => setOpenOrgs((m) => ({ ...m, [o.id]: !m[o.id] }))} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', minHeight: '56px', padding: '0.5rem 0.75rem', background: 'none', border: 0, color: 'inherit', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
                   <span aria-hidden="true" style={{ flex: 'none', width: '44px', height: '44px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', background: 'rgba(78, 204, 163, 0.15)' }}><Icon name={o.kind === 'group' ? 'tent' : 'people'} /></span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span className="cal-card-title" style={{ display: 'block' }}>{o.name}</span>

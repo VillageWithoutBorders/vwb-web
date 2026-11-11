@@ -91,6 +91,16 @@ const PREFIX_TIPS = [
   ['Your garden', 'See the gifts growing in your garden.'],
   ['Step into', 'Go into this village.'],
   ['Entrar a', 'Go into this village.'],
+  ['Send update to', 'Send this update to the people coming.'],
+  ['See all', 'See the whole list.'],
+]
+// Nov 11: buttons whose words are a name or a number. The kind of button says what it does.
+const CLASS_TIPS = [
+  ['.groups-row', 'Open this chat.'],
+  ['.dash-stat', 'See the list behind this number.'],
+  ['.dash-need', 'Open this to take care of it.'],
+  ['.wd-res-list button', 'Show this place on the map.'],
+  ['.gh-link', 'Open this part of the group.'],
 ]
 function fallbackTip(el, firstLine) {
   // The raw words: clean() takes arrows like \u21B3 out.
@@ -100,6 +110,9 @@ function fallbackTip(el, firstLine) {
   if (el.tagName === 'SELECT') return t('Pick one from the list.')
   if (el.classList.contains('hub-tile')) return t('See places near you that help with this.')
   if (el.classList.contains('notification-card')) return t('Open this alert.')
+  // A place on a group or village list: the small line under its name says what is there.
+  if (el.matches('.vs-room')) { const sub = clean(el.querySelector('small')?.textContent); return sub || t('Open this part of the group.') }
+  for (const [sel, tip] of CLASS_TIPS) if (el.matches(sel)) return t(tip)
   // A button with a title and a line under it: the line under it says what it is.
   const lines = (el.innerText || '').split('\n').map((l) => l.trim()).filter(Boolean)
   if (lines.length >= 2) {

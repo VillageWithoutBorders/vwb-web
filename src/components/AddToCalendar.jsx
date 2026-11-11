@@ -58,7 +58,7 @@ export default function AddToCalendar({ ev, children, asButton = false }) {
     <>
       {asButton
         ? <button type="button" className="btn btn-outline btn-full" aria-expanded={usual ? undefined : open} onClick={tap}>{children}</button>
-        : <button type="button" style={linkStyle} aria-expanded={usual ? undefined : open} onClick={tap}>{children}</button>}
+        : <button type="button" style={linkStyle} aria-expanded={usual ? undefined : open} onClick={tap} data-tip={t('Put this on your calendar.')}>{children}</button>}
       {!asButton && (
         <>
           <br />
