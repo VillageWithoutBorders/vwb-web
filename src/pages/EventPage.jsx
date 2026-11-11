@@ -18,6 +18,7 @@ import { askConfirm, tell } from '../components/AdminDialog'
 import { useT, t as tr, getLang } from '../utils/lang'
 import EventAccessNotes from '../components/EventAccessNotes'
 import EventRsvp, { EventReminder, EventRsvpCounts } from '../components/EventRsvp'
+import EventEntrancePhoto from '../components/EventEntrancePhoto'
 
 // One event. Public route on purpose: this is the page people land on from
 // the website calendar, a shared Facebook post, or a private invite link,
@@ -393,6 +394,7 @@ export default function EventPage() {
         {user && <PartnerAnswer eventId={id} rows={partners} hostName={ev.organization_name} onChanged={() => { reloadPartners(); load() }} />}
 
         <EventAccessNotes info={accessInfo} />
+        {user && !ev.is_online && <EventEntrancePhoto eventId={id} user={user} />}
 
         {organizers.length > 0 && (
           <section className="cal-box" aria-label={t('Contact the organizers')}>

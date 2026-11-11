@@ -28,3 +28,10 @@ enabled = true
 # no personal details and writes only through log_csp_reports().
 verify_jwt = false
 entrypoint = "./functions/csp-report/index.ts"
+
+[functions.cleanup-event-photos]
+enabled = true
+# Called by a Supabase cron job every night (vwb-event-entrance-photos.sql), not
+# by a signed-in member. It checks the x-push-secret header instead.
+verify_jwt = false
+entrypoint = "./functions/cleanup-event-photos/index.ts"

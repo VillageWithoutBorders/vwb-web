@@ -12,6 +12,7 @@ import InviteSheet from '../components/InviteSheet'
 import { tell } from '../components/AdminDialog'
 import Icon from '../components/Icon'
 import { useT, getLang } from '../utils/lang'
+import { avatarSrc } from '../utils/avatar'
 
 export default function PublicProfile() {
   const { userId } = useParams()
@@ -182,7 +183,7 @@ export default function PublicProfile() {
   }
 
   const canSeeHistory = user?.id === userId || msgStatus === 'open'
-  const avatarUrl = profile.avatar_url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId}`
+  const avatarUrl = avatarSrc(profile.avatar_url, userId)
 
   const name = profile.display_name || t('Neighbor')
   const showCottage = !!cottage && !blockedThem
