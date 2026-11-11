@@ -8259,3 +8259,35 @@ html.text-largest .plan-slot-row { grid-template-columns: 1fr; }
 .partner-row small { display: block; color: var(--text-secondary); font-size: .875rem; }
 .partner-row .btn { min-height: 44px; }
 .plan-team-tag { margin: 0 0 4px; }
+
+/* Nov 11 (Jade's phone at Largest): Messages shows a chat on the first screen.
+   Inside the Messages hub the inbox uses the full width, the four tabs fit one row,
+   Chat settings becomes a gear beside New message, and folders are smaller. */
+#hub-panel .messages-page { padding: 0; }
+@media (max-width: 700px) {
+  :is(html.text-large, html.text-larger, html.text-largest) .hub-tabs-three { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 4px; }
+  :is(html.text-large, html.text-larger, html.text-largest) .hub-tabs-three > button { font-size: 0.8rem !important; padding: 4px 2px !important; min-height: 44px !important; min-width: 0; overflow-wrap: anywhere; }
+}
+:is(html.text-larger, html.text-largest) .hub-subtabs { margin: 4px 0 6px; }
+:is(html.text-larger, html.text-largest) .hub-subtab { font-size: 0.8rem; padding: 0 10px; }
+:is(html.text-larger, html.text-largest) .msg-new-row { flex-wrap: nowrap; }
+:is(html.text-larger, html.text-largest) .msg-new-main { flex: 1 1 auto; }
+:is(html.text-larger, html.text-largest) .msg-gear-word { width: 48px !important; padding: 0 !important; justify-content: center; }
+:is(html.text-larger, html.text-largest) .msg-gear-word > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:is(html.text-larger, html.text-largest) .msg-folders { padding-bottom: 0.4rem !important; margin-bottom: 0.25rem !important; }
+:is(html.text-larger, html.text-largest) .msg-folders > button { font-size: 0.75rem !important; padding: 0.3rem 0.75rem !important; }
+
+/* Nov 11: event entrance photo (EventEntrancePhoto.jsx) */
+.ep-fig { margin: 0.5rem 0; }
+.ep-fig img { display: block; width: 100%; max-width: 100%; height: auto; max-height: 60vh; object-fit: contain; border-radius: 10px; background: var(--bg-secondary, #eee); }
+.ep-flag { margin: 0 0 0.5rem; padding: 0.5rem 0.75rem; border-radius: 8px; border: 2px solid var(--danger); font-weight: 600; }
+.ep-report { min-height: 44px; }
+.ep-form { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; }
+.ep-form label[for], .ep-form > label:not(.btn):not(.ep-check) { font-weight: 600; }
+.ep-form input[type="text"], .ep-form textarea { font-size: max(16px, 1rem); width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-strong); min-height: 44px; font-family: inherit; }
+.ep-form input[type="text"]:focus-visible, .ep-form textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.ep-tips { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.ep-pick { position: relative; cursor: pointer; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.ep-pick:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.ep-check { align-items: flex-start; gap: 0.6rem; min-height: 44px; }
+.ep-check input { width: 24px; height: 24px; flex: none; margin-top: 2px; }

@@ -8,6 +8,7 @@ import { startConversation } from '../utils/startConversation'
 import { tell } from './AdminDialog'
 import { cottagesICanVisit } from '../utils/cottageVisits'
 import { useT, getLang, t as tNow } from '../utils/lang'
+import { avatarSrc } from '../utils/avatar'
 
 function reportError(context, error) {
   if (!error) return false
@@ -19,7 +20,7 @@ export default function AvatarDisplay({ url, userId, size = 32, label = null, cl
   const navigate = useNavigate()
   const blockedBy = useBlockedBy()
   const t = useT()
-  const src = url || `https://api.dicebear.com/7.x/thumbs/svg?seed=${userId || 'default'}`
+  const src = avatarSrc(url, userId)
   const [showPopup, setShowPopup] = useState(false)
   const [info, setInfo] = useState(null)
   const [messaging, setMessaging] = useState(false)

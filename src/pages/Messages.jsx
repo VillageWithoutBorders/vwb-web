@@ -845,13 +845,13 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
         <div className="msg-new-main"><NewMessage /></div>
         {embedded && (
           // Round D (Nov 10, Jade): the gear says what it is.
-          <button type="button" onClick={() => setShowSidebar(true)} className="msg-gear msg-gear-word" data-tip={t('Folders, disappearing messages, read receipts, and blocked people.')}>
+          <button type="button" onClick={() => setShowSidebar(true)} className="msg-gear msg-gear-word" aria-label={t('Chat settings')} data-tip={t('Folders, disappearing messages, read receipts, and blocked people.')}>
             <Icon name="gear" size={24} /> <span>{t('Chat settings')}</span>
           </button>
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+      <div className="msg-folders" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
         <button style={tabStyle(activeFolder === 'unread')} onClick={() => setActiveFolder('unread')}>{t('Unread')}</button>
         <button style={{ ...tabStyle(activeFolder === 'all'), outline: dropTarget === 'all' ? '2px solid var(--accent)' : 'none' }} onClick={() => setActiveFolder('all')} onDragOver={(e) => { e.preventDefault(); setDropTarget('all') }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), 'remove'); setDraggingConvo(null) }}>{t('All')}</button>
         {folders.map(f => (

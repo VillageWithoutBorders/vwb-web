@@ -13,6 +13,9 @@
     "a11y": "node scripts/a11y-check.mjs"
   },
   "dependencies": {
+    "@dicebear/avataaars": "7.1.4",
+    "@dicebear/core": "7.1.4",
+    "@dicebear/thumbs": "7.1.4",
     "@supabase/supabase-js": "^2.112.4",
     "leaflet": "^1.9.4",
     "libsodium-wrappers": "^0.7.13",
@@ -44,5 +47,10 @@
   "bugs": {
     "url": "https://github.com/VillageWithoutBorders/vwb-web/issues"
   },
-  "homepage": "https://github.com/VillageWithoutBorders/vwb-web#readme"
+  "homepage": "https://github.com/VillageWithoutBorders/vwb-web#readme",
+  "overrides": {
+    "@dicebear/converter": {
+      "sharp": "^0.35.4"
+    }
+  }
 }

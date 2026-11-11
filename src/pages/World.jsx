@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
@@ -312,6 +312,34 @@ export default function World() {
   async function tapOrg(o) { if (await askGo(o.name)) zoomTo(o.gx, o.gy, '/orgs/' + o.id) }
 
   const view = net === 'villages' ? villageMap : orgMap
+
+  // Nov 11 (Jade's phone at Largest): names on the globe never sit on top of each other
+  // or under Announcements. Your own places keep their names first; a name that would
+  // overlap is hidden on the globe (every name is still in the list below, and on the button).
+  useLayoutEffect(() => {
+    const root = globeRef.current
+    if (!root) return
+    const wrap = root.closest('.wd-globe-wrap')
+    function fit() {
+      const tags = [...root.querySelectorAll('.wd-tag, .wd-org-tag')]
+      tags.forEach((el) => el.classList.remove('wd-tag-hide'))
+      const news = wrap && wrap.querySelector('.wd-news')
+      const kept = news ? [news.getBoundingClientRect()] : []
+      const mine = (el) => (el.classList.contains('wd-tag-under') || !!el.closest('.wd-org.wd-in') ? 1 : 0)
+      const hits = (a, b) => !(a.right - 2 <= b.left || b.right - 2 <= a.left || a.bottom - 2 <= b.top || b.bottom - 2 <= a.top)
+      tags.sort((a, b) => mine(b) - mine(a)).forEach((el) => {
+        const r = el.getBoundingClientRect()
+        if (r.width === 0) return
+        if (kept.some((k) => hits(k, r))) el.classList.add('wd-tag-hide')
+        else kept.push(r)
+      })
+    }
+    fit()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => fit()) : null
+    if (ro) ro.observe(root)
+    const tm = setTimeout(fit, 400)
+    return () => { if (ro) ro.disconnect(); clearTimeout(tm) }
+  }, [net, villageMap, orgMap, announceBoard])
   const myGroups = myOrgs.filter((o) => o.kind === 'group')
   const myRealOrgs = myOrgs.filter((o) => o.kind !== 'group')
   const hasMine = net === 'villages' ? shown.some((v) => v.is_mine) : net === 'groups' ? myGroups.length > 0 : myRealOrgs.length > 0

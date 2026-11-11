@@ -216,3 +216,13 @@
 .wd-res-list button[aria-pressed="true"] { border: 2px solid var(--accent); }
 .wd-res-list small { color: var(--text-secondary); font-size: .875rem; }
 .wd-res-list button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Nov 11 (Jade's phone at Largest): names on the globe stay a readable, fixed size so they
+   fit the globe. Names that would overlap are hidden there (World.jsx) and stay in the list. */
+.wd-tag, .wd-org-tag { font-size: min(0.78rem, 14px) !important; }
+.wd-tag-hide { visibility: hidden !important; }
+:is(html.text-larger, html.text-largest) .wd-news { top: -3% !important; right: -3% !important; }
+:is(html.text-larger, html.text-largest) .wd-news-word { font-size: 12px; }
+:is(html.text-larger, html.text-largest) .wd-news-pic { width: 26px; height: 26px; }
+:is(html.text-larger, html.text-largest) .wd-org .wd-em { width: 2.2rem; height: 2.2rem; }
+.wd-res-map .leaflet-control-attribution { font-size: 10px !important; line-height: 1.3; }

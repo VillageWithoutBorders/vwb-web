@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { startConversation } from '../utils/startConversation'
 import { useT } from '../utils/lang'
+import { avatarSrc } from '../utils/avatar'
 
 // "New message" on the Messages page. Search finds only people you already
 // know on VWB (the database decides, same rule as group invites). Picking
@@ -87,7 +88,7 @@ export default function NewMessage() {
           {results.map((p) => (
             <li key={p.user_id}>
               <button type="button" disabled={busyId === p.user_id} onClick={() => pick(p)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', minHeight: '52px', padding: '0.4rem 0.5rem', borderRadius: '8px', border: 'none', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '1rem', textAlign: 'left', cursor: 'pointer' }}>
-                <img src={p.avatar_url || ('https://api.dicebear.com/7.x/thumbs/svg?seed=' + p.user_id)} alt="" width={36} height={36} style={{ borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />
+                <img src={avatarSrc(p.avatar_url, p.user_id)} alt="" width={36} height={36} style={{ borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />
                 <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{p.display_name}</span>
               </button>
             </li>

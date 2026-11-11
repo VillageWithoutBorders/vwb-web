@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import Icon from './Icon'
 import { tell } from './AdminDialog'
 import { useT, t } from '../utils/lang'
+import { avatarSrc } from '../utils/avatar'
 
 const BASE = 'https://api.dicebear.com/7.x/avataaars/svg'
 
@@ -239,7 +240,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig, hideTit
           <div className="ab-grid">
             {seeds.map((seed, seedIndex) => (
               <button key={seed} type="button" className={'ab-face' + (selected === seed ? ' on' : '')} onClick={() => setSelected(seed)} aria-pressed={selected === seed} aria-label={t(selected === seed ? 'Avatar option {n}, selected' : 'Avatar option {n}', { n: seedIndex + 1 })}>
-                <img src={BASE + '?seed=' + encodeURIComponent(seed)} alt="" width="96" height="96" loading="lazy" />
+                <img src={avatarSrc(BASE + '?seed=' + encodeURIComponent(seed))} alt="" width="96" height="96" loading="lazy" />
               </button>
             ))}
           </div>
@@ -251,7 +252,7 @@ export default function AvatarBuilder({ onSave, onCancel, initialConfig, hideTit
         <div className="ab-make">
           <div className="ab-preview">
             <div className="ab-preview-pic">
-              {previewUrl && <img src={previewUrl} alt={t('Your avatar')} width="200" height="200" />}
+              {previewUrl && <img src={avatarSrc(previewUrl)} alt={t('Your avatar')} width="200" height="200" />}
             </div>
             <button type="button" className="ab-soft" onClick={randomizeCustom}><Icon name="dice" /> {t('Surprise me')}</button>
           </div>
@@ -331,5 +332,5 @@ export function AvatarPreview({ url, size = 40, style = {} }) {
       </div>
     )
   }
-  return <img src={url} alt={t('Avatar')} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, background: '#2a2a2a', ...style }} />
+  return <img src={avatarSrc(url)} alt={t('Avatar')} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, background: '#2a2a2a', ...style }} />
 }
