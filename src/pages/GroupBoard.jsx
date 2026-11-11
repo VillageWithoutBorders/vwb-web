@@ -331,6 +331,35 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
     loadPosts()
   }
 
+  // Round E part 3 (Nov 10): leaders (and members they choose) can pin a post to the
+  // group's handbook. The handbook keeps only which post it is; it stays scrambled.
+  const [hbCan, setHbCan] = useState(false)
+  const [hbPins, setHbPins] = useState({}) // post id -> pin id
+  const orgOfChat = group?.organization_id || null
+  useEffect(() => {
+    if (!orgOfChat || !id) { setHbCan(false); setHbPins({}); return }
+    let alive = true
+    Promise.all([
+      supabase.rpc('org_can_edit_handbook', { p_org: orgOfChat }),
+      supabase.rpc('org_handbook_pins_in', { p_group: id }),
+    ]).then(([c, p]) => {
+      if (!alive) return
+      if (c.error && c.error.code !== 'PGRST202') console.error('Failed to check handbook access:', c.error)
+      setHbCan(!!c.data)
+      setHbPins(Object.fromEntries((p.data || []).map((r) => [String(r.post_id), r.pin_id])))
+    })
+    return () => { alive = false }
+  }, [orgOfChat, id])
+  async function togglePin(post) {
+    const pinId = hbPins[String(post.id)]
+    const { data, error } = pinId
+      ? await supabase.rpc('org_handbook_unpin', { p_pin: pinId })
+      : await supabase.rpc('org_handbook_pin', { p_post: post.id, p_label: null })
+    if (error) { console.error('Handbook pin failed:', error); tell(t("We couldn't save that. Try again."), { tone: 'error' }); return }
+    setHbPins((m) => { const n = { ...m }; if (pinId) delete n[String(post.id)]; else n[String(post.id)] = data; return n })
+    tell(pinId ? t('Taken out of the handbook.') : t('Pinned to the handbook.'))
+  }
+
   // --- Members panel actions ---------------------------------------
 
   useEffect(() => {
@@ -725,6 +754,7 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
                   {p.edit_count > 0 && <> · <button type="button" className="group-post-delete" onClick={() => showPostHistory(p)}>{t('Edited')}</button></>}
                   {isMe && canEditPost(p) && <> · <button type="button" className="group-post-delete" onClick={() => { setEditingPost(p); setNewPost(p.text); setSendNote('') }}>{t('Edit')}</button></>}
                   {isMe && <> · <button type="button" className="group-post-delete" onClick={() => deletePost(p)}>{t('Delete')}</button></>}
+                  {hbCan && p.text !== LOCKED_POST && <> · <button type="button" className="group-post-delete" aria-pressed={!!hbPins[String(p.id)]} onClick={() => togglePin(p)}>{hbPins[String(p.id)] ? t('Pinned (unpin)') : t('Pin')}</button></>}
                 </span>
                 <SparkButton count={sparks[String(p.id)]?.n || 0} mine={!!sparks[String(p.id)]?.mine} onToggle={() => toggleSpark(p.id)} />
               </div>
