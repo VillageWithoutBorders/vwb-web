@@ -75,8 +75,9 @@ export default function GroupHome({ org, events, posts, chats, news, canManage, 
           </button>
         ))}
         <div className="gh-more">
-          {hasNeedsSpot && <button type="button" className="gh-link" onClick={() => onOpen('needs')}>{t('Needs and offers')}</button>}
-          <button type="button" className="gh-link" onClick={() => onOpen('share')}>{t(hasNeedsSpot ? 'What we share' : 'Supplies we keep')}</button>
+          {hasNeedsSpot
+            ? <button type="button" className="gh-link" onClick={() => onOpen('needs')}>{t('Needs and what we share')}</button>
+            : <button type="button" className="gh-link" onClick={() => onOpen('share')}>{t('Supplies we keep')}</button>}
         </div>
       </section>
 

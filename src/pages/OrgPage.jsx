@@ -335,7 +335,7 @@ export default function OrgPage() {
   const ownNames = scene.names && typeof scene.names === 'object' ? scene.names : {}
   const sign = scene.sign || (isGroup ? 'tent' : 'people')
   const named = (s) => (ownNames[s.k] ? { ...s, label: ownNames[s.k], short: ownNames[s.k] } : s)
-  const spots = SPOTS.filter((s) => !s.organizers || canManage).filter((s) => s.k === 'tools' || !hiddenKeys.includes(s.k))
+  const spots = SPOTS.filter((s) => !s.merged).filter((s) => !s.organizers || canManage).filter((s) => s.k === 'tools' || !hiddenKeys.includes(s.k))
     .map(named)
   const general = chats.find((c) => c.is_general)
   // Round E: members already belong, so Get involved leaves their map (it stays in the list as Share this page).
@@ -360,9 +360,9 @@ export default function OrgPage() {
       case 'ready': return { sub: org.response_status === 'approved' ? t('Approved to respond to emergencies') : org.response_status === 'asked' ? t('Waiting for approval') : t('Not called to emergencies yet') }
       case 'links': return { sub: links.length ? n('1 connected group', '{n} connected groups', links.length) : t('No connections yet') }
       case 'news': return { sub: !isMember ? t('Members only') : news ? t('News from {name}', { name: org.name }) : canManage ? t('Start Announcements for your members') : t('No announcements yet') }
-      case 'fires': return { sub: !isMember ? t('Members only') : chats.length ? n('1 Campfire you are in', '{n} Campfires you are in', chats.length) : t('No Campfires yet') }
+      case 'fires': return { sub: !isMember ? t('Members only') : (news ? t('Announcements') + ', ' : '') + (chats.length ? n('1 Campfire you are in', '{n} Campfires you are in', chats.length) : t('No Campfires yet')) }
       case 'events': return { sub: events.length ? t('{n} coming up', { n: events.length }) : t('Nothing on the calendar yet') }
-      case 'needs': return { sub: t('What we need and what we offer') }
+      case 'needs': return { sub: t('What we need, what we offer, and what we share') }
       case 'share': return { sub: resources.length ? n('1 shared resource', '{n} shared resources', resources.length) : t('Nothing shared yet') }
       case 'members': return { sub: !isMember ? t('Members only') : isGroup ? t('Who is in, and what we bring') : t('Who is part of this group') }
       case 'involved': return { sub: isMember ? t('Share this page with a friend') : asked ? t('You asked to join') : t('Ask to join or reach the {who}', { who: t(W.leadsLower) }) }
@@ -377,7 +377,7 @@ export default function OrgPage() {
     const go = async (to) => { if (fromMap && !(await askGoTo(s))) return; navigate(to) }
     if (s.k === 'tools') { go('/orgs/' + id + '/dashboard'); return }
     if (s.k === 'news' && isMember && news) { go('/groups/' + news.id); return }
-    if (s.k === 'fires' && isMember && chats.length === 1) { go('/groups/' + chats[0].id); return }
+    if (s.k === 'fires' && isMember && chats.length === 1 && !news && !canManage) { go('/groups/' + chats[0].id); return }
     if (s.k === 'needs' && posts === null) loadPosts()
     openSheet({ k: s.k })
   }
@@ -445,6 +445,14 @@ export default function OrgPage() {
         </>
       case 'fires':
         return <>{title}
+          {/* Nov 11 (map review): Announcements live here now, above the Campfires. */}
+          {news && (
+            <button type="button" className="vs-row" onClick={() => { setSheet(null); navigate('/groups/' + news.id) }}>
+              <span aria-hidden="true"><Icon name="megaphone" /></span> {t('Announcements')}<small>{t('News from {name}', { name: org.name })}</small>
+            </button>
+          )}
+          {!news && canManage && <button type="button" className="btn btn-outline btn-full" disabled={newsBusy} onClick={startNews}><Icon name="megaphone" /> {newsBusy ? t('Starting...') : t('Start Announcements')}</button>}
+          {newsNote && <p className="vs-note" role="alert">{newsNote}</p>}
           {chats.length === 0 && <p>{canManage ? t('No Campfires yet. Start the general chat from {tools}.', { tools: TOOLS }) : t('No Campfires yet. {leads} start the general chat.', { leads: LEADS })}</p>}
           {/* Smaller Campfires (sidechats in the database) live inside the general Campfire: listed under it, not as chats of their own. */}
           {chats.filter((c) => c.is_general || c.shared).map((c) => (
@@ -492,26 +500,15 @@ export default function OrgPage() {
             <button type="button" className="vs-big vs-find" onClick={() => navigate('/ask')}>{t('Ask for Help')}</button>
             <button type="button" className="vs-big vs-offer" onClick={() => navigate('/post-offer')}>{t('Offer Help')}</button>
           </div>
+          {!isGroup && <>
+            <h3 className="vs-sheet-sub">{t('What we share')}</h3>
+            {shareList()}
+          </>}
         </>
       case 'ready':
         return <>{title}<GroupResponse orgId={id} orgName={org.name} isKeeper={canManage} villageCount={villageCount} onChanged={loadOrg} /></>
       case 'share':
-        return <>{title}
-          {resources.length === 0 && <p>{isGroup ? t('No supplies listed yet. Keepers and Helpers can add the supplies your crew keeps ready, like tarps or water, as resources.') : t('Nothing shared yet.')}</p>}
-          {resources.map((r) => (
-            <div key={r.id} className="vs-item">
-              <b>{r.name}</b>
-              {r.description && <small>{r.description}</small>}
-              <small>{resourceCats(r).map((c) => t(c)).join(' · ')}</small>
-              {(r.phone || r.url) && (
-                <span className="hub-resource-links">
-                  {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')}>{t('Call {phone}', { phone: r.phone })}</a>}
-                  {r.url && <a href={safeLink(r.url)} target="_blank" rel="noopener noreferrer">{t('Website')}</a>}
-                </span>
-              )}
-            </div>
-          ))}
-        </>
+        return <>{title}{shareList()}</>
       case 'members':
         return <>{title}
           <OrgMemberNames orgId={id} words={W} />
@@ -533,6 +530,27 @@ export default function OrgPage() {
       default: return title
     }
   }
+
+  // What the group shares (or a crew's supplies). Used in the Needs sheet and the Share sheet.
+  function shareList() {
+    return <>
+          {resources.length === 0 && <p>{isGroup ? t('No supplies listed yet. Keepers and Helpers can add the supplies your crew keeps ready, like tarps or water, as resources.') : t('Nothing shared yet.')}</p>}
+          {resources.map((r) => (
+            <div key={r.id} className="vs-item">
+              <b>{r.name}</b>
+              {r.description && <small>{r.description}</small>}
+              <small>{resourceCats(r).map((c) => t(c)).join(' · ')}</small>
+              {(r.phone || r.url) && (
+                <span className="hub-resource-links">
+                  {r.phone && <a href={'tel:' + r.phone.replace(/[^0-9+]/g, '')}>{t('Call {phone}', { phone: r.phone })}</a>}
+                  {r.url && <a href={safeLink(r.url)} target="_blank" rel="noopener noreferrer">{t('Website')}</a>}
+                </span>
+              )}
+            </div>
+          ))}
+        </>
+  }
+
 
   // ----- Organizer settings (same as before) -----
   async function saveZip(e, raw = zip) {
@@ -750,7 +768,7 @@ export default function OrgPage() {
         )}
 
         {canManage && <SimpleFold on={simple} label={t(W.settings)}>
-          {!simple && <OrgSceneEditor org={org} spots={SPOTS.filter((s) => !s.organizers)} isGroup={isGroup} onSaved={loadOrg} />}
+          {!simple && <OrgSceneEditor org={org} spots={SPOTS.filter((s) => !s.organizers && !s.merged)} isGroup={isGroup} onSaved={loadOrg} />}
           {!simple && <h2>{t(W.settings)}</h2>}
           <section className="cal-box" aria-labelledby="org-home">
             <h3 id="org-home">{t('Home area')}</h3>

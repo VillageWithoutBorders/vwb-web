@@ -8203,3 +8203,47 @@ html.text-larger .acc-list > div, html.text-largest .acc-list > div { grid-templ
 .rsvp-msg { margin: 0; color: var(--accent); font-weight: 600; }
 .rsvp-remind select { min-height: 44px; font-size: 1rem; max-width: 100%; }
 .rsvp-counts { margin: 0 0 0.5rem; }
+
+/* Round F part 1 (Nov 11): roles on the event page, the event plan. */
+.roles { display: grid; gap: 12px; }
+.role { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+.role h3 { margin: 0; font-size: 1.1rem; overflow-wrap: anywhere; }
+.role p { margin: 0; overflow-wrap: anywhere; }
+.role-slots { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; }
+.role-slot { display: grid; gap: 6px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border-strong); }
+.role-slot.is-mine { border: 2px solid var(--accent); }
+.role-slot-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; }
+.role-slot-when { font-weight: 600; }
+.role-slot-left { color: var(--text-secondary); }
+.role-slot-left.is-full { color: var(--gold, #f2c763); }
+.role-slot .btn, .role-note-edit .btn { min-height: 44px; }
+.role-slot-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.role-in { font-weight: 700; color: var(--accent); }
+.role-note { margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); overflow-wrap: anywhere; }
+.role-note-in { border: 2px solid var(--gold, #f2c763); }
+.role-note-edit { display: grid; gap: 6px; }
+.role-note-edit textarea { width: 100%; box-sizing: border-box; font-size: 1rem; }
+.task-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.task-list small { display: block; color: var(--text-secondary); font-size: .875rem; }
+.plan-page h1 { overflow-wrap: anywhere; }
+.plan-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
+.plan-tab { min-height: 48px; padding: 6px 14px; border-radius: 12px; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; background: var(--surface-2); color: var(--text-soft); flex: 1 1 auto; }
+.plan-tab.is-on { background: var(--accent); color: var(--on-accent); }
+.plan-tab:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.plan-role h2 { margin: 0 0 4px; overflow-wrap: anywhere; }
+.plan-slots { margin: 6px 0; padding-left: 1.2rem; }
+.plan-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.plan-btns .btn, .plan-btns select { min-height: 44px; }
+.plan-btns select { max-width: 100%; font-size: 1rem; }
+.plan-form { display: grid; gap: 6px; }
+.plan-form label { font-weight: 600; }
+.plan-form input, .plan-form textarea, .plan-form select { width: 100%; box-sizing: border-box; font-size: 1rem; min-height: 44px; }
+.plan-slot-edit { border: 0; padding: 0; margin: 8px 0; display: grid; gap: 10px; min-width: 0; }
+.plan-slot-edit legend { font-weight: 700; margin-bottom: 6px; }
+.plan-slot-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.plan-slot-row label { display: grid; gap: 2px; font-weight: 600; font-size: .9375rem; }
+.plan-slot-row .btn { grid-column: 1 / -1; min-height: 44px; }
+@media (min-width: 700px) { .plan-slot-row { grid-template-columns: 1.4fr 1fr 1fr .8fr auto; align-items: end; } .plan-slot-row .btn { grid-column: auto; } }
+html.text-largest .plan-slot-row { grid-template-columns: 1fr; }
+.plan-task { display: grid; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.plan-next { margin-top: 16px; }
