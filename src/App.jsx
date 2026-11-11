@@ -53,6 +53,7 @@ const JoinOrgLink = lazyPage(() => import('./pages/JoinOrgLink'))
 const Terms = lazyPage(() => import('./pages/Terms'))
 const Calendar = lazyPage(() => import('./pages/Calendar'))
 const CalendarEventForm = lazyPage(() => import('./pages/CalendarEventForm'))
+const EventPlan = lazyPage(() => import('./pages/EventPlan'))
 const CalendarImport = lazyPage(() => import('./pages/CalendarImport'))
 const CalendarEmbed = lazyPage(() => import('./pages/CalendarEmbed'))
 const EventPage = lazyPage(() => import('./pages/EventPage'))
@@ -324,6 +325,8 @@ function AppRoutes() {
         <Route path="calendar/new" element={<CalendarEventForm />} />
         <Route path="calendar/import" element={<CalendarImport />} />
         <Route path="calendar/:id/edit" element={<CalendarEventForm />} />
+        {/* Round F: Plan this event (organizers). */}
+        <Route path="calendar/:id/plan" element={<EventPlan />} />
         <Route path="groups" element={<OneHome groups><Groups /></OneHome>} />
         <Route path="groups/:id" element={<GroupBoard />} />
       </Route>
