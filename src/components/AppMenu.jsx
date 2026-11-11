@@ -30,6 +30,16 @@ export default function AppMenu({ inline = false, only = null }) {
   const [open, setOpen] = useState(false)
   const [panel, setPanel] = useState(null) // 'share' | 'install' | 'logout'
   const [copied, setCopied] = useState(false)
+  // Nov 11 (privacy follow-up): the share QR is made on the phone, not by an outside website.
+  const [qrPng, setQrPng] = useState('')
+  useEffect(() => {
+    if (panel !== 'share' || qrPng) return
+    let alive = true
+    import('qrcode').then((m) => (m.default || m).toDataURL(SIGNUP_URL, { width: 520, margin: 0, errorCorrectionLevel: 'M', color: { dark: '#000000', light: '#ffffff' } }))
+      .then((d) => { if (alive) setQrPng(d) })
+      .catch((err) => console.error('QR code failed:', err))
+    return () => { alive = false }
+  }, [panel, qrPng])
   const buttonRef = useRef(null)
   const menuRef = useRef(null)
 
@@ -173,13 +183,9 @@ export default function AppMenu({ inline = false, only = null }) {
             <div role="dialog" aria-modal="true" aria-labelledby="shareTitle" className="app-dialog">
               <h2 id="shareTitle" className="app-dialog-title">{t('Share Village Without Borders')}</h2>
               <p className="app-dialog-text">{t("Scan with a phone camera to sign up. It's a plain link. Nothing is tracked.")}</p>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=520x520&margin=0&data=${encodeURIComponent(SIGNUP_URL)}`}
-                alt={t('QR code that opens the Village Without Borders sign-up form')}
-                width={260}
-                height={260}
-                className="app-dialog-qr"
-              />
+              {qrPng
+                ? <img src={qrPng} alt={t('QR code that opens the Village Without Borders sign-up form')} width={260} height={260} className="app-dialog-qr" />
+                : <div className="app-dialog-qr" style={{ width: 260, height: 260, maxWidth: '100%' }} role="status" aria-label={t('Loading...')} />}
               <p className="app-dialog-link">{APP_URL}</p>
               <div className="app-dialog-buttons">
                 {typeof navigator !== 'undefined' && navigator.share && (
