@@ -34,6 +34,7 @@ export default function LeadToday({ orgId, onOpen }) {
   if (!d || !d.ok) return null
   const dash = '/orgs/' + orgId + '/dashboard'
   const items = [
+    ...(d.partner_asks || []).slice(0, 3).map((x) => ({ k: 'p' + x.event_id, icon: 'people', text: t('{host} asked you to co-host {title}', { host: x.host || t('A group'), title: x.title }), btn: t('Answer'), go: () => navigate('/events/' + x.event_id) })),
     reports > 0 && { k: 'r', icon: 'flag', text: reports === 1 ? t('1 report to look at') : t('{n} reports to look at', { n: reports }), btn: t('Look'), go: () => navigate(dash + '?tab=people') },
     d.asks > 0 && { k: 'a', icon: 'raise-hand', text: d.asks === 1 ? t('1 person asked to join') : t('{n} people asked to join', { n: d.asks }), btn: t('Answer'), go: () => navigate(dash + '?tab=people') },
     ...(d.shifts || []).slice(0, 3).map((s, i) => ({ k: 's' + i, icon: 'calendar',
