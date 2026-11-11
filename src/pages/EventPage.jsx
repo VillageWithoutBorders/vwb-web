@@ -14,6 +14,8 @@ import Linkify from '../components/Linkify'
 import AddToCalendar from '../components/AddToCalendar'
 import { askConfirm, tell } from '../components/AdminDialog'
 import { useT, t as tr, getLang } from '../utils/lang'
+import EventAccessNotes from '../components/EventAccessNotes'
+import EventRsvp, { EventReminder, EventRsvpCounts } from '../components/EventRsvp'
 
 // One event. Public route on purpose: this is the page people land on from
 // the website calendar, a shared Facebook post, or a private invite link,
@@ -51,6 +53,8 @@ export default function EventPage() {
   const [attendeeMsg, setAttendeeMsg] = useState('')
   const [organizers, setOrganizers] = useState([])
   const [organizerMsg, setOrganizerMsg] = useState('')
+  // Round E part 4: access notes and the watch-from-home link (vwb-event-access-rsvp.sql).
+  const [accessInfo, setAccessInfo] = useState(null)
 
   const load = useCallback(async () => {
     if (user && token) {
@@ -62,6 +66,12 @@ export default function EventPage() {
     const { event } = await fetchCalendarEvent(id, token)
     setEv(event)
     setLoading(false)
+    if (event) {
+      supabase.rpc('get_event_access', { p_id: Number(id), p_token: token || null }).then(({ data, error }) => {
+        if (error) { if (error.code !== 'PGRST202') console.error('Failed to load access notes:', error); return }
+        setAccessInfo(data || null)
+      })
+    }
     if (event) {
       // Older events, or a database without the columns yet, use the defaults.
       const { data: extra } = await supabase.from('calendar_events').select('signup_kind, needs_text').eq('id', Number(id)).maybeSingle()
@@ -361,7 +371,22 @@ export default function EventPage() {
           <div className="cal-detail-row"><span aria-hidden="true"><Icon name="lock" /></span><span>{t(VISIBILITY[ev.visibility].label)}. {t(VISIBILITY[ev.visibility].desc)}</span></div>
         )}
 
+        {accessInfo?.watch_link && /^https?:\/\//i.test(accessInfo.watch_link) && (
+          <div className="cal-detail-row">
+            <span aria-hidden="true"><Icon name="globe" /></span>
+            <span>{t('Watch from home:')} <a href={accessInfo.watch_link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', wordBreak: 'break-all' }}>{accessInfo.watch_link}</a></span>
+          </div>
+        )}
+        {accessInfo?.has_watch_link && !accessInfo.watch_link && (
+          <div className="cal-detail-row">
+            <span aria-hidden="true"><Icon name="globe" /></span>
+            <span>{t('You can watch from home. Pick Watching from home below to get the link.')}</span>
+          </div>
+        )}
+
         {ev.description && <p className="cal-description"><Linkify text={ev.description} /></p>}
+
+        <EventAccessNotes info={accessInfo} />
 
         {organizers.length > 0 && (
           <section className="cal-box" aria-label={t('Contact the organizers')}>
@@ -395,6 +420,11 @@ export default function EventPage() {
         )}
 
         <EventShifts eventId={id} token={token} user={user} canManage={ev.can_manage} past={past} cancelled={cancelled} onSignIn={goSignIn} onChanged={load} onLoaded={(n) => setHasShifts(n > 0)} />
+        {user && hasShifts && !past && !cancelled && (
+          <section className="cal-box" aria-label={t('Reminder')}>
+            <EventReminder eventId={id} token={token} label="Remind me before my shift" />
+          </section>
+        )}
 
         {ev.signup_enabled && !cancelled && !hasShifts && (
           <section className="cal-box" aria-label={t('Sign up')}>
@@ -408,6 +438,9 @@ export default function EventPage() {
             {message && <p role="status" style={{ color: 'var(--accent)' }}>{message}</p>}
             {past ? (
               <p className="cal-sub">{t('This event has already happened.')}</p>
+            ) : signupKind === 'attend' && user ? (
+              <EventRsvp ev={ev} token={token} full={full} hasWatch={!!accessInfo?.has_watch_link} onChanged={load}
+                askNote={needsList.length > 0 ? 'What can you bring? How many are coming with you? (optional)' : 'How many are coming with you? Anything we should know? (optional)'} />
             ) : full && !ev.is_signed_up ? (
               <p className="cal-sub">{t('All spots are filled.')}</p>
             ) : !user ? (
@@ -418,6 +451,7 @@ export default function EventPage() {
             ) : ev.is_signed_up ? (
               <div className="cal-actions">
                 <p style={{ margin: 0, fontWeight: 700, color: 'var(--accent)' }}>{t("You're signed up.")}</p>
+                <EventReminder eventId={id} token={token} />
                 <button type="button" className="btn btn-outline btn-full" onClick={cancelSignup} disabled={busy}>{t('Cancel my sign-up')}</button>
               </div>
             ) : (
@@ -451,9 +485,12 @@ export default function EventPage() {
             <h2>{t('Save or share')}</h2>
             <div className="cal-actions">
               <AddToCalendar ev={ev} asButton>{t('Add to my calendar')}</AddToCalendar>
-              {ev.visibility === 'public' && (
-                <button type="button" className="btn btn-outline btn-full" onClick={share}>{copied === 'share' ? t('Link copied!') : t('Share this event')}</button>
-              )}
+              {ev.visibility === 'public' && <>
+                {/* Round E part 4: share outward. The link opens a public page that works without an account. */}
+                <a className="btn btn-outline btn-full" href={'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(eventUrl(ev, false))} target="_blank" rel="noopener noreferrer">{t('Share to Facebook')}</a>
+                <button type="button" className="btn btn-outline btn-full" onClick={() => copy(eventUrl(ev, false), 'link')}>{copied === 'link' ? t('Link copied!') : t('Copy link')}</button>
+                {typeof navigator !== 'undefined' && navigator.share && <button type="button" className="btn btn-outline btn-full" onClick={share}>{t('Share this event')}</button>}
+              </>}
             </div>
           </section>
         )}
@@ -548,6 +585,7 @@ export default function EventPage() {
             {ev.signup_enabled && (
               <>
                 <h2 style={{ marginTop: '1rem' }}>{t("Who's signed up ({n})", { n: signups.length })}</h2>
+                <EventRsvpCounts eventId={id} />
                 {attendeeMsg && <p className="cal-sub" role="status" style={{ marginTop: 0 }}>{attendeeMsg}</p>}
                 {signups.length === 0 ? <p className="cal-sub">{t('Nobody yet.')}</p> : (
                   <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.6 }}>

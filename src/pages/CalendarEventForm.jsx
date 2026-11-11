@@ -6,6 +6,8 @@ import { DISTANCE_OPTIONS, VISIBILITY, placeFromZip } from '../utils/calendar'
 import { EVENT_TEMPLATES, addMinutes } from '../utils/eventTemplates'
 import { parsePastedEvent } from '../utils/pasteEvent'
 import ShiftsEditor from '../components/ShiftsEditor'
+import AccessNotesEditor from '../components/AccessNotesEditor'
+import { cleanAccess } from '../utils/eventAccess'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
 import { calmMotion } from '../utils/motion'
@@ -70,6 +72,7 @@ export default function CalendarEventForm() {
     teensCanHelp: false,
     online: false,
     onlineLink: '',
+    access: {},
   })
   // New events start by picking a kind of event (see eventTemplates.js),
   // or "Start from scratch". null = still choosing.
@@ -111,6 +114,7 @@ export default function CalendarEventForm() {
         teensCanHelp: !!data.teens_can_help,
         online: !!data.is_online,
         onlineLink: data.online_link || '',
+        access: data.access || {},
       })
       if (data.town && data.latitude != null && data.longitude != null) {
         setPlace({ name: data.town, lat: Number(data.latitude), lng: Number(data.longitude) })
@@ -272,7 +276,8 @@ export default function CalendarEventForm() {
     if (form.online) {
       if (!link) { fail('ev-link', t('Add the link people use to join the online event.')); return }
       if (!/^https?:\/\//i.test(link)) link = 'https://' + link
-    } else if (!place) { fail('ev-zip', zip.length === 5 ? t("We couldn't find that zip code. Check it and try again.") : t('Enter the 5 digit zip code where the event is happening.')); return }
+    } else if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link
+    if (!form.online && !place) { fail('ev-zip', zip.length === 5 ? t("We couldn't find that zip code. Check it and try again.") : t('Enter the 5 digit zip code where the event is happening.')); return }
     const row = {
       organization_id: form.host === VWB_HOST ? null : form.host,
       title: form.title.trim(),
@@ -295,7 +300,9 @@ export default function CalendarEventForm() {
       all_ages: form.allAges,
       teens_can_help: form.allAges && form.teensCanHelp,
       is_online: form.online,
-      online_link: form.online ? link : null,
+      // Round E part 4: an in-person event can also have a link to watch from home.
+      online_link: link || null,
+      access: cleanAccess(form.access),
     }
 
     setSaving(true)
@@ -477,8 +484,15 @@ export default function CalendarEventForm() {
             <small>{t('Everyone else just sees the town.')}</small>
           </span>
         </label>
+        <div className="form-field">
+          <label htmlFor="ev-watch">{t('Link to watch from home (optional)')}</label>
+          <input id="ev-watch" type="url" inputMode="url" autoComplete="url" maxLength={500} value={form.onlineLink} onChange={(e) => set('onlineLink', e.target.value)} placeholder="https://" aria-describedby="ev-watch-hint" />
+          <p id="ev-watch-hint" className="field-hint">{t('If people can join by video. They can pick Watching from home.')}</p>
+        </div>
           </>
         )}
+
+        <AccessNotesEditor value={form.access} onChange={(a) => set('access', a)} orgId={form.host === VWB_HOST ? null : form.host} />
 
         <h2 style={{ fontSize: '1.05rem', margin: '1.25rem 0 0.5rem' }}>{t('Who can see it?')}</h2>
         {Object.entries(VISIBILITY).filter(([key]) => key !== 'affiliates' || umbrellaIds.includes(form.host)).map(([key, v]) => {
