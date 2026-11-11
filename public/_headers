@@ -17,10 +17,9 @@
 #   challenges.cloudflare.com          the "are you a person?" check on sign-in and sign-up (Turnstile)
 #   tile.openstreetmap.org             street map pictures
 #   api.dicebear.com                   avatar drawings
-#   api.qrserver.com                   the printed QR card in the menu
 
 /*
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-ht39DG5JTE6DMq6sIGfe12uSLA7XL2U4FoRwQd/JM0E=' 'sha256-3+GlBY8/nIdFZ/0F17GvjZjR13wd8hysHtIdN7EXPTo=' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://jgabhhobqkuteuqtikpi.supabase.co https://tile.openstreetmap.org https://api.dicebear.com https://api.qrserver.com; font-src 'self' data:; connect-src 'self' https://jgabhhobqkuteuqtikpi.supabase.co wss://jgabhhobqkuteuqtikpi.supabase.co; frame-src https://challenges.cloudflare.com; worker-src 'self'; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report; report-to csp
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-ht39DG5JTE6DMq6sIGfe12uSLA7XL2U4FoRwQd/JM0E=' 'sha256-3+GlBY8/nIdFZ/0F17GvjZjR13wd8hysHtIdN7EXPTo=' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://jgabhhobqkuteuqtikpi.supabase.co https://tile.openstreetmap.org https://api.dicebear.com; font-src 'self' data:; connect-src 'self' https://jgabhhobqkuteuqtikpi.supabase.co wss://jgabhhobqkuteuqtikpi.supabase.co; frame-src https://challenges.cloudflare.com; worker-src 'self'; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report; report-to csp
   Reporting-Endpoints: csp="https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report"
   Report-To: {"group":"csp","max_age":2592000,"endpoints":[{"url":"https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report"}]}
   Strict-Transport-Security: max-age=31536000; includeSubDomains
