@@ -14,6 +14,7 @@ import ToolsSheet, { EMERGENCY, toolRows } from '../components/ToolsSheet'
 import { useMyTools } from '../hooks/useMyTools'
 import { useAdminInbox } from '../hooks/useAdminInbox'
 import { useEmergenciesICanHelp } from '../hooks/useEmergenciesICanHelp'
+import { avatarSrc as drawAvatar } from '../utils/avatar'
 
 // My Corner (/me): only the things that are yours and live nowhere else.
 // Nov 10 (Jade), top to bottom:
@@ -41,7 +42,7 @@ export default function YourCorner() {
   const [scanOpen, setScanOpen] = useState(false)
   const scanBtn = useRef(null)
   // Your avatar from the avatar builder, or the same drawn avatar others see. The letter shows only if it can't load.
-  const avatarSrc = profile?.avatar_url || 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + (user?.id || 'default')
+  const avatarSrc = drawAvatar(profile?.avatar_url, user?.id)
   const name = profile?.display_name || t('Neighbor')
   const letter = (name.trim().charAt(0) || '?').toUpperCase()
   const place = profile?.neighborhood || (profile?.zip_code ? t('Zip {zip}', { zip: profile.zip_code }) : '')
