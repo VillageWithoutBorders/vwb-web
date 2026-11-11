@@ -5377,6 +5377,14 @@ const more = {
   'New account: a few things open up soon': 'Cuenta nueva: algunas cosas se abren pronto',
   'Private messages and the people you are connected with.': 'Mensajes privados y las personas con las que está conectado.',
   'Village Square, Cottage Chats, and Campfires.': 'Plaza de la aldea, chats de la casita y fogatas.',
+  // Nov 10: Resource map
+  'Only places with a public street address are on this map. Phone lines and places that keep their address private are on the full list.': 'En este mapa solo aparecen lugares con una dirección pública. Las líneas telefónicas y los lugares que mantienen su dirección privada están en la lista completa.',
+  'All kinds': 'Todos los tipos',
+  'No resources with a public address near you yet.': 'Todavía no hay recursos con dirección pública cerca de ti.',
+  'See the full list': 'Ver la lista completa',
+  'Map of resources with a public address': 'Mapa de recursos con dirección pública',
+  'Loading the map...': 'Cargando el mapa...',
+  'On this map': 'En este mapa',
 }
 
 export default more
