@@ -6,6 +6,7 @@ import { applyPrefs, devicePrefs, savePrefs } from '../utils/uiPrefs'
 import { firstRunPaused } from '../utils/firstVillage'
 import { useAuth } from '../context/AuthContext'
 import { useSimpleView, setSimpleLocal, isSimpleView } from '../utils/simpleView'
+import { setSkinLocal, pickedSkin } from '../utils/skin'
 import SimpleOffer from '../components/SimpleOffer'
 import ReadAloud from '../components/ReadAloud'
 import PendingAsks from '../components/PendingAsks'
@@ -47,6 +48,13 @@ export default function Layout() {
     const v = profile?.simple_view
     if (typeof v === 'boolean' && v !== isSimpleView()) setSimpleLocal(v)
   }, [profile?.simple_view])
+  // Skin (Nov 11) follows the account too. Empty on the account means Home Place.
+  const hasSkin = !!profile && Object.prototype.hasOwnProperty.call(profile, 'skin')
+  useEffect(() => {
+    if (!hasSkin) return
+    const v = profile.skin || 'home'
+    if (v !== pickedSkin()) setSkinLocal(v)
+  }, [hasSkin, profile?.skin]) // eslint-disable-line react-hooks/exhaustive-deps
   // Text size, Light or dark, and Motion follow the account too (Nov 1). An account that
   // never saved them takes this phone's choices, so nobody loses what they picked.
   const prefsKey = profile && Object.prototype.hasOwnProperty.call(profile, 'ui_prefs') ? JSON.stringify(profile.ui_prefs) : ''
