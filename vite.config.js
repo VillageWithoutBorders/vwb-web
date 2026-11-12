@@ -12,8 +12,16 @@ function paintedIcons() {
       .filter((f) => f.endsWith('.webp')).map((f) => f.slice(0, -5))
   } catch { return [] }
 }
+// Nov 11: skin drawings in public/art/skins/<skin>/ (see src/utils/skinArt.js). Read the
+// same way, so restart dev after adding one.
+function skinArtFiles() {
+  try {
+    return readdirSync(fileURLToPath(new URL('./public/art/skins', import.meta.url)), { recursive: true })
+      .map((f) => String(f).replace(/\\/g, '/')).filter((f) => f.endsWith('.webp')).map((f) => '/art/skins/' + f)
+  } catch { return [] }
+}
 export default defineConfig({
-  define: { __PAINTED_ICONS__: JSON.stringify(paintedIcons()) },
+  define: { __PAINTED_ICONS__: JSON.stringify(paintedIcons()), __SKIN_ART__: JSON.stringify(skinArtFiles()) },
   resolve: {
     alias: {
       // libsodium-wrappers' own ESM build (dist/modules-esm/libsodium-wrappers.mjs)

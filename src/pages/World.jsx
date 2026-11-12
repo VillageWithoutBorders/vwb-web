@@ -22,6 +22,7 @@ import { distanceMiles } from '../utils/location'
 import { startingOrigin } from '../utils/calendar'
 import { CATEGORIES, resourceCats } from '../utils/resourceCategories'
 import AddressLink from '../components/AddressLink'
+import { skinArt } from '../utils/skinArt'
 
 // Nov 10 (Jade): the Resource map shows only resources with a public street address.
 // No address, no street number, or words that say the address is kept private: no pin.
@@ -367,7 +368,7 @@ export default function World() {
           <div ref={globeRef} className={'wd-globe' + (leaving ? (leaving.spin ? ' wd-spin' : ' wd-zoom') : '')}
             style={leaving ? { transformOrigin: leaving.x + '% ' + leaving.y + '%' } : undefined}>
             <button type="button" className="wd-sea" aria-label={t('See every village, below the globe')} onClick={seeAll}>
-              <img src="/art/globe.webp" alt="" width="720" height="720" fetchpriority="high" />
+              <img src={skinArt('/art/globe.webp')} alt="" width="720" height="720" fetchpriority="high" />
             </button>
             <svg className="wd-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
               {/* Nov 7: sister lines first, so the village circles sit on top of them. */}

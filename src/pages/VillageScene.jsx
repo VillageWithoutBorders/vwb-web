@@ -18,6 +18,7 @@ import Dashboard from './Dashboard'
 import { useSimpleView } from '../utils/simpleView'
 import { calmMotion } from '../utils/motion'
 import { useT, plainName } from '../utils/lang'
+import { skinArt } from '../utils/skinArt'
 
 // The Village page: one village as a little world. Every element on the
 // hills is a button that goes to its own page. A plain list sits below for
@@ -505,14 +506,14 @@ export default function VillageScene() {
           so you can move it. A gift still to grow takes you to the step that grows it. */}
       {got.map((g) => (
         <button key={g.k} type="button" className="vs-item vs-gift-row" onClick={() => moveGift(g.k)}>
-          <img src={g.src} alt="" width="48" height="48" /><span><b>{t(g.label)}</b><small>{t(g.why)}. {t('Tap to move it on your map.')}</small></span>
+          <img src={skinArt(g.src)} alt="" width="48" height="48" /><span><b>{t(g.label)}</b><small>{t(g.why)}. {t('Tap to move it on your map.')}</small></span>
           <span className="vs-gift-go" aria-hidden="true">&#8250;</span>
         </button>
       ))}
       {got.length < GIFTS.length && <h3 className="vs-arrange-h">{t('Still to grow')}</h3>}
       {GIFTS.filter((g) => !g.got).map((g) => (
         <button key={g.k} type="button" className="vs-item vs-gift-row vs-gift-next" onClick={() => { closeSheet(); navigate(GIFT_STEPS[g.k]) }}>
-          <img src={g.src} alt="" width="48" height="48" /><span><b>{t(g.next)}</b><small>{t('A gift will grow when you do. Tap to start.')}</small></span>
+          <img src={skinArt(g.src)} alt="" width="48" height="48" /><span><b>{t(g.next)}</b><small>{t('A gift will grow when you do. Tap to start.')}</small></span>
           <span className="vs-gift-go" aria-hidden="true">&#8250;</span>
         </button>
       ))}
@@ -740,7 +741,7 @@ export default function VillageScene() {
         {cottage && GIFTS.filter((g) => g.got).map((g) => {
           const gs = placed(GIFT_SPOTS.find((x) => x.k === 'gift-' + g.k))
           if (!arrange && isHidden(gs.k)) return null
-          const img = <img className={'vs-gift-img' + (gs.flip ? ' vs-flip' : '')} src={g.src} alt="" width="64" height="64" draggable="false" />
+          const img = <img className={'vs-gift-img' + (gs.flip ? ' vs-flip' : '')} src={skinArt(g.src)} alt="" width="64" height="64" draggable="false" />
           const style = { left: gs.x + '%', top: gs.y + '%', '--s': gs.s || 1, zIndex: placeLayer(gs.z) }
           return arrange
             ? <button key={gs.k} type="button" data-spot={gs.k} className={'vs-gift vs-gift-edit' + (picked === gs.k ? ' vs-picked' : '') + (isHidden(gs.k) ? ' vs-hidden' : '')} style={style}
@@ -759,18 +760,18 @@ export default function VillageScene() {
               onClick={(e) => { if (!arrange) tap(s, true); else if (e.detail === 0) pickByKey(s.k) }}>
               <span className={'vs-em' + (s.flip ? ' vs-flip' : '')} aria-hidden="true">
                 {s.k === 'campfires' && life
-                  ? <img className="vs-icon vs-life-fire" src={LIFE_ART.fire[life.fire_level] || LIFE_ART.fire[1]} alt="" width="96" height="96" draggable="false" />
+                  ? <img className="vs-icon vs-life-fire" src={skinArt(LIFE_ART.fire[life.fire_level] || LIFE_ART.fire[1])} alt="" width="96" height="96" draggable="false" />
                   : s.k === 'neighbors' && life
                     // Lit cottages fill the front row first.
                     ? <span className="vs-hamlet">
                         {[0, 1, 2, 3, 4, 5].map((n) => (
-                          <img key={n} className={'vs-cot' + (5 - n < life.lit_cottages ? ' vs-cot-lit' : '')} src={5 - n < life.lit_cottages ? LIFE_ART.cottageLit : LIFE_ART.cottageDark} alt="" width="48" height="48" draggable="false" />
+                          <img key={n} className={'vs-cot' + (5 - n < life.lit_cottages ? ' vs-cot-lit' : '')} src={skinArt(5 - n < life.lit_cottages ? LIFE_ART.cottageLit : LIFE_ART.cottageDark)} alt="" width="48" height="48" draggable="false" />
                         ))}
                       </span>
                     : <SpotIcon spot={s} painted />}
-                {cottage && i.lantern && <img className="vs-lantern vs-lantern-lit" src={LIFE_ART.lantern} alt="" width="48" height="48" draggable="false" />}
+                {cottage && i.lantern && <img className="vs-lantern vs-lantern-lit" src={skinArt(LIFE_ART.lantern)} alt="" width="48" height="48" draggable="false" />}
                 {!cottage && !mine && GATED.includes(s.k) && <span className="vs-gate"><Icon name="lock" size={22} /></span>}
-                {s.k === 'keeper' && life && !life.has_keeper && <img className="vs-wanted" src={LIFE_ART.sign} alt="" width="48" height="48" draggable="false" />}
+                {s.k === 'keeper' && life && !life.has_keeper && <img className="vs-wanted" src={skinArt(LIFE_ART.sign)} alt="" width="48" height="48" draggable="false" />}
               </span>
               <span className="vs-lab">{s.k === 'keeper' && life && !life.has_keeper ? t('Keeper wanted') : t(s.short)}</span>
               {cottage && i.lantern
