@@ -35,6 +35,9 @@ export function applySkinClass() {
   subs.forEach((f) => f())
 }
 
+// For lang.js: re-draw words when the skin changes. Returns a function to stop.
+export function onSkinChange(f) { subs.add(f); return () => subs.delete(f) }
+
 // Change it on this device only (used when the account value loads).
 export function setSkinLocal(v) {
   skin = clean(v)

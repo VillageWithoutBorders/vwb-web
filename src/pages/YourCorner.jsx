@@ -8,7 +8,7 @@ import CornerRoom, { ROOM_READY } from '../components/CornerRoom'
 import { useWideScreen } from '../hooks/useWideScreen'
 import { useBackCloses } from '../hooks/useBackCloses'
 import { useSimpleView } from '../utils/simpleView'
-import { useT } from '../utils/lang'
+import { useT, plainName } from '../utils/lang'
 import { openMyQr } from '../utils/qrSheet'
 import ToolsSheet, { EMERGENCY, toolRows } from '../components/ToolsSheet'
 import { useMyTools } from '../hooks/useMyTools'
@@ -135,7 +135,7 @@ export default function YourCorner() {
   const page = (
     <div className={'corner-page' + (split ? ' corner-page-full' : '')}>
       {/* Nov 8 (Jade): side by side, the title sits above both sides so their boxes line up. */}
-      {!split && <h1 className="corner-title">{t('My Corner')}</h1>}
+      {!split && <h1 className="corner-title">{t('My Corner')}{plainName('My Corner') && <small className="skin-plain"> {plainName('My Corner')}</small>}</h1>}
 
       {emergencyRole && (
         <Link to="/emergency" className={'corner-emergency' + (openNow.length || toCheck ? ' corner-emergency-live' : '')} data-tip={t('Emergency: see the emergencies that are open and help respond.')}>
@@ -212,7 +212,7 @@ export default function YourCorner() {
   if (!split) return <>{page}{sheets}</>
   return (
     <>
-    <h1 className="corner-title corner-title-wide">{t('My Corner')}</h1>
+    <h1 className="corner-title corner-title-wide">{t('My Corner')}{plainName('My Corner') && <small className="skin-plain"> {plainName('My Corner')}</small>}</h1>
     <div className="corner-split">
       <div className="corner-split-main">{page}</div>
       <div className="corner-split-side">

@@ -17,7 +17,7 @@ import Icon from '../components/Icon'
 import Dashboard from './Dashboard'
 import { useSimpleView } from '../utils/simpleView'
 import { calmMotion } from '../utils/motion'
-import { useT } from '../utils/lang'
+import { useT, plainName } from '../utils/lang'
 
 // The Village page: one village as a little world. Every element on the
 // hills is a button that goes to its own page. A plain list sits below for
@@ -683,8 +683,8 @@ export default function VillageScene() {
     <div className="vs-page vs-page-path">
       {cottage ? (
         <div className="vs-title">
-          <h1>{profile?.cottage_name || t('My Cottage')}</h1>
-          <p className="vs-cottage-sub">{profile?.cottage_name ? t('My Cottage') + '. ' : ''}{simple ? t('Everything you are part of, in one place.') : t('Everything you are part of, in one place.') + ' ' + visitorsLine(profile?.cottage_visitors || 'nobody')}</p>
+          <h1>{profile?.cottage_name || <>{t('My Cottage')}{plainName('My Cottage') && <small className="skin-plain"> {plainName('My Cottage')}</small>}</>}</h1>
+          <p className="vs-cottage-sub">{profile?.cottage_name ? t('My Cottage') + (plainName('My Cottage') ? ' ' + plainName('My Cottage') : '') + '. ' : ''}{simple ? t('Everything you are part of, in one place.') : t('Everything you are part of, in one place.') + ' ' + visitorsLine(profile?.cottage_visitors || 'nobody')}</p>
           <div className="vs-chips">
             {home?.village_id
               ? <Link className="vs-chip vs-chip-in vs-chip-link" to={'/village/' + home.village_id}>{t('Home: {village}', { village: home.name })}</Link>
