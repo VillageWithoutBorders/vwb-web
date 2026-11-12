@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './skins.css'
 import App from './App'
 import { startLang } from './utils/lang'
 import { watchForUpdates } from './utils/freshApp'
