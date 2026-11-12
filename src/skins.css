@@ -1,0 +1,82 @@
+/* ---------- Skins, "Choose your story" (Nov 11, Jade) ----------
+   A skin changes only the look and some place names. Never the buttons, their order,
+   where they sit, what they do, or the shape of any page. skin.js puts the class on
+   <html> (skin-space, skin-mycelium, skin-fairy). Home Place has no class. Simple view
+   never gets a skin class.
+
+   This file only swaps color variables the app already uses, plus the deep teal behind
+   the map pages. It never touches --danger, --warn, --gold, the Emergency card colors,
+   --focus, text colors, or any size or layout.
+
+   Text check (Nov 11): every text color is 4.5:1 or better on the page, panels and
+   tiles, or at least as good as Home Place is on the same spot (raised tiles).
+   Re-check if a color here changes. */
+
+/* Each skin's colors. --sk-* is night (dark), --skl-* is day (light). */
+html.skin-space {
+  --sk-bg: #111A2E; --sk-surface: #172238; --sk-s2: #1A253D; --sk-s3: #283656; --sk-sunk: #0B1222;
+  --sk-border: #2E3D60; --sk-border-strong: #3E5080;
+  --sk-header: #1B2742; --sk-accent: #A9B6E8; --sk-hover: #C2CCF0;
+  --sk-page: #0A1024; --sk-card: #1F2E52; --sk-card2: #26375F; --sk-line: #3A4C7A;
+  --sk-chip: #A9B6E8; --sk-on-chip: #0A1024; --sk-muted: #B4C0E4;
+  --skl-bg: #EEF1F9; --skl-surface: #FBFCFF; --skl-s2: #E3E8F5; --skl-s3: #D5DCEE; --skl-sunk: #DEE4F2;
+  --skl-border: #C8D0E8; --skl-border-strong: #96A3CB; --skl-accent: #24335E; --skl-hover: #1B2742;
+}
+html.skin-mycelium {
+  --sk-bg: #1E1712; --sk-surface: #261D16; --sk-s2: #2C221A; --sk-s3: #3A2E22; --sk-sunk: #140F0B;
+  --sk-border: #46372A; --sk-border-strong: #5A4532;
+  --sk-header: #3A2C20; --sk-accent: #E9D2B0; --sk-hover: #F2E2C8;
+  --sk-page: #17110C; --sk-card: #3A2E22; --sk-card2: #44362A; --sk-line: #5A4532;
+  --sk-chip: #C2AE84; --sk-on-chip: #17110C; --sk-muted: #D2C3A6;
+  --skl-bg: #F4ECE0; --skl-surface: #FFF9F1; --skl-s2: #EEE3D2; --skl-s3: #E3D4BD; --skl-sunk: #E9DDC9;
+  --skl-border: #DACAB0; --skl-border-strong: #B39C78; --skl-accent: #4A3828; --skl-hover: #3A2C20;
+}
+html.skin-fairy {
+  --sk-bg: #13202A; --sk-surface: #142430; --sk-s2: #172833; --sk-s3: #213642; --sk-sunk: #0C161E;
+  --sk-border: #2E4A55; --sk-border-strong: #3D6B70;
+  --sk-header: #1E3A44; --sk-accent: #D7ECF2; --sk-hover: #E8F5F8;
+  --sk-page: #0E1A24; --sk-card: #22404A; --sk-card2: #284A55; --sk-line: #3D6B70;
+  --sk-chip: #9CC9D9; --sk-on-chip: #0E1A24; --sk-muted: #B5D3DC;
+  --skl-bg: #E9F3F5; --skl-surface: #F8FDFE; --skl-s2: #DCEBEE; --skl-s3: #CBE0E4; --skl-sunk: #D5E7EA;
+  --skl-border: #BDD7DC; --skl-border-strong: #8BB2B9; --skl-accent: #1E4A56; --skl-hover: #163A44;
+}
+
+/* Night (the default). The header color stays the same in day too. */
+html:is(.skin-space, .skin-mycelium, .skin-fairy) {
+  --bg: var(--sk-bg); --white: var(--sk-surface); --surface: var(--sk-surface);
+  --surface-2: var(--sk-s2); --surface-3: var(--sk-s3); --surface-sunk: var(--sk-sunk);
+  --border: var(--sk-border); --border-strong: var(--sk-border-strong);
+  --green-dark: var(--sk-header);
+  --accent: var(--sk-accent); --btn-bg: var(--sk-accent); --btn-hover: var(--sk-hover);
+}
+
+/* Map pages (My World, villages, cottages, group pages). village-scene.css gives these
+   their own dark colors, so the skin sets them here too. */
+html:is(.skin-space, .skin-mycelium, .skin-fairy) .vs-page {
+  --bg: var(--sk-bg); --white: var(--sk-surface); --surface: var(--sk-surface);
+  --surface-2: var(--sk-s2); --surface-3: var(--sk-s3); --surface-sunk: var(--sk-sunk);
+  --border: var(--sk-border); --border-strong: var(--sk-border-strong);
+  --accent: var(--sk-accent); --btn-bg: var(--sk-accent); --btn-hover: var(--sk-hover);
+  --vs-bg: var(--sk-page); --vs-card: var(--sk-card); --vs-card2: var(--sk-card2); --vs-line: var(--sk-line);
+  --vs-muted: var(--sk-muted); --vs-teal: var(--sk-chip); --vs-on-teal: var(--sk-on-chip);
+}
+html:is(.skin-space, .skin-mycelium, .skin-fairy) .app-main.app-main-world { background: var(--sk-page); }
+
+/* Day (light). These win over the night rules above and over index.css's day colors.
+   Map pages already follow the day colors in light mode (village-scene.css). */
+:root:is(.skin-space, .skin-mycelium, .skin-fairy)[data-theme="light"] {
+  --bg: var(--skl-bg); --white: var(--skl-surface); --surface: var(--skl-surface);
+  --surface-2: var(--skl-s2); --surface-3: var(--skl-s3); --surface-sunk: var(--skl-sunk);
+  --border: var(--skl-border); --border-strong: var(--skl-border-strong);
+  --accent: var(--skl-accent); --on-accent: var(--skl-surface);
+  --btn-bg: var(--skl-accent); --btn-ink: var(--skl-surface); --btn-hover: var(--skl-hover);
+}
+@media (prefers-color-scheme: light) {
+  :root:is(.skin-space, .skin-mycelium, .skin-fairy):not([data-theme="dark"]) {
+    --bg: var(--skl-bg); --white: var(--skl-surface); --surface: var(--skl-surface);
+    --surface-2: var(--skl-s2); --surface-3: var(--skl-s3); --surface-sunk: var(--skl-sunk);
+    --border: var(--skl-border); --border-strong: var(--skl-border-strong);
+    --accent: var(--skl-accent); --on-accent: var(--skl-surface);
+    --btn-bg: var(--skl-accent); --btn-ink: var(--skl-surface); --btn-hover: var(--skl-hover);
+  }
+}
