@@ -47,17 +47,44 @@ function roadPath(pts) {
   const L = P[P.length - 1]
   return dd + ' L' + L[0] + ' ' + L[1]
 }
+// Roads (Nov 12, Jade: "make the roads look better"): a worn dirt path with soft,
+// uneven edges, a lighter trodden middle and a few pebbles. The rough edges come
+// from RoadDefs. While a road is being drawn it skips the filters, so drawing stays quick.
+function RoadDefs() {
+  return (
+    <defs>
+      <filter id="vs-road-rough" filterUnits="userSpaceOnUse" x="-5" y="-5" width="110" height="160">
+        <feTurbulence type="fractalNoise" baseFrequency="0.18" numOctaves="2" seed="5" />
+        <feDisplacementMap in="SourceGraphic" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+      <filter id="vs-road-soft" filterUnits="userSpaceOnUse" x="-5" y="-5" width="110" height="160">
+        <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="9" />
+        <feDisplacementMap in="SourceGraphic" scale="3" xChannelSelector="R" yChannelSelector="G" result="d" />
+        <feGaussianBlur in="d" stdDeviation="0.6" />
+      </filter>
+    </defs>
+  )
+}
 function Road({ pts, drawing }) {
   const dd = roadPath(pts)
+  const line = { d: dd, fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' }
+  const rough = drawing ? undefined : 'url(#vs-road-rough)'
+  const soft = drawing ? undefined : 'url(#vs-road-soft)'
   return (
     <g className={drawing ? 'vs-road-live' : undefined}>
-      <path d={dd} fill="none" stroke="#9c8250" strokeOpacity="0.45" strokeWidth="6.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={dd} fill="none" stroke="#dcc48e" strokeWidth="5.4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={dd} fill="none" stroke="#efe0b4" strokeOpacity="0.45" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="0.6 2.4" />
+      <path className="vs-road-edge" {...line} stroke="#4f5e2e" strokeOpacity="0.32" strokeWidth="7.4" filter={soft} />
+      <path className="vs-road-fill" {...line} stroke="#b4965e" strokeWidth="5.8" filter={rough} />
+      <path className="vs-road-top" {...line} stroke="#d8bf88" strokeWidth="4.6" filter={rough} />
+      <path className="vs-road-worn" {...line} stroke="#ecdcb0" strokeOpacity="0.6" strokeWidth="2" filter={soft} />
+      {!drawing && <>
+        <path className="vs-road-dash" {...line} stroke="#a0844f" strokeOpacity="0.45" strokeWidth="0.7" strokeDasharray="0.01 5.5 0.01 8" transform="translate(1.1,0.3)" />
+        <path className="vs-road-dash" {...line} stroke="#a0844f" strokeOpacity="0.4" strokeWidth="0.55" strokeDasharray="0.01 7 0.01 4.5" transform="translate(-1,-0.4)" />
+      </>}
     </g>
   )
 }
 
+// Each skin can recolor roads and streams by these class names (skins.css).
 // Water: soft, uneven banks (a little noise moves the edges), shallow and deep
 // water in layers, and scattered glints that drift slowly downstream.
 function StreamDefs() {
@@ -85,10 +112,10 @@ function Stream({ pts, drawing }) {
   const line = { fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' }
   return (
     <g className={'vs-stream' + (drawing ? ' vs-road-live' : '')}>
-      <path d={dd} {...line} stroke="#5f7442" strokeOpacity="0.5" strokeWidth="10.5" filter="url(#vs-bank)" />
-      <path d={dd} {...line} stroke="#9cc4a6" strokeWidth="8" filter="url(#vs-water)" />
-      <path d={dd} {...line} stroke="#5aa3a4" strokeWidth="6.2" filter="url(#vs-water)" />
-      <path d={dd} {...line} stroke="#347f8b" strokeOpacity="0.75" strokeWidth="3.6" filter="url(#vs-bank)" />
+      <path className="vs-stream-bank" d={dd} {...line} stroke="#5f7442" strokeOpacity="0.5" strokeWidth="10.5" filter="url(#vs-bank)" />
+      <path className="vs-stream-shallow" d={dd} {...line} stroke="#9cc4a6" strokeWidth="8" filter="url(#vs-water)" />
+      <path className="vs-stream-water" d={dd} {...line} stroke="#5aa3a4" strokeWidth="6.2" filter="url(#vs-water)" />
+      <path className="vs-stream-deep" d={dd} {...line} stroke="#347f8b" strokeOpacity="0.75" strokeWidth="3.6" filter="url(#vs-bank)" />
       <g filter="url(#vs-glint)">
         <path className="vs-ripple" d={dd} {...line} stroke="#effaf5" strokeOpacity="0.7" strokeWidth="0.45" strokeDasharray="1.4 4.5 0.6 7 2 5" transform="translate(0.4,-1.6)" />
         <path className="vs-ripple vs-ripple-2" d={dd} {...line} stroke="#effaf5" strokeOpacity="0.5" strokeWidth="0.35" strokeDasharray="0.8 6 1.8 3.5 0.5 8" transform="translate(-0.6,1.4)" />
@@ -138,7 +165,7 @@ export function ToolIcon({ name }) {
   return <svg className="vs-tool-ic" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d={TOOL_PATHS[name]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
 }
 
-export { Road, Stream, StreamDefs, simplify }
+export { Road, RoadDefs, Stream, StreamDefs, simplify }
 
 // A saved layout, cleaned up. Unknown or missing parts become empty.
 // base: the usual look for this kind of map (DEFAULT_WORLDS), used when nothing is saved.
@@ -586,6 +613,7 @@ export function MapLayers({ b }) {
         {(world.streams.length > 0 || tool === 'stream') && <StreamDefs />}
         {world.streams.map((r, i) => <Stream key={'s' + i} pts={r} />)}
         {drawing && drawing.length > 1 && tool === 'stream' && <Stream pts={drawing} drawing />}
+        {world.roads.length > 0 && <RoadDefs />}
         {world.roads.map((r, i) => <Road key={i} pts={r} />)}
         {drawing && drawing.length > 1 && tool === 'road' && <Road pts={drawing} drawing />}
       </svg>
