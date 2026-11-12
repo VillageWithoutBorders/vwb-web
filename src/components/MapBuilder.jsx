@@ -5,6 +5,7 @@ import { askConfirm } from './AdminDialog'
 import { useOwnBack } from './BackLink'
 import { calmMotion } from '../utils/motion'
 import { useT, t } from '../utils/lang'
+import { skinArt } from '../utils/skinArt'
 
 // The map builder (Oct 22): Arrange and build for every map page.
 // Your cottage, village pages, organization and group pages all use it.
@@ -593,7 +594,7 @@ export function MapLayers({ b }) {
       const piece = DECOR_PIECES.find((p) => p.k === d.k)
       if (!piece) return null
       const style = { left: d.x + '%', top: d.y + '%', '--s': d.s || 1, zIndex: decorLayer(d.z) }
-      const img = <img className={'vs-deco-img' + (d.flip ? ' vs-flip' : '')} src={piece.src} alt="" width="96" height="96" draggable="false" />
+      const img = <img className={'vs-deco-img' + (d.flip ? ' vs-flip' : '')} src={skinArt(piece.src)} alt="" width="96" height="96" draggable="false" />
       return arrange && tool === 'move'
         ? <button key={d.id} type="button" className={'vs-deco vs-deco-edit' + (picked === 'd:' + d.id ? ' vs-picked' : '') + (justAdded === d.id ? ' vs-just-added' : '')} style={style} aria-label={piece.label} onPointerDown={(e) => dragStart(e, 'd:' + d.id)} onClick={(e) => { if (e.detail === 0) pickByKey('d:' + d.id) }}>{img}</button>
         : <span key={d.id} className="vs-deco" style={style} aria-hidden="true">{img}</span>
@@ -711,7 +712,7 @@ export function MapToolbar({ b, more }) {
                 <div className="vs-palette">
                   {DECOR_PIECES.map((p) => (
                     <button key={p.k} type="button" className="vs-palette-item" onClick={() => addDecor(p)}>
-                      <img src={p.src} alt="" width="56" height="56" loading="lazy" />
+                      <img src={skinArt(p.src)} alt="" width="56" height="56" loading="lazy" />
                       <span>{t(p.label)}</span>
                     </button>
                   ))}
