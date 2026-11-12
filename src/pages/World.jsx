@@ -11,7 +11,7 @@ import Icon from '../components/Icon'
 import BringOrg from '../components/BringOrg'
 import { askConfirm } from '../components/AdminDialog'
 import { calmMotion } from '../utils/motion'
-import { useT } from '../utils/lang'
+import { useT, plainName } from '../utils/lang'
 import { DeskMoreBelow } from '../components/MapBuilder'
 
 // Oct 22: the Village Network (search, street map, every village and organization)
@@ -488,7 +488,7 @@ export default function World() {
           <button type="button" className="btn btn-primary btn-full" onClick={() => navigate('/community/resources')}>{t('See the full list')}</button>
         </div>
       </> : <>
-      <h1 className="wd-hint">{t(net === 'villages' ? (hasMine || villages === null ? 'Your villages' : 'Start here: find your village') : net === 'groups' ? 'Your emergency crews' : 'Your groups')}</h1>
+      <h1 className="wd-hint">{t(net === 'villages' ? (hasMine || villages === null ? 'Your villages' : 'Start here: find your village') : net === 'groups' ? 'Your emergency crews' : 'Your groups')}{net === 'villages' && (hasMine || villages === null) && plainName('Your villages') && <small className="skin-plain"> {plainName('Your villages')}</small>}</h1>
       <p className="wd-sub">
         {net === 'villages'
           // Round C (Nov 10): three short lines, left-aligned, instead of one long paragraph.

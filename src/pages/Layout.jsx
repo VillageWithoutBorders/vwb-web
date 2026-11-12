@@ -15,6 +15,7 @@ import EmergencyBanner from '../components/EmergencyBanner'
 import { useT } from '../utils/lang'
 import BottomTabs from '../components/BottomTabs'
 import MeButton, { MyCornerButton } from '../components/MeButton'
+import TabName from '../components/TabName'
 import AlertsButton from '../components/AlertsButton'
 import WhatButton from '../components/WhatButton'
 import QrSheetHost from '../components/QrSheet'
@@ -168,11 +169,11 @@ export default function Layout() {
           {!simple && (<>
           <Link to="/world" className={'header-btn' + (pathname === '/world' ? ' on' : '')} aria-current={pathname === '/world' ? 'page' : undefined} aria-label={t('My World: your networks on the globe')} data-tip={t('My World: see your villages and groups on a map of the world.')} data-tour="top-home">
             <img className="header-btn-logo" src="/images/vwb_header-v2.png" alt="" width="26" height="26" />
-            <span className="header-btn-label" aria-hidden="true"><span className="header-my">{t('My ')}</span>{t('World')}</span>
+            <TabName word="World" />
           </Link>
           <Link to="/village" className={'header-btn' + (villageHere ? ' on' : '')} aria-current={villageHere ? 'page' : undefined} aria-label={t('My Village: your home village')} data-tip={t('My Village: your home village. Its chat, neighbors, groups, rules, and sister villages.')} data-tour="top-village">
             <Icon name="houses" size={26} className="header-btn-pic" />
-            <span className="header-btn-label" aria-hidden="true"><span className="header-my">{t('My ')}</span>{t('Village')}</span>
+            <TabName word="Village" />
           </Link>
           <MeButton />
           <MyCornerButton adminWaiting={adminWaiting} adminUrgent={adminUrgent} />

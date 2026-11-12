@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { t, getLang } from '../utils/lang'
+import { activeSkin } from '../utils/skin'
 import { ROUTE_TIPS, TEXT_TIPS } from '../data/hoverTips'
 
 // Nov 7 (Jade): when a mouse rests on a button or link, a short note shows over it
@@ -38,7 +39,8 @@ const clean = (s) => (s || '').replace(/[←-⇿›‹+›‹]/g, '').replace(/\
 
 let textMap = null, textLang = null
 function textTip(words) {
-  const lang = getLang()
+  // Skins change a few button words (Edit cottage), so the skin is part of the key too.
+  const lang = getLang() + '|' + activeSkin()
   if (!textMap || textLang !== lang) {
     textMap = new Map()
     for (const [label, tip] of Object.entries(TEXT_TIPS)) textMap.set(clean(t(label)).toLowerCase(), tip)
