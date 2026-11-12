@@ -3,6 +3,7 @@ import { useSimpleView } from '../utils/simpleView'
 import Icon from './Icon'
 import MyAvatar from './MyAvatar'
 import { useT } from '../utils/lang'
+import TabName from './TabName'
 
 // Cottage in the top bar. Opens your cottage: your own map, with My Corner under it.
 // Oct 25 (Jade): the top bar shows the cottage icon, the same one as Cottage Chats. Your avatar is on My Corner, next to it.
@@ -34,7 +35,7 @@ export default function MeButton({ adminWaiting = 0, adminUrgent = false }) {
       aria-current={here ? 'page' : undefined}
     >
       {simple ? <MyAvatar size={26} /> : <Icon name="cottage" size={26} className="header-btn-pic" />}
-      <span className="header-btn-label" aria-hidden="true">{simple ? t('My Corner') : <><span className="header-my">{t('My ')}</span>{t('Cottage')}</>}</span>
+      {simple ? <span className="header-btn-label" aria-hidden="true">{t('My Corner')}</span> : <TabName word="Cottage" />}
       {simple && <InboxBadge n={adminWaiting} urgent={adminUrgent} />}
     </Link>
   )
@@ -51,7 +52,7 @@ export function MyCornerButton({ adminWaiting = 0, adminUrgent = false }) {
     <Link to="/me" className={'header-btn me-btn' + (here ? ' on' : '')} data-tour="corner" data-tip={t('My Corner: your profile, settings, and account.')}
       aria-label={t('My Corner: your profile, account, and settings') + inboxWords(t, adminWaiting, adminUrgent)} aria-current={pathname === '/me' ? 'page' : undefined}>
       <MyAvatar size={26} />
-      <span className="header-btn-label" aria-hidden="true"><span className="header-my">{t('My ')}</span>{t('Corner')}</span>
+      <TabName word="Corner" />
       <InboxBadge n={adminWaiting} urgent={adminUrgent} />
     </Link>
   )

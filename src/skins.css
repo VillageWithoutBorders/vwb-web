@@ -80,3 +80,17 @@ html:is(.skin-space, .skin-mycelium, .skin-fairy) .app-main.app-main-world { bac
     --btn-bg: var(--skl-accent); --btn-ink: var(--skl-surface); --btn-hover: var(--skl-hover);
   }
 }
+
+/* ---------- Place names (Step 4) ----------
+   Top bar tabs with a skin on: the skin's name, and the plain word on a small second
+   line (TabName.jsx). Page titles get a small "(your cottage)" after them. */
+.header-name { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; max-width: 100%; }
+.header-plain { font-size: 0.6875rem; font-weight: 400; line-height: 1; color: #fff; white-space: nowrap; }
+.header-nav .header-btn.on .header-plain { color: var(--text-strong); }
+@media (max-width: 359px) { .header-plain { font-size: 0.625rem; } }
+.skin-plain { font-size: 0.55em; font-weight: 400; white-space: nowrap; }
+/* Longer skin names ("My Toadstool", "Mi Escondite") need the room, so the small "My "
+   drops off sooner than on Home Place, the same way Spanish does. The plain word under
+   it still says which place it is. Checked at 320 to 1440 wide, every text size. */
+@media (max-width: 479px) { html:is(.skin-space, .skin-mycelium, .skin-fairy) .header-nav .header-my { display: none; } }
+@media (max-width: 1023px) { html:is(.skin-space, .skin-mycelium, .skin-fairy):is(.text-larger, .text-largest) .header-nav .header-my { display: none; } }

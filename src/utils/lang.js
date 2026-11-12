@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from 'react'
+import { activeSkin, onSkinChange } from './skin'
+import { SKIN_WORDS, TAB_WORDS } from '../data/skinWords'
 
 // Language (Nov 3, barriers review): English or Spanish.
 // Words on screen go through t('English words'). In Spanish, t() looks the words
@@ -75,6 +77,9 @@ export function t(en, vars) {
     // Some older skill names in the database use "&" ("Food & Meals"). Same words.
     s = words[en] || words[String(en).replace(/\s*&\s*/g, ' and ')] || en
   }
+  // Skins (Nov 11): a few place names change. Before {name} spots fill, so people's
+  // own words (a cottage name, a message) are never changed.
+  if (s && typeof s === 'string') { const sk = activeSkin(); if (sk !== 'home') s = skinSwap(en, s, sk) }
   if (vars) for (const k of Object.keys(vars)) s = s.split('{' + k + '}').join(String(vars[k]))
   return s
 }
@@ -124,9 +129,38 @@ export function tAlert(text) {
   return out
 }
 
+// Skins (Nov 11, Jade). The place name by itself ("My Corner") becomes the skin's name
+// ("My Bunk"). Inside longer words (a note, a hover tip, a screen reader label), the
+// plain name follows in ( ): "Tap My Station (your village) at the top."
+function skinSwap(en, s, sk) {
+  const i = lang === 'es' ? 1 : 0
+  const own = SKIN_WORDS[en]
+  if (own) return own[sk][i]
+  for (const [key, w] of Object.entries(SKIN_WORDS)) {
+    const from = i ? w.es : key
+    if (s.includes(from)) s = s.split(from).join(w[sk][i] + ' (' + w.plain[i] + ')')
+  }
+  return s
+}
+
+// The plain name for a title with a skin on: "(your cottage)". Empty for Home Place.
+export function plainName(en) {
+  const sk = activeSkin()
+  const w = sk !== 'home' && SKIN_WORDS[en]
+  return w ? '(' + w.plain[lang === 'es' ? 1 : 0] + ')' : ''
+}
+
+// The second word on a top bar tab ("World" in "My World"), in the skin's words.
+export function tabWord(en) {
+  const sk = activeSkin()
+  const w = sk !== 'home' && TAB_WORDS[en]
+  return w ? w[sk][lang === 'es' ? 1 : 0] : t(en)
+}
+
 // Re-draws the screen when the language changes. Returns t, so a component can write
 // const t = useT()
 export function useT() {
-  useSyncExternalStore((f) => { subs.add(f); return () => subs.delete(f) }, () => version, () => 0)
+  // And when the skin changes (Nov 11), since a few place names follow it.
+  useSyncExternalStore((f) => { subs.add(f); const off = onSkinChange(f); return () => { subs.delete(f); off() } }, () => version + '|' + activeSkin(), () => '0|home')
   return t
 }
