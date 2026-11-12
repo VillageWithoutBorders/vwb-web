@@ -4,6 +4,7 @@ import { COTTAGE_SPOTS, GIFT_SPOTS, backgroundSrc, DEFAULT_WORLDS } from '../dat
 import { useMapBuilder, MapLayers, ToolIcon, sceneProps, zoomLayer, fromSaved, placeLayer } from './MapBuilder'
 import '../village-scene.css'
 import { useT } from '../utils/lang'
+import { skinArt } from '../utils/skinArt'
 
 // Someone else's cottage map, as they arranged it (Nov 1, moved here Nov 7).
 // Used by the full map page (/u/:id/cottage) and inside their profile.
@@ -30,7 +31,7 @@ export default function CottageMap({ data, name, onHouse, preview = false, class
         {GIFT_SPOTS.filter((g) => data.gifts && data.gifts[g.k.slice(5)] && !isHidden(g.k)).map((g0) => {
           const g = placed(g0)
           const style = { left: g.x + '%', top: g.y + '%', '--s': g.s || 1, zIndex: placeLayer(g.z) }
-          return <span key={g.k} className="vs-gift" style={style} aria-hidden="true"><img className={'vs-gift-img' + (g.flip ? ' vs-flip' : '')} src={g.src} alt="" width="64" height="64" draggable="false" /></span>
+          return <span key={g.k} className="vs-gift" style={style} aria-hidden="true"><img className={'vs-gift-img' + (g.flip ? ' vs-flip' : '')} src={skinArt(g.src)} alt="" width="64" height="64" draggable="false" /></span>
         })}
         {COTTAGE_SPOTS.filter((s0) => !isHidden(s0.k)).map((s0) => {
           const s = placed(s0)

@@ -1,3 +1,4 @@
+import { skinArt } from '../utils/skinArt'
 // The clickable elements of the VWB world. Names follow the VWB Vocabulary
 // sheet (project doc claude/VWB-Vocabulary.md). x and y are percent positions
 // on the village scene. "soon" marks things decided but not built yet.
@@ -132,6 +133,8 @@ export function seasonNow(date = new Date()) {
   return m >= 2 && m <= 4 ? 'spring' : m >= 5 && m <= 7 ? 'summer' : m >= 8 && m <= 10 ? 'fall' : 'winter'
 }
 export function backgroundSrc(key) {
+  // Skins (Nov 11): the skin's own ground, unless the person picked a ground themselves.
+  if (!key || key === 'seasons') { const g = skinArt(FIELD_SRC); if (g !== FIELD_SRC) return g }
   if (key === 'seasons') {
     const s = seasonNow()
     const hit = BACKGROUNDS.find((b) => b.group === 'field' && b.season === s)
