@@ -5816,6 +5816,18 @@ const more = {
   "Download this list as a spreadsheet.": "Descargar esta lista como hoja de cálculo.",
   "Put this on your calendar.": "Poner esto en su calendario.",
   "Show or hide more about this group.": "Mostrar u ocultar más sobre este grupo.",
+  // Skins, Choose your story (Nov 11)
+  "Choose your story": "Elija su historia",
+  "Home Place": "El Hogar",
+  "Space Station": "Estación espacial",
+  "Mycelium": "Micelio",
+  "Fairy Ring": "Anillo de hadas",
+  "Only the look and some names change. Buttons stay the same.": "Solo cambian el aspecto y algunos nombres. Los botones siguen igual.",
+  "Simple view uses the Home Place look. Turn off Simple view to pick a story.": "La Vista sencilla usa el aspecto de El Hogar. Apague la Vista sencilla para elegir una historia.",
+  "Use the Home Place look. This is how the app has always looked.": "Usar el aspecto de El Hogar. Así se ha visto siempre la app.",
+  "Use the Space Station look: night blues, and space names for your places.": "Usar el aspecto de Estación espacial: azules de noche y nombres del espacio para sus lugares.",
+  "Use the Mycelium look: forest browns, and forest names for your places.": "Usar el aspecto de Micelio: cafés del bosque y nombres del bosque para sus lugares.",
+  "Use the Fairy Ring look: sea-glass blues, and meadow names for your places.": "Usar el aspecto de Anillo de hadas: azules de vidrio de mar y nombres de la pradera para sus lugares.",
 }
 
 export default more

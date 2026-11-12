@@ -7,6 +7,7 @@ import { fetchMyDevices, removeMyDevice, getDeviceId } from '../lib/e2ee'
 import RecoveryKeySection from '../components/RecoveryKeySection'
 import DevicesSheet from '../components/DevicesSheet'
 import AppearancePicker from '../components/AppearancePicker'
+import StoryPicker from '../components/StoryPicker'
 import WidthPicker from '../components/WidthPicker'
 import ReadButtonPicker from '../components/ReadButtonPicker'
 import VillageChatsSwitch from '../components/VillageChatsSwitch'
@@ -373,6 +374,7 @@ export default function Settings() {
           <h2 className="settings-group-h">{t('Seeing')}</h2>
           <TextSizePicker />
           <AppearancePicker />
+          <StoryPicker />
           </div>
 
           <div className="settings-col">
