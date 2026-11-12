@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { supabase } from '../supabaseClient'
+import { applySkinClass } from './skin'
 
 // Simple view: bigger words and buttons, only the main things.
 // Saved on the account (helper_profiles.simple_view) so it follows the person
@@ -21,6 +22,8 @@ export function setSimpleLocal(v) {
   on = !!v
   try { if (on) localStorage.setItem(KEY, '1'); else localStorage.removeItem(KEY) } catch { /* private window */ }
   document.documentElement.classList.toggle('simple', on)
+  // Simple view always uses Home Place, so the skin class comes off (and back).
+  applySkinClass()
   subs.forEach((f) => f())
 }
 
