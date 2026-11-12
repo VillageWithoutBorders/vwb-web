@@ -114,3 +114,39 @@ html.calm-motion .story-card:active { transform: none; }
    The strip above the painted ground was a teal sky. With a skin it takes the skin's
    page color. The drawings themselves swap by folder (src/utils/skinArt.js). */
 html:is(.skin-space, .skin-mycelium, .skin-fairy) .vs-scene { background: var(--sk-page); }
+
+/* Roads and streams in each skin (Nov 12). The map draws them in MapBuilder.jsx
+   (Road, Stream); these rules only change their colors. Home Place and Simple
+   view have no skin class, so they keep the usual dirt roads and green creeks. */
+html.skin-space .vs-road-edge { stroke: #3E5080; stroke-opacity: 0.8; }
+html.skin-space .vs-road-fill { stroke: #9AA4D0; }
+html.skin-space .vs-road-top { stroke: #C9D2F2; }
+html.skin-space .vs-road-worn { stroke: #E8ECFA; }
+html.skin-space .vs-road-dash { stroke: #5FC2C0; stroke-opacity: 0.55; }
+html.skin-space .vs-stream-bank { stroke: #2E3D72; stroke-opacity: 0.7; }
+html.skin-space .vs-stream-shallow { stroke: #8C9AD8; }
+html.skin-space .vs-stream-water { stroke: #4E5FA8; }
+html.skin-space .vs-stream-deep { stroke: #26346A; }
+html.skin-space .vs-ripple { stroke: #FFE2A0; }
+
+html.skin-mycelium .vs-road-edge { stroke: #2E2218; stroke-opacity: 0.7; }
+html.skin-mycelium .vs-road-fill { stroke: #6E5238; }
+html.skin-mycelium .vs-road-top { stroke: #9C7A52; }
+html.skin-mycelium .vs-road-worn { stroke: #B8966A; }
+html.skin-mycelium .vs-road-dash { stroke: #9AB86A; stroke-opacity: 0.45; }
+html.skin-mycelium .vs-stream-bank { stroke: #3E5228; stroke-opacity: 0.7; }
+html.skin-mycelium .vs-stream-shallow { stroke: #7E9A72; }
+html.skin-mycelium .vs-stream-water { stroke: #4E7A72; }
+html.skin-mycelium .vs-stream-deep { stroke: #2E4E4A; }
+html.skin-mycelium .vs-ripple { stroke: #E9F2C0; }
+
+html.skin-fairy .vs-road-edge { stroke: #6E9AAA; stroke-opacity: 0.7; }
+html.skin-fairy .vs-road-fill { stroke: #A9C2CC; }
+html.skin-fairy .vs-road-top { stroke: #D7E6EA; }
+html.skin-fairy .vs-road-worn { stroke: #F2F8FA; }
+html.skin-fairy .vs-road-dash { stroke: #E8A0B4; stroke-opacity: 0.55; }
+html.skin-fairy .vs-stream-bank { stroke: #1E4A3E; stroke-opacity: 0.6; }
+html.skin-fairy .vs-stream-shallow { stroke: #B8E0EA; }
+html.skin-fairy .vs-stream-water { stroke: #7FB8CC; }
+html.skin-fairy .vs-stream-deep { stroke: #4E8AA0; }
+html.skin-fairy .vs-ripple { stroke: #FFF3C4; }
