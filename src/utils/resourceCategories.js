@@ -25,8 +25,29 @@ export const OLD_CATEGORY_NAMES = {
   'Advocacy and Organizing': 'Give and Get Involved',
   'Government': 'Money and Benefits',
 }
+// Short, lowercase names from early test and partner listings (Nov 13).
+const LOOSE_NAMES = {
+  'food': 'Food', 'housing': 'Housing', 'shelter': 'Housing', 'health': 'Health', 'medical': 'Health',
+  'transportation': 'Rides', 'transport': 'Rides', 'rides': 'Rides',
+  'family': 'Family and Child Care', 'childcare': 'Family and Child Care', 'child care': 'Family and Child Care',
+  'utilities': 'Bills and Utilities', 'bills': 'Bills and Utilities',
+  'legal': 'Legal and Tenant Help', 'mental health': 'Mental Health and Recovery', 'recovery': 'Mental Health and Recovery',
+  'emergency': 'Emergency Help', 'safety': 'Safety', 'repair': 'Home Repair', 'home repair': 'Home Repair',
+  'money': 'Money and Benefits', 'benefits': 'Money and Benefits', 'volunteer': 'Give and Get Involved',
+}
+const BY_LOWER = Object.fromEntries([
+  ...CATEGORIES.map((c) => [c.toLowerCase(), c]),
+  ...Object.entries(OLD_CATEGORY_NAMES).map(([k, v]) => [k.toLowerCase(), v]),
+  ...Object.entries(LOOSE_NAMES),
+])
+
+// Any spelling or capitals -> one of the current kinds of help. Names that
+// don't match a kind of help (like "clothing") go under Other, so the list
+// never shows the same kind twice.
 export function currentCategory(c) {
-  return OLD_CATEGORY_NAMES[c] || c
+  const key = String(c || '').trim().toLowerCase()
+  if (!key) return ''
+  return BY_LOWER[key] || 'Other'
 }
 
 // The kinds of help that can also be a neighbor's skill. Picking one in
