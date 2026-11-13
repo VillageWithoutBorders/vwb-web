@@ -5909,6 +5909,7 @@ const more = {
   "Clothing and Household": "Ropa y artículos del hogar",
   "Jobs and Learning": "Empleo y aprendizaje",
   "Disability and Aging": "Discapacidad y personas mayores",
+  "Pets": "Mascotas",
   "See all kinds of help": "Ver todos los tipos de ayuda",
   "Website": "Sitio web",
   "About {n} miles away": "A unas {n} millas",
