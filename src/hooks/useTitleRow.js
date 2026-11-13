@@ -58,9 +58,11 @@ export function useTitleRow(mainRef, key, off) {
       const nearWhat = hr.top - contentTop < NEAR_WHAT
 
       // Back: only the frame's own Back row, alone (Simple view adds Read this to me there).
+      // Nov 13: a row that holds only Read this to me (a page with no Back, like Simple home)
+      // stays on its own line. It is too wide for the title's line and covered the title.
       const backRow = main.querySelector(':scope > .app-back-row')
       let back = false
-      if (near && backRow && backRow.children.length === 1) {
+      if (near && backRow && backRow.children.length === 1 && !backRow.classList.contains('read-aloud-row')) {
         const between = [...main.querySelectorAll(ACT)].some((el) =>
           !backRow.contains(el) && !h1.contains(el) && !el.closest('.what-btn') && shown(el)
           && (backRow.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)
