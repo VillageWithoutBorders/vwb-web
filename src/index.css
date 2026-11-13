@@ -8338,3 +8338,14 @@ html.text-largest .plan-slot-row { grid-template-columns: 1fr; }
 :is(html.text-larger, html.text-largest) .dash-stat small { font-size: 0.72em; overflow-wrap: break-word; }
 :is(html.text-larger, html.text-largest) .dash-tabs-5 .dash-tab { padding-left: 4px; padding-right: 4px; min-width: 0; }
 :is(html.text-larger, html.text-largest) .dash-tabs-5 .dash-tab-label { font-size: 0.78em; }
+
+/* Nov 13 (Jade): "See all kinds of help" is a full-width row under the 15 kinds when
+   the tiles are 3 across (5 even rows). With 2 across it stays a normal tile (8 even rows). */
+.nr-tiles > .nr-tile-all { grid-column: 1 / -1; flex-direction: row; justify-content: center; text-align: center; min-height: 56px; }
+@media (max-width: 479px) {
+  .nr-tiles > .nr-tile-all { grid-column: auto; flex-direction: column; }
+}
+@media (min-width: 1024px) {
+  html.text-larger:not(.simple) .nr-pick > .nr-tiles > .nr-tile-all,
+  html.text-largest:not(.simple) .nr-pick > .nr-tiles > .nr-tile-all { grid-column: auto; flex-direction: row; justify-content: flex-start; text-align: left; }
+}
