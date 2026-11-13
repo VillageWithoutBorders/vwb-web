@@ -17,6 +17,53 @@ export function isPushSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
 
+// iPhones and iPads only allow alerts from the app once it is on the Home Screen
+// (iOS 16.4 or newer, opened from the Home Screen icon). Nov 13.
+export function isAppleMobile() {
+  const ua = navigator.userAgent || ''
+  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+}
+
+export function isInstalledApp() {
+  return window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true
+}
+
+// What this phone or computer can do right now (Nov 13):
+// 'on' | 'off' | 'blocked' | 'needs-home-screen' | 'unsupported'
+export async function getPushState() {
+  if (!isPushSupported()) return isAppleMobile() && !isInstalledApp() ? 'needs-home-screen' : 'unsupported'
+  if (Notification.permission === 'denied') return 'blocked'
+  if (Notification.permission !== 'granted') return 'off'
+  return (await isSubscribedToPush()) ? 'on' : 'off'
+}
+
+// Quietly keeps the server's copy of this device's alert address current (Nov 13).
+// Browsers sometimes swap the address; without this, alerts stop with no sign why.
+// Only runs when the person already said yes. Never asks for permission.
+export async function resyncPush(userId) {
+  if (!userId || !isPushSupported() || Notification.permission !== 'granted' || !VAPID_PUBLIC_KEY) return { ok: false, reason: 'skip' }
+  try {
+    const registration = await getServiceWorker(4000)
+    let subscription = await registration.pushManager.getSubscription()
+    if (!subscription) {
+      // They said yes before but the address is gone. Only make a new one if they had turned it on here.
+      let wanted = false
+      try { wanted = localStorage.getItem('vwb_push_v2') === 'true' } catch { /* private mode */ }
+      if (!wanted) return { ok: false, reason: 'off' }
+      subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) })
+    }
+    const subJson = subscription.toJSON()
+    const { error } = await supabase.from('push_subscriptions').upsert({
+      user_id: userId, endpoint: subJson.endpoint, p256dh: subJson.keys.p256dh, auth: subJson.keys.auth,
+    }, { onConflict: 'user_id,endpoint' })
+    if (error) { console.error('Failed to refresh push subscription:', error); return { ok: false, reason: 'db_error' } }
+    return { ok: true }
+  } catch (err) {
+    console.error('Push refresh error:', err)
+    return { ok: false, reason: 'error' }
+  }
+}
+
 export async function getPushPermission() {
   if (!isPushSupported()) return 'unsupported'
   return Notification.permission
@@ -88,11 +135,13 @@ export async function unsubscribeFromPush(userId) {
     if (subscription) {
       const endpoint = subscription.endpoint
       await subscription.unsubscribe()
-      await supabase.from('push_subscriptions')
+      const { error } = await supabase.from('push_subscriptions')
         .delete()
         .eq('user_id', userId)
         .eq('endpoint', endpoint)
+      if (error) console.error('Failed to remove push subscription:', error)
     }
+    try { localStorage.removeItem('vwb_push_v2') } catch { /* private mode */ }
 
     return { ok: true }
   } catch (err) {

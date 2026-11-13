@@ -27,6 +27,7 @@ import { calmMotion } from '../utils/motion'
 import { useTitleRow } from '../hooks/useTitleRow'
 import { readReadButton } from '../utils/readButton'
 import { usePrefsRefresh } from '../hooks/usePrefsRefresh'
+import { resyncPush } from '../utils/pushUtils'
 
 export default function Layout() {
   const { pathname, search, key } = useLocation()
@@ -44,6 +45,13 @@ export default function Layout() {
   const [readOn, setReadOn] = useState(readReadButton() === 'on')
   usePrefsRefresh(() => setReadOn(readReadButton() === 'on'))
   const reader = simple || readOn
+  // Nov 13: keep this device's alert address fresh on the server, once per opening.
+  // Does nothing unless the person already said yes to alerts on this device.
+  useEffect(() => {
+    if (!user?.id) return
+    const timer = setTimeout(() => { resyncPush(user.id) }, 3000)
+    return () => clearTimeout(timer)
+  }, [user?.id])
   // The account says which view to use. Follow it on this phone too.
   useEffect(() => {
     const v = profile?.simple_view

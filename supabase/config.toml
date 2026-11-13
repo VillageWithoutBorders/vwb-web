@@ -35,3 +35,10 @@ enabled = true
 # by a signed-in member. It checks the x-push-secret header instead.
 verify_jwt = false
 entrypoint = "./functions/cleanup-event-photos/index.ts"
+
+[functions.send-welcome-email]
+enabled = true
+# Called by the database trigger welcome_new_account when a new account's email
+# is confirmed, not by a signed-in member. It checks the x-push-secret header instead.
+verify_jwt = false
+entrypoint = "./functions/send-welcome-email/index.ts"

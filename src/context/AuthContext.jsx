@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase, savedSignIn, keepSignedIn } from '../supabaseClient'
 import { ensureDeviceKeypair, flushOutbox } from '../lib/e2ee'
 import { peekReturnTo } from '../utils/returnTo'
+import { getLang } from '../utils/lang'
 import { tell } from '../components/AdminDialog'
 import { clearAllPendingAsks, isNoSignal } from '../utils/pendingAsks'
 import { clearAllPendingReports } from '../utils/pendingReports'
@@ -395,6 +396,8 @@ export function AuthProvider({ children }) {
         data: {
           display_name: displayName,
           is_hope_ambassador: isAmbassador,
+          // Nov 13: the welcome email comes in the language they signed up in.
+          lang: getLang() === 'es' ? 'es' : 'en',
           ...(orgInvite ? { org_invite_pending: orgInvite } : {}),
           ...extra,
         },

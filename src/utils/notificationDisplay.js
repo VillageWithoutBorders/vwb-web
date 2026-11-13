@@ -6,6 +6,8 @@ export const TYPE_ICONS = {
   event_signup: '\u{1F4C5}',
   event_signup_cancel: '\u{1F4C5}',
   village: '\u{1F3D8}',
+  welcome: '\u{1F33F}',
+  push_test: '\u{1F514}',
   role: '\u{1F5DD}\uFE0F',
   security_alert: '\u{1F512}',
   message: '\u{1F4AC}',
