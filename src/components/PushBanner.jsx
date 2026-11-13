@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { isPushSupported, subscribeToPush } from '../utils/pushUtils'
 import { useT } from '../utils/lang'
+import Icon from './Icon'
 
 export default function PushBanner() {
   const { user } = useAuth()
@@ -74,7 +75,7 @@ export default function PushBanner() {
   return (
     <div className="push-banner">
       <div className="push-banner-content">
-        <span className="push-banner-icon">&#x1F514;</span>
+        <span className="push-banner-icon" aria-hidden="true"><Icon name="bell" /></span>
         <div className="push-banner-text">
           <strong>{message || t('Stay in the loop')}</strong>
           {!message && <p>{t('Get notified when neighbors need help or someone responds to your request.')}</p>}
