@@ -5,7 +5,7 @@
 export const CATEGORIES = [
   'Emergency Help', 'Housing', 'Bills and Utilities', 'Food', 'Health',
   'Mental Health and Recovery', 'Rides', 'Money and Benefits', 'Legal and Tenant Help',
-  'Home Repair', 'Family and Child Care', 'Safety', 'Give and Get Involved', 'Other',
+  'Home Repair', 'Family and Child Care', 'Clothing and Household', 'Safety', 'Give and Get Involved', 'Other',
 ]
 // Picture for each kind of help, in public/art/icons (same look as the village map).
 export const CAT_ICON_FILES = {
@@ -13,6 +13,8 @@ export const CAT_ICON_FILES = {
   'Food': 'cat-food', 'Health': 'cat-health', 'Mental Health and Recovery': 'cat-recovery',
   'Rides': 'cat-rides', 'Money and Benefits': 'cat-government', 'Legal and Tenant Help': 'cat-tenant',
   'Home Repair': 'cat-repair', 'Family and Child Care': 'cat-family', 'Safety': 'cat-safety',
+  // Nov 13: placeholder picture until Jade draws a clothing icon.
+  'Clothing and Household': 'cat-other',
   'Give and Get Involved': 'cat-donation', 'Other': 'cat-other',
 }
 
@@ -33,7 +35,8 @@ const LOOSE_NAMES = {
   'utilities': 'Bills and Utilities', 'bills': 'Bills and Utilities',
   'legal': 'Legal and Tenant Help', 'mental health': 'Mental Health and Recovery', 'recovery': 'Mental Health and Recovery',
   'emergency': 'Emergency Help', 'safety': 'Safety', 'repair': 'Home Repair', 'home repair': 'Home Repair',
-  'money': 'Money and Benefits', 'benefits': 'Money and Benefits', 'volunteer': 'Give and Get Involved',
+  'clothing': 'Clothing and Household', 'clothes': 'Clothing and Household', 'household': 'Clothing and Household',
+  'furniture': 'Clothing and Household', 'money': 'Money and Benefits', 'benefits': 'Money and Benefits', 'volunteer': 'Give and Get Involved',
 }
 const BY_LOWER = Object.fromEntries([
   ...CATEGORIES.map((c) => [c.toLowerCase(), c]),
@@ -42,7 +45,7 @@ const BY_LOWER = Object.fromEntries([
 ])
 
 // Any spelling or capitals -> one of the current kinds of help. Names that
-// don't match a kind of help (like "clothing") go under Other, so the list
+// don't match a kind of help go under Other, so the list
 // never shows the same kind twice.
 export function currentCategory(c) {
   const key = String(c || '').trim().toLowerCase()
@@ -69,6 +72,7 @@ export const CATEGORY_SKILLS = {
     'Carpentry and Building', 'Heating and Cooling (HVAC)', 'Ramps and Accessibility Builds',
     'Tree and Yard Work', 'Engineering and Safety Checks'],
   'Family and Child Care': ['Childcare', 'Caregiving', 'Tutoring and Teaching'],
+  'Clothing and Household': ['Supplies and Lending'],
 }
 
 // "Food & Meals" and "Food and Meals" are the same skill.

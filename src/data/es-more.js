@@ -5906,6 +5906,8 @@ const more = {
   "Not known yet": "Aún no se sabe",
   "Call the organization: {phone}": "Llamar a la organización: {phone}",
   "Directions": "Cómo llegar",
+  "Clothing and Household": "Ropa y artículos del hogar",
+  "See all kinds of help": "Ver todos los tipos de ayuda",
   "Website": "Sitio web",
   "About {n} miles away": "A unas {n} millas",
   "Enter a zip code. We only use it to measure how far each place is. We never guess where you are.": "Escriba un código postal. Solo lo usamos para medir qué tan lejos está cada lugar. Nunca adivinamos dónde está usted.",
