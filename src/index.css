@@ -5827,6 +5827,9 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 .admin-back:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .admin-title { margin: 0; font-size: 1.5rem; color: var(--accent); flex: 1; }
 .admin-top-note { font-size: 0.875rem; color: var(--text-muted); }
+.admin-env { margin: 0 0 0.75rem; padding: 0.6rem 0.85rem; border-radius: 10px; font-weight: 700; font-size: 1rem; line-height: 1.35; }
+.admin-env-test { background: #1f4d8f; color: #ffffff; }
+.admin-env-live { background: #a3231a; color: #ffffff; }
 
 .admin-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }
 .admin-nav-btn {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { csvToObjects, toCsv, downloadText } from '../utils/csv'
 import { friendlyError } from '../utils/resourceReports'
@@ -74,6 +74,8 @@ export default function AdminCrnImport() {
   const [groupFilter, setGroupFilter] = useState('all')
   const [visible, setVisible] = useState(PAGE)
   const [confirming, setConfirming] = useState(false)
+  const [undidThisVisit, setUndidThisVisit] = useState(false) // after one Undo, hide the next one so a second tap can't undo an older import
+  const prevRef = useRef(null)
   const [values, setValues] = useState([])
   const [newValue, setNewValue] = useState({ field: 'category', value: '', meaning: '' })
   const [teamList, setTeamList] = useState([])
@@ -92,8 +94,18 @@ export default function AdminCrnImport() {
     if (pick) openBatchRows(pick)
   }
 
-  async function openBatchRows(b) {
+  async function openBatchRows(b, opts = {}) {
     setOpenBatch(b); setConfirming(false); setGroupFilter('all'); setVisible(PAGE)
+    if (opts.scroll) {
+      // The import opens near the top of the page. Bring it into view so the tap visibly does something.
+      setTimeout(() => {
+        const el = prevRef.current
+        if (!el) return
+        const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+        el.querySelector('h3')?.focus({ preventScroll: true })
+      }, 60)
+    }
     const { data, error } = await supabase.rpc('crn_import_rows_for', { p_batch: b.id })
     if (error) { console.error('crn_import_rows_for failed:', error); setNote(tr(friendlyError(error, "We couldn't load that import."))); return }
     setRows(data || [])
@@ -152,6 +164,7 @@ export default function AdminCrnImport() {
     setBusy(false)
     if (error) { console.error('crn_import_apply failed:', error); setNote(tr(friendlyError(error, "The import didn't finish. Nothing changed. Try again."))); return }
     setNote(tr('Imported.'))
+    setUndidThisVisit(false) // a fresh import can be undone right away
     await loadBatches(openBatch.id)
     loadTeam()
   }
@@ -167,12 +180,15 @@ export default function AdminCrnImport() {
   }
 
   async function undo(b) {
-    if (!(await askConfirm(tr('Undo this import? Everything it changed goes back the way it was.'), { yes: tr('Undo import'), danger: true }))) return
+    const when = new Date(b.uploaded_at).toLocaleString()
+    const what = batchChanges(b) || tr('nothing')
+    if (!(await askConfirm(tr('Undo the import from {when}? It changed: {what}. Everything it changed goes back the way it was.', { when, what }), { yes: tr('Undo import'), danger: true }))) return
     setBusy(true); setNote('')
     const { error } = await supabase.rpc('crn_import_undo', { p_batch: b.id })
     setBusy(false)
     if (error) { console.error('crn_import_undo failed:', error); setNote(tr(friendlyError(error, "Undo didn't work. Nothing changed."))); return }
     setNote(tr('Undone.'))
+    setUndidThisVisit(true)
     await loadBatches(b.id)
   }
 
@@ -273,6 +289,17 @@ export default function AdminCrnImport() {
   const quietByTab = (g) => TABS.map((t) => [t.key, rows.filter((r) => r.grp === g && r.tab === t.key).length]).filter(([, n]) => n).map(([k, n]) => tr(TAB_WORD[k][n === 1 ? 0 : 1], { n })).join(', ')
   function pickGroup(g) { setGroupFilter(g); setVisible(PAGE) }
   const ignored = openBatch ? Object.entries(openBatch.ignored_columns || {}).flatMap(([tab, cols]) => (cols || []).map((c) => tr(TAB_LABEL[tab]) + ': ' + c)) : []
+  // What a batch changed, from its saved results. Rows that were only listed or unchanged are left out.
+  const batchChanges = (b) => Object.entries(b?.counts?.results || {})
+    .filter(([k, n]) => n && !['listed only', 'no change'].includes(k))
+    .map(([k, n]) => n + ' ' + tr(k)).join(', ')
+  // Organizations and locations are private records. Say so, so "New" doesn't read as public.
+  const rowLabel = (r) => {
+    const base = GROUP_LABEL[r.grp] ? tr(GROUP_LABEL[r.grp]) : r.grp
+    const isPrivate = r.tab !== 'services' && ['new', 'updated'].includes(r.grp)
+      && (r.flags?.includes('research') || (r.reasons || []).some((x) => /private research/i.test(x)))
+    return isPrivate ? tr('{label}, private research', { label: base }) : base
+  }
   const latestApplied = batches.filter((b) => b.status === 'applied').sort((a, b) => new Date(b.decided_at) - new Date(a.decided_at))[0]
   const fieldMeanings = (VALUE_FIELDS.find((f) => f.key === newValue.field) || VALUE_FIELDS[0]).meanings
 
@@ -304,8 +331,8 @@ export default function AdminCrnImport() {
       )}
 
       {openBatch && (
-        <section style={box} aria-labelledby="crn-prev-h">
-          <h3 id="crn-prev-h" style={h3}>
+        <section ref={prevRef} style={{ ...box, scrollMarginTop: '1rem' }} aria-labelledby="crn-prev-h">
+          <h3 id="crn-prev-h" tabIndex={-1} style={h3}>
             {inPreview ? tr('Preview') : tr('Import from {date}', { date: new Date(openBatch.uploaded_at).toLocaleDateString() })} <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>({openBatch.status === 'preview' ? tr('nothing changed yet') : openBatch.status})</span>
           </h3>
           <p style={small}>{tr('Files: {files}', { files: Object.values(openBatch.file_names || {}).join(', ') || tr('none') })}</p>
@@ -346,7 +373,7 @@ export default function AdminCrnImport() {
                 <li key={r.id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '0.6rem', background: 'var(--surface-2)' }}>
                   <p style={{ margin: 0, fontWeight: 700, overflowWrap: 'anywhere' }}>{r.label || tr('(no name)')}</p>
                   <p style={{ ...small, margin: '0.1rem 0 0.25rem' }}>
-                    {tr(TAB_LABEL[r.tab])}{r.source_id ? ' · ' + r.source_id : ''}{r.row_number ? ' · ' + tr('line {n}', { n: r.row_number }) : ''} · <strong>{GROUP_LABEL[r.grp] ? tr(GROUP_LABEL[r.grp]) : r.grp}</strong>
+                    {tr(TAB_LABEL[r.tab])}{r.source_id ? ' · ' + r.source_id : ''}{r.row_number ? ' · ' + tr('line {n}', { n: r.row_number }) : ''} · <strong>{rowLabel(r)}</strong>
                     {r.flags?.includes('coverage') && <> · <strong style={{ color: 'var(--warn)' }}>{tr('Coverage flagged')}</strong></>}
                     {r.result && <> · {tr('Result: {result}', { result: r.result })}</>}
                   </p>
@@ -478,16 +505,18 @@ export default function AdminCrnImport() {
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.4rem' }}>
           {batches.map((b) => (
             <li key={b.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button type="button" onClick={() => openBatchRows(b)} style={{ minHeight: 44, padding: '0 0.25rem', background: 'none', border: 'none', color: 'var(--accent)', font: 'inherit', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', textAlign: 'left' }}>
+              <button type="button" onClick={() => openBatchRows(b, { scroll: true })} aria-label={tr('Open the import from {when}', { when: new Date(b.uploaded_at).toLocaleString() })} style={{ minHeight: 44, padding: '0 0.25rem', background: 'none', border: 'none', color: 'var(--accent)', font: 'inherit', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', textAlign: 'left' }}>
                 {new Date(b.uploaded_at).toLocaleString()}
               </button>
               <span style={{ color: 'var(--text-secondary)' }}>{b.status}</span>
-              {latestApplied && b.id === latestApplied.id && (
+              {batchChanges(b) && <span style={{ ...small, margin: 0, flexBasis: '100%' }}>{batchChanges(b)}</span>}
+              {latestApplied && b.id === latestApplied.id && !undidThisVisit && (
                 <button type="button" className="btn btn-outline" style={{ minHeight: 44 }} disabled={busy} onClick={() => undo(b)}>{tr('Undo')}</button>
               )}
             </li>
           ))}
         </ul>
+        {undidThisVisit && latestApplied && <p style={{ ...small, marginTop: '0.5rem' }}>{tr('To undo an older import too, reload this page first.')}</p>}
       </section>
       </>}
     </div>
