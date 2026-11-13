@@ -4912,6 +4912,7 @@ const more = {
   "Organization Type": "Tipo de organización",
   "Public Email": "Correo público",
   "Public Location Name": "Nombre público del lugar",
+  "Street Address": "Dirección",
   "City": "Ciudad",
   "State": "Estado",
   "ZIP": "Código postal",
