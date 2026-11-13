@@ -12,6 +12,7 @@ import BackLink from '../components/BackLink'
 import HelpSwitch from '../components/HelpSwitch'
 import Icon, { iconSrc, iconClass } from '../components/Icon'
 import AreaPicker from '../components/AreaPicker'
+import { LocationPrompt } from '../components/LocationPrompt'
 import CrnCardDetails from '../components/CrnCardDetails'
 import ResourceReport from '../components/ResourceReport'
 import SuggestResource from '../components/SuggestResource'
@@ -68,6 +69,7 @@ export default function CommunityResources() {
   // The viewer's own approximate location, used to sort resources with a
   // pinned location nearest-first. Resources without a pin just stay put.
   const [myLocation, setMyLocation] = useState(null)
+  const [askPlace, setAskPlace] = useState(false)
 
   // Resource Library
   const [resources, setResources] = useState([])
@@ -1017,6 +1019,14 @@ export default function CommunityResources() {
           {/* Oct 28 (Jade): no "Kinds of help" heading; the picture tiles speak for themselves. */}
 
 
+          {/* Nov 13: with no place yet, say why there are no distances and offer to add one. */}
+          {placesEnabled && user && !myLocation && (askPlace
+            ? <LocationPrompt title="See how far each place is" intro="Enter a zip code. We only use it to measure how far each place is. We never guess where you are."
+                onDone={() => { setAskPlace(false); setMyLocation(startingOrigin(profile)) }} onCancel={() => setAskPlace(false)} />
+            : <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.875rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.4rem 0.6rem', margin: '0 0 0.75rem', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.25rem 0.5rem' }}>
+                {t('See how far each place is.')}
+                <button type="button" className="link-button" style={{ minHeight: 44 }} onClick={() => setAskPlace(true)}>{t('Add a zip code')}</button>
+              </p>)}
           {!placesEnabled && user && profile && profile.latitude == null && (
             <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.8125rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.6rem', margin: '0 0 0.75rem' }}>
               {t('Showing national resources. Add your zip code in your profile to see ones near you.')}

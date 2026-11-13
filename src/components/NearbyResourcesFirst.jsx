@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { iconSrc, iconClass } from './Icon'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { getMyLocation, distanceMiles } from '../utils/location'
+import { distanceMiles } from '../utils/location'
+import { startingOrigin } from '../utils/calendar'
+import { LocationPrompt } from './LocationPrompt'
 import { resourceCats, currentCategory, CAT_ICON_FILES } from '../utils/resourceCategories'
 import { searchResources } from '../utils/resourceSearch'
 import AddressLink from './AddressLink'
@@ -25,7 +27,12 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
   const [rows, setRows] = useState(null)
   const [cat, setCat] = useState('')
   const [query, setQuery] = useState('')
-  const loc = getMyLocation(profile)
+  // One "your place" for the whole app (Nov 13): the place picked in Calendar on
+  // this device, else the member's own area. Same as Find Help.
+  const [placeBump, setPlaceBump] = useState(0)
+  const [askPlace, setAskPlace] = useState(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loc = useMemo(() => startingOrigin(profile), [profile?.latitude, profile?.longitude, placeBump])
   const wide = useWideScreen()
   const resultsRef = useRef(null)
   const [scrollAsked, setScrollAsked] = useState(0)
@@ -34,12 +41,23 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
     let alive = true
     supabase
       .from('community_resources')
-      .select('id, name, description, phone, url, address, category, categories, latitude, longitude, requirements, neighborhood, region')
+      .select('id, name, description, phone, url, address, category, categories, latitude, longitude, requirements, neighborhood, region, source')
       .eq('verified', true)
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (!alive) return
         if (error) console.error('NearbyResourcesFirst', error)
-        setRows(data || [])
+        let list = data || []
+        // CRN listings with no exact pin: ZIP (or county) center, only for "About X miles away".
+        const need = list.filter((r) => r.source === 'crn' && (r.latitude == null || r.longitude == null)).map((r) => r.id)
+        if (need.length) {
+          const { data: pts, error: pErr } = await supabase.rpc('crn_approx_points', { p_ids: need })
+          if (pErr) console.warn('crn_approx_points not available:', pErr.message)
+          else {
+            const byId = new Map((pts || []).map((p) => [p.id, p]))
+            list = list.map((r) => (byId.has(r.id) ? { ...r, approx_lat: byId.get(r.id).lat, approx_lng: byId.get(r.id).lng } : r))
+          }
+        }
+        if (alive) setRows(list)
       })
     return () => { alive = false }
   }, [])
@@ -50,10 +68,14 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
     if (query.trim()) list = searchResources(list, query)
     else if (cat) list = list.filter((r) => resourceCats(r).includes(cat))
     else return []
-    const dist = (r) => (loc && r.latitude != null && r.longitude != null ? distanceMiles(loc.lat, loc.lng, r.latitude, r.longitude) : null)
+    const exact = (r) => r.latitude != null && r.longitude != null
+    const dist = (r) => (!loc ? null
+      : exact(r) ? distanceMiles(loc.lat, loc.lng, r.latitude, r.longitude)
+      : r.approx_lat != null ? distanceMiles(loc.lat, loc.lng, r.approx_lat, r.approx_lng) : null)
+    const item = (r) => ({ r, d: dist(r), approx: !exact(r) && r.approx_lat != null })
     return query.trim()
-      ? list.map((r) => ({ r, d: dist(r) }))
-      : list.map((r) => ({ r, d: dist(r) })).sort((a, b) => (a.d ?? 1e9) - (b.d ?? 1e9) || a.r.name.localeCompare(b.r.name))
+      ? list.map(item)
+      : list.map(item).sort((a, b) => (a.d ?? 1e9) - (b.d ?? 1e9) || a.r.name.localeCompare(b.r.name))
   }, [rows, cat, query, loc])
 
   const picked = Boolean(cat || query.trim())
@@ -100,7 +122,13 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
         ))}
       </div>
 
-      {!loc && <p style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>{t('Add your zip code in your profile to see distances and ones near you. Until then you see national resources.')}</p>}
+      {!loc && (askPlace
+        ? <LocationPrompt title="See how far each place is" intro="Enter a zip code. We only use it to measure how far each place is. We never guess where you are."
+            onDone={() => { setAskPlace(false); setPlaceBump((n) => n + 1) }} onCancel={() => setAskPlace(false)} />
+        : <p style={{ fontSize: '0.9rem', color: 'var(--text-soft)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.25rem 0.5rem' }}>
+            {t('See how far each place is.')}
+            <button type="button" className="link-button" style={{ minHeight: 44 }} onClick={() => setAskPlace(true)}>{t('Add a zip code')}</button>
+          </p>)}
       </div>
       </div>
 
@@ -112,11 +140,11 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
       {rows && picked && results.length === 0 && <p style={{ color: 'var(--text-soft)' }}>{t('Nothing found nearby. A neighbor may be able to help. Tap Ask a neighbor for help.')}</p>}
       {results.length > 0 && (
         <ul style={{ listStyle: 'none', margin: '0 0 0.5rem', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {results.slice(0, SHOW).map(({ r, d }) => (
+          {results.slice(0, SHOW).map(({ r, d, approx }) => (
             <li key={r.id} className="nr-card" style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px' }}>
               {/* Oct 28 (Jade): the whole card opens the full listing in Find resources. */}
               <Link className="nr-card-open" to={'/community/resources?cat=' + encodeURIComponent((cat && !query.trim()) ? cat : (resourceCats(r)[0] || '')) + '&show=' + r.id} style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{r.name} <span aria-hidden="true">&#8250;</span></Link>
-              {d != null && <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{d < 1 ? t('Under a mile away') : t('{n} miles away', { n: Math.round(d) })}</div>}
+              {d != null && <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{approx ? t('About {n} miles away', { n: Math.max(1, Math.round(d)) }) : d < 1 ? t('Under a mile away') : t('{n} miles away', { n: Math.round(d) })}</div>}
               {r.description && <p style={{ margin: '0.3rem 0 0', fontSize: '0.9rem', color: 'var(--text-soft)', overflowWrap: 'anywhere' }}>{r.description}</p>}
               {r.address && <p style={{ margin: '0.3rem 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', overflowWrap: 'anywhere' }}><AddressLink address={r.address} /></p>}
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
