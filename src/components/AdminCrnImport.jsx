@@ -331,6 +331,15 @@ export default function AdminCrnImport() {
       <div role="group" aria-label={tr('CRN view')} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
         <button type="button" style={chip(view === 'import')} aria-pressed={view === 'import'} onClick={() => setView('import')}>{tr('Imports')}</button>
         <button type="button" style={chip(view === 'research')} aria-pressed={view === 'research'} onClick={() => setView('research')}>{tr('Research records')}</button>
+        {view === 'import' && (
+          <button type="button" style={chip(false)} onClick={() => {
+            const el = document.getElementById('crn-values-h')
+            if (!el) return
+            const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+            el.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
+            el.focus({ preventScroll: true })
+          }}>{tr('What CRN values mean')} &#8595;</button>
+        )}
       </div>
       {view === 'research' ? <AdminCrnResearch /> : <>
       <p role="status" style={{ minHeight: '1.2em', margin: '0 0 0.5rem', color: 'var(--accent)', fontWeight: 600 }}>{note}</p>
@@ -436,13 +445,13 @@ export default function AdminCrnImport() {
           )}
 
           {inPreview && !confirming && (
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+            <div style={{ position: 'sticky', bottom: 'calc(var(--tab-height, 60px) + env(safe-area-inset-bottom, 0px) + 0.5rem)', zIndex: 5, display: 'flex', gap: '0.5rem', marginTop: '1rem', padding: '0.5rem', borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 -4px 16px rgba(0,0,0,0.25)' }}>
               <button type="button" className="btn btn-outline" style={{ minHeight: 48, flex: 1 }} disabled={busy} onClick={discard}>{tr('Discard')}</button>
               <button type="button" className="btn btn-primary" style={{ minHeight: 48, flex: 2 }} disabled={busy} onClick={() => setConfirming(true)}>{tr('Apply')}</button>
             </div>
           )}
           {inPreview && confirming && (
-            <div role="alertdialog" aria-labelledby="crn-confirm-h" style={{ marginTop: '1rem', padding: '0.75rem', borderRadius: 10, border: '2px solid var(--accent)', background: 'var(--surface)' }}>
+            <div role="alertdialog" aria-labelledby="crn-confirm-h" style={{ position: 'sticky', bottom: 'calc(var(--tab-height, 60px) + env(safe-area-inset-bottom, 0px) + 0.5rem)', zIndex: 5, boxShadow: '0 -4px 16px rgba(0,0,0,0.25)', marginTop: '1rem', padding: '0.75rem', borderRadius: 10, border: '2px solid var(--accent)', background: 'var(--surface)' }}>
               <p id="crn-confirm-h" style={{ margin: '0 0 0.5rem', fontWeight: 700 }}>{tr('Import these?')}</p>
               <EnvBanner compact />
               <p style={small}>
@@ -461,7 +470,7 @@ export default function AdminCrnImport() {
       )}
 
       <section style={box} aria-labelledby="crn-values-h">
-        <h3 id="crn-values-h" style={h3}>{tr('What CRN values mean')}</h3>
+        <h3 id="crn-values-h" tabIndex={-1} style={{ ...h3, scrollMarginTop: '1rem' }}>{tr('What CRN values mean')}</h3>
         <p style={small}>{tr('Rows with a value the app doesn’t know yet are held, not guessed. Teach it each value once, using the CRN team’s lists.')}</p>
         {VALUE_FIELDS.map((f) => {
           const list = values.filter((v) => v.field === f.key)
