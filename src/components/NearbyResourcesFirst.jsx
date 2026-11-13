@@ -19,8 +19,8 @@ import { useT } from '../utils/lang'
 // The 12 kinds of help, most asked first (211 data, Oct 2026).
 const QUICK_PICKS = ['Food', 'Housing', 'Bills and Utilities', 'Rides', 'Health', 'Home Repair', 'Legal and Tenant Help',
   'Money and Benefits', 'Mental Health and Recovery', 'Family and Child Care', 'Emergency Help', 'Safety',
-  'Clothing and Household']
-// Nov 13 (Jade): 13 kinds plus a "See all" tile keeps the grid even and opens the full list.
+  'Jobs and Learning', 'Disability and Aging', 'Clothing and Household']
+// Nov 13 (Jade): 15 kinds plus a "See all" tile keeps the grid even (8 rows of 2) and opens the full list.
 const SHOW = 5
 
 export default function NearbyResourcesFirst({ profile, onContinue }) {
