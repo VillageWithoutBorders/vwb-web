@@ -5892,6 +5892,11 @@ const more = {
   "Local copy using LIVE data. Changes here are real.": "Copia local con datos REALES. Los cambios aquí son reales.",
   "Importing into the test project (vwb-crn-dev).": "Importando al proyecto de prueba (vwb-crn-dev).",
   "Importing into LIVE data. This is real.": "Importando a datos REALES. Esto es real.",
+  "See how far each place is.": "Vea qué tan lejos está cada lugar.",
+  "See how far each place is": "Vea qué tan lejos está cada lugar",
+  "Add a zip code": "Agregar un código postal",
+  "About {n} miles away": "A unas {n} millas",
+  "Enter a zip code. We only use it to measure how far each place is. We never guess where you are.": "Escriba un código postal. Solo lo usamos para medir qué tan lejos está cada lugar. Nunca adivinamos dónde está usted.",
   "Also saved as private records: {list}.": "También se guardan como registros privados: {list}.",
   "Service areas added or changed: {list}.": "Áreas de servicio agregadas o cambiadas: {list}.",
 }
