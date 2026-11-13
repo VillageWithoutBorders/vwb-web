@@ -5890,6 +5890,8 @@ const more = {
   "{label}, private research": "{label}, investigación privada",
   "Test project (vwb-crn-dev). Nothing here changes the live app.": "Proyecto de prueba (vwb-crn-dev). Nada aquí cambia la app real.",
   "Local copy using LIVE data. Changes here are real.": "Copia local con datos REALES. Los cambios aquí son reales.",
+  "Importing into the test project (vwb-crn-dev).": "Importando al proyecto de prueba (vwb-crn-dev).",
+  "Importing into LIVE data. This is real.": "Importando a datos REALES. Esto es real.",
   "Also saved as private records: {list}.": "También se guardan como registros privados: {list}.",
   "Service areas added or changed: {list}.": "Áreas de servicio agregadas o cambiadas: {list}.",
 }

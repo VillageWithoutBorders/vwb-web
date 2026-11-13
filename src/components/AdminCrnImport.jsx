@@ -4,6 +4,7 @@ import { csvToObjects, toCsv, downloadText } from '../utils/csv'
 import { friendlyError } from '../utils/resourceReports'
 import { CATEGORIES } from '../utils/resourceCategories'
 import { askConfirm } from './AdminDialog'
+import EnvBanner from './EnvBanner'
 import AdminCrnResearch from './AdminCrnResearch'
 import { t, useT } from '../utils/lang'
 
@@ -319,6 +320,7 @@ export default function AdminCrnImport() {
 
   return (
     <div>
+      <EnvBanner />
       <div role="group" aria-label={tr('CRN view')} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
         <button type="button" style={chip(view === 'import')} aria-pressed={view === 'import'} onClick={() => setView('import')}>{tr('Imports')}</button>
         <button type="button" style={chip(view === 'research')} aria-pressed={view === 'research'} onClick={() => setView('research')}>{tr('Research records')}</button>
@@ -435,6 +437,7 @@ export default function AdminCrnImport() {
           {inPreview && confirming && (
             <div role="alertdialog" aria-labelledby="crn-confirm-h" style={{ marginTop: '1rem', padding: '0.75rem', borderRadius: 10, border: '2px solid var(--accent)', background: 'var(--surface)' }}>
               <p id="crn-confirm-h" style={{ margin: '0 0 0.5rem', fontWeight: 700 }}>{tr('Import these?')}</p>
+              <EnvBanner compact />
               <p style={small}>
                 {tr('{added} new in Find Help, {updated} updated, {linked} linked, {hiding} hidden, {research} saved as private research, {held} held or skipped, {flagged} flagged for coverage.', summary)}
                 {privateSaved && <> {tr('Also saved as private records: {list}.', { list: privateSaved })}</>}

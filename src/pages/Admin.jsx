@@ -24,6 +24,7 @@ import { ORG_TYPES } from '../data/orgTypes'
 import { calmMotion } from '../utils/motion'
 // tNow is the same t, for the loaders (they run outside a draw).
 import { useT, t as tNow } from '../utils/lang'
+import EnvBanner from '../components/EnvBanner'
 
 // Logs every Supabase error to the console with context so failures never vanish silently.
 // Pass a userMessage to also tell the person (an in-page note) and let the caller bail out; omit it for
@@ -1032,14 +1033,7 @@ export default function Admin() {
         <h1 className="admin-title">{tr('Admin')}</h1>
         {wide && <span className="admin-top-note">{tr('Computer view: every tool')}</span>}
       </div>
-      {import.meta.env.DEV && (
-        // Only on a computer running the app locally. The deployed app never shows this.
-        <p role="note" className={'admin-env ' + (import.meta.env.MODE === 'crndev' ? 'admin-env-test' : 'admin-env-live')}>
-          {import.meta.env.MODE === 'crndev'
-            ? tr('Test project (vwb-crn-dev). Nothing here changes the live app.')
-            : tr('Local copy using LIVE data. Changes here are real.')}
-        </p>
-      )}
+      {tab !== 'crn' && <EnvBanner />}{/* CRN Import shows its own, right above the import tools */}
 
       {wide ? (
         <nav className="admin-side" aria-label={tr('Admin sections')}>
