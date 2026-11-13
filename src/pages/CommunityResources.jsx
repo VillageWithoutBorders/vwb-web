@@ -13,7 +13,7 @@ import HelpSwitch from '../components/HelpSwitch'
 import Icon, { iconSrc, iconClass } from '../components/Icon'
 import AreaPicker from '../components/AreaPicker'
 import { LocationPrompt } from '../components/LocationPrompt'
-import CrnCardDetails, { ResourceFacts, known } from '../components/CrnCardDetails'
+import CrnCardDetails, { ResourceFacts, CrnNotice, known } from '../components/CrnCardDetails'
 import { mapLinkFor } from '../utils/calendar'
 import ResourceReport from '../components/ResourceReport'
 import SuggestResource from '../components/SuggestResource'
@@ -725,6 +725,7 @@ export default function CommunityResources() {
                         </button>
                         {open && <div id={'fh-body-' + r.id} className="fh-card-body">
                         <ResourceFacts r={r} />
+                        {placesEnabled && <CrnNotice r={r} />}
                         <div className="fh-actions">
                           {(r.phone || r.provider_phone) && <a className="btn btn-primary fh-action" href={'tel:' + (r.phone || r.provider_phone).replace(/[^0-9+]/g, '')}>{r.phone ? t('Call {phone}', { phone: r.phone }) : t('Call the organization: {phone}', { phone: r.provider_phone })}</a>}
                           {r.address && mapLinkFor(r.address) && <a className="btn btn-outline fh-action" href={mapLinkFor(r.address)} {...(mapLinkFor(r.address).startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{t('Directions')}</a>}

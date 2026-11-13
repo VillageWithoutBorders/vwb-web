@@ -57,6 +57,18 @@ export function ResourceFacts({ r }) {
   )
 }
 
+// One plain notice on every CRN card (Nov 13): these come from public research,
+// not from the provider, and many have no hours or cost yet.
+export function CrnNotice({ r }) {
+  const t = useT()
+  if (r.source !== 'crn') return null
+  return (
+    <p className="fh-notice" role="note">
+      {t('Found in public sources. Not confirmed with the provider yet. Call before you go.')}
+    </p>
+  )
+}
+
 // An open-to-anyone listing whose "who it's for" only says "anyone" again.
 const sameAsAnyone = (r) => {
   const e = known(r.eligibility_summary)
@@ -85,7 +97,7 @@ export default function CrnCardDetails({ r }) {
   return (
     <div className="fh-crn" style={{ margin: '0.2rem 0 0.35rem' }}>
       {r.provider_name && <p style={{ color: 'var(--text)', fontWeight: 600 }}>{t('Run by {name}', { name: r.provider_name })}</p>}
-      {fuzzy && <p>{t('Not sure if your address counts? Call and ask before you go.')}</p>}
+      {fuzzy && <p>{isCrn ? t('Not sure if your address counts? Ask when you call.') : t('Not sure if your address counts? Call and ask before you go.')}</p>}
       <Row label={t("Who it's for")} value={sameAsAnyone(r) ? '' : known(r.eligibility_summary)} />
       {hasMore && (
         <button type="button" className="fh-more" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen(!open)}>
