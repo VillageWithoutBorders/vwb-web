@@ -5894,8 +5894,9 @@ html.simple .tab-item.active::before { width: 44px; margin-left: -22px; height: 
 /* Computer build */
 @media (min-width: 1024px) {
   .app-main.app-main-admin { max-width: 1240px; }
-  .admin-shell.admin-wide { display: grid; grid-template-columns: 240px minmax(0, 1fr); grid-template-areas: "top top" "side main"; column-gap: 1.5rem; align-items: start; }
+  .admin-shell.admin-wide { display: grid; grid-template-columns: 240px minmax(0, 1fr); grid-template-areas: "top top" "env env" "side main"; column-gap: 1.5rem; align-items: start; }
   .admin-wide .admin-top { grid-area: top; }
+  .admin-wide .admin-env { grid-area: env; }
   .admin-wide .admin-side { grid-area: side; position: sticky; top: calc(var(--header-height) + 1rem); display: grid; gap: 0.375rem; }
   .admin-wide .admin-main { grid-area: main; }
   .admin-side-more { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: grid; gap: 0.375rem; }
