@@ -4,7 +4,7 @@
 // they sit at the end.
 export const CATEGORIES = [
   'Emergency Help', 'Housing', 'Bills and Utilities', 'Food', 'Health',
-  'Mental Health and Recovery', 'Rides', 'Money and Benefits', 'Legal and Tenant Help',
+  'Mental Health and Recovery', 'Disability and Aging', 'Rides', 'Money and Benefits', 'Jobs and Learning', 'Legal and Tenant Help',
   'Home Repair', 'Family and Child Care', 'Clothing and Household', 'Safety', 'Give and Get Involved', 'Other',
 ]
 // Picture for each kind of help, in public/art/icons (same look as the village map).
@@ -13,8 +13,10 @@ export const CAT_ICON_FILES = {
   'Food': 'cat-food', 'Health': 'cat-health', 'Mental Health and Recovery': 'cat-recovery',
   'Rides': 'cat-rides', 'Money and Benefits': 'cat-government', 'Legal and Tenant Help': 'cat-tenant',
   'Home Repair': 'cat-repair', 'Family and Child Care': 'cat-family', 'Safety': 'cat-safety',
-  // Nov 13: placeholder picture until Jade draws a clothing icon.
-  'Clothing and Household': 'cat-other',
+  // Nov 13: simple placeholder pictures (Claude, basic shapes) until Jade draws her own.
+  'Clothing and Household': 'cat-clothing',
+  'Jobs and Learning': 'cat-jobs',
+  'Disability and Aging': 'cat-aging',
   'Give and Get Involved': 'cat-donation', 'Other': 'cat-other',
 }
 
@@ -36,7 +38,11 @@ const LOOSE_NAMES = {
   'legal': 'Legal and Tenant Help', 'mental health': 'Mental Health and Recovery', 'recovery': 'Mental Health and Recovery',
   'emergency': 'Emergency Help', 'safety': 'Safety', 'repair': 'Home Repair', 'home repair': 'Home Repair',
   'clothing': 'Clothing and Household', 'clothes': 'Clothing and Household', 'household': 'Clothing and Household',
-  'furniture': 'Clothing and Household', 'money': 'Money and Benefits', 'benefits': 'Money and Benefits', 'volunteer': 'Give and Get Involved',
+  'furniture': 'Clothing and Household', 'hygiene': 'Clothing and Household', 'laundry': 'Clothing and Household',
+  'jobs': 'Jobs and Learning', 'employment': 'Jobs and Learning', 'job training': 'Jobs and Learning',
+  'education': 'Jobs and Learning', 'learning': 'Jobs and Learning',
+  'disability': 'Disability and Aging', 'disability support': 'Disability and Aging', 'aging': 'Disability and Aging',
+  'seniors': 'Disability and Aging', 'older adults': 'Disability and Aging', 'money': 'Money and Benefits', 'benefits': 'Money and Benefits', 'volunteer': 'Give and Get Involved',
 }
 const BY_LOWER = Object.fromEntries([
   ...CATEGORIES.map((c) => [c.toLowerCase(), c]),
@@ -73,6 +79,8 @@ export const CATEGORY_SKILLS = {
     'Tree and Yard Work', 'Engineering and Safety Checks'],
   'Family and Child Care': ['Childcare', 'Caregiving', 'Tutoring and Teaching'],
   'Clothing and Household': ['Supplies and Lending'],
+  'Jobs and Learning': ['Tutoring and Teaching', 'Tech Help', 'Paperwork and Benefits'],
+  'Disability and Aging': ['Caregiving', 'Ramps and Accessibility Builds', 'Check-ins and Companionship'],
 }
 
 // "Food & Meals" and "Food and Meals" are the same skill.
