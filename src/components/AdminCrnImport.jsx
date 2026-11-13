@@ -290,9 +290,23 @@ export default function AdminCrnImport() {
   function pickGroup(g) { setGroupFilter(g); setVisible(PAGE) }
   const ignored = openBatch ? Object.entries(openBatch.ignored_columns || {}).flatMap(([tab, cols]) => (cols || []).map((c) => tr(TAB_LABEL[tab]) + ': ' + c)) : []
   // What a batch changed, from its saved results. Rows that were only listed or unchanged are left out.
-  const batchChanges = (b) => Object.entries(b?.counts?.results || {})
-    .filter(([k, n]) => n && !['listed only', 'no change'].includes(k))
-    .map(([k, n]) => n + ' ' + tr(k)).join(', ')
+  // Grouped by tab so it says what was added: "New: 2 organizations · Research updated: 4 services".
+  const batchChanges = (b) => {
+    const groups = b?.counts?.groups
+    if (groups) {
+      const parts = []
+      GROUPS.forEach((g) => {
+        if (QUIET.includes(g.key)) return
+        const list = TABS.map((t) => [t.key, groups[t.key]?.[g.key] || 0]).filter(([, n]) => n)
+          .map(([k, n]) => tr(TAB_WORD[k][n === 1 ? 0 : 1], { n })).join(', ')
+        if (list) parts.push(tr(g.label) + ': ' + list)
+      })
+      return parts.join(' · ')
+    }
+    return Object.entries(b?.counts?.results || {})
+      .filter(([k, n]) => n && !['listed only', 'no change'].includes(k))
+      .map(([k, n]) => n + ' ' + tr(k)).join(', ')
+  }
   // Organizations and locations are private records. Say so, so "New" doesn't read as public.
   const rowLabel = (r) => {
     const base = GROUP_LABEL[r.grp] ? tr(GROUP_LABEL[r.grp]) : r.grp
@@ -502,14 +516,14 @@ export default function AdminCrnImport() {
       <section style={box} aria-labelledby="crn-past-h">
         <h3 id="crn-past-h" style={h3}>{tr('Past imports')}</h3>
         {batches.length === 0 && <p style={small}>{tr('None yet.')}</p>}
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.4rem' }}>
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.5rem' }}>
           {batches.map((b) => (
-            <li key={b.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <li key={b.id} style={{ display: 'flex', alignItems: 'center', columnGap: '0.5rem', rowGap: '0.15rem', flexWrap: 'wrap', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)' }}>
               <button type="button" onClick={() => openBatchRows(b, { scroll: true })} aria-label={tr('Open the import from {when}', { when: new Date(b.uploaded_at).toLocaleString() })} style={{ minHeight: 44, padding: '0 0.25rem', background: 'none', border: 'none', color: 'var(--accent)', font: 'inherit', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', textAlign: 'left' }}>
                 {new Date(b.uploaded_at).toLocaleString()}
               </button>
               <span style={{ color: 'var(--text-secondary)' }}>{b.status}</span>
-              {batchChanges(b) && <span style={{ ...small, margin: 0, flexBasis: '100%' }}>{batchChanges(b)}</span>}
+              {batchChanges(b) && <span style={{ ...small, margin: '0 0 0.25rem 0.25rem', flexBasis: '100%' }}>{batchChanges(b)}</span>}
               {latestApplied && b.id === latestApplied.id && !undidThisVisit && (
                 <button type="button" className="btn btn-outline" style={{ minHeight: 44 }} disabled={busy} onClick={() => undo(b)}>{tr('Undo')}</button>
               )}
