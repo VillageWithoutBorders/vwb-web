@@ -107,9 +107,16 @@ export default function AdminCrnImport() {
         el.querySelector('h3')?.focus({ preventScroll: true })
       }, 60)
     }
-    const { data, error } = await supabase.rpc('crn_import_rows_for', { p_batch: b.id })
-    if (error) { console.error('crn_import_rows_for failed:', error); setNote(tr(friendlyError(error, "We couldn't load that import."))); return }
-    setRows(data || [])
+    // The server sends at most 1000 rows per request, and a full CRN export has more.
+    // Load page by page so the counts and the confirm box cover every row (Nov 13).
+    const all = []
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase.rpc('crn_import_rows_for', { p_batch: b.id }).range(from, from + 999)
+      if (error) { console.error('crn_import_rows_for failed:', error); setNote(tr(friendlyError(error, "We couldn't load that import."))); return }
+      all.push(...(data || []))
+      if (!data || data.length < 1000) break
+    }
+    setRows(all)
   }
 
   async function loadValues() {
