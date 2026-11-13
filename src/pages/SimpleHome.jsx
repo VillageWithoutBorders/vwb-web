@@ -7,6 +7,7 @@ import { saveSimpleView } from '../utils/simpleView'
 import { startPath, setupWaiting } from '../utils/startPath'
 import Icon from '../components/Icon'
 import OrgInvites from '../components/OrgInvites'
+import PushBanner from '../components/PushBanner'
 import VillageGuestInvites from '../components/VillageGuestInvites'
 import { orgWords } from '../utils/roleWords'
 import { useT, t as tr } from '../utils/lang'
@@ -96,6 +97,8 @@ export default function SimpleHome() {
     <div className="sh-page">
       <h1 className="sh-hello">{hello()}{first ? ', ' + first : ''}.</h1>
       <p className="sh-sub">{t('What would you like to do?')}</p>
+      {/* Nov 13: Simple view never showed the "turn on alerts" ask. */}
+      <PushBanner />
 
       {done && (
         <div className="sh-done" role="status">

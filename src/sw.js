@@ -66,6 +66,10 @@ self.addEventListener('push', (event) => {
     icon: '/icons/icon-192-v2.png',
     badge: '/icons/badge-96.png',
     tag: data.tag || 'vwb-notification',
+    // Nov 13: a new alert with the same tag replaces the old one. Without renotify it
+    // replaces it silently (no sound, no buzz, no pop up), so later alerts went unseen.
+    renotify: true,
+    timestamp: Date.now(),
     data: { url: data.url || '/' },
     vibrate: [200, 100, 200]
   }
