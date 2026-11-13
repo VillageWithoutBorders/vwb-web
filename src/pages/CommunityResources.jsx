@@ -209,6 +209,17 @@ export default function CommunityResources() {
         setLoadError(t("We couldn't load Find Help. Pull down to try again."))
       }
       list = (data || []).map((r) => ({ ...r, verified: true }))
+      // CRN listings without an exact pin: get their ZIP (or county) center,
+      // only for an "About X mi away" line. Never used for a map pin.
+      const need = list.filter((r) => r.source === 'crn' && (r.latitude == null || r.longitude == null)).map((r) => r.id)
+      if (need.length) {
+        const { data: pts, error: pErr } = await supabase.rpc('crn_approx_points', { p_ids: need })
+        if (pErr) console.warn('crn_approx_points not available:', pErr.message)
+        else {
+          const byId = new Map((pts || []).map((p) => [p.id, p]))
+          list = list.map((r) => (byId.has(r.id) ? { ...r, approx_lat: byId.get(r.id).lat, approx_lng: byId.get(r.id).lng } : r))
+        }
+      }
       if (profile?.is_hope_ambassador || isAdmin) {
         const { data: pending, error: pErr } = await supabase
           .from('community_resources')
@@ -658,10 +669,14 @@ export default function CommunityResources() {
   })
   const grouped = {}
   filteredVerifiedResources.forEach(r => { resourceCats(r).forEach(cat => { if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(r) }) })
+  // Exact when the listing has a pin; otherwise its ZIP or county center (approximate).
   function resourceDistance(r) {
-    if (!myLocation || r.latitude == null || r.longitude == null) return null
-    return distanceMiles(myLocation.lat, myLocation.lng, r.latitude, r.longitude)
+    if (!myLocation) return null
+    if (r.latitude != null && r.longitude != null) return distanceMiles(myLocation.lat, myLocation.lng, r.latitude, r.longitude)
+    if (r.approx_lat != null && r.approx_lng != null) return distanceMiles(myLocation.lat, myLocation.lng, r.approx_lat, r.approx_lng)
+    return null
   }
+  const distanceIsApprox = (r) => (r.latitude == null || r.longitude == null) && r.approx_lat != null
   Object.keys(grouped).forEach(cat => {
     grouped[cat].sort((a, b) => {
       const da = resourceDistance(a)
@@ -696,7 +711,9 @@ export default function CommunityResources() {
                         {r.neighborhood && <p className="fh-card-meta">{t('Area:')} {r.neighborhood}</p>}
                         {r.requirements && <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', margin: '0.2rem 0', lineHeight: 1.4 }}><Icon name="clipboard" /> {t('What to bring:')} {r.requirements}</p>}
                         {resourceDistance(r) != null && (
-                          <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.2rem 0 0' }}><Icon name="pin" /> {t('{n} mi away', { n: resourceDistance(r).toFixed(1) })}</p>
+                          <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.2rem 0 0' }}><Icon name="pin" /> {distanceIsApprox(r)
+                            ? t('About {n} mi away', { n: Math.max(1, Math.round(resourceDistance(r))) })
+                            : t('{n} mi away', { n: resourceDistance(r).toFixed(1) })}</p>
                         )}
                         {r.organizations && !user && (
                           <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.4rem 0 0' }}>{t('Shared by {name}', { name: r.organizations.name })}</p>

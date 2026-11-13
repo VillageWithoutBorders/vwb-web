@@ -39,7 +39,7 @@ const SERVICE_FIELDS = [
 const ORG_FIELDS = [['organization_name', 'Organization Name'], ['common_name', 'Common Name'], ['organization_type', 'Organization Type'],
   ['website', 'Website'], ['public_phone', 'Public Phone'], ['public_email', 'Public Email'], ['approved_at', 'Approved At']]
 const LOC_FIELDS = [['public_location_name', 'Public Location Name'], ['street_address', 'Street Address'], ['city', 'City'], ['state', 'State'], ['zip', 'ZIP'],
-  ['physical_county', 'Physical County'], ['location_type', 'Location Type'], ['public_access_notes', 'Public Access Notes'], ['approved_at', 'Approved At']]
+  ['physical_county', 'Physical County'], ['latitude', 'Latitude'], ['longitude', 'Longitude'], ['location_type', 'Location Type'], ['public_access_notes', 'Public Access Notes'], ['approved_at', 'Approved At']]
 
 const RESULT_WORDS = {
   'added to research': 'Added as private research', 'research updated': 'Research updated', 'no change': 'Seen, no change',

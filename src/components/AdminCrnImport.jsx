@@ -12,7 +12,7 @@ import { t, useT } from '../utils/lang'
 
 const TABS = [
   { key: 'organizations', label: 'Organizations', file: 'Approved Organizations' },
-  { key: 'locations', label: 'Locations', file: 'Approved Locations' },
+  { key: 'locations', label: 'Locations', file: 'Approved Locations', hint: 'Latitude and Longitude are optional. A map pin needs both, with at least 4 decimal places, copied from the building itself. No street number or a private location means no pin. Without them, Find Help shows "About X mi away" from the ZIP.' },
   { key: 'services', label: 'Services', file: 'Approved Services' },
   { key: 'areas', label: 'Service areas', file: 'Verified Service Areas', hint: 'Area Type can be County, Community, ZIP or Open to anyone (blank means County). Open to anyone shows to people within 50 miles of the location. A community shows to people who search its county (with a note) or who chose that town. Other towns do not see it. A ZIP only shows on the card. It never decides who sees a service.' },
 ]
