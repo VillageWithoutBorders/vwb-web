@@ -5,7 +5,7 @@
 export const CATEGORIES = [
   'Emergency Help', 'Housing', 'Bills and Utilities', 'Food', 'Health',
   'Mental Health and Recovery', 'Disability and Aging', 'Rides', 'Money and Benefits', 'Jobs and Learning', 'Legal and Tenant Help',
-  'Home Repair', 'Family and Child Care', 'Clothing and Household', 'Pets', 'Safety', 'Give and Get Involved', 'Other',
+  'Home Repair', 'Family and Child Care', 'Clothing and Household', 'Pets', 'Help Finding Help', 'Safety', 'Give and Get Involved', 'Other',
 ]
 // Picture for each kind of help, in public/art/icons (same look as the village map).
 export const CAT_ICON_FILES = {
@@ -18,6 +18,7 @@ export const CAT_ICON_FILES = {
   'Jobs and Learning': 'cat-jobs',
   'Disability and Aging': 'cat-aging',
   'Pets': 'cat-pets',
+  'Help Finding Help': 'cat-signpost',
   'Give and Get Involved': 'cat-donation', 'Other': 'cat-other',
 }
 
@@ -45,6 +46,8 @@ const LOOSE_NAMES = {
   'disability': 'Disability and Aging', 'disability support': 'Disability and Aging', 'aging': 'Disability and Aging',
   'seniors': 'Disability and Aging', 'older adults': 'Disability and Aging', 'money': 'Money and Benefits', 'benefits': 'Money and Benefits', 'volunteer': 'Give and Get Involved',
   'pets': 'Pets', 'pet': 'Pets', 'animals': 'Pets', 'animal': 'Pets', 'pet care': 'Pets', 'pet food': 'Pets',
+  '211': 'Help Finding Help', 'navigation': 'Help Finding Help', 'resource navigation': 'Help Finding Help',
+  'referrals': 'Help Finding Help', 'case management': 'Help Finding Help',
 }
 const BY_LOWER = Object.fromEntries([
   ...CATEGORIES.map((c) => [c.toLowerCase(), c]),
@@ -84,6 +87,7 @@ export const CATEGORY_SKILLS = {
   'Jobs and Learning': ['Tutoring and Teaching', 'Tech Help', 'Paperwork and Benefits'],
   'Disability and Aging': ['Caregiving', 'Ramps and Accessibility Builds', 'Check-ins and Companionship'],
   'Pets': ['Pet Care'],
+  'Help Finding Help': ['Paperwork and Benefits', 'Tech Help', 'Translation'],
 }
 
 // "Food & Meals" and "Food and Meals" are the same skill.
