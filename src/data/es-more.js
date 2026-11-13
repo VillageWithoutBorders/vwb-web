@@ -5878,6 +5878,13 @@ const more = {
   "How to let alerts in": "Cómo permitir las alertas",
   "Not seeing alerts on your {device}?": "¿No ve las alertas en su {device}?",
   "Which alerts pop up": "Qué alertas aparecen",
+  "Undo the import from {when}? It changed: {what}. Everything it changed goes back the way it was.": "¿Deshacer la importación del {when}? Cambió: {what}. Todo lo que cambió vuelve a como estaba.",
+  "nothing": "nada",
+  "To undo an older import too, reload this page first.": "Para deshacer también una importación anterior, primero vuelva a cargar esta página.",
+  "Open the import from {when}": "Abrir la importación del {when}",
+  "{label}, private research": "{label}, investigación privada",
+  "Test project (vwb-crn-dev). Nothing here changes the live app.": "Proyecto de prueba (vwb-crn-dev). Nada aquí cambia la app real.",
+  "Local copy using LIVE data. Changes here are real.": "Copia local con datos REALES. Los cambios aquí son reales.",
   "Also saved as private records: {list}.": "También se guardan como registros privados: {list}.",
   "Service areas added or changed: {list}.": "Áreas de servicio agregadas o cambiadas: {list}.",
 }

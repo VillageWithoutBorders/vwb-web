@@ -1032,6 +1032,14 @@ export default function Admin() {
         <h1 className="admin-title">{tr('Admin')}</h1>
         {wide && <span className="admin-top-note">{tr('Computer view: every tool')}</span>}
       </div>
+      {import.meta.env.DEV && (
+        // Only on a computer running the app locally. The deployed app never shows this.
+        <p role="note" className={'admin-env ' + (import.meta.env.MODE === 'crndev' ? 'admin-env-test' : 'admin-env-live')}>
+          {import.meta.env.MODE === 'crndev'
+            ? tr('Test project (vwb-crn-dev). Nothing here changes the live app.')
+            : tr('Local copy using LIVE data. Changes here are real.')}
+        </p>
+      )}
 
       {wide ? (
         <nav className="admin-side" aria-label={tr('Admin sections')}>
