@@ -1,7 +1,7 @@
 // Round E part 2 (Nov 10): plain names for kinds of alerts, for Mute this and the
 // muted list in Settings. The database decides what is muted (vwb-invites-and-quiet-alerts.sql).
 // These always come through and can't be muted. Keep in step with alert_always() in the SQL.
-export const ALWAYS_ALERTS = ['emergency', 'emergency_verified', 'security_alert', 'daily_summary']
+export const ALWAYS_ALERTS = ['emergency', 'emergency_verified', 'security_alert', 'daily_summary', 'push_test']
 
 const NAMES = {
   message: 'Private messages',
