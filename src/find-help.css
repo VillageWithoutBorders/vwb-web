@@ -219,3 +219,22 @@ img.hub-tile-icon { width: 40px; height: 40px; }
   html.text-larger:not(.simple) .fr-left > .fh-head,
   html.text-largest:not(.simple) .fr-left > .fh-head { margin-bottom: 0.15rem; }
 }
+
+/* Nov 13 (Jade): ADHD-friendly cards. Short until tapped; the four answers first. */
+.fh-card-head { display: grid; grid-template-columns: 1fr auto; column-gap: 0.5rem; width: 100%; min-height: 44px; padding: 0; background: none; border: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.fh-card-head .fh-card-name { grid-column: 1; }
+.fh-card-sub { grid-column: 1; color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.15rem; }
+.fh-card-chev { grid-column: 2; grid-row: 1 / span 2; align-self: center; display: inline-flex; align-items: center; justify-content: center;
+  width: 2.25rem; height: 2.25rem; border-radius: 50%; border: 2px solid var(--border-strong); color: var(--text); font-size: 1.15rem; line-height: 1; }
+.fh-card-head:hover .fh-card-chev, .fh-card-head[aria-expanded="true"] .fh-card-chev { border-color: var(--accent); color: var(--accent); }
+.fh-card-head:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 6px; }
+.fh-card-body { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--border); }
+.fh-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.35rem 0.75rem; margin: 0 0 0.6rem; font-size: 1rem; line-height: 1.4; }
+.fh-facts dt { font-weight: 700; color: var(--text); }
+.fh-facts dd { margin: 0; color: var(--text-secondary); overflow-wrap: anywhere; }
+.fh-chip-btn { display: inline-flex; align-items: center; min-height: 36px; padding: 0 0.6rem; margin: 0.1rem 0; border: 1px solid var(--border-strong); border-radius: 999px; background: none; color: var(--accent); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.fh-chip-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.fh-zip-list { display: block; margin-top: 0.25rem; }
+.fh-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 0.5rem; }
+.fh-action { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; flex: 1 1 9rem; }
+@media (pointer: coarse) { .fh-chip-btn { min-height: 44px; } }
