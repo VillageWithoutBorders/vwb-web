@@ -13,7 +13,8 @@ import HelpSwitch from '../components/HelpSwitch'
 import Icon, { iconSrc, iconClass } from '../components/Icon'
 import AreaPicker from '../components/AreaPicker'
 import { LocationPrompt } from '../components/LocationPrompt'
-import CrnCardDetails from '../components/CrnCardDetails'
+import CrnCardDetails, { ResourceFacts, known } from '../components/CrnCardDetails'
+import { mapLinkFor } from '../utils/calendar'
 import ResourceReport from '../components/ResourceReport'
 import SuggestResource from '../components/SuggestResource'
 import { useWideScreen } from '../hooks/useWideScreen'
@@ -70,6 +71,8 @@ export default function CommunityResources() {
   // pinned location nearest-first. Resources without a pin just stay put.
   const [myLocation, setMyLocation] = useState(null)
   const [askPlace, setAskPlace] = useState(false)
+  // Nov 13 (Jade, ADHD-friendly): cards start short (name, kind, distance). Tap to open.
+  const [openCards, setOpenCards] = useState(() => new Set())
 
   // Resource Library
   const [resources, setResources] = useState([])
@@ -78,6 +81,7 @@ export default function CommunityResources() {
   const [selectedCat, setSelectedCat] = useState(() => (searchParams.get('cat') ? currentCategory(searchParams.get('cat')) : null))
   // Oct 28 (Jade): a tapped place on Resources near you opens here (?show=<id>).
   const showId = searchParams.get('show')
+  useEffect(() => { if (showId) setOpenCards((prev) => new Set(prev).add(String(showId))) }, [showId])
   const [showFilters, setShowFilters] = useState(false)
   const [orgFilter, setOrgFilter] = useState('all')
   const [radiusFilter, setRadiusFilter] = useState('all') // 'all' | 10 | 25 | 50 (miles)
@@ -704,33 +708,43 @@ export default function CommunityResources() {
   const fieldStyle = { display: 'block', width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'var(--surface-2)', color: 'var(--text-strong)', fontSize: '0.85rem', marginBottom: '0.5rem', boxSizing: 'border-box' }
   const labelStyle = { display: 'block', color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }
 
-  const resourceCard = (r) => (
+  const isCardOpen = (r) => openCards.has(String(r.id))
+  const toggleCard = (id) => setOpenCards((prev) => { const n = new Set(prev); const k = String(id); if (n.has(k)) n.delete(k); else n.add(k); return n })
+  const cardKind = (r) => known(r.service_type) || (resourceCats(r)[0] ? t(resourceCats(r)[0]) : '')
+  const cardDistance = (r) => {
+    const d = resourceDistance(r)
+    if (d == null) return ''
+    return distanceIsApprox(r) ? t('About {n} mi away', { n: Math.max(1, Math.round(d)) }) : t('{n} mi away', { n: d.toFixed(1) })
+  }
+  const resourceCard = (r) => { const open = isCardOpen(r); return (
                       <div key={r.id} id={'res-' + r.id} className={'fh-card' + (showId === String(r.id) ? ' fh-card-picked' : '')}>
-                        <span className="fh-card-name">{r.name}</span>
+                        <button type="button" className="fh-card-head" aria-expanded={open} aria-controls={'fh-body-' + r.id} onClick={() => toggleCard(r.id)}>
+                          <span className="fh-card-name">{r.name}</span>
+                          <span className="fh-card-sub">{[cardKind(r), cardDistance(r)].filter(Boolean).join(' \u00b7 ')}</span>
+                          <span className="fh-card-chev" aria-hidden="true">{open ? '\u25B4' : '\u25BE'}</span>
+                        </button>
+                        {open && <div id={'fh-body-' + r.id} className="fh-card-body">
+                        <ResourceFacts r={r} />
+                        <div className="fh-actions">
+                          {(r.phone || r.provider_phone) && <a className="btn btn-primary fh-action" href={'tel:' + (r.phone || r.provider_phone).replace(/[^0-9+]/g, '')}>{r.phone ? t('Call {phone}', { phone: r.phone }) : t('Call the organization: {phone}', { phone: r.provider_phone })}</a>}
+                          {r.address && mapLinkFor(r.address) && <a className="btn btn-outline fh-action" href={mapLinkFor(r.address)} {...(mapLinkFor(r.address).startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{t('Directions')}</a>}
+                          {r.url && <a className="btn btn-outline fh-action" href={r.url} target="_blank" rel="noopener noreferrer">{t('Website')} &#8599;</a>}
+                        </div>
+                        {Array.isArray(r.links) && r.links.some((l) => l && /^https?:\/\//i.test(l.url || '')) && (
+                          <div className="fh-card-links">
+                            {r.links.filter((l) => l && /^https?:\/\//i.test(l.url || '')).map((l, i) => (
+                              <a key={i} className="fh-link" href={l.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>{l.label || 'Link'} &#8599;</a>
+                            ))}
+                          </div>
+                        )}
                         {r.description && <p className="fh-card-desc">{r.description}</p>}
                         {placesEnabled && <CrnCardDetails r={r} />}
-                        {r.address && <p className="fh-card-meta"><AddressLink address={r.address} /></p>}
-                        {r.neighborhood && <p className="fh-card-meta">{t('Area:')} {r.neighborhood}</p>}
-                        {r.requirements && <p style={{ color: 'var(--warn)', fontSize: '0.8125rem', margin: '0.2rem 0', lineHeight: 1.4 }}><Icon name="clipboard" /> {t('What to bring:')} {r.requirements}</p>}
-                        {resourceDistance(r) != null && (
-                          <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.2rem 0 0' }}><Icon name="pin" /> {distanceIsApprox(r)
-                            ? t('About {n} mi away', { n: Math.max(1, Math.round(resourceDistance(r))) })
-                            : t('{n} mi away', { n: resourceDistance(r).toFixed(1) })}</p>
-                        )}
                         {r.organizations && !user && (
                           <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, margin: '0.4rem 0 0' }}>{t('Shared by {name}', { name: r.organizations.name })}</p>
                         )}
                         {r.organizations && user && (
-                          <button onClick={() => navigate('/orgs/' + r.organizations.id)} style={{ display: 'block', background: 'none', border: 'none', padding: '0.3rem 0', marginTop: '0.2rem', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>{t('Shared by {name}', { name: r.organizations.name })}</button>
+                          <button onClick={() => navigate('/orgs/' + r.organizations.id)} style={{ display: 'block', background: 'none', border: 'none', padding: '0.3rem 0', marginTop: '0.2rem', color: 'var(--accent)', fontSize: '0.8125rem', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', minHeight: 44 }}>{t('Shared by {name}', { name: r.organizations.name })}</button>
                         )}
-                        <div className="fh-card-links">
-                          {r.phone && <a className="fh-link" href={'tel:' + r.phone.replace(/[^0-9+]/g, '')} style={{ color: 'var(--info)' }}>{t('Call {phone}', { phone: r.phone })}</a>}
-                          {!r.phone && r.provider_phone && <a className="fh-link" href={'tel:' + r.provider_phone.replace(/[^0-9+]/g, '')} style={{ color: 'var(--info)' }}>{t('Organization phone:')} {r.provider_phone}</a>}
-                          {r.url && <a className="fh-link" href={r.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>{t('Visit website')} &#8599;</a>}
-                          {Array.isArray(r.links) && r.links.filter((l) => l && /^https?:\/\//i.test(l.url || '')).map((l, i) => (
-                            <a key={i} className="fh-link" href={l.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>{l.label || 'Link'} &#8599;</a>
-                          ))}
-                        </div>
 
                         {placesEnabled && r.has_pending_edit && (
                           <p role="note" style={{ color: 'var(--text-soft)', fontSize: '0.85rem', margin: '0.4rem 0 0' }}><Icon name="hourglass" /> {t('Your edit is waiting for a Hope Ambassador.')}</p>
@@ -879,8 +893,9 @@ export default function CommunityResources() {
                             )}
                           </div>
                         )}
+                        </div>}
                       </div>
-  )
+  ) }
 
   return (
     <div className="community-page fr-page">
