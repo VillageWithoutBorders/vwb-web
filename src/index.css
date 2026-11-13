@@ -6805,6 +6805,8 @@ html.calm-motion .nr-card:active { transform: none; }
 /* Read this to me (Nov 3, barriers review). Sits to the right of Back in Simple view. */
 .app-back-row:has(.read-aloud) { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .read-aloud-row { justify-content: flex-end; }
+/* Nov 13: on a page with no Back (Simple home), line it up with the ? on the title line below. */
+.app-main > .read-aloud-row { padding-left: 0; padding-right: 0; }
 .read-aloud { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 16px 0 12px; border-radius: 24px;
   border: 2px solid var(--accent); background: var(--surface); color: var(--text-strong); font: inherit; font-weight: 700; cursor: pointer; margin-left: auto; }
 .read-aloud.on { background: var(--accent); color: var(--on-accent); }
