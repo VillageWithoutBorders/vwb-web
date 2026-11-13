@@ -258,6 +258,14 @@ export default function AdminCrnImport() {
     hiding: svc.filter((r) => r.grp === 'will_hide').length,
     flagged: svc.filter((r) => r.flags?.includes('coverage') && !['held', 'skipped', 'missing'].includes(r.grp)).length,
   }
+  // Organizations and locations are always private records. Count them so the confirm box matches the preview.
+  const SAVES = ['new', 'updated', 'research_new', 'research_updated']
+  const savedWord = (tab) => {
+    const n = rows.filter((r) => r.tab === tab && SAVES.includes(r.grp)).length
+    return n ? tr(TAB_WORD[tab][n === 1 ? 0 : 1], { n }) : ''
+  }
+  const privateSaved = ['organizations', 'locations'].map(savedWord).filter(Boolean).join(', ')
+  const areasSaved = savedWord('areas')
   const counts = {}
   rows.forEach((r) => { counts[r.grp] = (counts[r.grp] || 0) + 1 })
   const shown = rows.filter((r) => (groupFilter === 'all' ? !QUIET.includes(r.grp) : r.grp === groupFilter || (groupFilter === 'coverage' && r.flags?.includes('coverage'))))
@@ -388,6 +396,8 @@ export default function AdminCrnImport() {
               <p id="crn-confirm-h" style={{ margin: '0 0 0.5rem', fontWeight: 700 }}>{tr('Import these?')}</p>
               <p style={small}>
                 {tr('{added} new in Find Help, {updated} updated, {linked} linked, {hiding} hidden, {research} saved as private research, {held} held or skipped, {flagged} flagged for coverage.', summary)}
+                {privateSaved && <> {tr('Also saved as private records: {list}.', { list: privateSaved })}</>}
+                {areasSaved && <> {tr('Service areas added or changed: {list}.', { list: areasSaved })}</>}
                 {summary.waiting > 0 && <> {tr(summary.waiting === 1 ? '1 possible match is not decided yet and will wait for next time.' : '{n} possible matches are not decided yet and will wait for next time.', { n: summary.waiting })}</>}
               </p>
               <div style={{ display: 'flex', gap: '0.5rem' }}>

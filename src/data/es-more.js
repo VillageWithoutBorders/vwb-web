@@ -5878,6 +5878,8 @@ const more = {
   "How to let alerts in": "Cómo permitir las alertas",
   "Not seeing alerts on your {device}?": "¿No ve las alertas en su {device}?",
   "Which alerts pop up": "Qué alertas aparecen",
+  "Also saved as private records: {list}.": "También se guardan como registros privados: {list}.",
+  "Service areas added or changed: {list}.": "Áreas de servicio agregadas o cambiadas: {list}.",
 }
 
 export default more
