@@ -18,7 +18,9 @@ import { useT } from '../utils/lang'
 // resources, so whatever comes back here is local or national.
 // The 12 kinds of help, most asked first (211 data, Oct 2026).
 const QUICK_PICKS = ['Food', 'Housing', 'Bills and Utilities', 'Rides', 'Health', 'Home Repair', 'Legal and Tenant Help',
-  'Money and Benefits', 'Mental Health and Recovery', 'Family and Child Care', 'Emergency Help', 'Safety']
+  'Money and Benefits', 'Mental Health and Recovery', 'Family and Child Care', 'Emergency Help', 'Safety',
+  'Clothing and Household']
+// Nov 13 (Jade): 13 kinds plus a "See all" tile keeps the grid even and opens the full list.
 const SHOW = 5
 
 export default function NearbyResourcesFirst({ profile, onContinue }) {
@@ -120,6 +122,10 @@ export default function NearbyResourcesFirst({ profile, onContinue }) {
             <span>{t(c)}</span>
           </button>
         ))}
+        <Link to="/community/resources" className="hub-tile nr-tile nr-tile-all" style={{ textDecoration: 'none' }}>
+          <img className={iconClass('books', 'hub-tile-icon')} src={iconSrc('books')} alt="" width="40" height="40" />
+          <span>{t('See all kinds of help')} <span aria-hidden="true">&#8250;</span></span>
+        </Link>
       </div>
 
       {!loc && (askPlace
