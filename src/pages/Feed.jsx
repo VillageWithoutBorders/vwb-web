@@ -95,6 +95,12 @@ export default function Feed() {
     const [loading, setLoading] = useState(true)
     const [myLoc, setMyLoc] = useState(null)
     const [filterSkill, setFilterSkill] = useState('all')
+    // Nov 13 (Jade): the skills you picked (Hope Ambassador application, setup, Profile)
+    // now match requests. "&" and "and" count as the same ("Food & Meals" = "Food and Meals").
+    const skillKeyOf = (s) => String(s || '').toLowerCase().replace(/\s*&\s*/g, ' and ').replace(/\s+/g, ' ').trim()
+    const mySkills = Array.isArray(profile?.skills) ? profile.skills.filter(Boolean) : []
+    const mySkillKeys = new Set(mySkills.map(skillKeyOf))
+    const matchesMe = (skill) => mySkillKeys.has(skillKeyOf(skill))
     const [filterOfferCat, setFilterOfferCat] = useState('all')
     const [skillCategories, setSkillCategories] = useState([])
     const [expandedId, setExpandedId] = useState(null)
@@ -172,7 +178,7 @@ export default function Feed() {
         if (view === 'requests') {
             // Group-only requests whose time is up open to everyone (this also alerts ambassadors).
             supabase.rpc('release_due_solidarity_requests').then(() => {}, () => {})
-            const helperSkills = filterSkill === 'all' ? [] : [filterSkill]
+            const helperSkills = filterSkill === 'all' ? [] : (filterSkill === 'mine' ? mySkills : [filterSkill])
             const radius = profile?.radius_miles || 25
             const { data, error } = loc
                 ? await supabase.rpc('nearby_matching_requests', {
@@ -403,6 +409,7 @@ export default function Feed() {
                 {view === 'requests' ? (
                     <select className="feed-filter-select" value={filterSkill} onChange={e => setFilterSkill(e.target.value)} aria-label={t('Filter by skill')}>
                         <option value="all">{t('All skills')}</option>
+                        {mySkills.length > 0 && <option value="mine">{t('My skills ({n})', { n: mySkills.length })}</option>}
                         {groupSkills(skillCategories).map(g => (
                             <optgroup key={g.group} label={t(g.group)}>
                                 {g.skills.map(s => <option key={s} value={s}>{t(s)}</option>)}
@@ -439,7 +446,7 @@ export default function Feed() {
                 !myLoc ? null : sortedRequests.length === 0 ? (
                     // Round B (Nov 10, Jade): one line, and two ways forward.
                     <div className="feed-empty feed-empty-short">
-                        <p className="feed-empty-line">{filterSkill !== 'all' ? t('No open "{skill}" requests nearby.', { skill: t(filterSkill) }) : t('No requests near you right now.')}</p>
+                        <p className="feed-empty-line">{filterSkill === 'mine' ? t('No open requests for your skills nearby.') : filterSkill !== 'all' ? t('No open "{skill}" requests nearby.', { skill: t(filterSkill) }) : t('No requests near you right now.')}</p>
                         <div className="feed-empty-actions">
                             <button type="button" className="btn btn-outline" aria-expanded={fartherOpen} onClick={() => setFartherOpen((o) => !o)}>{t('Look farther away')}</button>
                             <button type="button" className="btn btn-primary" onClick={() => navigate('/post-offer')}>{t('Post an offer')}</button>
@@ -484,6 +491,7 @@ export default function Feed() {
 
                                     <div className="feed-card-meta">
                                         <span className="feed-card-skill">{t(req.skill_needed)}</span>
+                                        {matchesMe(req.skill_needed) && <span className="feed-card-match">{t('Matches your skills')}</span>}
                                         {req.distance_miles != null && <span className="feed-card-distance">{req.distance_miles} mi</span>}
                                     </div>
 

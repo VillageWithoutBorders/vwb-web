@@ -6657,12 +6657,15 @@ html.calm-motion .nr-card:active { transform: none; }
     max-width: none; padding-bottom: 0;
     display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
   }
-  html:not(.simple) .fo-page > .feed-header { margin: 0; height: var(--fit-h); overflow-y: auto; min-width: 0; }
+  /* Nov 13 (Jade): same as Ask for Help. The page scrolls the left side; the list panel
+     fits what's in it and stays in view. A long list scrolls inside the panel. */
+  html:not(.simple) .fo-page > .feed-header { margin: 0; min-width: 0; }
   html:not(.simple) .fo-page > .feed-scroll {
-    height: var(--fit-h); overflow-y: auto; min-width: 0;
+    position: sticky; top: calc(var(--header-height) + 1rem);
+    max-height: var(--fit-h); overflow-y: auto; min-width: 0; box-sizing: border-box;
     padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
   }
-  html:not(.simple) .fo-page > .feed-scroll > .feed-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; box-sizing: border-box; }
+  html:not(.simple) .fo-page > .feed-scroll > .feed-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; box-sizing: border-box; }
 }
 
 /* Your tasks: title row, and side by side on computers (Oct 28). */
@@ -8378,3 +8381,6 @@ html.text-largest .plan-slot-row { grid-template-columns: 1fr; }
   html.text-larger:not(.simple) .nr-pick > .nr-tiles > .nr-tile-all,
   html.text-largest:not(.simple) .nr-pick > .nr-tiles > .nr-tile-all { grid-column: auto; flex-direction: row; justify-content: flex-start; text-align: left; }
 }
+
+/* Nov 13 (Jade): a request that matches a skill you picked (Offer Help). */
+.feed-card-match { display: inline-flex; align-items: center; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid var(--green); color: var(--green-ink); font-size: 0.85rem; font-weight: 700; }
