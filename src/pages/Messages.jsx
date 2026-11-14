@@ -509,7 +509,8 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
           if (!lastMessageText) lastMessageText = t('[Encrypted message]')
         }
         const lastRead = c.helper_id === user.id ? c.last_read_helper : c.last_read_requester
-        const hasUnread = lastMsg && (!lastRead || new Date(lastMsg.created_at) > new Date(lastRead))
+        // Nov 14 (Jade): your own last message never makes a chat unread for you.
+        const hasUnread = !!lastMsg && lastMsg.sender_id !== user.id && (!lastRead || new Date(lastMsg.created_at) > new Date(lastRead))
         // A message still waiting on this device is always the newest one.
         const queued = waiting.filter(q => q.conversationId === c.id).pop()
         if (queued) return { ...c, otherId, otherName: p?.display_name || t('Neighbor'), otherAvatar: p?.avatar_url || null, lastMessage: t('Waiting to send: {text}', { text: queued.text }), lastMessageAt: queued.createdAt, hasUnread }
@@ -614,7 +615,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
   }
 
-  const tabStyle = (active) => ({ padding: '0.5rem 1rem', minHeight: 44, borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : 'var(--surface-2)', color: active ? 'var(--on-accent)' : 'var(--text-secondary)' })
+  const tabStyle = (active) => ({ padding: '0.5rem 1rem', minHeight: 44, borderRadius: '20px', border: active ? '1px solid var(--accent)' : '1px solid var(--border-strong)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : 'var(--surface)', color: active ? 'var(--on-accent)' : 'var(--text-secondary)' })
   const sidebarStyle = { position: 'fixed', top: 0, right: showSidebar ? 0 : '-320px', width: '300px', height: '100%', background: 'var(--surface)', borderLeft: '1px solid var(--border)', zIndex: 1000, transition: 'right 0.3s ease', overflowY: 'auto', padding: '1.25rem' }
   const overlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: showSidebar ? 'block' : 'none' }
   const sectionTitle = { fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '1.5rem', marginBottom: '0.5rem' }
@@ -853,11 +854,11 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
         )}
       </div>
 
-      <div className="msg-folders" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
-        <button style={tabStyle(activeFolder === 'unread')} onClick={() => setActiveFolder('unread')}>{t('Unread')}</button>
-        <button style={{ ...tabStyle(activeFolder === 'all'), outline: dropTarget === 'all' ? '2px solid var(--accent)' : 'none' }} onClick={() => setActiveFolder('all')} onDragOver={(e) => { e.preventDefault(); setDropTarget('all') }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), 'remove'); setDraggingConvo(null) }}>{t('All')}</button>
+      <div className="msg-folders" style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingTop: '0.5rem', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+        <button aria-pressed={activeFolder === 'unread'} style={tabStyle(activeFolder === 'unread')} onClick={() => setActiveFolder('unread')}>{t('Unread')}</button>
+        <button aria-pressed={activeFolder === 'all'} style={{ ...tabStyle(activeFolder === 'all'), outline: dropTarget === 'all' ? '2px solid var(--accent)' : undefined }} onClick={() => setActiveFolder('all')} onDragOver={(e) => { e.preventDefault(); setDropTarget('all') }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), 'remove'); setDraggingConvo(null) }}>{t('All')}</button>
         {folders.map(f => (
-          <button key={f.id} style={{ ...tabStyle(activeFolder === f.id), outline: dropTarget === f.id ? '2px solid var(--accent)' : 'none' }} onClick={() => setActiveFolder(f.id)} onDragOver={(e) => { e.preventDefault(); setDropTarget(f.id) }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), f.id); setDraggingConvo(null) }}>{f.name}</button>
+          <button key={f.id} aria-pressed={activeFolder === f.id} style={{ ...tabStyle(activeFolder === f.id), outline: dropTarget === f.id ? '2px solid var(--accent)' : undefined }} onClick={() => setActiveFolder(f.id)} onDragOver={(e) => { e.preventDefault(); setDropTarget(f.id) }} onDragLeave={() => setDropTarget(null)} onDrop={(e) => { e.preventDefault(); setDropTarget(null); assignToFolder(parseInt(e.dataTransfer.getData('text/plain')), f.id); setDraggingConvo(null) }}>{f.name}</button>
         ))}
         {(followUpCount > 0 || activeFolder === 'followup') && (
           <button style={tabStyle(activeFolder === 'followup')} onClick={() => setActiveFolder('followup')}><Icon name="flag" /> {t('Follow up ({n})', { n: followUpCount })}</button>

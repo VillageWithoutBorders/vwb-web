@@ -117,8 +117,8 @@ export default function ConnectHub() {
   }, [user?.id])
 
   const chip = (on) => ({
-    minHeight: '48px', padding: '0.35rem 0.6rem', borderRadius: '12px', lineHeight: 1.2, border: 'none', cursor: 'pointer',
-    fontSize: '1rem', fontWeight: 600, background: on ? 'var(--accent)' : 'var(--surface-2)', color: on ? 'var(--on-accent)' : 'var(--text-soft)',
+    minHeight: '48px', padding: '0.35rem 0.6rem', borderRadius: '12px', lineHeight: 1.2, border: on ? '2px solid var(--accent)' : '2px solid var(--border-strong)', cursor: 'pointer',
+    fontSize: '1rem', fontWeight: 600, background: on ? 'var(--accent)' : 'var(--surface)', color: on ? 'var(--on-accent)' : 'var(--text-strong)',
   })
 
   const head = (
