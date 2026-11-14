@@ -744,7 +744,7 @@ html.simple .vs-list { grid-template-columns: 1fr !important; }
   position: absolute; right: 100%; bottom: 0; margin-right: 4px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   min-width: 48px; min-height: 56px; padding: 4px; box-sizing: border-box;
-  border-radius: 12px; border: 2px solid var(--vs-gold); background: rgba(20, 44, 43, 0.95); color: var(--vs-ink, #fff);
+  border-radius: 12px; border: 2px solid var(--vs-gold); background: rgba(20, 44, 43, 0.95); color: #fff;
   font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer;
 }
 .vs-tools-toggle:focus-visible { outline: 3px solid var(--vs-focus, #fff); outline-offset: 2px; }
@@ -1383,3 +1383,24 @@ html.text-larger .gh, html.text-largest .gh { grid-template-columns: 1fr !import
 .hb-link-row { display: grid; grid-template-columns: 1fr; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--vs-line, rgba(255,255,255,.12)); }
 .hb-link-row .btn { min-height: 44px; }
 @media (min-width: 700px) { .hb-link-row { grid-template-columns: 1fr 1.4fr auto; align-items: center; } }
+
+/* ---------- Nov 14 (Jade): edit tools readable in light mode ----------
+   The tool drawer, the tool rail, Close Add and the Edit map menu kept a dark
+   teal background in light mode while their words turned dark, so the words
+   disappeared (Close Add, Back to the usual cottage, the help lines).
+   In light mode these now use the light page colors. Hide tools and Zoom in
+   stay dark pills over the map, with white words in both modes. */
+:root[data-theme="light"] .vs-toolbar .vs-toolpanel,
+:root[data-theme="light"] .vs-toolbar .vs-tool-main { background: var(--vs-bg); box-shadow: -4px 4px 16px rgba(0, 0, 0, 0.25); }
+:root[data-theme="light"] .vs-drawer-close { background: var(--vs-card); color: var(--vs-ink); }
+:root[data-theme="light"] .vs-drawer-close .vs-tool-ic { color: var(--vs-ink); }
+:root[data-theme="light"] .vs-edit-menu { background: var(--vs-bg); }
+:root[data-theme="light"] .vs-edit-menu button { background: var(--vs-card); color: var(--vs-ink); }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .vs-toolbar .vs-toolpanel,
+  :root:not([data-theme="dark"]) .vs-toolbar .vs-tool-main { background: var(--vs-bg); box-shadow: -4px 4px 16px rgba(0, 0, 0, 0.25); }
+  :root:not([data-theme="dark"]) .vs-drawer-close { background: var(--vs-card); color: var(--vs-ink); }
+  :root:not([data-theme="dark"]) .vs-drawer-close .vs-tool-ic { color: var(--vs-ink); }
+  :root:not([data-theme="dark"]) .vs-edit-menu { background: var(--vs-bg); }
+  :root:not([data-theme="dark"]) .vs-edit-menu button { background: var(--vs-card); color: var(--vs-ink); }
+}

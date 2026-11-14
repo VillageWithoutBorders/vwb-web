@@ -14,15 +14,24 @@ export function UnreadCountProvider({ children }) {
 
   const refresh = useCallback(async () => {
     if (!user?.id) return
-    const { data, error } = await supabase.rpc('unread_conversation_count', { user_uuid: user.id })
-    if (error || typeof data !== 'number') return
-    // Chats you marked unread yourself (Messages > Mark as unread) count too.
-    // If that column isn't there yet, just use the regular count.
-    const { count: marked, error: markedErr } = await supabase
-      .from('conversation_user_settings')
-      .select('conversation_id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('marked_unread', true)
+    // Nov 14 (Jade): unread_chat_count counts the same chats the Unread list shows
+    // (no blocked people, no chats you emptied, chats you marked unread counted once).
+    // Until that SQL is run, fall back to the older count.
+    let chats = 0
+    const { data: v2, error: v2Err } = await supabase.rpc('unread_chat_count')
+    if (!v2Err && typeof v2 === 'number') {
+      chats = v2
+    } else {
+      const { data, error } = await supabase.rpc('unread_conversation_count', { user_uuid: user.id })
+      if (error || typeof data !== 'number') return
+      // Chats you marked unread yourself (Messages > Mark as unread) count too.
+      const { count: marked, error: markedErr } = await supabase
+        .from('conversation_user_settings')
+        .select('conversation_id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('marked_unread', true)
+      chats = data + (markedErr ? 0 : (marked || 0))
+    }
     const { data: posts, error: postsErr } = await supabase
       .from('notifications')
       .select('type, link')
@@ -36,7 +45,7 @@ export function UnreadCountProvider({ children }) {
     // The Village Square summary counts once, however many there are.
     const square = rows.some((p) => p.type === 'campfire') ? 1 : 0
     setNewBoards(boards)
-    setCount(data + (markedErr ? 0 : (marked || 0)) + boards.size + square)
+    setCount(chats + boards.size + square)
   }, [user?.id])
 
   useEffect(() => {
