@@ -373,6 +373,35 @@ body {
   margin: 0;
   accent-color: var(--green);
 }
+/* Nov 13 (Jade): the browser's unpicked radio was dark gray on dark blue and nearly vanished.
+   Our own ring: clear when empty, filled green dot when picked, in light and dark. */
+.form-field input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid var(--text-secondary);
+  border-radius: 50%;
+  background: transparent;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+}
+.form-field input[type="radio"]::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+  transform: scale(0);
+}
+.form-field input[type="radio"]:checked { border-color: var(--green); }
+.form-field input[type="radio"]:checked::before { transform: scale(1); }
+.form-field input[type="radio"]:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  .form-field input[type="radio"]::before { transition: transform 0.12s ease-out; }
+}
+@media (forced-colors: active) {
+  .form-field input[type="radio"] { appearance: auto; -webkit-appearance: radio; }
+}
 
 .form-field label.audience-option {
   display: flex;
