@@ -180,7 +180,9 @@ export default function AskForHelp() {
     const groupId = audienceOrg || postAs || organizations[0]?.id || ''
     // With more than one group and none picked yet, don't name one at random.
     const groupPicked = Boolean(audienceOrg || postAs) || organizations.length === 1
-    const groupName = groupPicked ? ((organizations.find((o) => o.id === groupId) || {}).name || t('your group')) : t('your group')
+    // The group's real name once one is picked; otherwise the lines below say "your group" in words that read right.
+    const pickedName = groupPicked ? ((organizations.find((o) => o.id === groupId) || {}).name || '') : ''
+    const postAsName = postAs ? ((managedOrgs.find((o) => o.id === postAs) || {}).name || '') : ''
 
     async function handleSubmit(e) {
         e.preventDefault()
@@ -534,7 +536,7 @@ export default function AskForHelp() {
                             <option value="">{t('Myself')}</option>
                             {managedOrgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
-                        <span className="field-hint">{t('Posting as your group lists it on your group dashboard.')}</span>
+                        <span className="field-hint">{postAsName ? t("It will be listed on {group}'s dashboard too.", { group: postAsName }) : t("Pick your group to list it on your group's dashboard too.")}</span>
                     </div>
                 )}
 
@@ -553,15 +555,15 @@ export default function AskForHelp() {
                         <legend style={{ fontWeight: 600, marginBottom: '0.4rem' }}>{t('Who sees this first?')}</legend>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'everyone'} onChange={() => setAudience('everyone')} style={{ marginTop: '0.3rem' }} />
-                            <span>{t('Everyone nearby')}</span>
+                            <span>{t('Everyone nearby')}<small style={{ display: 'block', color: 'var(--text-secondary)' }}>{t('Neighbors and Hope Ambassadors nearby see it right away.')}</small></span>
                         </label>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'group'} onChange={() => setAudience('group')} style={{ marginTop: '0.3rem' }} />
-                            <span>{t('Only {group} first', { group: groupName })}<small style={{ display: 'block', color: 'var(--text-secondary)' }}>{t('Members of your group see it right away. Neighbors and Hope Ambassadors see it once it opens to everyone.')}</small></span>
+                            <span>{pickedName ? t('Only {group} first', { group: pickedName }) : t('Only your group first')}<small style={{ display: 'block', color: 'var(--text-secondary)' }}>{t('Members of your group see it right away. Neighbors and Hope Ambassadors see it once it opens to everyone.')}</small></span>
                         </label>
                         <label className="audience-option">
                             <input type="radio" name="audience" checked={audience === 'network'} onChange={() => setAudience('network')} style={{ marginTop: '0.3rem' }} />
-                            <span>{t('{group} and its network first', { group: groupName })}<small style={{ display: 'block', color: 'var(--text-secondary)' }}>{t('Groups connected to {group} can see it too.', { group: groupName })}</small></span>
+                            <span>{pickedName ? t('{group} and its network first', { group: pickedName }) : t('Your group and its network first')}<small style={{ display: 'block', color: 'var(--text-secondary)' }}>{pickedName ? t('Groups connected to {group} can see it too.', { group: pickedName }) : t('Groups connected to your group can see it too.')}</small></span>
                         </label>
                         {audience !== 'everyone' && (
                             <>

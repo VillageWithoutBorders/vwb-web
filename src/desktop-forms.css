@@ -21,15 +21,16 @@
     max-width: none !important; margin: 0 !important; padding: 0 !important;
     display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start;
   }
+  /* Nov 13 (Jade): one scrollbar. The page scrolls the form; the preview stays in view beside it. */
   html:not(.simple) .ask-split > .ask-left,
   html:not(.simple) .offer-split > .ask-left {
-    min-width: 0; height: var(--fit-h); overflow-y: auto; overscroll-behavior: contain;
-    padding: 4px 0.5rem 4px 4px; box-sizing: border-box;
+    min-width: 0; padding: 4px; box-sizing: border-box;
   }
   html:not(.simple) .ask-split > .ask-preview,
   html:not(.simple) .offer-split > .ask-preview {
     display: flex; flex-direction: column; gap: 0.75rem; min-width: 0;
-    height: var(--fit-h); overflow-y: auto; box-sizing: border-box;
+    position: sticky; top: calc(var(--header-height) + 1rem);
+    max-height: var(--fit-h); overflow-y: auto; box-sizing: border-box;
     padding: 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
   }
 }
