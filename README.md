@@ -6,6 +6,16 @@ It started in Northwest Georgia and the Chattanooga Valley. It is built so any t
 
 Live app: https://app.villagewithoutborders.org
 
+## How VWB started
+
+Village Without Borders grew out of mutual aid work in Northwest Georgia and the Chattanooga Valley.
+
+In the fall of 2025, our founder, Jade Michalski, kept running into the same gap. People needed help. Neighbors had the skills to help. But there was no simple, safe way for them to find each other.
+
+In February 2026, Jade started learning to code. The first version was an Android app. In August 2026 it became a web app, so it would work on any phone and need no app store.
+
+In November 2026, VWB became free and open source. It started here, but it was built so any town can grow a village of its own.
+
 ## Start a village in your town
 
 You are welcome to copy this code and run your own version for your community.
