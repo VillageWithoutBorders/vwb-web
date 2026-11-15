@@ -768,6 +768,15 @@ export default function Campfire({ pane = false }) {
         </div>
       )}
 
+      {/* Nov 13 (Jade): Announcements leads with VWB's own news (kept, unlike chat posts). */}
+      {activeBoard?.is_general && (
+        <button type="button" className="wn-board-link" onClick={() => navigate('/whats-new')}>
+          <Icon name="sprout" />
+          <span><b>{t('What’s new in VWB')}</b><small>{t('New ways to make the app yours, resources, and what is coming next.')}</small></span>
+          <span aria-hidden="true">›</span>
+        </button>
+      )}
+
       {pinnedMessages.length > 0 && (
         <div style={{ borderBottom: '1px solid #3a2a10', background: 'var(--warn-bg)' }}>
           <button

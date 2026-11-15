@@ -14,6 +14,7 @@ const PERSONAL = {
   group_removal_request: '/groups', group_post: '/groups', group_setting: '/groups', group_waiting: '/groups', group_member: '/groups',
   calendar_signup: '/calendar', calendar_invite: '/calendar', calendar_update: '/calendar',
   event_signup: '/calendar', event_signup_cancel: '/calendar',
+  app_news: '/whats-new',
   affiliation_request: '/org-dashboard', affiliation_accepted: '/org-dashboard', affiliation_ended: '/org-dashboard',
 }
 

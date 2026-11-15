@@ -42,3 +42,11 @@ enabled = true
 # is confirmed, not by a signed-in member. It checks the x-push-secret header instead.
 verify_jwt = false
 entrypoint = "./functions/send-welcome-email/index.ts"
+
+[functions.send-news-email]
+enabled = true
+# Called by the database (tell_app_news) and the daily cron job news-email-resume,
+# which send the x-push-secret header. The ?off=<token> unsubscribe link needs no
+# sign-in; the token is a private random id.
+verify_jwt = false
+entrypoint = "./functions/send-news-email/index.ts"

@@ -42,6 +42,8 @@ const Admin = lazyPage(() => import('./pages/Admin'))
 const Campfire = lazyPage(() => import('./pages/Campfire'))
 const FindVillage = lazyPage(() => import('./pages/FindVillage'))
 const Notifications = lazyPage(() => import('./pages/Notifications'))
+const WhatsNew = lazyPage(() => import('./pages/WhatsNew'))
+const NewsEmailOff = lazyPage(() => import('./pages/NewsEmailOff'))
 const PublicProfile = lazyPage(() => import('./pages/PublicProfile'))
 const FullSetup = lazyPage(() => import('./pages/FullSetup'))
 const CottageVisit = lazyPage(() => import('./pages/CottageVisit'))
@@ -261,6 +263,7 @@ function AppRoutes() {
       {/* Round E part 2 (Nov 10): a group's invite link. functions/join/[token].js adds the link preview. */}
       <Route path="/join/:token" element={<SetupGate><JoinOrgLink /></SetupGate>} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/news-email-off" element={<NewsEmailOff />} />
       {/* Public on purpose: the resource list is read-only and needs no account, so people of any age can use it. */}
       <Route path="/resources" element={<PublicResources />} />
       {/* Public on purpose: the website calendar and shared event links work without an account. */}
@@ -321,6 +324,7 @@ function AppRoutes() {
         <Route path="my-code" element={<MyCode />} />
         <Route path="trail" element={<Trail />} />
         <Route path="notifications" element={<Notifications />} />
+        <Route path="whats-new" element={<WhatsNew />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="calendar/new" element={<CalendarEventForm />} />
         <Route path="calendar/import" element={<CalendarImport />} />

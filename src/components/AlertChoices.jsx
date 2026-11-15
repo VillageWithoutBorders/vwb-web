@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { alertKindName } from '../utils/alertKinds'
 import { useT } from '../utils/lang'
 import PushDeviceSwitch from './PushDeviceSwitch'
+import NewsEmailSwitch from './NewsEmailSwitch'
 
 // Round E part 2 (Nov 10): how phone alerts come. Everything still shows in the
 // Alerts list in the app. Emergencies and account safety alerts always come through.
@@ -24,6 +25,7 @@ export default function AlertChoices() {
       <div className="profile-details" style={{ marginBottom: '1rem' }}>
         <div className="detail-section-header">{t('Alerts')}</div>
         <PushDeviceSwitch />
+        <NewsEmailSwitch />
       </div>
     )
   }
@@ -60,6 +62,8 @@ export default function AlertChoices() {
         </label>
       ))}
       <p className="alert-choices-note">{t('Emergencies and account safety alerts always come through. Everything still shows in Alerts in the app.')}</p>
+      <p className="alert-choices-note" style={{ marginTop: '0.75rem', paddingLeft: '10px' }}><b>{t('Email')}</b></p>
+      <NewsEmailSwitch />
       {muted.length > 0 && (
         <div className="alert-muted">
           <p><b>{t('Muted')}</b></p>

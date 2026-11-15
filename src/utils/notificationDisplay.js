@@ -26,6 +26,7 @@ export const TYPE_ICONS = {
   report_reviewed: '\u2705',
   group_removal_request: '\u{1F6E1}',
   campfire: '\u{1F4E3}',
+  app_news: '\u{1F331}',
   calendar_signup: '\u{1F4C5}',
   calendar_invite: '\u{1F4C5}',
   calendar_update: '\u{1F4E3}',

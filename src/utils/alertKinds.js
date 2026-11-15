@@ -28,6 +28,7 @@ const NAMES = {
   org_invite_accepted: 'Group join asks and invites',
   resource_approved: 'Resources you shared',
   care_circle: 'Care circle updates',
+  app_news: 'VWB news and app updates',
 }
 
 export function alertKindName(type) {

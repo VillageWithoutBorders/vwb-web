@@ -16,6 +16,7 @@ export const ROUTE_TIPS = [
   ['/profile', 'See and change your profile.'],
   ['/settings', 'Change text size, light or dark, language, and Simple view.'],
   ['/notifications', 'See your alerts.'],
+  ['/whats-new', 'What just changed in VWB, and what is coming next.'],
   ['/help-doors', 'All the ways to get help or give help.'],
   ['/help', 'All the ways to get help or give help.'],
   ['/ask', 'Ask your neighbors for a hand with something.'],
