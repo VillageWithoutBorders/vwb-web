@@ -13,9 +13,9 @@
     "a11y": "node scripts/a11y-check.mjs"
   },
   "dependencies": {
-    "@dicebear/avataaars": "7.1.4",
-    "@dicebear/core": "7.1.4",
-    "@dicebear/thumbs": "7.1.4",
+    "@dicebear/avataaars": "9.4.2",
+    "@dicebear/core": "10.7.0",
+    "@dicebear/thumbs": "9.4.2",
     "@supabase/supabase-js": "^2.112.4",
     "leaflet": "^1.9.4",
     "libsodium-wrappers": "^0.7.13",
