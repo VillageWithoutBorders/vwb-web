@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@dicebear/avataaars": "7.1.4",
-    "@dicebear/core": "7.1.4",
+    "@dicebear/core": "7.2.0",
     "@dicebear/thumbs": "7.1.4",
     "@supabase/supabase-js": "^2.112.4",
     "leaflet": "^1.9.4",
