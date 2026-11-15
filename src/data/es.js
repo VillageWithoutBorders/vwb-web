@@ -679,6 +679,8 @@ const es = {
   '{n} emergency updates are waiting for signal': '{n} cosas de emergencias están esperando señal',
   'Optional note: what you need (water, a ride, medicine)': 'Nota si quiere: qué necesita (agua, transporte, medicinas)',
   'Never put your address here. Everyone signed up for this emergency can read it.': 'Nunca ponga su dirección aquí. Todos los que se anotaron en esta emergencia lo pueden leer.',
+  'Village Without Borders is free and open source.': 'Village Without Borders es gratis y de código abierto.',
+  'See the code': 'Ver el código',
 }
 
 export default es
