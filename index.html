@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/vwb_favicon-v2.png" />
+    <link rel="icon" type="image/png" href="/vwb_favicon-v3.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#1a1a1a" />
     <script>
@@ -30,23 +30,24 @@
         } catch (e) {}
       })();
     </script>
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-v2.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-v3.png" />
     <title>Village Without Borders</title>
     <meta name="description" content="A free app where neighbors ask for help, offer help, and find local events. No fees. No algorithm. Just connection." />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Village Without Borders" />
     <meta property="og:title" content="Free yourself from the algorithm" />
     <meta property="og:description" content="A free app where neighbors ask for help, offer help, and find local events. No fees. No algorithm. Just connection." />
-    <meta property="og:image" content="https://app.villagewithoutborders.org/images/vwb_share_card.png" />
+    <meta property="og:image" content="https://app.villagewithoutborders.org/images/vwb_share_card-v3.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Village Without Borders logo. Neighbors helping neighbors." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Free yourself from the algorithm" />
     <meta name="twitter:description" content="A free app where neighbors ask for help, offer help, and find local events. No fees. No algorithm. Just connection." />
-    <meta name="twitter:image" content="https://app.villagewithoutborders.org/images/vwb_share_card.png" />
+    <meta name="twitter:image" content="https://app.villagewithoutborders.org/images/vwb_share_card-v3.png" />
     <style>
-      /* Opening splash: Jade's animated logo (portrait video, updated Oct 25).
+      /* Opening splash: the new logo (Nov 14): the sun rises over the three homes,
+         then the name fades in. Was Jade's animated globe (Oct 25).
          Lives here (not in React) so it shows the instant the page opens,
          before the app's JavaScript has even downloaded. The background
          matches the video's own dark teal, so the video's edges disappear
@@ -57,7 +58,7 @@
       #vwb-splash {
         position: fixed; inset: 0; z-index: 9999;
         display: flex; align-items: center; justify-content: center;
-        background: #0d1917;
+        background: #2E4D46;
         transition: opacity 0.45s ease;
         cursor: pointer;
       }
@@ -96,7 +97,7 @@
         if (seen || embedded) { el.parentNode.removeChild(el); return }
         el.addEventListener('click', hide)
         var wide = window.matchMedia && window.matchMedia('(orientation: landscape) and (min-width: 700px)').matches
-        var name = wide ? '/splash/vwb-splash-v4-wide' : '/splash/vwb-splash-v4'
+        var name = wide ? '/splash/vwb-splash-v5-wide' : '/splash/vwb-splash-v5'
         var w = wide ? 1600 : 720, h = wide ? 900 : 1280
         video.width = w
         video.height = h
