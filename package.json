@@ -39,15 +39,15 @@
   "main": "vite.config.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/VillageWithoutBorders/vwb-web.git"
+    "url": "git+https://github.com/VillageWithoutBorders/village-without-borders.git"
   },
   "keywords": [],
   "author": "",
   "license": "AGPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/VillageWithoutBorders/vwb-web/issues"
+    "url": "https://github.com/VillageWithoutBorders/village-without-borders/issues"
   },
-  "homepage": "https://github.com/VillageWithoutBorders/vwb-web#readme",
+  "homepage": "https://github.com/VillageWithoutBorders/village-without-borders#readme",
   "overrides": {
     "@dicebear/converter": {
       "sharp": "^0.35.4"

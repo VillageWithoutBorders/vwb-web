@@ -677,7 +677,7 @@ export default function Settings() {
           using the app can find its code, so this link shows on both tabs. */}
       <p className="settings-source" style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.5, textAlign: 'center' }}>
         {t('Village Without Borders is free and open source.')}{' '}
-        <a href="https://github.com/VillageWithoutBorders/vwb-web" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', minHeight: '44px', lineHeight: '44px', padding: '0 0.25rem' }}>
+        <a href="https://github.com/VillageWithoutBorders/village-without-borders" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', minHeight: '44px', lineHeight: '44px', padding: '0 0.25rem' }}>
           {t('See the code')}
         </a>
       </p>
