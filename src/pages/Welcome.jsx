@@ -206,7 +206,7 @@ export default function Welcome() {
     <div style={pageStyle}>
       <header style={headerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <img src="/images/vwb_header-v2.png" alt="" style={{ height: '36px', borderRadius: '50%' }} />
+          <img src="/images/vwb_header-v3.png" alt="" style={{ height: '36px', borderRadius: '50%' }} />
           {/* Nov 7: hidden on small phones, where it took three lines; the big logo below says it. */}
           <span className="welcome-brand-name" style={{ fontWeight: 700, fontSize: '1rem', color: COLORS.text }}>Village Without Borders</span>
         </div>
@@ -221,7 +221,7 @@ export default function Welcome() {
       <main>
         {/* Hero */}
         <section style={{ ...sectionStyle, textAlign: 'center', paddingTop: '2rem' }}>
-          <img src="/images/vwb_logo.png" alt="" width="120" height="120" style={{ width: '120px', height: '120px', maxWidth: '40vw', borderRadius: '50%', margin: '0 auto 1rem', display: 'block' }} />
+          <img src="/images/vwb_logo-v3.png" alt="" width="120" height="120" style={{ width: '120px', height: '120px', maxWidth: '40vw', borderRadius: '50%', margin: '0 auto 1rem', display: 'block' }} />
           <h1 style={{ fontSize: '2rem', lineHeight: 1.25, margin: '0 0 0.75rem', color: COLORS.text }}>{t('Neighbors helping neighbors')}</h1>
           <p style={{ fontSize: '1.1rem', color: COLORS.textDim, lineHeight: 1.6, margin: '0 auto 1.5rem', maxWidth: '520px' }}>
             {t('Ask for help or offer a hand, with people near you. Free, always.')}

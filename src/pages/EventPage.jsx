@@ -268,7 +268,7 @@ export default function EventPage() {
   const topbar = (
     <div className="cal-topbar">
       <Link to={user ? '/calendar' : '/welcome'} aria-label={user ? t('Back to the calendar') : t('Village Without Borders home')}>
-        <img src="/images/vwb_header-v2.png" alt="" width="32" height="32" style={{ borderRadius: '50%' }} />
+        <img src="/images/vwb_header-v3.png" alt="" width="32" height="32" style={{ borderRadius: '50%' }} />
         <span>{user ? '← ' + t('Calendar') : 'Village Without Borders'}</span>
       </Link>
     </div>
