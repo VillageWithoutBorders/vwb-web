@@ -2,6 +2,7 @@ import { createAvatar } from '@dicebear/core'
 import * as avataaars from '@dicebear/avataaars'
 import * as thumbs from '@dicebear/thumbs'
 
+// Nov 15: DiceBear v9. toDataUri() gives the picture right away (v7 needed toDataUriSync).
 // Nov 11 (Jade): avatars are drawn on the phone, the same look as before. Nothing is sent
 // to an outside website, and nobody's account id leaves the app.
 // Saved avatars are still the old DiceBear address (helper_profiles.avatar_url), so no
@@ -42,13 +43,13 @@ export function avatarSrc(url, seed) {
   let out = url || ''
   try {
     if (!url) {
-      out = createAvatar(thumbs, { seed: String(seed || 'default') }).toDataUriSync()
+      out = createAvatar(thumbs, { seed: String(seed || 'default') }).toDataUri()
     } else {
       const m = /^https:\/\/api\.dicebear\.com\/\d+\.x\/([a-z-]+)\/svg\?(.*)$/i.exec(url)
       if (m) {
         // A style we don't carry gets the plain avatar, drawn here too.
-        out = STYLES[m[1]] ? createAvatar(STYLES[m[1]], parseOptions(m[2])).toDataUriSync()
-          : createAvatar(thumbs, { seed: String(seed || 'default') }).toDataUriSync()
+        out = STYLES[m[1]] ? createAvatar(STYLES[m[1]], parseOptions(m[2])).toDataUri()
+          : createAvatar(thumbs, { seed: String(seed || 'default') }).toDataUri()
       }
     }
   } catch (err) {

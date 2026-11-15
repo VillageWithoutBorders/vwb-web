@@ -13,9 +13,9 @@
     "a11y": "node scripts/a11y-check.mjs"
   },
   "dependencies": {
-    "@dicebear/avataaars": "7.1.4",
-    "@dicebear/core": "7.1.4",
-    "@dicebear/thumbs": "7.1.4",
+    "@dicebear/avataaars": "9.4.2",
+    "@dicebear/core": "9.4.3",
+    "@dicebear/thumbs": "9.4.2",
     "@supabase/supabase-js": "^2.112.4",
     "leaflet": "^1.9.4",
     "libsodium-wrappers": "^0.7.13",
@@ -47,10 +47,5 @@
   "bugs": {
     "url": "https://github.com/VillageWithoutBorders/village-without-borders/issues"
   },
-  "homepage": "https://github.com/VillageWithoutBorders/village-without-borders#readme",
-  "overrides": {
-    "@dicebear/converter": {
-      "sharp": "^0.35.4"
-    }
-  }
+  "homepage": "https://github.com/VillageWithoutBorders/village-without-borders#readme"
 }
