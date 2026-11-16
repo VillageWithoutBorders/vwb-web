@@ -45,19 +45,6 @@ supabase/.temp/
 # Reference-only files kept outside the repo (see ../reference/)
 vwb-complete-schema.sql
 
-# Local drafts and screenshots, not for the public repo
-drafts/
-
-# Local drafts
-*.patch
-vwb-*.css
-vwb-*.sql
-
-# Local drafts
-*.patch
-vwb-*.css
-vwb-*.sql
-
 # Local drafts
 *.patch
 vwb-*.css

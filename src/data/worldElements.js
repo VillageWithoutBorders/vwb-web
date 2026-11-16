@@ -1,6 +1,6 @@
 import { skinArt } from '../utils/skinArt'
 // The clickable elements of the VWB world. Names follow the VWB Vocabulary
-// sheet (the project notes). x and y are percent positions
+// sheet in the project notes. x and y are percent positions
 // on the village scene. "soon" marks things decided but not built yet.
 
 // Layout: every map sits on a field background (see BACKGROUNDS below).

@@ -1,6 +1,6 @@
 // The VWB Admin Guide, shown at /admin-guide.
 // Source of truth: the "VWB Admin Guide" doc Jade reviews
-// (the project notes). Matched Nov 7, 2026.
+// in the project notes. Matched Nov 7, 2026.
 // When the doc changes, update this file to match.
 //
 // Block types: p (paragraph, **bold** allowed), h3, ul, ol, table { head, rows }.
