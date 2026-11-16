@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security problem
+    url: https://github.com/VillageWithoutBorders/village-without-borders/security/advisories/new
+    about: Please report security problems privately, not in a public issue.
+  - name: Need help using the app?
+    url: https://app.villagewithoutborders.org/help
+    about: Questions about your account or finding help go here, not on GitHub.

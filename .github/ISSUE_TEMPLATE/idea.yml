@@ -1,0 +1,22 @@
+name: I have an idea
+description: Suggest something new or a better way to do something.
+labels: ["idea"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What is your idea?
+    validations:
+      required: true
+  - type: textarea
+    id: who
+    attributes:
+      label: Who would it help, and how?
+      description: Think about neighbors who are new, older, have little signal, or read slowly.
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else?
+      description: Sketches, examples, or how other places do it.
