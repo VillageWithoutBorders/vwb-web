@@ -5983,6 +5983,9 @@ const more = {
   "Changed your mind? Sign in, go to Settings, then Alerts, and turn on Email me VWB news.": "¿Cambió de opinión? Inicie sesión, vaya a Ajustes, luego a Alertas, y active Enviarme novedades de VWB por correo.",
   "Open Settings": "Abrir Ajustes",
   "VWB news and app updates": "Novedades y cambios de VWB",
+  // Quick exit on Find Help (Nov 16)
+  "Quick exit": "Salida rápida",
+  "Leaves VWB right away and opens a weather page. Your browser history may still show VWB.": "Sale de VWB enseguida y abre una página del clima. El historial de su navegador todavía puede mostrar VWB.",
   // Two-step sign-in for leaders (Nov 16)
   "Turn on two-step login by December 1.": "Active la verificación en dos pasos antes del 1 de diciembre.",
   "After that, Ambassador tools stay locked until you do. It takes a few minutes with an authenticator app on your phone.": "Después, las herramientas de embajador quedan cerradas hasta que lo haga. Toma unos minutos con una app de autenticación en su teléfono.",

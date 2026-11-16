@@ -24,6 +24,7 @@ import { placesEnabled, getMyPlaces, getVisitorArea, setVisitorArea } from '../u
 import { findHelpForMe, resourcesForPlace, friendlyError, saysNo } from '../utils/resourceReports'
 import { tell } from '../components/AdminDialog'
 import PrintResourceList from '../components/PrintResourceList'
+import QuickExit from '../components/QuickExit'
 import { useT, getLang } from '../utils/lang'
 
 // Edit history shows the database's field names. In Spanish, show the word instead.
@@ -903,6 +904,7 @@ export default function CommunityResources() {
       {/* Oct 28 (Jade): computers show the kinds of help on the left and the places on the right,
           like the map pages. Phones keep one column. */}
       <div className="fr-left">
+      <QuickExit signedIn={!!user} />
       {user ? <HelpSwitch /> : <BackLink fallback="/welcome" fallbackLabel="Welcome" />}
       <div className="fh-head">
         <img className={iconClass('heart-hands', '')} src={iconSrc('heart-hands')} alt="" width="48" height="48" />

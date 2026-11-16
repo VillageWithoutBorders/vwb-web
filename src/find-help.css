@@ -241,3 +241,32 @@ img.hub-tile-icon { width: 40px; height: 40px; }
 
 /* Nov 13: one plain notice on CRN cards (from public sources, not confirmed yet). */
 .fh-notice { margin: 0 0 0.6rem; padding: 0.45rem 0.65rem; border-left: 4px solid var(--accent); border-radius: 6px; background: var(--surface-2, rgba(127,127,127,0.08)); color: var(--text); font-size: 1rem; line-height: 1.4; overflow-wrap: anywhere; }
+
+/* Quick exit (Nov 16): always on screen on Find Help, in the thumb zone, above the bottom bar. */
+.quick-exit {
+  position: fixed;
+  right: 12px;
+  bottom: calc(var(--tab-height) + 12px + env(safe-area-inset-bottom, 0px));
+  z-index: 150;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 48px;
+  padding: 0 1rem;
+  border: 2px solid var(--bg);
+  border-radius: 999px;
+  background: var(--text-strong);
+  color: var(--bg);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.quick-exit--no-tabs { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+.quick-exit:active { transform: scale(0.96); }
+.quick-exit:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.quick-exit-x { font-size: 0.9em; }
+@media (max-width: 767px) { .fr-page { padding-bottom: 4.5rem; } }
+@media (prefers-reduced-motion: reduce) { .quick-exit:active { transform: none; } }
+@media print { .quick-exit { display: none !important; } }
