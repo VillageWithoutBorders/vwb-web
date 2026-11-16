@@ -13,6 +13,9 @@ import { useTwoStepOn, TwoStepGate } from '../components/AdminSafety'
 //   Emergencies waiting to be checked, groups asking to respond to emergencies,
 //   need near you, and the Ambassadors board.
 
+// Two-step for ambassadors (Nov 16): a reminder until this date, then the tools lock.
+const TWO_STEP_DEADLINE = new Date('2026-12-01T00:00:00-05:00')
+
 function ago(ts) {
   const hrs = Math.floor((Date.now() - new Date(ts).getTime()) / 3600000)
   if (hrs < 1) return t('just now')
@@ -64,7 +67,8 @@ export default function Ambassador() {
 
   if (profile && !allowed) return <Navigate to="/" replace />
 
-  if (twoStepOn === false) {
+  const needsTwoStep = twoStepOn === false && !isAdmin
+  if (needsTwoStep && Date.now() >= TWO_STEP_DEADLINE.getTime()) {
     return (
       <div className="amb-page">
         <h1 className="amb-title"><Icon name="star" size={30} /> {tr('Ambassador tools')}</h1>
@@ -77,6 +81,13 @@ export default function Ambassador() {
     <div className="amb-page">
       <h1 className="amb-title"><Icon name="star" size={30} /> {tr('Ambassador tools')}</h1>
       <p className="amb-sub">{tr('What is waiting on you. Ambassadors and VWB admins see this page.')}</p>
+      {needsTwoStep && (
+        <div className="admin-tool-wait" role="status">
+          <p><strong>{tr('Turn on two-step login by December 1.')}</strong></p>
+          <p>{tr('After that, Ambassador tools stay locked until you do. It takes a few minutes with an authenticator app on your phone.')}</p>
+          <button type="button" className="btn btn-primary" onClick={() => navigate('/settings#two-step')}>{tr('Turn it on in Settings')}</button>
+        </div>
+      )}
       {error && <p className="amb-error" role="alert">{error}</p>}
 
       <section className="amb-box" aria-labelledby="amb-em">

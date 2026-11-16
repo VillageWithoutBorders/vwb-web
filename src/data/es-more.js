@@ -5984,6 +5984,8 @@ const more = {
   "Open Settings": "Abrir Ajustes",
   "VWB news and app updates": "Novedades y cambios de VWB",
   // Two-step sign-in for leaders (Nov 16)
+  "Turn on two-step login by December 1.": "Active la verificación en dos pasos antes del 1 de diciembre.",
+  "After that, Ambassador tools stay locked until you do. It takes a few minutes with an authenticator app on your phone.": "Después, las herramientas de embajador quedan cerradas hasta que lo haga. Toma unos minutos con una app de autenticación en su teléfono.",
   "We couldn't add a backup phone. Sign out, sign in with your code, and try again.": "No pudimos agregar un teléfono de respaldo. Cierre la sesión, entre con su código e intente otra vez.",
   "Backup phone added. Either phone can give you a code now.": "Se agregó el teléfono de respaldo. Ahora cualquiera de los dos teléfonos le puede dar un código.",
   "Turn off two-step login? Your account will be protected by your password alone, and your admin or ambassador tools will lock until you turn it back on.": "¿Apagar la verificación en dos pasos? Su cuenta quedará protegida solo por su contraseña, y sus herramientas de administrador o embajador quedarán cerradas hasta que la vuelva a prender.",
