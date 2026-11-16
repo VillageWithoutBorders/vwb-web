@@ -5983,6 +5983,17 @@ const more = {
   "Changed your mind? Sign in, go to Settings, then Alerts, and turn on Email me VWB news.": "¿Cambió de opinión? Inicie sesión, vaya a Ajustes, luego a Alertas, y active Enviarme novedades de VWB por correo.",
   "Open Settings": "Abrir Ajustes",
   "VWB news and app updates": "Novedades y cambios de VWB",
+  // Cooling-off wait before removal (Nov 16)
+  "They were reported here in the last day, so removal waits 24 hours after that report. It finishes on its own unless someone takes it back.": "Alguien hizo un reporte sobre esta persona aquí en el último día, así que sacarla espera 24 horas después de ese reporte. Se termina sola a menos que alguien lo retire.",
+  "Agreed. They were reported here in the last day, so removal waits 24 hours after that report. Use the time to check in.": "De acuerdo. Alguien hizo un reporte sobre esta persona aquí en el último día, así que sacarla espera 24 horas después de ese reporte. Use ese tiempo para hablar con ella.",
+  "Two members agreed. They were reported here recently, so removal finishes after {time}. Use this time to check in.": "Dos miembros están de acuerdo. Hubo un reporte reciente aquí, así que la salida se termina después de {time}. Use este tiempo para hablar con la persona.",
+  "Removal finishes after {time}.": "La salida se termina después de {time}.",
+  "{name} was reported here in the last day, so removal waits 24 hours after that report. It finishes on its own unless someone takes it back.": "Hubo un reporte sobre {name} aquí en el último día, así que sacarle espera 24 horas después de ese reporte. Se termina sola a menos que alguien lo retire.",
+  "removal finishes after {time}": "la salida se termina después de {time}",
+  "{name} was reported here in the last day, so removal waits 24 hours after that report. It finishes on its own unless you cancel it.": "Hubo un reporte sobre {name} aquí en el último día, así que sacarle espera 24 horas después de ese reporte. Se termina sola a menos que usted lo cancele.",
+  "Removal cancelled. {name} stays in the group.": "Se canceló la salida. {name} se queda en el grupo.",
+  "Removal finishes after {time}. Use this time to check in.": "La salida se termina después de {time}. Use este tiempo para hablar con la persona.",
+  "Cancel removal": "Cancelar la salida",
   // Quick exit on Find Help (Nov 16)
   "Quick exit": "Salida rápida",
   "Leaves VWB right away and opens a weather page. Your browser history may still show VWB.": "Sale de VWB enseguida y abre una página del clima. El historial de su navegador todavía puede mostrar VWB.",

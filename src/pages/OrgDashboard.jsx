@@ -18,6 +18,7 @@ import { askConfirm } from '../components/AdminDialog'
 import { orgWords } from '../utils/roleWords'
 import RoleLog from '../components/RoleLog'
 import GroupDownload from '../components/GroupDownload'
+import { waitTime } from '../utils/removalWait'
 import CareCircle from '../components/CareCircle'
 import OrgInviteLink from '../components/OrgInviteLink'
 import PlaceReports, { usePlaceReportCount } from '../components/PlaceReports'
@@ -57,6 +58,8 @@ export default function OrgDashboard() {
   const [sideFilter, setSideFilter] = useState('')
   const [orgName, setOrgName] = useState(mine?.name || '')
   const [members, setMembers] = useState([])
+  // Removals waiting out the cooling-off (vwb-cooling-off.sql).
+  const [waiting, setWaiting] = useState([])
   const [events, setEvents] = useState([])
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -95,6 +98,10 @@ export default function OrgDashboard() {
       supabase.rpc('org_join_asks_list', { p_org: id }),
       supabase.rpc('my_org_connections', { p_org: id }),
     ])
+    supabase.rpc('org_removals_waiting', { p_org: id }).then(({ data, error }) => {
+      if (error) { console.error('Failed to load waiting removals:', error); return }
+      setWaiting(data || [])
+    })
     if (a.error) console.error('Failed to load join asks:', a.error)
     if (c.error) console.error('Failed to load connection requests:', c.error)
     setAsks(a.data || [])
@@ -214,8 +221,12 @@ export default function OrgDashboard() {
 
   const removeMember = async (u) => {
     if (!await askConfirm(t('Remove {name} from {group}?', { name: u.display_name, group: orgName }))) return
-    run(() => supabase.rpc('remove_org_member', { p_org: id, p_user: u.user_id }), t('{name} was removed.', { name: u.display_name }))
+    run(() => supabase.rpc('remove_org_member', { p_org: id, p_user: u.user_id }), (data) => data === 'waiting'
+      ? t('{name} was reported here in the last day, so removal waits 24 hours after that report. It finishes on its own unless you cancel it.', { name: u.display_name })
+      : t('{name} was removed.', { name: u.display_name }))
   }
+
+  const cancelRemoval = (u) => run(() => supabase.rpc('cancel_org_removal', { p_org: id, p_target: u.user_id }), t('Removal cancelled. {name} stays in the group.', { name: u.display_name }))
 
   // /org-dashboard with no group picked: go straight in if there is only one.
   if (!id) {
@@ -322,6 +333,7 @@ export default function OrgDashboard() {
                 <div className="dash-row-main">
                   <strong><UserName userId={u.user_id} name={u.display_name} /></strong>
                   <small>{t(W.stepLabel[u.role] || u.role)}{u.user_id === user.id ? ' ' + t('(you)') : ''}</small>
+                  {waiting.find((w) => w.target_id === u.user_id) && <small className="od-wait">{t('Removal finishes after {time}. Use this time to check in.', { time: waitTime(waiting.find((w) => w.target_id === u.user_id).finish_after) })}</small>}
                 </div>
                 {u.role === 'admin' && u.user_id === user.id && headCount > 1 && (
                   <div className="dash-btns">
@@ -333,7 +345,9 @@ export default function OrgDashboard() {
                     {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => makeHead(u)}>{t('Make {role}', { role: t(W.head) })}</button>}
                     {isHead && u.role === 'member' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'organizer')}>{t('Make {role}', { role: t(W.Organizer) })}</button>}
                     {isHead && u.role === 'organizer' && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => setRole(u, 'member')}>{t('Make member')}</button>}
-                    {(isHead || u.role === 'member') && <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => removeMember(u)}>{t('Remove')}</button>}
+                    {(isHead || u.role === 'member') && (waiting.some((w) => w.target_id === u.user_id)
+                      ? <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => cancelRemoval(u)}>{t('Cancel removal')}</button>
+                      : <button type="button" className="btn btn-outline group-small-btn" disabled={busy} onClick={() => removeMember(u)}>{t('Remove')}</button>)}
                   </div>
                 )}
               </div>

@@ -20,6 +20,7 @@ import { useSimpleView } from '../utils/simpleView'
 import '../desktop-chats.css'
 import Icon from '../components/Icon'
 import { askConfirm, tell } from '../components/AdminDialog'
+import { waitTime } from '../utils/removalWait'
 import { useT, getLang } from '../utils/lang'
 
 // One group's board: its own private Campfire. Posts are end-to-end
@@ -562,6 +563,7 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
     const { data, error } = await supabase.rpc('request_community_group_removal', { p_group: id, p_target: member.userId, p_reason: reason })
     if (error) { console.error('Removal request failed:', error); return { error } }
     if (data === 'removed') tell(t('{name} was removed from the chat.', { name: member.name }))
+    if (data === 'waiting') tell(t('{name} was reported here in the last day, so removal waits 24 hours after that report. It finishes on its own unless someone takes it back.', { name: member.name }))
     loadGroup()
     return {}
   }
@@ -1022,13 +1024,15 @@ export default function GroupBoard({ pane = false, boardId = null, onOpen, onClo
                 <div key={m.userId} id={'focus-removal-' + m.userId} tabIndex={-1} className="group-member" style={focusStyle('removal-' + m.userId)}>
                   {focusLabel('removal-' + m.userId)}
                   <AvatarDisplay url={m.avatar} userId={m.userId} size={32} />
-                  <span className="group-member-name"><UserName userId={m.userId} name={m.name} />{isMe ? ' ' + t('(you)') : ''}{isSteward ? <span className="group-steward-badge">{t('Steward')}</span> : null}{group.steward_offer_to === m.userId ? <span className="group-member-sub">{t('Asked to take over as steward')}</span> : null}{open && !isMe ? <span className="group-member-flag">{' · ' + (mine ? t('you asked to remove') : t('a member asked to remove'))}</span> : null}{open && !isMe && open.reason ? <span className="group-member-sub">{t('Reason: {reason}', { reason: t(open.reason) })}</span> : null}</span>
+                  <span className="group-member-name"><UserName userId={m.userId} name={m.name} />{isMe ? ' ' + t('(you)') : ''}{isSteward ? <span className="group-steward-badge">{t('Steward')}</span> : null}{group.steward_offer_to === m.userId ? <span className="group-member-sub">{t('Asked to take over as steward')}</span> : null}{open && !isMe ? <span className="group-member-flag">{' · ' + (open.agreed_by ? t('removal finishes after {time}', { time: waitTime(open.finish_after) }) : mine ? t('you asked to remove') : t('a member asked to remove'))}</span> : null}{open && !isMe && open.reason ? <span className="group-member-sub">{t('Reason: {reason}', { reason: t(open.reason) })}</span> : null}</span>
                   {!isMe && (
                     <span className="group-member-actions">
                       {isSteward
                         ? null
-                        : mine && !iAmSteward
+                        : mine && (!iAmSteward || open.agreed_by)
                           ? <button type="button" className="btn btn-outline group-small-btn" onClick={() => withdrawRemoval(m)}>{t('Take back')}</button>
+                          : open && open.agreed_by
+                            ? null
                           : <button type="button" className="btn btn-outline group-small-btn" onClick={() => askRemove(m)}>{iAmSteward ? t('Remove') : open ? t('Agree to remove') : t('Remove')}</button>}
                       {iAmSteward && (group.steward_offer_to === m.userId
                         ? <button type="button" className="btn btn-outline group-small-btn" onClick={() => offerSteward(null)}>{t('Take back steward offer')}</button>

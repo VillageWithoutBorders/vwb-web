@@ -6,6 +6,7 @@ import VouchButton from './VouchButton'
 import { askConfirm } from './AdminDialog'
 import RoleLog from './RoleLog'
 import { useT, getLang } from '../utils/lang'
+import { waitTime } from '../utils/removalWait'
 
 // Must match the list inside request_village_member_removal (vwb-village-chats-v2.sql).
 const REMOVE_REASONS = [
@@ -195,7 +196,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
     setBusy(false)
     if (error) { console.error('Removal request failed:', error); setNote(error.message ? t(error.message) : t('Could not do that. Try again.')); return }
     setReasonFor(null); setReason('')
-    setNote(data === 'removed' ? t('They were removed from this chat.') : t('Asked. It takes a second member to agree. They are not told.'))
+    setNote(data === 'removed' ? t('They were removed from this chat.') : data === 'waiting' ? t('They were reported here in the last day, so removal waits 24 hours after that report. It finishes on its own unless someone takes it back.') : t('Asked. It takes a second member to agree. They are not told.'))
     onRequestsChange?.()
     load(search.trim())
   }
@@ -206,7 +207,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
     const { data, error } = await supabase.rpc('request_village_member_removal', { p_village: villageId, p_target: targetId, p_reason: null })
     setBusy(false)
     if (error) { console.error('Removal agree failed:', error); setNote(error.message ? t(error.message) : t('Could not do that. Try again.')); return }
-    setNote(data === 'removed' ? t('They were removed from this chat.') : t('Saved.'))
+    setNote(data === 'removed' ? t('They were removed from this chat.') : data === 'waiting' ? t('Agreed. They were reported here in the last day, so removal waits 24 hours after that report. Use the time to check in.') : t('Saved.'))
     onRequestsChange?.()
     load(search.trim())
   }
@@ -240,9 +241,14 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
               <div key={r.target_id} style={{ padding: '0.5rem 0', borderTop: '1px solid var(--warn-bg)' }}>
                 <p style={{ margin: 0, color: 'var(--text)', fontSize: '0.9rem' }}>{t('A member asked to remove this person:')} <strong>{r.target_name || t('someone')}</strong></p>
                 <p style={{ margin: '0.2rem 0 0.4rem', color: 'var(--text-soft)', fontSize: '0.85rem' }}>{t('Reason: {reason}', { reason: t(r.reason) })}</p>
-                {r.requested_by === myId
-                  ? <button type="button" style={btn} disabled={busy} onClick={() => takeBack(r.target_id)}>{t('Take back my request')}</button>
-                  : <button type="button" style={{ ...btn, borderColor: 'var(--warn)', color: 'var(--warn)' }} disabled={busy} onClick={() => agree(r.target_id)}>{t('I agree. Remove them')}</button>}
+                {r.agreed_by
+                  ? <>
+                      <p style={{ margin: '0 0 0.4rem', color: 'var(--text)', fontSize: '0.85rem' }}>{t('Two members agreed. They were reported here recently, so removal finishes after {time}. Use this time to check in.', { time: waitTime(r.finish_after) })}</p>
+                      {(r.requested_by === myId || r.agreed_by === myId) && <button type="button" style={btn} disabled={busy} onClick={() => takeBack(r.target_id)}>{t('Take back')}</button>}
+                    </>
+                  : r.requested_by === myId
+                    ? <button type="button" style={btn} disabled={busy} onClick={() => takeBack(r.target_id)}>{t('Take back my request')}</button>
+                    : <button type="button" style={{ ...btn, borderColor: 'var(--warn)', color: 'var(--warn)' }} disabled={busy} onClick={() => agree(r.target_id)}>{t('I agree. Remove them')}</button>}
               </div>
             ))}
           </div>
@@ -320,7 +326,7 @@ export default function VillagePeople({ villageId, villageName, myId, isAdmin, r
                     {!protectedRole && !pending && reasonFor !== p.user_id && (
                       <button type="button" onClick={() => { setReasonFor(p.user_id); setReason(''); setNote('') }} style={{ ...btn, marginTop: '0.5rem', borderColor: 'var(--warn)', color: 'var(--warn)' }}>{isAdmin ? t('Remove from this chat') : t('Ask to remove')}</button>
                     )}
-                    {pending && <p style={{ margin: '0.5rem 0 0', color: 'var(--gold)', fontSize: '0.8125rem' }}>{t('A removal request is open. It needs a second member.')}</p>}
+                    {pending && <p style={{ margin: '0.5rem 0 0', color: 'var(--gold)', fontSize: '0.8125rem' }}>{pending.agreed_by ? t('Removal finishes after {time}.', { time: waitTime(pending.finish_after) }) : t('A removal request is open. It needs a second member.')}</p>}
                     {reasonFor === p.user_id && (
                       <div style={{ marginTop: '0.5rem' }}>
                         <label htmlFor={'vp-reason-' + p.user_id} style={{ display: 'block', color: 'var(--text)', fontSize: '0.85rem', marginBottom: '0.3rem' }}>{t('Why? Pick one.')}</label>
