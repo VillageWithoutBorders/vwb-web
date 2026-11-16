@@ -33,12 +33,22 @@ export function useTwoStepOn() {
   return on
 }
 
-export function TwoStepGate({ onSettings }) {
+// kind: 'admin' (Admin page) or 'ambassador' (Ambassador tools).
+export function TwoStepGate({ onSettings, kind = 'admin' }) {
   const t = useT()
   return (
     <div className="admin-tool-wait" role="alert">
-      <p><strong>{t('Turn on two-step login to use admin tools.')}</strong></p>
-      <p>{t("Admin tools can change other people's accounts. A code from an app on your phone keeps them safe if someone learns your password.")}</p>
+      {kind === 'ambassador' ? (
+        <>
+          <p><strong>{t('Turn on two-step login to use Ambassador tools.')}</strong></p>
+          <p>{t('Ambassador tools check emergencies and approve groups. A code from an app on your phone keeps them safe if someone learns your password.')}</p>
+        </>
+      ) : (
+        <>
+          <p><strong>{t('Turn on two-step login to use admin tools.')}</strong></p>
+          <p>{t("Admin tools can change other people's accounts. A code from an app on your phone keeps them safe if someone learns your password.")}</p>
+        </>
+      )}
       <button type="button" className="btn btn-primary" onClick={onSettings}>{t('Turn it on in Settings')}</button>
     </div>
   )

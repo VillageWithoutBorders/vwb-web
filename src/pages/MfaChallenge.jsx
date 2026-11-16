@@ -55,7 +55,7 @@ export default function MfaChallenge() {
           {error && <p className="form-error" role="alert">{error}</p>}
           <button type="submit" className="btn btn-primary btn-full" disabled={busy}>{busy ? t('Checking...') : t('Continue')}</button>
           <p className="login-toggle">
-            {t('Lost your phone? Email info@villagewithoutborders.org from the address on your account.')}
+            {t('Lost your phone? Use your backup phone if you added one. If not, email info@villagewithoutborders.org from the address on your account.')}
           </p>
           <button type="button" className="link-button" onClick={signOut} style={{ fontSize: '0.875rem' }}>{t('Sign out')}</button>
         </form>

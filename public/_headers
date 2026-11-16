@@ -2,11 +2,9 @@
 # Nov 7, 2026. Cloudflare Pages reads this file from the build output; Vite
 # copies everything in public/ there, so this file lives at public/_headers.
 #
-# STEP 1 (now): the content rules (CSP) are REPORT-ONLY. Nothing is blocked.
-# The browser only tells us what WOULD be blocked, through the csp-report
-# function on Supabase. The other headers here are on for real.
-# STEP 3 (after the wait): rename "Content-Security-Policy-Report-Only" to
-# "Content-Security-Policy". See the Security Headers Plan in the project notes.
+# Nov 16: the content rules (CSP) are ON. Report-only ran Nov 7 to Nov 16 with
+# nothing real reported. The browser still reports anything it blocks, through
+# the csp-report function on Supabase. To undo: Cloudflare > Deployments > Rollback.
 #
 # If you change one of the two small scripts at the top of index.html, its
 # 'sha256-...' below must change too, or the browser will report it (and,
@@ -18,7 +16,7 @@
 #   tile.openstreetmap.org             street map pictures
 
 /*
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-VB4dAXLaOF4zQWuEfq8SPPh9yiDyv/WUw30zhPlqDPw=' 'sha256-0FyYEviv/0EcVy9qwbQD6r3d9SVIUHrlTvs8Uq/N3Ig=' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://jgabhhobqkuteuqtikpi.supabase.co https://tile.openstreetmap.org; font-src 'self' data:; connect-src 'self' https://jgabhhobqkuteuqtikpi.supabase.co wss://jgabhhobqkuteuqtikpi.supabase.co; frame-src https://challenges.cloudflare.com; worker-src 'self'; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report; report-to csp
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-VB4dAXLaOF4zQWuEfq8SPPh9yiDyv/WUw30zhPlqDPw=' 'sha256-0FyYEviv/0EcVy9qwbQD6r3d9SVIUHrlTvs8Uq/N3Ig=' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://jgabhhobqkuteuqtikpi.supabase.co https://tile.openstreetmap.org; font-src 'self' data:; connect-src 'self' https://jgabhhobqkuteuqtikpi.supabase.co wss://jgabhhobqkuteuqtikpi.supabase.co; frame-src https://challenges.cloudflare.com; worker-src 'self'; manifest-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report; report-to csp
   Reporting-Endpoints: csp="https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report"
   Report-To: {"group":"csp","max_age":2592000,"endpoints":[{"url":"https://jgabhhobqkuteuqtikpi.supabase.co/functions/v1/csp-report"}]}
   Strict-Transport-Security: max-age=31536000; includeSubDomains

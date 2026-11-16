@@ -5983,6 +5983,25 @@ const more = {
   "Changed your mind? Sign in, go to Settings, then Alerts, and turn on Email me VWB news.": "¿Cambió de opinión? Inicie sesión, vaya a Ajustes, luego a Alertas, y active Enviarme novedades de VWB por correo.",
   "Open Settings": "Abrir Ajustes",
   "VWB news and app updates": "Novedades y cambios de VWB",
+  // Two-step sign-in for leaders (Nov 16)
+  "We couldn't add a backup phone. Sign out, sign in with your code, and try again.": "No pudimos agregar un teléfono de respaldo. Cierre la sesión, entre con su código e intente otra vez.",
+  "Backup phone added. Either phone can give you a code now.": "Se agregó el teléfono de respaldo. Ahora cualquiera de los dos teléfonos le puede dar un código.",
+  "Turn off two-step login? Your account will be protected by your password alone, and your admin or ambassador tools will lock until you turn it back on.": "¿Apagar la verificación en dos pasos? Su cuenta quedará protegida solo por su contraseña, y sus herramientas de administrador o embajador quedarán cerradas hasta que la vuelva a prender.",
+  "Remove this phone? Its codes will stop working. Your other phone keeps working.": "¿Quitar este teléfono? Sus códigos dejarán de funcionar. Su otro teléfono sigue funcionando.",
+  "We couldn't remove that phone. Sign out, sign in with your code, and try again.": "No pudimos quitar ese teléfono. Cierre la sesión, entre con su código e intente otra vez.",
+  "Add a code from an authenticator app to sign in. Required for admins and Hope Ambassadors.": "Use un código de una aplicación de códigos para entrar. Se necesita para administradores y Embajadores de Esperanza.",
+  "First phone": "Primer teléfono",
+  "Backup phone": "Teléfono de respaldo",
+  "Add a backup phone, so losing your phone does not lock you out of your tools.": "Agregue un teléfono de respaldo, para que perder su teléfono no lo deje fuera de sus herramientas.",
+  "Add a backup phone in case you lose this one.": "Agregue un teléfono de respaldo por si pierde este.",
+  "You can add one more backup phone.": "Puede agregar un teléfono de respaldo más.",
+  "Add a backup phone": "Agregar un teléfono de respaldo",
+  "Do this on your backup phone or tablet, not the phone you already use.": "Haga esto en su teléfono o tableta de respaldo, no en el teléfono que ya usa.",
+  "Keep your phone safe. No one can reset the founder's two-step login in the app, so add a backup phone next.": "Cuide su teléfono. Nadie puede restablecer en la app la verificación en dos pasos de la fundadora, así que agregue un teléfono de respaldo después.",
+  "Keep your phone safe. If you lose it, use your backup phone, or email info@villagewithoutborders.org and an admin can reset it.": "Cuide su teléfono. Si lo pierde, use su teléfono de respaldo, o escriba a info@villagewithoutborders.org y un administrador la puede restablecer.",
+  "Lost your phone? Use your backup phone if you added one. If not, email info@villagewithoutborders.org from the address on your account.": "¿Perdió su teléfono? Use su teléfono de respaldo si agregó uno. Si no, escriba a info@villagewithoutborders.org desde el correo de su cuenta.",
+  "Turn on two-step login to use Ambassador tools.": "Active la verificación en dos pasos para usar las herramientas de embajador.",
+  "Ambassador tools check emergencies and approve groups. A code from an app on your phone keeps them safe if someone learns your password.": "Las herramientas de embajador revisan emergencias y aprueban grupos. Un código de una app en su teléfono las protege si alguien sabe su contraseña.",
 }
 
 export default more

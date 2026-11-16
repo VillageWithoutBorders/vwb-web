@@ -44,6 +44,13 @@ function reportError(context, error, userMessage) {
   return true
 }
 
+// Phones that finished setup, oldest first (the first phone, then backups).
+function verifiedApps(data) {
+  return (data?.totp || [])
+    .filter((f) => f.status === 'verified')
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+}
+
 export default function Settings() {
   const t = useT()
   const simpleOn = useSimpleView()
@@ -83,9 +90,9 @@ export default function Settings() {
   const [pwError, setPwError] = useState('')
   const [pwMessage, setPwMessage] = useState('')
 
-  const [twoStep, setTwoStep] = useState(null) // the verified authenticator, if any
+  const [codeApps, setCodeApps] = useState([]) // verified authenticator apps: first phone, then backup phones
   const [twoStepLoaded, setTwoStepLoaded] = useState(false)
-  const [enroll, setEnroll] = useState(null) // { id, qr, secret } while setting up
+  const [enroll, setEnroll] = useState(null) // { id, qr, secret, backup } while setting up
   const [twoStepCode, setTwoStepCode] = useState('')
   const [twoStepBusy, setTwoStepBusy] = useState(false)
   const [twoStepError, setTwoStepError] = useState('')
@@ -228,27 +235,36 @@ export default function Settings() {
     supabase.auth.mfa.listFactors().then(({ data, error }) => {
       if (!alive) return
       if (error) console.error('[Settings:listFactors]', error)
-      setTwoStep(data?.totp?.[0] || null)
+      setCodeApps(verifiedApps(data))
       setTwoStepLoaded(true)
     })
     return () => { alive = false }
   }, [])
 
+  // Admins, the founder and Hope Ambassadors need two-step for their tools.
+  const mustHaveTwoStep = isAdmin || !!profile?.is_hope_ambassador
+  const MAX_CODE_APPS = 3
+
   async function startTwoStep() {
+    const backup = codeApps.length > 0
     setTwoStepError(''); setTwoStepMessage(''); setTwoStepBusy(true)
     // Clear any half-finished setup from an earlier try.
     const { data: existing } = await supabase.auth.mfa.listFactors()
     for (const f of existing?.all || []) {
       if (f.status === 'unverified') await supabase.auth.mfa.unenroll({ factorId: f.id })
     }
-    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Authenticator app' })
+    // Names must differ, so each backup phone gets its own.
+    const friendlyName = backup ? 'Backup phone ' + Date.now() : 'Authenticator app'
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName })
     setTwoStepBusy(false)
     if (error || !data) {
       console.error('[Settings:enroll]', error)
-      setTwoStepError(t("We couldn't start two-step login. Try again in a moment."))
+      setTwoStepError(backup
+        ? t("We couldn't add a backup phone. Sign out, sign in with your code, and try again.")
+        : t("We couldn't start two-step login. Try again in a moment."))
       return
     }
-    setEnroll({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret })
+    setEnroll({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret, backup })
     setTwoStepCode('')
   }
 
@@ -266,9 +282,12 @@ export default function Settings() {
       return
     }
     const { data } = await supabase.auth.mfa.listFactors()
-    setTwoStep(data?.totp?.[0] || null)
+    setCodeApps(verifiedApps(data))
+    const wasBackup = enroll.backup
     setEnroll(null); setTwoStepCode(''); setTwoStepBusy(false)
-    setTwoStepMessage(t('Two-step login is on. You will enter a code each time you sign in.'))
+    setTwoStepMessage(wasBackup
+      ? t('Backup phone added. Either phone can give you a code now.')
+      : t('Two-step login is on. You will enter a code each time you sign in.'))
     await refreshMfa()
   }
 
@@ -278,17 +297,41 @@ export default function Settings() {
   }
 
   async function turnOffTwoStep() {
-    if (!(await askConfirm(t('Turn off two-step login? Your account will be protected by your password alone.')))) return
+    const ask = mustHaveTwoStep
+      ? t('Turn off two-step login? Your account will be protected by your password alone, and your admin or ambassador tools will lock until you turn it back on.')
+      : t('Turn off two-step login? Your account will be protected by your password alone.')
+    if (!(await askConfirm(ask))) return
     setTwoStepError(''); setTwoStepMessage(''); setTwoStepBusy(true)
-    const { error } = await supabase.auth.mfa.unenroll({ factorId: twoStep.id })
+    for (const f of codeApps) {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: f.id })
+      if (error) {
+        console.error('[Settings:unenroll]', error)
+        const { data } = await supabase.auth.mfa.listFactors()
+        setCodeApps(verifiedApps(data))
+        setTwoStepBusy(false)
+        setTwoStepError(t("We couldn't turn it off. Sign out, sign in with your code, and try again."))
+        return
+      }
+    }
+    setTwoStepBusy(false)
+    setCodeApps([])
+    setTwoStepMessage(t('Two-step login is off.'))
+  }
+
+  // Removes one phone when there is more than one (a lost phone, say).
+  async function removeCodeApp(f) {
+    if (!(await askConfirm(t('Remove this phone? Its codes will stop working. Your other phone keeps working.')))) return
+    setTwoStepError(''); setTwoStepMessage(''); setTwoStepBusy(true)
+    const { error } = await supabase.auth.mfa.unenroll({ factorId: f.id })
+    const { data } = await supabase.auth.mfa.listFactors()
+    setCodeApps(verifiedApps(data))
     setTwoStepBusy(false)
     if (error) {
-      console.error('[Settings:unenroll]', error)
-      setTwoStepError(t("We couldn't turn it off. Sign out, sign in with your code, and try again."))
+      console.error('[Settings:removeCodeApp]', error)
+      setTwoStepError(t("We couldn't remove that phone. Sign out, sign in with your code, and try again."))
       return
     }
-    setTwoStep(null)
-    setTwoStepMessage(t('Two-step login is off.'))
+    setTwoStepMessage(t('Removed.'))
   }
 
   // Shows the database's own short message when it is plain, otherwise a general one.
@@ -474,24 +517,47 @@ export default function Settings() {
 
       <div className="profile-details" id="two-step" style={{ marginTop: '1rem', scrollMarginTop: 'calc(var(--header-height) + 1rem)' }}>
         <div className="detail-section-header">{t('Two-Step Login')}</div>
-        {twoStepLoaded && !enroll && !twoStep && (
+        {twoStepLoaded && !enroll && codeApps.length === 0 && (
           <div className="detail-row">
-            <span className="detail-value" style={{ textAlign: 'left' }}>{t('Add a code from an authenticator app to sign in. Strongly recommended for admins.')}</span>
+            <span className="detail-value" style={{ textAlign: 'left' }}>{t('Add a code from an authenticator app to sign in. Required for admins and Hope Ambassadors.')}</span>
             <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={startTwoStep} disabled={twoStepBusy}>
               {twoStepBusy ? t('Starting...') : t('Turn on')}
             </button>
           </div>
         )}
-        {twoStepLoaded && !enroll && twoStep && (
-          <div className="detail-row">
-            <span className="detail-value" style={{ textAlign: 'left' }}>{t('On. You enter a 6-digit code each time you sign in.')}</span>
-            <button type="button" className="link-button" style={{ fontSize: '0.8125rem', color: 'var(--danger)' }} onClick={turnOffTwoStep} disabled={twoStepBusy}>
-              {t('Turn off')}
-            </button>
-          </div>
+        {twoStepLoaded && !enroll && codeApps.length > 0 && (
+          <>
+            <div className="detail-row">
+              <span className="detail-value" style={{ textAlign: 'left' }}>{t('On. You enter a 6-digit code each time you sign in.')}</span>
+              <button type="button" className="link-button" style={{ fontSize: '0.8125rem', color: 'var(--danger)' }} onClick={turnOffTwoStep} disabled={twoStepBusy}>
+                {t('Turn off')}
+              </button>
+            </div>
+            {codeApps.length > 1 && codeApps.map((f, i) => (
+              <div className="detail-row" key={f.id}>
+                <span className="detail-value" style={{ textAlign: 'left' }}>{i === 0 ? t('First phone') : t('Backup phone')}</span>
+                <button type="button" className="link-button" style={{ fontSize: '0.8125rem', color: 'var(--danger)' }} onClick={() => removeCodeApp(f)} disabled={twoStepBusy}>
+                  {t('Remove')}
+                </button>
+              </div>
+            ))}
+            {codeApps.length < MAX_CODE_APPS && (
+              <div className="detail-row">
+                <span className="detail-value" style={{ textAlign: 'left' }}>
+                  {codeApps.length === 1
+                    ? (mustHaveTwoStep ? t('Add a backup phone, so losing your phone does not lock you out of your tools.') : t('Add a backup phone in case you lose this one.'))
+                    : t('You can add one more backup phone.')}
+                </span>
+                <button type="button" className="link-button" style={{ fontSize: '0.8125rem' }} onClick={startTwoStep} disabled={twoStepBusy}>
+                  {twoStepBusy ? t('Starting...') : t('Add a backup phone')}
+                </button>
+              </div>
+            )}
+          </>
         )}
         {enroll && (
           <form onSubmit={confirmTwoStep} className="form-field" style={{ padding: '0 1rem 0.75rem' }} noValidate>
+            {enroll.backup && <p className="field-hint"><strong>{t('Do this on your backup phone or tablet, not the phone you already use.')}</strong></p>}
             <p className="field-hint">{t('1. Open an authenticator app (Google Authenticator, Microsoft Authenticator, Authy, or your password manager) and scan this picture.')}</p>
             <img src={enroll.qr} alt={t('QR code to scan with your authenticator app')} width={180} height={180} style={{ background: '#fff', padding: '8px', borderRadius: '8px', display: 'block', margin: '0.5rem 0', maxWidth: '100%', height: 'auto' }} />
             <p className="field-hint">{t("Can't scan it? Type this key into the app instead:")}</p>
@@ -499,7 +565,9 @@ export default function Settings() {
             <p className="field-hint" style={{ marginTop: '0.75rem' }}>{t('2. Enter the 6-digit code the app shows.')}</p>
             <label htmlFor="twoStepCode" className="sr-only">{t('6-digit code')}</label>
             <input id="twoStepCode" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={7} value={twoStepCode} onChange={(e) => setTwoStepCode(e.target.value)} />
-            <p className="field-hint">{t('Keep your phone safe. If you lose it, an admin can reset this for you after you email info@villagewithoutborders.org.')}</p>
+            <p className="field-hint">{isFounder
+              ? t("Keep your phone safe. No one can reset the founder's two-step login in the app, so add a backup phone next.")
+              : t('Keep your phone safe. If you lose it, use your backup phone, or email info@villagewithoutborders.org and an admin can reset it.')}</p>
             <div className="form-row" style={{ marginTop: '0.5rem' }}>
               <button type="button" className="btn btn-outline" onClick={cancelTwoStep} disabled={twoStepBusy}>{t('Cancel')}</button>
               <button type="submit" className="btn btn-primary" disabled={twoStepBusy} style={{ flex: 1 }}>{twoStepBusy ? t('Checking...') : t('Turn on')}</button>

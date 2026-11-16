@@ -4,7 +4,7 @@
 // Spanish too (Nov 9), so the guide names them the way they show on screen.
 // A native Spanish speaker should read this, like es.js and es-more.js.
 
-export const GUIDE_UPDATED = '7 de noviembre de 2026'
+export const GUIDE_UPDATED = '16 de noviembre de 2026'
 
 export const ADMIN_GUIDE = [
   {
@@ -69,7 +69,7 @@ export const ADMIN_GUIDE = [
     blocks: [
       { p: 'Abra el escudo una vez al día y atienda primero lo urgente.' },
       { ol: [
-        '**Prenda la verificación en dos pasos.** Las herramientas de administrador quedan cerradas hasta que lo haga. Vaya a Ajustes, Verificación en dos pasos, y siga los pasos con una app de autenticación en su teléfono. Después, siempre entre con su código. Las herramientas de administrador lo necesitan.',
+        '**Prenda la verificación en dos pasos.** Las herramientas de administrador quedan cerradas hasta que lo haga. Vaya a Ajustes, Verificación en dos pasos, y siga los pasos con una app de autenticación en su teléfono. Después, siempre entre con su código. Las herramientas de administrador lo necesitan. Luego toque Agregar un teléfono de respaldo y prepare un segundo teléfono o tableta, para que un teléfono perdido no lo deje afuera.',
         '**Toque el escudo en la barra de arriba.** El número muestra cuántas cosas esperan. Rojo quiere decir que algo es urgente. Dorado quiere decir que nada es urgente.',
         '**Empiece con Le espera.** Es una sola lista que comparten todos los administradores. Cuando uno de ustedes atiende algo, sale de la lista para todos.',
         '**Vea quién ya lo está atendiendo.** Cuando usted toca **Abrir**, los otros administradores ven "Sam abrió esto" por 30 minutos, para que dos de ustedes no hagan lo mismo. Si alguien lo abrió hace un minuto, elija otra cosa o escríbale.',
@@ -77,6 +77,7 @@ export const ADMIN_GUIDE = [
         '**Después, el grupo Esperando.** Solicitudes, grupos, pedidos para manejar un recurso, mensajes de la página de Ayuda y reportes de recursos.',
         '**Mire Últimos avisos de administradores.** Son los mismos avisos que suenan en los teléfonos de los administradores.',
       ] },
+      { p: '**Teléfono nuevo o perdido:** si agregó un teléfono de respaldo, entre con ese. Luego vaya a Ajustes, Verificación en dos pasos: quite el teléfono perdido y agregue el nuevo. ¿No tiene teléfono de respaldo? Pida a otro administrador que restablezca su verificación en dos pasos (a la fundadora la restablece una persona con llave). Vuelva a prenderla enseguida.' },
       { p: '**Avisos en su teléfono:** cada cosa nueva de administración manda un aviso a todos los administradores. El trabajo de administración ya no sale en sus Avisos personales. Si escondió los detalles en la pantalla bloqueada, el aviso solo dice que algo está esperando.' },
       { p: '**En el teléfono o en la computadora:** todas las herramientas de administrador funcionan en los dos. La computadora solo da más espacio para Aldeas, Compartir habilidades e Importar CRN.' },
     ],
@@ -242,7 +243,7 @@ export const ADMIN_GUIDE = [
           ['Le espera', 'La lista compartida de todo lo que espera a un administrador.'],
           ['Cambios de funciones', 'El registro de quién recibió o perdió el acceso de administrador, y quién estuvo de acuerdo.'],
           ['Escudo', 'El botón de administración en la barra de arriba. Su número muestra lo que espera.'],
-          ['Verificación en dos pasos', 'Un código de una app en su teléfono, que se usa con su contraseña. Se necesita para las herramientas de administrador.'],
+          ['Verificación en dos pasos', 'Un código de una app en su teléfono, que se usa con su contraseña. Se necesita para administradores y Embajadores de Esperanza.'],
           ['Aldea', 'Un grupo de vecinos que comparten códigos postales y un chat de aldea.'],
           ['Responder por alguien', 'Cuando un miembro dice que lo conoce y confía en usted.'],
         ],

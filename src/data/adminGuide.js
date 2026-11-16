@@ -5,7 +5,7 @@
 //
 // Block types: p (paragraph, **bold** allowed), h3, ul, ol, table { head, rows }.
 
-export const GUIDE_UPDATED = 'November 7, 2026'
+export const GUIDE_UPDATED = 'November 16, 2026'
 
 export const ADMIN_GUIDE = [
   {
@@ -70,7 +70,7 @@ export const ADMIN_GUIDE = [
     blocks: [
       { p: 'Open the shield once a day and clear what is urgent first.' },
       { ol: [
-        '**Turn on two-step login.** Admin tools stay locked until you do. Go to Settings, Two-Step Login, and follow the steps with an authenticator app on your phone. After that, always sign in with your code. Admin tools need it.',
+        '**Turn on two-step login.** Admin tools stay locked until you do. Go to Settings, Two-Step Login, and follow the steps with an authenticator app on your phone. After that, always sign in with your code. Admin tools need it. Then tap Add a backup phone and set up a second phone or tablet, so a lost phone can\'t lock you out.',
         '**Tap the shield in the top bar.** The number shows how many things are waiting. Red means something is urgent. Gold means nothing urgent.',
         '**Start with Needs you.** It is one list shared by every admin. When one of you handles something, it leaves the list for everyone.',
         '**See who is already on it.** When you tap Open, other admins see "Sam opened this" for 30 minutes, so two of you don\'t work the same thing. If someone opened it a minute ago, pick another item or message them.',
@@ -78,6 +78,7 @@ export const ADMIN_GUIDE = [
         '**Then the Waiting group.** Applications, groups, claims, Help page messages, and resource reports.',
         "**Glance at Latest admin alerts.** These are the same alerts that buzz admins' phones.",
       ] },
+      { p: '**New or lost phone:** if you added a backup phone, sign in with it. Then go to Settings, Two-Step Login: remove the lost phone and add the new one. No backup phone? Ask another admin to reset your two-step login (a key holder resets the founder). Turn it back on right away.' },
       { p: '**Alerts on your phone:** every new admin item sends a push to every admin. Admin work no longer shows in your personal Alerts. If you hid alert details on your lock screen, the push only says something is waiting.' },
       { p: '**On a phone or a computer:** every admin tool works on both. A computer just gives more room for Villages, SkillShare and CRN Import.' },
     ],
@@ -243,7 +244,7 @@ export const ADMIN_GUIDE = [
           ['Needs you', 'The shared list of everything waiting on an admin.'],
           ['Role changes', 'The log of who gained or lost admin access, and who agreed.'],
           ['Shield', "The admin button in the top bar. Its number shows what's waiting."],
-          ['Two-step login', 'A code from an app on your phone, used with your password. Required for admin tools.'],
+          ['Two-step login', 'A code from an app on your phone, used with your password. Required for admins and Hope Ambassadors.'],
           ['Village', 'A group of neighbors who share zip codes and a village chat.'],
           ['Vouch', 'When a member says they know and trust you.'],
         ],

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import NearbyNeedTiles from '../components/NearbyNeedTiles'
@@ -7,6 +7,7 @@ import Icon from '../components/Icon'
 import FindAKeeper from '../components/FindAKeeper'
 import { ADMIN_REQUESTS_OPEN } from '../data/adminTeam'
 import { useT, t } from '../utils/lang'
+import { useTwoStepOn, TwoStepGate } from '../components/AdminSafety'
 
 // Ambassador tools: what is waiting on a Hope Ambassador (or VWB admin) in one place.
 //   Emergencies waiting to be checked, groups asking to respond to emergencies,
@@ -24,6 +25,9 @@ export default function Ambassador() {
   const tr = useT()
   const { profile, isAdmin } = useAuth()
   const allowed = !!profile?.is_hope_ambassador || isAdmin
+  // Ambassador tools need two-step login, like admin tools (Nov 16).
+  const twoStepOn = useTwoStepOn()
+  const navigate = useNavigate()
   const [events, setEvents] = useState(null)
   const [groups, setGroups] = useState(null)
   const [board, setBoard] = useState(null)
@@ -59,6 +63,15 @@ export default function Ambassador() {
   }, [allowed])
 
   if (profile && !allowed) return <Navigate to="/" replace />
+
+  if (twoStepOn === false) {
+    return (
+      <div className="amb-page">
+        <h1 className="amb-title"><Icon name="star" size={30} /> {tr('Ambassador tools')}</h1>
+        <TwoStepGate kind="ambassador" onSettings={() => navigate('/settings#two-step')} />
+      </div>
+    )
+  }
 
   return (
     <div className="amb-page">
