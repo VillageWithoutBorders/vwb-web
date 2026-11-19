@@ -39,6 +39,9 @@ export async function loadMyTaskOverview(userId) {
   if (helpRes.error) console.error('Failed to load tasks you are helping with:', helpRes.error)
   if (offRes.error) console.error('Failed to load your offers:', offRes.error)
   if (fbRes.error) console.error('Failed to load your task answers:', fbRes.error)
+  // If any list could not be read, say so (ok: false), so a failed load never looks
+  // like "nothing to do". Whatever did load is still handed back.
+  let failed = !!(reqRes.error || helpRes.error || offRes.error)
 
   const myReqs = reqRes.data || []
   const helping = helpRes.data || []
@@ -50,7 +53,7 @@ export async function loadMyTaskOverview(userId) {
     const { data, error } = await supabase.from('skill_matches')
       .select('id, request_id, helper_id, accepted, helper_completed, requester_completed')
       .in('request_id', myReqs.map((r) => r.id))
-    if (error) console.error('Failed to load helpers on your requests:', error)
+    if (error) { console.error('Failed to load helpers on your requests:', error); failed = true }
     reqMatches = (data || []).filter((m) => m.accepted !== false)
   }
 
@@ -60,7 +63,7 @@ export async function loadMyTaskOverview(userId) {
     const { data, error } = await supabase.from('help_requests')
       .select('id, skill_needed, urgency, status, requester_id, archived_at, created_at, for_name')
       .in('id', helping.map((m) => m.request_id))
-    if (error) console.error('Failed to load requests you are helping with:', error)
+    if (error) { console.error('Failed to load requests you are helping with:', error); failed = true }
     helpReqs = data || []
   }
 
@@ -140,5 +143,5 @@ export async function loadMyTaskOverview(userId) {
   active.sort((a, b) => (b.needsYou ? 1 : 0) - (a.needsYou ? 1 : 0) || byNew(a, b))
   archived.sort(byNew)
 
-  return { requests, offers: offerRows, active, archived, ok: true }
+  return { requests, offers: offerRows, active, archived, ok: !failed }
 }
