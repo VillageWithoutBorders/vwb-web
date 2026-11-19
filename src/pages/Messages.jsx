@@ -611,8 +611,12 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
     const diff = now - d
     if (diff < 60000) return t('Just now')
     if (diff < 3600000) return t('{n}m ago', { n: Math.floor(diff / 60000) })
-    if (diff < 86400000) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+    // Nov 19 (Jade): last night's 11 PM looked like today. Go by the calendar day.
+    const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+    const days = Math.round((day(now) - day(d)) / 86400000)
+    if (days <= 0) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    if (days === 1) return t('Yesterday')
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) })
   }
 
   const tabStyle = (active) => ({ padding: '0.5rem 1rem', minHeight: 44, borderRadius: '20px', border: active ? '1px solid var(--accent)' : '1px solid var(--border-strong)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', background: active ? 'var(--accent)' : 'var(--surface)', color: active ? 'var(--on-accent)' : 'var(--text-secondary)' })
@@ -821,7 +825,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
       {/* ========== Your Pending Offers (helper side) ========== */}
       {myOutgoingOffers.length > 0 && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
+          <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--gold)', marginBottom: '0.5rem' }}>
             <Icon name="hourglass" /> {t('Your Pending Offers ({n})', { n: myOutgoingOffers.length })}
           </div>
           {myOutgoingOffers.map(offer => (
@@ -938,6 +942,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
               <span className="message-card-time" style={{ color: unread ? "var(--accent)" : undefined }}>{formatTime(c.lastMessageAt)}</span>
             </div>
             {c.help_requests && (<p className="message-card-skill">{t(c.help_requests.skill_needed)}{c.help_requests.for_name ? ' ' + t('for {name}', { name: c.help_requests.for_name }) : ''}{c.help_requests.neighborhood ? ' ' + t('in {place}', { place: c.help_requests.neighborhood }) : ''}</p>)}
+            {!c.lastMessage && <p className="message-card-preview" style={{ fontStyle: 'italic' }}>{t('No messages yet')}</p>}
             {c.lastMessage && (<p className="message-card-preview" style={{ color: unread ? "var(--text)" : undefined, fontWeight: unread ? 600 : 400 }}>{c.lastMessage.length > 80 ? c.lastMessage.slice(0, 80) + '...' : c.lastMessage}</p>)}
             </div>
           </div>
@@ -950,7 +955,7 @@ export default function Messages({ embedded = false, onOpen, selectedId }) {
               if (!closing) positionOptionsMenu(e)
             }}
             aria-label={t('Options for conversation with {name}', { name: c.otherName })}
-            style={{ position: 'absolute', bottom: '0.6rem', right: '0.6rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.25rem', padding: '4px 6px', lineHeight: 1 }}
+            style={{ position: 'absolute', bottom: '0.25rem', right: '0.25rem', minWidth: '44px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', borderRadius: '10px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.4rem', padding: 0, lineHeight: 1 }}
             title={t('Options')}>&#8943;</button>
 
           {openMenu === c.id && (

@@ -3836,11 +3836,9 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 
 .groups-section {
   margin: 1.25rem 0 0.5rem;
-  font-size: 0.8125rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .groups-card {

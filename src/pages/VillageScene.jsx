@@ -104,6 +104,12 @@ export default function VillageScene() {
     setParams({}, { replace: true })
     b.openArrange(null)
   }, [cottage]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Nov 19: Messages > Campfires links here with ?sheet=campfires to open that sheet.
+  useEffect(() => {
+    if (cottage || params.get('sheet') !== 'campfires') return
+    setParams({}, { replace: true })
+    openSheet({ k: 'campfires' })
+  }, [cottage, id]) // eslint-disable-line react-hooks/exhaustive-deps
   // The tour and other first-run questions wait while you arrange your cottage.
   const arrangeSoon = cottage && (arrange || params.get('arrange') === '1')
   useEffect(() => { pauseFirstRun(arrangeSoon); return () => pauseFirstRun(false) }, [arrangeSoon])

@@ -45,7 +45,7 @@ export default function ConnectHub() {
     { key: 'messages', label: 'Private messages', badge: unreadCount },
     { key: 'cottage', label: 'Group chats' },
   ] : [
-    { key: 'messages', label: 'Messages', badge: unreadCount },
+    { key: 'messages', label: 'Chats', badge: unreadCount },
     { key: 'villages', label: 'Village Square', badge: villageUnread },
     { key: 'cottage', label: 'Cottage Chats' },
     { key: 'campfires', label: 'Campfires' },

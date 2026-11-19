@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 // The Village tab (/village) opens your home village. Oct 22: your cottage
@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 // No home village yet: go find or start one.
 export default function VillageHome() {
   const { profile } = useAuth()
+  const { search } = useLocation()
   if (!profile) return <div className="cal-page"><p className="cal-empty">Loading...</p></div>
-  return <Navigate to={profile.home_village_id ? '/village/' + profile.home_village_id : '/find-village'} replace />
+  return <Navigate to={profile.home_village_id ? '/village/' + profile.home_village_id + search : '/find-village'} replace />
 }

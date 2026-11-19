@@ -156,12 +156,20 @@ export default function Groups({ embedded = false, show: showProp = 'all', onOpe
           {!embedded && <h1>{show === 'campfires' ? t('Your Campfires') : show === 'cottage' ? t('Your Cottage Chats') : t('Your group chats')}</h1>}
           {isSimpleView()
             ? <p className="groups-sub">{t('Chats with a few people you chose. Only the people in a chat can read it.')}</p>
+            : show === 'campfires' ? <p className="groups-sub"><Icon name="campfire" /> {t('Campfire: gather round and let your voices be heard.')}</p>
+            : show === 'cottage' ? <p className="groups-sub"><Icon name="cottage" /> {t("Cottage Chat: take a seat, let it out. You're safe here.")}</p>
             : <p className="groups-sub"><Icon name="cottage" /> {t("Cottage Chat: take a seat, let it out. You're safe here.")} <Icon name="campfire" /> {t('Campfire: gather round and let your voices be heard.')}</p>}
         </div>
       </div>
 
       {show === 'campfires' ? (
-        <p className="groups-sub">{t('Campfires start in a village or a group. Open your village map and tap Campfires.')}</p>
+        // Nov 19 (Jade): a button straight to your village's Campfires, not only directions.
+        <>
+          <p className="groups-sub">{t('Campfires start in a village or a group.')}</p>
+          <button type="button" className="btn btn-primary btn-full groups-start-btn" onClick={() => navigate('/village?sheet=campfires')}>
+            + {t('Start a Campfire in my village')}
+          </button>
+        </>
       ) : !showStart ? (
         established === false ? (
           <p className="new-account-note" role="status">{t(NEW_ACCOUNT_NOTE)} {t('A member can still invite you to their Cottage Chat.')}</p>

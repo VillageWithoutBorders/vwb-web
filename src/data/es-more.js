@@ -1147,6 +1147,8 @@ const more = {
   'For neighbors helping in this emergency': 'Para los vecinos que ayudan en esta emergencia',
   'Ambassador rooms': 'Cuartos de Embajadores',
   'Only Ambassadors can read this': 'Solo los Embajadores pueden leer esto',
+  'Campfires start in a village or a group.': 'Las fogatas empiezan en una aldea o un grupo.',
+  'Start a Campfire in my village': 'Empezar una fogata en mi aldea',
   'You have not joined a village chat yet.': 'Todavía no se ha unido a un chat de la aldea.',
   'Add your zip code on your Profile to find your village chat.': 'Agregue su código postal en su Perfil para encontrar el chat de su aldea.',
   'Go to my Profile': 'Ir a mi Perfil',
