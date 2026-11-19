@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { supabase, keepSignedIn } from '../supabaseClient'
-import { isNoSignal } from './pendingAsks'
+import { isNoSignal, sameAs } from './pendingAsks'
 import { bestMatch } from './emergencyMatch'
 
 // Emergency reports saved with no signal (Nov 5). Storms take the signal down first,
@@ -65,6 +65,10 @@ export function clearAllPendingReports() {
   changed()
 }
 
+// What tells one report from another. The title alone is not enough: "Tree down" on
+// two different roads is two reports, and both must go out.
+const SAME_REPORT = ['title', 'event_type', 'location_name']
+
 let sending = null
 
 // Sends every saved report it can. Returns the ones that went out: [{ id, title }].
@@ -80,8 +84,9 @@ export function sendPendingReports(userId) {
 
       // A try that lost signal may have reached VWB anyway. Look first, so it never posts twice.
       const since = new Date(new Date(item.saved_at).getTime() - 5 * 60 * 1000).toISOString()
-      const { data: mine, error: mineErr } = await supabase.from('emergency_events')
-        .select('id, title').eq('created_by', userId).eq('title', row.title).gte('created_at', since).limit(1)
+      const { data: mine, error: mineErr } = await sameAs(
+        supabase.from('emergency_events').select('id, title').eq('created_by', userId), row, SAME_REPORT,
+      ).gte('created_at', since).limit(1)
       if (mineErr) {
         if (isNoSignal(mineErr)) break
         console.error('Failed to check a saved emergency report:', mineErr)
