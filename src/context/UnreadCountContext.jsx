@@ -42,8 +42,13 @@ export function UnreadCountProvider({ children }) {
     if (postsErr) console.error('[UnreadCount] new board posts', postsErr)
     const rows = postsErr ? [] : posts || []
     const boards = new Set(rows.filter((p) => p.type === 'group_post').map((p) => String(p.link || '').replace(/^\/groups\//, '')).filter(Boolean))
-    // The Village Square summary counts once, however many there are.
-    const square = rows.some((p) => p.type === 'campfire') ? 1 : 0
+    // Nov 19 (Jade): village chats with new posts count too, one per chat, so the
+    // bottom Messages tab shows the same new posts as Places > Village Square.
+    // If that check fails, fall back to counting the Village Square summary once.
+    const { data: vu, error: vuErr } = await supabase.rpc('campfire_unread')
+    if (vuErr) console.error('[UnreadCount] village chats', vuErr)
+    const villageChats = vuErr ? 0 : (vu || []).filter((r) => Number(r.unread || 0) > 0).length
+    const square = villageChats || (rows.some((p) => p.type === 'campfire') ? 1 : 0)
     setNewBoards(boards)
     setCount(chats + boards.size + square)
   }, [user?.id])
