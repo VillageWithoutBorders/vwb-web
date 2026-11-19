@@ -17,15 +17,17 @@ export async function acceptHelpOffer(offer, myId) {
   }
 
   // Reuse any existing conversation with this helper, so messages with the same
-  // neighbor stay in one thread instead of splitting per request.
-  const { data: existingConvo, error: existingErr } = await supabase
+  // neighbor stay in one thread instead of splitting per request. If they already
+  // have more than one, use the oldest, the same as startConversation.js does.
+  const { data: existingConvos, error: existingErr } = await supabase
     .from('conversations')
     .select('id')
     .or('and(helper_id.eq.' + offer.helper_id + ',requester_id.eq.' + myId + '),and(helper_id.eq.' + myId + ',requester_id.eq.' + offer.helper_id + ')')
-    .maybeSingle()
+    .order('created_at', { ascending: true })
+    .limit(1)
   if (existingErr) console.error('Failed to check for an existing conversation:', existingErr)
 
-  let convo = existingConvo
+  let convo = existingConvos && existingConvos.length ? existingConvos[0] : null
   if (!convo) {
     const { data: newConvo, error: convoErr } = await supabase
       .from('conversations')
