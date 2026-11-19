@@ -62,3 +62,8 @@ live-layout.csv
 
 # Accessibility check test build
 dist-check/
+
+# Test output (npm test, npm run test:e2e)
+coverage/
+test-results/
+playwright-report/
