@@ -3132,7 +3132,7 @@ a:focus:not(:focus-visible) {
 }
 
 .cal-card-meta {
-  font-size: 0.85rem;
+  font-size: 0.9375rem;
   color: var(--text-secondary);
 }
 
@@ -5232,7 +5232,8 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 /* ---------- Home: need nearby, smaller and calmer ---------- */
 .home-need { margin: 0 0 1rem; }
 .home-need-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
-@media (min-width: 480px) { .home-need-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* Nov 20 (Jade): four across only when there is room, so "This week or later" doesn't wrap to three lines. */
+@media (min-width: 640px) { .home-need-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .home-need-tile { min-height: 56px; min-width: 0; display: flex; align-items: baseline; gap: 0.45rem; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-soft); font: inherit; text-align: left; cursor: pointer; }
 .home-need-num { font-size: 1.25rem; font-weight: 800; }
 .home-need-label { font-size: 1rem; color: var(--text-secondary); }
@@ -6373,7 +6374,8 @@ input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
 .tab-item-btn { position: relative; }
 .tab-badge-admin { background: #f2c763; color: #2a2004; border: 2px solid var(--white, #fff); }
 .feed-empty-icon .vwb-icon { width: 64px; height: 64px; vertical-align: 0; }
-.vm-tap { color: var(--accent); font-weight: 600; }
+/* Nov 20 (Jade): its own line, so it doesn't run into the neighbor count. */
+.vm-tap { display: block; margin-top: 2px; color: var(--accent); font-weight: 600; }
 .sh-village { margin: 0 0 1rem; }
 .sh-groups { padding: 1rem; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
 .sh-groups h2 { margin: 0 0 0.1rem; font-size: 1.15rem; color: var(--text-strong); }
@@ -8427,3 +8429,17 @@ html.text-largest .plan-slot-row { grid-template-columns: 1fr; }
 .wn-board-link b, .wn-board-link small { display: block; }
 .wn-board-link small { color: var(--text-secondary); font-size: 0.875rem; }
 @media (prefers-reduced-motion: reduce) { .wn-board-link:active { transform: none; } }
+
+/* Nov 20 (Jade): "More organizers (2)" on Calendar looks like something you can tap. */
+.cal-more-orgs { margin: 0.5rem 0; }
+.cal-more-orgs > summary {
+  list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  min-height: 48px; padding: 0.5rem 1rem; box-sizing: border-box;
+  border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface);
+  color: var(--text); font-weight: 700; font-size: 1rem; cursor: pointer;
+}
+.cal-more-orgs > summary::-webkit-details-marker { display: none; }
+.cal-more-orgs > summary::after { content: '\25BE'; font-size: 1.1rem; color: var(--text-secondary); }
+.cal-more-orgs[open] > summary { margin-bottom: 0.5rem; }
+.cal-more-orgs[open] > summary::after { content: '\25B4'; }
+.cal-more-orgs > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }

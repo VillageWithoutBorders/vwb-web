@@ -903,11 +903,14 @@ export function ScrollCue({ b, label = 'More below' }) {
     return () => { clearTimeout(tm); window.removeEventListener('resize', measure) }
   })
   if (b.arrange) return null
-  function go() {
+  function go(e) {
     const el = b.outerRef.current
     if (!el) return
     const head = (document.querySelector('.app-header') || { getBoundingClientRect: () => ({ bottom: 56 }) }).getBoundingClientRect().bottom
-    const y = el.getBoundingClientRect().bottom + window.scrollY - head - 8
+    // Nov 20 (Jade): stop just past this button too, so the map's bottom edge and the
+    // button don't peek out from under the top bar.
+    const cue = e && e.currentTarget ? e.currentTarget.getBoundingClientRect().bottom : 0
+    const y = Math.max(el.getBoundingClientRect().bottom, cue) + window.scrollY - head + 4
     window.scrollTo({ top: y, behavior: stillMotion() ? 'auto' : 'smooth' })
   }
   return (
