@@ -53,6 +53,29 @@ self.addEventListener('fetch', (event) => {
   })())
 })
 
+// Nov 20 (Jade): the number on the VWB icon. The open app sends the exact count
+// here (AppIconBadge.jsx). Each alert that arrives while VWB is closed adds one.
+// Kept in a tiny cache entry so it survives the service worker going to sleep.
+const BADGE_CACHE = 'vwb-badge'
+async function readBadge() {
+  try {
+    const res = await (await caches.open(BADGE_CACHE)).match('/__badge')
+    return res ? Number(await res.text()) || 0 : 0
+  } catch { return 0 }
+}
+async function writeBadge(n) {
+  try { await (await caches.open(BADGE_CACHE)).put('/__badge', new Response(String(n))) } catch { /* storage full */ }
+}
+async function showBadge(n) {
+  if (!('setAppBadge' in self.navigator)) return
+  try { n > 0 ? await self.navigator.setAppBadge(n) : await self.navigator.clearAppBadge() } catch { /* not allowed here */ }
+}
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'vwb-badge') return
+  const n = Math.max(0, Number(event.data.count) || 0)
+  event.waitUntil(writeBadge(n))
+})
+
 self.addEventListener('push', (event) => {
   if (!event.data) return
   let data
@@ -73,9 +96,10 @@ self.addEventListener('push', (event) => {
     data: { url: data.url || '/' },
     vibrate: [200, 100, 200]
   }
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'Village Without Borders', options)
-  )
+  event.waitUntil(Promise.all([
+    self.registration.showNotification(data.title || 'Village Without Borders', options),
+    readBadge().then((n) => writeBadge(n + 1).then(() => showBadge(n + 1))),
+  ]))
 })
 
 self.addEventListener('notificationclick', (event) => {

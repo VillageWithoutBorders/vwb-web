@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'rea
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { UnreadCountProvider } from './context/UnreadCountContext'
 import { NotificationsProvider } from './context/NotificationsContext'
+import AppIconBadge from './components/AppIconBadge'
 import Layout from './pages/Layout'
 import FirstVillage from './components/FirstVillage'
 import { needsFirstVillage } from './utils/firstVillage'
@@ -350,6 +351,7 @@ export default function App() {
             <AppRoutes />
             <AdminDialogHost />
             <HoverTips />
+            <AppIconBadge />
           </NotificationsProvider>
         </UnreadCountProvider>
       </AuthProvider>
