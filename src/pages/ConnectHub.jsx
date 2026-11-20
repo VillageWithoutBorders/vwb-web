@@ -33,7 +33,7 @@ const GroupBoard = lazy(() => import('./GroupBoard'))
 // members or opens anyone's chats for them.
 export default function ConnectHub() {
   const { user, isAdmin, organizations, established } = useAuth()
-  const { unreadCount, newBoards } = useUnreadCount()
+  const { chatUnread, newBoards } = useUnreadCount()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [villageUnread, setVillageUnread] = useState(0)
@@ -42,10 +42,10 @@ export default function ConnectHub() {
 
   // Simple view: just private messages and Cottage Chats.
   const tabs = simple ? [
-    { key: 'messages', label: 'Private messages', badge: unreadCount },
+    { key: 'messages', label: 'Private messages', badge: chatUnread },
     { key: 'cottage', label: 'Group chats' },
   ] : [
-    { key: 'messages', label: 'Chats', badge: unreadCount },
+    { key: 'messages', label: 'Chats', badge: chatUnread },
     { key: 'villages', label: 'Village Square', badge: villageUnread },
     { key: 'cottage', label: 'Cottage Chats' },
     { key: 'campfires', label: 'Campfires' },
@@ -61,7 +61,7 @@ export default function ConnectHub() {
   // Connections), Places (Village Square, Cottage Chats, Campfires), Groups. Admin for admins.
   // Each kind of chat is still here, one tap further, so old ?tab= links keep working.
   const FAMILIES = simple ? null : [
-    { key: 'people', label: 'People', parts: ['messages', 'connections'], badge: unreadCount },
+    { key: 'people', label: 'People', parts: ['messages', 'connections'], badge: chatUnread },
     { key: 'places', label: 'Places', parts: ['villages', 'cottage', 'campfires'], badge: villageUnread + ((newBoards && newBoards.size) || 0) },
     ...((organizations || []).length > 0 ? [{ key: 'groups', label: 'Groups', parts: ['orgs'] }] : []),
     ...(isAdmin ? [{ key: 'admin', label: 'Admin', parts: ['admin'] }] : []),

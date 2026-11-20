@@ -46,7 +46,7 @@ export default function VillageScene() {
     // Nov 10 map review: no Me spot (My Cottage is on the top bar), one place for groups and crews,
     // and Help nearby only in the Simple view list.
     : VILLAGE_SPOTS.filter((v) => simple || !v.simpleOnly)
-  const { unreadCount } = useUnreadCount()
+  const { chatUnread: privateUnread } = useUnreadCount()
   // The You button and old /me links open the cottage at Your corner (Oct 22).
   useEffect(() => {
     const spot = window.location.hash.slice(1)
@@ -422,7 +422,7 @@ export default function VillageScene() {
       // Nov 10 (map review): one place each for villages, groups and crews, and chats.
       case 'villages': return { sub: home?.village_id ? (visits.length ? t('{home} and {n} more', { home: home.name, n: visits.length }) : home.name) : home ? t('Find or start your home village') : t('Loading...') }
       case 'chats': {
-        const n = unreadCount + chatsNew
+        const n = privateUnread + chatsNew
         return { sub: n ? t('{n} new', { n }) : t('Messages, village chats, and Campfires'), badge: n, lantern: n ? t('{n} new', { n }) : '' }
       }
       case 'visits': return { sub: visits.length ? (visits.length === 1 ? t('1 village where you are a guest') : t('{n} villages where you are a guest', { n: visits.length })) : t('Villages you visit show up here') }
@@ -437,7 +437,7 @@ export default function VillageScene() {
         ? { sub: [offersWaiting ? (offersWaiting === 1 ? t('1 neighbor offered to help.') : t('{n} neighbors offered to help.', { n: offersWaiting })) : '', yourTurn ? (yourTurn === 1 ? t('1 task is waiting on you.') : t('{n} tasks are waiting on you.', { n: yourTurn })) : ''].filter(Boolean).join(' '), badge: offersWaiting + yourTurn, lantern: offersWaiting ? t('Say yes?') : t('Your turn') }
         : { sub: t('Find resources, ask for help, or help a neighbor') }
       case 'me': return { sub: t('Your profile, vouches, and settings') }
-      case 'messages': return { sub: unreadCount ? t('{n} unread', { n: unreadCount }) : t('Requests and private messages'), badge: unreadCount, lantern: unreadCount ? t('{n} new', { n: unreadCount }) : '' }
+      case 'messages': return { sub: privateUnread ? t('{n} unread', { n: privateUnread }) : t('Requests and private messages'), badge: privateUnread, lantern: privateUnread ? t('{n} new', { n: privateUnread }) : '' }
       default: return { sub: '' }
     }
   }
@@ -551,7 +551,7 @@ export default function VillageScene() {
       case 'skillshare': return { sub: t('Help nearby: requests and offers') }
       case 'neighbors': return { sub: village && village.member_count ? t('{n} neighbors live here', { n: village.member_count }) : t('A few neighbors so far') }
       case 'cottage': return { sub: t('Private chats with people you chose') }
-      case 'messages': return { sub: unreadCount ? t('{n} unread', { n: unreadCount }) : t('Requests and private messages'), badge: unreadCount }
+      case 'messages': return { sub: privateUnread ? t('{n} unread', { n: privateUnread }) : t('Requests and private messages'), badge: privateUnread }
       case 'orgs': {
         const c = orgs.filter((o) => o.kind === 'group').length, g = orgs.length - c
         const parts = [g ? (g === 1 ? t('1 group') : t('{n} groups', { n: g })) : '', c ? (c === 1 ? t('1 crew') : t('{n} crews', { n: c })) : ''].filter(Boolean)

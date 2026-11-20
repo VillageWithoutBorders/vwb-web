@@ -231,6 +231,12 @@ export default function Admin() {
     const nameOf = {}
     ;(nameRows || []).forEach(n => { nameOf[n.user_id] = n.display_name })
 
+    // Nov 20 (Jade): posts a VWB admin marked "Not a duplicate" stay unflagged.
+    // Until vwb-duplicate-dismissals.sql is run this read fails, and nothing is skipped.
+    const { data: dismissRows, error: dismissErr } = await supabase.from('duplicate_dismissals').select('kind, item_id')
+    if (dismissErr) console.error('[Admin] loadContent:dismissals', dismissErr)
+    const dismissed = new Set((dismissRows || []).map(d => d.kind + '-' + d.item_id))
+
     const reqKeyCounts = {}
     ;(reqs || []).forEach(r => {
       const key = r.requester_id + '|' + (r.skill_needed || '').trim().toLowerCase()
@@ -253,7 +259,7 @@ export default function Admin() {
       neighborhood: r.neighborhood,
       status: r.status,
       created_at: r.created_at,
-      is_duplicate: reqKeyCounts[r.requester_id + '|' + (r.skill_needed || '').trim().toLowerCase()] > 1,
+      is_duplicate: !dismissed.has('request-' + r.id) && reqKeyCounts[r.requester_id + '|' + (r.skill_needed || '').trim().toLowerCase()] > 1,
     }))
     const offItems = (offs || []).map(o => ({
       kind: 'offer',
@@ -266,10 +272,25 @@ export default function Admin() {
       neighborhood: o.neighborhood,
       status: o.is_available ? 'open' : 'not available',
       created_at: o.created_at,
-      is_duplicate: offKeyCounts[o.user_id + '|' + (o.title || '').trim().toLowerCase()] > 1,
+      is_duplicate: !dismissed.has('offer-' + o.id) && offKeyCounts[o.user_id + '|' + (o.title || '').trim().toLowerCase()] > 1,
     }))
 
     setContent([...reqItems, ...offItems].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
+  }
+
+  // Nov 20 (Jade): "Not a duplicate" clears the flag for every VWB admin.
+  // The post itself is not changed. Undo puts the flag back.
+  async function dismissDuplicate(item) {
+    const { error } = await supabase.rpc('dismiss_duplicate', { p_kind: item.kind, p_item_id: item.id })
+    if (reportError('dismissDuplicate', error, tr('Could not clear this. Try again.'))) return
+    setContent(prev => prev.map(c => (c.kind === item.kind && c.id === item.id) ? { ...c, is_duplicate: false } : c))
+    tell(tr('Marked not a duplicate.'), { action: { label: tr('Undo'), run: () => undismissDuplicate(item) } })
+  }
+
+  async function undismissDuplicate(item) {
+    const { error } = await supabase.rpc('undismiss_duplicate', { p_kind: item.kind, p_item_id: item.id })
+    if (reportError('undismissDuplicate', error, tr('Could not undo. Try again.'))) return
+    setContent(prev => prev.map(c => (c.kind === item.kind && c.id === item.id) ? { ...c, is_duplicate: true } : c))
   }
 
   function askDeleteContent(item) { setDeletingKey(item.kind + '-' + item.id) }
@@ -1778,7 +1799,12 @@ export default function Admin() {
                     </div>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => askDeleteContent(c)} style={{ marginTop: '0.4rem', padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{tr('Delete permanently')}</button>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+                    {c.is_duplicate && (
+                      <button type="button" onClick={() => dismissDuplicate(c)} style={{ minHeight: 44, padding: '0.35rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-strong)', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{tr('Not a duplicate')}</button>
+                    )}
+                    <button type="button" onClick={() => askDeleteContent(c)} style={{ minHeight: 44, padding: '0.35rem 0.75rem', borderRadius: '6px', border: '1px solid var(--danger)', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>{tr('Delete permanently')}</button>
+                  </div>
                 )}
               </div>
             )

@@ -6025,6 +6025,9 @@ const more = {
   "Lost your phone? Use your backup phone if you added one. If not, email info@villagewithoutborders.org from the address on your account.": "¿Perdió su teléfono? Use su teléfono de respaldo si agregó uno. Si no, escriba a info@villagewithoutborders.org desde el correo de su cuenta.",
   "Turn on two-step login to use Ambassador tools.": "Active la verificación en dos pasos para usar las herramientas de embajador.",
   "Ambassador tools check emergencies and approve groups. A code from an app on your phone keeps them safe if someone learns your password.": "Las herramientas de embajador revisan emergencias y aprueban grupos. Un código de una app en su teléfono las protege si alguien sabe su contraseña.",
+  "Not a duplicate": "No es repetido",
+  "Marked not a duplicate.": "Marcado como no repetido.",
+  "Could not clear this. Try again.": "No se pudo quitar. Intente otra vez.",
 }
 
 export default more
