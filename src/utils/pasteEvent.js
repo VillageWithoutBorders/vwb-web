@@ -5,7 +5,10 @@
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 const MONTH_RE = '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)'
-const WEEKDAY_RE = '(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)[a-z]*'
+const WEEKDAY_RE = '(?:mon(?:day)?|tue(?:s|sday)?|wed(?:s|nesday)?|thu(?:r|rs|rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)'
+// A line that only says when ("Saturday at 6 PM", "Sat, Oct 10", "Friday night"), so it
+// is not the name. "Saturday Market" and "Monthly Meeting" are names, and are kept.
+const WHEN_LINE_RE = new RegExp('^' + WEEKDAY_RE + '\\b\\.?\\s*(?:$|[,;:·|@–—-]|\\d|(?:at|from|morning|afternoon|evening|night|noon)\\b|' + MONTH_RE + '\\b)', 'i')
 const TIME_RE = '(\\d{1,2})(?::(\\d{2}))?\\s*([ap])\\.?\\s*m\\.?'
 const STREET_RE = /\b\d{1,6}\s+[A-Za-z0-9.' -]{2,40}\s(?:st|street|rd|road|ave|avenue|dr|drive|blvd|boulevard|ln|lane|hwy|highway|way|ct|court|pkwy|parkway|pike|cir|circle|trl|trail)\b\.?/i
 const NOISE = /^(event|public|private|public event|going|interested|invite|share|see more|see less|details|about|discussion|more|write something\.{0,3}|duration|hosted by.*|event by.*|\d[\d,.]*\s*(?:people )?(?:went|going|interested|responded).*|.*people responded|.*invited you.*|guests?|online event|add to calendar|ticket info|public · anyone on or off facebook)$/i
@@ -75,24 +78,23 @@ export function parsePastedEvent(text, nowDate) {
   if (!lines.length) { out.missing = ['everything']; return out }
 
   const used = new Set()
-  const dateRe = new RegExp('(\\b' + MONTH_RE + '\\.?\\s+\\d{1,2}\\b)|(\\b\\d{1,2}(?:st|nd|rd|th)?\\s+' + MONTH_RE + '\\b)|(\\b\\d{1,2}\\/\\d{1,2}\\b)', 'i')
+  const dateRe = new RegExp('(\\b' + MONTH_RE + '\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?\\b)|(\\b\\d{1,2}(?:st|nd|rd|th)?\\s+' + MONTH_RE + '\\b)|(\\b\\d{1,2}\\/\\d{1,2}\\b)', 'i')
 
-  // Date and times: the first line that has a date in it.
-  let dateIdx = lines.findIndex((l) => dateRe.test(l))
-  if (dateIdx >= 0) {
-    const dt = findDate(lines[dateIdx], now)
-    if (dt) {
-      out.date = ymd(dt)
-      const t = findTimes(lines[dateIdx])
-      out.startTime = t.start
-      out.endTime = t.end
-      used.add(dateIdx)
-      // Times can sit on the next line ("10:00 AM - 2:00 PM").
-      if (!out.startTime && lines[dateIdx + 1]) {
-        const t2 = findTimes(lines[dateIdx + 1])
-        if (t2.start) { out.startTime = t2.start; out.endTime = t2.end; used.add(dateIdx + 1) }
-      }
-    } else dateIdx = -1
+  // Date and times: the first line that has a real date in it. A line that only looks
+  // like one ("Crisis line open 24/7") is passed over, so the real date is still found.
+  let dt = null
+  const dateIdx = lines.findIndex((l) => dateRe.test(l) && (dt = findDate(l, now)))
+  if (dt) {
+    out.date = ymd(dt)
+    const t = findTimes(lines[dateIdx])
+    out.startTime = t.start
+    out.endTime = t.end
+    used.add(dateIdx)
+    // Times can sit on the next line ("10:00 AM - 2:00 PM").
+    if (!out.startTime && lines[dateIdx + 1]) {
+      const t2 = findTimes(lines[dateIdx + 1])
+      if (t2.start) { out.startTime = t2.start; out.endTime = t2.end; used.add(dateIdx + 1) }
+    }
   }
 
   // Online link
@@ -122,7 +124,7 @@ export function parsePastedEvent(text, nowDate) {
   }
 
   // Title: first line that is not the date, the place, or Facebook chrome.
-  const titleIdx = lines.findIndex((l, i) => !used.has(i) && !NOISE.test(l) && !new RegExp('^' + WEEKDAY_RE + '\\b', 'i').test(l) && l.length <= 120)
+  const titleIdx = lines.findIndex((l, i) => !used.has(i) && !NOISE.test(l) && !WHEN_LINE_RE.test(l) && l.length <= 120)
   if (titleIdx >= 0) { out.title = lines[titleIdx]; used.add(titleIdx) }
 
   // Description: everything left, minus Facebook chrome.

@@ -11,12 +11,11 @@ function unfold(text) {
   return text.replace(/\r\n|\r/g, '\n').replace(/\n[ \t]/g, '')
 }
 
+// Undo the calendar format's escapes in one pass, left to right, so a real backslash
+// followed by the letter n is not mistaken for a line break.
 function unescapeText(v) {
   return String(v || '')
-    .replace(/\\n/gi, '\n')
-    .replace(/\\,/g, ',')
-    .replace(/\\;/g, ';')
-    .replace(/\\\\/g, '\\')
+    .replace(/\\([\\;,nN])/g, (_, c) => (c === 'n' || c === 'N' ? '\n' : c))
     .trim()
 }
 
@@ -88,12 +87,14 @@ function expand(start, rrule, exdates, now, limit) {
   if (freq !== 'WEEKLY' && rule.BYDAY && /\d/.test(rule.BYDAY)) return null // "second Tuesday"
   const interval = Math.max(1, parseInt(rule.INTERVAL || '1', 10))
   const count = rule.COUNT ? parseInt(rule.COUNT, 10) : null
-  let until = null
+  // UNTIL is the last moment a date in the series can start. A plain date means the
+  // whole of that day. A date with a time is exact.
+  let until = Infinity
   if (rule.UNTIL) {
     const u = parseDate({ value: rule.UNTIL, params: {} })
-    until = u ? u.date : null
+    if (u) until = u.allDay ? u.date.getTime() + 86400000 - 1 : u.date.getTime()
   }
-  const stopAt = Math.min(limit.getTime(), until ? until.getTime() + 86400000 : Infinity)
+  const stopAt = Math.min(limit.getTime(), until)
   const out = []
   const skip = new Set((exdates || []).map((d) => d.getTime()))
   const byDay = rule.BYDAY ? rule.BYDAY.split(',').map((d) => DAYS.indexOf(d.slice(-2))).filter((i) => i >= 0) : null
@@ -131,6 +132,7 @@ function expand(start, rrule, exdates, now, limit) {
     else if (freq === 'MONTHLY') d.setMonth(start.getMonth() + i * interval)
     else d.setFullYear(start.getFullYear() + i * interval)
     if (freq === 'MONTHLY' && d.getDate() !== start.getDate()) continue // e.g. the 31st in a 30-day month
+    if (freq === 'YEARLY' && d.getMonth() !== start.getMonth()) continue // Feb 29 in a year without one
     if (d.getTime() > stopAt) return out
     if (count && produced >= count) return out
     if (byDay && byDay.length && freq === 'DAILY' && !byDay.includes(d.getDay())) continue
