@@ -61,6 +61,19 @@ export function isNoSignal(error) {
   return error.code === 'PGRST301' || error.status === 401
 }
 
+// Narrows a look-up to rows that carry the same values as a saved row, for the
+// columns named. An empty value has to be asked for with "is", not "eq".
+export function sameAs(query, row, columns) {
+  for (const col of columns) {
+    query = row[col] == null ? query.is(col, null) : query.eq(col, row[col])
+  }
+  return query
+}
+
+// What tells one ask from another. The words alone are not enough: "Please call me"
+// under Rides and under Food and Meals are two asks, and both must go out.
+const SAME_ASK = ['skill_needed', 'description', 'for_name']
+
 let sending = null
 
 // Sends every saved request it can. Returns how many went out.
@@ -74,8 +87,9 @@ export function sendPendingAsks(userId) {
       if (typeof navigator !== 'undefined' && navigator.onLine === false) break
       // A try that lost signal may have reached VWB anyway. Look first, so it never posts twice.
       const since = new Date(new Date(item.saved_at).getTime() - 5 * 60 * 1000).toISOString()
-      const { data: found, error: lookErr } = await supabase.from('help_requests')
-        .select('id').eq('requester_id', userId).eq('description', item.row.description).gte('created_at', since).limit(1)
+      const { data: found, error: lookErr } = await sameAs(
+        supabase.from('help_requests').select('id').eq('requester_id', userId), item.row, SAME_ASK,
+      ).gte('created_at', since).limit(1)
       if (lookErr) {
         if (isNoSignal(lookErr)) break
         console.error('Failed to check a saved request:', lookErr)
