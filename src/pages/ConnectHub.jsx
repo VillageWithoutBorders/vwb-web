@@ -113,7 +113,8 @@ export default function ConnectHub() {
     }
     load()
     const timer = setInterval(load, 30000)
-    return () => { alive = false; clearInterval(timer) }
+    window.addEventListener('vwb:village-read', load)
+    return () => { alive = false; clearInterval(timer); window.removeEventListener('vwb:village-read', load) }
   }, [user?.id])
 
   const chip = (on) => ({

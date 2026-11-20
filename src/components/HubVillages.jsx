@@ -39,7 +39,8 @@ export default function HubVillages({ onOpen, selectedId }) {
     }
     load()
     const timer = setInterval(load, 30000)
-    return () => { alive = false; clearInterval(timer) }
+    window.addEventListener('vwb:village-read', load)
+    return () => { alive = false; clearInterval(timer); window.removeEventListener('vwb:village-read', load) }
   }, [user.id])
 
   const general = (boards || []).filter((b) => b.is_general)
@@ -56,10 +57,10 @@ export default function HubVillages({ onOpen, selectedId }) {
   function card(b, icon, note) {
     const n = unread[b.id] || 0
     return (
-      <button key={b.id} type="button" className={'cal-card' + (selectedId && (selectedId === b.id || (selectedId === 'square' && b.is_general)) ? ' hub-row-on' : '')} style={{ width: '100%', textAlign: 'left', minHeight: '44px', marginBottom: '0.6rem' }}
+      <button key={b.id} type="button" className={'cal-card' + (selectedId && (selectedId === b.id || (selectedId === 'square' && b.is_general)) ? ' hub-row-on' : '')} style={{ width: '100%', textAlign: 'left', minHeight: '44px', marginBottom: '0.6rem', ...(n > 0 ? { borderLeft: '4px solid var(--danger)' } : {}) }}
         aria-current={selectedId === b.id ? 'true' : undefined}
         aria-label={b.name + (n ? ', ' + t('{n} new', { n }) : '')} onClick={() => (onOpen ? onOpen(b.id) : navigate('/village-square?board=' + b.id))}>
-        <span className="cal-card-title"><Icon name={icon} /> {b.name}{n > 0 && <span style={{ marginLeft: '0.5rem', color: 'var(--accent)', fontWeight: 700 }}>{t('{n} new', { n: n > 9 ? '9+' : n })}</span>}</span>
+        <span className="cal-card-title"><Icon name={icon} /> {b.name}{n > 0 && <span className="hub-tab-count" style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{t('{n} new', { n: n > 9 ? '9+' : n })}</span>}</span>
         <span className="cal-card-meta">{note}</span>
       </button>
     )

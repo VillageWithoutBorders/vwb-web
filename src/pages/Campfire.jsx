@@ -439,7 +439,12 @@ export default function Campfire({ pane = false }) {
         markedRef.current = markKey
         supabase.rpc('campfire_mark_read', { p_board: boardAtStart }).then(({ error: readErr }) => {
           if (readErr) console.error('Failed to mark chat read:', readErr)
-          else setUnread(prev => ({ ...prev, [boardAtStart]: 0 }))
+          else {
+            setUnread(prev => ({ ...prev, [boardAtStart]: 0 }))
+            // Nov 20 (Jade): clear the Places, Village Square and Messages badges now, not 30 seconds later.
+            refreshUnread()
+            try { window.dispatchEvent(new Event('vwb:village-read')) } catch { /* old browser */ }
+          }
         })
       }
       if (data.length > 0) {
