@@ -15,6 +15,7 @@ import { personalAlertLink } from '../utils/alertLink'
 import { useT, tAlert } from '../utils/lang'
 import { supabase } from '../supabaseClient'
 import { alertKindName, canMute } from '../utils/alertKinds'
+import { useMenuPosition } from '../utils/useMenuPosition'
 import '../desktop-me.css'
 
 export default function Notifications() {
@@ -37,6 +38,21 @@ export default function Notifications() {
     await refreshProfile()
     setMuteNote(mute ? type : null)
   }
+
+  // Nov 20 (Jade): Flag and Mute live behind one ⋯ button on each alert,
+  // so each card has two buttons instead of four. One menu for the whole page.
+  const { menuRef, menuStyle, openMenu, closeMenu } = useMenuPosition('right')
+  const [menuFor, setMenuFor] = useState(null)
+  function closeOptions() { setMenuFor(null); closeMenu() }
+  useEffect(() => {
+    if (!menuFor) return
+    function onKey(e) { if (e.key === 'Escape') closeOptions() }
+    function onScroll() { closeOptions() }
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('scroll', onScroll, true)
+    window.addEventListener('resize', onScroll)
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('scroll', onScroll, true); window.removeEventListener('resize', onScroll) }
+  }, [menuFor]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Opening this page clears the top-bar badge right away. Alerts you
   // haven't tapped still show under "New" until you do.
@@ -124,8 +140,8 @@ export default function Notifications() {
       notification={n}
       onTap={handleTap}
       onDelete={handleDelete}
-      onToggleFollowUp={handleToggleFollowUp}
-      onMute={muteReady && canMute(n.type) && !mutedTypes.includes(n.type) ? (e) => { e.stopPropagation(); setMute(n.type, true) } : null}
+      menuOpen={menuFor?.id === n.id}
+      onMore={(e) => { e.stopPropagation(); if (menuFor?.id === n.id) { closeOptions(); return } setMenuFor(n); openMenu(e) }}
     />
   )
 
@@ -196,7 +212,7 @@ export default function Notifications() {
             {filter === 'unread'
               ? t("You're all caught up!")
               : filter === 'followup'
-                ? t('Nothing flagged. Tap the flag on an alert to come back to it later.')
+                ? t('Nothing flagged. Tap \u22EF on an alert and pick Flag to follow up to come back to it later.')
                 : t('No notifications yet')}
           </p>
         </div>
@@ -217,6 +233,29 @@ export default function Notifications() {
             {read.map(card)}
           </div>
         </div>
+      )}
+
+      {menuFor && (
+        <>
+          <button type="button" className="nt-menu-scrim" aria-label={t('Close')} tabIndex={-1} onClick={closeOptions} />
+          <div ref={menuRef} className="nt-menu" role="menu" style={menuStyle}>
+            <button type="button" role="menuitem" className="nt-menu-item" autoFocus
+              onClick={(e) => { const n = menuFor; closeOptions(); handleToggleFollowUp(e, n) }}>
+              <Icon name="flag" /> {menuFor.follow_up ? t('Remove follow up flag') : t('Flag to follow up')}
+            </button>
+            {muteReady && canMute(menuFor.type) && (mutedTypes.includes(menuFor.type) ? (
+              <button type="button" role="menuitem" className="nt-menu-item"
+                onClick={() => { const n = menuFor; closeOptions(); setMute(n.type, false) }}>
+                <Icon name="bell" /> {t('Turn phone alerts like this back on')}
+              </button>
+            ) : (
+              <button type="button" role="menuitem" className="nt-menu-item"
+                onClick={() => { const n = menuFor; closeOptions(); setMute(n.type, true) }}>
+                <Icon name="bell" /> {t('Mute phone alerts like this')}
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       {confirmClear && (
@@ -241,7 +280,7 @@ export default function Notifications() {
   )
 }
 
-function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp, onMute }) {
+function NotificationCard({ notification, onTap, onDelete, onMore, menuOpen }) {
   const t = useT()
   const icon = TYPE_ICONS[notification.type] || '\u{1F514}'
   const color = TYPE_COLORS[notification.type] || '#6b7280'
@@ -277,19 +316,14 @@ function NotificationCard({ notification, onTap, onDelete, onToggleFollowUp, onM
         {!notification.read && <span className="unread-dot" aria-hidden="true" />}
         <button
           type="button"
-          className="notification-flag"
-          aria-pressed={flagged}
-          onClick={(e) => onToggleFollowUp(e, notification)}
-          aria-label={flagged ? t('Remove follow up flag') : t('Flag to follow up')}
+          className="notification-more"
+          aria-haspopup="menu"
+          aria-expanded={!!menuOpen}
+          onClick={onMore}
+          aria-label={t('More for this alert: flag or mute')}
         >
-          <span aria-hidden="true"><Icon name="flag" /></span>
+          <span aria-hidden="true">&#8943;</span>
         </button>
-        {onMute && (
-          <button type="button" className="notification-mute" onClick={onMute}
-            aria-label={t('Mute phone alerts like this')} data-tip={t('No more phone alerts like this. They still show here.')}>
-            {t('Mute')}
-          </button>
-        )}
         <button
           type="button"
           className="notification-delete"

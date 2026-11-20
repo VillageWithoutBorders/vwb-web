@@ -6028,6 +6028,9 @@ const more = {
   "Not a duplicate": "No es repetido",
   "Marked not a duplicate.": "Marcado como no repetido.",
   "Could not clear this. Try again.": "No se pudo quitar. Intente otra vez.",
+  "Turn phone alerts like this back on": "Volver a recibir alertas del teléfono como esta",
+  "More for this alert: flag or mute": "Más para esta alerta: marcar o silenciar",
+  "Nothing flagged. Tap \u22EF on an alert and pick Flag to follow up to come back to it later.": "Nada marcado. Toque \u22EF en una alerta y elija Marcar para dar seguimiento para volver a ella después.",
 }
 
 export default more

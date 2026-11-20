@@ -8196,6 +8196,15 @@ html.calm-motion .read-bar-btn:not(:disabled):active { transform: none; }
 .notification-mute { min-height: 44px; min-width: 44px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-secondary); font-size: .875rem; font-weight: 600; cursor: pointer; }
 .notification-mute:hover, .notification-mute:focus-visible { color: var(--text-strong); border-color: var(--accent); }
 .notification-mute:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* Nov 20 (Jade): one ⋯ button holds Flag and Mute. */
+.notification-more { min-width: 44px; min-height: 44px; border: none; border-radius: 10px; background: none; color: var(--text-secondary); font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.notification-more:hover, .notification-more[aria-expanded="true"] { background: var(--surface-2); color: var(--text-strong); }
+.notification-more:focus-visible, .notification-delete:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.nt-menu-scrim { position: fixed; inset: 0; z-index: 199; background: transparent; border: none; padding: 0; cursor: default; }
+.nt-menu { min-width: 240px; max-width: calc(100vw - 16px); background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); padding: 4px; }
+.nt-menu-item { display: flex; align-items: center; gap: 0.6rem; width: 100%; min-height: 48px; padding: 0.5rem 0.75rem; border: none; border-radius: 8px; background: none; color: var(--text); font: inherit; font-size: 1rem; text-align: left; cursor: pointer; }
+.nt-menu-item:hover, .nt-menu-item:focus-visible { background: var(--surface-2); }
+.nt-menu-item:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 .notif-mute-note { margin: 8px 0; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--accent); overflow-wrap: anywhere; }
 .notif-mute-note .link-button { min-height: 44px; font-weight: 700; }
 .alert-choices { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; min-width: 0; }
