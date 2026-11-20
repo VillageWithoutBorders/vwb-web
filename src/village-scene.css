@@ -1404,3 +1404,21 @@ html.text-larger .gh, html.text-largest .gh { grid-template-columns: 1fr !import
   :root:not([data-theme="dark"]) .vs-edit-menu { background: var(--vs-bg); }
   :root:not([data-theme="dark"]) .vs-edit-menu button { background: var(--vs-card); color: var(--vs-ink); }
 }
+
+/* ============================================================
+   Nov 20 (Jade): the place list on My Village and My Cottage on a computer.
+   The cards no longer stretch to fill the screen (that made tall boxes with
+   small words floating in the middle). Each card is its natural height, and
+   the words are bigger and easier to read. Undoes the Nov 8 stretch above.
+   ============================================================ */
+@media (min-width: 1024px) {
+  html:not(.simple) .vs-page-path > .vs-body > .vs-list { flex: 0 0 auto; grid-auto-rows: auto; align-content: start; max-height: none; }
+  html:not(.simple) .vs-page-path .vs-room { height: auto; min-height: 64px; padding: 10px 14px; gap: 12px; }
+  html:not(.simple) .vs-page-path .vs-room-ic,
+  html:not(.simple) .vs-page-path .vs-room-ic .vwb-icon,
+  html:not(.simple) .vs-page-path .vs-room-ic img { width: 36px; height: 36px; }
+  html:not(.simple) .vs-page-path .vs-room-text b { font-size: 1.05rem; line-height: 1.3; }
+  html:not(.simple) .vs-page-path .vs-room-text small { font-size: 0.95rem; line-height: 1.35; }
+  html:not(.simple) .vs-page-path .vs-pick-h { font-size: 1.05rem; }
+}
+
